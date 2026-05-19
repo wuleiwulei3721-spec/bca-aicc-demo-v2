@@ -1,4 +1,3 @@
-import { ClockCircleOutlined } from '@ant-design/icons'
 import { Modal } from 'antd'
 import { callFlowDetail } from '../../../mock/inbound'
 
@@ -24,21 +23,13 @@ export function CallFlowDetailModal({
         <section className="inbound-call-flow__section">
           <div className="inbound-call-flow__section-header">
             <span>IVR Journey</span>
-            <strong>{callFlowDetail.ivrDuration}</strong>
           </div>
           <div className="inbound-call-flow__steps">
-            {callFlowDetail.ivrJourney.map((step, index) => (
+            {callFlowDetail.ivrJourney.map((step) => (
               <div className="inbound-call-flow__step" key={step.id}>
                 <div className="inbound-call-flow__step-node">
-                  <span className="inbound-call-flow__step-index">
-                    {index + 1}
-                  </span>
                   <strong>{step.nodeName}</strong>
                 </div>
-                <span className="inbound-call-flow__step-time">
-                  <ClockCircleOutlined />
-                  {step.actionTime}
-                </span>
               </div>
             ))}
           </div>

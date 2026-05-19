@@ -28,11 +28,6 @@ export const callFlowDetail: CallFlowDetail = {
   ivrDuration: '02:35',
   ivrJourney: [
     {
-      id: 'ivr-001',
-      nodeName: 'Phone',
-      actionTime: '14:18:02',
-    },
-    {
       id: 'ivr-002',
       nodeName: 'Bahasa Indonesia',
       actionTime: '14:18:15',
@@ -44,13 +39,8 @@ export const callFlowDetail: CallFlowDetail = {
     },
     {
       id: 'ivr-004',
-      nodeName: 'Limit Adjustment',
+      nodeName: 'Report Lost Card & Check Credit Card Application Status',
       actionTime: '14:19:06',
-    },
-    {
-      id: 'ivr-005',
-      nodeName: 'Transfer to Agent',
-      actionTime: '14:19:30',
     },
   ],
   transferHistory: [

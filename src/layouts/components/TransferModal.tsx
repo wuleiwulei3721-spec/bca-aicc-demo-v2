@@ -177,6 +177,12 @@ function TransferNumberTab({ onComplete }: { onComplete: () => void }) {
         <span>System Number</span>
         <Select
           allowClear
+          showSearch
+          filterOption={(input, option) =>
+            String(option?.label ?? '')
+              .toLowerCase()
+              .includes(input.trim().toLowerCase())
+          }
           options={transferSystemNumbers.map(
             (number: TransferSystemNumber) => ({
               label: `${number.label} (${number.number})`,

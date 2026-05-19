@@ -24,6 +24,10 @@ const channelClassNames: Record<string, string> = {
   WhatsApp: 'inbound-channel-tag--whatsapp',
 }
 
+const channelDisplayLabels: Partial<Record<ChannelTagValue, string>> = {
+  Phone: 'PSTN',
+}
+
 function renderIcon(value: ChannelTagValue) {
   if (value === 'Phone') {
     return <PhoneOutlined />
@@ -48,7 +52,7 @@ export function ChannelTag({ value, compact }: ChannelTagProps) {
         .join(' ')}
       icon={renderIcon(value)}
     >
-      {value}
+      {channelDisplayLabels[value] ?? value}
     </Tag>
   )
 }

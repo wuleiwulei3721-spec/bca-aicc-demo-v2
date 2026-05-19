@@ -21,6 +21,7 @@ import {
   type QuestionStepStatus,
 } from './CustomerVerificationModal'
 import { SectionCard } from './SectionCard'
+import { SendEmailModal } from './SendEmailModal'
 
 interface CustomerInformationCardProps {
   customer: CustomerInformation
@@ -67,6 +68,7 @@ export function CustomerInformationCard({
     Record<string, QuestionStepStatus>
   >({})
   const [isCallFlowOpen, setIsCallFlowOpen] = useState(false)
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
   const { profile } = customer
 
   const openVerification = () => {
@@ -118,10 +120,15 @@ export function CustomerInformationCard({
                   <PhoneOutlined />
                   {profile.phoneNumber}
                 </span>
-                <span>
+                <button
+                  className="inbound-customer-fact-action"
+                  title="Send email"
+                  type="button"
+                  onClick={() => setIsEmailModalOpen(true)}
+                >
                   <MailOutlined />
                   {profile.email}
-                </span>
+                </button>
                 <span>
                   <IdcardOutlined />
                   {profile.cisNumber}
@@ -174,6 +181,11 @@ export function CustomerInformationCard({
       <CallFlowDetailModal
         open={isCallFlowOpen}
         onClose={() => setIsCallFlowOpen(false)}
+      />
+      <SendEmailModal
+        customerEmail={profile.email}
+        open={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
       />
     </>
   )

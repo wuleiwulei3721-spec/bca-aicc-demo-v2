@@ -10,6 +10,8 @@ import { AppButton } from '../../components'
 import { internalChatSessions } from '../../mock/chat'
 import type { InternalChatSession } from '../../types'
 
+const { TextArea } = Input
+
 interface InternalChatModalProps {
   open: boolean
   onClose: () => void
@@ -131,20 +133,25 @@ export function InternalChatModal({ open, onClose }: InternalChatModalProps) {
           </div>
 
           <footer className="aicc-internal-chat__composer">
-            <button aria-label="Emoji" type="button">
-              <SmileOutlined />
-            </button>
-            <button aria-label="Upload image" type="button">
-              <FileImageOutlined />
-            </button>
-            <Input
+            <TextArea
+              autoSize={{ minRows: 3, maxRows: 5 }}
               placeholder="Type internal message"
               value={message}
               onChange={(event) => setMessage(event.target.value)}
             />
-            <AppButton icon={<SendOutlined />} type="primary">
-              Send
-            </AppButton>
+            <div className="aicc-internal-chat__composer-actions">
+              <span>
+                <button aria-label="Emoji" type="button">
+                  <SmileOutlined />
+                </button>
+                <button aria-label="Upload image" type="button">
+                  <FileImageOutlined />
+                </button>
+              </span>
+              <AppButton icon={<SendOutlined />} type="primary">
+                Send
+              </AppButton>
+            </div>
           </footer>
         </section>
       </div>
