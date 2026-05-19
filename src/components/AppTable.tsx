@@ -1,16 +1,16 @@
-import { Table } from 'antd'
-import type { TableProps } from 'antd'
+import { BaseTable } from './BaseTable'
+import type { BaseTableProps } from './BaseTable'
 
 export function AppTable<RecordType extends object = object>({
   className,
   size = 'middle',
   pagination,
   ...props
-}: TableProps<RecordType>) {
+}: BaseTableProps<RecordType>) {
   const tableClassName = ['aicc-table', className].filter(Boolean).join(' ')
 
   return (
-    <Table<RecordType>
+    <BaseTable<RecordType>
       className={tableClassName}
       pagination={
         pagination === false

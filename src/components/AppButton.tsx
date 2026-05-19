@@ -1,8 +1,12 @@
-import { Button } from 'antd'
-import type { ButtonProps } from 'antd'
+import { BaseButton } from './BaseButton'
+import type { BaseButtonProps } from './BaseButton'
 
-export function AppButton({ className, size = 'middle', ...props }: ButtonProps) {
+export function AppButton({
+  className,
+  size = 'middle',
+  ...props
+}: BaseButtonProps) {
   const buttonClassName = ['aicc-button', className].filter(Boolean).join(' ')
 
-  return <Button className={buttonClassName} size={size} {...props} />
+  return <BaseButton className={buttonClassName} size={size} {...props} />
 }

@@ -1,8 +1,7 @@
 import { useMemo } from 'react'
 import { CustomerServiceOutlined, HomeOutlined } from '@ant-design/icons'
-import { Tabs } from 'antd'
 import type { TabsProps } from 'antd'
-import { PageContainer } from '../components'
+import { BaseTabs, PageContainer } from '../components'
 import { useAppStore } from '../store'
 import { InboundPage } from './inbound'
 
@@ -67,12 +66,13 @@ export function AgentWorkspace() {
 
   return (
     <PageContainer>
-      <Tabs
+      <BaseTabs
         activeKey={activeKey}
         className="agent-workspace-tabs"
         hideAdd
         items={tabItems}
         type="editable-card"
+        variant="toolbar"
         onChange={setActiveKey}
         onEdit={handleEdit}
       />

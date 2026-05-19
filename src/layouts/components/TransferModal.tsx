@@ -1,8 +1,14 @@
 import { useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
-import { Input, Modal, Select, Space, Tabs, Tag } from 'antd'
+import { Input, Select, Space, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { AppButton, AppTable } from '../../components'
+import {
+  AppButton,
+  AppTable,
+  BaseModal,
+  BaseTabs,
+  SearchInput,
+} from '../../components'
 import {
   transferAgents,
   transferSkills,
@@ -87,9 +93,7 @@ function TransferAgentTab({ onComplete }: { onComplete: () => void }) {
   return (
     <div className="aicc-transfer-panel">
       <div className="aicc-transfer-search">
-        <Input
-          allowClear
-          prefix={<SearchOutlined />}
+        <SearchInput
           placeholder="Search name or employee ID"
           value={keyword}
           onChange={(event) => setKeyword(event.target.value)}
@@ -145,9 +149,7 @@ function TransferSkillTab({ onComplete }: { onComplete: () => void }) {
   return (
     <div className="aicc-transfer-panel">
       <div className="aicc-transfer-search">
-        <Input
-          allowClear
-          prefix={<SearchOutlined />}
+        <SearchInput
           placeholder="Search skill name"
           value={keyword}
           onChange={(event) => setKeyword(event.target.value)}
@@ -232,15 +234,20 @@ export function TransferModal({ open, onClose }: TransferModalProps) {
   ]
 
   return (
-    <Modal
+    <BaseModal
       className="aicc-transfer-modal"
-      footer={null}
+      kind="transfer"
       open={open}
       title="Transfer"
       width={860}
       onCancel={onClose}
     >
-      <Tabs className="aicc-transfer-tabs" defaultActiveKey="agent" items={items} />
-    </Modal>
+      <BaseTabs
+        className="aicc-transfer-tabs"
+        defaultActiveKey="agent"
+        items={items}
+        variant="modal"
+      />
+    </BaseModal>
   )
 }

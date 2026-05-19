@@ -1,8 +1,14 @@
 import { useMemo, useState } from 'react'
 import { PhoneOutlined, SearchOutlined } from '@ant-design/icons'
-import { Input, Modal, Space, Tabs, Tag } from 'antd'
+import { Input, Space, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { AppButton, AppTable } from '../../components'
+import {
+  AppButton,
+  AppTable,
+  BaseModal,
+  BaseTabs,
+  SearchInput,
+} from '../../components'
 import { transferAgents } from '../../mock/transfer'
 import type { TransferAgent } from '../../types'
 
@@ -91,9 +97,7 @@ function CallAgentTab({ onComplete }: { onComplete: () => void }) {
   return (
     <div className="aicc-transfer-panel">
       <div className="aicc-transfer-search">
-        <Input
-          allowClear
-          prefix={<SearchOutlined />}
+        <SearchInput
           placeholder="Search name or employee ID"
           value={keyword}
           onChange={(event) => setKeyword(event.target.value)}
@@ -128,19 +132,20 @@ export function OutboundCallModal({ open, onClose }: OutboundCallModalProps) {
   ]
 
   return (
-    <Modal
+    <BaseModal
       className="aicc-transfer-modal"
-      footer={null}
+      kind="outbound"
       open={open}
       title="Outbound Call"
       width={860}
       onCancel={onClose}
     >
-      <Tabs
+      <BaseTabs
         className="aicc-transfer-tabs"
         defaultActiveKey="number"
         items={items}
+        variant="modal"
       />
-    </Modal>
+    </BaseModal>
   )
 }

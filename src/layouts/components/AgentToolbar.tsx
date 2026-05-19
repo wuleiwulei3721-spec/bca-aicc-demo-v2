@@ -12,6 +12,7 @@ import {
 import { Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
 import { useEffect, useState } from 'react'
+import { ToolbarButton } from '../../components'
 import type { AgentStatus, CallStatus } from '../../types'
 import { OutboundCallModal } from './OutboundCallModal'
 import { ToolbarSettingsModal } from './ToolbarSettingsModal'
@@ -100,94 +101,59 @@ export function AgentToolbar({
     <>
       <div className="aicc-agent-toolbar" aria-label="Call controls">
         {!isInCall && (
-          <button
-            className={[
-              'aicc-agent-toolbar__control',
-              isIncoming ? 'aicc-agent-toolbar__control--incoming' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
+          <ToolbarButton
             disabled={!isIncoming}
-            type="button"
+            flashing={isIncoming}
+            icon={<PhoneOutlined />}
+            tone={isIncoming ? 'incoming' : 'default'}
             onClick={onAnswer}
           >
-            <PhoneOutlined />
-            <span>Answer</span>
-          </button>
+            Answer
+          </ToolbarButton>
         )}
 
         {isInCall && (
           <>
-            <button
-              className={[
-                'aicc-agent-toolbar__control',
-                callStatus === 'Hold'
-                  ? 'aicc-agent-toolbar__control--active aicc-agent-toolbar__control--hold-active'
-                  : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              type="button"
+            <ToolbarButton
+              active={callStatus === 'Hold'}
+              icon={<PauseCircleOutlined />}
               onClick={onHoldToggle}
             >
-              <PauseCircleOutlined />
-              <span>Hold</span>
-            </button>
-            <button
-              className={[
-                'aicc-agent-toolbar__control',
-                callStatus === 'Mute'
-                  ? 'aicc-agent-toolbar__control--active aicc-agent-toolbar__control--mute-active'
-                  : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              type="button"
+              Hold
+            </ToolbarButton>
+            <ToolbarButton
+              active={callStatus === 'Mute'}
+              icon={<AudioMutedOutlined />}
               onClick={onMuteToggle}
             >
-              <AudioMutedOutlined />
-              <span>Mute</span>
-            </button>
-            <button
-              className={[
-                'aicc-agent-toolbar__control',
-                isTransferOpen
-                  ? 'aicc-agent-toolbar__control--active aicc-agent-toolbar__control--transfer-active'
-                  : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              type="button"
+              Mute
+            </ToolbarButton>
+            <ToolbarButton
+              active={isTransferOpen}
+              icon={<SwapOutlined />}
               onClick={() => setIsTransferOpen(true)}
             >
-              <SwapOutlined />
-              <span>Transfer</span>
-            </button>
-            <button
-              className="aicc-agent-toolbar__control aicc-agent-toolbar__control--danger"
-              type="button"
+              Transfer
+            </ToolbarButton>
+            <ToolbarButton
+              icon={<DisconnectOutlined />}
+              tone="danger"
               onClick={onHangUp}
             >
-              <DisconnectOutlined />
-              <span>Hang Up</span>
-            </button>
+              Hang Up
+            </ToolbarButton>
           </>
         )}
 
-        <button
+        <ToolbarButton
           aria-pressed={isReady}
-          className={[
-            'aicc-agent-toolbar__control',
-            isReady ? 'aicc-agent-toolbar__control--ready' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-          type="button"
+          icon={isReady ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
+          selected={isReady}
+          tone={isReady ? 'ready' : 'default'}
           onClick={onReadyToggle}
         >
-          {isReady ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
           {readyLabel}
-        </button>
+        </ToolbarButton>
 
         <div className="aicc-agent-toolbar__timer">
           <span>{timerLabel}</span>
@@ -195,7 +161,7 @@ export function AgentToolbar({
         </div>
 
         <Dropdown
-          overlayClassName="aicc-agent-status-menu"
+          classNames={{ root: 'aicc-agent-status-menu' }}
           menu={{ items: moreItems, onClick: handleMoreMenuClick }}
           placement="bottomRight"
         >

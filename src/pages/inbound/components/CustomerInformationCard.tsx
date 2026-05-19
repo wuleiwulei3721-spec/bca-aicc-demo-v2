@@ -1,14 +1,5 @@
 import { useState } from 'react'
-import {
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  CloseCircleOutlined,
-  IdcardOutlined,
-  MailOutlined,
-  PhoneOutlined,
-} from '@ant-design/icons'
-import { Avatar, Modal, Tag } from 'antd'
-import { AppButton } from '../../../components'
+import { BaseModal, CustomerInformationPanel } from '../../../components'
 import type {
   CustomerInformation,
   VerificationQuestion,
@@ -20,41 +11,10 @@ import {
   CustomerVerificationModal,
   type QuestionStepStatus,
 } from './CustomerVerificationModal'
-import { SectionCard } from './SectionCard'
 import { SendEmailModal } from './SendEmailModal'
 
 interface CustomerInformationCardProps {
   customer: CustomerInformation
-}
-
-const statusClassName: Record<VerificationStatus, string> = {
-  Verified: 'inbound-status-tag inbound-status-tag--success',
-  Unverified: 'inbound-status-tag inbound-status-tag--warning',
-  'Verification Failed': 'inbound-status-tag inbound-status-tag--danger',
-}
-
-function renderStatusIcon(status: VerificationStatus) {
-  if (status === 'Verified') {
-    return <CheckCircleOutlined />
-  }
-
-  if (status === 'Verification Failed') {
-    return <CloseCircleOutlined />
-  }
-
-  return <CloseCircleOutlined />
-}
-
-function renderStatusLabel(status: VerificationStatus) {
-  if (status === 'Unverified') {
-    return 'Unverified'
-  }
-
-  if (status === 'Verification Failed') {
-    return 'Failed'
-  }
-
-  return status
 }
 
 export function CustomerInformationCard({
@@ -96,76 +56,19 @@ export function CustomerInformationCard({
 
   return (
     <>
-      <SectionCard
-        className="inbound-section-card--customer"
-        title="Customer Information"
-      >
-        <div className="inbound-customer-card">
-          <div className="inbound-customer-card__identity">
-            <div className="inbound-customer-card__avatar-wrap">
-              <Avatar
-                className="inbound-profile__avatar"
-                size={58}
-                src={profile.avatarUrl}
-              >
-                {profile.avatarInitials}
-              </Avatar>
-              <Tag className="inbound-priority-tag">Priority</Tag>
-            </div>
+      <CustomerInformationPanel
+        accessChannelNode={<ChannelTag compact value={customer.accessChannel} />}
+        className="inbound-section-card inbound-section-card--customer"
+        customer={customer}
+        verificationStatus={verificationStatus}
+        onOpenCallFlow={() => setIsCallFlowOpen(true)}
+        onSendEmail={() => setIsEmailModalOpen(true)}
+        onVerify={openVerification}
+      />
 
-            <div className="inbound-customer-card__main">
-              <div className="inbound-profile__name">{profile.name}</div>
-              <div className="inbound-customer-facts">
-                <span>
-                  <PhoneOutlined />
-                  {profile.phoneNumber}
-                </span>
-                <button
-                  className="inbound-customer-fact-action"
-                  title="Send email"
-                  type="button"
-                  onClick={() => setIsEmailModalOpen(true)}
-                >
-                  <MailOutlined />
-                  {profile.email}
-                </button>
-                <span>
-                  <IdcardOutlined />
-                  {profile.cisNumber}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="inbound-access-strip">
-            <button
-              className="inbound-channel-action"
-              title="View call flow detail"
-              type="button"
-              onClick={() => setIsCallFlowOpen(true)}
-            >
-              <ChannelTag compact value={customer.accessChannel} />
-            </button>
-            <span>
-              <ClockCircleOutlined />
-              {customer.accessDuration}
-            </span>
-            <Tag
-              className={`inbound-avatar-status ${statusClassName[verificationStatus]}`}
-              icon={renderStatusIcon(verificationStatus)}
-            >
-              {renderStatusLabel(verificationStatus)}
-            </Tag>
-            <AppButton size="small" type="primary" onClick={openVerification}>
-              Verify
-            </AppButton>
-          </div>
-        </div>
-      </SectionCard>
-
-      <Modal
+      <BaseModal
         className="inbound-verification-modal"
-        footer={null}
+        kind="verification"
         open={isModalOpen}
         title="Customer Verification"
         width={760}
@@ -177,7 +80,7 @@ export function CustomerInformationCard({
           onFinish={finishVerification}
           onQuestionAction={handleQuestionAction}
         />
-      </Modal>
+      </BaseModal>
       <CallFlowDetailModal
         open={isCallFlowOpen}
         onClose={() => setIsCallFlowOpen(false)}

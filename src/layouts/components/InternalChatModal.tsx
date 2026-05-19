@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react'
 import {
   FileImageOutlined,
-  SearchOutlined,
   SendOutlined,
   SmileOutlined,
 } from '@ant-design/icons'
-import { Avatar, Badge, Input, Modal } from 'antd'
-import { AppButton } from '../../components'
+import { Avatar, Badge, Input } from 'antd'
+import { AppButton, BaseModal, SearchInput } from '../../components'
 import { internalChatSessions } from '../../mock/chat'
 import type { InternalChatSession } from '../../types'
 
@@ -78,9 +77,9 @@ export function InternalChatModal({ open, onClose }: InternalChatModalProps) {
   }
 
   return (
-    <Modal
+    <BaseModal
       className="aicc-internal-chat-modal"
-      footer={null}
+      kind="internal-chat"
       open={open}
       title="Internal Chat"
       width={880}
@@ -89,9 +88,7 @@ export function InternalChatModal({ open, onClose }: InternalChatModalProps) {
       <div className="aicc-internal-chat">
         <aside className="aicc-internal-chat__list">
           <div className="aicc-internal-chat__search">
-            <Input
-              allowClear
-              prefix={<SearchOutlined />}
+            <SearchInput
               placeholder="Search name or employee ID"
               value={keyword}
               onChange={(event) => setKeyword(event.target.value)}
@@ -155,6 +152,6 @@ export function InternalChatModal({ open, onClose }: InternalChatModalProps) {
           </footer>
         </section>
       </div>
-    </Modal>
+    </BaseModal>
   )
 }

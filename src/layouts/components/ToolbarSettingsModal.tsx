@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { InputNumber, Modal } from 'antd'
-import { AppButton } from '../../components'
+import { InputNumber } from 'antd'
+import { AppButton, BaseModal } from '../../components'
 
 interface ToolbarSettingsModalProps {
   autoAnswerSeconds: number
@@ -18,9 +18,9 @@ export function ToolbarSettingsModal({
   const [draftSeconds, setDraftSeconds] = useState(autoAnswerSeconds)
 
   return (
-    <Modal
+    <BaseModal
       className="aicc-transfer-modal aicc-toolbar-settings-modal"
-      footer={null}
+      kind="settings"
       open={open}
       title="Settings"
       width={520}
@@ -44,6 +44,6 @@ export function ToolbarSettingsModal({
           </AppButton>
         </div>
       </div>
-    </Modal>
+    </BaseModal>
   )
 }

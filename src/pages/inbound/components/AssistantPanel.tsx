@@ -1,11 +1,11 @@
 import { ApiOutlined, RobotOutlined } from '@ant-design/icons'
-import { Tabs } from 'antd'
+import { BaseTabs } from '../../../components'
 import { EmbeddedPlaceholder } from './EmbeddedPlaceholder'
 
 export function AssistantPanel() {
   return (
     <div className="inbound-right-panel">
-      <Tabs
+      <BaseTabs
         className="inbound-assistant-tabs"
         defaultActiveKey="assistant"
         items={[
@@ -34,6 +34,7 @@ export function AssistantPanel() {
             ),
           },
         ]}
+        variant="assistant"
       />
     </div>
   )

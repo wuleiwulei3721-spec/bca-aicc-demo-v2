@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { BasicLayout } from './layouts'
-import { AgentWorkspace } from './pages'
+import { AgentWorkspace, DesignSystem } from './pages'
 
 export const router = createBrowserRouter([
   {
@@ -10,6 +10,10 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <AgentWorkspace />,
+      },
+      {
+        path: 'design-system',
+        element: <DesignSystem />,
       },
       {
         path: '*',

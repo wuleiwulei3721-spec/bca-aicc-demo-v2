@@ -10,7 +10,8 @@ import {
   WhatsAppOutlined,
   XOutlined,
 } from '@ant-design/icons'
-import { Modal, Space, Tag, Tooltip } from 'antd'
+import { Space, Tag, Tooltip } from 'antd'
+import { BaseModal, StatusBadge } from '../../../components'
 import type { CustomerJourneyItem, JourneyChannel } from '../../../types'
 import { ChannelTag } from './ChannelTag'
 import { SectionCard } from './SectionCard'
@@ -118,9 +119,9 @@ export function CustomerJourneyCard({ items }: CustomerJourneyCardProps) {
         </div>
       </SectionCard>
 
-      <Modal
+      <BaseModal
         className="inbound-detail-modal"
-        footer={null}
+        kind="detail"
         open={Boolean(activeItem)}
         title="Interaction Detail"
         width={860}
@@ -159,15 +160,11 @@ export function CustomerJourneyCard({ items }: CustomerJourneyCardProps) {
               <div className="inbound-detail-section-title">Summary</div>
               <Space size={6} wrap>
                 <ChannelTag compact value={activeItem.channel} />
-                <Tag
-                  className={
-                    activeItem.result === 'Success'
-                      ? 'inbound-status-tag inbound-status-tag--success'
-                      : 'inbound-status-tag inbound-status-tag--danger'
-                  }
-                >
-                  {activeItem.result}
-                </Tag>
+                <StatusBadge
+                  label={activeItem.result}
+                  size="small"
+                  status={activeItem.result === 'Success' ? 'success' : 'failed'}
+                />
                 <Tag className="inbound-neutral-tag">{activeItem.date}</Tag>
               </Space>
               <div className="inbound-summary-list">
@@ -187,7 +184,7 @@ export function CustomerJourneyCard({ items }: CustomerJourneyCardProps) {
             </aside>
           </div>
         )}
-      </Modal>
+      </BaseModal>
     </>
   )
 }

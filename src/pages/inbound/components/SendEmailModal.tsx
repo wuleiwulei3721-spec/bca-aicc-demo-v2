@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Input, Modal } from 'antd'
-import { AppButton } from '../../../components'
+import { Input } from 'antd'
+import { AppButton, BaseModal } from '../../../components'
 
 const { TextArea } = Input
 
@@ -50,9 +50,9 @@ export function SendEmailModal({
   }
 
   return (
-    <Modal
+    <BaseModal
       className="inbound-send-email-modal"
-      footer={null}
+      kind="email"
       open={open}
       title="Send Email"
       width={680}
@@ -106,6 +106,6 @@ export function SendEmailModal({
           </AppButton>
         </footer>
       </div>
-    </Modal>
+    </BaseModal>
   )
 }

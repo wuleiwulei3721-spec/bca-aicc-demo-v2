@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { AppCard } from '../../../components'
+import { BaseCard } from '../../../components'
 
 interface SectionCardProps {
   title: string
@@ -24,40 +24,17 @@ export function SectionCard({
     .filter(Boolean)
     .join(' ')
 
-  const titleNode = (
-    <button
-      className={[
-        'inbound-section-card__header-button',
-        expandable ? 'inbound-section-card__header-button--expandable' : '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      type="button"
-      onClick={onHeaderClick}
-    >
-      <span className="inbound-section-card__title">{title}</span>
-      {expandable && (
-        <span
-          className={[
-            'inbound-section-card__arrow',
-            expanded ? 'inbound-section-card__arrow--expanded' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-        >
-          {extra}
-        </span>
-      )}
-    </button>
-  )
-
   return (
-    <AppCard
+    <BaseCard
       className={cardClassName}
       compact
-      title={titleNode}
+      expandable={expandable}
+      expanded={expanded}
+      headerExtra={extra}
+      title={title}
+      onHeaderClick={onHeaderClick}
     >
       {children}
-    </AppCard>
+    </BaseCard>
   )
 }

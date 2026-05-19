@@ -105,7 +105,7 @@ export function AgentProfileArea({
       </span>
 
       <Dropdown
-        overlayClassName="aicc-agent-status-menu"
+        classNames={{ root: 'aicc-agent-status-menu' }}
         menu={{ items: actionItems, onClick: handleActionClick }}
         placement="bottomRight"
         trigger={['click']}

@@ -1,4 +1,4 @@
-import { Modal } from 'antd'
+import { BaseModal, TimelineFlow } from '../../../components'
 import { callFlowDetail } from '../../../mock/inbound'
 
 interface CallFlowDetailModalProps {
@@ -11,9 +11,9 @@ export function CallFlowDetailModal({
   onClose,
 }: CallFlowDetailModalProps) {
   return (
-    <Modal
+    <BaseModal
       className="inbound-call-flow-modal"
-      footer={null}
+      kind="detail"
       open={open}
       title="Call Flow Detail"
       width={720}
@@ -24,15 +24,14 @@ export function CallFlowDetailModal({
           <div className="inbound-call-flow__section-header">
             <span>IVR Journey</span>
           </div>
-          <div className="inbound-call-flow__steps">
-            {callFlowDetail.ivrJourney.map((step) => (
-              <div className="inbound-call-flow__step" key={step.id}>
-                <div className="inbound-call-flow__step-node">
-                  <strong>{step.nodeName}</strong>
-                </div>
-              </div>
-            ))}
-          </div>
+          <TimelineFlow
+            className="inbound-call-flow__steps"
+            items={callFlowDetail.ivrJourney.map((step) => ({
+              id: step.id,
+              meta: step.actionTime,
+              title: step.nodeName,
+            }))}
+          />
         </section>
 
         {callFlowDetail.transferHistory.length > 0 ? (
@@ -62,6 +61,6 @@ export function CallFlowDetailModal({
           </section>
         ) : null}
       </div>
-    </Modal>
+    </BaseModal>
   )
 }
