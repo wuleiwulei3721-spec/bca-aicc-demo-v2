@@ -1,0 +1,71 @@
+import { useMemo, useState } from 'react'
+import { ArrowRightOutlined, DownOutlined } from '@ant-design/icons'
+import { Tag } from 'antd'
+import type { TicketHistoryItem } from '../../../types'
+import { SectionCard } from './SectionCard'
+
+interface TicketingHistoryCardProps {
+  items: TicketHistoryItem[]
+  onOpenCrm: (link: string) => void
+}
+
+const monthIndex: Record<string, number> = {
+  Jan: 0,
+  Feb: 1,
+  Mar: 2,
+  Apr: 3,
+  May: 4,
+  Jun: 5,
+  Jul: 6,
+  Aug: 7,
+  Sep: 8,
+  Oct: 9,
+  Nov: 10,
+  Dec: 11,
+}
+
+function parseTicketDate(date: string) {
+  const [day, month] = date.split(' ')
+  return new Date(2026, monthIndex[month] ?? 0, Number(day)).getTime()
+}
+
+export function TicketingHistoryCard({
+  items,
+  onOpenCrm,
+}: TicketingHistoryCardProps) {
+  const [expanded, setExpanded] = useState(false)
+  const visibleItems = useMemo(() => {
+    const sortedItems = [...items].sort(
+      (current, next) =>
+        parseTicketDate(next.createdDate) - parseTicketDate(current.createdDate),
+    )
+
+    return sortedItems.slice(0, expanded ? 10 : 2)
+  }, [expanded, items])
+
+  return (
+    <SectionCard
+      expandable
+      expanded={expanded}
+      extra={<DownOutlined />}
+      title="Ticketing History"
+      onHeaderClick={() => setExpanded((current) => !current)}
+    >
+      <div className="inbound-ticket-list">
+        {visibleItems.map((item) => (
+          <button
+            className="inbound-compact-row inbound-ticket-row inbound-ticket-row--clickable"
+            key={item.id}
+            type="button"
+            onClick={() => onOpenCrm(`/crm/tickets/${item.ticketNumber}`)}
+          >
+            <span className="inbound-ticket-type">{item.ticketType}</span>
+            <Tag className="inbound-neutral-tag">{item.ticketNumber}</Tag>
+            <span className="inbound-compact-row__date">{item.createdDate}</span>
+            <ArrowRightOutlined className="inbound-ticket-row__hint" />
+          </button>
+        ))}
+      </div>
+    </SectionCard>
+  )
+}
