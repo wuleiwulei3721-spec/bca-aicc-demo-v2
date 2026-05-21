@@ -1,4 +1,11 @@
-export type AccessChannel = 'Phone' | 'Haloapps Voice' | 'Webchat Voice'
+export type AccessChannel =
+  | 'Phone'
+  | 'Haloapps Voice'
+  | 'Haloapps Video'
+  | 'Haloapps'
+  | 'WhatsApp'
+  | 'Webchat'
+  | 'Webchat Voice'
 
 export type VerificationStatus =
   | 'Verified'
@@ -29,6 +36,17 @@ export interface CustomerInformation {
   accessDuration: string
   profile: CustomerProfile
   verificationStatus: VerificationStatus
+}
+
+export interface LiveChatSession {
+  id: string
+  channel: Extract<AccessChannel, 'WhatsApp' | 'Haloapps' | 'Webchat'>
+  customer: CustomerInformation
+  intent: string
+  lastMessage: string
+  lastMessageTime: string
+  priority: 'High' | 'Normal'
+  unreadCount: number
 }
 
 export interface CallFlowStep {

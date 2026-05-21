@@ -43,6 +43,8 @@ interface CallTiming {
   accumulatedMuteSeconds: number
 }
 
+type ActiveCallChannel = 'voice' | 'video' | null
+
 const initialCallTiming: CallTiming = {
   talkingStartedAt: null,
   holdStartedAt: null,
@@ -59,15 +61,15 @@ const sideMenuItems: SideMenuItem[] = [
     children: [
       {
         key: 'test-pstn-voice',
-        label: 'PSTN / Voice',
-      },
-      {
-        key: 'test-chat',
-        label: 'Live Chat',
+        label: 'PSTN / Voice Call',
       },
       {
         key: 'test-video',
         label: 'Video Call',
+      },
+      {
+        key: 'test-chat',
+        label: 'Live Chat',
       },
     ],
   },
@@ -117,6 +119,19 @@ export function BasicLayout() {
   const collapsed = useAppStore((state) => state.collapsed)
   const setCollapsed = useAppStore((state) => state.setCollapsed)
   const requestInboundPopup = useAppStore((state) => state.requestInboundPopup)
+  const requestVideoCallPopup = useAppStore(
+    (state) => state.requestVideoCallPopup,
+  )
+  const requestLiveChatWorkspace = useAppStore(
+    (state) => state.requestLiveChatWorkspace,
+  )
+  const isVideoCallTabOpen = useAppStore((state) => state.isVideoCallTabOpen)
+  const setLiveChatTabOpen = useAppStore(
+    (state) => state.setLiveChatTabOpen,
+  )
+  const setOpenEyeVideoWindowVisible = useAppStore(
+    (state) => state.setOpenEyeVideoWindowVisible,
+  )
   const customerOutboundCallRequestId = useAppStore(
     (state) => state.customerOutboundCallRequestId,
   )
@@ -130,6 +145,8 @@ export function BasicLayout() {
   )
   const [callTiming, setCallTiming] =
     useState<CallTiming>(initialCallTiming)
+  const [activeCallChannel, setActiveCallChannel] =
+    useState<ActiveCallChannel>(null)
   const [autoAnswerSeconds, setAutoAnswerSeconds] = useState(3)
   const [isInternalChatOpen, setIsInternalChatOpen] = useState(false)
   const [isAfterCallWork, setIsAfterCallWork] = useState(false)
@@ -142,14 +159,17 @@ export function BasicLayout() {
   const updateAgentStatus = useCallback((status: AgentStatus) => {
     setAgentStatus(status)
     setStatusStartedAt(Date.now())
+    setLiveChatTabOpen(status !== 'Unsigned')
 
     if (status === 'Unsigned' || status.startsWith('AUX')) {
       setCallStatus('Idle')
       setCallStatusStartedAt(Date.now())
       setCallTiming(initialCallTiming)
+      setActiveCallChannel(null)
       setIsAfterCallWork(false)
+      setOpenEyeVideoWindowVisible(false)
     }
-  }, [])
+  }, [setLiveChatTabOpen, setOpenEyeVideoWindowVisible])
 
   const updateCallStatus = useCallback((status: CallStatus) => {
     setCallStatus(status)
@@ -157,21 +177,19 @@ export function BasicLayout() {
   }, [])
 
   const isSignedIn = agentStatus !== 'Unsigned'
-  const canReceiveInbound = agentStatus === 'Ready' && callStatus === 'Idle'
+  const isConnectedCall =
+    callStatus === 'Talking' || callStatus === 'Hold' || callStatus === 'Mute'
 
   useEffect(() => {
-    if (!canReceiveInbound || isAfterCallWork) {
-      return undefined
-    }
-
-    const timer = window.setTimeout(() => {
-      setCallStatus('Incoming')
-      setCallStatusStartedAt(Date.now())
-      requestInboundPopup()
-    }, 2000)
-
-    return () => window.clearTimeout(timer)
-  }, [canReceiveInbound, isAfterCallWork, requestInboundPopup, statusStartedAt])
+    setOpenEyeVideoWindowVisible(
+      activeCallChannel === 'video' && isConnectedCall && isVideoCallTabOpen,
+    )
+  }, [
+    activeCallChannel,
+    isConnectedCall,
+    isVideoCallTabOpen,
+    setOpenEyeVideoWindowVisible,
+  ])
 
   useEffect(() => {
     if (!isAfterCallWork || agentStatus !== 'Not Ready') {
@@ -190,6 +208,44 @@ export function BasicLayout() {
     updateAgentStatus(agentStatus === 'Ready' ? 'Not Ready' : 'Ready')
   }, [agentStatus, updateAgentStatus])
 
+  const triggerVoiceInboundCall = useCallback(() => {
+    if (agentStatus !== 'Ready' || callStatus !== 'Idle') {
+      return
+    }
+
+    setCallTiming(initialCallTiming)
+    setActiveCallChannel('voice')
+    setIsAfterCallWork(false)
+    setOpenEyeVideoWindowVisible(false)
+    updateCallStatus('Incoming')
+    requestInboundPopup()
+  }, [
+    agentStatus,
+    callStatus,
+    requestInboundPopup,
+    setOpenEyeVideoWindowVisible,
+    updateCallStatus,
+  ])
+
+  const triggerVideoInboundCall = useCallback(() => {
+    if (agentStatus !== 'Ready' || callStatus !== 'Idle') {
+      return
+    }
+
+    setCallTiming(initialCallTiming)
+    setActiveCallChannel('video')
+    setIsAfterCallWork(false)
+    setOpenEyeVideoWindowVisible(false)
+    updateCallStatus('Incoming')
+    requestVideoCallPopup()
+  }, [
+    agentStatus,
+    callStatus,
+    requestVideoCallPopup,
+    setOpenEyeVideoWindowVisible,
+    updateCallStatus,
+  ])
+
   const startTalkingCall = useCallback(() => {
     const now = Date.now()
     setCallTiming({
@@ -197,8 +253,9 @@ export function BasicLayout() {
       talkingStartedAt: now,
     })
     setIsAfterCallWork(false)
+    setOpenEyeVideoWindowVisible(activeCallChannel === 'video')
     updateCallStatus('Talking')
-  }, [updateCallStatus])
+  }, [activeCallChannel, setOpenEyeVideoWindowVisible, updateCallStatus])
 
   const handleAnswer = useCallback(() => {
     if (callStatus === 'Incoming') {
@@ -300,9 +357,11 @@ export function BasicLayout() {
   const handleHangUp = useCallback(() => {
     updateCallStatus('Idle')
     setCallTiming(initialCallTiming)
+    setActiveCallChannel(null)
     setIsAfterCallWork(true)
+    setOpenEyeVideoWindowVisible(false)
     updateAgentStatus('Not Ready')
-  }, [updateAgentStatus, updateCallStatus])
+  }, [setOpenEyeVideoWindowVisible, updateAgentStatus, updateCallStatus])
 
   const handlePrimaryMenuClick = useCallback(
     (item: SideMenuItem) => {
@@ -334,8 +393,25 @@ export function BasicLayout() {
     (childKey: string, parentKey?: string) => {
       setSelectedMenuKey(childKey)
       setClosedFlyoutKey(parentKey ?? null)
+
+      if (childKey === 'test-pstn-voice') {
+        triggerVoiceInboundCall()
+      }
+
+      if (childKey === 'test-video') {
+        triggerVideoInboundCall()
+      }
+
+      if (childKey === 'test-chat' && isSignedIn) {
+        requestLiveChatWorkspace()
+      }
     },
-    [],
+    [
+      isSignedIn,
+      requestLiveChatWorkspace,
+      triggerVideoInboundCall,
+      triggerVoiceInboundCall,
+    ],
   )
 
   const handleSiderToggle = useCallback(() => {

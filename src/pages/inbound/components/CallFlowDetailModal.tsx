@@ -3,11 +3,13 @@ import { callFlowDetail } from '../../../mock/inbound'
 
 interface CallFlowDetailModalProps {
   open: boolean
+  showIvrJourney?: boolean
   onClose: () => void
 }
 
 export function CallFlowDetailModal({
   open,
+  showIvrJourney = true,
   onClose,
 }: CallFlowDetailModalProps) {
   return (
@@ -20,19 +22,21 @@ export function CallFlowDetailModal({
       onCancel={onClose}
     >
       <div className="inbound-call-flow">
-        <section className="aicc-modal-section inbound-call-flow__section">
-          <div className="aicc-modal-section__header inbound-call-flow__section-header">
-            <span className="aicc-modal-section__title">IVR Journey</span>
-          </div>
-          <TimelineFlow
-            className="inbound-call-flow__steps"
-            items={callFlowDetail.ivrJourney.map((step) => ({
-              id: step.id,
-              meta: step.actionTime,
-              title: step.nodeName,
-            }))}
-          />
-        </section>
+        {showIvrJourney ? (
+          <section className="aicc-modal-section inbound-call-flow__section">
+            <div className="aicc-modal-section__header inbound-call-flow__section-header">
+              <span className="aicc-modal-section__title">IVR Journey</span>
+            </div>
+            <TimelineFlow
+              className="inbound-call-flow__steps"
+              items={callFlowDetail.ivrJourney.map((step) => ({
+                id: step.id,
+                meta: step.actionTime,
+                title: step.nodeName,
+              }))}
+            />
+          </section>
+        ) : null}
 
         {callFlowDetail.transferHistory.length > 0 ? (
           <section className="aicc-modal-section inbound-call-flow__section">

@@ -1,17 +1,27 @@
 import { useMemo } from 'react'
-import { CustomerServiceOutlined, HomeOutlined } from '@ant-design/icons'
+import {
+  CustomerServiceOutlined,
+  HomeOutlined,
+  MessageOutlined,
+  VideoCameraOutlined,
+} from '@ant-design/icons'
 import type { TabsProps } from 'antd'
 import { BaseTabs, PageContainer } from '../components'
 import { useAppStore } from '../store'
-import { InboundPage } from './inbound'
+import { InboundPage, LiveChatPage, VideoCallPage } from './inbound'
 
 const HOME_TAB_KEY = 'home'
+const LIVE_CHAT_TAB_KEY = 'live-chat'
 const INBOUND_TAB_KEY = 'inbound'
+const VIDEO_CALL_TAB_KEY = 'video-call'
 
 export function AgentWorkspace() {
   const activeKey = useAppStore((state) => state.activeWorkspaceTabKey)
+  const hasLiveChatTab = useAppStore((state) => state.isLiveChatTabOpen)
   const hasInboundTab = useAppStore((state) => state.isInboundTabOpen)
+  const hasVideoCallTab = useAppStore((state) => state.isVideoCallTabOpen)
   const closeInboundTab = useAppStore((state) => state.closeInboundTab)
+  const closeVideoCallTab = useAppStore((state) => state.closeVideoCallTab)
   const setActiveKey = useAppStore(
     (state) => state.setActiveWorkspaceTabKey,
   )
@@ -41,6 +51,21 @@ export function AgentWorkspace() {
       },
     ]
 
+    if (hasLiveChatTab) {
+      items.push({
+        key: LIVE_CHAT_TAB_KEY,
+        closable: false,
+        label: (
+          <span>
+            <MessageOutlined />
+            Live Chat
+          </span>
+        ),
+        children:
+          activeKey === LIVE_CHAT_TAB_KEY ? <LiveChatPage /> : null,
+      })
+    }
+
     if (hasInboundTab) {
       items.push({
         key: INBOUND_TAB_KEY,
@@ -48,19 +73,38 @@ export function AgentWorkspace() {
         label: (
           <span>
             <CustomerServiceOutlined />
-            Inbound
+            PSTN / Voice Call
           </span>
         ),
         children: <InboundPage />,
       })
     }
 
+    if (hasVideoCallTab) {
+      items.push({
+        key: VIDEO_CALL_TAB_KEY,
+        closable: true,
+        label: (
+          <span>
+            <VideoCameraOutlined />
+            Video Call
+          </span>
+        ),
+        children:
+          activeKey === VIDEO_CALL_TAB_KEY ? <VideoCallPage /> : null,
+      })
+    }
+
     return items
-  }, [hasInboundTab])
+  }, [activeKey, hasInboundTab, hasLiveChatTab, hasVideoCallTab])
 
   const handleEdit: TabsProps['onEdit'] = (targetKey, action) => {
     if (action === 'remove' && targetKey === INBOUND_TAB_KEY) {
       closeInboundTab()
+    }
+
+    if (action === 'remove' && targetKey === VIDEO_CALL_TAB_KEY) {
+      closeVideoCallTab()
     }
   }
 

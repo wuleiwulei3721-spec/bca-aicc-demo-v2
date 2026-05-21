@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-21 15:55 +08:00
+最后更新：2026-05-21 23:40 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,259 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-21 23:40 +08:00 - 创建非生产集成分支暂存弹屏框架
+
+修改页面或文件：
+
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- Git 分支：`codex/interaction-popup-base`
+
+修改原因：
+
+- 用户希望保留当前视频/文字弹屏框架，但暂不合并或推送到 `main`，避免客户正式环境看到未完成的页面内容。
+- 需要创建一个非生产集成分支，作为后续视频来电详情和文字弹屏详情优化的共同基础。
+
+修改结果：
+
+- 已从当前 `codex/videocall-popup` 工作区创建 `codex/interaction-popup-base`。
+- 当前分支定位为非生产集成备份分支；后续优化可从该分支继续拆分。
+- `main` 未合并、未推送，客户正式环境不更新。
+
+回滚说明：
+
+- 如需撤销该集成分支，可删除本地和远端 `codex/interaction-popup-base` 分支；不要删除 `main`。
+- 如需继续在原分支开发，可切回 `codex/videocall-popup`，但建议后续需求从 `codex/interaction-popup-base` 新开分支。
+
+当前风险点：
+
+- 推送非 `main` 分支不会更新生产分支；如果 Vercel 对所有分支启用了 preview deployment，可能产生预览部署，但不影响客户正式地址。
+- 后续正式给客户前，仍需把最终验收版本合并并推送到 `main`。
+
+### 2026-05-21 23:01 +08:00 - 新增 Sign In 后固定 Live Chat 工作台
+
+修改页面或文件：
+
+- `src/store/appStore.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/AgentWorkspace.tsx`
+- `src/pages/inbound/InteractionWorkspace.tsx`
+- `src/pages/inbound/LiveChatPage.tsx`
+- `src/pages/inbound/components/LiveChatCustomerList.tsx`
+- `src/pages/inbound/components/ChannelTag.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/pages/inbound/index.ts`
+- `src/mock/inbound.ts`
+- `src/types/inbound.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-21-2301.md`
+- `.codex-backup/current-todo-2026-05-21-2301.md`
+- `.codex-backup/page-state-2026-05-21-2301.md`
+
+修改原因：
+
+- 用户要求新增实时文字聊天弹屏页面。
+- 坐席点击右上角 `Sign In` 后具备实时聊天技能，因此 Home 旁需要新增固定不可关闭的 `Live Chat` 页签。
+- Live Chat 页面需在语音来电弹屏内容基础上复用现有组件，在左侧新增类似微信客户端的客户列表，并支持 WhatsApp、Haloapps、Webchat 渠道。
+
+修改结果：
+
+- `appStore` 新增 Live Chat tab 状态与切换方法，签出时当前在 Live Chat 会退回 Home。
+- `BasicLayout` 将 Live Chat tab 绑定到坐席签入状态；左侧 `Channel Simulation > Live Chat` 在已签入时切换到固定 Live Chat tab。
+- `AgentWorkspace` 新增不可关闭 `Live Chat` tab，插入 Home 后、PSTN / Voice Call 和 Video Call 之前。
+- `InteractionWorkspace` 增加 `leadPanel` 扩展点，Live Chat 通过该扩展点复用原三栏工作台，不复制电话/视频页面代码。
+- 新增 `LiveChatPage`、`LiveChatCustomerList`、`LiveChatSession` 类型和 `liveChatSessions` mock。
+- Live Chat 客户列表支持展开/收起，展示 unread count、渠道、最后消息、时间与高优先级标记；切换客户会同步更新 Customer Information。
+- `ChannelTag` 支持 WhatsApp、Haloapps、Webchat 文字渠道；文字聊天渠道打开 Call Flow Detail 时不显示 IVR Journey。
+
+回滚说明：
+
+- 如需回滚本轮 Live Chat，可移除 `LiveChatPage`、`LiveChatCustomerList`、`LiveChatSession`、`liveChatSessions`，恢复 `InteractionWorkspace` 的 `leadPanel` 扩展前结构，并移除 `appStore` / `BasicLayout` / `AgentWorkspace` 中的 Live Chat tab 状态与入口。
+- 不要回滚上一轮 Video Call、PSTN / Voice Call 或 OpenEye 相关改动，除非另有明确要求。
+
+当前风险点：
+
+- Live Chat 当前是静态 demo mock，不接真实 WhatsApp / Haloapps / Webchat 网关，也未实现真实消息发送。
+- 四列展开布局需要在目标演示分辨率下继续复查；收起客户列表后可缓解横向空间压力。
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite chunk size warning。
+- Browser check `/` 通过：签入后出现不可关闭 Live Chat tab，客户列表可切换和收起。
+- Browser check `/design-system` 通过：页面正常加载。
+
+### 2026-05-21 22:12 +08:00 - 按浏览器评论调整 Channel Simulation 文案
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/AgentWorkspace.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-21-2212.md`
+- `.codex-backup/current-todo-2026-05-21-2212.md`
+- `.codex-backup/page-state-2026-05-21-2212.md`
+
+修改原因：
+
+- 浏览器 diff comments 要求将左侧菜单 `PSTN / Voice` 改为 `PSTN / Voice Call`。
+- 浏览器 diff comments 要求将 workspace 中原 `Inbound` tab 文案改为 `PSTN / Voice Call`。
+- 浏览器 diff comments 要求 `Live Chat` 与 `Video Call` 菜单交换顺序。
+
+修改结果：
+
+- Channel Simulation 子菜单顺序调整为 `PSTN / Voice Call`、`Video Call`、`Live Chat`。
+- 电话弹屏 workspace tab 文案调整为 `PSTN / Voice Call`。
+- 仅调整显示文案与菜单顺序，未改变 PSTN / Voice Call 与 Video Call 的触发逻辑。
+
+回滚说明：
+
+- 如需回滚本轮评论调整，可将 `BasicLayout` 中子菜单文案恢复为 `PSTN / Voice`，并恢复 `Live Chat` / `Video Call` 顺序；将 `AgentWorkspace` 电话弹屏 tab label 恢复为 `Inbound`。
+
+当前风险点：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite chunk size warning。
+- Browser check `/` 通过：菜单顺序为 `PSTN / Voice Call`、`Video Call`、`Live Chat`；点击 `PSTN / Voice Call` 后 tab 文案显示为 `PSTN / Voice Call`。
+
+### 2026-05-21 19:33 +08:00 - 调整 Video Call 接通显示、Haloapps Call Flow 与 Tab 宽度
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/store/appStore.ts`
+- `src/pages/inbound/VideoCallPage.tsx`
+- `src/pages/inbound/components/CallFlowDetailModal.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-21-1933.md`
+- `.codex-backup/current-todo-2026-05-21-1933.md`
+- `.codex-backup/page-state-2026-05-21-1933.md`
+
+修改原因：
+
+- 用户要求 OpenEye 截图只在视频通话 Answer 接通后显示，挂断视频通话时隐藏。
+- 用户指出视频通话不进入 IVR 流程，因此 Haloapps 渠道的 `Call Flow Detail` 不应显示 IVR Journey。
+- 用户指出 Home tab 没有关闭按钮却留出多余空间，要求标签宽度适应内容并居中。
+
+修改结果：
+
+- `appStore` 新增 `isOpenEyeVideoWindowVisible` 与 setter。
+- `BasicLayout` 将 OpenEye 显示状态绑定到 `activeCallChannel === 'video'`、通话已连接状态和 Video Call tab 打开状态。
+- Video Call Incoming 阶段不显示 OpenEye；Answer/Talking 后显示；Hang Up、关闭 Video Call tab 或非视频通话状态会隐藏。
+- `CallFlowDetailModal` 支持隐藏 IVR Journey；`CustomerInformationCard` 对 `Haloapps Video` 传入隐藏 IVR 配置。
+- Home tab 去掉固定最小宽度，并让 tab 内容居中显示。
+
+回滚说明：
+
+- 如需回滚本次细化，可移除 OpenEye 可见状态字段与 BasicLayout 同步 effect，恢复 VideoCallPage 始终渲染 OpenEye 浮窗。
+- 可恢复 `CallFlowDetailModal` 始终显示 IVR Journey。
+- 可恢复 `.agent-workspace-tabs.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab` 的 `min-width: 92px`。
+
+当前风险点：
+
+- 关闭 Video Call tab 仍不自动 Hang Up，只隐藏 OpenEye 浮窗；该行为与现有 Inbound tab 关闭策略一致。
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite chunk size warning。
+- Browser smoke check `/` 通过：Incoming 阶段 OpenEye 不显示，Answer 后显示，Haloapps Call Flow Detail 不显示 IVR Journey，Hang Up 后 OpenEye 隐藏。
+- Browser smoke check `/design-system` 通过。
+
+### 2026-05-21 19:03 +08:00 - 新增 Video Call 弹屏与 OpenEye 独立浮窗
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/AgentWorkspace.tsx`
+- `src/pages/inbound/InteractionWorkspace.tsx`
+- `src/pages/inbound/InboundPage.tsx`
+- `src/pages/inbound/VideoCallPage.tsx`
+- `src/pages/inbound/components/ChannelTag.tsx`
+- `src/pages/inbound/components/OpenEyeVideoWindow.tsx`
+- `src/store/appStore.ts`
+- `src/styles/index.less`
+- `src/types/inbound.ts`
+- `public/screenshots/openeye-video-call.png`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-21-1903.md`
+- `.codex-backup/current-todo-2026-05-21-1903.md`
+- `.codex-backup/page-state-2026-05-21-1903.md`
+
+修改原因：
+
+- 用户要求点击左侧 `Video Call` 后，在 Home 旁打开可关闭的视频来电弹屏 tab。
+- 用户要求视频弹屏复用电话弹屏页面内容，只将 Customer Information 渠道改为 Haloapps + 视频图标。
+- 用户要求 OpenEye 作为完全独立客户端示意，直接把截图浮在 AICC 系统最上层，不添加 AICC 内部可见文案。
+
+修改结果：
+
+- 新增 `InteractionWorkspace`，抽出电话与视频弹屏共用的三栏工作台逻辑，避免复制页面。
+- `InboundPage` 改为 PSTN/Voice wrapper；新增 `VideoCallPage` 复用同一工作台并叠加 OpenEye 浮窗。
+- `appStore` 新增 Video Call tab open/close/request 状态。
+- `AgentWorkspace` 新增可关闭的 `Video Call` tab。
+- `BasicLayout` 新增 `triggerVideoInboundCall()`，仅在坐席 Ready 且通话 Idle 时触发 Incoming 和 Video Call tab。
+- `AccessChannel` 新增 `Haloapps Video`；`ChannelTag` 对该渠道显示 `Haloapps` 并使用视频图标。
+- 已将用户提供截图复制为 `public/screenshots/openeye-video-call.png`。
+- 新增 `OpenEyeVideoWindow`，以 fixed 高层级、可拖动图片浮窗形式模拟独立 OpenEye 客户端；浮窗不添加额外可见标题或说明文案。
+
+回滚说明：
+
+- 如需回滚 Video Call 功能，可移除 `VideoCallPage`、`InteractionWorkspace`、`OpenEyeVideoWindow`、OpenEye 截图资源，并恢复 `InboundPage` 为原三栏实现。
+- 同时移除 `appStore` 的 Video Call tab 状态、`AgentWorkspace` 的 Video Call tab、`BasicLayout` 的 `triggerVideoInboundCall()`、`AccessChannel` 的 `Haloapps Video` 和 `ChannelTag` 视频渠道分支。
+- PSTN/Voice 点击触发电话来电是上一轮需求，如只回滚 Video Call，应保留该部分。
+
+当前风险点：
+
+- OpenEye 只是截图模拟，不接真实客户端协议和音视频能力。
+- 关闭 Video Call tab 只隐藏 workspace 与 OpenEye 浮窗，不自动 Hang Up；当前与 Inbound tab 关闭策略保持一致。
+- 自动接听倒计时仍保留；如果演示口径要求必须人工点击 Answer，需要后续停用 Incoming 自动接听。
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite chunk size warning。
+- Browser smoke check `/` 通过：Video Call tab 打开、Answer 可用、Haloapps 视频渠道显示、OpenEye 浮窗显示并可拖动、关闭 tab 后浮窗消失、PSTN/Voice 仍可触发 Inbound。
+- Browser smoke check `/design-system` 通过。
+
+### 2026-05-21 18:01 +08:00 - PSTN/Voice 点击触发电话来电
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-21-1801.md`
+- `.codex-backup/current-todo-2026-05-21-1801.md`
+- `.codex-backup/page-state-2026-05-21-1801.md`
+
+修改原因：
+
+- 用户要求主版本保持稳定，在 `codex/videocall-popup` 分支先完成 PSTN/Voice 电话来电触发逻辑。
+- 原逻辑为坐席 Ready 且 Idle 后自动模拟来电；现在要求改为点击左侧菜单 `Channel Simulation > PSTN / Voice` 后才模拟电话打进来。
+- Video Call 页面与视频弹屏需求尚未明确，本轮不实现。
+
+修改结果：
+
+- 已从干净 `main` 创建并切换到 `codex/videocall-popup` 分支。
+- 移除 `BasicLayout` 中 Ready + Idle 后 2 秒自动来电的 effect。
+- 新增 `triggerVoiceInboundCall()`，仅在 `agentStatus === 'Ready'` 且 `callStatus === 'Idle'` 时触发。
+- 点击 `PSTN / Voice` 后进入 `Incoming`，打开 Inbound tab，并让话务条 Answer 按钮亮起。
+- 保留现有 Answer、Talking、Hold、Mute、Hang Up、After Call Work 和自动接听倒计时逻辑。
+- `Video Call` 菜单本轮不绑定新弹屏功能。
+
+回滚说明：
+
+- 如需回滚本轮交互改造，可恢复 `src/layouts/BasicLayout.tsx` 中原 Ready + Idle 自动来电 `useEffect`，并移除 `triggerVoiceInboundCall()` 及 `PSTN / Voice` 子菜单点击触发逻辑。
+- 文档与备份可按本时间戳条目删除或回退。
+
+当前风险点：
+
+- 自动接听倒计时仍保留；如果演示口径要求必须人工点击 Answer，需要后续停用 Incoming 自动接听。
+- Video Call 弹屏尚未设计与实现，需等待详细需求。
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite chunk size warning。
+- Browser smoke check `/` 通过：Sign In 后等待超过 2 秒不会自动弹 Inbound；点击 `PSTN / Voice` 后 Answer 可用且 Inbound tab 打开；Talking 后 Hang Up 进入 Not Ready 并自动回 Ready。
+- Browser smoke check `/design-system` 通过。
 
 ### 2026-05-21 15:55 +08:00 - 优化侧栏电话图标与收起态浮层关闭
 

@@ -2,6 +2,7 @@ import type {
   CallFlowDetail,
   CustomerInformation,
   CustomerJourneyItem,
+  LiveChatSession,
   NextBestActionItem,
   QuickActionItem,
   TicketHistoryItem,
@@ -23,6 +24,69 @@ export const inboundCustomer: CustomerInformation = {
   },
   verificationStatus: 'Unverified',
 }
+
+export const liveChatSessions: LiveChatSession[] = [
+  {
+    id: 'live-chat-001',
+    channel: 'WhatsApp',
+    customer: {
+      ...inboundCustomer,
+      accessChannel: 'WhatsApp',
+      accessDuration: '00:48',
+    },
+    intent: 'Card unlock',
+    lastMessage: 'My debit card is still blocked after verification.',
+    lastMessageTime: '14:32',
+    priority: 'High',
+    unreadCount: 3,
+  },
+  {
+    id: 'live-chat-002',
+    channel: 'Haloapps',
+    customer: {
+      accessChannel: 'Haloapps',
+      accessDuration: '02:11',
+      profile: {
+        avatarInitials: 'SA',
+        avatarUrl: '',
+        name: 'Sari Amelia',
+        phoneNumber: '081234560118',
+        email: 'sari.amelia@example.com',
+        cisNumber: '00000056231',
+        customerType: 'Mass Affluent',
+      },
+      verificationStatus: 'Unverified',
+    },
+    intent: 'Mobile banking login',
+    lastMessage: 'I cannot access my mobile banking account today.',
+    lastMessageTime: '14:29',
+    priority: 'Normal',
+    unreadCount: 1,
+  },
+  {
+    id: 'live-chat-003',
+    channel: 'Webchat',
+    customer: {
+      accessChannel: 'Webchat',
+      accessDuration: '03:44',
+      profile: {
+        avatarInitials: 'RF',
+        avatarUrl: '',
+        name: 'Rafi Firmansyah',
+        phoneNumber: '082187650041',
+        email: 'rafi.firmansyah@example.com',
+        cisNumber: '00000073452',
+        customerType: 'Regular Customer',
+      },
+      verificationStatus: 'Verified',
+    },
+    intent: 'Credit card billing',
+    lastMessage: 'Please help me check why the installment fee changed.',
+    lastMessageTime: '14:24',
+    priority: 'Normal',
+    unreadCount: 0,
+  },
+]
 
 export const callFlowDetail: CallFlowDetail = {
   ivrDuration: '02:35',

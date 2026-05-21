@@ -1,6 +1,9 @@
 import {
   AudioOutlined,
+  GlobalOutlined,
   MessageOutlined,
+  VideoCameraOutlined,
+  WhatsAppOutlined,
 } from '@ant-design/icons'
 import { Tag } from 'antd'
 import { PhoneIcon } from '../../../components'
@@ -16,6 +19,9 @@ interface ChannelTagProps {
 const channelClassNames: Record<string, string> = {
   Phone: 'inbound-channel-tag--phone',
   'Haloapps Voice': 'inbound-channel-tag--voice',
+  'Haloapps Video': 'inbound-channel-tag--video',
+  Haloapps: 'inbound-channel-tag--haloapps',
+  Webchat: 'inbound-channel-tag--webchat',
   'Webchat Voice': 'inbound-channel-tag--webchat',
   Email: 'inbound-channel-tag--email',
   X: 'inbound-channel-tag--x',
@@ -25,12 +31,25 @@ const channelClassNames: Record<string, string> = {
 }
 
 const channelDisplayLabels: Partial<Record<ChannelTagValue, string>> = {
+  'Haloapps Video': 'Haloapps',
   Phone: 'PSTN',
 }
 
 function renderIcon(value: ChannelTagValue) {
   if (value === 'Phone') {
     return <PhoneIcon />
+  }
+
+  if (value === 'Haloapps Video') {
+    return <VideoCameraOutlined />
+  }
+
+  if (value === 'WhatsApp') {
+    return <WhatsAppOutlined />
+  }
+
+  if (value === 'Webchat') {
+    return <GlobalOutlined />
   }
 
   if (value.includes('Voice')) {

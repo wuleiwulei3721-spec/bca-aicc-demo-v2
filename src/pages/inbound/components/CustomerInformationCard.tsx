@@ -80,6 +80,9 @@ export function CustomerInformationCard({
     useState<CustomerOutboundRequestStatus>('idle')
   const outboundApprovalTimerRef = useRef<number | null>(null)
   const { profile } = customer
+  const showIvrJourney =
+    customer.accessChannel === 'Phone' ||
+    customer.accessChannel.includes('Voice')
 
   useEffect(
     () => () => {
@@ -174,6 +177,7 @@ export function CustomerInformationCard({
       </BaseModal>
       <CallFlowDetailModal
         open={isCallFlowOpen}
+        showIvrJourney={showIvrJourney}
         onClose={() => setIsCallFlowOpen(false)}
       />
       <SendEmailModal

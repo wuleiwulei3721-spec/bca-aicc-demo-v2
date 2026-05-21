@@ -73,6 +73,13 @@
 - 组件应保留截图加载失败时的代码 fallback，避免截图资源缺失导致空白。
 - 截图必须完整等比放在对应面板内，不裁切、不变形、不拉伸或撑大页面布局。
 
+## 2026-05-21 Live Chat 实时文字聊天
+
+- 新增实时文字聊天功能，客户可通过 WhatsApp、Haloapps、webchat 等文字渠道联系坐席。
+- 坐席点击右上角 `Sign In` 后具备接收实时聊天渠道客户的技能；签入后 Home 旁增加固定 `Live Chat` tab，且不可关闭。
+- Live Chat 页面应基于语音来电弹屏内容扩展，必须复用现有 Inbound/InteractionWorkspace 组件，不复制一整套代码。
+- Live Chat 页面在原三栏左侧增加类似微信客户端的客户列表；客户列表要支持收起/展开，右侧继续保持 Customer Information、CRM workspace、Assistant 三栏。
+
 ## 上下文恢复
 
 - 停止继续修复 UI/sidebar/cache，改为从 rollout session 文件恢复开发上下文。

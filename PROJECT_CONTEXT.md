@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-05-21 15:55 +08:00
+最后更新：2026-05-21 23:40 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：主 Workspace 视觉已恢复；左侧系统菜单已支持默认收起、紧凑展开/收起、展开态菜单搜索、英文企业呼叫中心菜单文案、两级菜单、电话图标水平翻转和收起态右侧悬浮子菜单关闭控制，保留 `BANK 1` 品牌替换。
+当前目标：`codex/interaction-popup-base` 作为非生产集成分支，暂存 PSTN / Voice Call、Video Call 与 Live Chat 三类弹屏入口；后续视频与文字弹屏详细页面优化从该分支继续拆分，`main` 未合并、未推送，客户正式环境不更新。
 
 ## 0. 使用规则
 
@@ -40,8 +40,8 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`main`  
-当前 HEAD：`1d9d9cb update browser title`  
+当前分支：`codex/interaction-popup-base`
+当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于非生产集成备份，未发布到 `main`
 部署目标：Vercel 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -104,7 +104,11 @@ codex-recovered-context.md
 - `src/routes.tsx`：定义 `/`、`/design-system` 和通配重定向。
 - `src/layouts/BasicLayout.tsx`：全局 Header、可展开/收起左侧菜单、坐席工具条、内部聊天入口和主内容出口。
 - `src/pages/AgentWorkspace.tsx`：Home tab 与 Inbound tab 容器。
-- `src/pages/inbound/InboundPage.tsx`：Inbound 三栏工作台。
+- `src/pages/inbound/InteractionWorkspace.tsx`：电话与视频弹屏共用的三栏工作台。
+- `src/pages/inbound/InboundPage.tsx`：PSTN / Voice Call 电话弹屏 wrapper。
+- `src/pages/inbound/VideoCallPage.tsx`：Video Call 弹屏 wrapper，复用三栏工作台并叠加 OpenEye 浮窗。
+- `src/pages/inbound/LiveChatPage.tsx`：Live Chat 固定页签页面，复用三栏工作台并增加文字聊天客户列表。
+- `src/pages/inbound/components/LiveChatCustomerList.tsx`：WhatsApp / Haloapps / Webchat 客户聊天列表，可收起展开。
 - `src/pages/DesignSystem.tsx`：设计系统展示页。
 - `src/store/appStore.ts`：workspace tab 与 inbound popup 全局状态。
 - `src/mock/inbound.ts`：Inbound 演示数据。
@@ -123,9 +127,15 @@ codex-recovered-context.md
 
 - `BasicLayout` 是所有页面的壳，包含顶部 Header、坐席状态、话务工具条、侧栏和内容区。
 - `AgentWorkspace` 默认显示 Home tab。
-- 当坐席处于 Ready 且无通话时，系统模拟 2 秒后进入 Incoming 状态，并调用 `requestInboundPopup()`。
+- 坐席点击右上角 `Sign In` 后，`Live Chat` tab 会固定插入 Home tab 旁边，`closable: false`，用于承载实时文字聊天工作台。
+- 当坐席处于 Ready 且无通话时，点击左侧 `Channel Simulation > PSTN / Voice Call` 进入 Incoming 并打开电话弹屏 tab；点击 `Channel Simulation > Video Call` 进入 Incoming 并打开 Video Call tab。
+- 点击左侧 `Channel Simulation > Live Chat` 时，如坐席已签入，则切换到固定 `Live Chat` tab，不改变语音/视频通话状态。
 - `requestInboundPopup()` 会打开 Inbound tab，并切换 active workspace tab 到 `inbound`。
+- `requestVideoCallPopup()` 会打开 Video Call tab，并切换 active workspace tab 到 `video-call`。
+- `requestLiveChatWorkspace()` 会打开并切换到固定 Live Chat tab，`setLiveChatTabOpen(false)` 会在签出时移除该 tab。
 - Inbound tab 可关闭，关闭后回到 Home tab。
+- Live Chat tab 不可关闭，签出后自动从 workspace tabs 移除。
+- Video Call tab 可关闭，关闭后隐藏 OpenEye 独立客户端截图浮窗。
 - `/design-system` 独立展示设计规范与基础组件，不参与通话流程。
 
 ## 5. 全局布局与状态机
@@ -135,7 +145,7 @@ codex-recovered-context.md
 - 顶部蓝色渐变 BANK 1 Header，恢复旧版主工作台视觉。
 - 可展开/收起左侧系统菜单，默认收起，`collapsedWidth` 为 `48px`，展开宽度使用 `--aicc-layout-sider-width`。
 - 左侧菜单支持 2 层级：展开态顶部显示折叠按钮与菜单搜索框，点击一级菜单在下方展开二级菜单；收起态仅显示一级图标，鼠标悬浮在一级图标时在右侧显示二级菜单浮层，鼠标移出浮层或点击菜单后浮层关闭。
-- 当前侧栏菜单使用英文企业呼叫中心文案：Channel Simulation（PSTN / Voice、Live Chat、Video Call）、Agent Center（Agent Profile、Service History）、Operations（Alert KPI Management、Floor Management）、Call Management、Reports。
+- 当前侧栏菜单使用英文企业呼叫中心文案：Channel Simulation（PSTN / Voice Call、Video Call、Live Chat）、Agent Center（Agent Profile、Service History）、Operations（Alert KPI Management、Floor Management）、Call Management、Reports。
 - Agent Toolbar：Answer、Hold、Mute、Transfer、Hang Up、More。
 - Agent Profile Area：Ready、Not Ready、AUX - Ibadah、AUX - Makan、Unsigned 等状态。
 - Notifications 和 Internal Chat 入口。
@@ -165,7 +175,10 @@ type CallStatus =
 
 关键逻辑：
 
-- Ready + Idle 时可触发 Inbound。
+- Sign In 后 `BasicLayout` 调用 `setLiveChatTabOpen(true)`，使 Home 旁出现固定 `Live Chat` tab；Sign Out 后调用 `setLiveChatTabOpen(false)` 并在当前 tab 是 Live Chat 时退回 Home。
+- Ready + Idle 时点击 `Channel Simulation > PSTN / Voice Call` 可触发电话弹屏。
+- Ready + Idle 时点击 `Channel Simulation > Video Call` 可触发 Video Call。
+- 已签入时点击 `Channel Simulation > Live Chat` 只激活 Live Chat 工作台，不触发 `Incoming` 话务状态。
 - Incoming 支持手动 Answer，也支持按 `autoAnswerSeconds` 自动接听。
 - Talking 可切换 Hold 或 Mute。
 - Hold 和 Mute 有独立累计计时。
@@ -176,11 +189,15 @@ type CallStatus =
 
 入口文件：`src/pages/inbound/InboundPage.tsx`
 
+共用容器：`src/pages/inbound/InteractionWorkspace.tsx`
+
 Inbound 是当前最核心演示页面，采用三栏结构：
 
 - Left：客户资料与业务卡片。
 - Center：CRM workspace。
 - Right：Assistant 与连接状态。
+
+`InteractionWorkspace` 当前被 PSTN / Voice Call、Video Call 和 Live Chat 复用。Live Chat 通过 `leadPanel` 在三栏左侧注入客户聊天列表，避免复制一套 Inbound 三栏代码。
 
 ### Left Column
 
@@ -253,6 +270,19 @@ interface CrmWorkspaceTab {
 - Assistant fallback 使用印尼语业务内容，展示意图识别、时间线和 Suggested Response。
 - Connection tab 展示 CRM Core、Knowledge Base、Voice Analytics、Case Workflow 状态。
 
+## 6.1 Live Chat 工作台
+
+入口文件：`src/pages/inbound/LiveChatPage.tsx`
+
+当前状态：
+
+- 坐席 Sign In 后，Home tab 旁新增固定 `Live Chat` tab，不能关闭。
+- `LiveChatPage` 复用 `InteractionWorkspace`，在原三栏左侧增加 `LiveChatCustomerList`。
+- 客户列表展示 WhatsApp、Haloapps、Webchat 三个文字聊天渠道，支持 unread count、优先级、最后消息和最后消息时间。
+- 客户列表支持收起/展开；收起后保留头像与未读数，右侧仍保持 Customer Information、CRM、Assistant 三栏。
+- 切换客户后，Customer Information 的客户姓名、渠道、时长、验证状态会随选中聊天会话更新。
+- 文字聊天渠道不显示 IVR Journey；`Call Flow Detail` 仅保留可用的非 IVR 内容。
+
 ## 7. 设计系统
 
 页面：`src/pages/DesignSystem.tsx`  
@@ -314,6 +344,12 @@ Inbound 当前主要数据：
 - 客户类型：`Priority Customer`
 - 当前验证状态：`Unverified`
 
+Live Chat 当前 mock：
+
+- `liveChatSessions` 位于 `src/mock/inbound.ts`。
+- 当前包含 WhatsApp、Haloapps、Webchat 三个文字聊天会话。
+- 每个会话包含 `LiveChatSession` 类型字段：channel、customer、intent、lastMessage、lastMessageTime、priority、unreadCount。
+
 当前语言状态：
 
 - UI 框架和多数控件仍为英文。
@@ -332,8 +368,12 @@ Inbound 当前主要数据：
 - 企业级 BANK 1 AICC Header。
 - 收起侧栏。
 - 左侧系统菜单已改为可展开/收起的 2 层级英文菜单，默认收起并保持图标居中；展开态支持菜单搜索。
-- Home / Inbound 工作台 tabs。
-- 模拟 Inbound 来电触发逻辑。
+- Home / PSTN / Voice Call / Video Call 工作台 tabs。
+- PSTN / Voice Call 菜单点击触发电话来电逻辑。
+- Video Call 菜单点击触发视频来电 tab，复用电话弹屏三栏内容。
+- Sign In 后自动显示固定不可关闭 Live Chat tab。
+- Live Chat 页面复用 `InteractionWorkspace`，新增可收起客户文字聊天列表，支持 WhatsApp、Haloapps、Webchat 会话切换。
+- OpenEye 独立客户端截图浮窗模拟，使用 `public/screenshots/openeye-video-call.png`，仅视频通话接通后显示，挂断或关闭 Video Call tab 后隐藏。
 - 坐席状态机。
 - 话务状态机。
 - 自动应答配置。
@@ -363,48 +403,83 @@ Inbound 当前主要数据：
 
 ## 10. 当前开发状态
 
-截至 2026-05-21 15:55 +08:00，工作区仍有未提交改动，来源于之前的业务开发、上下文机制建设、视觉/品牌优化和本轮左侧系统菜单建设。本轮继续只细化左侧菜单：Call Management 电话图标已水平翻转；收起态二级菜单浮层改为 hover 打开，并在点击菜单后对当前菜单项抑制显示，鼠标移出后重置；主 Workspace 旧版视觉和 `BANK 1` 品牌替换继续保留。
+截至 2026-05-21 23:40 +08:00，当前工作已切到 `codex/interaction-popup-base` 非生产集成分支。该分支承接 `codex/videocall-popup` 的视频弹屏与 Live Chat 框架成果，用于后续继续拆分视频来电详情和文字弹屏详情优化；`main` 未合并、未推送，客户正式环境不更新。
 
 当前 `git status --short --branch` 主要状态：
 
 ```text
+## codex/interaction-popup-base
+M .codex-backup/key-prompts.md
 M DEV_LOG.md
 M PROJECT_CONTEXT.md
 M src/layouts/BasicLayout.tsx
-M src/layouts/components/InternalChatModal.tsx
-M src/pages/inbound/components/AssistantPanel.tsx
-M src/pages/inbound/components/ContactManagementModal.tsx
-M src/pages/inbound/components/contactManagementData.ts
+M src/mock/inbound.ts
+M src/pages/AgentWorkspace.tsx
+M src/pages/inbound/InboundPage.tsx
+M src/pages/inbound/components/CallFlowDetailModal.tsx
+M src/pages/inbound/components/ChannelTag.tsx
+M src/pages/inbound/components/CustomerInformationCard.tsx
+M src/pages/inbound/index.ts
 M src/store/appStore.ts
 M src/styles/index.less
-?? .codex-backup/context-snapshot-2026-05-21-1520.md
-?? .codex-backup/context-snapshot-2026-05-21-1539.md
-?? .codex-backup/current-todo-2026-05-21-1520.md
-?? .codex-backup/current-todo-2026-05-21-1539.md
-?? .codex-backup/page-state-2026-05-21-1520.md
-?? .codex-backup/page-state-2026-05-21-1539.md
+M src/types/inbound.ts
+?? .codex-backup/context-snapshot-2026-05-21-1801.md
+?? .codex-backup/context-snapshot-2026-05-21-1903.md
+?? .codex-backup/context-snapshot-2026-05-21-1933.md
+?? .codex-backup/context-snapshot-2026-05-21-2212.md
+?? .codex-backup/context-snapshot-2026-05-21-2301.md
+?? .codex-backup/current-todo-2026-05-21-1801.md
+?? .codex-backup/current-todo-2026-05-21-1903.md
+?? .codex-backup/current-todo-2026-05-21-1933.md
+?? .codex-backup/current-todo-2026-05-21-2212.md
+?? .codex-backup/current-todo-2026-05-21-2301.md
+?? .codex-backup/page-state-2026-05-21-1801.md
+?? .codex-backup/page-state-2026-05-21-1903.md
+?? .codex-backup/page-state-2026-05-21-1933.md
+?? .codex-backup/page-state-2026-05-21-2212.md
+?? .codex-backup/page-state-2026-05-21-2301.md
+?? public/screenshots/openeye-video-call.png
+?? src/pages/inbound/InteractionWorkspace.tsx
+?? src/pages/inbound/LiveChatPage.tsx
+?? src/pages/inbound/VideoCallPage.tsx
+?? src/pages/inbound/components/LiveChatCustomerList.tsx
+?? src/pages/inbound/components/OpenEyeVideoWindow.tsx
 ```
 
-当前 tracked diff 统计包含历史未提交改动与本轮菜单变更：
+当前 tracked diff 统计包含本分支历史未提交改动与本轮 Live Chat 调整：
 
 ```text
-9 files changed, 646 insertions(+), 120 deletions(-)
+14 files changed, 960 insertions(+), 154 deletions(-)
 ```
 
-业务改动主题：
+本轮业务改动：
 
-- 本轮保留：BANK 1 品牌替换，移除旧品牌可见文案。
-- 本轮纠偏：主 Workspace 视觉回退到视觉重构前稳定版本，包括蓝色渐变 Header、旧版应用背景、Customer Information 高亮卡片、主页面卡片和话务条样式。
-- 本轮修复：恢复 CRM/Assistant 截图资源与图片优先加载逻辑，资源路径为 `public/screenshots/crm-workspace.jpg` 和 `public/screenshots/assistant-workspace.jpg`。
-- 本轮优化：CRM/Assistant 截图改为 `contain` 等比完整显示，不再裁切或撑大所在面板。
-- Modal/Dialog 本轮不继续调整，仍保留上一轮已有代码状态，后续如需处理应另起明确需求。
-- 本轮新增：CRM/Assistant 改为代码内 BANK 1 fallback，公开截图资源不再使用。
-- 印尼语业务数据与业务话术扩展。
-- CRM workspace tabs 与 CRM 动态业务 tab 详情页。
-- CRM/Assistant fallback。
-- Contact Management 相关弹窗和数据。
-- Inbound 三栏样式扩展与弹窗样式优化。
-- 通用组件、Modal、Toolbar 与 token 细节调整。
+- `appStore` 新增 `isLiveChatTabOpen`、`setLiveChatTabOpen()`、`requestLiveChatWorkspace()`，签出时如当前停留在 Live Chat 会退回 Home。
+- `BasicLayout` 在坐席 Sign In 后打开 Live Chat 固定 tab，Sign Out 后移除；左侧 `Channel Simulation > Live Chat` 在已签入时切换到该 tab。
+- `AgentWorkspace` 新增固定不可关闭 `Live Chat` tab，显示顺序为 Home、Live Chat、PSTN / Voice Call、Video Call。
+- 新增 `LiveChatPage` 和 `LiveChatCustomerList`，客户列表可收起展开，选中客户会驱动共用三栏里的 Customer Information。
+- `InteractionWorkspace` 新增 `leadPanel` 能力，用于在三栏前插入 Live Chat 客户列表，电话和视频页面保持原复用路径。
+- `AccessChannel` 和 mock 新增 WhatsApp、Haloapps、Webchat 文字聊天渠道与 `LiveChatSession` 数据结构。
+- `ChannelTag` 支持 WhatsApp、Haloapps、Webchat 渠道图标和样式。
+- 非语音文字聊天渠道打开 `Call Flow Detail` 时不显示 IVR Journey。
+- 移除 `BasicLayout` 中 Ready + Idle 后 2 秒自动来电的 effect。
+- 新增 `triggerVoiceInboundCall()`，仅当坐席 `Ready` 且 `callStatus === 'Idle'` 时触发。
+- 点击左侧 `Channel Simulation > PSTN / Voice Call` 后进入 `Incoming`，打开电话弹屏 tab，并使话务条 Answer 按钮亮起。
+- 新增 `triggerVideoInboundCall()`，点击左侧 `Channel Simulation > Video Call` 后进入 `Incoming`，打开 Video Call tab，并使话务条 Answer 按钮亮起。
+- 抽出 `InteractionWorkspace`，电话与视频弹屏共用 LeftColumn、CRM、Assistant 和动态 CRM tabs。
+- Video Call 的 Customer Information 渠道显示为 `Haloapps`，使用视频图标。
+- OpenEye 截图从 `D:\03projects\BCA AICC\需求文档\openeye视频通话.png` 复制到 `public/screenshots/openeye-video-call.png`，并以固定高层级、可拖动浮窗形式显示，不额外添加可见文案；现在仅视频通话已接通时显示，挂断后隐藏。
+- Haloapps 视频渠道的 `Call Flow Detail` 弹框不显示 `IVR Journey`，只保留可用的转接历史等非 IVR 内容。
+- Home tab 已去掉固定最小宽度，标签宽度随内容适配并居中显示。
+- 保留 Answer、Talking、Hold、Mute、Hang Up、After Call Work 与自动接听倒计时逻辑。
+
+本轮验证：
+
+- `npm run lint`：通过。
+- `npm run build`：通过，仍保留既有 Vite chunk size warning。
+- Browser smoke check `/`：签入后出现不可关闭 `Live Chat` tab；打开后可见 WhatsApp / Haloapps / Webchat 客户列表，切换 Sari Amelia 后 Customer Information 同步更新，客户列表收起后仍保留三栏内容。
+- Browser smoke check `/`：菜单顺序已确认为 `PSTN / Voice Call`、`Video Call`、`Live Chat`；点击 `PSTN / Voice Call` 后 workspace tab 文案同步显示为 `PSTN / Voice Call`。
+- Browser smoke check `/design-system`：页面正常加载，标题为 `BANK 1 AICC Demo`。
 
 本次项目级 AI 规则创建新增或更新：
 
@@ -419,7 +494,12 @@ M src/styles/index.less
 ## 11. 已知问题与风险
 
 - CRM/Assistant 当前使用客户提供的截图资源，组件保留代码 fallback；如截图资源丢失，页面会自动显示 fallback。
-- 左侧菜单当前只负责展示和交互状态，不绑定实际业务路由；后续若新增页面，需要再明确路由、权限和菜单选中规则。
+- 左侧菜单当前已有 `PSTN / Voice Call` 电话来电模拟入口；其他菜单仍主要负责展示和选中态，后续若新增页面，需要再明确路由、权限和菜单选中规则。
+- `PSTN / Voice Call` 触发来电后仍保留既有 `autoAnswerSeconds` 自动接听倒计时；如演示需要必须手动 Answer，需另行停用自动接听。
+- `Video Call` 当前为演示型弹屏和截图浮窗，不接真实 OpenEye 协议、不实现真实音视频能力。
+- `Live Chat` 当前为演示型固定工作台与静态 mock 会话，不接真实 WhatsApp / Haloapps / Webchat 消息网关，也不实现真实消息发送。
+- Live Chat 扩展为四列布局，虽然客户列表可收起，但仍需在目标演示分辨率下复查展开态是否会压缩三栏内容。
+- 关闭 Video Call tab 只隐藏 workspace 与 OpenEye 浮窗，不自动 Hang Up；Hang Up 会同步隐藏 OpenEye 浮窗。
 - 菜单搜索当前只在展开态显示，收起菜单时会清空搜索条件，避免影响收起态图标列表。
 - 收起态二级菜单浮层当前通过 CSS hover 打开，并通过 `closedFlyoutKey` 控制点击后关闭；如后续增加键盘导航，需要再补充键盘触发规则。
 - 本轮已重新运行 `npm run lint` 和 `npm run build`，均通过；build 仍有 Vite chunk size warning。
@@ -428,14 +508,15 @@ M src/styles/index.less
 - `codex-recovered-context.md` 是 UTF-8 中文文件，PowerShell 非 UTF-8 读取时可能显示乱码；应使用 `Get-Content -Raw -Encoding UTF8 codex-recovered-context.md`。
 - `DEPLOY.md` 同样应按 UTF-8 读取。
 - 不要继续投入时间修复 Codex sidebar/cache/sqlite/session_index，当前策略是把上下文落入项目文件。
-- 本轮尝试使用 in-app browser 检查 `/`，但当前没有可用的 Codex browser pane；已通过静态图片 URL 200、本地 HTTP 200、lint 和 build 做验证。后续仍建议重新打开浏览器后检查 `/` 和 Inbound 主工作台。
+- 本轮已使用 Browser smoke check 验证 `/` 的菜单文案、菜单顺序和 `PSTN / Voice Call` tab 文案。
 
 ## 12. TODO
 
 P0：
 
+- 在目标演示分辨率下复查 Live Chat 展开态与收起态，确认客户列表不会让 Customer Information、CRM、Assistant 三栏不可用。
 - 在目标演示分辨率下复查左侧菜单展开态是否不会压缩 Inbound 三栏到不可用宽度。
-- 确认后续菜单点击是否需要绑定路由或触发渠道模拟流程，目前本轮仅实现菜单展示与层级交互。
+- 确认 Video Call 演示是否接受“关闭 tab 不自动 Hang Up”的行为；如需关闭页签即挂断，后续应统一调整 tab 与话务状态机关系。
 - 重新打开浏览器后检查 `/` 主 Workspace 是否恢复蓝色渐变 Header、旧版背景、Customer Information 卡片和话务条风格。
 - 重新打开浏览器后检查 CRM/Assistant 区域是否完整等比显示客户截图，而不是 fallback、裁切或变形。
 - 确认 Inbound 三栏布局在目标演示分辨率下不溢出。
