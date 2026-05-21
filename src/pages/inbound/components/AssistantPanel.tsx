@@ -64,18 +64,16 @@ function ConnectionSystemArea() {
     <div className="inbound-system-shot inbound-system-shot--assistant">
       <div className="inbound-system-shot__fallback inbound-system-shot__fallback--visible">
         <div className="inbound-connection-system">
-          {[
-            ['CRM Core', 'Connected', '42 ms'],
-            ['Knowledge Base', 'Connected', '58 ms'],
-            ['Voice Analytics', 'Streaming', 'Live'],
-            ['Case Workflow', 'Connected', '31 ms'],
-          ].map(([system, status, latency]) => (
-            <section key={system}>
-              <strong>{system}</strong>
-              <span>{status}</span>
-              <em>{latency}</em>
-            </section>
-          ))}
+          <a
+            className="inbound-connection-system__link"
+            href="/bank1-official-website"
+            rel="noreferrer"
+            target="_blank"
+          >
+            <strong>BANK 1 Official Website</strong>
+            <span>Open</span>
+            <em>Public service and product information</em>
+          </a>
         </div>
       </div>
     </div>

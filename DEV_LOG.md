@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-21 12:22 +08:00  
+最后更新：2026-05-21 15:55 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,114 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-21 15:55 +08:00 - 优化侧栏电话图标与收起态浮层关闭
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-21-1555.md`
+- `.codex-backup/current-todo-2026-05-21-1555.md`
+- `.codex-backup/page-state-2026-05-21-1555.md`
+
+修改原因：
+
+- 用户要求电话图标水平翻转。
+- 用户要求收起状态下鼠标移出二级菜单浮层时，或点击菜单后，浮层不继续显示。
+
+修改结果：
+
+- 仅侧栏 `Call Management` 的电话图标增加 `aicc-sider__menu-phone-icon` class，并通过 CSS `scaleX(-1)` 水平翻转。
+- 收起态二级菜单浮层改为 hover 打开，并在点击一级/二级菜单后通过 `closedFlyoutKey` 抑制当前浮层显示。
+- 鼠标移出当前一级菜单与浮层区域后，关闭抑制状态重置，后续再次悬浮可正常打开。
+
+回滚说明：
+
+- 如需回滚本轮细化，移除 `aicc-sider__menu-phone-icon` class/CSS，并恢复 `.aicc-sider__flyout` 的展示规则及 `closedFlyoutKey` 相关逻辑。
+
+当前风险点：
+
+- 本轮只处理鼠标交互关闭逻辑，未新增完整键盘导航行为。
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite chunk size warning。
+- 已通过本地浏览器 smoke check `/`，确认页面可加载、侧栏默认收起、`Call Management` 菜单项存在。
+
+### 2026-05-21 15:39 +08:00 - 细化左侧菜单搜索、英文文案和视觉密度
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-21-1539.md`
+- `.codex-backup/current-todo-2026-05-21-1539.md`
+- `.codex-backup/page-state-2026-05-21-1539.md`
+
+修改原因：
+
+- 用户要求展开态顶部不要只有独立收起按钮，需要在按钮旁增加菜单搜索。
+- 用户要求系统菜单使用英文企业级呼叫中心规范文案。
+- 用户要求菜单图标、文字大小、行高和间距贴合当前系统密度，不要与整体风格割裂。
+
+修改结果：
+
+- 展开态侧栏顶部改为紧凑的 Collapse 按钮 + `Search menu` 输入框。
+- 收起态不显示搜索框，并在收起时清空搜索条件。
+- 菜单文案调整为 Channel Simulation、Agent Center、Operations、Call Management、Reports 等英文用语。
+- 菜单主项高度、子项高度、图标尺寸、字体和间距已整体压缩，贴近现有工作台密度。
+
+回滚说明：
+
+- 如需回滚本轮细化，可恢复 `BasicLayout` 中搜索相关 state、过滤逻辑和英文菜单文案，并恢复 `index.less` 中 `.aicc-sider__toggle`、`.aicc-sider__search`、菜单行高和图标尺寸相关样式。
+
+当前风险点：
+
+- 菜单搜索只过滤当前静态菜单项，不涉及路由或权限。
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite chunk size warning。
+- 已通过本地浏览器检查 `/`：展开态搜索可过滤 `Live Chat`，收起态搜索隐藏。
+- 已通过本地浏览器检查 `/design-system`：页面可访问，未发现菜单调整影响页面主体。
+
+### 2026-05-21 15:20 +08:00 - 构建左侧系统菜单
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/store/appStore.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-21-1520.md`
+- `.codex-backup/current-todo-2026-05-21-1520.md`
+- `.codex-backup/page-state-2026-05-21-1520.md`
+
+修改原因：
+
+- 用户要求左侧菜单默认收起，可通过顶部按钮展开/收起。
+- 展开态需要显示一级菜单图标和文字，并支持点击一级菜单展开二级菜单。
+- 收起态只显示一级图标，悬浮图标时在右侧显示二级菜单选择层。
+
+修改结果：
+
+- `BasicLayout` 的左侧菜单改为项目内自绘菜单结构，保留 Ant Design 图标和现有 `Sider` 容器。
+- 菜单已配置为：测试菜单、个人中心、运营管理、呼叫管理、报表；其中前三项包含二级菜单。
+- `appStore.collapsed` 默认值改为 `true`，确保进入系统时左侧菜单处于收起状态。
+- `index.less` 新增侧栏顶部按钮、展开态二级菜单、收起态图标居中和右侧悬浮菜单样式。
+
+回滚说明：
+
+- 如需回滚本轮菜单，可恢复 `src/layouts/BasicLayout.tsx` 中旧的 Ant Design `Menu` 配置，恢复 `src/store/appStore.ts` 中 `collapsed` 默认值，并删除本轮新增的 `.aicc-sider__*` 菜单样式。
+
+当前风险点：
+
+- 菜单点击目前只维护本地选中态，不绑定业务路由或渠道模拟逻辑。
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite chunk size warning。
+- 已通过本地浏览器检查 `/` 与 `/design-system`，展开态和二级菜单交互正常；收起态浮层支持 hover/focus，自动化侧以 focus 路径确认浮层可见。
 
 ### 2026-05-21 12:22 +08:00 - CRM/Assistant 截图完整等比适配面板
 

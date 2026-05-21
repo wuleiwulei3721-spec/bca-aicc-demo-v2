@@ -1,11 +1,11 @@
 export const CONTACT_SECTIONS = [
   {
     title: 'Communication Channels',
-    types: ['Phone', 'WhatsApp', 'Haloapps', 'Email'],
+    types: ['Phone', 'WhatsApp', 'Bankapp', 'Email'],
   },
   {
     title: 'Social Media',
-    types: ['Facebook', 'Instagram', 'X', 'TikTok', 'YouTube'],
+    types: ['Facebook', 'Instagram', 'X', 'TikTok', 'YouTube', 'LinkedIn'],
   },
   {
     title: 'App Store Channels',

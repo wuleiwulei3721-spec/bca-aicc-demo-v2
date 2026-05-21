@@ -1,7 +1,21 @@
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons'
+import {
+  AppleFilled,
+  DeleteOutlined,
+  FacebookFilled,
+  InstagramFilled,
+  LinkedinFilled,
+  MailOutlined,
+  MobileOutlined,
+  PlusOutlined,
+  TikTokFilled,
+  WhatsAppOutlined,
+  XOutlined,
+  YoutubeFilled,
+} from '@ant-design/icons'
 import { Input } from 'antd'
+import type { ReactNode } from 'react'
 import { useState } from 'react'
-import { BaseButton, BaseModal } from '../../../components'
+import { BaseButton, BaseModal, PhoneIcon } from '../../../components'
 import {
   CONTACT_SECTIONS,
   CONTACT_TYPES,
@@ -19,21 +33,59 @@ interface ContactManagementModalProps {
 const contactPlaceholders: Record<ContactType, string> = {
   Phone: '+62 21 0000 0000',
   WhatsApp: '+62 812 0000 0000',
-  Haloapps: 'haloapps_id',
+  Bankapp: 'bankapp_id',
   Email: 'customer@email.com',
   Facebook: 'facebook.com/customer',
   Instagram: '@customer',
   X: '@customer',
   TikTok: '@customer',
   YouTube: 'youtube.com/@customer',
+  LinkedIn: 'linkedin.com/in/customer',
   'App Store': 'App Store review/profile',
   'Play Store': 'Play Store review/profile',
+}
+
+function PlayStoreIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="inbound-contact-management__play-store-icon"
+      focusable="false"
+      viewBox="0 0 24 24"
+    >
+      <path d="M4.6 3.6v16.8l8.1-8.4z" fill="#34a853" />
+      <path d="M12.7 12 4.6 3.6l10.5 6z" fill="#4285f4" />
+      <path d="M12.7 12 4.6 20.4l10.5-6z" fill="#fbbc04" />
+      <path d="m15.1 9.6 4.3 2.4-4.3 2.4-2.4-2.4z" fill="#ea4335" />
+    </svg>
+  )
+}
+
+const contactIcons: Record<ContactType, ReactNode> = {
+  Phone: <PhoneIcon />,
+  WhatsApp: <WhatsAppOutlined />,
+  Bankapp: <MobileOutlined />,
+  Email: <MailOutlined />,
+  Facebook: <FacebookFilled />,
+  Instagram: <InstagramFilled />,
+  X: <XOutlined />,
+  TikTok: <TikTokFilled />,
+  YouTube: <YoutubeFilled />,
+  LinkedIn: <LinkedinFilled />,
+  'App Store': <AppleFilled />,
+  'Play Store': <PlayStoreIcon />,
 }
 
 function createContactId(type: ContactType) {
   return `${type.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}-${Math.random()
     .toString(36)
     .slice(2, 8)}`
+}
+
+function getContactIconClassName(type: ContactType) {
+  return `inbound-contact-management__channel-icon inbound-contact-management__channel-icon--${type
+    .toLowerCase()
+    .replace(/\s+/g, '-')}`
 }
 
 function cloneContacts(contacts: ContactGroups): ContactGroups {
@@ -126,7 +178,12 @@ export function ContactManagementModal({
                     key={type}
                   >
                     <header>
-                      <strong>{type}</strong>
+                      <span className="inbound-contact-management__label">
+                        <span className={getContactIconClassName(type)}>
+                          {contactIcons[type]}
+                        </span>
+                        <strong>{type}</strong>
+                      </span>
                       <button
                         aria-label={`Add ${type} contact`}
                         className="inbound-contact-management__add"

@@ -1,14 +1,19 @@
 import {
+  AppstoreOutlined,
+  BarChartOutlined,
   BellOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
   MessageOutlined,
-  CustomerServiceOutlined,
-  DashboardOutlined,
+  PhoneOutlined,
+  SearchOutlined,
+  SettingOutlined,
+  UserOutlined,
 } from '@ant-design/icons'
-import { Badge, Layout, Menu } from 'antd'
-import type { MenuProps } from 'antd'
+import { Badge, Layout } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { Outlet } from 'react-router-dom'
-import { PhoneIcon } from '../components'
 import { headerAgentProfile } from '../mock/agent'
 import { useAppStore } from '../store'
 import type { AgentStatus, CallStatus } from '../types'
@@ -17,6 +22,18 @@ import { AgentToolbar } from './components/AgentToolbar'
 import { InternalChatModal } from './components/InternalChatModal'
 
 const { Header, Sider, Content } = Layout
+
+interface SideMenuChildItem {
+  key: string
+  label: string
+}
+
+interface SideMenuItem {
+  key: string
+  icon: ReactNode
+  label: string
+  children?: SideMenuChildItem[]
+}
 
 interface CallTiming {
   talkingStartedAt: number | null
@@ -34,25 +51,71 @@ const initialCallTiming: CallTiming = {
   accumulatedMuteSeconds: 0,
 }
 
-const sideMenuItems: MenuProps['items'] = [
+const sideMenuItems: SideMenuItem[] = [
   {
-    key: 'desktop',
-    icon: <DashboardOutlined />,
-    label: 'Desktop',
+    key: 'test-menu',
+    icon: <AppstoreOutlined />,
+    label: 'Channel Simulation',
+    children: [
+      {
+        key: 'test-pstn-voice',
+        label: 'PSTN / Voice',
+      },
+      {
+        key: 'test-chat',
+        label: 'Live Chat',
+      },
+      {
+        key: 'test-video',
+        label: 'Video Call',
+      },
+    ],
   },
   {
-    key: 'inbound',
-    icon: <CustomerServiceOutlined />,
-    label: 'Inbound',
+    key: 'profile',
+    icon: <UserOutlined />,
+    label: 'Agent Center',
+    children: [
+      {
+        key: 'profile-info',
+        label: 'Agent Profile',
+      },
+      {
+        key: 'profile-service-records',
+        label: 'Service History',
+      },
+    ],
   },
   {
-    key: 'voice',
-    icon: <PhoneIcon />,
-    label: 'Voice',
+    key: 'operations',
+    icon: <SettingOutlined />,
+    label: 'Operations',
+    children: [
+      {
+        key: 'operations-warning-metrics',
+        label: 'Alert KPI Management',
+      },
+      {
+        key: 'operations-site-management',
+        label: 'Floor Management',
+      },
+    ],
+  },
+  {
+    key: 'call-management',
+    icon: <PhoneOutlined className="aicc-sider__menu-phone-icon" />,
+    label: 'Call Management',
+  },
+  {
+    key: 'reports',
+    icon: <BarChartOutlined />,
+    label: 'Reports',
   },
 ]
 
 export function BasicLayout() {
+  const collapsed = useAppStore((state) => state.collapsed)
+  const setCollapsed = useAppStore((state) => state.setCollapsed)
   const requestInboundPopup = useAppStore((state) => state.requestInboundPopup)
   const customerOutboundCallRequestId = useAppStore(
     (state) => state.customerOutboundCallRequestId,
@@ -70,6 +133,10 @@ export function BasicLayout() {
   const [autoAnswerSeconds, setAutoAnswerSeconds] = useState(3)
   const [isInternalChatOpen, setIsInternalChatOpen] = useState(false)
   const [isAfterCallWork, setIsAfterCallWork] = useState(false)
+  const [closedFlyoutKey, setClosedFlyoutKey] = useState<string | null>(null)
+  const [menuSearchQuery, setMenuSearchQuery] = useState('')
+  const [openMenuKeys, setOpenMenuKeys] = useState<string[]>([])
+  const [selectedMenuKey, setSelectedMenuKey] = useState('test-pstn-voice')
   const handledOutboundCallRequestIdRef = useRef(0)
 
   const updateAgentStatus = useCallback((status: AgentStatus) => {
@@ -237,6 +304,84 @@ export function BasicLayout() {
     updateAgentStatus('Not Ready')
   }, [updateAgentStatus, updateCallStatus])
 
+  const handlePrimaryMenuClick = useCallback(
+    (item: SideMenuItem) => {
+      if (collapsed) {
+        setClosedFlyoutKey(item.key)
+
+        if (!item.children?.length) {
+          setSelectedMenuKey(item.key)
+        }
+
+        return
+      }
+
+      if (item.children?.length) {
+        setOpenMenuKeys((current) =>
+          current.includes(item.key)
+            ? current.filter((menuKey) => menuKey !== item.key)
+            : [...current, item.key],
+        )
+        return
+      }
+
+      setSelectedMenuKey(item.key)
+    },
+    [collapsed],
+  )
+
+  const handleChildMenuClick = useCallback(
+    (childKey: string, parentKey?: string) => {
+      setSelectedMenuKey(childKey)
+      setClosedFlyoutKey(parentKey ?? null)
+    },
+    [],
+  )
+
+  const handleSiderToggle = useCallback(() => {
+    const nextCollapsed = !collapsed
+    setCollapsed(nextCollapsed)
+
+    if (nextCollapsed) {
+      setClosedFlyoutKey(null)
+      setMenuSearchQuery('')
+    }
+  }, [collapsed, setCollapsed])
+
+  const visibleSideMenuItems = useMemo(() => {
+    if (collapsed) {
+      return sideMenuItems
+    }
+
+    const query = menuSearchQuery.trim().toLowerCase()
+
+    if (!query) {
+      return sideMenuItems
+    }
+
+    return sideMenuItems
+      .map((item) => {
+        const parentMatches = item.label.toLowerCase().includes(query)
+        const childMatches = item.children?.filter((childItem) =>
+          childItem.label.toLowerCase().includes(query),
+        )
+
+        if (parentMatches) {
+          return item
+        }
+
+        if (childMatches?.length) {
+          return {
+            ...item,
+            children: childMatches,
+          }
+        }
+
+        return null
+      })
+      .filter((item): item is SideMenuItem => Boolean(item))
+  }, [collapsed, menuSearchQuery])
+
   const timerState = useMemo(() => {
     if (callStatus === 'Talking') {
       return {
@@ -336,18 +481,144 @@ export function BasicLayout() {
       />
       <Layout className="aicc-body">
         <Sider
-          className="aicc-sider"
-          collapsed
+          className={`aicc-sider ${
+            collapsed ? 'aicc-sider--collapsed' : 'aicc-sider--expanded'
+          }`}
+          collapsed={collapsed}
           collapsedWidth={48}
+          collapsible
           theme="light"
+          trigger={null}
           width="var(--aicc-layout-sider-width)"
         >
-          <Menu
-            className="aicc-sider__menu"
-            items={sideMenuItems}
-            mode="inline"
-            selectedKeys={['desktop']}
-          />
+          <div className="aicc-sider__toggle">
+            <button
+              aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+              className="aicc-sider__toggle-button"
+              title={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+              type="button"
+              onClick={handleSiderToggle}
+            >
+              {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            </button>
+            {!collapsed && (
+              <label className="aicc-sider__search">
+                <SearchOutlined />
+                <input
+                  aria-label="Search navigation menu"
+                  placeholder="Search menu"
+                  type="search"
+                  value={menuSearchQuery}
+                  onChange={(event) => setMenuSearchQuery(event.target.value)}
+                />
+              </label>
+            )}
+          </div>
+          <nav className="aicc-sider__menu" aria-label="System navigation">
+            {visibleSideMenuItems.map((item) => {
+              const hasChildren = Boolean(item.children?.length)
+              const isOpen =
+                openMenuKeys.includes(item.key) ||
+                Boolean(menuSearchQuery.trim())
+              const isSelected =
+                selectedMenuKey === item.key ||
+                Boolean(
+                  item.children?.some(
+                    (childItem) => childItem.key === selectedMenuKey,
+                  ),
+                )
+
+              return (
+                <div
+                  className={`aicc-sider__menu-group ${
+                    isSelected ? 'aicc-sider__menu-group--selected' : ''
+                  } ${
+                    collapsed && closedFlyoutKey === item.key
+                      ? 'aicc-sider__menu-group--flyout-closed'
+                      : ''
+                  }`}
+                  key={item.key}
+                  onMouseEnter={() => {
+                    if (closedFlyoutKey === item.key) {
+                      setClosedFlyoutKey(null)
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    if (closedFlyoutKey === item.key) {
+                      setClosedFlyoutKey(null)
+                    }
+                  }}
+                >
+                  <button
+                    aria-expanded={hasChildren ? isOpen : undefined}
+                    aria-haspopup={hasChildren ? 'menu' : undefined}
+                    className="aicc-sider__menu-button aicc-sider__menu-button--primary"
+                    title={collapsed ? item.label : undefined}
+                    type="button"
+                    onClick={() => handlePrimaryMenuClick(item)}
+                  >
+                    <span className="aicc-sider__menu-icon">{item.icon}</span>
+                    <span className="aicc-sider__menu-label">
+                      {item.label}
+                    </span>
+                  </button>
+
+                  {hasChildren && !collapsed && isOpen && (
+                    <div
+                      aria-label={`${item.label} submenu`}
+                      className="aicc-sider__submenu"
+                      role="menu"
+                    >
+                      {item.children?.map((childItem) => (
+                        <button
+                          className={`aicc-sider__menu-button aicc-sider__menu-button--child ${
+                            selectedMenuKey === childItem.key
+                              ? 'aicc-sider__menu-button--selected'
+                              : ''
+                          }`}
+                          key={childItem.key}
+                          role="menuitem"
+                          type="button"
+                          onClick={() => handleChildMenuClick(childItem.key)}
+                        >
+                          {childItem.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {hasChildren && collapsed && (
+                    <div
+                      aria-label={`${item.label} flyout submenu`}
+                      className="aicc-sider__flyout"
+                      role="menu"
+                    >
+                      {item.children?.map((childItem) => (
+                        <button
+                          className={`aicc-sider__flyout-item ${
+                            selectedMenuKey === childItem.key
+                              ? 'aicc-sider__flyout-item--selected'
+                              : ''
+                          }`}
+                          key={childItem.key}
+                          role="menuitem"
+                          type="button"
+                          onClick={() =>
+                            handleChildMenuClick(childItem.key, item.key)
+                          }
+                        >
+                          {childItem.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+            {visibleSideMenuItems.length === 0 && (
+              <div className="aicc-sider__empty">No menu results</div>
+            )}
+          </nav>
         </Sider>
         <Content className="aicc-content">
           <Outlet />

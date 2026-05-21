@@ -15,7 +15,7 @@ interface AppState {
 
 export const useAppStore = create<AppState>((set) => ({
   activeWorkspaceTabKey: 'home',
-  collapsed: false,
+  collapsed: true,
   customerOutboundCallRequestId: 0,
   isInboundTabOpen: false,
   inboundPopupRequestId: 0,

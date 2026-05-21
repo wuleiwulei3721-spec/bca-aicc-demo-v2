@@ -136,24 +136,26 @@ export function InternalChatModal({ open, onClose }: InternalChatModalProps) {
           </div>
 
           <footer className="aicc-internal-chat__composer">
-            <TextArea
-              autoSize={{ minRows: 3, maxRows: 5 }}
-              placeholder="Type internal message"
-              value={message}
-              onChange={(event) => setMessage(event.target.value)}
-            />
-            <div className="aicc-internal-chat__composer-actions">
-              <span>
-                <button aria-label="Emoji" type="button">
-                  <SmileOutlined />
-                </button>
-                <button aria-label="Upload image" type="button">
-                  <FileImageOutlined />
-                </button>
-              </span>
-              <AppButton icon={<SendOutlined />} type="primary">
-                Send
-              </AppButton>
+            <div className="aicc-internal-chat__composer-box">
+              <TextArea
+                autoSize={{ minRows: 3, maxRows: 5 }}
+                placeholder="Type internal message"
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+              />
+              <div className="aicc-internal-chat__composer-actions">
+                <span>
+                  <button aria-label="Emoji" type="button">
+                    <SmileOutlined />
+                  </button>
+                  <button aria-label="Upload image" type="button">
+                    <FileImageOutlined />
+                  </button>
+                </span>
+                <AppButton icon={<SendOutlined />} type="primary">
+                  Send
+                </AppButton>
+              </div>
             </div>
           </footer>
         </section>
