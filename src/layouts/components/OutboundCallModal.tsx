@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { PhoneOutlined, SearchOutlined } from '@ant-design/icons'
+import { SearchOutlined } from '@ant-design/icons'
 import { Input, Space, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
@@ -7,6 +7,7 @@ import {
   AppTable,
   BaseModal,
   BaseTabs,
+  PhoneIcon,
   SearchInput,
 } from '../../components'
 import { transferAgents } from '../../mock/transfer'
@@ -17,20 +18,32 @@ interface OutboundCallModalProps {
   onClose: () => void
 }
 
-function CallNumberTab({ onComplete }: { onComplete: () => void }) {
+function CallNumberTab({
+  onCancel,
+  onComplete,
+}: {
+  onCancel: () => void
+  onComplete: () => void
+}) {
   const [phoneNumber, setPhoneNumber] = useState('')
 
   return (
-    <div className="aicc-outbound-number">
-      <Input
-        placeholder="Enter phone number"
-        prefix={<PhoneOutlined />}
-        value={phoneNumber}
-        onChange={(event) => setPhoneNumber(event.target.value)}
-      />
-      <AppButton icon={<PhoneOutlined />} type="primary" onClick={onComplete}>
-        Call
-      </AppButton>
+    <div className="aicc-modal-section aicc-outbound-number">
+      <label className="aicc-outbound-number__field">
+        <span>Phone Number</span>
+        <Input
+          placeholder="Enter phone number"
+          prefix={<PhoneIcon />}
+          value={phoneNumber}
+          onChange={(event) => setPhoneNumber(event.target.value)}
+        />
+      </label>
+      <div className="aicc-modal-footer aicc-outbound-number__actions">
+        <AppButton onClick={onCancel}>Cancel</AppButton>
+        <AppButton icon={<PhoneIcon />} type="primary" onClick={onComplete}>
+          Call
+        </AppButton>
+      </div>
     </div>
   )
 }
@@ -95,8 +108,8 @@ function CallAgentTab({ onComplete }: { onComplete: () => void }) {
   ]
 
   return (
-    <div className="aicc-transfer-panel">
-      <div className="aicc-transfer-search">
+    <div className="aicc-modal-section aicc-transfer-panel">
+      <div className="aicc-modal-toolbar aicc-transfer-search">
         <SearchInput
           placeholder="Search name or employee ID"
           value={keyword}
@@ -105,6 +118,9 @@ function CallAgentTab({ onComplete }: { onComplete: () => void }) {
         <AppButton icon={<SearchOutlined />} type="primary">
           Search
         </AppButton>
+        <span className="aicc-transfer-search__meta">
+          {filteredAgents.length} agents
+        </span>
       </div>
       <AppTable<TransferAgent>
         columns={columns}
@@ -122,7 +138,7 @@ export function OutboundCallModal({ open, onClose }: OutboundCallModalProps) {
     {
       key: 'number',
       label: 'Call Number',
-      children: <CallNumberTab onComplete={onClose} />,
+      children: <CallNumberTab onCancel={onClose} onComplete={onClose} />,
     },
     {
       key: 'agent',
@@ -133,7 +149,7 @@ export function OutboundCallModal({ open, onClose }: OutboundCallModalProps) {
 
   return (
     <BaseModal
-      className="aicc-transfer-modal"
+      className="aicc-transfer-modal aicc-outbound-modal"
       kind="outbound"
       open={open}
       title="Outbound Call"

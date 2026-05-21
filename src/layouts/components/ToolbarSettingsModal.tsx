@@ -37,7 +37,7 @@ export function ToolbarSettingsModal({
           />
           <span>seconds</span>
         </label>
-        <div className="aicc-toolbar-settings__footer">
+        <div className="aicc-modal-footer aicc-toolbar-settings__footer">
           <AppButton onClick={onClose}>Cancel</AppButton>
           <AppButton type="primary" onClick={() => onConfirm(draftSeconds)}>
             Confirm

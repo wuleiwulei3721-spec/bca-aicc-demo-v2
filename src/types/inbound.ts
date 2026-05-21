@@ -88,7 +88,6 @@ export interface TicketHistoryItem {
 export interface NextBestActionItem {
   id: string
   recommendedService: string
-  createdDate: string
   crmLink: string
 }
 
@@ -96,4 +95,18 @@ export interface QuickActionItem {
   id: string
   label: string
   crmLink: string
+}
+
+export type CrmWorkspaceTabKind =
+  | 'ticket'
+  | 'next-best-action'
+  | 'quick-action'
+
+export interface CrmWorkspaceTab {
+  key: string
+  title: string
+  kind: CrmWorkspaceTabKind
+  crmLink: string
+  reference?: string
+  description?: string
 }

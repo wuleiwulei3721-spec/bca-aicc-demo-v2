@@ -1,9 +1,9 @@
-import type { QuickActionItem } from '../../../types'
+import type { CrmWorkspaceTab, QuickActionItem } from '../../../types'
 import { SectionCard } from './SectionCard'
 
 interface QuickActionCardProps {
   items: QuickActionItem[]
-  onOpenCrm: (link: string) => void
+  onOpenCrm: (tab: CrmWorkspaceTab) => void
 }
 
 export function QuickActionCard({ items, onOpenCrm }: QuickActionCardProps) {
@@ -15,7 +15,17 @@ export function QuickActionCard({ items, onOpenCrm }: QuickActionCardProps) {
             className="inbound-quick-action"
             key={item.id}
             type="button"
-            onClick={() => onOpenCrm(item.crmLink)}
+            onClick={() =>
+              onOpenCrm({
+                key: item.id,
+                title: item.label,
+                kind: 'quick-action',
+                crmLink: item.crmLink,
+                reference: 'Quick Action',
+                description:
+                  'Form aksi cepat untuk mempercepat penanganan permintaan nasabah.',
+              })
+            }
           >
             {item.label}
           </button>

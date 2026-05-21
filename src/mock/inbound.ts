@@ -66,53 +66,53 @@ export const callFlowDetail: CallFlowDetail = {
 export const verificationQuestions: VerificationQuestion[] = [
   {
     id: 'verify-001',
-    question: "What is your mother's last name?",
+    question: 'Mohon sebutkan nama gadis ibu kandung Anda.',
     answer: 'Santoso',
   },
   {
     id: 'verify-002',
-    question: 'What is your registered place of birth?',
+    question: 'Mohon sebutkan tempat lahir yang terdaftar pada data nasabah.',
     answer: 'Jakarta',
   },
   {
     id: 'verify-003',
-    question: 'What is the last four digits of your primary savings account?',
+    question: 'Mohon sebutkan empat digit terakhir nomor rekening tabungan utama Anda.',
     answer: '8987',
   },
   {
     id: 'verify-004',
-    question: 'What is your registered billing postal code?',
+    question: 'Mohon sebutkan kode pos alamat penagihan yang terdaftar.',
     answer: '12190',
   },
   {
     id: 'verify-005',
-    question: 'Which branch opened your customer profile?',
-    answer: 'BCA Sudirman Main Branch',
+    question: 'Mohon sebutkan kantor cabang pembukaan profil nasabah Anda.',
+    answer: 'KCU BANK 1 Sudirman',
   },
   {
     id: 'verify-006',
-    question: 'What is your latest card transaction merchant category?',
+    question: 'Mohon sebutkan kategori merchant transaksi kartu terakhir Anda.',
     answer: 'Supermarket',
   },
   {
     id: 'verify-007',
-    question: 'What is the mobile number registered for banking alerts?',
+    question: 'Mohon sebutkan nomor ponsel yang terdaftar untuk notifikasi perbankan.',
     answer: '087825100234',
   },
   {
     id: 'verify-008',
-    question: 'What is the email address registered in CRM?',
+    question: 'Mohon sebutkan alamat email yang terdaftar pada data nasabah.',
     answer: 'Dimas@gmail.com',
   },
   {
     id: 'verify-009',
-    question: 'What is your customer segment in CRM?',
-    answer: 'Priority Customer',
+    question: 'Mohon sebutkan segmen nasabah Anda yang terdaftar di sistem kami.',
+    answer: 'Nasabah Prioritas',
   },
   {
     id: 'verify-010',
-    question: 'What is your last successful service request type?',
-    answer: 'Card Unlock',
+    question: 'Mohon sebutkan jenis permintaan layanan terakhir yang berhasil diproses.',
+    answer: 'Pembukaan Blokir Kartu',
   },
 ]
 
@@ -468,61 +468,61 @@ export const customerJourney: CustomerJourneyItem[] = [
 export const ticketingHistory: TicketHistoryItem[] = [
   {
     id: 'ticket-001',
-    ticketType: 'Debit Card Block',
+    ticketType: 'Blokir Kartu Debit',
     ticketNumber: 'CRM000145',
     createdDate: '24 Sep',
   },
   {
     id: 'ticket-002',
-    ticketType: 'Lost Card Report',
+    ticketType: 'Laporan Kartu Hilang',
     ticketNumber: 'CRM000146',
     createdDate: '13 Oct',
   },
   {
     id: 'ticket-003',
-    ticketType: 'Customer Data Correction',
+    ticketType: 'Koreksi Data Nasabah',
     ticketNumber: 'CRM000147',
     createdDate: '29 Oct',
   },
   {
     id: 'ticket-004',
-    ticketType: 'Mobile Banking Activation',
+    ticketType: 'Aktivasi Mobile Banking',
     ticketNumber: 'CRM000148',
     createdDate: '03 Nov',
   },
   {
     id: 'ticket-005',
-    ticketType: 'Card PIN Reset',
+    ticketType: 'Reset PIN Kartu',
     ticketNumber: 'CRM000149',
     createdDate: '11 Nov',
   },
   {
     id: 'ticket-006',
-    ticketType: 'Transaction Cancellation',
+    ticketType: 'Pembatalan Transaksi',
     ticketNumber: 'CRM000150',
     createdDate: '19 Nov',
   },
   {
     id: 'ticket-007',
-    ticketType: 'Card Replacement',
+    ticketType: 'Penggantian Kartu',
     ticketNumber: 'CRM000151',
     createdDate: '28 Nov',
   },
   {
     id: 'ticket-008',
-    ticketType: 'Limit Increase',
+    ticketType: 'Kenaikan Limit',
     ticketNumber: 'CRM000152',
     createdDate: '05 Dec',
   },
   {
     id: 'ticket-009',
-    ticketType: 'Promotion Claim',
+    ticketType: 'Klaim Promosi',
     ticketNumber: 'CRM000153',
     createdDate: '14 Dec',
   },
   {
     id: 'ticket-010',
-    ticketType: 'Address Update',
+    ticketType: 'Perubahan Alamat',
     ticketNumber: 'CRM000154',
     createdDate: '22 Dec',
   },
@@ -531,26 +531,22 @@ export const ticketingHistory: TicketHistoryItem[] = [
 export const nextBestActions: NextBestActionItem[] = [
   {
     id: 'nba-001',
-    recommendedService: 'Mastercard Credit Card Activation',
-    createdDate: '22 Dec',
+    recommendedService: 'Aktivasi Kartu Kredit Mastercard',
     crmLink: '/crm/recommendations/mastercard-activation',
   },
   {
     id: 'nba-002',
-    recommendedService: 'Mortgage Application',
-    createdDate: '14 Dec',
+    recommendedService: 'Pengajuan KPR',
     crmLink: '/crm/recommendations/mortgage-application',
   },
   {
     id: 'nba-003',
-    recommendedService: 'Priority Savings Review',
-    createdDate: '05 Dec',
+    recommendedService: 'Upgrade Limit',
     crmLink: '/crm/recommendations/priority-savings',
   },
   {
     id: 'nba-004',
-    recommendedService: 'Travel Insurance Bundle',
-    createdDate: '28 Nov',
+    recommendedService: 'Aktivasi BANK 1 Mobile',
     crmLink: '/crm/recommendations/travel-insurance',
   },
 ]
@@ -558,27 +554,27 @@ export const nextBestActions: NextBestActionItem[] = [
 export const quickActions: QuickActionItem[] = [
   {
     id: 'quick-001',
-    label: 'Unblock ABC ID',
+    label: 'Buka Blokir BANK 1 ID',
     crmLink: '/crm/quick-actions/unblock-abc-id',
   },
   {
     id: 'quick-002',
-    label: 'Two Questions',
+    label: 'Verifikasi Dua Pertanyaan',
     crmLink: '/crm/quick-actions/two-questions',
   },
   {
     id: 'quick-003',
-    label: 'Card Replacement',
+    label: 'Penggantian Kartu',
     crmLink: '/crm/quick-actions/card-replacement',
   },
   {
     id: 'quick-004',
-    label: 'Five Questions',
+    label: 'Verifikasi Lima Pertanyaan',
     crmLink: '/crm/quick-actions/five-questions',
   },
   {
     id: 'quick-005',
-    label: 'Card Replacement Guide',
+    label: 'Panduan Penggantian Kartu',
     crmLink: '/crm/quick-actions/card-replacement-guide',
   },
 ]

@@ -1,9 +1,9 @@
 import {
   AudioOutlined,
   MessageOutlined,
-  PhoneOutlined,
 } from '@ant-design/icons'
 import { Tag } from 'antd'
+import { PhoneIcon } from '../../../components'
 import type { AccessChannel, JourneyChannel } from '../../../types'
 
 type ChannelTagValue = AccessChannel | JourneyChannel
@@ -30,7 +30,7 @@ const channelDisplayLabels: Partial<Record<ChannelTagValue, string>> = {
 
 function renderIcon(value: ChannelTagValue) {
   if (value === 'Phone') {
-    return <PhoneOutlined />
+    return <PhoneIcon />
   }
 
   if (value.includes('Voice')) {

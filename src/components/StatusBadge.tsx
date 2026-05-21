@@ -5,10 +5,10 @@ import {
   ExclamationCircleOutlined,
   MinusCircleOutlined,
   PauseCircleOutlined,
-  PhoneOutlined,
 } from '@ant-design/icons'
 import { Tag } from 'antd'
 import type { ReactNode } from 'react'
+import { PhoneIcon } from './PhoneIcon'
 
 export type StatusBadgeStatus =
   | 'ready'
@@ -40,7 +40,7 @@ const defaultIcons: Partial<Record<StatusBadgeStatus, ReactNode>> = {
   ready: <CheckCircleOutlined />,
   'not-ready': <CloseCircleOutlined />,
   aux: <ExclamationCircleOutlined />,
-  talking: <PhoneOutlined />,
+  talking: <PhoneIcon />,
   hold: <PauseCircleOutlined />,
   mute: <AudioMutedOutlined />,
   verified: <CheckCircleOutlined />,

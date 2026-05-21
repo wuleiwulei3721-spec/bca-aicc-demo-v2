@@ -1,4 +1,4 @@
-import { BaseModal, TimelineFlow } from '../../../components'
+import { BaseButton, BaseModal, TimelineFlow } from '../../../components'
 import { callFlowDetail } from '../../../mock/inbound'
 
 interface CallFlowDetailModalProps {
@@ -20,9 +20,9 @@ export function CallFlowDetailModal({
       onCancel={onClose}
     >
       <div className="inbound-call-flow">
-        <section className="inbound-call-flow__section">
-          <div className="inbound-call-flow__section-header">
-            <span>IVR Journey</span>
+        <section className="aicc-modal-section inbound-call-flow__section">
+          <div className="aicc-modal-section__header inbound-call-flow__section-header">
+            <span className="aicc-modal-section__title">IVR Journey</span>
           </div>
           <TimelineFlow
             className="inbound-call-flow__steps"
@@ -35,10 +35,14 @@ export function CallFlowDetailModal({
         </section>
 
         {callFlowDetail.transferHistory.length > 0 ? (
-          <section className="inbound-call-flow__section inbound-call-flow__section--separated">
-            <div className="inbound-call-flow__section-header">
-              <span>Transfer History</span>
-              <strong>{callFlowDetail.transferHistory.length} records</strong>
+          <section className="aicc-modal-section inbound-call-flow__section">
+            <div className="aicc-modal-section__header inbound-call-flow__section-header">
+              <span className="aicc-modal-section__title">
+                Transfer History
+              </span>
+              <strong className="aicc-modal-section__meta">
+                {callFlowDetail.transferHistory.length} records
+              </strong>
             </div>
             <div className="inbound-call-flow__transfers">
               <div className="inbound-call-flow__transfer-head">
@@ -60,6 +64,9 @@ export function CallFlowDetailModal({
             </div>
           </section>
         ) : null}
+        <footer className="aicc-modal-footer inbound-call-flow__footer">
+          <BaseButton onClick={onClose}>Close</BaseButton>
+        </footer>
       </div>
     </BaseModal>
   )

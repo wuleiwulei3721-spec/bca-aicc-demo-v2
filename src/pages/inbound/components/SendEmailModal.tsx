@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Input } from 'antd'
-import { AppButton, BaseModal } from '../../../components'
+import { BaseButton, BaseModal } from '../../../components'
 
 const { TextArea } = Input
 
@@ -13,7 +13,7 @@ const emailTemplates = [
   {
     label: 'Credit Card Activation',
     message:
-      'Dear Customer, your credit card activation request has been recorded. Please follow the secure activation steps shared by BCA.',
+      'Dear Customer, your credit card activation request has been recorded. Please follow the secure activation steps shared by BANK 1.',
   },
   {
     label: 'Application Follow-up',
@@ -59,31 +59,42 @@ export function SendEmailModal({
       onCancel={handleClose}
     >
       <div className="inbound-send-email">
-        <label>
-          <span>To</span>
-          <Input readOnly value={customerEmail} />
-        </label>
-        <label>
-          <span>Subject</span>
-          <Input
-            placeholder="Enter email subject"
-            value={subject}
-            onChange={(event) => setSubject(event.target.value)}
-          />
-        </label>
-        <label>
-          <span>Message</span>
-          <TextArea
-            autoSize={{ minRows: 6, maxRows: 10 }}
-            placeholder="Type message to customer"
-            value={message}
-            onChange={(event) => setMessage(event.target.value)}
-          />
-        </label>
+        <section className="aicc-modal-section inbound-send-email__compose">
+          <div className="aicc-modal-section__header">
+            <span className="aicc-modal-section__title">Email Content</span>
+            <span className="aicc-modal-section__meta">Customer message</span>
+          </div>
+          <label>
+            <span>To</span>
+            <Input readOnly value={customerEmail} />
+          </label>
+          <label>
+            <span>Subject</span>
+            <Input
+              placeholder="Enter email subject"
+              value={subject}
+              onChange={(event) => setSubject(event.target.value)}
+            />
+          </label>
+          <label>
+            <span>Message</span>
+            <TextArea
+              autoSize={{ minRows: 6, maxRows: 10 }}
+              placeholder="Type message to customer"
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+            />
+          </label>
+        </section>
 
-        <section className="inbound-send-email__templates">
-          <span>Quick Templates</span>
-          <div>
+        <section className="aicc-modal-section inbound-send-email__templates">
+          <div className="aicc-modal-section__header">
+            <span className="aicc-modal-section__title">Quick Templates</span>
+            <span className="aicc-modal-section__meta">
+              {emailTemplates.length} templates
+            </span>
+          </div>
+          <div className="inbound-send-email__template-list">
             {emailTemplates.map((template) => (
               <button
                 key={template.label}
@@ -99,11 +110,11 @@ export function SendEmailModal({
           </div>
         </section>
 
-        <footer className="inbound-send-email__footer">
-          <AppButton onClick={handleClose}>Cancel</AppButton>
-          <AppButton type="primary" onClick={handleSend}>
+        <footer className="aicc-modal-footer inbound-send-email__footer">
+          <BaseButton onClick={handleClose}>Cancel</BaseButton>
+          <BaseButton type="primary" onClick={handleSend}>
             Send Email
-          </AppButton>
+          </BaseButton>
         </footer>
       </div>
     </BaseModal>

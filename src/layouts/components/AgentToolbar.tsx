@@ -5,14 +5,12 @@ import {
   DisconnectOutlined,
   EllipsisOutlined,
   PauseCircleOutlined,
-  PhoneOutlined,
-  SettingOutlined,
   SwapOutlined,
 } from '@ant-design/icons'
 import { Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
 import { useEffect, useState } from 'react'
-import { ToolbarButton } from '../../components'
+import { PhoneIcon, ToolbarButton } from '../../components'
 import type { AgentStatus, CallStatus } from '../../types'
 import { OutboundCallModal } from './OutboundCallModal'
 import { ToolbarSettingsModal } from './ToolbarSettingsModal'
@@ -77,13 +75,8 @@ export function AgentToolbar({
   const moreItems: MenuProps['items'] = [
     {
       key: 'outbound-call',
-      icon: <PhoneOutlined />,
+      icon: <PhoneIcon />,
       label: 'Outbound Call',
-    },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: 'Settings',
     },
   ]
 
@@ -104,7 +97,7 @@ export function AgentToolbar({
           <ToolbarButton
             disabled={!isIncoming}
             flashing={isIncoming}
-            icon={<PhoneOutlined />}
+            icon={<PhoneIcon />}
             tone={isIncoming ? 'incoming' : 'default'}
             onClick={onAnswer}
           >

@@ -1,5 +1,6 @@
 import type {
   CustomerInformation,
+  CrmWorkspaceTab,
   CustomerJourneyItem,
   NextBestActionItem,
   QuickActionItem,
@@ -17,7 +18,7 @@ interface LeftColumnProps {
   tickets: TicketHistoryItem[]
   nextBestActions: NextBestActionItem[]
   quickActions: QuickActionItem[]
-  onOpenCrm: (link: string) => void
+  onOpenCrm: (tab: CrmWorkspaceTab) => void
 }
 
 export function LeftColumn({

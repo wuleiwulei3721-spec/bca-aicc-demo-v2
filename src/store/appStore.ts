@@ -3,10 +3,12 @@ import { create } from 'zustand'
 interface AppState {
   activeWorkspaceTabKey: string
   collapsed: boolean
+  customerOutboundCallRequestId: number
   isInboundTabOpen: boolean
   inboundPopupRequestId: number
   closeInboundTab: () => void
   requestInboundPopup: () => void
+  requestCustomerOutboundCall: () => void
   setActiveWorkspaceTabKey: (tabKey: string) => void
   setCollapsed: (collapsed: boolean) => void
 }
@@ -14,6 +16,7 @@ interface AppState {
 export const useAppStore = create<AppState>((set) => ({
   activeWorkspaceTabKey: 'home',
   collapsed: false,
+  customerOutboundCallRequestId: 0,
   isInboundTabOpen: false,
   inboundPopupRequestId: 0,
   closeInboundTab: () =>
@@ -26,6 +29,11 @@ export const useAppStore = create<AppState>((set) => ({
       activeWorkspaceTabKey: 'inbound',
       isInboundTabOpen: true,
       inboundPopupRequestId: state.inboundPopupRequestId + 1,
+    })),
+  requestCustomerOutboundCall: () =>
+    set((state) => ({
+      customerOutboundCallRequestId:
+        state.customerOutboundCallRequestId + 1,
     })),
   setActiveWorkspaceTabKey: (tabKey) =>
     set({

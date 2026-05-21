@@ -110,7 +110,7 @@ export function CustomerVerificationModal({
         })}
       </div>
 
-      <div className="inbound-verification-modal__footer">
+      <div className="aicc-modal-footer inbound-verification-modal__footer">
         <AppButton type="primary" onClick={() => onFinish('Verified')}>
           Verification Passed
         </AppButton>

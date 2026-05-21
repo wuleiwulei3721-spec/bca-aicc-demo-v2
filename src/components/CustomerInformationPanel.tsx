@@ -1,24 +1,34 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import {
+  CheckOutlined,
   ClockCircleOutlined,
   IdcardOutlined,
   MailOutlined,
-  PhoneOutlined,
 } from '@ant-design/icons'
 import { Avatar } from 'antd'
 import type { CustomerInformation, VerificationStatus } from '../types'
 import { BaseCard } from './BaseCard'
 import { BaseButton } from './BaseButton'
+import { PhoneIcon } from './PhoneIcon'
 import { StatusBadge } from './StatusBadge'
+
+export type CustomerOutboundRequestStatus =
+  | 'idle'
+  | 'requesting'
+  | 'approved'
 
 export interface CustomerInformationPanelProps {
   accessChannelNode?: ReactNode
   className?: string
   customer: CustomerInformation
+  headerExtra?: ReactNode
   onOpenCallFlow?: () => void
+  onRequestOutbound?: () => void
   onSendEmail?: () => void
+  onStartOutbound?: () => void
   onVerify?: () => void
+  outboundRequestStatus?: CustomerOutboundRequestStatus
   verificationStatus?: VerificationStatus
 }
 
@@ -38,20 +48,35 @@ export function CustomerInformationPanel({
   accessChannelNode,
   className,
   customer,
+  headerExtra,
   onOpenCallFlow,
+  onRequestOutbound,
   onSendEmail,
+  onStartOutbound,
   onVerify,
+  outboundRequestStatus = 'idle',
   verificationStatus,
 }: CustomerInformationPanelProps) {
   const [internalVerificationStatus] = useState(customer.verificationStatus)
   const status = verificationStatus ?? internalVerificationStatus
   const badge = verificationBadge(status)
   const { profile } = customer
+  const outboundRequestLabel =
+    outboundRequestStatus === 'requesting'
+      ? 'Requesting...'
+      : outboundRequestStatus === 'approved'
+        ? 'Call'
+        : 'Request Outbound'
+  const handleOutboundClick =
+    outboundRequestStatus === 'approved'
+      ? onStartOutbound
+      : onRequestOutbound
 
   return (
     <BaseCard
       className={className}
       compact
+      headerExtra={headerExtra}
       title="Customer Information"
       tone="highlight"
     >
@@ -71,10 +96,43 @@ export function CustomerInformationPanel({
           <div className="aicc-customer-info__main">
             <div className="aicc-customer-info__name">{profile.name}</div>
             <div className="aicc-customer-info__facts">
-              <span>
-                <PhoneOutlined />
-                {profile.phoneNumber}
-              </span>
+              <div
+                className={[
+                  'aicc-customer-info__phone-row',
+                  `aicc-customer-info__phone-row--${outboundRequestStatus}`,
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
+                <span className="aicc-customer-info__phone-value">
+                  <PhoneIcon />
+                  {profile.phoneNumber}
+                </span>
+                {(onRequestOutbound || onStartOutbound) && (
+                  <button
+                    className={[
+                      'aicc-customer-info__outbound-request',
+                      `aicc-customer-info__outbound-request--${outboundRequestStatus}`,
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                    disabled={
+                      outboundRequestStatus === 'requesting' ||
+                      !handleOutboundClick
+                    }
+                    title={
+                      outboundRequestStatus === 'approved'
+                        ? 'Start outbound call'
+                        : 'Request TL approval for outbound call'
+                    }
+                    type="button"
+                    onClick={handleOutboundClick}
+                  >
+                    {outboundRequestStatus === 'approved' && <CheckOutlined />}
+                    <span>{outboundRequestLabel}</span>
+                  </button>
+                )}
+              </div>
               <button
                 className="aicc-customer-info__fact-action"
                 title="Send email"

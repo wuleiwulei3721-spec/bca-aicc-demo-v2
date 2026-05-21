@@ -85,8 +85,14 @@ export function InternalChatModal({ open, onClose }: InternalChatModalProps) {
       width={880}
       onCancel={onClose}
     >
-      <div className="aicc-internal-chat">
+      <div className="aicc-modal-section aicc-modal-section--flush aicc-internal-chat">
         <aside className="aicc-internal-chat__list">
+          <header className="aicc-internal-chat__list-header">
+            <span className="aicc-modal-section__title">Agent Sessions</span>
+            <span className="aicc-modal-section__meta">
+              {filteredSessions.length} active
+            </span>
+          </header>
           <div className="aicc-internal-chat__search">
             <SearchInput
               placeholder="Search name or employee ID"

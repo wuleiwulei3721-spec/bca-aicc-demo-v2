@@ -5,7 +5,6 @@ import {
   DisconnectOutlined,
   MailOutlined,
   PauseCircleOutlined,
-  PhoneOutlined,
   SearchOutlined,
   SendOutlined,
   SettingOutlined,
@@ -21,6 +20,7 @@ import {
   BaseTabs,
   CustomerInformationPanel,
   PageContainer,
+  PhoneIcon,
   SearchInput,
   StatusBadge,
   TimelineFlow,
@@ -38,7 +38,8 @@ const colors = [
   ['Primary Blue', '#1769E0', 'Primary CTA, active toolbar, key links'],
   ['Gradient Blue', '#0B4FA8 to #1686CF', 'Global header, high-emphasis shell'],
   ['Background', '#F4F7FB', 'Application canvas'],
-  ['Card Background', '#FFFFFF', 'Cards, modals, panels'],
+  ['Card Background', '#FFFFFF', 'Cards, tables, modal body'],
+  ['Subtle Background', '#F8FBFF', 'Highlighted card body, empty state'],
   ['Border', '#DDE6F2', 'Card, table, form divider'],
   ['Hover', '#F3F8FF', 'Rows, buttons, selectable surfaces'],
   ['Active', '#DBEAFF', 'Pressed and focused controls'],
@@ -142,7 +143,7 @@ export function DesignSystem() {
   return (
     <PageContainer
       description="Unified UI rules and reusable components for Online Chat, Video Call, Dashboard, Admin, Supervisor, and future AICC modules."
-      eyebrow="BCA AICC"
+      eyebrow="BANK 1 AICC"
       title="UI Design System"
     >
       <div className="design-system-page">
@@ -198,7 +199,7 @@ export function DesignSystem() {
           <div className="design-component-grid">
             <BaseCard compact title="Button Variants">
               <Space size={8} wrap>
-                <BaseButton icon={<PhoneOutlined />} variant="primary">
+                <BaseButton icon={<PhoneIcon />} variant="primary">
                   Primary Button
                 </BaseButton>
                 <BaseButton icon={<SearchOutlined />}>Secondary Button</BaseButton>
@@ -288,7 +289,7 @@ export function DesignSystem() {
             <BaseCard compact title="Quick Action">
               <div className="inbound-quick-grid">
                 <button className="inbound-quick-action" type="button">
-                  Unblock ABC ID
+                  Unblock BANK 1 ID
                 </button>
                 <button className="inbound-quick-action" type="button">
                   Card Replacement
@@ -452,7 +453,7 @@ export function DesignSystem() {
 
         <DesignSection title="12. Toolbar System">
           <div className="design-toolbar-preview">
-            <ToolbarButton flashing icon={<PhoneOutlined />} tone="incoming">
+            <ToolbarButton flashing icon={<PhoneIcon />} tone="incoming">
               Answer
             </ToolbarButton>
             <ToolbarButton active icon={<PauseCircleOutlined />}>

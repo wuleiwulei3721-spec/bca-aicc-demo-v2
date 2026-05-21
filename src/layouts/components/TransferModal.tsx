@@ -91,8 +91,8 @@ function TransferAgentTab({ onComplete }: { onComplete: () => void }) {
   ]
 
   return (
-    <div className="aicc-transfer-panel">
-      <div className="aicc-transfer-search">
+    <div className="aicc-modal-section aicc-transfer-panel">
+      <div className="aicc-modal-toolbar aicc-transfer-search">
         <SearchInput
           placeholder="Search name or employee ID"
           value={keyword}
@@ -101,6 +101,9 @@ function TransferAgentTab({ onComplete }: { onComplete: () => void }) {
         <AppButton icon={<SearchOutlined />} type="primary">
           Search
         </AppButton>
+        <span className="aicc-transfer-search__meta">
+          {filteredAgents.length} agents
+        </span>
       </div>
       <AppTable<TransferAgent>
         columns={columns}
@@ -147,8 +150,8 @@ function TransferSkillTab({ onComplete }: { onComplete: () => void }) {
   ]
 
   return (
-    <div className="aicc-transfer-panel">
-      <div className="aicc-transfer-search">
+    <div className="aicc-modal-section aicc-transfer-panel">
+      <div className="aicc-modal-toolbar aicc-transfer-search">
         <SearchInput
           placeholder="Search skill name"
           value={keyword}
@@ -157,6 +160,9 @@ function TransferSkillTab({ onComplete }: { onComplete: () => void }) {
         <AppButton icon={<SearchOutlined />} type="primary">
           Search
         </AppButton>
+        <span className="aicc-transfer-search__meta">
+          {filteredSkills.length} skills
+        </span>
       </div>
       <AppTable<TransferSkill>
         columns={columns}
@@ -169,13 +175,19 @@ function TransferSkillTab({ onComplete }: { onComplete: () => void }) {
   )
 }
 
-function TransferNumberTab({ onComplete }: { onComplete: () => void }) {
+function TransferNumberTab({
+  onCancel,
+  onComplete,
+}: {
+  onCancel: () => void
+  onComplete: () => void
+}) {
   const [selectedNumber, setSelectedNumber] = useState<string>()
   const [manualNumber, setManualNumber] = useState('')
 
   return (
-    <div className="aicc-transfer-number">
-      <section>
+    <div className="aicc-modal-section aicc-transfer-number">
+      <section className="aicc-transfer-number__field">
         <span>System Number</span>
         <Select
           allowClear
@@ -196,7 +208,7 @@ function TransferNumberTab({ onComplete }: { onComplete: () => void }) {
           onChange={setSelectedNumber}
         />
       </section>
-      <section>
+      <section className="aicc-transfer-number__field">
         <span>Manual Number</span>
         <Input
           placeholder="Enter phone number"
@@ -204,7 +216,8 @@ function TransferNumberTab({ onComplete }: { onComplete: () => void }) {
           onChange={(event) => setManualNumber(event.target.value)}
         />
       </section>
-      <div className="aicc-transfer-number__actions">
+      <div className="aicc-modal-footer aicc-transfer-number__actions">
+        <AppButton onClick={onCancel}>Cancel</AppButton>
         <AppButton type="primary" onClick={onComplete}>
           Transfer
         </AppButton>
@@ -229,7 +242,7 @@ export function TransferModal({ open, onClose }: TransferModalProps) {
     {
       key: 'number',
       label: 'Transfer Number',
-      children: <TransferNumberTab onComplete={onClose} />,
+      children: <TransferNumberTab onCancel={onClose} onComplete={onClose} />,
     },
   ]
 

@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
 import { ArrowRightOutlined, DownOutlined } from '@ant-design/icons'
 import { Tag } from 'antd'
-import type { TicketHistoryItem } from '../../../types'
+import type { CrmWorkspaceTab, TicketHistoryItem } from '../../../types'
 import { SectionCard } from './SectionCard'
 
 interface TicketingHistoryCardProps {
   items: TicketHistoryItem[]
-  onOpenCrm: (link: string) => void
+  onOpenCrm: (tab: CrmWorkspaceTab) => void
 }
 
 const monthIndex: Record<string, number> = {
@@ -57,7 +57,17 @@ export function TicketingHistoryCard({
             className="inbound-compact-row inbound-ticket-row inbound-ticket-row--clickable"
             key={item.id}
             type="button"
-            onClick={() => onOpenCrm(`/crm/tickets/${item.ticketNumber}`)}
+            onClick={() =>
+              onOpenCrm({
+                key: `ticket-${item.ticketNumber}`,
+                title: item.ticketType,
+                kind: 'ticket',
+                crmLink: `/crm/tickets/${item.ticketNumber}`,
+                reference: item.ticketNumber,
+                description:
+                  'Detail tiket layanan nasabah yang dibuka dari riwayat ticketing.',
+              })
+            }
           >
             <span className="inbound-ticket-type">{item.ticketType}</span>
             <Tag className="inbound-neutral-tag">{item.ticketNumber}</Tag>

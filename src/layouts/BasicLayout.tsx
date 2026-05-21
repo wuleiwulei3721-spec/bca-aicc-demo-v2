@@ -3,12 +3,12 @@ import {
   MessageOutlined,
   CustomerServiceOutlined,
   DashboardOutlined,
-  PhoneOutlined,
 } from '@ant-design/icons'
 import { Badge, Layout, Menu } from 'antd'
 import type { MenuProps } from 'antd'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Outlet } from 'react-router-dom'
+import { PhoneIcon } from '../components'
 import { headerAgentProfile } from '../mock/agent'
 import { useAppStore } from '../store'
 import type { AgentStatus, CallStatus } from '../types'
@@ -47,13 +47,16 @@ const sideMenuItems: MenuProps['items'] = [
   },
   {
     key: 'voice',
-    icon: <PhoneOutlined />,
+    icon: <PhoneIcon />,
     label: 'Voice',
   },
 ]
 
 export function BasicLayout() {
   const requestInboundPopup = useAppStore((state) => state.requestInboundPopup)
+  const customerOutboundCallRequestId = useAppStore(
+    (state) => state.customerOutboundCallRequestId,
+  )
   const [agentStatus, setAgentStatus] = useState<AgentStatus>(
     headerAgentProfile.status,
   )
@@ -64,9 +67,10 @@ export function BasicLayout() {
   )
   const [callTiming, setCallTiming] =
     useState<CallTiming>(initialCallTiming)
-  const [autoAnswerSeconds, setAutoAnswerSeconds] = useState(5)
+  const [autoAnswerSeconds, setAutoAnswerSeconds] = useState(3)
   const [isInternalChatOpen, setIsInternalChatOpen] = useState(false)
   const [isAfterCallWork, setIsAfterCallWork] = useState(false)
+  const handledOutboundCallRequestIdRef = useRef(0)
 
   const updateAgentStatus = useCallback((status: AgentStatus) => {
     setAgentStatus(status)
@@ -119,16 +123,21 @@ export function BasicLayout() {
     updateAgentStatus(agentStatus === 'Ready' ? 'Not Ready' : 'Ready')
   }, [agentStatus, updateAgentStatus])
 
+  const startTalkingCall = useCallback(() => {
+    const now = Date.now()
+    setCallTiming({
+      ...initialCallTiming,
+      talkingStartedAt: now,
+    })
+    setIsAfterCallWork(false)
+    updateCallStatus('Talking')
+  }, [updateCallStatus])
+
   const handleAnswer = useCallback(() => {
     if (callStatus === 'Incoming') {
-      const now = Date.now()
-      setCallTiming({
-        ...initialCallTiming,
-        talkingStartedAt: now,
-      })
-      updateCallStatus('Talking')
+      startTalkingCall()
     }
-  }, [callStatus, updateCallStatus])
+  }, [callStatus, startTalkingCall])
 
   useEffect(() => {
     if (callStatus !== 'Incoming') {
@@ -136,16 +145,30 @@ export function BasicLayout() {
     }
 
     const timer = window.setTimeout(() => {
-      const now = Date.now()
-      setCallTiming({
-        ...initialCallTiming,
-        talkingStartedAt: now,
-      })
-      updateCallStatus('Talking')
+      startTalkingCall()
     }, autoAnswerSeconds * 1000)
 
     return () => window.clearTimeout(timer)
-  }, [autoAnswerSeconds, callStatus, updateCallStatus])
+  }, [autoAnswerSeconds, callStatus, startTalkingCall])
+
+  useEffect(() => {
+    if (
+      customerOutboundCallRequestId === 0 ||
+      handledOutboundCallRequestIdRef.current === customerOutboundCallRequestId
+    ) {
+      return
+    }
+
+    handledOutboundCallRequestIdRef.current = customerOutboundCallRequestId
+
+    if (agentStatus === 'Unsigned') {
+      return
+    }
+
+    const timer = window.setTimeout(startTalkingCall, 0)
+
+    return () => window.clearTimeout(timer)
+  }, [agentStatus, customerOutboundCallRequestId, startTalkingCall])
 
   const handleHoldToggle = useCallback(() => {
     const now = Date.now()
@@ -264,7 +287,7 @@ export function BasicLayout() {
     <Layout className="aicc-app-shell">
       <Header className="aicc-header">
         <div className="aicc-header__brand">
-          <span className="aicc-header__logo">BCA</span>
+          <span className="aicc-header__logo">BANK 1</span>
         </div>
         {isSignedIn && (
           <AgentToolbar

@@ -32,7 +32,7 @@ export function BaseModal({
 
   return (
     <Modal className={modalClassName} footer={footer} {...props}>
-      {children}
+      <div className="aicc-modal__body">{children}</div>
     </Modal>
   )
 }
