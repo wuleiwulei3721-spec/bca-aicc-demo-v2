@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { SearchOutlined } from '@ant-design/icons'
-import { Input, Select, Space, Tag } from 'antd'
+import { DownOutlined, SearchOutlined } from '@ant-design/icons'
+import { Dropdown, Input, Select, Space, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
+import type { MenuProps } from 'antd'
 import {
   AppButton,
   AppTable,
@@ -22,12 +23,31 @@ import type {
 
 interface TransferModalProps {
   open: boolean
+  variant?: TransferModalVariant
   onClose: () => void
 }
 
+type TransferModalVariant = 'call' | 'conversation'
+
+const callAgentActions = ['Consult', 'Transfer', 'Conference']
+const conversationPrimaryAgentActions = [
+  'Request Transfer',
+  'Request Conference',
+]
+const conversationOverflowAgentActions: MenuProps['items'] = [
+  {
+    key: 'force-transfer',
+    label: 'Force Transfer',
+  },
+  {
+    key: 'force-conference',
+    label: 'Force Conference',
+  },
+]
+
 function rowActions(actions: string[], onComplete: () => void) {
   return (
-    <Space size={4}>
+    <Space className="aicc-transfer-row-actions" size={4}>
       {actions.map((action) => (
         <AppButton key={action} size="small" onClick={onComplete}>
           {action}
@@ -37,7 +57,41 @@ function rowActions(actions: string[], onComplete: () => void) {
   )
 }
 
-function TransferAgentTab({ onComplete }: { onComplete: () => void }) {
+function ConversationAgentActions({ onComplete }: { onComplete: () => void }) {
+  return (
+    <div className="aicc-transfer-agent-actions">
+      {conversationPrimaryAgentActions.map((action) => (
+        <AppButton key={action} size="small" onClick={onComplete}>
+          {action}
+        </AppButton>
+      ))}
+      <Dropdown
+        menu={{
+          items: conversationOverflowAgentActions,
+          onClick: () => onComplete(),
+        }}
+        placement="bottomRight"
+        trigger={['click']}
+      >
+        <AppButton
+          aria-label="More transfer actions"
+          className="aicc-transfer-agent-actions__more"
+          icon={<DownOutlined />}
+          size="small"
+          title="More actions"
+        />
+      </Dropdown>
+    </div>
+  )
+}
+
+function TransferAgentTab({
+  variant,
+  onComplete,
+}: {
+  variant: TransferModalVariant
+  onComplete: () => void
+}) {
   const [keyword, setKeyword] = useState('')
 
   const filteredAgents = useMemo(() => {
@@ -85,8 +139,13 @@ function TransferAgentTab({ onComplete }: { onComplete: () => void }) {
     {
       key: 'actions',
       title: 'Actions',
-      width: 210,
-      render: () => rowActions(['Consult', 'Transfer', 'Conference'], onComplete),
+      width: variant === 'conversation' ? 286 : 250,
+      render: () =>
+        variant === 'conversation' ? (
+          <ConversationAgentActions onComplete={onComplete} />
+        ) : (
+          rowActions(callAgentActions, onComplete)
+        ),
     },
   ]
 
@@ -227,23 +286,33 @@ function TransferNumberTab({
   )
 }
 
-export function TransferModal({ open, onClose }: TransferModalProps) {
+export function TransferModal({
+  open,
+  variant = 'call',
+  onClose,
+}: TransferModalProps) {
   const items = [
     {
       key: 'agent',
       label: 'Transfer Agent',
-      children: <TransferAgentTab onComplete={onClose} />,
+      children: <TransferAgentTab variant={variant} onComplete={onClose} />,
     },
     {
       key: 'skill',
       label: 'Transfer Skill',
       children: <TransferSkillTab onComplete={onClose} />,
     },
-    {
-      key: 'number',
-      label: 'Transfer Number',
-      children: <TransferNumberTab onCancel={onClose} onComplete={onClose} />,
-    },
+    ...(variant === 'call'
+      ? [
+          {
+            key: 'number',
+            label: 'Transfer Number',
+            children: (
+              <TransferNumberTab onCancel={onClose} onComplete={onClose} />
+            ),
+          },
+        ]
+      : []),
   ]
 
   return (

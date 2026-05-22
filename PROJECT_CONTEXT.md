@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-05-21 23:40 +08:00
+最后更新：2026-05-22 18:55 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：`codex/interaction-popup-base` 作为非生产集成分支，暂存 PSTN / Voice Call、Video Call 与 Live Chat 三类弹屏入口；后续视频与文字弹屏详细页面优化从该分支继续拆分，`main` 未合并、未推送，客户正式环境不更新。
+当前目标：`codex/live-chat-detail` 继续优化 Live Chat 来电弹屏详情；本轮修复话务条 Transfer 按钮换行回归并移除 Conversation 顶部 Invite。
 
 ## 0. 使用规则
 
@@ -40,7 +40,7 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`codex/interaction-popup-base`
+当前分支：`codex/live-chat-detail`
 当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于非生产集成备份，未发布到 `main`
 部署目标：Vercel 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
@@ -108,7 +108,7 @@ codex-recovered-context.md
 - `src/pages/inbound/InboundPage.tsx`：PSTN / Voice Call 电话弹屏 wrapper。
 - `src/pages/inbound/VideoCallPage.tsx`：Video Call 弹屏 wrapper，复用三栏工作台并叠加 OpenEye 浮窗。
 - `src/pages/inbound/LiveChatPage.tsx`：Live Chat 固定页签页面，复用三栏工作台并增加文字聊天客户列表。
-- `src/pages/inbound/components/LiveChatCustomerList.tsx`：WhatsApp / Haloapps / Webchat 客户聊天列表，可收起展开。
+- `src/pages/inbound/components/LiveChatCustomerList.tsx`：WhatsApp / BankApp / Webchat 客户聊天列表，默认收起，支持 ALL 与渠道图标筛选，可收起展开。
 - `src/pages/DesignSystem.tsx`：设计系统展示页。
 - `src/store/appStore.ts`：workspace tab 与 inbound popup 全局状态。
 - `src/mock/inbound.ts`：Inbound 演示数据。
@@ -278,10 +278,25 @@ interface CrmWorkspaceTab {
 
 - 坐席 Sign In 后，Home tab 旁新增固定 `Live Chat` tab，不能关闭。
 - `LiveChatPage` 复用 `InteractionWorkspace`，在原三栏左侧增加 `LiveChatCustomerList`。
-- 客户列表展示 WhatsApp、Haloapps、Webchat 三个文字聊天渠道，支持 unread count、优先级、最后消息和最后消息时间。
-- 客户列表支持收起/展开；收起后保留头像与未读数，右侧仍保持 Customer Information、CRM、Assistant 三栏。
+- 客户列表默认收起；展开后顶部显示 ALL、WhatsApp、BankApp、Webchat 四个图标筛选按钮，hover 显示渠道名；渠道为多选，ALL 代表三渠道全选。
+- 客户列表行用渠道图标替代客户头像，并移除行内渠道 tag 与 High 优先级 tag，以降低列表行高度。
+- 客户列表支持收起/展开；收起后保留渠道图标与未读数，右侧仍保持 Customer Information、CRM、Assistant 三栏。
 - 切换客户后，Customer Information 的客户姓名、渠道、时长、验证状态会随选中聊天会话更新。
+- Live Chat 的 CRM 工作区在 `CRM` 右侧新增固定不可关闭 `Conversation` tab，默认进入 Live Chat 时选中 Conversation。
+- `Conversation` tab 顶部为浅色工具头，左侧按“渠道图标 -> 客户姓名 -> 无外框聊天计时”排列；渠道图标复用客户列表行 `live-chat-channel-icon--customer` 视觉重量，只显示图形，`title` / `aria-label` 显示渠道名；右侧仅显示轻量 `Transfer` 图标 + 文案，以及与相邻图标对齐的红色叉号结束按钮。
+- 点击 `Conversation` 顶部 `Transfer` 会打开复用的 Transfer 弹框 conversation 变体：仅有 `Transfer Agent` / `Transfer Skill`；Agent 行默认显示 `Request Transfer`、`Request Conference` 和更多下箭头；下拉菜单提供 `Force Transfer`、`Force Conference`；Skill tab 保持话务条原 `Transfer` 动作。
+- 点击 `End Service` 会打开二次确认框，确认后从当前 Live Chat 客户列表关闭该客户，并自动切到下一个可用客户。
+- `Conversation` tab 不再使用内部深色 header；中部和底部发送区沿用现有浅色 workspace surface，仅通过边线区分层级。
+- `Conversation` tab 中部展示客户、历史坐席和当前坐席的文字会话记录；切换左侧客户列表时聊天内容同步切换。消息时间移到气泡外上方；客户消息左侧只显示头像、时间和内容，不展示客户姓名或 `Customer` 字样；历史坐席消息左侧显示中性灰蓝气泡、坐席姓名和时间，不再展示 `Previous Agent`；当前坐席消息右侧只显示时间和浅 BANK 1 蓝气泡，不展示 `You`。
+- `Conversation` tab 下方提供发送信息框，底部只保留表情、文件和 Send；发送区内部不再使用额外线框分割。发送后会在当前会话追加当前坐席消息，并更新客户列表最后消息。
+- Live Chat WhatsApp 客户使用本地生成的女生头像；BankApp 与 Webchat 客户按未上传头像处理，显示姓名首字母默认头像。
+- Customer Information 中 `Regular Customer` 不显示客户级别 badge，`Priority Customer` 仍显示为 `Priority`。
+- Customer Information 邮箱行允许长邮箱换行，邮箱图标不再被压缩。
+- Customer Information 邮箱 hover/focus 时会高亮并下划线提示可点击。
+- Customer Information 外呼申请状态按当前客户 key 隔离，Live Chat 切换客户时不会把一个客户的外呼申请状态带到其它客户。
+- Webchat 的 Customer Information 渠道标识使用与客户列表 Webchat 图标一致的橙色系。
 - 文字聊天渠道不显示 IVR Journey；`Call Flow Detail` 仅保留可用的非 IVR 内容。
+- 内部 mock 仍使用 `Haloapps` channel key，界面展示统一为 `BankApp`，BankApp 图标与 Contact Management 面板中的 Mobile icon 风格保持一致。
 
 ## 7. 设计系统
 
@@ -347,8 +362,11 @@ Inbound 当前主要数据：
 Live Chat 当前 mock：
 
 - `liveChatSessions` 位于 `src/mock/inbound.ts`。
-- 当前包含 WhatsApp、Haloapps、Webchat 三个文字聊天会话。
-- 每个会话包含 `LiveChatSession` 类型字段：channel、customer、intent、lastMessage、lastMessageTime、priority、unreadCount。
+- 当前包含 WhatsApp、Haloapps、Webchat 三个文字聊天会话；Haloapps 在用户可见 UI 中展示为 BankApp。
+- 每个会话包含 `LiveChatSession` 类型字段：channel、customer、conversation、intent、lastMessage、lastMessageTime、priority、unreadCount。
+- `conversation` 使用 `LiveChatConversationMessage[]`，区分 customer、历史 agent、当前 agent，用于 `Conversation` tab 的实时会话演示。
+- WhatsApp 会话的客户头像使用 `public/avatars/whatsapp-customer-female.png`。
+- BankApp 与 Webchat 会话的 `profile.avatarUrl` 为空，使用 `avatarInitials` 显示默认头像；两者 `customerType` 为 `Regular Customer`，因此不显示客户级别。
 
 当前语言状态：
 
@@ -372,7 +390,8 @@ Live Chat 当前 mock：
 - PSTN / Voice Call 菜单点击触发电话来电逻辑。
 - Video Call 菜单点击触发视频来电 tab，复用电话弹屏三栏内容。
 - Sign In 后自动显示固定不可关闭 Live Chat tab。
-- Live Chat 页面复用 `InteractionWorkspace`，新增可收起客户文字聊天列表，支持 WhatsApp、Haloapps、Webchat 会话切换。
+- Live Chat 页面复用 `InteractionWorkspace`，新增默认收起的客户文字聊天列表，支持 ALL、WhatsApp、BankApp、Webchat 图标筛选和会话切换。
+- Live Chat 的 CRM 工作区新增固定不可关闭 `Conversation` tab，支持按客户联动历史会话、消息发送和结束服务确认关闭客户。
 - OpenEye 独立客户端截图浮窗模拟，使用 `public/screenshots/openeye-video-call.png`，仅视频通话接通后显示，挂断或关闭 Video Call tab 后隐藏。
 - 坐席状态机。
 - 话务状态机。
@@ -383,6 +402,8 @@ Live Chat 当前 mock：
 - Internal Chat Modal。
 - Toolbar Settings Modal。
 - Customer Information。
+- `CustomerInformationPanel` 支持空头像首字母兜底、普通客户隐藏级别、长邮箱换行、固定邮箱图标宽度和邮箱 hover/focus 可点击高亮。
+- `CustomerInformationCard` 的外呼申请状态按客户隔离，不再由当前卡片实例的单个状态影响所有切换后的客户。
 - Customer Verification Modal。
 - Call Flow Detail Modal。
 - Customer Journey Detail。
@@ -403,56 +424,162 @@ Live Chat 当前 mock：
 
 ## 10. 当前开发状态
 
-截至 2026-05-21 23:40 +08:00，当前工作已切到 `codex/interaction-popup-base` 非生产集成分支。该分支承接 `codex/videocall-popup` 的视频弹屏与 Live Chat 框架成果，用于后续继续拆分视频来电详情和文字弹屏详情优化；`main` 未合并、未推送，客户正式环境不更新。
+截至 2026-05-22 18:28 +08:00，当前工作在 `codex/live-chat-detail` 分支继续优化 Live Chat 详情页。`main` 未合并、未推送，客户正式环境不更新。
 
 当前 `git status --short --branch` 主要状态：
 
 ```text
-## codex/interaction-popup-base
+## codex/live-chat-detail...origin/codex/live-chat-detail
 M .codex-backup/key-prompts.md
 M DEV_LOG.md
 M PROJECT_CONTEXT.md
-M src/layouts/BasicLayout.tsx
+M src/components/CustomerInformationPanel.tsx
 M src/mock/inbound.ts
-M src/pages/AgentWorkspace.tsx
-M src/pages/inbound/InboundPage.tsx
-M src/pages/inbound/components/CallFlowDetailModal.tsx
-M src/pages/inbound/components/ChannelTag.tsx
+M src/pages/inbound/InteractionWorkspace.tsx
+M src/pages/inbound/LiveChatPage.tsx
+M src/layouts/components/TransferModal.tsx
 M src/pages/inbound/components/CustomerInformationCard.tsx
-M src/pages/inbound/index.ts
-M src/store/appStore.ts
+M src/pages/inbound/components/ChannelTag.tsx
+M src/pages/inbound/components/CrmPanel.tsx
+M src/pages/inbound/components/ContactManagementModal.tsx
+M src/pages/inbound/components/LiveChatCustomerList.tsx
+M src/pages/inbound/components/contactManagementData.ts
 M src/styles/index.less
 M src/types/inbound.ts
-?? .codex-backup/context-snapshot-2026-05-21-1801.md
-?? .codex-backup/context-snapshot-2026-05-21-1903.md
-?? .codex-backup/context-snapshot-2026-05-21-1933.md
-?? .codex-backup/context-snapshot-2026-05-21-2212.md
-?? .codex-backup/context-snapshot-2026-05-21-2301.md
-?? .codex-backup/current-todo-2026-05-21-1801.md
-?? .codex-backup/current-todo-2026-05-21-1903.md
-?? .codex-backup/current-todo-2026-05-21-1933.md
-?? .codex-backup/current-todo-2026-05-21-2212.md
-?? .codex-backup/current-todo-2026-05-21-2301.md
-?? .codex-backup/page-state-2026-05-21-1801.md
-?? .codex-backup/page-state-2026-05-21-1903.md
-?? .codex-backup/page-state-2026-05-21-1933.md
-?? .codex-backup/page-state-2026-05-21-2212.md
-?? .codex-backup/page-state-2026-05-21-2301.md
-?? public/screenshots/openeye-video-call.png
-?? src/pages/inbound/InteractionWorkspace.tsx
-?? src/pages/inbound/LiveChatPage.tsx
-?? src/pages/inbound/VideoCallPage.tsx
-?? src/pages/inbound/components/LiveChatCustomerList.tsx
-?? src/pages/inbound/components/OpenEyeVideoWindow.tsx
+?? src/pages/inbound/components/ConversationWorkspace.tsx
+?? .codex-backup/context-snapshot-2026-05-22-0102.md
+?? .codex-backup/context-snapshot-2026-05-22-0128.md
+?? .codex-backup/context-snapshot-2026-05-22-1145.md
+?? .codex-backup/context-snapshot-2026-05-22-1158.md
+?? .codex-backup/context-snapshot-2026-05-22-1209.md
+?? .codex-backup/context-snapshot-2026-05-22-1219.md
+?? .codex-backup/context-snapshot-2026-05-22-1253.md
+?? .codex-backup/context-snapshot-2026-05-22-1310.md
+?? .codex-backup/context-snapshot-2026-05-22-1552.md
+?? .codex-backup/context-snapshot-2026-05-22-1620.md
+?? .codex-backup/context-snapshot-2026-05-22-1650.md
+?? .codex-backup/context-snapshot-2026-05-22-1717.md
+?? .codex-backup/context-snapshot-2026-05-22-1733.md
+?? .codex-backup/context-snapshot-2026-05-22-1748.md
+?? .codex-backup/context-snapshot-2026-05-22-1828.md
+?? .codex-backup/current-todo-2026-05-22-0102.md
+?? .codex-backup/current-todo-2026-05-22-0128.md
+?? .codex-backup/current-todo-2026-05-22-1145.md
+?? .codex-backup/current-todo-2026-05-22-1158.md
+?? .codex-backup/current-todo-2026-05-22-1209.md
+?? .codex-backup/current-todo-2026-05-22-1219.md
+?? .codex-backup/current-todo-2026-05-22-1253.md
+?? .codex-backup/current-todo-2026-05-22-1310.md
+?? .codex-backup/current-todo-2026-05-22-1552.md
+?? .codex-backup/current-todo-2026-05-22-1620.md
+?? .codex-backup/current-todo-2026-05-22-1650.md
+?? .codex-backup/current-todo-2026-05-22-1717.md
+?? .codex-backup/current-todo-2026-05-22-1733.md
+?? .codex-backup/current-todo-2026-05-22-1748.md
+?? .codex-backup/current-todo-2026-05-22-1828.md
+?? .codex-backup/page-state-2026-05-22-0102.md
+?? .codex-backup/page-state-2026-05-22-0128.md
+?? .codex-backup/page-state-2026-05-22-1145.md
+?? .codex-backup/page-state-2026-05-22-1158.md
+?? .codex-backup/page-state-2026-05-22-1209.md
+?? .codex-backup/page-state-2026-05-22-1219.md
+?? .codex-backup/page-state-2026-05-22-1253.md
+?? .codex-backup/page-state-2026-05-22-1310.md
+?? .codex-backup/page-state-2026-05-22-1552.md
+?? .codex-backup/page-state-2026-05-22-1620.md
+?? .codex-backup/page-state-2026-05-22-1650.md
+?? .codex-backup/page-state-2026-05-22-1717.md
+?? .codex-backup/page-state-2026-05-22-1733.md
+?? .codex-backup/page-state-2026-05-22-1748.md
+?? .codex-backup/page-state-2026-05-22-1828.md
+?? public/avatars/
 ```
 
-当前 tracked diff 统计包含本分支历史未提交改动与本轮 Live Chat 调整：
+本轮 Customer Information 卡片调整：
 
-```text
-14 files changed, 960 insertions(+), 154 deletions(-)
-```
+- 恢复邮箱 hover/focus 可点击标识：邮箱文字在悬浮或键盘聚焦时变为主蓝色并显示下划线。
+- 外呼申请状态从单个 `outboundRequestStatus` 调整为按 `accessChannel + CIS + phoneNumber` 组成的客户 key 存储；Live Chat 切换客户后，申请中或已批准状态只属于发起申请的客户。
+- WhatsApp Live Chat 会话的客户头像改为本地生成的女生客户头像 `public/avatars/whatsapp-customer-female.png`，不影响 PSTN 默认客户头像。
+- BankApp 和 Webchat Live Chat 客户按未上传头像处理，`CustomerInformationPanel` 对空 `avatarUrl` 使用 `avatarInitials` 显示默认头像。
+- `CustomerInformationPanel` 对 `Regular Customer` 不渲染客户级别；`Priority Customer` 仍显示 `Priority`，其它非空客户类型继续显示原值。
+- Customer Information 邮箱按钮改为图标 + 可换行文本结构，长邮箱可换行且邮箱图标保持固定尺寸。
+- Webchat 的 `ChannelTag` 样式改为橙色系，与 Live Chat 客户列表 Webchat 图标保持一致。
 
-本轮业务改动：
+本轮 Conversation 页签新增：
+
+- `src/pages/inbound/components/ConversationWorkspace.tsx` 新增实时对话工作区，作为 Live Chat CRM 面板里的固定 `Conversation` tab 内容。
+- `src/pages/inbound/components/CrmPanel.tsx` 支持在 `CRM` tab 右侧插入不可关闭的 `Conversation` tab；该 tab 仅在 Live Chat 传入 conversation 配置时出现。
+- `src/pages/inbound/InteractionWorkspace.tsx` 支持传入 Live Chat conversation 配置，并在 Live Chat 默认选中 `Conversation` tab；PSTN / Voice Call 与 Video Call 仍默认选中 `CRM`。
+- `src/pages/inbound/LiveChatPage.tsx` 新增会话消息、客户关闭和发送消息的前端演示状态；关闭当前客户后会从列表移除并切换到下一个可用客户。
+- `src/types/inbound.ts` 新增 `LiveChatConversationMessage`，`LiveChatSession` 新增 `conversation` 字段。
+- `src/mock/inbound.ts` 为 WhatsApp、BankApp、Webchat 三个 Live Chat 客户补充客户与历史坐席会话记录。
+- `src/styles/index.less` 新增 Conversation 页签、消息气泡、发送框、结束服务确认和无会话空态样式。
+
+本轮 Conversation 二次精简：
+
+- 仅调整 `ConversationWorkspace.tsx` 与 `src/styles/index.less` 中 `.live-chat-conversation*` 相关样式。
+- Conversation 顶部左侧展示客户姓名、无外框本地递增聊天计时和渠道标签；右侧展示无边框常规字重的 Transfer/Invite 文本按钮和红色叉号结束按钮。
+- Transfer、Invite、End Service 从底部发送区移回顶部工具条；底部发送区只保留消息输入、表情、附件和 Send。
+- 消息区改为气泡外上方显示时间：客户消息只显示时间；历史坐席消息显示坐席姓名和时间；当前坐席消息只显示时间，不再显示 `You`。
+- 客户/历史坐席仍在左侧，当前坐席仍在右侧；历史坐席使用中性灰蓝交接记录样式，当前坐席使用浅 BANK 1 蓝气泡。
+- 保留消息区自动滚动到底部的 DOM 同步，避免发送后的当前坐席消息被发送框遮挡或显示不完整。
+- 本轮未修改客户列表、Customer Information、CRM 截图、Assistant、渠道筛选或其它 Conversation 以外 UI。
+
+本轮 Conversation 顶部三次调整：
+
+- 仅调整 `ConversationWorkspace.tsx` 的顶部工具条和 `src/styles/index.less` 中 Conversation header 相关样式，不修改中部消息区、底部发送区、客户列表、Customer Information、CRM 或 Assistant。
+- 顶部左侧顺序改为“渠道图标 -> 客户姓名 -> 计时”。渠道图标复用客户列表同款 `live-chat-channel-icon` 与 WhatsApp / BankApp / Webchat modifier，只显示图标，鼠标悬浮和辅助读屏使用渠道名。
+- 顶部右侧 `Transfer` / `Invite` 恢复 `SwapOutlined` / `UserAddOutlined` 图标，保持无边框、低强调、常规字重的 icon + text 按钮。
+- 结束服务按钮由圆圈叉改为 `CloseOutlined` 单独叉号，尺寸放大、红色显示，不显示文字，并保留 `aria-label`、`title` 和二次确认弹窗。
+
+本轮 Conversation 顶部视觉校准：
+
+- 仅调整 `ConversationWorkspace.tsx` 顶部渠道图标 class，以及 `src/styles/index.less` 中 Conversation header actions / End Service 相关样式。
+- Conversation 顶部渠道图标额外复用客户列表行同款 `live-chat-channel-icon--customer`，让图标尺寸和视觉重量与客户列表客户行保持一致；未新增或覆盖第二套渠道颜色。
+- `Transfer` / `Invite` hover/focus 从局部硬编码 `#eef6ff` / `--aicc-primary-strong` 改为系统 token `--aicc-hover` / `--aicc-primary`，避免 hover 蓝色比 Conversation tab 选中态更重。
+- End Service 叉号从 `18px` 调整为 `16px`，按钮盒统一回 `28px`，恢复浅红 hover/focus 背景块，确保与旁边两个操作图标对齐且保留危险操作语义。
+
+本轮 Conversation Transfer 弹框组件化：
+
+- `src/layouts/components/TransferModal.tsx` 增加 `variant?: 'call' | 'conversation'`，默认 `call`，确保话务条 Transfer 弹框保持三页签和原按钮不变。
+- `conversation` 变体隐藏 `Transfer Number` tab，只显示 `Transfer Agent` 与 `Transfer Skill`。
+- `Transfer Agent` 行操作在 conversation 变体中先实现为 `Request Transfer`、`Force Transfer`、`Request Invite`、`Force Invite`；后续已在 18:49 收纳为两个主操作加更多菜单。
+- `ConversationWorkspace` 顶部 `Transfer` 按钮接入 `<TransferModal variant="conversation" />`；顶部 `Invite` 按钮本轮仍保持展示按钮。
+- `src/styles/index.less` 增加 Transfer 行动作换行样式，避免四个动作按钮挤压表格。
+
+本轮 Conversation Transfer Agent 操作收纳：
+
+- `TransferModal` 的 `conversation` 变体新增专用 Agent 行动作：默认展示 `Request Transfer`、`Request Conference` 和下箭头，更多菜单提供 `Force Transfer`、`Force Conference`。
+- Conversation Transfer 弹框内将邀请语义统一到 `Conference`，不再使用 `Request Invite` / `Force Invite`；话务条 `call` 变体仍保留原 `Consult` / `Transfer` / `Conference`。
+- `Transfer Skill` 页签保持原搜索、表格和 `Transfer` 按钮；`Transfer Number` 仍只在话务条 call 变体中显示。
+- `src/styles/index.less` 新增单行 `.aicc-transfer-agent-actions` 与小箭头按钮样式，避免 Agent 表格行因长按钮换行导致行高过大。
+
+本轮 Conversation Invite 移除与话务条 Transfer 回归修复：
+
+- Conversation 顶部右侧移除 `Invite` 按钮与 `UserAddOutlined` 引用，仅保留 `Transfer` 与 End Service 叉号。
+- 修复话务条 `TransferModal` call 变体被 `.aicc-transfer-row-actions` 的 `wrap` 影响而出现三按钮换行的问题。
+- 通用 `rowActions` 改回单行布局，call 变体 Action 列宽调整为可容纳 `Consult` / `Transfer` / `Conference` 三个按钮；conversation 变体继续使用专用收纳动作。
+
+本轮 Live Chat 客户列表调整：
+
+- `LiveChatPage` 新增渠道过滤状态，客户列表默认收起。
+- `LiveChatCustomerList` 顶部改为 ALL、WhatsApp、BankApp、Webchat 四个图标筛选按钮，hover 显示文字；渠道支持多选，ALL 只有三渠道全选时高亮。
+- 客户列表行由客户头像改为渠道图标，移除行内渠道 tag 与 High tag，降低列表高度。
+- 收起态保持窄栏展示：上方为简洁箭头与 2x2 渠道筛选图标，下方保留渠道图标和未读数。
+- 客户列表面板采用更蓝的浅 BANK 1 蓝色调，与右侧白色工作区拉开视觉层级；未选中的筛选图标置灰，选中后恢复渠道色。
+- 普通客户行去掉背景色块，改为透明底与分隔线；只有 active 行使用白色背景强调当前会话。
+- 顶部渠道筛选按钮取消外层边框和外层选中框，点击区域放大，状态只通过图标自身颜色与透明度表达。
+- 顶部收起/展开按钮取消边框，默认弱化，面板 header 悬浮或按钮悬浮时才明显显示。
+- ALL 筛选改为双态：全选时点击 ALL 会取消全部渠道，非全选时点击 ALL 会恢复全部渠道。
+- 客户列表 active 行改为整行浅色选中，不再有左侧主色线或额外框；收起态客户列表列宽从 66px 收窄到 56px。
+- 客户列表 active 行背景进一步调浅，并铺满整个客户列表面板宽度，不再受列表容器左右 padding 限制。
+- 客户列表 hover 行与 selected 行背景再次调亮，选中和悬浮效果比上一版更浅白、更轻。
+- 客户列表未读数 badge 去掉 Ant Design 默认白色外描边。
+- Webchat 渠道图标改为橙色系，避免与 WhatsApp 绿色重复。
+- `ChannelTag` 将 `Haloapps` / `Haloapps Video` 的可见标签显示为 `BankApp`，并对 `Haloapps` 使用 Mobile icon。
+- Contact Management 面板中的 `Bankapp` 文案统一为 `BankApp`。
+
+上一轮业务改动：
 
 - `appStore` 新增 `isLiveChatTabOpen`、`setLiveChatTabOpen()`、`requestLiveChatWorkspace()`，签出时如当前停留在 Live Chat 会退回 Home。
 - `BasicLayout` 在坐席 Sign In 后打开 Live Chat 固定 tab，Sign Out 后移除；左侧 `Channel Simulation > Live Chat` 在已签入时切换到该 tab。
@@ -477,8 +604,29 @@ M src/types/inbound.ts
 
 - `npm run lint`：通过。
 - `npm run build`：通过，仍保留既有 Vite chunk size warning。
-- Browser smoke check `/`：签入后出现不可关闭 `Live Chat` tab；打开后可见 WhatsApp / Haloapps / Webchat 客户列表，切换 Sari Amelia 后 Customer Information 同步更新，客户列表收起后仍保留三栏内容。
-- Browser smoke check `/`：菜单顺序已确认为 `PSTN / Voice Call`、`Video Call`、`Live Chat`；点击 `PSTN / Voice Call` 后 workspace tab 文案同步显示为 `PSTN / Voice Call`。
+- Browser smoke check `/`：签入后出现不可关闭 `Live Chat` tab；默认客户列表为收起态，顶部可见 ALL、WhatsApp、BankApp、Webchat 图标筛选和展开箭头。
+- Browser smoke check `/`：展开客户列表后，客户行显示渠道图标、未读数、客户名、时间和最后消息；不再显示行内渠道 tag 或 High tag。
+- Browser smoke check `/`：点击 BankApp 筛选后仅显示 Sari Amelia，会同步更新 Customer Information，并确认 DOM 中不再出现 Haloapps 可见文案。
+- Browser smoke check `/`：默认 ALL 与三个渠道均为高亮；取消 Webchat 后 ALL 取消高亮、Webchat 置灰且 Rafi 从列表消失；点击 ALL 后恢复全渠道高亮和完整列表。
+- Browser visual check `/`：客户列表面板为更蓝的浅蓝色调，普通行透明底加分隔线，顶部筛选按钮无外层边框，收起按钮无边框且默认弱化。
+- Browser smoke check `/`：点击 ALL 可取消全部渠道并显示空列表；再次点击 ALL 恢复全部渠道；收起态列宽更窄且仍可显示图标和未读数。
+- Browser visual check `/`：active 客户行背景更浅，并横向铺满客户列表面板宽度。
+- Browser visual check `/`：selected 行与 hover 行背景再次调亮，其它客户列表面板效果保持不变。
+- Browser smoke/visual check `/`：Customer Information WhatsApp 客户显示新女生头像且保留 `Priority`；BankApp 与 Webchat 客户显示 `SA` / `RF` 默认头像并不显示客户级别。
+- Browser smoke/visual check `/`：Customer Information 邮箱图标保持固定尺寸；BankApp/Webchat 邮箱在窄卡片内正常显示；Webchat 渠道标识为橙色系。
+- Browser smoke check `/`：Live Chat 页面可签入并加载 Customer Information；邮箱按钮仍在 DOM 中作为可点击按钮呈现。
+- Browser smoke check `/`：签入并打开 Live Chat 后，CRM 工作区默认选中固定 `Conversation` tab，tab 无关闭按钮。
+- Browser smoke check `/`：展开客户列表并点击 Sari Amelia 后，Conversation 顶部客户名、历史会话和输入框均同步切换为 Sari Amelia。
+- Browser smoke check `/`：在 Sari Amelia Conversation 中发送消息后，消息追加为 Current Agent，客户列表最后消息与时间同步更新。
+- Browser smoke check `/`：点击 `End Service` 后出现二次确认框；确认后 Sari Amelia 从客户列表移除并自动切换到 Rafi Firmansyah。
+- Browser smoke check `/`：Conversation 顶部左侧显示“WhatsApp 图标 -> Dimas Abimanyu Prabowo -> 计时”，渠道图标在 DOM 中具备 `WhatsApp` 可访问名称；右侧 Transfer/Invite 显示图标 + 文字，结束服务为 `CloseOutlined` 叉号按钮。
+- Browser smoke check `/`：Conversation 顶部视觉校准后仍显示渠道图标、Transfer/Invite 图标与 End Service close 图标；End Service 点击仍打开确认弹窗。
+- Browser smoke check `/`：Conversation 顶部 `Transfer` 打开弹框；弹框无 `Transfer Number` tab；Agent 行默认显示 `Request Transfer`、`Request Conference` 和更多下箭头，不再出现 `Request Invite`；下拉菜单显示 `Force Transfer`、`Force Conference`，点击动作后弹框关闭。
+- Browser smoke check `/`：Conversation Transfer Skill tab 可见按钮仍为 `Transfer`，未显示 request/force Agent 动作。
+- Browser smoke check `/`：PSTN / Voice Call 进入通话后，话务条 Transfer 弹框仍保留 `Transfer Agent`、`Transfer Skill`、`Transfer Number` 三页签，并保留同一行 `Consult`、`Transfer`、`Conference` 原动作。
+- Browser smoke check `/`：Conversation 顶部 header 不再显示 `Invite`，仅保留 `Transfer` 与 End Service。
+- Browser smoke check `/`：Conversation 消息时间位于气泡外上方；客户消息不再显示客户姓名或 `Customer` 字样；历史坐席显示姓名和时间；当前坐席不再显示 `You`。
+- Browser smoke check `/`：End Service 点击后仍打开二次确认弹窗；本轮未确认关闭客户，以避免在顶部视觉复查时改变当前会话状态。
 - Browser smoke check `/design-system`：页面正常加载，标题为 `BANK 1 AICC Demo`。
 
 本次项目级 AI 规则创建新增或更新：
@@ -498,7 +646,8 @@ M src/types/inbound.ts
 - `PSTN / Voice Call` 触发来电后仍保留既有 `autoAnswerSeconds` 自动接听倒计时；如演示需要必须手动 Answer，需另行停用自动接听。
 - `Video Call` 当前为演示型弹屏和截图浮窗，不接真实 OpenEye 协议、不实现真实音视频能力。
 - `Live Chat` 当前为演示型固定工作台与静态 mock 会话，不接真实 WhatsApp / Haloapps / Webchat 消息网关，也不实现真实消息发送。
-- Live Chat 扩展为四列布局，虽然客户列表可收起，但仍需在目标演示分辨率下复查展开态是否会压缩三栏内容。
+- `Conversation` tab 的发送、Transfer、End Service 均为前端演示状态；Transfer 弹框 action 点击只关闭弹框，不接真实转移/会议流程；发送消息只存在于当前页面内存，刷新后恢复 mock 初始值。
+- Live Chat 扩展为四列布局，当前客户列表默认收起；仍需在目标演示分辨率下复查展开态是否会压缩三栏内容。
 - 关闭 Video Call tab 只隐藏 workspace 与 OpenEye 浮窗，不自动 Hang Up；Hang Up 会同步隐藏 OpenEye 浮窗。
 - 菜单搜索当前只在展开态显示，收起菜单时会清空搜索条件，避免影响收起态图标列表。
 - 收起态二级菜单浮层当前通过 CSS hover 打开，并通过 `closedFlyoutKey` 控制点击后关闭；如后续增加键盘导航，需要再补充键盘触发规则。
@@ -514,7 +663,8 @@ M src/types/inbound.ts
 
 P0：
 
-- 在目标演示分辨率下复查 Live Chat 展开态与收起态，确认客户列表不会让 Customer Information、CRM、Assistant 三栏不可用。
+- 在目标演示分辨率下复查 Live Chat 默认收起态、展开态与渠道过滤交互，确认客户列表不会让 Customer Information、CRM、Assistant 三栏不可用。
+- 在目标演示分辨率下复查 Conversation tab 的顶部轻量操作区、历史消息区和发送框，确认不会压缩 CRM/Assistant 三栏到不可用。
 - 在目标演示分辨率下复查左侧菜单展开态是否不会压缩 Inbound 三栏到不可用宽度。
 - 确认 Video Call 演示是否接受“关闭 tab 不自动 Hang Up”的行为；如需关闭页签即挂断，后续应统一调整 tab 与话务状态机关系。
 - 重新打开浏览器后检查 `/` 主 Workspace 是否恢复蓝色渐变 Header、旧版背景、Customer Information 卡片和话务条风格。
@@ -522,10 +672,12 @@ P0：
 - 确认 Inbound 三栏布局在目标演示分辨率下不溢出。
 - 确认 Ticketing / Next Best Action / Quick Action 能正确打开和关闭 CRM 动态 tab。
 - 确认 Contact Management 弹窗相关入口和数据状态。
+- 确认 `End Service` 关闭客户后的业务口径：是否只关闭文字会话，还是还需要同步 ACW / 工单 / 坐席状态。
 
 P1：
 
 - 确认最终语言策略：全英文、全印尼语，或英文 UI + 印尼语业务数据。
+- 明确顶部是否还需要独立会议/协作入口；当前 Conversation header 已移除 `Invite`，Transfer 弹框内已统一使用 `Conference` 语义。
 - 如后续重新处理 Modal/Dialog，必须先明确新的设计方向，避免再次影响主 Workspace 视觉体系。
 - 如演示必须使用真实系统图，补充已脱敏 BANK 1 CRM/Assistant 截图，再恢复图片加载策略。
 - 当前 dirty changes 验收后再 commit/push，并确认 `AGENTS.md`、上下文文档和备份文件是否一并纳入提交。

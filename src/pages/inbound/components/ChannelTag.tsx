@@ -2,6 +2,7 @@ import {
   AudioOutlined,
   GlobalOutlined,
   MessageOutlined,
+  MobileOutlined,
   VideoCameraOutlined,
   WhatsAppOutlined,
 } from '@ant-design/icons'
@@ -31,7 +32,8 @@ const channelClassNames: Record<string, string> = {
 }
 
 const channelDisplayLabels: Partial<Record<ChannelTagValue, string>> = {
-  'Haloapps Video': 'Haloapps',
+  'Haloapps Video': 'BankApp',
+  Haloapps: 'BankApp',
   Phone: 'PSTN',
 }
 
@@ -42,6 +44,10 @@ function renderIcon(value: ChannelTagValue) {
 
   if (value === 'Haloapps Video') {
     return <VideoCameraOutlined />
+  }
+
+  if (value === 'Haloapps') {
+    return <MobileOutlined />
   }
 
   if (value === 'WhatsApp') {

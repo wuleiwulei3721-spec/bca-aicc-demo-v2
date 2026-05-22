@@ -33,7 +33,7 @@ interface ContactManagementModalProps {
 const contactPlaceholders: Record<ContactType, string> = {
   Phone: '+62 21 0000 0000',
   WhatsApp: '+62 812 0000 0000',
-  Bankapp: 'bankapp_id',
+  BankApp: 'bankapp_id',
   Email: 'customer@email.com',
   Facebook: 'facebook.com/customer',
   Instagram: '@customer',
@@ -64,7 +64,7 @@ function PlayStoreIcon() {
 const contactIcons: Record<ContactType, ReactNode> = {
   Phone: <PhoneIcon />,
   WhatsApp: <WhatsAppOutlined />,
-  Bankapp: <MobileOutlined />,
+  BankApp: <MobileOutlined />,
   Email: <MailOutlined />,
   Facebook: <FacebookFilled />,
   Instagram: <InstagramFilled />,

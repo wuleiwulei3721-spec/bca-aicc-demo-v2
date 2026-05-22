@@ -76,19 +76,27 @@ export function CustomerInformationCard({
     return initialContacts
   })
   const [isContactModalOpen, setIsContactModalOpen] = useState(false)
-  const [outboundRequestStatus, setOutboundRequestStatus] =
-    useState<CustomerOutboundRequestStatus>('idle')
-  const outboundApprovalTimerRef = useRef<number | null>(null)
   const { profile } = customer
+  const customerKey = [
+    customer.accessChannel,
+    profile.cisNumber,
+    profile.phoneNumber,
+  ].join(':')
+  const [outboundRequestStatuses, setOutboundRequestStatuses] = useState<
+    Record<string, CustomerOutboundRequestStatus>
+  >({})
+  const outboundApprovalTimerRefs = useRef<Record<string, number>>({})
+  const outboundRequestStatus =
+    outboundRequestStatuses[customerKey] ?? 'idle'
   const showIvrJourney =
     customer.accessChannel === 'Phone' ||
     customer.accessChannel.includes('Voice')
 
   useEffect(
     () => () => {
-      if (outboundApprovalTimerRef.current) {
-        window.clearTimeout(outboundApprovalTimerRef.current)
-      }
+      Object.values(outboundApprovalTimerRefs.current).forEach((timerId) =>
+        window.clearTimeout(timerId),
+      )
     },
     [],
   )
@@ -121,10 +129,16 @@ export function CustomerInformationCard({
       return
     }
 
-    setOutboundRequestStatus('requesting')
-    outboundApprovalTimerRef.current = window.setTimeout(() => {
-      setOutboundRequestStatus('approved')
-      outboundApprovalTimerRef.current = null
+    setOutboundRequestStatuses((current) => ({
+      ...current,
+      [customerKey]: 'requesting',
+    }))
+    outboundApprovalTimerRefs.current[customerKey] = window.setTimeout(() => {
+      setOutboundRequestStatuses((current) => ({
+        ...current,
+        [customerKey]: 'approved',
+      }))
+      delete outboundApprovalTimerRefs.current[customerKey]
     }, 3000)
   }
 

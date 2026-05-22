@@ -8,7 +8,8 @@ import {
 } from '../../mock/inbound'
 import type { CrmWorkspaceTab, CustomerInformation } from '../../types'
 import { AssistantPanel } from './components/AssistantPanel'
-import { CrmPanel } from './components/CrmPanel'
+import { CONVERSATION_TAB_KEY, CrmPanel } from './components/CrmPanel'
+import type { ConversationWorkspaceConfig } from './components/ConversationWorkspace'
 import { LeftColumn } from './components/LeftColumn'
 
 const CRM_TAB_KEY = 'crm'
@@ -16,6 +17,7 @@ const CRM_TAB_KEY = 'crm'
 interface InteractionWorkspaceProps {
   ariaLabel: string
   className?: string
+  conversation?: ConversationWorkspaceConfig
   customer: CustomerInformation
   leadPanel?: ReactNode
   overlay?: ReactNode
@@ -24,6 +26,7 @@ interface InteractionWorkspaceProps {
 export function InteractionWorkspace({
   ariaLabel,
   className,
+  conversation,
   customer,
   leadPanel,
   overlay,
@@ -32,7 +35,7 @@ export function InteractionWorkspace({
     activeKey: string
     tabs: CrmWorkspaceTab[]
   }>({
-    activeKey: CRM_TAB_KEY,
+    activeKey: conversation ? CONVERSATION_TAB_KEY : CRM_TAB_KEY,
     tabs: [],
   })
 
@@ -81,6 +84,7 @@ export function InteractionWorkspace({
         />
         <CrmPanel
           activeKey={crmWorkspace.activeKey}
+          conversation={conversation}
           workspaceTabs={crmWorkspace.tabs}
           onActiveKeyChange={(activeKey) =>
             setCrmWorkspace((current) => ({ ...current, activeKey }))

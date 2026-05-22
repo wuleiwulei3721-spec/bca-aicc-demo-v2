@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-21 23:40 +08:00
+最后更新：2026-05-22 18:55 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,772 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-22 18:55 +08:00 - 话务条 Transfer 换行回归修复与 Conversation Invite 移除
+
+修改页面或文件：
+
+- `src/layouts/components/TransferModal.tsx`
+- `src/pages/inbound/components/ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-05-22-1855.md`
+- `.codex-backup/current-todo-2026-05-22-1855.md`
+- `.codex-backup/page-state-2026-05-22-1855.md`
+
+修改原因：
+
+- 用户指出话务条 Transfer 弹框的 `Consult` / `Transfer` / `Conference` 三个按钮被错误换行，之前不应换行。
+- 用户要求移除 Conversation 面板右上角的 `Invite` 按钮。
+
+修改结果：
+
+- `TransferModal` 的通用 `rowActions` 移除 wrap 行为，`.aicc-transfer-row-actions` 强制单行显示。
+- 话务条 `call` 变体 Action 列宽调整为 `250`，确保 `Consult`、`Transfer`、`Conference` 保持同一行。
+- Conversation `conversation` 变体继续使用专用 `Request Transfer` / `Request Conference` + 更多下拉，不受 call 分支修复影响。
+- Conversation 顶部移除 `Invite` 按钮和 `UserAddOutlined` 引用，右侧仅保留 `Transfer` 与 End Service 叉号。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/` 通过：PSTN / Voice Call 接听后打开话务条 Transfer，第一行 `Consult`、`Transfer`、`Conference` 三按钮同一行且无 request 动作。
+- Browser smoke check `/` 通过：Conversation header 不再显示 `Invite`，仅保留 `Transfer` 与 End Service。
+- Browser smoke check `/` 通过：Conversation Transfer 仍无 `Transfer Number`，仍显示 `Request Conference`，下拉仍为 `Force Transfer` / `Force Conference`。
+- Browser smoke check `/design-system` 通过：设计系统页面正常加载。
+
+回滚说明：
+
+- 如需回滚本轮，恢复 `rowActions` 的 wrap 参数和 call 变体原 Action 列宽，并在 `ConversationWorkspace` 顶部加回 `Invite` 按钮和 `UserAddOutlined`。
+- 不需要回滚 Conversation Transfer Agent 操作收纳或 `TransferModal` 的 `variant` 组件化。
+
+当前风险点：
+
+- Conversation 顶部已无独立 Invite 入口；如果后续需要单独邀请/会议入口，需要重新确定是 header 按钮还是 Transfer 弹框内动作。
+- Transfer / Conference 动作仍为前端演示动作，点击后只关闭弹框。
+
+### 2026-05-22 18:49 +08:00 - Conversation Transfer Agent 操作收纳
+
+修改页面或文件：
+
+- `src/layouts/components/TransferModal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-05-22-1849.md`
+- `.codex-backup/current-todo-2026-05-22-1849.md`
+- `.codex-backup/page-state-2026-05-22-1849.md`
+
+修改原因：
+
+- 用户指出 Conversation Transfer Agent 页签中四个长按钮会换行，导致表格行距过高。
+- 用户建议默认只显示申请转移和申请会议，并通过小箭头下拉提供强制转移和强制会议。
+- 需要将文字渠道邀请语义与话务条 `Conference` 文案统一。
+
+修改结果：
+
+- `TransferModal` 的 `conversation` 变体新增专用 Agent 行动作：默认显示 `Request Transfer`、`Request Conference` 和更多下箭头。
+- 更多菜单使用 Ant Design `Dropdown`，菜单项为 `Force Transfer`、`Force Conference`，点击后仍按演示逻辑关闭弹框。
+- 移除 Conversation Agent 行内 `Request Invite` / `Force Invite` 文案，统一使用 `Conference`。
+- `Transfer Skill` 页签保持原搜索、表格和 `Transfer` 按钮；话务条 `call` 变体仍保持 `Consult` / `Transfer` / `Conference` 与三页签。
+- 新增 `.aicc-transfer-agent-actions` 单行布局和小箭头按钮样式，避免长按钮换行抬高行距。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/` 通过：Conversation Transfer 弹框无 `Transfer Number`，Agent 行默认显示 `Request Transfer`、`Request Conference` 和下箭头，不再显示 `Request Invite`。
+- Browser smoke check `/` 通过：点击下箭头显示 `Force Transfer`、`Force Conference`，点击下拉动作后弹框关闭。
+- Browser smoke check `/` 通过：Conversation Transfer Skill tab 可见按钮仍为 `Transfer`。
+- Browser smoke check `/` 通过：PSTN / Voice Call 话务条 Transfer 弹框仍保留三页签和原 `Consult` / `Transfer` / `Conference` 动作。
+- Browser smoke check `/design-system` 通过：设计系统页面正常加载。
+
+回滚说明：
+
+- 如需回滚本轮，只需恢复 `TransferModal` 中 conversation 变体的四按钮 action 数组与 render 逻辑，并移除 `.aicc-transfer-agent-actions` 相关样式。
+- 不需要回滚 `TransferModal` 的 `variant` 组件化、Conversation 顶部 Transfer 接入或话务条 Transfer 逻辑。
+
+当前风险点：
+
+- Force 类动作仍为前端演示动作，点击后只关闭弹框，不接真实强制转移或强制会议流程。
+- Conversation 顶部 `Invite` 按钮仍保留原英文展示，尚未统一为 `Conference` 或接入会议流程。
+
+### 2026-05-22 18:28 +08:00 - Conversation Transfer 弹框组件化
+
+修改页面或文件：
+
+- `src/layouts/components/TransferModal.tsx`
+- `src/pages/inbound/components/ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-22-1828.md`
+- `.codex-backup/current-todo-2026-05-22-1828.md`
+- `.codex-backup/page-state-2026-05-22-1828.md`
+
+修改原因：
+
+- 用户要求 Conversation 顶部 `Transfer` 点击后打开 Transfer 弹框。
+- 用户要求 Conversation 弹框不显示 `Transfer Number` 页签。
+- 用户要求 Conversation 的 `Transfer Agent` 每行显示请求转移、强制转移、请求邀请、强制邀请四类动作；`Transfer Skill` 保持现有内容和 `Transfer` 按钮不变。
+
+修改结果：
+
+- `TransferModal` 增加 `variant?: 'call' | 'conversation'`，默认 `call`，话务条不传参时保持原三页签与原动作。
+- `conversation` 变体仅显示 `Transfer Agent` / `Transfer Skill` 两个页签，并隐藏 `Transfer Number`。
+- `conversation` 变体的 Agent 行动作改为 `Request Transfer`、`Force Transfer`、`Request Invite`、`Force Invite`；Skill tab 仍沿用原 `Transfer` 动作。
+- Conversation 顶部 `Transfer` 按钮接入 `TransferModal variant="conversation"`；顶部 `Invite` 本轮仍为展示按钮。
+- 增加 Transfer 行动作换行样式，避免四个按钮挤压表格。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/` 通过：Live Chat Conversation 顶部 `Transfer` 打开弹框，弹框无 `Transfer Number` 页签。
+- Browser smoke check `/` 通过：Conversation Transfer Agent 行显示四个新动作，Transfer Skill tab 保持 `Transfer` 动作，点击动作后弹框关闭。
+- Browser smoke check `/` 通过：PSTN / Voice Call 进入通话后，话务条 Transfer 弹框仍保留三页签和原 `Consult` / `Transfer` / `Conference` 动作。
+- Browser smoke check `/design-system` 通过：设计系统页面正常加载。
+
+回滚说明：
+
+- 如需回滚本轮，移除 `TransferModal` 的 `variant` 逻辑，恢复 `ConversationWorkspace` 中 Transfer 按钮为展示按钮，并移除 `.aicc-transfer-row-actions` 样式。
+- 不需要回滚 Conversation tab、消息发送、End Service 或话务条 Transfer 的既有业务状态。
+
+当前风险点：
+
+- Conversation Transfer 四个动作仍为前端演示动作，点击后只关闭弹框，不接真实转移/邀请流程。
+- 顶部 `Invite` 按钮本轮仍保持展示按钮，尚未接入弹框或邀请流程。
+- 仍需在目标演示分辨率下人工复查四个长按钮在 Agent 表格中的换行视觉。
+
+### 2026-05-22 17:48 +08:00 - Conversation 顶部视觉校准
+
+修改页面或文件：
+
+- `src/pages/inbound/components/ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-22-1748.md`
+- `.codex-backup/current-todo-2026-05-22-1748.md`
+- `.codex-backup/page-state-2026-05-22-1748.md`
+
+修改原因：
+
+- 用户指出 End Service 叉号偏大，且 hover 缺少背景块，和 Transfer/Invite 图标未对齐。
+- 用户指出 Conversation 面板配色看起来比系统主色调更暗，需要检查是否存在局部硬编码导致的两套标准。
+
+修改结果：
+
+- Conversation 顶部渠道图标继续复用 `.live-chat-channel-icon`，并额外加上客户列表行同款 `live-chat-channel-icon--customer`，统一图标尺寸与视觉重量。
+- `Transfer` / `Invite` hover/focus 从局部硬编码 `#eef6ff` / `--aicc-primary-strong` 改为系统 token `--aicc-hover` / `--aicc-primary`。
+- End Service 叉号从 `18px` 调整为 `16px`，按钮盒回到 `28px`，hover/focus 恢复浅红背景块 `#fff1f1`。
+- 本轮未修改中部消息区、底部发送区、客户列表、Customer Information、CRM 或 Assistant。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/` 通过：Sign In 后打开 Live Chat，Conversation 顶部仍显示渠道图标、客户名、计时、Transfer/Invite 图标和 End Service close 图标。
+- Browser smoke check `/` 通过：点击 End Service 仍打开二次确认弹窗。
+- Browser smoke check `/design-system` 通过：设计系统页面正常加载。
+
+回滚说明：
+
+- 如需回滚本轮视觉校准，恢复 `ConversationWorkspace.tsx` 中渠道图标 class 的本轮新增项，以及 `src/styles/index.less` 中 Conversation header action hover 和 End Service 尺寸/hover 样式。
+- 不需要回滚 Conversation tab、中部消息布局、底部 composer、客户切换、发送或 End Service 业务逻辑。
+
+当前风险点：
+
+- 计时器仍为本地前端演示计时，不接真实会话网关时间。
+- Transfer 和 Invite 仍为展示按钮，尚未接真实弹窗或协作流程。
+- 仍需在最终演示分辨率下人工复查顶部操作区 hover 视觉和图标对齐。
+
+### 2026-05-22 17:33 +08:00 - Conversation 顶部三次调整
+
+修改页面或文件：
+
+- `src/pages/inbound/components/ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-22-1733.md`
+- `.codex-backup/current-todo-2026-05-22-1733.md`
+- `.codex-backup/page-state-2026-05-22-1733.md`
+
+修改原因：
+
+- 用户要求 Conversation 顶部渠道标识改为客户列表同款图标，只显示图形，hover/title 再表达渠道名。
+- 用户要求顶部左侧三项采用更合理的扫描顺序，并确认采用“渠道图标 -> 客户姓名 -> 计时”。
+- 用户要求右侧 `Transfer` / `Invite` 恢复图标，结束按钮去掉圆圈叉，改为更大的单独红色叉号。
+
+修改结果：
+
+- Conversation 顶部左侧改为渠道图标、客户姓名、计时；渠道图标复用 `live-chat-channel-icon` 和 WhatsApp / BankApp / Webchat modifier，保留 `title` 与 `aria-label`。
+- `Transfer` / `Invite` 恢复为 `SwapOutlined` / `UserAddOutlined` 图标 + 文字，仍为无边框、低强调、常规字重按钮。
+- End Service 改为 `CloseOutlined` 单独叉号按钮，尺寸放大、红色显示，不显示文字，并保留二次确认弹窗。
+- 本轮未修改中部消息区、底部发送区、客户列表、Customer Information、CRM 或 Assistant。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/` 通过：Sign In 后打开 Live Chat，Conversation 顶部左侧为渠道图标、客户姓名、计时；右侧 Transfer/Invite 为图标 + 文字，结束按钮为 `close` 图标。
+- Browser smoke check `/` 通过：点击 End Service 仍打开二次确认弹窗；本轮未确认关闭客户，避免顶部视觉复查改变当前会话状态。
+- Browser smoke check `/design-system` 通过：设计系统页面正常加载。
+
+回滚说明：
+
+- 如需回滚本轮顶部三次调整，恢复 `ConversationWorkspace.tsx` 的 header icon/import/markup，以及 `src/styles/index.less` 中 Conversation header 相关选择器。
+- 不需要回滚 Conversation tab、中部消息布局、底部 composer、客户切换、发送或 End Service 业务逻辑。
+
+当前风险点：
+
+- 计时器仍为本地前端演示计时，不接真实会话网关时间。
+- Transfer 和 Invite 仍为展示按钮，尚未接真实弹窗或协作流程。
+- 仍需在最终演示分辨率下人工复查顶部操作区换行和图标密度。
+
+### 2026-05-22 17:17 +08:00 - Conversation 面板二次精简
+
+修改页面或文件：
+
+- `src/pages/inbound/components/ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-22-1717.md`
+- `.codex-backup/current-todo-2026-05-22-1717.md`
+- `.codex-backup/page-state-2026-05-22-1717.md`
+
+修改原因：
+
+- 用户要求 Conversation 顶部左侧显示客户名称、无外框通话计时和与 Customer Information 一致的渠道标识。
+- 用户要求顶部右侧显示轻量 Transfer、Invite 和仅红色叉号的结束按钮。
+- 用户要求中部消息时间放在气泡外上方，只有其他坐席在时间前显示名称，当前坐席不显示 `You`。
+
+修改结果：
+
+- Conversation 顶部改为左侧客户姓名、计时、渠道；右侧 Transfer/Invite 为无边框常规字重文本按钮，结束服务为红色叉号图标按钮。
+- 底部 composer 只保留表情、附件和 Send，不再承载 Transfer、Invite、End Service。
+- 消息元信息移到气泡外上方：客户消息只显示时间；历史坐席显示坐席姓名和时间；当前坐席只显示时间。
+- 当前坐席消息不再显示 `You`；历史坐席仍在左侧，当前坐席仍在右侧，避免误判历史话术来源。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/` 通过：签入后打开固定 `Live Chat` tab，Conversation 顶部结构与右侧操作符合本轮要求。
+- Browser smoke check `/` 通过：消息 DOM 显示客户消息只有时间，历史坐席为姓名 + 时间，当前坐席无 `You`。
+- Browser smoke check `/` 通过：End Service 二次确认出现，确认后关闭当前客户并切换到 Sari Amelia。
+- Browser smoke check `/design-system` 通过：设计系统页面正常加载。
+- 浏览器插件本轮输入文本时报虚拟剪贴板不可用，因此发送消息未通过浏览器完成复测；发送逻辑本轮未改，仅移动了非发送操作按钮。
+
+回滚说明：
+
+- 如需回滚本轮二次精简，恢复 `ConversationWorkspace.tsx` 中 header/actions/message meta 结构，以及 `src/styles/index.less` 中 `.live-chat-conversation*` 的本轮样式修改。
+- 不需要回滚 Conversation tab 功能、Live Chat 客户切换、发送消息或 End Service 确认逻辑。
+
+当前风险点：
+
+- 计时器仍为本地前端演示计时，不接真实会话网关时间。
+- Transfer 和 Invite 仍为展示按钮，尚未接真实弹窗或协作流程。
+- 仍需在最终演示分辨率下人工复查顶部右侧操作是否在窄宽度下换行合理。
+
+### 2026-05-22 16:50 +08:00 - Conversation 面板浅色企业级视觉收敛
+
+修改页面或文件：
+
+- `src/pages/inbound/components/ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-22-1650.md`
+- `.codex-backup/current-todo-2026-05-22-1650.md`
+- `.codex-backup/page-state-2026-05-22-1650.md`
+
+修改原因：
+
+- 用户指出 Conversation 顶部深色背景与系统整体浅色企业级工作台样式割裂。
+- 用户要求顶部右侧只展示客户姓名和聊天计时。
+- 用户要求中部不再展示客户名称和 `Customer` 字样，并希望明确历史坐席记录的位置与原因。
+- 规划结论：历史坐席记录放左侧，用中性样式与客户消息区分；右侧只保留当前坐席发送内容，避免误判历史话术是当前坐席刚发送。
+
+修改结果：
+
+- Conversation 顶部从深色 header 改为浅色工具头，左侧显示渠道标签与 intent，右侧只显示客户姓名和本地递增聊天计时。
+- Transfer、Invite、End Service 从顶部移到底部发送区操作组，Send 保持主操作。
+- 客户消息左侧显示头像、气泡和时间，不再显示客户姓名或 `Customer` 字样。
+- 历史坐席记录放在左侧，使用中性灰蓝气泡并保留坐席姓名、`Previous Agent` 与时间；当前坐席消息右侧显示浅 BANK 1 蓝气泡和 `You`。
+- `.live-chat-conversation*` 样式改回现有浅色 surface hierarchy，不再使用内部深色大块。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/` 通过：签入后打开固定 `Live Chat` tab，CRM 工作区默认选中 `Conversation`。
+- Browser smoke check `/` 通过：Conversation 顶部显示 WhatsApp/BankApp 渠道与 intent，右侧只显示客户姓名和聊天计时。
+- Browser smoke check `/` 通过：发送消息后追加为右侧 `You` 消息；End Service 二次确认后关闭当前客户并切换到下一个客户。
+- Browser smoke check `/design-system` 通过：设计系统页面正常加载。
+- 本轮浏览器截图接口在 CDP 上超时，因此未保存截图；关键路径已通过 DOM 与交互 smoke check 验证。
+
+回滚说明：
+
+- 如需回滚本轮浅色视觉收敛，恢复 `ConversationWorkspace.tsx` 中 header/actions/message meta 结构，以及 `src/styles/index.less` 中 `.live-chat-conversation*` 的本轮样式修改。
+- 不需要回滚 Conversation tab 功能、Live Chat 客户切换、发送消息或 End Service 逻辑。
+
+当前风险点：
+
+- 计时器为本地前端演示计时，不接真实会话网关时间。
+- Transfer 和 Invite 仍为展示按钮，尚未接真实弹窗或协作流程。
+- 仍需在最终演示分辨率下人工复查底部操作组是否会换行挤压发送区。
+
+### 2026-05-22 16:20 +08:00 - 限定调整 Conversation 对话与发送区样式
+
+修改页面或文件：
+
+- `src/pages/inbound/components/ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-22-1620.md`
+- `.codex-backup/current-todo-2026-05-22-1620.md`
+- `.codex-backup/page-state-2026-05-22-1620.md`
+
+修改原因：
+
+- 用户要求不要修改 Conversation 以外内容。
+- 用户要求 Conversation 顶部客户名称区域使用深色背景，中部对话和底部发送信息框使用最浅色背景。
+- 用户要求中部对话改为左右气泡框形式，显示客户头像和其它坐席头像；当前坐席发送的消息不显示头像，并使用深色配色方便区分。
+- 用户要求底部发送区与中部同为浅色背景，只用一个线框/分割线区分，大线框内不再用额外线框分割。
+
+修改结果：
+
+- 仅调整 `ConversationWorkspace` 结构和 `.live-chat-conversation*` 样式。
+- Conversation 顶部改为深色 header，客户名称与意图/时长使用白色层级。
+- 消息区改为左右气泡：客户左侧头像 + 白色气泡，历史坐席右侧头像 + 浅蓝气泡，当前坐席右侧深色气泡且无头像。
+- 底部发送区去掉 textarea 自身边框，与消息区保持同一浅色背景，只保留顶部一条分割线，内部保留输入、表情、附件和发送按钮。
+- 增加消息区滚到底部的 DOM 同步，避免发送后的当前坐席消息显示不完整。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser visual check `/` 通过：Live Chat Conversation 顶部为深色，中部和底部为统一浅色背景；客户和历史坐席头像显示，当前坐席深色气泡无头像；Conversation 以外区域未被本轮样式调整影响。
+
+回滚说明：
+
+- 如需回滚本轮视觉调整，恢复 `ConversationWorkspace.tsx` 中消息 avatar wrapper 结构，以及 `src/styles/index.less` 中 `.live-chat-conversation*` 的本轮样式修改。
+- 不需要回滚前一轮新增的 Conversation tab、mock conversation 或 Live Chat 客户切换逻辑。
+
+当前风险点：
+
+- 当前坐席消息自动滚动使用 DOM `scrollIntoView`，只作用于 Conversation 消息区。
+- 本轮未重新验证 `End Service` 关闭客户流程，因功能逻辑未改；上一轮已验证通过。
+
+### 2026-05-22 15:52 +08:00 - 新增 Live Chat Conversation 固定页签
+
+修改页面或文件：
+
+- `src/pages/inbound/components/ConversationWorkspace.tsx`
+- `src/pages/inbound/components/CrmPanel.tsx`
+- `src/pages/inbound/InteractionWorkspace.tsx`
+- `src/pages/inbound/LiveChatPage.tsx`
+- `src/types/inbound.ts`
+- `src/mock/inbound.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-22-1552.md`
+- `.codex-backup/current-todo-2026-05-22-1552.md`
+- `.codex-backup/page-state-2026-05-22-1552.md`
+
+修改原因：
+
+- 用户要求在 CRM 右侧新增固定 `Conversation` 页签，用于实时对话的客户与坐席聊天框。
+- 用户要求点击左侧客户列表选择客户时，聊天内容随当前客户联动。
+- 用户要求 Conversation 顶部显示客户名称和 `Transfer`、`Invite`、`End Service` 操作；`End Service` 点击后需要二次确认，确认后关闭该客户。
+- 用户要求 Conversation 中部展示客户与其他坐席的历史会话记录，下方提供发送信息框、表情、文件和发送按钮。
+
+修改结果：
+
+- 新增 `ConversationWorkspace` 组件，作为 Live Chat CRM 工作区内固定 `Conversation` tab 内容。
+- `CrmPanel` 支持在 `CRM` tab 右侧插入不可关闭的 `Conversation` tab；PSTN / Voice Call 与 Video Call 未传入 conversation 配置时仍保持原有 CRM 行为。
+- `InteractionWorkspace` 支持传入 conversation 配置，Live Chat 默认选中 `Conversation`，其它弹屏默认选中 `CRM`。
+- `LiveChatPage` 新增前端演示状态：每个客户保留独立 conversation messages，发送消息会追加 Current Agent 消息并更新客户列表最后消息；确认 `End Service` 后会从列表移除当前客户并切到下一个客户。
+- `LiveChatSession` 新增 `conversation` 字段，mock 为 WhatsApp、BankApp、Webchat 三个客户补充客户、历史坐席和当前坐席会话记录。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/` 通过：签入后打开固定 `Live Chat` tab，CRM 工作区默认选中固定 `Conversation` tab 且无关闭按钮。
+- Browser smoke check `/` 通过：展开客户列表并切换到 Sari Amelia 后，Conversation 顶部、历史消息与输入框同步切换。
+- Browser smoke check `/` 通过：发送消息后，Current Agent 消息追加到当前会话，客户列表最后消息和时间同步更新。
+- Browser smoke check `/` 通过：点击 `End Service` 后出现二次确认框，确认后 Sari Amelia 从客户列表关闭并自动切换到 Rafi Firmansyah。
+- Browser smoke check `/design-system` 通过：设计系统页面正常加载。
+
+回滚说明：
+
+- 如需回滚 Conversation 功能，移除 `ConversationWorkspace.tsx`，恢复 `CrmPanel`、`InteractionWorkspace`、`LiveChatPage` 中 conversation 相关 props/state，并删除 `LiveChatSession.conversation` 类型与 mock 字段。
+- 如只需隐藏 Conversation tab，可停止从 `LiveChatPage` 向 `InteractionWorkspace` 传入 `conversation` 配置，保留 mock 数据不影响 PSTN / Video Call。
+
+当前风险点：
+
+- `Transfer` 和 `Invite` 当前为展示按钮，尚未接真实弹窗或协作流程。
+- `End Service` 关闭客户仅影响 Live Chat 前端列表，不联动坐席 ACW、工单或后端会话网关。
+- 发送消息只存在于当前页面内存，刷新后恢复 mock 初始 conversation。
+- 仍需在目标演示分辨率下复查 Conversation tab 对四列 Live Chat 布局的横向压缩影响。
+
+### 2026-05-22 13:10 +08:00 - 恢复邮箱 hover 标识并按客户隔离外呼申请状态
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-22-1310.md`
+- `.codex-backup/current-todo-2026-05-22-1310.md`
+- `.codex-backup/page-state-2026-05-22-1310.md`
+
+修改原因：
+
+- 用户指出上一轮为了解决邮箱过长换行时，把邮箱悬浮后的文字高亮点击提示弱化/丢失了，需要恢复 hover 高亮标识。
+- 用户要求点击电话号码触发的外呼申请功能只针对当前客户，而不是切换后的所有客户共用同一个申请状态。
+
+修改结果：
+
+- 邮箱按钮保持上轮的换行结构，同时在 hover/focus-visible 时让邮箱文字变为主蓝色并显示下划线，明确提示可点击。
+- `CustomerInformationCard` 的外呼申请状态从单个组件级状态改为按 `accessChannel + CIS + phoneNumber` 组成的客户 key 存储。
+- 外呼申请审批计时器也按客户 key 管理，组件卸载时统一清理，避免切换 Live Chat 客户后状态串到其它客户。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite chunk size warning。
+- Browser smoke check `/` 通过：签入后 Live Chat 和 Customer Information 正常加载，邮箱仍作为 `Send email` 按钮出现在 DOM 中。
+
+回滚说明：
+
+- 如需回滚邮箱 hover 效果，恢复 `src/styles/index.less` 中 `.aicc-customer-info__email-value` hover/focus 样式。
+- 如需回滚外呼申请状态隔离，恢复 `CustomerInformationCard.tsx` 中单个 `outboundRequestStatus` state 和单个 timer ref 的实现，但会重新出现 Live Chat 切换客户时状态共享的问题。
+
+当前风险点：
+
+- 本轮外呼状态隔离只作用于外呼申请状态；Customer Information 里其它本地状态如验证状态、联系人编辑状态仍沿用既有实现，后续如要完全按客户隔离可继续拆分。
+- 浏览器工具未稳定点中隐藏 hover 外呼按钮，已通过代码结构、lint/build 和页面加载 smoke check 验证本轮改动。
+
+### 2026-05-22 12:53 +08:00 - 优化 Customer Information 卡片头像、级别与邮箱显示
+
+修改页面或文件：
+
+- `src/components/CustomerInformationPanel.tsx`
+- `src/mock/inbound.ts`
+- `src/styles/index.less`
+- `public/avatars/whatsapp-customer-female.png`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-22-1253.md`
+- `.codex-backup/current-todo-2026-05-22-1253.md`
+- `.codex-backup/page-state-2026-05-22-1253.md`
+
+修改原因：
+
+- 用户要求 Live Chat 的 Customer Information 卡片中，WhatsApp 客户改为女生头像，BankApp 和 Webchat 客户按未上传头像显示姓名首字母。
+- 用户要求 BankApp 和 Webchat 作为普通客户，不显示客户级别。
+- 用户指出邮箱过长时邮箱图标被缩小，要求图标不缩小，邮箱文本可换行。
+- 用户要求 Webchat 渠道标识配色与客户列表面板中的 Webchat 图标一致。
+- 用户强调 Customer Information 是共用组件，不要改客户信息卡片以外内容。
+
+修改结果：
+
+- 新增本地 WhatsApp 女生客户头像资源 `public/avatars/whatsapp-customer-female.png`，并仅在 Live Chat WhatsApp 会话中覆盖头像。
+- BankApp 与 Webchat Live Chat 客户保持空 `avatarUrl`，共用 `CustomerInformationPanel` 对空头像改为显示 `avatarInitials`。
+- `CustomerInformationPanel` 改为按 `customerType` 条件渲染客户级别：`Regular Customer` 不显示，`Priority Customer` 显示 `Priority`。
+- Customer Information 邮箱行改为固定图标列 + 可换行文本，长邮箱不再压缩邮箱图标。
+- Webchat 的 `inbound-channel-tag--webchat` 改为与客户列表 Webchat 图标一致的橙色系。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite chunk size warning。
+- Browser smoke/visual check `/` 通过：WhatsApp 显示新女生头像并保留 `Priority`；BankApp 显示 `SA` 默认头像且无客户级别；Webchat 显示 `RF` 默认头像且无客户级别。
+- Browser smoke/visual check `/` 通过：邮箱图标不被压缩，Webchat 渠道 tag 为橙色系。
+
+回滚说明：
+
+- 如需回滚头像，可移除 `src/mock/inbound.ts` 中 WhatsApp 会话的 `avatarUrl` 覆盖并删除新增头像资源。
+- 如需回滚客户级别逻辑，可恢复 `CustomerInformationPanel` 中固定显示 `Priority` 的实现，但会重新影响所有共用卡片。
+- 如需回滚邮箱显示，可恢复 `.aicc-customer-info__fact-action` 与 `.aicc-customer-info__email-value` 的样式调整。
+- 如需回滚 Webchat 渠道色，可恢复 `src/styles/index.less` 中 `.inbound-channel-tag--webchat` 的旧配色。
+
+当前风险点：
+
+- `CustomerInformationPanel` 是共用组件，本轮已按客户类型做通用条件渲染；后续如需要在其它页面展示 `Regular Customer` badge，需要新增显式配置。
+- `npm run build` 仍有既有 Vite chunk size warning，不影响本轮功能。
+
+### 2026-05-22 12:19 +08:00 - 调亮 Live Chat 客户行 hover 与 selected 背景
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-22-1219.md`
+- `.codex-backup/current-todo-2026-05-22-1219.md`
+- `.codex-backup/page-state-2026-05-22-1219.md`
+
+修改原因：
+
+- 用户要求 Live Chat 客户列表数据的选中背景框继续优化：选中效果和悬浮效果颜色都比当前更浅白、更亮。
+- 用户要求其他效果都不要动。
+
+修改结果：
+
+- 仅调整 `.live-chat-customer-list__item:hover` / `:focus-visible` 和 `.live-chat-customer-list__item--active` 的背景透明度。
+- hover 背景从 `rgba(255, 255, 255, 0.34)` 调整为 `rgba(255, 255, 255, 0.48)`。
+- active 背景从 `rgba(255, 255, 255, 0.78)` 调整为 `rgba(255, 255, 255, 0.88)`。
+- 其他客户列表交互、尺寸、渠道筛选、收起态和页面其它区域未改动。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite chunk size warning。
+- Browser visual check `/` 通过：Live Chat 展开态 selected 行更亮，客户列表其它效果保持不变。
+
+回滚说明：
+
+- 如需回滚本轮调色，仅恢复 `src/styles/index.less` 中上述两个背景色值即可。
+
+当前风险点：
+
+- 本轮仅调亮客户列表 hover/selected 背景；最终视觉仍以目标演示屏幕效果为准。
+- `npm run build` 仍有既有 Vite chunk size warning，不影响本轮功能。
+
+### 2026-05-22 12:09 +08:00 - 加宽 Live Chat 客户列表选中行背景
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-22-1209.md`
+- `.codex-backup/current-todo-2026-05-22-1209.md`
+- `.codex-backup/page-state-2026-05-22-1209.md`
+
+修改原因：
+
+- 用户要求 Live Chat 客户列表数据选中背景更浅白一些。
+- 用户要求选中背景拉宽到整个客户列表面板，不要两边留边距，使选中效果更明显。
+
+修改结果：
+
+- 仅调整 `.live-chat-customer-list` 相关样式。
+- 客户列表容器左右 padding 移除，行内 padding 补偿，保持文本与图标对齐。
+- active 行背景从 `rgba(255, 255, 255, 0.58)` 调整为 `rgba(255, 255, 255, 0.78)`。
+- active 行背景现在横向铺满客户列表面板，收起态 active 行也铺满窄栏宽度。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite chunk size warning。
+- Browser visual check `/` 通过：Live Chat 展开态 active 客户行背景更浅，并铺满客户列表面板宽度。
+
+回滚说明：
+
+- 如需回滚本轮视觉调整，可恢复 `src/styles/index.less` 中 `.live-chat-customer-list__items`、`.live-chat-customer-list__item`、`.live-chat-customer-list__item--active` 和收起态 items/item 的 padding/width 改动。
+
+当前风险点：
+
+- 本轮仅调整客户列表面板选中行样式，未改动客户列表面板以外内容。
+- `npm run build` 仍有既有 Vite chunk size warning，不影响本轮功能。
+
+### 2026-05-22 11:58 +08:00 - 优化 Live Chat ALL 双态、选中行与收起态宽度
+
+修改页面或文件：
+
+- `src/pages/inbound/LiveChatPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-22-1158.md`
+- `.codex-backup/current-todo-2026-05-22-1158.md`
+- `.codex-backup/page-state-2026-05-22-1158.md`
+
+修改原因：
+
+- 用户要求顶部 `ALL` 也具备双态：选中时点击相当于取消所有渠道。
+- 用户要求客户列表选中效果更简洁，整行选中即可，不再加额外框，以便收起状态进一步缩窄。
+- 用户要求未读数圆形 badge 不再有白色外边框。
+- 用户强调不要修改客户列表面板以外的内容。
+
+修改结果：
+
+- `ALL` 筛选逻辑改为双态：当前全渠道选中时点击 ALL 会清空所有渠道；非全选时点击 ALL 会恢复全渠道。
+- 客户列表 active 行改为整行浅色背景，不再使用左侧主色 accent、白底卡片框或额外边框。
+- Live Chat 收起态列宽从 `66px` 收窄到 `56px`，对应收起态筛选图标、客户行和渠道图标尺寸同步收敛。
+- 客户列表面板内覆盖 Ant Design badge 样式，去掉未读数白色外描边。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite chunk size warning。
+- Browser smoke check `/` 通过：点击 ALL 可清空所有渠道并显示 `No active chats`，再次点击 ALL 恢复全部客户。
+- Browser visual check `/` 通过：active 行为整行浅色选中，收起态更窄，未读数 badge 无白色外描边。
+
+回滚说明：
+
+- 如需回滚本轮调整，可恢复 `LiveChatPage` 中 ALL 点击逻辑，并恢复 `src/styles/index.less` 中 `.inbound-page--live-chat-list-collapsed`、`.live-chat-customer-list__item--active`、`.live-chat-customer-list--collapsed` 和 badge 相关样式。
+- 不要回滚前序多选渠道、BankApp 文案、渠道图标替换头像等功能，除非另有明确要求。
+
+当前风险点：
+
+- 当前允许 ALL 清空所有渠道，空列表时右侧仍保留最近 active customer 的信息；这是本轮按用户要求实现的行为。
+- 收起态变窄后仍需在最终演示分辨率下确认点击舒适度。
+- `npm run build` 仍有既有 Vite chunk size warning，不影响本轮功能。
+
+### 2026-05-22 11:45 +08:00 - 重新调整 Live Chat 客户列表面板蓝色层级与行样式
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-22-1145.md`
+- `.codex-backup/current-todo-2026-05-22-1145.md`
+- `.codex-backup/page-state-2026-05-22-1145.md`
+
+修改原因：
+
+- 用户指出上一版客户列表面板配色不好看，要求整体再蓝一些。
+- 用户要求聊天列表中未选中客户行不显示背景色块，改用条线隔开。
+- 用户要求顶部渠道选择选中/悬浮都不要在图标外再加边框，让图标更大、点击范围更大。
+- 用户要求顶部收起展开按钮不要边框，只在鼠标悬浮时明显显示。
+- 用户强调不要修改客户列表面板以外的内容。
+
+修改结果：
+
+- 仅调整 `.live-chat-customer-list` 相关样式。
+- 客户列表面板从冷灰蓝改为更明确的浅 BANK 1 蓝色调，header 同步加深蓝色层级。
+- 未选中客户行改为透明底 + 分隔线；active 行保留白底和左侧主色强调。
+- 顶部渠道筛选按钮取消外层 border、hover border 和 active 外层框，放大按钮与图标尺寸。
+- 未选中筛选图标继续置灰，选中图标恢复渠道色。
+- 顶部收起/展开按钮取消 border，默认弱化，header 或按钮悬浮时才明显显示。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite chunk size warning。
+- Browser visual check `/` 通过：Live Chat 客户列表面板更蓝，普通客户行无背景色块并以分隔线区分，顶部筛选图标无外层框，收起按钮无边框且默认弱化。
+
+回滚说明：
+
+- 如需回滚本轮视觉调整，可恢复 `src/styles/index.less` 中 `.live-chat-customer-list`、`.live-chat-customer-list__filter`、`.live-chat-channel-icon`、`.live-chat-customer-list__toggle`、`.live-chat-customer-list__item` 相关样式。
+- 不要回滚多选筛选逻辑、BankApp 文案、客户头像替换渠道图标等前序功能，除非另有明确要求。
+
+当前风险点：
+
+- 本轮仅调整客户列表面板样式，未改变客户列表以外页面内容。
+- 仍需以最终演示分辨率确认蓝色面板与右侧三栏的视觉权重是否满足演示口径。
+- `npm run build` 仍有既有 Vite chunk size warning，不影响本轮功能。
+
+### 2026-05-22 01:28 +08:00 - 细化 Live Chat 渠道多选与客户列表面板层级
+
+修改页面或文件：
+
+- `src/pages/inbound/LiveChatPage.tsx`
+- `src/pages/inbound/components/LiveChatCustomerList.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-22-0128.md`
+- `.codex-backup/current-todo-2026-05-22-0128.md`
+- `.codex-backup/page-state-2026-05-22-0128.md`
+
+修改原因：
+
+- 用户要求 Live Chat 左侧客户列表顶部渠道选择改为多选：未选中置灰，选中高亮，点击 ALL 全部高亮，取消单个渠道时 ALL 不再选中。
+- 用户指出 Webchat 渠道图标颜色与 WhatsApp 重复，需要换色。
+- 用户要求客户列表面板整体背景色加深，避免 Live Chat 四列全是同一种浅色卡片样式导致视觉混乱。
+- 用户要求不改动客户列表面板以外的内容。
+
+修改结果：
+
+- `LiveChatPage` 将渠道过滤从单选改为多选数组，默认 WhatsApp、BankApp、Webchat 全选。
+- 点击 ALL 会恢复三渠道全选；点击单个渠道会切换该渠道，少选任意渠道时 ALL 自动取消高亮。
+- 未选中的筛选图标置灰，选中的筛选图标恢复渠道色并高亮。
+- Webchat 图标从绿色改为橙色系，避免与 WhatsApp 绿色重复。
+- 客户列表面板改为冷灰蓝背景、稍深 header、白色 active 行和更明确的 hover/active 层级，只影响 `.live-chat-customer-list` 相关样式。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite chunk size warning。
+- Browser smoke check `/` 通过：默认 ALL 与三个渠道均高亮；取消 Webchat 后 ALL 取消高亮、Webchat 置灰且 Rafi 从列表消失；点击 ALL 后恢复完整列表。
+- Browser visual check `/` 通过：客户列表面板与右侧白色区域已有更明显层级区分，Webchat 图标为橙色系。
+
+回滚说明：
+
+- 如需回滚本轮细化，可恢复 `LiveChatPage` 的单选渠道状态、`LiveChatCustomerList` 的 `channelFilter` prop 和 `src/styles/index.less` 中 `.live-chat-customer-list` 相关样式。
+- 不要回滚上一轮头像替换渠道图标、BankApp 文案或 Live Chat tab 基础功能，除非另有明确要求。
+
+当前风险点：
+
+- 当前采用冷灰蓝面板方案；如演示现场希望更强的视觉重心，可改为深蓝侧栏或浅灰分组方案。
+- 多选允许取消所有渠道，此时列表为空但右侧仍保留最近 active session 的客户信息；如不希望空列表，后续可禁止取消最后一个渠道。
+- `npm run build` 仍有既有 Vite chunk size warning，不影响本轮功能。
+
+### 2026-05-22 01:02 +08:00 - 调整 Live Chat 左侧客户列表筛选与收起态
+
+修改页面或文件：
+
+- `src/pages/inbound/LiveChatPage.tsx`
+- `src/pages/inbound/components/LiveChatCustomerList.tsx`
+- `src/pages/inbound/components/ChannelTag.tsx`
+- `src/pages/inbound/components/ContactManagementModal.tsx`
+- `src/pages/inbound/components/contactManagementData.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-22-0102.md`
+- `.codex-backup/current-todo-2026-05-22-0102.md`
+- `.codex-backup/page-state-2026-05-22-0102.md`
+
+修改原因：
+
+- 用户要求 Live Chat 来电弹屏左侧客户列表顶部改为 ALL、WhatsApp、BankApp、Webchat 四个渠道图标筛选。
+- 用户要求客户列表行用渠道图标替代客户头像，去掉行内渠道标签和 High 优先级标签，以节省高度。
+- 用户要求客户列表默认收起，并且渠道图标不要与 Contact Management 面板中的图标不一致。
+
+修改结果：
+
+- `LiveChatPage` 新增渠道过滤状态，默认客户列表收起。
+- `LiveChatCustomerList` 顶部改为四个图标筛选按钮，hover 显示渠道名；收起态使用窄栏 2x2 筛选图标与箭头。
+- 客户列表行改为渠道图标 + unread count + 客户名/时间/最后消息，不再显示客户头像、行内渠道 tag 或 High tag。
+- `Haloapps` 作为内部 channel key 保留，用户可见文案统一显示为 `BankApp`。
+- `ChannelTag` 中 `Haloapps` / `Haloapps Video` 的可见标签显示为 `BankApp`，`Haloapps` 使用与 Contact Management 一致的 Mobile icon。
+- Contact Management 面板中的 `Bankapp` 文案统一为 `BankApp`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite chunk size warning。
+- Browser smoke check `/` 通过：签入后 Live Chat tab 出现，列表默认收起，顶部可见 ALL、WhatsApp、BankApp、Webchat 图标筛选和展开箭头。
+- Browser smoke check `/` 通过：展开后客户行仅显示渠道图标、未读数、客户名、时间和最后消息；BankApp 筛选仅显示 Sari Amelia 并同步 Customer Information。
+- Browser smoke check `/design-system` 通过：页面正常加载，标题为 `BANK 1 AICC Demo`。
+
+回滚说明：
+
+- 如需回滚本轮 Live Chat 客户列表调整，可恢复 `LiveChatPage`、`LiveChatCustomerList`、`ChannelTag`、`ContactManagementModal`、`contactManagementData` 和 `src/styles/index.less` 中本次改动。
+- 回滚时应保留上一轮 Live Chat tab、InteractionWorkspace、Video Call 和 PSTN / Voice Call 的既有功能，除非另有明确要求。
+
+当前风险点：
+
+- Live Chat 仍为静态 demo mock，不接真实 WhatsApp / BankApp / Webchat 消息网关。
+- 展开态仍是四列布局，需要在最终演示分辨率下确认 CRM 与 Assistant 区域宽度是否足够。
+- `npm run build` 仍有既有 Vite chunk size warning，不影响本轮功能。
 
 ### 2026-05-21 23:40 +08:00 - 创建非生产集成分支暂存弹屏框架
 

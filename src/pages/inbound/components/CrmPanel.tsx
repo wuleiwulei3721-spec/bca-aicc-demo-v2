@@ -3,16 +3,23 @@ import {
   BankOutlined,
   CloseOutlined,
   FileDoneOutlined,
+  MessageOutlined,
 } from '@ant-design/icons'
 import type { TabsProps } from 'antd'
 import { BaseTabs } from '../../../components'
 import type { CrmWorkspaceTab } from '../../../types'
+import {
+  ConversationWorkspace,
+  type ConversationWorkspaceConfig,
+} from './ConversationWorkspace'
 
 const CRM_TAB_KEY = 'crm'
+export const CONVERSATION_TAB_KEY = 'conversation'
 const CRM_SCREENSHOT_SRC = '/screenshots/crm-workspace.jpg'
 
 interface CrmPanelProps {
   activeKey: string
+  conversation?: ConversationWorkspaceConfig
   workspaceTabs: CrmWorkspaceTab[]
   onActiveKeyChange: (activeKey: string) => void
   onCloseTab: (tabKey: string) => void
@@ -190,6 +197,7 @@ function WorkspaceBusinessDetail({ tab }: { tab: CrmWorkspaceTab }) {
 
 export function CrmPanel({
   activeKey,
+  conversation,
   workspaceTabs,
   onActiveKeyChange,
   onCloseTab,
@@ -207,6 +215,26 @@ export function CrmPanel({
         ),
         children: <CrmScreenshotArea />,
       },
+      ...(conversation
+        ? [
+            {
+              key: CONVERSATION_TAB_KEY,
+              closable: false,
+              label: (
+                <span>
+                  <MessageOutlined />
+                  Conversation
+                </span>
+              ),
+              children: (
+                <ConversationWorkspace
+                  key={conversation.session.id}
+                  {...conversation}
+                />
+              ),
+            },
+          ]
+        : []),
       ...workspaceTabs.map((tab) => ({
         key: tab.key,
         closable: true,
@@ -219,7 +247,7 @@ export function CrmPanel({
         children: <WorkspaceBusinessDetail tab={tab} />,
       })),
     ],
-    [workspaceTabs],
+    [conversation, workspaceTabs],
   )
 
   const handleEdit: TabsProps['onEdit'] = (targetKey, action) => {

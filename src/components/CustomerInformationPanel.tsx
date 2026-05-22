@@ -44,6 +44,18 @@ function verificationBadge(status: VerificationStatus) {
   return { label: 'Unverified', status: 'warning' as const }
 }
 
+function customerLevelLabel(customerType: string) {
+  if (!customerType || customerType === 'Regular Customer') {
+    return null
+  }
+
+  if (customerType === 'Priority Customer') {
+    return 'Priority'
+  }
+
+  return customerType
+}
+
 export function CustomerInformationPanel({
   accessChannelNode,
   className,
@@ -71,6 +83,8 @@ export function CustomerInformationPanel({
     outboundRequestStatus === 'approved'
       ? onStartOutbound
       : onRequestOutbound
+  const levelLabel = customerLevelLabel(profile.customerType)
+  const avatarSrc = profile.avatarUrl.trim() || undefined
 
   return (
     <BaseCard
@@ -86,11 +100,13 @@ export function CustomerInformationPanel({
             <Avatar
               className="aicc-customer-info__avatar"
               size={58}
-              src={profile.avatarUrl}
+              src={avatarSrc}
             >
               {profile.avatarInitials}
             </Avatar>
-            <StatusBadge label="Priority" size="small" status="selected" />
+            {levelLabel && (
+              <StatusBadge label={levelLabel} size="small" status="selected" />
+            )}
           </div>
 
           <div className="aicc-customer-info__main">
@@ -140,7 +156,9 @@ export function CustomerInformationPanel({
                 onClick={onSendEmail}
               >
                 <MailOutlined />
-                {profile.email}
+                <span className="aicc-customer-info__email-value">
+                  {profile.email}
+                </span>
               </button>
               <span>
                 <IdcardOutlined />

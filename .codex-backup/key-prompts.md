@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-05-21 12:22 +08:00
+最后更新：2026-05-22 18:55 +08:00
 
 ## 项目方向
 
@@ -79,6 +79,23 @@
 - 坐席点击右上角 `Sign In` 后具备接收实时聊天渠道客户的技能；签入后 Home 旁增加固定 `Live Chat` tab，且不可关闭。
 - Live Chat 页面应基于语音来电弹屏内容扩展，必须复用现有 Inbound/InteractionWorkspace 组件，不复制一整套代码。
 - Live Chat 页面在原三栏左侧增加类似微信客户端的客户列表；客户列表要支持收起/展开，右侧继续保持 Customer Information、CRM workspace、Assistant 三栏。
+
+## 2026-05-22 Live Chat Conversation 页签
+
+- 在 Live Chat 的 CRM 工作区中，`CRM` 右侧新增固定不可关闭的 `Conversation` tab。
+- `Conversation` tab 顶部左侧显示当前客户名称，右侧提供 `Transfer` 与 `End Service` 操作；`Invite` 已从顶部移除。
+- `End Service` 点击后必须二次确认是否结束服务，确认后关闭当前客户会话。
+- `Conversation` tab 中部展示客户与其它坐席的历史会话记录，并随左侧客户列表选中客户联动切换。
+- `Conversation` tab 下方提供发送信息框，底部包含表情、文件和发送按钮。
+
+## 2026-05-22 Conversation Transfer 文案与操作
+
+- Conversation 顶部 `Transfer` 使用共享 `TransferModal` 的 `conversation` 变体。
+- Conversation Transfer 弹框不显示 `Transfer Number` 页签，只显示 `Transfer Agent` 与 `Transfer Skill`。
+- `Transfer Agent` 默认只显示 `Request Transfer`、`Request Conference` 和更多下箭头；下拉菜单提供 `Force Transfer`、`Force Conference`。
+- 文字渠道邀请语义在 Transfer 弹框内统一为 `Conference`，不再使用 `Invite` 作为 Agent 行动作文案。
+- 话务条 Transfer 弹框保持原 `Consult` / `Transfer` / `Conference` 与三页签行为。
+- 话务条 Transfer 弹框的 `Consult` / `Transfer` / `Conference` 必须保持同一行，不允许因为 Conversation 专用动作收纳影响 call 变体。
 
 ## 上下文恢复
 

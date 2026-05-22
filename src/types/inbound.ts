@@ -38,10 +38,21 @@ export interface CustomerInformation {
   verificationStatus: VerificationStatus
 }
 
+export interface LiveChatConversationMessage {
+  id: string
+  sender: 'customer' | 'agent'
+  senderName: string
+  senderRole: string
+  message: string
+  time: string
+  isCurrentAgent?: boolean
+}
+
 export interface LiveChatSession {
   id: string
   channel: Extract<AccessChannel, 'WhatsApp' | 'Haloapps' | 'Webchat'>
   customer: CustomerInformation
+  conversation: LiveChatConversationMessage[]
   intent: string
   lastMessage: string
   lastMessageTime: string
