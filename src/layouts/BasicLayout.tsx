@@ -5,7 +5,6 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   MessageOutlined,
-  MobileOutlined,
   PhoneOutlined,
   SearchOutlined,
   SettingOutlined,
@@ -57,32 +56,21 @@ const initialCallTiming: CallTiming = {
 
 const sideMenuItems: SideMenuItem[] = [
   {
-    key: 'customer-simulator',
-    icon: <MobileOutlined />,
-    label: 'Customer Simulator',
-    children: [
-      {
-        key: 'customer-bankapp',
-        label: 'BankApp',
-      },
-    ],
-  },
-  {
     key: 'test-menu',
     icon: <AppstoreOutlined />,
     label: 'Channel Simulation',
     children: [
       {
         key: 'test-pstn-voice',
-        label: 'PSTN / Voice Call',
+        label: 'PSTN',
       },
       {
-        key: 'test-video',
-        label: 'Video Call',
+        key: 'customer-bankapp',
+        label: 'BankApp',
       },
       {
-        key: 'test-chat',
-        label: 'Live Chat',
+        key: 'customer-whatsapp',
+        label: 'WhatsApp',
       },
     ],
   },
@@ -141,11 +129,11 @@ export function BasicLayout() {
   const requestBankAppDemoWorkspace = useAppStore(
     (state) => state.requestBankAppDemoWorkspace,
   )
+  const requestWhatsAppDemoWorkspace = useAppStore(
+    (state) => state.requestWhatsAppDemoWorkspace,
+  )
   const requestVideoCallPopup = useAppStore(
     (state) => state.requestVideoCallPopup,
-  )
-  const requestLiveChatWorkspace = useAppStore(
-    (state) => state.requestLiveChatWorkspace,
   )
   const isVideoCallTabOpen = useAppStore((state) => state.isVideoCallTabOpen)
   const setLiveChatTabOpen = useAppStore(
@@ -452,23 +440,17 @@ export function BasicLayout() {
         triggerVoiceInboundCall()
       }
 
-      if (childKey === 'test-video') {
-        triggerVideoInboundCall()
-      }
-
-      if (childKey === 'test-chat' && isSignedIn) {
-        requestLiveChatWorkspace()
-      }
-
       if (childKey === 'customer-bankapp') {
         requestBankAppDemoWorkspace()
       }
+
+      if (childKey === 'customer-whatsapp') {
+        requestWhatsAppDemoWorkspace()
+      }
     },
     [
-      isSignedIn,
       requestBankAppDemoWorkspace,
-      requestLiveChatWorkspace,
-      triggerVideoInboundCall,
+      requestWhatsAppDemoWorkspace,
       triggerVoiceInboundCall,
     ],
   )

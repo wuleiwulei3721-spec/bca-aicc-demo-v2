@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-05-23 19:33 +08:00
+最后更新：2026-05-23 19:36 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：冻结 `codex/bankapp-channel-demo` 为 BankApp Demo 基线版本 `v0.3.0`，并按后续里程碑推进菜单、WhatsApp、Video screen share 和客户远程演示优化。
+当前目标：在 `codex/nav-whatsapp-simulator` 实现 `v0.3.1` 左侧菜单重组与 WhatsApp 客户模拟入口，并继续准备 `v0.4.0` Video screen share demo。
 
 ## 0. 使用规则
 
@@ -40,7 +40,7 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`codex/bankapp-channel-demo`
+当前分支：`codex/nav-whatsapp-simulator`
 当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于 BankApp 客户接入演示集成，未合并或发布到 `main`
 部署目标：Vercel 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
@@ -111,7 +111,7 @@ codex-recovered-context.md
 - `src/pages/inbound/LiveChatPage.tsx`：Live Chat 固定页签页面，复用三栏工作台并增加文字聊天客户列表。
 - `src/pages/inbound/components/LiveChatCustomerList.tsx`：WhatsApp / BankApp / Webchat 客户聊天列表，默认收起，支持 ALL 与渠道图标筛选，可收起展开。
 - `src/pages/DesignSystem.tsx`：设计系统展示页。
-- `src/store/appStore.ts`：workspace tab、BankApp demo tab、Live Chat 聚焦和 inbound popup 全局状态。
+- `src/store/appStore.ts`：workspace tab、BankApp demo tab、WhatsApp demo tab、Live Chat 聚焦和 inbound popup 全局状态。
 - `src/mock/bankapp.ts`：BankApp 联系方式、业务类型、客户身份/语言驱动的技能路由和截图素材路径配置。
 - `src/mock/inbound.ts`：Inbound 演示数据。
 - `src/types/bankapp.ts`：BankApp demo 联系方式、业务类型和步骤类型。
@@ -130,10 +130,11 @@ codex-recovered-context.md
 
 - `BasicLayout` 是所有页面的壳，包含顶部 Header、坐席状态、话务工具条、侧栏和内容区。
 - `AgentWorkspace` 默认显示 Home tab。
-- 点击左侧 `Customer Simulator > BankApp` 会打开可关闭的 `BankApp Demo` tab，用于演示客户在 BankApp 内选择文字、语音或视频服务后进入 AICC。
+- 点击左侧 `Channel Simulation > BankApp` 会打开可关闭的 `BankApp Demo` tab，用于演示客户在 BankApp 内选择文字、语音或视频服务后进入 AICC。
+- 点击左侧 `Channel Simulation > WhatsApp` 会打开可关闭的 `WhatsApp Demo` tab，初版复用 BankApp 客户侧流程壳并默认聚焦 WhatsApp Live Chat 会话。
 - 坐席点击右上角 `Sign In` 后，`Live Chat` tab 会固定插入 Home tab 旁边，`closable: false`，用于承载实时文字聊天工作台。
-- 当坐席处于 Ready 且无通话时，点击左侧 `Channel Simulation > PSTN / Voice Call` 进入 Incoming 并打开电话弹屏 tab；点击 `Channel Simulation > Video Call` 进入 Incoming 并打开 Video Call tab。
-- 点击左侧 `Channel Simulation > Live Chat` 时，如坐席已签入，则切换到固定 `Live Chat` tab，不改变语音/视频通话状态。
+- 当坐席处于 Ready 且无通话时，点击左侧 `Channel Simulation > PSTN` 进入 Incoming 并打开电话弹屏 tab。
+- `Video Call` 与 `Live Chat` 已从左侧可见菜单移除；底层 workspace、store 和页面能力保留，供 BankApp Video、WhatsApp/BankApp chat 和后续调试复用。
 - `requestInboundPopup(source?, activate?)` 会打开 Inbound tab；`activate` 默认为 `true`，BankApp 演示可传 `false` 在后台准备电话弹屏但保持 BankApp Demo 当前激活页。
 - `requestInboundPopup('bankapp-voice')` 会打开 Inbound tab，并以 BankApp 客户资料展示语音接入。
 - `requestVideoCallPopup(source?, activate?)` 会打开 Video Call tab；`activate` 默认为 `true`，BankApp 演示可传 `false` 在后台准备视频弹屏但保持 BankApp Demo 当前激活页。
@@ -150,7 +151,7 @@ codex-recovered-context.md
 - 顶部蓝色渐变 BANK 1 Header，恢复旧版主工作台视觉。
 - 可展开/收起左侧系统菜单，默认收起，`collapsedWidth` 为 `48px`，展开宽度使用 `--aicc-layout-sider-width`。
 - 左侧菜单支持 2 层级：展开态顶部显示折叠按钮与菜单搜索框，点击一级菜单在下方展开二级菜单；收起态仅显示一级图标，鼠标悬浮在一级图标时在右侧显示二级菜单浮层，鼠标移出浮层或点击菜单后浮层关闭。
-- 当前侧栏菜单使用英文企业呼叫中心文案：Customer Simulator（BankApp）、Channel Simulation（PSTN / Voice Call、Video Call、Live Chat）、Agent Center（Agent Profile、Service History）、Operations（Alert KPI Management、Floor Management）、Call Management、Reports。
+- 当前侧栏菜单使用英文企业呼叫中心文案：Channel Simulation（PSTN、BankApp、WhatsApp）、Agent Center（Agent Profile、Service History）、Operations（Alert KPI Management、Floor Management）、Call Management、Reports。
 - Agent Toolbar：Answer、Hold、Mute、Transfer、Hang Up、More。
 - Agent Profile Area：Ready、Not Ready、AUX - Ibadah、AUX - Makan、Unsigned 等状态。
 - Notifications 和 Internal Chat 入口。
@@ -181,10 +182,9 @@ type CallStatus =
 关键逻辑：
 
 - Sign In 后 `BasicLayout` 调用 `setLiveChatTabOpen(true)`，使 Home 旁出现固定 `Live Chat` tab；Sign Out 后调用 `setLiveChatTabOpen(false)` 并在当前 tab 是 Live Chat 时退回 Home。
-- Ready + Idle 时点击 `Channel Simulation > PSTN / Voice Call` 可触发电话弹屏。
-- Ready + Idle 时点击 `Channel Simulation > Video Call` 可触发 Video Call。
+- Ready + Idle 时点击 `Channel Simulation > PSTN` 可触发电话弹屏。
 - BankApp Demo 的 `Livechat` 路径会打开 Live Chat 并聚焦 BankApp 客户；`Voice Call` / `Video Call` 路径通过 store request id 触发现有坐席话务状态机。
-- 已签入时点击 `Channel Simulation > Live Chat` 只激活 Live Chat 工作台，不触发 `Incoming` 话务状态。
+- WhatsApp Demo 默认走 Live Chat 路径并聚焦 WhatsApp 客户 `live-chat-001`；已签入后仍可通过固定 Live Chat tab 承载会话工作台。
 - Incoming 支持手动 Answer，也支持按 `autoAnswerSeconds` 自动接听。
 - Talking 可切换 Hold 或 Mute。
 - Hold 和 Mute 有独立累计计时。
@@ -397,6 +397,8 @@ Live Chat 当前 mock：
 - PSTN / Voice Call 菜单点击触发电话来电逻辑。
 - Video Call 菜单点击触发视频来电 tab，复用电话弹屏三栏内容。
 - BankApp Demo 的入口、业务选择、业务确认截图已切换为脱敏版本：渠道选择、游客号码输入、客户信息录入、三渠道业务选择和三渠道业务确认均保留手机截图比例和大概样式，但只显示 BANK 1 或通用业务内容；Video connected 直接使用用户提供的视频通话截图原图 `video-connected.png`；Live Chat 排队与聊天直接使用用户提供且已处理的 `livechat-queue.png` / `livechat-chat.png` 原附件；Voice / Video / Live Chat 最终 `Service Closed` 均使用用户提供的满意度评价截图 `service-closed.png`；步骤标题和 AICC Process rail 已按开发责任增加 `BANK1` / `Netinfo` 标识。
+- 左侧菜单已调整为 `Channel Simulation > PSTN / BankApp / WhatsApp`；旧可见 `Video Call` 和 `Live Chat` 入口已移除，底层能力保留。
+- 新增 `WhatsApp Demo` workspace tab，复用 BankApp 客户侧流程壳，默认 Live Chat 渠道并聚焦 WhatsApp mock 会话。
 - BankApp Live Chat 路径可打开 Live Chat 并自动选中 BankApp 客户 Sari Amelia；Registered Customer 跳过个人信息页，Guest 才进入个人信息录入。
 - BankApp Voice Call 路径可触发 `Incoming` 并打开 Inbound tab，Customer Information 渠道图标为 BankApp 移动端图标，文字显示 `BankApp`。
 - BankApp Video Call 路径可触发 Video Call tab，Customer Information 渠道图标为 BankApp 移动端图标，文字显示 `BankApp`；普通 Channel Simulation 的 Video Call 仍显示 `Video Call` 渠道。
@@ -435,7 +437,7 @@ Live Chat 当前 mock：
 
 ## 10. 当前开发状态
 
-截至 2026-05-23 19:03 +08:00，当前工作在 `codex/bankapp-channel-demo` 分支实现 BankApp 客户侧接入演示简化重构、浏览器批注调整、BankApp 截图脱敏、BankApp voice/video 坐席渠道标识修正、Video connected 用户附件原图接入、Live Chat 客户侧排队/聊天原附件接入、三渠道 `Service Closed` 满意度评价闭环，以及步骤开发方标识。`main` 未合并，客户正式环境不更新。
+截至 2026-05-23 19:36 +08:00，`main` 已本地快进到 BankApp Demo 基线并打 `v0.3.0` tag；当前工作在 `codex/nav-whatsapp-simulator` 分支实现 `v0.3.1` 菜单重组和 WhatsApp 模拟入口。远端推送与 GitHub PR 仍需在本轮最终验证后执行。
 
 本轮 BankApp 客户接入演示状态：
 

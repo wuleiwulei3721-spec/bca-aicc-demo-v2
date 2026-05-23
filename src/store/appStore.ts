@@ -16,6 +16,7 @@ interface AppState {
   isLiveChatTabOpen: boolean
   isOpenEyeVideoWindowVisible: boolean
   isVideoCallTabOpen: boolean
+  isWhatsAppDemoTabOpen: boolean
   inboundPopupRequestId: number
   liveChatFocusRequestId: number
   liveChatFocusSessionId: string | null
@@ -23,6 +24,7 @@ interface AppState {
   closeBankAppDemoTab: () => void
   closeInboundTab: () => void
   closeVideoCallTab: () => void
+  closeWhatsAppDemoTab: () => void
   requestBankAppDemoWorkspace: () => void
   requestBankAppVideoCall: () => void
   requestBankAppVoiceCall: () => void
@@ -33,6 +35,7 @@ interface AppState {
     activate?: boolean,
   ) => void
   requestCustomerOutboundCall: () => void
+  requestWhatsAppDemoWorkspace: () => void
   setActiveWorkspaceTabKey: (tabKey: string) => void
   setCollapsed: (collapsed: boolean) => void
   setLiveChatTabOpen: (open: boolean) => void
@@ -52,6 +55,7 @@ export const useAppStore = create<AppState>((set) => ({
   isLiveChatTabOpen: false,
   isOpenEyeVideoWindowVisible: false,
   isVideoCallTabOpen: false,
+  isWhatsAppDemoTabOpen: false,
   inboundPopupRequestId: 0,
   liveChatFocusRequestId: 0,
   liveChatFocusSessionId: null,
@@ -85,10 +89,23 @@ export const useAppStore = create<AppState>((set) => ({
       isOpenEyeVideoWindowVisible: false,
       isVideoCallTabOpen: false,
     })),
+  closeWhatsAppDemoTab: () =>
+    set((state) => ({
+      activeWorkspaceTabKey:
+        state.activeWorkspaceTabKey === 'whatsapp-demo'
+          ? 'home'
+          : state.activeWorkspaceTabKey,
+      isWhatsAppDemoTabOpen: false,
+    })),
   requestBankAppDemoWorkspace: () =>
     set({
       activeWorkspaceTabKey: 'bankapp-demo',
       isBankAppDemoTabOpen: true,
+    }),
+  requestWhatsAppDemoWorkspace: () =>
+    set({
+      activeWorkspaceTabKey: 'whatsapp-demo',
+      isWhatsAppDemoTabOpen: true,
     }),
   requestBankAppVideoCall: () =>
     set((state) => ({

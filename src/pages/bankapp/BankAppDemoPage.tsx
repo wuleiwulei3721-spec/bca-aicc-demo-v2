@@ -29,6 +29,37 @@ import type {
 } from '../../types'
 
 const BANKAPP_LIVE_CHAT_SESSION_ID = 'live-chat-002'
+const WHATSAPP_LIVE_CHAT_SESSION_ID = 'live-chat-001'
+
+type CustomerAppDemoVariant = 'bankapp' | 'whatsapp'
+
+interface CustomerAppDemoConfig {
+  ariaLabel: string
+  channelLabel: string
+  contactMethods: BankAppContactMethod[]
+  defaultContactMethod: BankAppContactMethod
+  liveChatSessionId: string
+  phoneTitle: string
+}
+
+const demoConfigs: Record<CustomerAppDemoVariant, CustomerAppDemoConfig> = {
+  bankapp: {
+    ariaLabel: 'BankApp customer demo',
+    channelLabel: 'BankApp',
+    contactMethods: ['voice', 'video', 'livechat'],
+    defaultContactMethod: 'voice',
+    liveChatSessionId: BANKAPP_LIVE_CHAT_SESSION_ID,
+    phoneTitle: 'Customer BankApp',
+  },
+  whatsapp: {
+    ariaLabel: 'WhatsApp customer demo',
+    channelLabel: 'WhatsApp',
+    contactMethods: ['livechat'],
+    defaultContactMethod: 'livechat',
+    liveChatSessionId: WHATSAPP_LIVE_CHAT_SESSION_ID,
+    phoneTitle: 'Customer WhatsApp',
+  },
+}
 
 const stepLabels: Record<BankAppDemoStep, string> = {
   business: 'Select Business',
@@ -131,23 +162,28 @@ function getRoutedSkill(
   return `${baseSkill} / ${methodLabel}`
 }
 
-function getProcessDescription(step: BankAppDemoStep) {
+function getProcessDescription(step: BankAppDemoStep, channelLabel: string) {
   const descriptions: Record<BankAppDemoStep, string> = {
     business: 'AICC displays skills from customer identity, language, and channel.',
     calling: 'AICC queues the request and starts agent routing.',
-    channel: 'Customer chooses a BankApp contact method.',
-    chat: 'Customer and agent are connected in BankApp chat.',
+    channel: `Customer chooses a ${channelLabel} contact method.`,
+    chat: `Customer and agent are connected in ${channelLabel} chat.`,
     closed: 'Customer receives reference number and rating prompt.',
     confirm: 'AICC confirms intent, language, and target skill.',
     connected: 'Customer sees the connected call timer before agent desktop opens.',
-    'personal-info': 'BankApp passes customer profile context to AICC.',
+    'personal-info': `${channelLabel} passes customer profile context to AICC.`,
     'phone-number': 'Guest customer provides a callback phone number.',
   }
 
   return descriptions[step]
 }
 
-export function BankAppDemoPage() {
+export function BankAppDemoPage({
+  variant = 'bankapp',
+}: {
+  variant?: CustomerAppDemoVariant
+}) {
+  const config = demoConfigs[variant]
   const requestBankAppVideoCall = useAppStore(
     (state) => state.requestBankAppVideoCall,
   )
@@ -161,7 +197,7 @@ export function BankAppDemoPage() {
     useState<BankAppCustomerType>('registered')
   const language: BankAppLanguage = 'en'
   const [contactMethod, setContactMethod] =
-    useState<BankAppContactMethod>('voice')
+    useState<BankAppContactMethod>(config.defaultContactMethod)
   const [businessType, setBusinessType] =
     useState<BankAppBusinessType>('mobile-login')
   const [demoStep, setDemoStep] = useState<BankAppDemoStep>('channel')
@@ -186,7 +222,7 @@ export function BankAppDemoPage() {
 
   const triggerAgentWorkspace = () => {
     if (contactMethod === 'livechat') {
-      requestLiveChatWorkspace(BANKAPP_LIVE_CHAT_SESSION_ID, false)
+      requestLiveChatWorkspace(config.liveChatSessionId, false)
       return
     }
 
@@ -233,7 +269,7 @@ export function BankAppDemoPage() {
 
   const handleReset = () => {
     setCustomerType('registered')
-    setContactMethod('voice')
+    setContactMethod(config.defaultContactMethod)
     setBusinessType('mobile-login')
     setDemoStep('channel')
   }
@@ -251,12 +287,14 @@ export function BankAppDemoPage() {
   const renderChannelScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--channel">
       <img
-        alt="BankApp service channel"
+        alt={`${config.channelLabel} service channel`}
         className="bankapp-phone-screen__reference"
         src={bankAppScreenshotSources.channel}
       />
       <div className="bankapp-channel-hotspots" aria-label="Choose service channel">
-        {bankAppContactMethods.map((method) => (
+        {bankAppContactMethods
+          .filter((method) => config.contactMethods.includes(method.id))
+          .map((method) => (
           <button
             aria-label={method.label}
             className={`bankapp-channel-hotspot bankapp-channel-hotspot--${method.id}`}
@@ -284,7 +322,7 @@ export function BankAppDemoPage() {
   const renderPhoneNumberScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--number">
       <img
-        alt="BankApp guest phone number input"
+        alt={`${config.channelLabel} guest phone number input`}
         className="bankapp-phone-screen__reference"
         src={bankAppScreenshotSources.voicePhoneNumber}
       />
@@ -294,7 +332,7 @@ export function BankAppDemoPage() {
   const renderPersonalInfoScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--personal">
       <img
-        alt="BankApp customer information input"
+        alt={`${config.channelLabel} customer information input`}
         className="bankapp-phone-screen__reference"
         src={bankAppScreenshotSources.textLogin}
       />
@@ -304,7 +342,9 @@ export function BankAppDemoPage() {
   const renderBusinessScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--business">
       <img
-        alt={`BankApp ${getMethodLabel(contactMethod)} business selection`}
+        alt={`${config.channelLabel} ${getMethodLabel(
+          contactMethod,
+        )} business selection`}
         className="bankapp-phone-screen__reference"
         src={bankAppScreenshotSources.businessSelection[contactMethod]}
       />
@@ -333,7 +373,9 @@ export function BankAppDemoPage() {
   const renderConfirmScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--confirm">
       <img
-        alt={`BankApp ${getMethodLabel(contactMethod)} business confirmation`}
+        alt={`${config.channelLabel} ${getMethodLabel(
+          contactMethod,
+        )} business confirmation`}
         className="bankapp-phone-screen__reference"
         src={bankAppScreenshotSources.businessConfirm[contactMethod]}
       />
@@ -361,7 +403,7 @@ export function BankAppDemoPage() {
       return (
         <div className="bankapp-phone-screen bankapp-phone-screen--livechat-queue">
           <img
-            alt="BankApp Live Chat queue"
+            alt={`${config.channelLabel} Live Chat queue`}
             className="bankapp-phone-screen__reference"
             src={bankAppScreenshotSources.textQueue}
           />
@@ -394,7 +436,7 @@ export function BankAppDemoPage() {
       return (
         <div className="bankapp-phone-screen bankapp-phone-screen--video-connected">
           <img
-            alt="BankApp connected video call"
+            alt={`${config.channelLabel} connected video call`}
             className="bankapp-phone-screen__reference"
             src={bankAppScreenshotSources.videoConnected}
           />
@@ -421,7 +463,7 @@ export function BankAppDemoPage() {
   const renderChatScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--livechat-chat">
       <img
-        alt="BankApp Live Chat conversation"
+        alt={`${config.channelLabel} Live Chat conversation`}
         className="bankapp-phone-screen__reference"
         src={bankAppScreenshotSources.textChat}
       />
@@ -431,7 +473,7 @@ export function BankAppDemoPage() {
   const renderClosedScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--service-closed">
       <img
-        alt="BankApp satisfaction evaluation"
+        alt={`${config.channelLabel} satisfaction evaluation`}
         className="bankapp-phone-screen__reference"
         src={bankAppScreenshotSources.serviceClosed}
       />
@@ -497,12 +539,12 @@ export function BankAppDemoPage() {
     (contactMethod === 'video' && demoStep === 'connected')
 
   return (
-    <section className="bankapp-demo" aria-label="BankApp customer demo">
+    <section className="bankapp-demo" aria-label={config.ariaLabel}>
       <div className="bankapp-demo__stage">
         <section className="bankapp-demo__phone-panel">
           <div className="bankapp-demo__panel-heading">
             <MobileOutlined />
-            <strong>Customer BankApp</strong>
+            <strong>{config.phoneTitle}</strong>
             <span className="bankapp-step-title">
               {stepLabels[demoStep]}
               <span
@@ -562,7 +604,12 @@ export function BankAppDemoPage() {
           </div>
 
           <div className="bankapp-process__summary">
-            <InfoRow label="Channel" value={`BankApp / ${getMethodLabel(contactMethod)}`} />
+            <InfoRow
+              label="Channel"
+              value={`${config.channelLabel} / ${getMethodLabel(
+                contactMethod,
+              )}`}
+            />
           </div>
 
           <ol className="bankapp-process__rail">
@@ -592,7 +639,7 @@ export function BankAppDemoPage() {
                         {getStepOwner(step)}
                       </span>
                     </strong>
-                    <p>{getProcessDescription(step)}</p>
+                    <p>{getProcessDescription(step, config.channelLabel)}</p>
                   </div>
                 </li>
               )

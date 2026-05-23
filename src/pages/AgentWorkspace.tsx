@@ -11,9 +11,11 @@ import { BaseTabs, PageContainer } from '../components'
 import { useAppStore } from '../store'
 import { BankAppDemoPage } from './bankapp'
 import { InboundPage, LiveChatPage, VideoCallPage } from './inbound'
+import { WhatsAppDemoPage } from './whatsapp'
 
 const HOME_TAB_KEY = 'home'
 const BANKAPP_DEMO_TAB_KEY = 'bankapp-demo'
+const WHATSAPP_DEMO_TAB_KEY = 'whatsapp-demo'
 const LIVE_CHAT_TAB_KEY = 'live-chat'
 const INBOUND_TAB_KEY = 'inbound'
 const VIDEO_CALL_TAB_KEY = 'video-call'
@@ -23,11 +25,17 @@ export function AgentWorkspace() {
   const hasBankAppDemoTab = useAppStore(
     (state) => state.isBankAppDemoTabOpen,
   )
+  const hasWhatsAppDemoTab = useAppStore(
+    (state) => state.isWhatsAppDemoTabOpen,
+  )
   const hasLiveChatTab = useAppStore((state) => state.isLiveChatTabOpen)
   const hasInboundTab = useAppStore((state) => state.isInboundTabOpen)
   const hasVideoCallTab = useAppStore((state) => state.isVideoCallTabOpen)
   const closeBankAppDemoTab = useAppStore(
     (state) => state.closeBankAppDemoTab,
+  )
+  const closeWhatsAppDemoTab = useAppStore(
+    (state) => state.closeWhatsAppDemoTab,
   )
   const closeInboundTab = useAppStore((state) => state.closeInboundTab)
   const closeVideoCallTab = useAppStore((state) => state.closeVideoCallTab)
@@ -72,6 +80,21 @@ export function AgentWorkspace() {
         ),
         children:
           activeKey === BANKAPP_DEMO_TAB_KEY ? <BankAppDemoPage /> : null,
+      })
+    }
+
+    if (hasWhatsAppDemoTab) {
+      items.push({
+        key: WHATSAPP_DEMO_TAB_KEY,
+        closable: true,
+        label: (
+          <span>
+            <MessageOutlined />
+            WhatsApp Demo
+          </span>
+        ),
+        children:
+          activeKey === WHATSAPP_DEMO_TAB_KEY ? <WhatsAppDemoPage /> : null,
       })
     }
 
@@ -126,11 +149,16 @@ export function AgentWorkspace() {
     hasInboundTab,
     hasLiveChatTab,
     hasVideoCallTab,
+    hasWhatsAppDemoTab,
   ])
 
   const handleEdit: TabsProps['onEdit'] = (targetKey, action) => {
     if (action === 'remove' && targetKey === BANKAPP_DEMO_TAB_KEY) {
       closeBankAppDemoTab()
+    }
+
+    if (action === 'remove' && targetKey === WHATSAPP_DEMO_TAB_KEY) {
+      closeWhatsAppDemoTab()
     }
 
     if (action === 'remove' && targetKey === INBOUND_TAB_KEY) {

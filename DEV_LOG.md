@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-23 19:33 +08:00
+最后更新：2026-05-23 19:36 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,47 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-23 19:36 +08:00 - v0.3.1 菜单重组与 WhatsApp 模拟入口
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/AgentWorkspace.tsx`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/pages/whatsapp/*`
+- `src/store/appStore.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求左侧菜单调整为 `Channel Simulation > PSTN / BankApp / WhatsApp`。
+- `PSTN / Voice Call` 可见文案需要改为 `PSTN`。
+- `Video Call` 和 `Live Chat` 需要从可见菜单移除，但保留底层能力。
+- 需要新增 WhatsApp 客户接入模拟界面，初版可复制 BankApp Demo 弹屏流程。
+
+修改结果：
+
+- 左侧可见菜单已移除 `Customer Simulator` 分组，`BankApp` 移到 `Channel Simulation` 下，位于 `PSTN` 下方。
+- `Video Call` 与 `Live Chat` 不再作为左侧可见菜单项出现；BankApp Video 和固定 Live Chat 工作台底层逻辑保留。
+- 新增 `WhatsApp Demo` workspace tab 与 store open/close/request 方法。
+- `WhatsApp Demo` 复用 BankApp 客户侧流程壳，默认 Live Chat 渠道并在 handoff 时聚焦现有 WhatsApp mock 会话 `live-chat-001`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+
+回滚说明：
+
+- 可恢复 `BasicLayout.tsx` 中旧菜单配置，并删除 `src/pages/whatsapp/` 与 store 中 WhatsApp demo tab 状态。
+- `BankAppDemoPage.tsx` 的 `variant` 支持可保留，不影响 BankApp 默认行为。
+
+当前风险点：
+
+- WhatsApp Demo 初版复用 BankApp 截图壳，仅作为入口和流程模拟；后续仍需按 WhatsApp 真实客户界面细化。
+- 左侧菜单隐藏 Video Call / Live Chat 后，普通 Video Call 入口只能通过内部流程或后续调试入口触发。
 
 ### 2026-05-23 19:33 +08:00 - BankApp 基线版本与素材风险清理
 
