@@ -1,3 +1,4 @@
 export * from './AgentWorkspace'
+export * from './bankapp'
 export * from './DesignSystem'
 export * from './Foundation'

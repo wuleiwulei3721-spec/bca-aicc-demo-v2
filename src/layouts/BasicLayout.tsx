@@ -5,6 +5,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   MessageOutlined,
+  MobileOutlined,
   PhoneOutlined,
   SearchOutlined,
   SettingOutlined,
@@ -16,6 +17,7 @@ import type { ReactNode } from 'react'
 import { Outlet } from 'react-router-dom'
 import { headerAgentProfile } from '../mock/agent'
 import { useAppStore } from '../store'
+import type { InboundPopupSource, VideoCallPopupSource } from '../store'
 import type { AgentStatus, CallStatus } from '../types'
 import { AgentProfileArea } from './components/AgentProfileArea'
 import { AgentToolbar } from './components/AgentToolbar'
@@ -54,6 +56,17 @@ const initialCallTiming: CallTiming = {
 }
 
 const sideMenuItems: SideMenuItem[] = [
+  {
+    key: 'customer-simulator',
+    icon: <MobileOutlined />,
+    label: 'Customer Simulator',
+    children: [
+      {
+        key: 'customer-bankapp',
+        label: 'BankApp',
+      },
+    ],
+  },
   {
     key: 'test-menu',
     icon: <AppstoreOutlined />,
@@ -117,8 +130,17 @@ const sideMenuItems: SideMenuItem[] = [
 
 export function BasicLayout() {
   const collapsed = useAppStore((state) => state.collapsed)
+  const bankAppVideoCallRequestId = useAppStore(
+    (state) => state.bankAppVideoCallRequestId,
+  )
+  const bankAppVoiceCallRequestId = useAppStore(
+    (state) => state.bankAppVoiceCallRequestId,
+  )
   const setCollapsed = useAppStore((state) => state.setCollapsed)
   const requestInboundPopup = useAppStore((state) => state.requestInboundPopup)
+  const requestBankAppDemoWorkspace = useAppStore(
+    (state) => state.requestBankAppDemoWorkspace,
+  )
   const requestVideoCallPopup = useAppStore(
     (state) => state.requestVideoCallPopup,
   )
@@ -154,6 +176,8 @@ export function BasicLayout() {
   const [menuSearchQuery, setMenuSearchQuery] = useState('')
   const [openMenuKeys, setOpenMenuKeys] = useState<string[]>([])
   const [selectedMenuKey, setSelectedMenuKey] = useState('test-pstn-voice')
+  const handledBankAppVideoCallRequestIdRef = useRef(0)
+  const handledBankAppVoiceCallRequestIdRef = useRef(0)
   const handledOutboundCallRequestIdRef = useRef(0)
 
   const updateAgentStatus = useCallback((status: AgentStatus) => {
@@ -208,43 +232,49 @@ export function BasicLayout() {
     updateAgentStatus(agentStatus === 'Ready' ? 'Not Ready' : 'Ready')
   }, [agentStatus, updateAgentStatus])
 
-  const triggerVoiceInboundCall = useCallback(() => {
-    if (agentStatus !== 'Ready' || callStatus !== 'Idle') {
-      return
-    }
+  const triggerVoiceInboundCall = useCallback(
+    (source?: InboundPopupSource, activateWorkspace = true) => {
+      if (agentStatus !== 'Ready' || callStatus !== 'Idle') {
+        return
+      }
 
-    setCallTiming(initialCallTiming)
-    setActiveCallChannel('voice')
-    setIsAfterCallWork(false)
-    setOpenEyeVideoWindowVisible(false)
-    updateCallStatus('Incoming')
-    requestInboundPopup()
-  }, [
-    agentStatus,
-    callStatus,
-    requestInboundPopup,
-    setOpenEyeVideoWindowVisible,
-    updateCallStatus,
-  ])
+      setCallTiming(initialCallTiming)
+      setActiveCallChannel('voice')
+      setIsAfterCallWork(false)
+      setOpenEyeVideoWindowVisible(false)
+      updateCallStatus('Incoming')
+      requestInboundPopup(source, activateWorkspace)
+    },
+    [
+      agentStatus,
+      callStatus,
+      requestInboundPopup,
+      setOpenEyeVideoWindowVisible,
+      updateCallStatus,
+    ],
+  )
 
-  const triggerVideoInboundCall = useCallback(() => {
-    if (agentStatus !== 'Ready' || callStatus !== 'Idle') {
-      return
-    }
+  const triggerVideoInboundCall = useCallback(
+    (source?: VideoCallPopupSource, activateWorkspace = true) => {
+      if (agentStatus !== 'Ready' || callStatus !== 'Idle') {
+        return
+      }
 
-    setCallTiming(initialCallTiming)
-    setActiveCallChannel('video')
-    setIsAfterCallWork(false)
-    setOpenEyeVideoWindowVisible(false)
-    updateCallStatus('Incoming')
-    requestVideoCallPopup()
-  }, [
-    agentStatus,
-    callStatus,
-    requestVideoCallPopup,
-    setOpenEyeVideoWindowVisible,
-    updateCallStatus,
-  ])
+      setCallTiming(initialCallTiming)
+      setActiveCallChannel('video')
+      setIsAfterCallWork(false)
+      setOpenEyeVideoWindowVisible(false)
+      updateCallStatus('Incoming')
+      requestVideoCallPopup(source, activateWorkspace)
+    },
+    [
+      agentStatus,
+      callStatus,
+      requestVideoCallPopup,
+      setOpenEyeVideoWindowVisible,
+      updateCallStatus,
+    ],
+  )
 
   const startTalkingCall = useCallback(() => {
     const now = Date.now()
@@ -293,6 +323,30 @@ export function BasicLayout() {
 
     return () => window.clearTimeout(timer)
   }, [agentStatus, customerOutboundCallRequestId, startTalkingCall])
+
+  useEffect(() => {
+    if (
+      bankAppVoiceCallRequestId === 0 ||
+      handledBankAppVoiceCallRequestIdRef.current === bankAppVoiceCallRequestId
+    ) {
+      return
+    }
+
+    handledBankAppVoiceCallRequestIdRef.current = bankAppVoiceCallRequestId
+    triggerVoiceInboundCall('bankapp-voice', false)
+  }, [bankAppVoiceCallRequestId, triggerVoiceInboundCall])
+
+  useEffect(() => {
+    if (
+      bankAppVideoCallRequestId === 0 ||
+      handledBankAppVideoCallRequestIdRef.current === bankAppVideoCallRequestId
+    ) {
+      return
+    }
+
+    handledBankAppVideoCallRequestIdRef.current = bankAppVideoCallRequestId
+    triggerVideoInboundCall('bankapp-video', false)
+  }, [bankAppVideoCallRequestId, triggerVideoInboundCall])
 
   const handleHoldToggle = useCallback(() => {
     const now = Date.now()
@@ -405,9 +459,14 @@ export function BasicLayout() {
       if (childKey === 'test-chat' && isSignedIn) {
         requestLiveChatWorkspace()
       }
+
+      if (childKey === 'customer-bankapp') {
+        requestBankAppDemoWorkspace()
+      }
     },
     [
       isSignedIn,
+      requestBankAppDemoWorkspace,
       requestLiveChatWorkspace,
       triggerVideoInboundCall,
       triggerVoiceInboundCall,

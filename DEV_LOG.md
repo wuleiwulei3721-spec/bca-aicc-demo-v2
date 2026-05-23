@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-22 18:55 +08:00
+最后更新：2026-05-23 19:33 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,549 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-23 19:33 +08:00 - BankApp 基线版本与素材风险清理
+
+修改页面或文件：
+
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `public/screenshots/bankapp/`
+
+修改原因：
+
+- 用户确认采用里程碑分支、`main` 直发演示和仅保留脱敏/可分享素材的版本策略。
+- 当前 BankApp Demo 已较完整，需要先形成可回滚的 `v0.3.0` 基线，再继续菜单、WhatsApp 和桌面共享工作。
+
+修改结果：
+
+- 已在当前 `main` 提交上创建 `v0.2.0` tag，作为旧稳定基线回滚点。
+- 已将明显未脱敏或旧版原始截图 `channel-selection.png`、`voice-phone-number.png`、`text-login.png`、`voice-skill-selection-en.png`、`voice-skill-confirm-en.png` 迁出仓库目录，避免误提交。
+- `public/screenshots/bankapp/` 仅保留当前代码引用的脱敏图和演示必需图；`video-connected.png`、`livechat-queue.png`、`livechat-chat.png`、`service-closed.png` 仍需发布前确认可分享性。
+
+回滚说明：
+
+- 如需恢复迁出的原始截图，可从本机私有目录 `D:\03projects\bca-aicc-demo-v2-private-assets\` 找回对应 `bankapp-raw-*` 备份。
+- 删除 `v0.2.0` tag 可使用 `git tag -d v0.2.0`，但不建议在已推送后删除。
+
+当前风险点：
+
+- `v0.3.0` 基线提交后仍需合入 `main` 并打 tag，才能作为远程演示的新稳定版本。
+- 部分保留演示图来自用户附件，推送公开或客户外部分发前仍需确认授权和脱敏口径。
+
+### 2026-05-23 19:03 +08:00 - BankApp 步骤开发方标识
+
+修改页面或文件：
+
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户要求在所有 BankApp 演示步骤后增加开发方标识，让客户能清楚区分哪些页面由 BANK1 开发，哪些页面由 Netinfo 开发。
+- `Choose Channel`、`Input Phone Number`、`Personal Information`、`Service Closed` 需要显示 `BANK1`。
+- 其它步骤需要显示 `Netinfo`。
+
+修改结果：
+
+- 新增步骤归属判断，`channel`、`phone-number`、`personal-info`、`closed` 显示 `BANK1`，其余步骤显示 `Netinfo`。
+- BankApp 手机当前步骤标题和右侧 AICC Process rail 的每个步骤名后都显示对应开发方 badge。
+- 新增 badge 样式：`BANK1` 使用 BANK 1 主蓝，`Netinfo` 使用绿色，保持轻量不抢主流程。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser check `/` 通过：Registered Voice 流程中 `Choose Channel` / `Service Closed` 显示 `BANK1`，其它流程步骤显示 `Netinfo`。
+- Browser check `/` 通过：Guest Voice 流程中 `Input Phone Number` 显示 `BANK1`。
+- Browser check `/` 通过：Guest Live Chat 流程中 `Personal Information` 显示 `BANK1`。
+- Browser check `/design-system` 通过，`UI Design System` 页面正常加载。
+
+回滚说明：
+
+- 如需回滚本轮，可移除 `BankAppDemoPage.tsx` 中 `bankOwnedSteps`、`getStepOwner()` 和 `bankapp-step-owner` 渲染，恢复步骤标题只显示文案。
+- 同时删除 `src/styles/index.less` 中 `.bankapp-step-owner*` 相关样式。
+
+当前风险点：
+
+- 这些标识是演示口径，不改变真实系统责任边界或后端集成关系。
+- 若后续客户确认某个步骤开发归属不同，只需调整 `bankOwnedSteps` 集合。
+
+### 2026-05-23 18:38 +08:00 - BankApp Video Connected 原图替换
+
+修改页面或文件：
+
+- `public/screenshots/bankapp/video-connected.png`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户明确要求视频通话界面直接使用本轮附件截图原图，不允许绘制，也不需要脱敏处理。
+- 之前 `video-connected.png` 不是用户本轮提供的原图，需要直接替换。
+
+修改结果：
+
+- 已将 `public/screenshots/bankapp/video-connected.png` 覆盖为用户本轮提供的视频通话截图原图。
+- BankApp Demo 已有代码路径继续引用同一个 `videoConnected` 图片地址，因此无需修改组件逻辑。
+- 本轮只替换视频通话客户侧 connected 图片，不修改其它页面和交互。
+
+验证：
+
+- Local image check 通过：`video-connected.png` 已打开确认，内容为用户本轮提供的视频通话截图。
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser check `/` 通过：BankApp Video 进入 `Connected` 后显示 `img[alt="BankApp connected video call"][src*="video-connected.png"]`，且仍停留在 BankApp Demo。
+- Browser check `/design-system` 通过，`UI Design System` 页面正常加载。
+
+回滚说明：
+
+- 如需回滚本轮，可用上一版 `public/screenshots/bankapp/video-connected.png` 覆盖当前文件，或替换为新的客户截图原图。
+- 组件仍通过 `src/mock/bankapp.ts` 的 `videoConnected` 路径引用该文件。
+
+当前风险点：
+
+- 该图片是静态客户侧演示资产，不接真实视频协议或真实通话状态。
+- 图片原图大小较上一版明显增加，当前不影响构建；如后续部署体积受限再考虑压缩，但不能改变内容。
+
+### 2026-05-23 18:12 +08:00 - BankApp 附件原图接入与 Service Closed 闭环修复
+
+修改页面或文件：
+
+- `public/screenshots/bankapp/livechat-queue.png`
+- `public/screenshots/bankapp/livechat-chat.png`
+- `public/screenshots/bankapp/service-closed.png`
+- `src/mock/bankapp.ts`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/store/appStore.ts`
+- `src/layouts/BasicLayout.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户明确要求文字渠道排队页和聊天页直接使用已处理附件原图，不允许前端重新绘制。
+- 用户补充三渠道最后一步 `Service Closed` 要使用新提供的满意度评价截图，且语音、视频、文字都能进入该最后一步。
+- 之前 `Connected` / `Chat Page` 后触发坐席工作台会直接切走当前 tab，导致 BankApp 手机端最后一步无法展示。
+
+修改结果：
+
+- 已将 `livechat-queue.png`、`livechat-chat.png` 替换为用户附件原图，BankApp Demo 的文字排队和聊天页面直接显示图片，不再绘制、不再脱敏处理。
+- 新增 `service-closed.png`，并在 Voice / Video / Live Chat 三条路径的 `Service Closed` 步骤统一显示用户提供的满意度评价截图。
+- `requestInboundPopup`、`requestVideoCallPopup`、`requestLiveChatWorkspace` 增加 `activate` 参数；BankApp 演示触发坐席电话、视频、文字页时后台打开对应 workspace tab，但保持 BankApp Demo 当前激活页继续展示客户侧满意度评价。
+- 修复 `Next Step` 从 Voice/Video `Connected` 或 Live Chat `Chat Page` 到 `Service Closed` 没有反应的问题。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser check `/` 通过：Livechat `Connecting to Agent` 加载 `/screenshots/bankapp/livechat-queue.png`。
+- Browser check `/` 通过：Livechat `Chat Page` 加载 `/screenshots/bankapp/livechat-chat.png`。
+- Browser check `/` 通过：Voice / Video / Livechat 均可通过 `Next Step` 到达 `/screenshots/bankapp/service-closed.png`。
+- Browser check `/` 通过：触发 BankApp voice/video/livechat 坐席页时，当前仍停留在 BankApp Demo 以展示 Service Closed。
+- Browser check `/design-system` 通过，`UI Design System` 页面正常加载。
+
+回滚说明：
+
+- 如需回滚本轮，可恢复 `BankAppDemoPage.tsx` 中 Live Chat 排队/聊天和 `Service Closed` 的组件化渲染，移除 `src/mock/bankapp.ts` 中 `serviceClosed` 路径。
+- 如需恢复坐席页触发后立即切换 workspace，可把 `requestInboundPopup`、`requestVideoCallPopup`、`requestLiveChatWorkspace` 的 `activate` 参数调用恢复为默认激活，并移除相关后台打开逻辑。
+- 三张图片资源可保留在 `public/screenshots/bankapp/` 作为素材备份。
+
+当前风险点：
+
+- 三张直接引用的图片是静态客户侧演示资产，不接真实消息网关、语音/视频协议或满意度评价接口。
+- BankApp 演示触发坐席页后保持当前 BankApp Demo 激活，是为了完整展示客户侧闭环；如果演示口径改为“立即切到坐席端”，需要再调整 `activate` 行为。
+
+### 2026-05-23 17:47 +08:00 - BankApp Live Chat 排队与聊天截图接入
+
+修改页面或文件：
+
+- `public/screenshots/bankapp/livechat-queue.png`
+- `public/screenshots/bankapp/livechat-chat.png`
+- `src/mock/bankapp.ts`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户要求文字渠道的排队页使用附件截图 1，文字渠道的聊天页使用附件截图 2。
+- 用户说明这两张图已经处理过，可以直接使用，不需要再次脱敏。
+
+修改结果：
+
+- BankApp Live Chat 的 `Connecting to Agent` / 排队步骤改为显示 `livechat-queue.png` 图片资源。
+- BankApp Live Chat 的 `Chat Page` 步骤改为显示 `livechat-chat.png` 图片资源。
+- `src/mock/bankapp.ts` 新增 `textQueue` / `textChat` 截图路径配置，`BankAppDemoPage` 只在 Live Chat 对应步骤引用这两张图。
+- 语音、视频、坐席 Live Chat 工作台、Inbound、Design System 等其它界面逻辑未改。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser check `/` 通过：BankApp Livechat 进入 `Connecting to Agent` 后加载 `/screenshots/bankapp/livechat-queue.png`。
+- Browser check `/` 通过：点击 `Next Step` 进入 `Chat Page` 后加载 `/screenshots/bankapp/livechat-chat.png`。
+- Browser check `/design-system` 通过，`UI Design System` 页面正常加载。
+
+回滚说明：
+
+- 如需回滚本轮，可恢复 `BankAppDemoPage.tsx` 中 Live Chat 排队和聊天页面的组件化实现，并移除 `src/mock/bankapp.ts` 中 `textQueue` / `textChat` 路径。
+- 两张图片资源可保留在 `public/screenshots/bankapp/` 作为素材备份，不会影响其它页面。
+
+当前风险点：
+
+- 这两张图片当前只用于 BankApp Demo 客户侧手机，不接真实消息网关，也不会改变坐席端 Live Chat Conversation 的静态 mock 数据。
+- 如果后续需要替换为客户提供的原始文件，只需保持图片比例一致并替换 `livechat-queue.png` / `livechat-chat.png`。
+
+### 2026-05-23 16:49 +08:00 - BankApp 渠道标识与 Live Chat 条件步骤修正
+
+修改页面或文件：
+
+- `src/types/inbound.ts`
+- `src/store/appStore.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/mock/inbound.ts`
+- `src/pages/inbound/VideoCallPage.tsx`
+- `src/pages/inbound/components/ChannelTag.tsx`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/mock/bankapp.ts`
+- `public/screenshots/bankapp/channel-selection-sanitized.png`
+- `public/screenshots/bankapp/video-connected.png`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户要求 BankApp voice/video 转坐席后，Customer Information 的渠道图标和文字都显示为 BankApp。
+- 用户要求 Video Call 的客户侧通话界面使用附件风格截图资源。
+- 用户要求 Live Chat 只有 Guest 才需要 Personal Information，Registered Customer 跳过该步骤。
+- 用户要求渠道选择图中 `Voice Call`、`Video Call`、`Live Chat` 字体放大，便于演示观看。
+
+修改结果：
+
+- 新增 `BankApp` 和 `Video` 渠道类型；BankApp voice/video 客户资料使用 `BankApp` 渠道，`ChannelTag` 使用移动端 BankApp 图标并显示 `BankApp`。
+- 为 Video Call 弹屏增加 `standard | bankapp-video` 来源；只有 BankApp Video 路径显示 BankApp 渠道，普通 `Channel Simulation > Video Call` 仍显示 `Video Call`。
+- Live Chat 路径按客户身份动态生成步骤：Registered Customer 直接进入 `Select Business`，Guest 才显示 `Personal Information`。
+- Video connected 步骤引用 `public/screenshots/bankapp/video-connected.png`。
+- `channel-selection-sanitized.png` 中三条渠道入口文字已放大，保留原图尺寸和热区稳定性。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser check `/` 通过：Registered Live Chat 直接进入业务选择，Guest Live Chat 进入个人信息录入。
+- Browser check `/` 通过：Video connected 步骤加载 `/screenshots/bankapp/video-connected.png`。
+- Browser check `/` 通过：BankApp Voice 坐席弹屏 Customer Information 显示 `mobile BankApp`。
+- Browser check `/` 通过：BankApp Video 坐席弹屏 Customer Information 显示 `mobile BankApp`。
+- Browser check `/` 通过：普通 `Channel Simulation > Video Call` 显示 `video-camera Video Call`，不受 BankApp Video 来源影响。
+- Browser check `/design-system` 通过，`UI Design System` 页面正常加载。
+
+回滚说明：
+
+- 如需回滚 BankApp 渠道显示，可恢复 `bankAppVoiceCustomer` / `bankAppVideoCustomer` 的 `accessChannel` 和 `ChannelTag` 对 `BankApp` / `Video` 的处理。
+- 如需回滚 Live Chat 条件步骤，可恢复 `getStepSequence()` 中 Livechat 固定包含 `personal-info` 的逻辑。
+- 如需回滚视频通话图片，可把 `bankAppScreenshotSources.videoConnected` 指回前端生成页或替换为新的截图资源。
+
+当前风险点：
+
+- `video-connected.png` 当前为项目内视频通话图片资源；如果必须逐像素使用用户附件原图，需要用户把原图落到本地素材目录后替换该文件。
+- BankApp voice/video 触发仍要求坐席处于 `Ready` 且当前话务为 `Idle`。
+
+### 2026-05-23 16:01 +08:00 - BankApp 三渠道业务选择与确认截图脱敏
+
+修改页面或文件：
+
+- `public/screenshots/bankapp/voice-business-selection-sanitized.png`
+- `public/screenshots/bankapp/video-business-selection-sanitized.png`
+- `public/screenshots/bankapp/livechat-business-selection-sanitized.png`
+- `public/screenshots/bankapp/voice-business-confirm-sanitized.png`
+- `public/screenshots/bankapp/video-business-confirm-sanitized.png`
+- `public/screenshots/bankapp/livechat-business-confirm-sanitized.png`
+- `src/mock/bankapp.ts`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户要求 Voice、Video、Livechat 三个渠道的 `Select Business` 和 `Confirm Business` 页面都使用客户提供截图，但必须打码脱敏。
+- 需要避免继续展示纯前端生成业务页，同时不能暴露客户真实系统品牌、产品名或业务截图细节。
+
+修改结果：
+
+- 基于客户提供的业务选择和确认截图，生成三渠道共六张脱敏图，保持 `1320 x 2868` 手机比例。
+- 业务选择页保留原截图的宫格样式，顶部按渠道显示 `Voice Call`、`Video Call`、`Live Chat`，业务名称替换为 BANK 1 通用服务类别。
+- 业务确认页使用已脱敏业务选择页作为背景并叠加确认弹窗，避免原截图背景残留客户品牌或产品名。
+- `BankAppDemoPage` 的 `business` 和 `confirm` 步骤改为展示脱敏截图。
+- 业务选择页保留透明业务热区；点击业务卡片会选中业务并进入确认页。
+- 业务确认页保留 No / Yes 透明热区；No 返回业务选择，Yes 进入 `Calling Agent`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser check `/` 通过：Voice 进入 `voice-business-selection-sanitized.png` 和 `voice-business-confirm-sanitized.png`，确认后进入 `Calling...`。
+- Browser check `/` 通过：Video 进入 `video-business-selection-sanitized.png` 和 `video-business-confirm-sanitized.png`。
+- Browser check `/` 通过：Livechat 进入 `livechat-business-selection-sanitized.png` 和 `livechat-business-confirm-sanitized.png`。
+- Browser check `/design-system` 通过，页面正常加载。
+
+回滚说明：
+
+- 如需回滚本轮，可恢复 `BankAppDemoPage.tsx` 中 `renderBusinessScreen` 和 `renderConfirmScreen` 的组件化实现，删除新增的业务截图路径和热区样式。
+- 新增脱敏图片可保留作为素材备份，不影响其它页面。
+
+当前风险点：
+
+- 三渠道业务选择/确认脱敏图当前基于同一组客户业务截图模板生成，只通过渠道标题区分；如客户后续提供专属 Video/Livechat 截图，应替换对应素材。
+- 业务热区坐标依赖当前脱敏业务宫格位置；如果图片布局变更，需要重新校验热区。
+
+### 2026-05-23 13:30 +08:00 - BankApp 三张入口截图脱敏
+
+修改页面或文件：
+
+- `public/screenshots/bankapp/channel-selection-sanitized.png`
+- `public/screenshots/bankapp/voice-phone-number-sanitized.png`
+- `public/screenshots/bankapp/text-login-sanitized.png`
+- `src/mock/bankapp.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户要求外网演示时不能看出客户真实系统特征，需要对 BankApp Demo 使用的三张入口截图做脱敏。
+- 脱敏范围限定为渠道选择、客户号码录入、客户信息录入三张图，不修改其它界面。
+- 需要保留原始截图，新增脱敏图，并只把 BankApp Demo 的引用切到脱敏版本。
+
+修改结果：
+
+- 使用本地图像处理生成三张脱敏 PNG，保持原图尺寸和手机比例。
+- 渠道选择页顶部品牌改为 `BANK 1`，只保留 `Voice Call`、`Video Call`、`Live Chat` 三个服务入口清晰可见，其它入口、底部导航和系统特征弱化。
+- 号码录入页和客户信息录入页改为 BANK 1 风格脱敏重绘，保留表单/弹窗大概形态，敏感字段以遮挡线展示。
+- `src/mock/bankapp.ts` 中 `channel`、`voicePhoneNumber`、`textLogin` 三个入口图路径已切到 `*-sanitized.png`。
+- 原始 `channel-selection.png`、`voice-phone-number.png`、`text-login.png` 保留在 `public/screenshots/bankapp/`，不再被 BankApp Demo 页面引用。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser check `/` 通过：`Customer Simulator > BankApp` 渠道页引用 `channel-selection-sanitized.png`，顶部显示 `BANK 1`。
+- Browser check `/` 通过：Video、Livechat、Guest Voice 三个热区仍能进入正确流程。
+- Browser check `/` 通过：Guest + Voice 显示 `voice-phone-number-sanitized.png`。
+- Browser check `/` 通过：Livechat 显示 `text-login-sanitized.png`。
+- Browser check `/design-system` 通过，页面正常加载。
+
+回滚说明：
+
+- 如需回滚本轮脱敏引用，只需把 `src/mock/bankapp.ts` 中三张入口图路径恢复为原始 `channel-selection.png`、`voice-phone-number.png`、`text-login.png`。
+- 如需删除脱敏资源，可移除三个 `*-sanitized.png` 文件；原始截图未删除。
+
+当前风险点：
+
+- 脱敏图是确定性重绘/遮挡版本，用于外网演示隐私保护，不是客户原 App 的像素级截图。
+- 渠道页热区仍依赖当前脱敏图中三条服务卡片的位置；以后改图需要再次浏览器校验热区。
+
+### 2026-05-23 01:14 +08:00 - BankApp 手机放大与截图页补齐
+
+修改页面或文件：
+
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户指出手机框仍然太小，需要按截图比例放大并让高度基本撑满。
+- 用户指出三个渠道热区位置没有对齐截图中的 Voice Call、Video Call、Live Chat。
+- 用户要求渠道选择、客户号码录入、客户信息录入页面都先用客户截图。
+- 用户要求 AICC Process 中 Customer Type、Next Step、Reset 放在同一行，Customer Type 不占整行。
+
+修改结果：
+
+- `.bankapp-phone` 改为按左侧面板高度驱动，保留截图比例，手机展示明显放大并接近撑满左侧面板。
+- 重新校准 Voice、Video、Livechat 三个透明热区位置，使其覆盖截图中的三条渠道菜单。
+- `Input Phone Number` 改为展示 `voice-phone-number.png` 客户截图。
+- `Personal Information` 改为展示 `text-login.png` 客户截图。
+- `Customer Type` 与 `Next Step` / `Reset` 在 AICC Process 控制区同一行展示，操作按钮靠右。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser check `/` 通过：手机框放大并按比例显示。
+- Browser check `/` 通过：AICC Process 控制区中 Customer Type、Next Step、Reset 同行展示。
+- Browser check `/` 通过：Guest + Voice 热区进入 `Input Phone Number` 截图页。
+- Browser check `/` 通过：Livechat 热区进入 `Personal Information` 截图页。
+
+回滚说明：
+
+- 如需回滚本轮，恢复 `.bankapp-phone` 的高度设置和 `.bankapp-channel-hotspot-*` 百分比位置，并恢复 `BankAppDemoPage` 中号码录入、个人信息录入的组件化页面。
+
+当前风险点：
+
+- 号码录入和客户信息录入页当前直接展示客户截图；后续如果要改文案或品牌，需要替换截图或重新组件化。
+- 渠道热区仍依赖当前截图版式，换图后需重新校准。
+
+### 2026-05-23 00:50 +08:00 - BankApp 浏览器批注调整
+
+修改页面或文件：
+
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户在浏览器批注中要求删除 BankApp Demo 顶部标题条、去除 Language 控制、去除 AICC 面板中不必要的客户/语言和 Business/Skill/Phone 摘要。
+- 用户要求将 `Customer Type` 和 `Next Step` / `Reset` 移入 AICC Process 面板。
+- 用户要求渠道选择页面使用已提供截图，并在 Voice/Video/Livechat 三个渠道上使用热区交互。
+- 用户指出当前手机比例被压得过宽，需要按截图比例显示。
+
+修改结果：
+
+- 删除 BankApp Demo 页面顶部 `Customer Simulator / BankApp Service Entry` 标题区。
+- 去除 `Language` 分段控件，AICC Process header 不再显示 `Registered Customer / EN`。
+- `Customer Type` 和 `Next Step` / `Reset` 已移动到 AICC Process 面板内。
+- AICC Process summary 去除 `Business`、`Skill`、`Phone`，只保留当前渠道摘要和流程 rail。
+- 渠道选择页改为显示 `public/screenshots/bankapp/channel-selection.png`，并覆盖三个透明按钮热区：Voice Call、Video Call、Livechat。
+- 手机模拟器尺寸改为固定截图纵横比并用高度驱动，避免在低高度视口中被压扁变宽。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser check `/` 通过：批注要求删除的顶部标题、Language、AICC header 客户/语言、Business/Skill/Phone 摘要均已消失。
+- Browser check `/` 通过：Customer Type 和 Next Step / Reset 位于 AICC Process 面板内。
+- Browser check `/` 通过：渠道选择页展示客户截图，Video 热区点击后进入 `Select Business`，Guest + Voice 热区点击后进入 `Input Phone Number`。
+
+回滚说明：
+
+- 如需回滚本轮批注调整，恢复 `BankAppDemoPage.tsx` 中原 header、Language 控制、AICC summary 和组件化渠道入口，并恢复 `.bankapp-phone` 的旧宽度驱动样式。
+
+当前风险点：
+
+- 渠道选择页按用户最新批注直接使用客户原始截图，因此该页面会呈现截图内原始品牌视觉；后续如需统一品牌，需要提供已替换品牌的截图或重新组件化绘制。
+- 热区位置基于当前 `channel-selection.png` 的版式百分比；如更换截图，需重新校准热区。
+
+### 2026-05-23 00:07 +08:00 - BankApp 演示交互简化重构
+
+修改页面或文件：
+
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/mock/bankapp.ts`
+- `src/types/bankapp.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户确认初版三栏 BankApp demo 过重，需要改为“Customer BankApp 手机主导 + AICC Process rail 联动”的演示舞台。
+- 需要支持客户在手机端或通过 `Next Step` 完成 Voice、Video、Livechat 三条接入路径，并用真实坐席 workspace tab 展示最终结果。
+- 页面可见命名必须统一为 `BankApp`，接管页面不直接展示带旧品牌字样的截图。
+
+修改结果：
+
+- `BankAppDemoPage` 移除厚重的 `Agent Desktop Outcome` 面板，页面主体改为真实手机比例 `1320 / 2868` 的 Customer BankApp 和轻量 `AICC Process` 竖向 rail。
+- 顶部控制简化为 `Customer Type`、`Language`、`Next Step`、`Reset`。
+- 新增 `customerType`、`language`、`contactMethod`、`businessType`、`demoStep` 状态；Registered Voice/Video 跳过号码输入，Guest Voice/Video 显示号码输入。
+- `Select Business`、`Confirm Business`、Calling、Connected、Chat、Closed 均为前端组件生成，业务技能按 `language + customerType + contactMethod` 动态展示。
+- 接管前的渠道选择、游客号码输入、个人信息页也改为组件化模拟页，避免页面直接露出旧截图品牌。
+- Voice handoff 触发现有 `PSTN / Voice Call`，Customer Information 显示 `BankApp Voice`。
+- Video handoff 触发现有 `Video Call`，Customer Information 显示 `BankApp Video`，接听后 OpenEye 浮窗显示。
+- Livechat handoff 打开 `Live Chat / Conversation` 并聚焦 Sari Amelia 的 BankApp 会话。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/` 通过：`Customer Simulator > BankApp` 可打开 BankApp Demo，顶部控制、手机舞台和 AICC Process rail 正常显示，未出现 `Haloapps` 可见文案。
+- Browser smoke check `/` 通过：Registered Voice 跳过 `Input Phone Number`，Guest Voice 显示 `Input Phone Number`。
+- Browser smoke check `/` 通过：Voice connected 后点击 `Next Step` 打开 `PSTN / Voice Call`，渠道显示 `BankApp Voice`，自动接听后进入 `Talking`。
+- Browser smoke check `/` 通过：Video connected 后点击 `Next Step` 打开 `Video Call`，渠道显示 `BankApp Video`，接通后显示 OpenEye 浮窗。
+- Browser smoke check `/` 通过：Livechat 到 `Chat Page` 后点击 `Next Step` 打开 Live Chat，并聚焦 BankApp 客户 Sari Amelia 的 Conversation。
+- Browser smoke check `/design-system` 通过：设计系统页面正常加载。
+
+回滚说明：
+
+- 如需回滚本轮简化重构，可恢复 `BankAppDemoPage.tsx` 到 2026-05-22 19:52 的三栏 demo 版本，并恢复对应 `.bankapp-*` 样式。
+- 如需完全移除 BankApp 演示，还需删除 `src/pages/bankapp/`、`src/mock/bankapp.ts`、`src/types/bankapp.ts`、`public/screenshots/bankapp/`，并恢复 `BasicLayout`、`AgentWorkspace`、`appStore`、`InboundPage`、`LiveChatPage`、`ChannelTag`、`inbound.ts`、`chat.ts`、`index.less` 中的 BankApp 相关改动。
+
+当前风险点：
+
+- BankApp Demo 仍为前端演示闭环，不接真实 BankApp、真实路由服务、消息网关或音视频协议。
+- Voice / Video 路径需要坐席处于 `Ready` 且话务 `Idle` 才会触发坐席侧来电；测试时需先 `Sign In`。
+- `public/screenshots/bankapp/` 仍保留客户原始截图作为素材备份；当前新页面不直接展示这些截图。
+
+### 2026-05-22 19:52 +08:00 - BankApp 客户侧接入演示
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/AgentWorkspace.tsx`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/store/appStore.ts`
+- `src/mock/bankapp.ts`
+- `src/mock/inbound.ts`
+- `src/types/bankapp.ts`
+- `src/pages/inbound/InboundPage.tsx`
+- `src/pages/inbound/LiveChatPage.tsx`
+- `src/pages/inbound/components/ChannelTag.tsx`
+- `src/styles/index.less`
+- `public/screenshots/bankapp/*`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户需要单独演示客户从 BankApp 内选择文字、语音、视频联系方式和业务类型，再接入 AICC 坐席的完整服务链路。
+- 需要复用现有 Live Chat、Inbound Voice、Video Call 工作台能力，不影响 `main` 客户可见版本。
+
+修改结果：
+
+- 新增 `Customer Simulator > BankApp` 菜单和 `BankApp Demo` 可关闭 tab。
+- BankApp Demo 页面采用 Customer BankApp、AICC Routing、Agent Desktop Outcome 三栏布局。
+- 已将客户提供的 BankApp/Haloapps 截图复制到 `public/screenshots/bankapp/` 并改为 ASCII 文件名。
+- Text Chat 路径可打开 Live Chat 并聚焦 BankApp 客户 Sari Amelia。
+- Voice Call 路径通过 store request id 触发现有 Inbound 来电状态机，并以 `BankApp Voice` 渠道展示客户资料。
+- Video Call 路径通过 store request id 触发现有 Video Call tab，并复用接听后的 OpenEye 浮窗。
+- 页面可见渠道命名统一为 `BankApp` / `BankApp Voice` / `BankApp Video`；Internal Chat mock 中的旧可见文案也改为 `BankApp`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/` 通过：`Customer Simulator > BankApp` 可打开 `BankApp Demo` tab，且页面未出现 `Haloapps` 可见文案。
+- Browser smoke check `/` 通过：Text Chat 路径可打开 Live Chat，并聚焦 BankApp 客户 Sari Amelia 的 Conversation。
+- Browser smoke check `/` 通过：Voice Call 路径在坐席 `Ready` / `Idle` 时打开 `PSTN / Voice Call`，Customer Information 显示 `BankApp Voice`。
+- Browser smoke check `/` 通过：Video Call 路径在坐席 `Ready` / `Idle` 时打开 `Video Call`，接听后出现 OpenEye 独立视频浮窗。
+- Browser smoke check `/` 通过：`Reset Demo` 可恢复 BankApp 手机模拟器到渠道选择初始状态。
+- Browser smoke check `/design-system` 通过：页面正常加载，标题为 `BANK 1 AICC Demo`。
+
+回滚说明：
+
+- 如需回滚本轮，删除 `src/pages/bankapp/`、`src/mock/bankapp.ts`、`src/types/bankapp.ts` 和 `public/screenshots/bankapp/`，并恢复 `BasicLayout`、`AgentWorkspace`、`appStore`、`InboundPage`、`LiveChatPage`、`ChannelTag`、`inbound.ts`、`chat.ts`、`index.less` 中的 BankApp demo 相关改动。
+- 回滚不应影响已提交的 `codex/live-chat-detail` Live Chat / Conversation 成果。
+
+当前风险点：
+
+- BankApp Demo 当前为前端演示状态，不接真实 BankApp、消息网关、真实语音/视频协议或真实路由服务。
+- Voice / Video 路径需要坐席处于 `Ready` 且话务 `Idle` 才会触发坐席侧来电；否则只会停留在客户侧演示状态。
+- 视频路径和服务完成评价页为前端模拟，当前没有客户提供的真实截图。
 
 ### 2026-05-22 18:55 +08:00 - 话务条 Transfer 换行回归修复与 Conversation Invite 移除
 

@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { liveChatSessions } from '../../mock/inbound'
+import { useAppStore } from '../../store'
 import type { LiveChatConversationMessage, LiveChatSession } from '../../types'
 import { LiveChatCustomerList } from './components/LiveChatCustomerList'
 import { InteractionWorkspace } from './InteractionWorkspace'
@@ -31,6 +32,12 @@ function getCurrentMessageTime() {
 }
 
 export function LiveChatPage() {
+  const liveChatFocusRequestId = useAppStore(
+    (state) => state.liveChatFocusRequestId,
+  )
+  const liveChatFocusSessionId = useAppStore(
+    (state) => state.liveChatFocusSessionId,
+  )
   const [activeSessionId, setActiveSessionId] = useState(
     liveChatSessions[0]?.id ?? '',
   )
@@ -59,6 +66,24 @@ export function LiveChatPage() {
         })),
     [openSessionIds, sessionSummariesById],
   )
+
+  useEffect(() => {
+    if (
+      !liveChatFocusSessionId ||
+      !availableSessions.some(
+        (session) => session.id === liveChatFocusSessionId,
+      )
+    ) {
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      setSelectedChannels(liveChatChannels)
+      setActiveSessionId(liveChatFocusSessionId)
+    }, 0)
+
+    return () => window.clearTimeout(timer)
+  }, [availableSessions, liveChatFocusRequestId, liveChatFocusSessionId])
 
   const filteredSessions = useMemo(
     () =>

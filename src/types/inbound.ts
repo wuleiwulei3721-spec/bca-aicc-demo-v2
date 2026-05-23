@@ -1,5 +1,7 @@
 export type AccessChannel =
   | 'Phone'
+  | 'Video'
+  | 'BankApp'
   | 'Haloapps Voice'
   | 'Haloapps Video'
   | 'Haloapps'

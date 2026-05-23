@@ -5587,6 +5587,1594 @@ button.inbound-list-row .inbound-list-row__title {
   gap: 5px;
 }
 
+.bankapp-demo {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bankapp-demo__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 10px 14px;
+  border: 1px solid var(--aicc-border-strong);
+  border-radius: var(--aicc-radius-lg);
+  background:
+    linear-gradient(90deg, rgba(232, 241, 255, 0.92), rgba(248, 251, 255, 0.96)),
+    var(--aicc-bg-elevated);
+  gap: 12px;
+}
+
+.bankapp-demo__header span,
+.bankapp-demo__controls > section > span,
+.bankapp-demo__panel-heading span,
+.bankapp-routing-summary span,
+.bankapp-outcome__facts dt {
+  color: var(--aicc-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.bankapp-demo__header h2 {
+  margin: 1px 0 0;
+  color: var(--aicc-text);
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.bankapp-demo__header-actions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.bankapp-demo__controls {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(420px, 1.4fr);
+  gap: 10px;
+}
+
+.bankapp-demo__controls > section {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius-lg);
+  background: var(--aicc-bg-elevated);
+}
+
+.bankapp-demo__control-group {
+  display: grid;
+  margin-top: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.bankapp-demo__control-group--business {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.bankapp-demo__choice {
+  display: flex;
+  min-width: 0;
+  min-height: 68px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8px;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius);
+  background: #fbfdff;
+  color: var(--aicc-text);
+  cursor: pointer;
+  gap: 4px;
+  text-align: left;
+}
+
+.bankapp-demo__choice:hover,
+.bankapp-demo__choice:focus-visible {
+  border-color: #9ac3f4;
+  background: var(--aicc-hover);
+  outline: none;
+}
+
+.bankapp-demo__choice--active {
+  border-color: var(--aicc-primary);
+  background: var(--aicc-selected);
+  box-shadow: inset 0 0 0 1px rgba(23, 105, 224, 0.2);
+}
+
+.bankapp-demo__choice .anticon {
+  color: var(--aicc-primary);
+  font-size: 16px;
+}
+
+.bankapp-demo__choice strong {
+  overflow: hidden;
+  color: var(--aicc-text);
+  font-size: 12px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bankapp-demo__choice small {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--aicc-text-secondary);
+  font-size: 11px;
+  line-height: 15px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.bankapp-demo__grid {
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(300px, 0.92fr) minmax(340px, 1.04fr) minmax(300px, 0.9fr);
+  gap: 10px;
+}
+
+.bankapp-demo__panel {
+  display: flex;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  border: 1px solid var(--aicc-border-strong);
+  border-radius: var(--aicc-radius-lg);
+  background: var(--aicc-bg-elevated);
+}
+
+.bankapp-demo__panel--phone {
+  align-items: center;
+}
+
+.bankapp-demo__panel-heading {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 38px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--aicc-border);
+  background: var(--aicc-surface-l4);
+  gap: 8px;
+}
+
+.bankapp-demo__panel-heading .anticon {
+  color: var(--aicc-primary);
+}
+
+.bankapp-demo__panel-heading strong {
+  min-width: 0;
+  flex: 1;
+  color: var(--aicc-text);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.bankapp-phone {
+  display: flex;
+  overflow: hidden;
+  width: min(100%, 292px);
+  max-height: calc(100vh - 292px);
+  min-height: 0;
+  margin: 12px;
+  aspect-ratio: 1320 / 2868;
+  flex-direction: column;
+  border: 8px solid #111827;
+  border-radius: 28px;
+  background: #f8fbff;
+  box-shadow: 0 18px 36px rgba(15, 42, 72, 0.18);
+}
+
+.bankapp-phone__status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 24px;
+  padding: 0 16px;
+  border-bottom: 1px solid rgba(213, 224, 238, 0.72);
+  background: #ffffff;
+  color: #111827;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.bankapp-phone__status span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bankapp-phone__screenshot {
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+  flex: 1;
+  background: #ffffff;
+}
+
+.bankapp-phone__screenshot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bankapp-phone__mock {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  background: #f6f9fc;
+}
+
+.bankapp-phone__mock header {
+  display: flex;
+  align-items: center;
+  padding: 14px;
+  border-bottom: 1px solid #e5edf6;
+  background: #ffffff;
+  gap: 8px;
+}
+
+.bankapp-phone__mock header .anticon {
+  color: var(--aicc-primary);
+}
+
+.bankapp-phone__mock header strong {
+  color: var(--aicc-text);
+  font-size: 13px;
+}
+
+.bankapp-phone__chat-log {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 14px;
+  gap: 8px;
+}
+
+.bankapp-phone__bubble {
+  max-width: 86%;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.bankapp-phone__bubble--customer {
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+  background: var(--aicc-primary);
+  color: #ffffff;
+}
+
+.bankapp-phone__bubble--agent {
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+  background: #ffffff;
+  color: var(--aicc-text);
+}
+
+.bankapp-phone__mock footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 12px 12px;
+  padding: 8px 10px;
+  border: 1px solid #dbe6f2;
+  border-radius: 18px;
+  background: #ffffff;
+  color: var(--aicc-text-tertiary);
+  font-size: 11px;
+}
+
+.bankapp-phone__mock--call,
+.bankapp-phone__mock--closed,
+.bankapp-phone__mock--video {
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  text-align: center;
+  gap: 10px;
+}
+
+.bankapp-phone__mock--call > .anticon,
+.bankapp-phone__mock--closed > .anticon {
+  display: inline-grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--aicc-primary);
+  color: #ffffff;
+  font-size: 24px;
+}
+
+.bankapp-phone__mock--closed > .anticon {
+  background: var(--aicc-success);
+}
+
+.bankapp-phone__mock--call strong,
+.bankapp-phone__mock--closed strong,
+.bankapp-phone__mock--video strong {
+  color: var(--aicc-text);
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.bankapp-phone__mock--call span,
+.bankapp-phone__mock--closed span,
+.bankapp-phone__mock--video span {
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.bankapp-phone__mock--call em {
+  color: var(--aicc-primary);
+  font-size: 22px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.bankapp-phone__rating {
+  display: inline-flex;
+  color: #f59e0b;
+  font-size: 18px;
+  gap: 3px;
+}
+
+.bankapp-phone__video-tile {
+  display: grid;
+  position: relative;
+  width: 100%;
+  max-width: 210px;
+  aspect-ratio: 4 / 5;
+  place-items: center;
+  border-radius: 18px;
+  background:
+    linear-gradient(160deg, rgba(23, 105, 224, 0.85), rgba(25, 160, 184, 0.82)),
+    #1769e0;
+  color: #ffffff;
+}
+
+.bankapp-phone__video-tile .anticon {
+  font-size: 38px;
+}
+
+.bankapp-phone__video-tile span {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.bankapp-phone__video-self {
+  display: grid;
+  width: 58px;
+  height: 74px;
+  place-items: center;
+  border: 2px solid #ffffff;
+  border-radius: 12px;
+  background: #1f2937;
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(15, 42, 72, 0.2);
+  transform: translate(68px, -54px);
+}
+
+.bankapp-routing-summary {
+  display: grid;
+  margin: 12px;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.bankapp-routing-summary div,
+.bankapp-outcome__facts div {
+  padding: 9px 10px;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius);
+  background: #fbfdff;
+}
+
+.bankapp-routing-summary strong,
+.bankapp-outcome__facts dd {
+  display: block;
+  margin-top: 2px;
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 17px;
+}
+
+.bankapp-routing {
+  display: flex;
+  overflow: auto;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  margin: 0;
+  padding: 0 12px 12px;
+  list-style: none;
+  gap: 8px;
+}
+
+.bankapp-routing__step {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 8px;
+}
+
+.bankapp-routing__marker {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid var(--aicc-border);
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--aicc-text-tertiary);
+  font-size: 12px;
+}
+
+.bankapp-routing__step--complete .bankapp-routing__marker {
+  border-color: rgba(31, 157, 103, 0.32);
+  background: rgba(31, 157, 103, 0.1);
+  color: var(--aicc-success);
+}
+
+.bankapp-routing__step--active .bankapp-routing__marker {
+  border-color: rgba(23, 105, 224, 0.36);
+  background: var(--aicc-primary-soft);
+  color: var(--aicc-primary);
+}
+
+.bankapp-routing__step strong {
+  color: var(--aicc-text);
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.bankapp-routing__step p {
+  margin: 2px 0 0;
+  color: var(--aicc-text-secondary);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.bankapp-outcome {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  padding: 12px;
+  gap: 10px;
+}
+
+.bankapp-outcome__hero {
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  border: 1px solid rgba(23, 105, 224, 0.18);
+  border-radius: var(--aicc-radius-lg);
+  background:
+    linear-gradient(135deg, rgba(232, 241, 255, 0.92), rgba(255, 255, 255, 0.92)),
+    #ffffff;
+  gap: 6px;
+}
+
+.bankapp-outcome__hero .anticon {
+  color: var(--aicc-primary);
+  font-size: 22px;
+}
+
+.bankapp-outcome__hero strong {
+  color: var(--aicc-text);
+  font-size: 15px;
+  line-height: 21px;
+}
+
+.bankapp-outcome__hero span {
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.bankapp-outcome__facts {
+  display: grid;
+  margin: 0;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.bankapp-outcome__facts dt,
+.bankapp-outcome__facts dd {
+  margin: 0;
+}
+
+.bankapp-demo {
+  display: flex;
+  overflow: hidden;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.bankapp-demo__header {
+  display: grid;
+  align-items: center;
+  min-height: 54px;
+  padding: 10px 14px;
+  grid-template-columns: minmax(180px, 1fr) auto auto auto;
+  border: 1px solid var(--aicc-border-strong);
+  border-radius: var(--aicc-radius-lg);
+  background:
+    linear-gradient(90deg, rgba(232, 241, 255, 0.94), rgba(248, 251, 255, 0.98)),
+    var(--aicc-bg-elevated);
+  gap: 12px;
+}
+
+.bankapp-demo__header h2 {
+  margin: 1px 0 0;
+  color: var(--aicc-text);
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.bankapp-demo__header > div > span,
+.bankapp-segmented > span,
+.bankapp-demo__panel-heading span,
+.bankapp-process__header span,
+.bankapp-info-row span,
+.bankapp-generated-screen__eyebrow {
+  color: var(--aicc-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.bankapp-demo__header-actions {
+  display: inline-flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.bankapp-segmented {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bankapp-segmented div {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius);
+  background: #ffffff;
+  gap: 2px;
+}
+
+.bankapp-segmented button {
+  min-width: 58px;
+  height: 24px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--aicc-radius-sm);
+  background: transparent;
+  color: var(--aicc-text-secondary);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.bankapp-segmented button:hover,
+.bankapp-segmented button:focus-visible,
+.bankapp-segmented__option--active {
+  background: var(--aicc-selected) !important;
+  color: var(--aicc-primary) !important;
+  outline: none;
+}
+
+.bankapp-demo__stage {
+  display: grid;
+  overflow: hidden;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: minmax(360px, 1fr) minmax(300px, 0.62fr);
+  gap: 10px;
+}
+
+.bankapp-demo__phone-panel,
+.bankapp-process {
+  display: flex;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  border: 1px solid var(--aicc-border-strong);
+  border-radius: var(--aicc-radius-lg);
+  background: var(--aicc-bg-elevated);
+}
+
+.bankapp-demo__phone-panel {
+  align-items: center;
+}
+
+.bankapp-demo__panel-heading,
+.bankapp-process__header {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 38px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--aicc-border);
+  background: var(--aicc-surface-l4);
+  gap: 8px;
+}
+
+.bankapp-demo__panel-heading .anticon,
+.bankapp-process__header .anticon {
+  color: var(--aicc-primary);
+}
+
+.bankapp-demo__panel-heading strong,
+.bankapp-process__header strong {
+  min-width: 0;
+  flex: 1;
+  color: var(--aicc-text);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.bankapp-process__header div {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.bankapp-phone {
+  display: flex;
+  overflow: hidden;
+  width: auto;
+  height: calc(100% - 54px);
+  min-height: 0;
+  max-height: 760px;
+  margin: 8px;
+  aspect-ratio: 2640 / 5736;
+  flex: 0 0 auto;
+  flex-direction: column;
+  border: 8px solid #111827;
+  border-radius: 30px;
+  background: #ffffff;
+  box-shadow: 0 18px 36px rgba(15, 42, 72, 0.2);
+}
+
+.bankapp-phone__status {
+  display: flex;
+  z-index: 2;
+  align-items: center;
+  justify-content: space-between;
+  height: 24px;
+  padding: 0 16px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.bankapp-phone__status span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bankapp-phone-screen,
+.bankapp-generated-screen,
+.bankapp-entry-screen,
+.bankapp-call-screen,
+.bankapp-video-screen,
+.bankapp-chat-screen {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  background: #eef7ff;
+}
+
+.bankapp-entry-screen {
+  background:
+    linear-gradient(180deg, #0b66b3 0 132px, #f5f9fc 132px 100%);
+}
+
+.bankapp-entry-screen__hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 116px;
+  padding: 18px;
+  color: #ffffff;
+}
+
+.bankapp-entry-screen__hero div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bankapp-entry-screen__hero strong {
+  color: #ffffff;
+  font-size: 24px;
+  line-height: 30px;
+}
+
+.bankapp-entry-screen__hero span {
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.bankapp-entry-screen__hero .anticon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  font-size: 20px;
+}
+
+.bankapp-entry-screen__login {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  margin: 0 14px 12px;
+  padding: 9px 11px;
+  border: 1px solid rgba(23, 105, 224, 0.2);
+  border-radius: 14px;
+  background: #e7f3ff;
+  color: var(--aicc-primary);
+  cursor: pointer;
+  gap: 8px;
+  text-align: left;
+}
+
+.bankapp-entry-screen__login span {
+  color: var(--aicc-primary);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.bankapp-entry-screen__services {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  padding: 4px 14px 16px;
+  gap: 9px;
+}
+
+.bankapp-entry-screen__eyebrow {
+  color: var(--aicc-text-secondary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.bankapp-phone-screen__reference {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bankapp-channel-hotspots {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+.bankapp-channel-hotspot {
+  position: absolute;
+  left: 4.2%;
+  width: 91.6%;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.bankapp-channel-hotspot:hover,
+.bankapp-channel-hotspot:focus-visible {
+  outline: 2px solid rgba(23, 105, 224, 0.78);
+  outline-offset: -2px;
+  background: rgba(23, 105, 224, 0.08);
+}
+
+.bankapp-channel-hotspot--voice {
+  top: 27.3%;
+  height: 8.8%;
+}
+
+.bankapp-channel-hotspot--video {
+  top: 35.7%;
+  height: 8.8%;
+}
+
+.bankapp-channel-hotspot--livechat {
+  top: 44.1%;
+  height: 8.8%;
+}
+
+.bankapp-business-hotspots,
+.bankapp-confirm-hotspots {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+.bankapp-business-hotspot,
+.bankapp-confirm-hotspot {
+  position: absolute;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.bankapp-business-hotspot {
+  width: 27%;
+  height: 16.5%;
+  border-radius: 18px;
+}
+
+.bankapp-business-hotspot:hover,
+.bankapp-business-hotspot:focus-visible,
+.bankapp-confirm-hotspot:hover,
+.bankapp-confirm-hotspot:focus-visible {
+  outline: 2px solid rgba(23, 105, 224, 0.78);
+  outline-offset: -2px;
+  background: rgba(23, 105, 224, 0.08);
+}
+
+.bankapp-business-hotspot--mobile-login {
+  top: 18.1%;
+  left: 4.5%;
+}
+
+.bankapp-business-hotspot--card-issue {
+  top: 18.1%;
+  left: 36.4%;
+}
+
+.bankapp-business-hotspot--account-info {
+  top: 18.1%;
+  left: 68.2%;
+}
+
+.bankapp-business-hotspot--transaction-dispute {
+  top: 36.2%;
+  left: 4.5%;
+}
+
+.bankapp-confirm-hotspot {
+  top: 61.5%;
+  width: 39.5%;
+  height: 5%;
+  border-radius: 999px;
+}
+
+.bankapp-confirm-hotspot--back {
+  left: 9%;
+}
+
+.bankapp-confirm-hotspot--confirm {
+  left: 51.5%;
+}
+
+.bankapp-phone-screen__overlay {
+  position: absolute;
+  right: 12px;
+  bottom: 16px;
+  left: 12px;
+  display: flex;
+  padding: 12px;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 14px 30px rgba(15, 42, 72, 0.16);
+  gap: 8px;
+}
+
+.bankapp-phone-screen__overlay strong {
+  color: var(--aicc-text);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.bankapp-phone-screen__overlay span,
+.bankapp-phone-screen__floating-card span,
+.bankapp-phone-screen__floating-card small {
+  color: var(--aicc-text-secondary);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.bankapp-phone-methods {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.bankapp-phone-method {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 7px 9px;
+  border: 1px solid var(--aicc-border);
+  border-radius: 12px;
+  background: #ffffff;
+  color: var(--aicc-text);
+  cursor: pointer;
+  gap: 8px;
+  text-align: left;
+}
+
+.bankapp-phone-method:hover,
+.bankapp-phone-method:focus-visible,
+.bankapp-phone-method--active {
+  border-color: var(--aicc-primary);
+  background: var(--aicc-selected);
+  outline: none;
+}
+
+.bankapp-phone-method .anticon {
+  color: var(--aicc-primary);
+}
+
+.bankapp-phone-method span {
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.bankapp-phone-method small {
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  flex: 1;
+  color: var(--aicc-text-secondary);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bankapp-phone-screen__floating-card {
+  position: absolute;
+  right: 14px;
+  bottom: 18px;
+  left: 14px;
+  display: flex;
+  padding: 12px;
+  flex-direction: column;
+  border: 1px solid var(--aicc-border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12px 26px rgba(15, 42, 72, 0.14);
+  gap: 3px;
+}
+
+.bankapp-phone-screen__floating-card strong {
+  color: var(--aicc-text);
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.bankapp-generated-screen__header,
+.bankapp-chat-screen header {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  padding: 0 14px;
+  background: #0b66b3;
+  color: #ffffff;
+  gap: 10px;
+}
+
+.bankapp-generated-screen__header strong,
+.bankapp-chat-screen header strong {
+  min-width: 0;
+  flex: 1;
+  color: #ffffff;
+  font-size: 17px;
+  line-height: 24px;
+}
+
+.bankapp-generated-screen__header span {
+  display: inline-flex;
+  gap: 14px;
+}
+
+.bankapp-generated-screen__body {
+  display: flex;
+  overflow: auto;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  padding: 16px;
+  gap: 12px;
+}
+
+.bankapp-generated-screen__body h3 {
+  margin: 0;
+  color: var(--aicc-text);
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.bankapp-input-preview {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid #bfd6ed;
+  border-radius: 12px;
+  background: #ffffff;
+  gap: 8px;
+}
+
+.bankapp-input-preview span {
+  color: var(--aicc-text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.bankapp-input-preview strong {
+  color: var(--aicc-text);
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.bankapp-helper-text {
+  margin: 0;
+  color: var(--aicc-text-secondary);
+  font-size: 11px;
+  line-height: 17px;
+}
+
+.bankapp-business-list,
+.bankapp-confirm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bankapp-business-item {
+  display: flex;
+  min-height: 58px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10px;
+  border: 1px solid #d8e6f4;
+  border-radius: 12px;
+  background: #ffffff;
+  cursor: pointer;
+  gap: 3px;
+  text-align: left;
+}
+
+.bankapp-business-item:hover,
+.bankapp-business-item:focus-visible,
+.bankapp-business-item--active {
+  border-color: var(--aicc-primary);
+  background: var(--aicc-selected);
+  outline: none;
+}
+
+.bankapp-business-item strong {
+  color: var(--aicc-text);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.bankapp-business-item span {
+  color: var(--aicc-text-secondary);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.bankapp-info-row {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
+  border: 1px solid var(--aicc-border);
+  border-radius: 10px;
+  background: #ffffff;
+  gap: 2px;
+}
+
+.bankapp-info-row strong {
+  color: var(--aicc-text);
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.bankapp-call-screen {
+  justify-content: space-between;
+  background: #15598f;
+  color: #ffffff;
+}
+
+.bankapp-call-screen__background {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 22% -4%, rgba(255, 255, 255, 0.12) 0 27%, transparent 28%),
+    radial-gradient(circle at 78% -10%, rgba(255, 255, 255, 0.1) 0 34%, transparent 35%),
+    #15598f;
+}
+
+.bankapp-call-screen__content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  gap: 12px;
+}
+
+.bankapp-call-screen__content strong {
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.bankapp-call-screen__avatar {
+  display: grid;
+  width: 116px;
+  height: 116px;
+  place-items: center;
+  border-radius: 44% 44% 48% 48%;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.bankapp-call-screen__avatar span {
+  display: grid;
+  width: 62px;
+  height: 48px;
+  place-items: center;
+  border-radius: 26px 26px 8px 8px;
+  background: #0969b5;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.bankapp-call-screen__content h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 26px;
+  line-height: 34px;
+}
+
+.bankapp-call-screen__content p {
+  max-width: 240px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 14px;
+  line-height: 21px;
+}
+
+.bankapp-call-controls {
+  position: relative;
+  display: grid;
+  padding: 0 18px 24px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.bankapp-call-controls span {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  color: #ffffff;
+  font-size: 11px;
+  gap: 7px;
+}
+
+.bankapp-call-controls .anticon {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 50%;
+  font-size: 20px;
+}
+
+.bankapp-call-controls__end .anticon {
+  border-color: transparent;
+  background: #ef5350;
+}
+
+.bankapp-video-screen {
+  padding: 14px;
+  background: #dfeaf5;
+}
+
+.bankapp-video-screen__main {
+  display: grid;
+  position: relative;
+  flex: 1;
+  place-items: center;
+  border-radius: 18px;
+  background:
+    linear-gradient(160deg, rgba(23, 105, 224, 0.88), rgba(25, 160, 184, 0.82)),
+    #1769e0;
+  color: #ffffff;
+}
+
+.bankapp-video-screen__main .anticon {
+  font-size: 46px;
+}
+
+.bankapp-video-screen__main span {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.bankapp-video-screen__self {
+  display: grid;
+  position: absolute;
+  top: 68px;
+  right: 24px;
+  width: 82px;
+  height: 106px;
+  place-items: center;
+  border: 2px solid #ffffff;
+  border-radius: 14px;
+  background: #1f2937;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 42, 72, 0.22);
+}
+
+.bankapp-video-screen > strong {
+  position: absolute;
+  top: 186px;
+  left: 0;
+  width: 100%;
+  color: #ffffff;
+  text-align: center;
+  text-shadow: 0 2px 8px rgba(15, 42, 72, 0.35);
+}
+
+.bankapp-call-controls--compact {
+  padding-bottom: 12px;
+}
+
+.bankapp-call-controls--compact span {
+  color: var(--aicc-text);
+}
+
+.bankapp-call-controls--compact .anticon {
+  border-color: #ffffff;
+  background: #ffffff;
+  color: var(--aicc-primary);
+}
+
+.bankapp-call-controls--compact .bankapp-call-controls__end .anticon {
+  background: #ef5350;
+  color: #ffffff;
+}
+
+.bankapp-chat-screen {
+  background: #e5f4ff;
+}
+
+.bankapp-chat-screen__messages {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 12px;
+  gap: 8px;
+}
+
+.bankapp-chat-screen__agent-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.bankapp-chat-screen__avatar {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--aicc-primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.bankapp-chat-screen__agent-row p,
+.bankapp-chat-screen__bubble {
+  margin: 0;
+  padding: 9px 11px;
+  border-radius: 16px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.bankapp-chat-screen__agent-row p,
+.bankapp-chat-screen__bubble--agent {
+  align-self: flex-start;
+  background: #ffffff;
+  color: var(--aicc-text);
+}
+
+.bankapp-chat-screen__bubble--customer {
+  align-self: flex-end;
+  max-width: 84%;
+  background: #a9d2fb;
+  color: var(--aicc-text);
+}
+
+.bankapp-chat-screen__typing {
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+}
+
+.bankapp-chat-screen__composer {
+  display: flex;
+  align-items: center;
+  margin: 0 12px 12px;
+  padding: 8px 10px;
+  border-radius: 18px;
+  background: #ffffff;
+  color: var(--aicc-text-tertiary);
+  font-size: 11px;
+  gap: 8px;
+}
+
+.bankapp-chat-screen__composer span {
+  min-width: 0;
+  flex: 1;
+}
+
+.bankapp-call-visual {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  padding: 20px;
+  text-align: center;
+  gap: 10px;
+}
+
+.bankapp-call-visual > .anticon {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--aicc-primary);
+  color: #ffffff;
+  font-size: 24px;
+}
+
+.bankapp-generated-screen--closed .bankapp-call-visual > .anticon {
+  background: var(--aicc-success);
+}
+
+.bankapp-call-visual strong {
+  color: var(--aicc-text);
+  font-size: 16px;
+}
+
+.bankapp-call-visual span {
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+}
+
+.bankapp-typing-dots {
+  display: inline-flex;
+  gap: 5px;
+}
+
+.bankapp-typing-dots i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--aicc-primary);
+}
+
+.bankapp-process {
+  background: #fbfdff;
+}
+
+.bankapp-process__controls {
+  display: grid;
+  align-items: end;
+  padding: 10px 12px;
+  grid-template-columns: max-content 1fr;
+  border-bottom: 1px solid var(--aicc-border);
+  gap: 10px;
+}
+
+.bankapp-process__controls .bankapp-segmented {
+  width: max-content;
+}
+
+.bankapp-process__controls .bankapp-segmented div {
+  width: max-content;
+}
+
+.bankapp-process__actions {
+  display: inline-flex;
+  justify-self: end;
+  gap: 8px;
+}
+
+.bankapp-process__actions .aicc-base-button {
+  justify-content: center;
+  min-width: 104px;
+}
+
+.bankapp-process__summary {
+  display: grid;
+  padding: 12px;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.bankapp-process__rail {
+  display: flex;
+  overflow: auto;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  margin: 0;
+  padding: 0 12px 12px;
+  list-style: none;
+  gap: 9px;
+}
+
+.bankapp-process__step {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 8px;
+}
+
+.bankapp-process__marker {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid var(--aicc-border);
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--aicc-text-tertiary);
+  font-size: 12px;
+}
+
+.bankapp-process__step--complete .bankapp-process__marker {
+  border-color: rgba(31, 157, 103, 0.32);
+  background: rgba(31, 157, 103, 0.1);
+  color: var(--aicc-success);
+}
+
+.bankapp-process__step--active .bankapp-process__marker {
+  border-color: rgba(23, 105, 224, 0.36);
+  background: var(--aicc-primary-soft);
+  color: var(--aicc-primary);
+}
+
+.bankapp-process__step strong {
+  color: var(--aicc-text);
+  font-size: 12px;
+  line-height: 17px;
+}
+
+.bankapp-step-title,
+.bankapp-process__step-title {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.bankapp-process__step-title {
+  flex-wrap: wrap;
+}
+
+.bankapp-step-owner {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 16px;
+  text-transform: none;
+}
+
+.bankapp-demo__panel-heading .bankapp-step-owner,
+.bankapp-process__step .bankapp-step-owner {
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 16px;
+  text-transform: none;
+}
+
+.bankapp-step-owner--bank1 {
+  border-color: rgba(23, 105, 224, 0.24);
+  background: rgba(23, 105, 224, 0.09);
+  color: var(--aicc-primary);
+}
+
+.bankapp-demo__panel-heading .bankapp-step-owner--bank1,
+.bankapp-process__step .bankapp-step-owner--bank1 {
+  color: var(--aicc-primary);
+}
+
+.bankapp-step-owner--netinfo {
+  border-color: rgba(31, 157, 103, 0.24);
+  background: rgba(31, 157, 103, 0.1);
+  color: var(--aicc-success);
+}
+
+.bankapp-demo__panel-heading .bankapp-step-owner--netinfo,
+.bankapp-process__step .bankapp-step-owner--netinfo {
+  color: var(--aicc-success);
+}
+
+.bankapp-process__step p {
+  margin: 2px 0 0;
+  color: var(--aicc-text-secondary);
+  font-size: 11px;
+  line-height: 16px;
+}
+
 @media (max-width: 960px) {
   :root {
     --aicc-layout-content-padding: 16px;
@@ -5642,6 +7230,39 @@ button.inbound-list-row .inbound-list-row__title {
 
   .home-workspace {
     min-height: calc(100vh - 168px);
+  }
+
+  .bankapp-demo {
+    min-height: auto;
+  }
+
+  .bankapp-demo__header {
+    align-items: flex-start;
+    flex-direction: column;
+    grid-template-columns: 1fr;
+  }
+
+  .bankapp-demo__controls,
+  .bankapp-demo__grid,
+  .bankapp-demo__stage {
+    grid-template-columns: 1fr;
+  }
+
+  .bankapp-demo__header-actions {
+    justify-content: flex-start;
+  }
+
+  .bankapp-process__summary {
+    grid-template-columns: 1fr;
+  }
+
+  .bankapp-demo__control-group,
+  .bankapp-demo__control-group--business {
+    grid-template-columns: 1fr;
+  }
+
+  .bankapp-phone {
+    max-height: none;
   }
 
   .inbound-page {

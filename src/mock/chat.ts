@@ -92,7 +92,7 @@ export const internalChatSessions: InternalChatSession[] = [
     department: 'Digital Banking',
     avatarUrl:
       'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80',
-    latestMessage: 'Haloapps voice callback is stable now.',
+    latestMessage: 'BankApp voice callback is stable now.',
     latestMessageTime: '09:12',
     latestMessageTimestamp: 1759817520,
     unreadCount: 0,
@@ -100,13 +100,13 @@ export const internalChatSessions: InternalChatSession[] = [
       {
         id: 'msg-008',
         sender: 'self',
-        content: 'Any issue with Haloapps voice callback today?',
+        content: 'Any issue with BankApp voice callback today?',
         time: '09:10',
       },
       {
         id: 'msg-009',
         sender: 'agent',
-        content: 'Haloapps voice callback is stable now.',
+        content: 'BankApp voice callback is stable now.',
         time: '09:12',
       },
     ],

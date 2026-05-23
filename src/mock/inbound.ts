@@ -25,6 +25,36 @@ export const inboundCustomer: CustomerInformation = {
   verificationStatus: 'Unverified',
 }
 
+export const bankAppVoiceCustomer: CustomerInformation = {
+  accessChannel: 'BankApp',
+  accessDuration: '00:12',
+  profile: {
+    avatarInitials: 'SA',
+    avatarUrl: '',
+    name: 'Sari Amelia',
+    phoneNumber: '081234560118',
+    email: 'sari.amelia@example.com',
+    cisNumber: '00000056231',
+    customerType: 'Regular Customer',
+  },
+  verificationStatus: 'Unverified',
+}
+
+export const bankAppVideoCustomer: CustomerInformation = {
+  accessChannel: 'BankApp',
+  accessDuration: '00:12',
+  profile: {
+    avatarInitials: 'SA',
+    avatarUrl: '',
+    name: 'Sari Amelia',
+    phoneNumber: '081234560118',
+    email: 'sari.amelia@example.com',
+    cisNumber: '00000056231',
+    customerType: 'Regular Customer',
+  },
+  verificationStatus: 'Unverified',
+}
+
 export const liveChatSessions: LiveChatSession[] = [
   {
     id: 'live-chat-001',

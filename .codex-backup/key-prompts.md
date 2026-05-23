@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-05-22 18:55 +08:00
+最后更新：2026-05-23 19:03 +08:00
 
 ## 项目方向
 
@@ -96,6 +96,116 @@
 - 文字渠道邀请语义在 Transfer 弹框内统一为 `Conference`，不再使用 `Invite` 作为 Agent 行动作文案。
 - 话务条 Transfer 弹框保持原 `Consult` / `Transfer` / `Conference` 与三页签行为。
 - 话务条 Transfer 弹框的 `Consult` / `Transfer` / `Conference` 必须保持同一行，不允许因为 Conversation 专用动作收纳影响 call 变体。
+
+## 2026-05-22 BankApp 客户侧接入演示
+
+- 在 `codex/bankapp-channel-demo` 分支上新增 BankApp 客户侧模拟器，`main` 暂不受影响。
+- 客户从 BankApp 内选择文字、语音或视频服务，再选择业务类型，AICC 展示路由过程，最后联动现有坐席工作台。
+- 页面结构为 Customer BankApp 手机模拟器、AICC Routing timeline、Agent Desktop Outcome 三栏。
+- 客户提供的 Haloapps 设计截图只作为素材来源，复制到 `public/screenshots/bankapp/` 后以 ASCII 文件名引用；页面可见命名统一为 `BankApp`，不显示 `Haloapps`。
+- Text Chat 路径打开 Live Chat 并聚焦 BankApp 客户；Voice Call 路径触发现有 Inbound 来电；Video Call 路径触发现有 Video Call tab 与接听后视频浮窗。
+- 第一版只做前端演示闭环，不接真实 BankApp、真实后端、真实消息网关或真实音视频协议。
+
+## 2026-05-23 BankApp 演示交互简化重构
+
+- BankApp Demo 当前方向改为“Customer BankApp 手机主导 + AICC Process rail 联动”，不再使用厚重的 Agent Desktop Outcome 面板。
+- 页面主体左侧固定真实手机比例 `1320 / 2868`；手机旁放轻量 `AICC Process` 竖向步骤，解释当前客户身份、语言、渠道、业务和技能路由。
+- 顶部控制只保留 `Customer Type`、`Language`、`Next Step`、`Reset`。
+- Voice：`Voice Call -> Input Phone Number(Guest only) -> Select Business -> Confirm Business -> Calling Agent -> Connected -> PSTN / Voice Call`，坐席侧 Customer Information 渠道显示 `BankApp`。
+- Video：`Video Call -> Input Phone Number(Guest only) -> Select Business -> Confirm Business -> Calling Agent -> Connected -> Video Call`，坐席侧 Customer Information 渠道显示 `BankApp`。
+- Live Chat：Registered Customer 跳过 `Personal Information`，Guest 才进入 `Personal Information`；最终 `Chat Page -> Live Chat / Conversation`，坐席侧渠道显示 `BankApp`。
+- `Select Business` 开始往后的页面必须由前端组件生成，便于后续改文案、语言、技能列表和业务类型。
+- 接管前页面也应避免直接暴露旧品牌截图；页面可见命名统一为 `BankApp`，不显示 `Haloapps`。
+
+## 2026-05-23 BankApp 浏览器批注调整
+
+- 删除 BankApp Demo 页面顶部的 `Customer Simulator / BankApp Service Entry` 标题条。
+- 去除 `Language` 控制和 AICC Process header 中的客户/语言摘要。
+- 将 `Customer Type` 与 `Next Step` / `Reset` 移动到 AICC Process 面板内。
+- AICC Process 面板不显示 `Business`、`Skill`、`Phone` 摘要，只保留当前渠道和步骤 rail。
+- 渠道选择页按用户要求直接使用客户提供截图 `channel-selection.png`，Voice/Video/Livechat 三个渠道通过透明热区交互。
+- 手机模拟器必须按截图比例显示，不能被视口高度压扁变宽。
+
+## 2026-05-23 BankApp 手机放大与截图页补齐
+
+- 手机框要按截图比例放大，高度基本撑满左侧展示面板。
+- Voice/Video/Livechat 三个透明热区必须对齐截图中的真实菜单行，不能落到其它行。
+- Customer Type、Next Step、Reset 在 AICC Process 内同一行展示；Customer Type 靠左，不占整行，操作按钮靠右。
+- 渠道选择页、客户号码录入页、客户信息录入页都先用客户截图：
+  - `channel-selection.png`
+  - `voice-phone-number.png`
+  - `text-login.png`
+- 从 `Select Business` 开始继续使用 AICC 前端组件生成页面，便于后续改业务、技能和话术。
+
+## 2026-05-23 BankApp 三张入口截图脱敏
+
+- 外网演示版本不能暴露客户真实系统特征，BankApp Demo 的三张入口截图必须使用脱敏版。
+- 保留原始截图文件，不删除、不覆盖；新增并引用：
+  - `channel-selection-sanitized.png`
+  - `voice-phone-number-sanitized.png`
+  - `text-login-sanitized.png`
+- 渠道选择脱敏图顶部品牌显示 `BANK 1`，只保留 `Voice Call`、`Video Call`、`Live Chat` 三个服务入口清晰可见；其它服务、底部导航、登录入口和系统特征弱化。
+- 号码录入和客户信息录入脱敏图保留表单/弹窗大概形态，具体手机号、账号、客户资料和敏感文案用遮挡线表现。
+- `src/mock/bankapp.ts` 只切换三张入口图路径；`Select Business` 及后续 AICC 页面继续保持组件化，不改其它界面。
+- 如果以后更换脱敏图，必须保持图片尺寸比例不变，并重新检查 Voice/Video/Livechat 热区位置。
+
+## 2026-05-23 BankApp 三渠道业务页截图脱敏
+
+- Voice、Video、Livechat 三个渠道的 `Select Business` 和 `Confirm Business` 页面都要使用客户提供截图风格，但必须打码脱敏。
+- 业务选择页新增并引用：
+  - `voice-business-selection-sanitized.png`
+  - `video-business-selection-sanitized.png`
+  - `livechat-business-selection-sanitized.png`
+- 业务确认页新增并引用：
+  - `voice-business-confirm-sanitized.png`
+  - `video-business-confirm-sanitized.png`
+  - `livechat-business-confirm-sanitized.png`
+- 脱敏原则：保留手机比例、顶部栏、宫格/弹窗形态；客户真实品牌、产品名、账号和可识别系统特征替换为 BANK 1 或通用服务类别。
+- `Select Business` 保留透明业务热区，点击业务卡片进入 `Confirm Business`。
+- `Confirm Business` 保留 No / Yes 透明热区，No 返回业务选择，Yes 进入 `Calling Agent`。
+- 业务选择/确认之后的呼叫、连接、聊天、服务结束页面继续由前端组件生成。
+
+## 2026-05-23 BankApp 渠道标识与条件步骤修正
+
+- BankApp voice/video 转坐席后，Customer Information 卡片里的渠道图标必须是 BankApp 移动端图标，文字必须显示 `BankApp`。
+- 普通 `Channel Simulation > Video Call` 不能因为 BankApp Video 改动而显示 BankApp，应继续显示 `Video Call` 渠道。
+- Live Chat 流程只有 Guest 才需要 `Personal Information`；Registered Customer 选择 Live Chat 后直接进入 `Select Business`。
+- Video Call 的客户侧 connected 通话界面引用 `public/screenshots/bankapp/video-connected.png` 图片资源；该文件必须直接使用用户提供的视频通话截图原图，不绘制、不脱敏。
+- 渠道选择脱敏图中的 `Voice Call`、`Video Call`、`Live Chat` 字体需要足够大，保证演示时客户能看清。
+
+## 2026-05-23 BankApp Live Chat 排队与聊天截图
+
+- 文字渠道的 `Connecting to Agent` / 排队步骤使用 `public/screenshots/bankapp/livechat-queue.png` 图片资源。
+- 文字渠道的 `Chat Page` 步骤使用 `public/screenshots/bankapp/livechat-chat.png` 图片资源。
+- 用户说明这两张文字渠道截图已经处理过，可以直接使用，不需要再脱敏。
+- 该调整只影响 BankApp Demo 客户侧手机画面，不改变坐席端 Live Chat 工作台、Conversation mock 或消息网关逻辑。
+
+## 2026-05-23 BankApp 附件原图与 Service Closed
+
+- Live Chat 排队页和聊天页必须直接使用用户已处理附件原图，不允许前端重新绘制或二次脱敏。
+- `public/screenshots/bankapp/livechat-queue.png` 和 `public/screenshots/bankapp/livechat-chat.png` 是从用户附件提取并落盘的原图。
+- `public/screenshots/bankapp/service-closed.png` 是用户提供的满意度评价截图原图，Voice / Video / Live Chat 三条路径最终 `Service Closed` 都使用这张图。
+- BankApp 演示触发坐席电话、视频或文字 workspace 时，后台打开对应 tab，但保持当前 `BankApp Demo` 激活页以展示客户侧满意度评价终态。
+- 如果后续用户再次要求“截图直接用”，优先从用户附件或指定本地文件直接落盘引用，不要重绘。
+
+## 2026-05-23 BankApp Video Connected 原图
+
+- `public/screenshots/bankapp/video-connected.png` 已替换为用户本轮提供的视频通话截图原图。
+- 该图片不需要脱敏处理，也不允许前端重新绘制。
+- BankApp Video 的 `Connected` 步骤必须直接显示这张图。
+
+## 2026-05-23 BankApp 步骤开发方标识
+
+- BankApp 手机当前步骤标题和右侧 AICC Process rail 的步骤名称后都要显示开发方标识。
+- `Choose Channel`、`Input Phone Number`、`Personal Information`、`Service Closed` 后显示 `BANK1`。
+- 其它步骤后显示 `Netinfo`，包括 `Select Business`、`Confirm Business`、`Calling Agent`、`Connected`、`Chat Page`。
+- 该标识用于演示说明页面由谁开发，不改变实际路由、坐席联动或截图引用。
+
+## 2026-05-23 版本与素材策略
+
+- 后续按里程碑分支推进：`v0.3.0` BankApp 基线、`v0.3.1` 菜单与 WhatsApp、`v0.4.0` Video screen share、`v0.5.0` 客户远程演示优化。
+- `main` 作为生产演示分支，合入后打 tag 冻结版本。
+- 仓库内只保留脱敏或明确可分享素材；明显未脱敏或旧版原始截图已迁出 `public/screenshots/bankapp/`，避免误提交。
 
 ## 上下文恢复
 
