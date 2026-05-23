@@ -2728,6 +2728,57 @@ a {
   pointer-events: none;
 }
 
+.openeye-video-window__media {
+  position: relative;
+}
+
+.openeye-video-window__screen-share {
+  display: grid;
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  left: 12px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 7px;
+  background: rgba(8, 18, 38, 0.9);
+  color: #ffffff;
+  gap: 8px;
+}
+
+.openeye-video-window__screen-share strong {
+  font-size: 11px;
+  letter-spacing: 0;
+  line-height: 14px;
+}
+
+.openeye-video-window__desktop {
+  display: grid;
+  overflow: hidden;
+  height: 78px;
+  border-radius: 6px;
+  background: #edf4ff;
+  grid-template-columns: 42px 1fr;
+}
+
+.openeye-video-window__desktop-sidebar {
+  background: #1746a2;
+}
+
+.openeye-video-window__desktop-content {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 7px;
+}
+
+.openeye-video-window__desktop-content span {
+  display: block;
+  height: 10px;
+  border-radius: 4px;
+  background: #c5d8f2;
+}
+
 .inbound-left-column {
   display: flex;
   height: 100%;
@@ -6825,6 +6876,55 @@ button.inbound-list-row .inbound-list-row__title {
 .bankapp-call-controls__end .anticon {
   border-color: transparent;
   background: #ef5350;
+}
+
+.bankapp-screen-share-control {
+  display: flex;
+  position: absolute;
+  z-index: 4;
+  right: 14px;
+  bottom: 18px;
+  left: 14px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 12px;
+  background: rgba(9, 31, 66, 0.78);
+  color: #ffffff;
+  gap: 8px;
+  backdrop-filter: blur(8px);
+}
+
+.bankapp-screen-share-control > div {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+}
+
+.bankapp-screen-share-control span {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bankapp-screen-share-control button {
+  flex: 0 0 auto;
+  min-width: 54px;
+  border: 0;
+  border-radius: 8px;
+  padding: 6px 9px;
+  background: #ffffff;
+  color: var(--aicc-primary);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 14px;
 }
 
 .bankapp-video-screen {

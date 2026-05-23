@@ -39,7 +39,11 @@ function clampPosition(x: number, y: number) {
   }
 }
 
-export function OpenEyeVideoWindow() {
+export function OpenEyeVideoWindow({
+  isScreenShareActive = false,
+}: {
+  isScreenShareActive?: boolean
+}) {
   const [position, setPosition] = useState(getInitialPosition)
   const [dragState, setDragState] = useState<DragState | null>(null)
 
@@ -97,11 +101,29 @@ export function OpenEyeVideoWindow() {
         })
       }}
     >
-      <img
-        alt="OpenEye video call client"
-        draggable={false}
-        src={OPEN_EYE_CLIENT_SRC}
-      />
+      <div className="openeye-video-window__media">
+        <img
+          alt="OpenEye video call client"
+          draggable={false}
+          src={OPEN_EYE_CLIENT_SRC}
+        />
+        {isScreenShareActive ? (
+          <div
+            aria-label="Customer desktop share preview"
+            className="openeye-video-window__screen-share"
+          >
+            <div className="openeye-video-window__desktop">
+              <div className="openeye-video-window__desktop-sidebar" />
+              <div className="openeye-video-window__desktop-content">
+                <span />
+                <span />
+                <span />
+              </div>
+            </div>
+            <strong>Screen Share Active</strong>
+          </div>
+        ) : null}
+      </div>
     </div>
   )
 }

@@ -206,6 +206,10 @@
 - 后续按里程碑分支推进：`v0.3.0` BankApp 基线、`v0.3.1` 菜单与 WhatsApp、`v0.4.0` Video screen share、`v0.5.0` 客户远程演示优化。
 - `main` 作为生产演示分支，合入后打 tag 冻结版本。
 - 仓库内只保留脱敏或明确可分享素材；明显未脱敏或旧版原始截图已迁出 `public/screenshots/bankapp/`，避免误提交。
+- `v0.3.1` 左侧菜单只显示 `Channel Simulation > PSTN / BankApp / WhatsApp`，普通 `Video Call` 和 `Live Chat` 菜单入口隐藏但底层能力保留。
+- WhatsApp 初版模拟器复用 BankApp 客户侧流程壳，默认 Live Chat，并在 handoff 时聚焦 WhatsApp mock session `live-chat-001`。
+- `v0.4.0` Video screen share 是前端 demo-only 状态：BankApp Video connected 页 Start/Stop，OpenEye 浮窗同步显示共享预览，Hang Up/关闭 Video tab/Reset 清理状态。
+- GitHub Actions CI 需要在 PR 到 `main` 或 push 到 `main` / `codex/**` 时运行 `npm ci`、`npm run lint`、`npm run build`。
 
 ## 上下文恢复
 

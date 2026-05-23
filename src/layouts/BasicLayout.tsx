@@ -142,6 +142,9 @@ export function BasicLayout() {
   const setOpenEyeVideoWindowVisible = useAppStore(
     (state) => state.setOpenEyeVideoWindowVisible,
   )
+  const setScreenShareActive = useAppStore(
+    (state) => state.setScreenShareActive,
+  )
   const customerOutboundCallRequestId = useAppStore(
     (state) => state.customerOutboundCallRequestId,
   )
@@ -180,8 +183,9 @@ export function BasicLayout() {
       setActiveCallChannel(null)
       setIsAfterCallWork(false)
       setOpenEyeVideoWindowVisible(false)
+      setScreenShareActive(false)
     }
-  }, [setLiveChatTabOpen, setOpenEyeVideoWindowVisible])
+  }, [setLiveChatTabOpen, setOpenEyeVideoWindowVisible, setScreenShareActive])
 
   const updateCallStatus = useCallback((status: CallStatus) => {
     setCallStatus(status)
@@ -230,6 +234,7 @@ export function BasicLayout() {
       setActiveCallChannel('voice')
       setIsAfterCallWork(false)
       setOpenEyeVideoWindowVisible(false)
+      setScreenShareActive(false)
       updateCallStatus('Incoming')
       requestInboundPopup(source, activateWorkspace)
     },
@@ -238,6 +243,7 @@ export function BasicLayout() {
       callStatus,
       requestInboundPopup,
       setOpenEyeVideoWindowVisible,
+      setScreenShareActive,
       updateCallStatus,
     ],
   )
@@ -252,6 +258,9 @@ export function BasicLayout() {
       setActiveCallChannel('video')
       setIsAfterCallWork(false)
       setOpenEyeVideoWindowVisible(false)
+      if (source !== 'bankapp-video') {
+        setScreenShareActive(false)
+      }
       updateCallStatus('Incoming')
       requestVideoCallPopup(source, activateWorkspace)
     },
@@ -260,6 +269,7 @@ export function BasicLayout() {
       callStatus,
       requestVideoCallPopup,
       setOpenEyeVideoWindowVisible,
+      setScreenShareActive,
       updateCallStatus,
     ],
   )
@@ -402,8 +412,14 @@ export function BasicLayout() {
     setActiveCallChannel(null)
     setIsAfterCallWork(true)
     setOpenEyeVideoWindowVisible(false)
+    setScreenShareActive(false)
     updateAgentStatus('Not Ready')
-  }, [setOpenEyeVideoWindowVisible, updateAgentStatus, updateCallStatus])
+  }, [
+    setOpenEyeVideoWindowVisible,
+    setScreenShareActive,
+    updateAgentStatus,
+    updateCallStatus,
+  ])
 
   const handlePrimaryMenuClick = useCallback(
     (item: SideMenuItem) => {

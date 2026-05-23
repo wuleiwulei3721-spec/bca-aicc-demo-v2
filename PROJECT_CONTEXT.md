@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-05-23 19:36 +08:00
+最后更新：2026-05-23 19:40 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：在 `codex/nav-whatsapp-simulator` 实现 `v0.3.1` 左侧菜单重组与 WhatsApp 客户模拟入口，并继续准备 `v0.4.0` Video screen share demo。
+当前目标：`codex/video-screenshare-demo` 已实现 `v0.4.0` Video / BankApp Video 桌面共享演示，并补齐 GitHub CI；后续 `v0.5.0` 等待客户话务条和电话弹屏优化内容。
 
 ## 0. 使用规则
 
@@ -40,7 +40,7 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`codex/nav-whatsapp-simulator`
+当前分支：`codex/video-screenshare-demo`
 当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于 BankApp 客户接入演示集成，未合并或发布到 `main`
 部署目标：Vercel 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
@@ -90,6 +90,7 @@ public/
   favicon.svg
   icons.svg
 .codex-backup/
+.github/workflows/
 AGENTS.md
 PROJECT_CONTEXT.md
 DEV_LOG.md
@@ -111,12 +112,13 @@ codex-recovered-context.md
 - `src/pages/inbound/LiveChatPage.tsx`：Live Chat 固定页签页面，复用三栏工作台并增加文字聊天客户列表。
 - `src/pages/inbound/components/LiveChatCustomerList.tsx`：WhatsApp / BankApp / Webchat 客户聊天列表，默认收起，支持 ALL 与渠道图标筛选，可收起展开。
 - `src/pages/DesignSystem.tsx`：设计系统展示页。
-- `src/store/appStore.ts`：workspace tab、BankApp demo tab、WhatsApp demo tab、Live Chat 聚焦和 inbound popup 全局状态。
+- `src/store/appStore.ts`：workspace tab、BankApp demo tab、WhatsApp demo tab、Live Chat 聚焦、inbound popup 和 demo-only screen share 全局状态。
 - `src/mock/bankapp.ts`：BankApp 联系方式、业务类型、客户身份/语言驱动的技能路由和截图素材路径配置。
 - `src/mock/inbound.ts`：Inbound 演示数据。
 - `src/types/bankapp.ts`：BankApp demo 联系方式、业务类型和步骤类型。
 - `src/types/inbound.ts`：Inbound 业务类型。
 - `src/styles/index.less`：全局样式与页面样式主文件。
+- `.github/workflows/ci.yml`：GitHub Actions 最小 CI，PR 到 `main` 或 push 到 `main` / `codex/**` 时运行 `npm ci`、`npm run lint`、`npm run build`。
 
 ## 4. 路由与页面关系
 
@@ -138,6 +140,7 @@ codex-recovered-context.md
 - `requestInboundPopup(source?, activate?)` 会打开 Inbound tab；`activate` 默认为 `true`，BankApp 演示可传 `false` 在后台准备电话弹屏但保持 BankApp Demo 当前激活页。
 - `requestInboundPopup('bankapp-voice')` 会打开 Inbound tab，并以 BankApp 客户资料展示语音接入。
 - `requestVideoCallPopup(source?, activate?)` 会打开 Video Call tab；`activate` 默认为 `true`，BankApp 演示可传 `false` 在后台准备视频弹屏但保持 BankApp Demo 当前激活页。
+- `isScreenShareActive` 表示 demo-only 桌面共享状态；BankApp Video connected 页可开启/停止，Video Call 的 OpenEye 浮窗会同步显示共享预览；Hang Up、关闭 Video Call tab、新普通视频呼叫、Reset BankApp Demo 会清理该状态。
 - `requestLiveChatWorkspace(sessionId?, activate?)` 会打开固定 Live Chat tab；传入 BankApp 会话 id 时会聚焦对应客户，`activate` 默认为 `true`，BankApp 演示可传 `false` 在后台准备文字坐席页，`setLiveChatTabOpen(false)` 会在签出时移除该 tab。
 - Inbound tab 可关闭，关闭后回到 Home tab。
 - Live Chat tab 不可关闭，签出后自动从 workspace tabs 移除。
@@ -399,6 +402,8 @@ Live Chat 当前 mock：
 - BankApp Demo 的入口、业务选择、业务确认截图已切换为脱敏版本：渠道选择、游客号码输入、客户信息录入、三渠道业务选择和三渠道业务确认均保留手机截图比例和大概样式，但只显示 BANK 1 或通用业务内容；Video connected 直接使用用户提供的视频通话截图原图 `video-connected.png`；Live Chat 排队与聊天直接使用用户提供且已处理的 `livechat-queue.png` / `livechat-chat.png` 原附件；Voice / Video / Live Chat 最终 `Service Closed` 均使用用户提供的满意度评价截图 `service-closed.png`；步骤标题和 AICC Process rail 已按开发责任增加 `BANK1` / `Netinfo` 标识。
 - 左侧菜单已调整为 `Channel Simulation > PSTN / BankApp / WhatsApp`；旧可见 `Video Call` 和 `Live Chat` 入口已移除，底层能力保留。
 - 新增 `WhatsApp Demo` workspace tab，复用 BankApp 客户侧流程壳，默认 Live Chat 渠道并聚焦 WhatsApp mock 会话。
+- 新增 Video / BankApp Video 桌面共享演示状态：BankApp Video connected 页可 Start/Stop screen share，坐席侧 OpenEye 浮窗显示共享中的桌面预览层。
+- 新增 GitHub Actions CI，覆盖 PR 到 `main` 和 push 到 `main` / `codex/**` 的 lint/build 验证。
 - BankApp Live Chat 路径可打开 Live Chat 并自动选中 BankApp 客户 Sari Amelia；Registered Customer 跳过个人信息页，Guest 才进入个人信息录入。
 - BankApp Voice Call 路径可触发 `Incoming` 并打开 Inbound tab，Customer Information 渠道图标为 BankApp 移动端图标，文字显示 `BankApp`。
 - BankApp Video Call 路径可触发 Video Call tab，Customer Information 渠道图标为 BankApp 移动端图标，文字显示 `BankApp`；普通 Channel Simulation 的 Video Call 仍显示 `Video Call` 渠道。
@@ -437,7 +442,7 @@ Live Chat 当前 mock：
 
 ## 10. 当前开发状态
 
-截至 2026-05-23 19:36 +08:00，`main` 已本地快进到 BankApp Demo 基线并打 `v0.3.0` tag；当前工作在 `codex/nav-whatsapp-simulator` 分支实现 `v0.3.1` 菜单重组和 WhatsApp 模拟入口。远端推送与 GitHub PR 仍需在本轮最终验证后执行。
+截至 2026-05-23 19:39 +08:00，`main` 已本地快进到 `v0.3.1`，当前工作在 `codex/video-screenshare-demo` 分支实现 `v0.4.0` Video screen share。远端推送与 GitHub PR 仍需在本轮最终验证后执行。
 
 本轮 BankApp 客户接入演示状态：
 

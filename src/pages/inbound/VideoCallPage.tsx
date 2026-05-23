@@ -13,6 +13,9 @@ export function VideoCallPage() {
   const showOpenEyeVideoWindow = useAppStore(
     (state) => state.isOpenEyeVideoWindowVisible,
   )
+  const isScreenShareActive = useAppStore(
+    (state) => state.isScreenShareActive,
+  )
   const videoCallPopupSource = useAppStore(
     (state) => state.videoCallPopupSource,
   )
@@ -25,7 +28,11 @@ export function VideoCallPage() {
     <InteractionWorkspace
       ariaLabel="Video call workspace"
       customer={customer}
-      overlay={showOpenEyeVideoWindow ? <OpenEyeVideoWindow /> : null}
+      overlay={
+        showOpenEyeVideoWindow ? (
+          <OpenEyeVideoWindow isScreenShareActive={isScreenShareActive} />
+        ) : null
+      }
     />
   )
 }

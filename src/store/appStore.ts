@@ -15,6 +15,7 @@ interface AppState {
   isInboundTabOpen: boolean
   isLiveChatTabOpen: boolean
   isOpenEyeVideoWindowVisible: boolean
+  isScreenShareActive: boolean
   isVideoCallTabOpen: boolean
   isWhatsAppDemoTabOpen: boolean
   inboundPopupRequestId: number
@@ -40,6 +41,7 @@ interface AppState {
   setCollapsed: (collapsed: boolean) => void
   setLiveChatTabOpen: (open: boolean) => void
   setOpenEyeVideoWindowVisible: (visible: boolean) => void
+  setScreenShareActive: (active: boolean) => void
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -54,6 +56,7 @@ export const useAppStore = create<AppState>((set) => ({
   isInboundTabOpen: false,
   isLiveChatTabOpen: false,
   isOpenEyeVideoWindowVisible: false,
+  isScreenShareActive: false,
   isVideoCallTabOpen: false,
   isWhatsAppDemoTabOpen: false,
   inboundPopupRequestId: 0,
@@ -87,6 +90,7 @@ export const useAppStore = create<AppState>((set) => ({
             : 'home'
           : state.activeWorkspaceTabKey,
       isOpenEyeVideoWindowVisible: false,
+      isScreenShareActive: false,
       isVideoCallTabOpen: false,
     })),
   closeWhatsAppDemoTab: () =>
@@ -139,6 +143,8 @@ export const useAppStore = create<AppState>((set) => ({
         ? 'video-call'
         : state.activeWorkspaceTabKey,
       isOpenEyeVideoWindowVisible: false,
+      isScreenShareActive:
+        source === 'bankapp-video' ? state.isScreenShareActive : false,
       isVideoCallTabOpen: true,
       videoCallPopupRequestId: state.videoCallPopupRequestId + 1,
       videoCallPopupSource: source,
@@ -165,5 +171,9 @@ export const useAppStore = create<AppState>((set) => ({
   setOpenEyeVideoWindowVisible: (visible) =>
     set({
       isOpenEyeVideoWindowVisible: visible,
+    }),
+  setScreenShareActive: (active) =>
+    set({
+      isScreenShareActive: active,
     }),
 }))

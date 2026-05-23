@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-23 19:36 +08:00
+最后更新：2026-05-23 19:40 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,73 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-23 19:40 +08:00 - GitHub Actions CI
+
+修改页面或文件：
+
+- `.github/workflows/ci.yml`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 计划要求每个里程碑 PR 至少通过 `npm ci`、`npm run lint`、`npm run build`，防止未构建通过的代码合入 `main`。
+
+修改结果：
+
+- 新增 GitHub Actions `CI` workflow。
+- PR 到 `main` 时运行 CI。
+- push 到 `main` 或 `codex/**` 分支时运行 CI。
+
+回滚说明：
+
+- 如需取消 CI，可删除 `.github/workflows/ci.yml`。
+
+当前风险点：
+
+- 本地已通过 lint/build；远端 CI 还需要在 push 后由 GitHub Actions 实际执行。
+
+### 2026-05-23 19:39 +08:00 - v0.4.0 Video screen share demo
+
+修改页面或文件：
+
+- `src/store/appStore.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/pages/inbound/VideoCallPage.tsx`
+- `src/pages/inbound/components/OpenEyeVideoWindow.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户后续需要调整 Video Call 和 BankApp demo 视频通话功能中的桌面共享功能。
+- 计划要求先做 demo-only screen share 状态，让 BankApp Video 客户侧和坐席侧 Video Call/OpenEye 展示同步。
+
+修改结果：
+
+- `appStore` 新增 `isScreenShareActive` 和 `setScreenShareActive()`。
+- BankApp Video connected 画面新增 `Screen share` 控制，可 Start/Stop 桌面共享。
+- BankApp Video handoff 到坐席侧时保留当前共享状态，OpenEye 浮窗显示 `Screen Share Active` 桌面预览层。
+- 普通新视频呼叫、Hang Up、关闭 Video Call tab、Reset BankApp/WhatsApp Demo、Unsigned/AUX 状态切换都会清理共享状态。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+
+回滚说明：
+
+- 可删除 `appStore` 中 screen share 状态和相关 reset 逻辑。
+- 可移除 `BankAppDemoPage.tsx` 的 screen share 控制和 `OpenEyeVideoWindow.tsx` 的共享预览层。
+- 同时删除 `src/styles/index.less` 中 `.bankapp-screen-share-control` 与 `.openeye-video-window__screen-share*` 相关样式。
+
+当前风险点：
+
+- 当前只是前端演示状态，不接真实桌面共享协议、权限请求或媒体流。
+- BankApp Video connected 图片仍是背景截图，共享控制为叠加演示控件；如客户要求完全还原真实 APP，需要后续替换为真实设计稿。
 
 ### 2026-05-23 19:36 +08:00 - v0.3.1 菜单重组与 WhatsApp 模拟入口
 

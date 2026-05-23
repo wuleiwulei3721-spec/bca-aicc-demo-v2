@@ -3,6 +3,7 @@ import {
   AudioOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  DesktopOutlined,
   FileDoneOutlined,
   IdcardOutlined,
   MobileOutlined,
@@ -193,6 +194,12 @@ export function BankAppDemoPage({
   const requestLiveChatWorkspace = useAppStore(
     (state) => state.requestLiveChatWorkspace,
   )
+  const isScreenShareActive = useAppStore(
+    (state) => state.isScreenShareActive,
+  )
+  const setScreenShareActive = useAppStore(
+    (state) => state.setScreenShareActive,
+  )
   const [customerType, setCustomerType] =
     useState<BankAppCustomerType>('registered')
   const language: BankAppLanguage = 'en'
@@ -272,6 +279,7 @@ export function BankAppDemoPage({
     setContactMethod(config.defaultContactMethod)
     setBusinessType('mobile-login')
     setDemoStep('channel')
+    setScreenShareActive(false)
   }
 
   const renderPhoneStatus = () => (
@@ -440,6 +448,20 @@ export function BankAppDemoPage({
             className="bankapp-phone-screen__reference"
             src={bankAppScreenshotSources.videoConnected}
           />
+          <div className="bankapp-screen-share-control">
+            <div>
+              <DesktopOutlined />
+              <span>
+                {isScreenShareActive ? 'Desktop sharing' : 'Screen share'}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setScreenShareActive(!isScreenShareActive)}
+            >
+              {isScreenShareActive ? 'Stop' : 'Start'}
+            </button>
+          </div>
         </div>
       )
     }
