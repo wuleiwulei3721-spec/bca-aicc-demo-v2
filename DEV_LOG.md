@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-24 17:57 +08:00
+最后更新：2026-05-24 19:16 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,56 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-24 19:16 +08:00 - 话务条 Incoming Identification 展示
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-05-24-1916.md`
+- `.codex-backup/current-todo-2026-05-24-1916.md`
+- `.codex-backup/page-state-2026-05-24-1916.md`
+
+修改原因：
+
+- 客户要求在话务条位置展示 incoming identification，方便坐席识别呼入来自 IVR 还是 BankApp/Halo Apps CTI。
+- 为避免出现 BCA 字样，本轮使用脱敏标签 `BankID`，不使用客户原话中的 `BCAID`。
+
+修改结果：
+
+- `BasicLayout` 根据 `activeCallChannel`、`inboundPopupSource`、`videoCallPopupSource` 计算 `callIdentification`。
+- PSTN / IVR 呼入在 `Incoming`、`Talking`、`Hold`、`Mute` 显示 `IVR: 08123456789`。
+- BankApp Voice / Video 呼入在同一通话状态显示 `BankID: 00012345`。
+- `AgentToolbar` 新增可选 `callIdentification` prop，并用浅色 pill 显示在 Answer 或 Hold 右侧。
+- Hang Up / Ready / ACW / Live Chat / WhatsApp 文字会话不显示 identification。
+- Customer Information、Contact Management、外呼申请、BankApp/WhatsApp 客户侧流程和 `v0.5.0` presence 状态点机制未修改。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：Sign In 后无通话时不显示 identification。
+- Browser smoke check `/`：PSTN Incoming / Talking 显示 `IVR: 08123456789`，Hang Up 后隐藏。
+- Browser smoke check `/`：BankApp Voice 显示 `BankID: 00012345`，Hang Up 后隐藏。
+- Browser smoke check `/`：BankApp Video 显示 `BankID: 00012345`，OpenEye `Desktop Share` 仍可见，Hang Up 后隐藏。
+- Browser smoke check `/`：BankApp Live Chat 和 WhatsApp Demo Live Chat 不显示 IVR/BankID。
+- Browser layout check `/` at 1366x768：话务条不遮挡 BANK 1 logo 或右侧 profile/actions。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚，仅移除 `AgentToolbar` 的 `callIdentification` prop 和 pill 样式，并删除 `BasicLayout` 中的 `callIdentification` 计算与传参。
+- 无需回滚 Customer Information、mock 客户资料或 store 状态结构，因为本轮没有修改这些内容。
+
+当前风险点：
+
+- IVR ANI 和 BankID 当前是前端 demo 固定值，未接真实 CTI payload。
+- 话务条宽度已扩大，客户实际远程演示分辨率下仍建议复查一次。
 
 ### 2026-05-24 17:57 +08:00 - 客户远程演示状态机制优化
 

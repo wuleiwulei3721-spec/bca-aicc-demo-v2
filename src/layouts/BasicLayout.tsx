@@ -150,6 +150,10 @@ export function BasicLayout() {
   const requestVideoCallPopup = useAppStore(
     (state) => state.requestVideoCallPopup,
   )
+  const inboundPopupSource = useAppStore((state) => state.inboundPopupSource)
+  const videoCallPopupSource = useAppStore(
+    (state) => state.videoCallPopupSource,
+  )
   const isVideoCallTabOpen = useAppStore((state) => state.isVideoCallTabOpen)
   const setLiveChatTabOpen = useAppStore(
     (state) => state.setLiveChatTabOpen,
@@ -606,6 +610,26 @@ export function BasicLayout() {
     callTiming,
     statusStartedAt,
   ])
+  const callIdentification = useMemo(() => {
+    if (callStatus === 'Idle') {
+      return null
+    }
+
+    if (activeCallChannel === 'voice') {
+      return inboundPopupSource === 'bankapp-voice'
+        ? { label: 'BankID', value: '00012345' }
+        : { label: 'IVR', value: '08123456789' }
+    }
+
+    if (
+      activeCallChannel === 'video' &&
+      videoCallPopupSource === 'bankapp-video'
+    ) {
+      return { label: 'BankID', value: '00012345' }
+    }
+
+    return null
+  }, [activeCallChannel, callStatus, inboundPopupSource, videoCallPopupSource])
 
   return (
     <Layout className="aicc-app-shell">
@@ -618,6 +642,7 @@ export function BasicLayout() {
             agentStatus={agentStatus}
             autoAnswerSeconds={autoAnswerSeconds}
             callStatus={callStatus}
+            callIdentification={callIdentification}
             baseElapsedSeconds={timerState.elapsedSeconds}
             timerLabel={timerState.label}
             timerStartedAt={timerState.startedAt}

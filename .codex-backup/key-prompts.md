@@ -294,6 +294,15 @@
 - End Service 只关闭当前文字 active session；如果没有其它 active sessions，状态点回到绿色。
 - Webchat mock 数据暂时保留但不可见，不显示 Webchat 客户或筛选项，直到后续新增 Webchat 入口。
 
+## 2026-05-24 话务条 Incoming Identification
+
+- 客户要求在话务条位置展示 incoming identification，让坐席确认接入来源来自 IVR 还是 Halo Apps / BankApp CTI。
+- PSTN / IVR 呼入显示 `IVR: 08123456789`。
+- BankApp Voice / Video 呼入显示脱敏后的 `BankID: 00012345`；不要使用 `BCAID`，避免出现 BCA 字样。
+- 识别信息从 `Incoming` 阶段开始显示，`Talking`、`Hold`、`Mute` 继续显示，Hang Up 后隐藏。
+- 只改话务条，不改 Customer Information 电话号码、Contact Management 或外呼申请按钮。
+- BankApp / WhatsApp Live Chat 文字接入不显示 IVR/BankID，因为没有电话/视频话务条接入识别需求。
+
 ## 2026-05-23 版本与素材策略
 
 - 后续按里程碑分支推进：`v0.3.0` BankApp 基线、`v0.3.1` 菜单与 WhatsApp、`v0.4.0` Video screen share、`v0.5.0` 客户远程演示优化。

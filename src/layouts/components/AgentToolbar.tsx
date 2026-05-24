@@ -16,10 +16,16 @@ import { OutboundCallModal } from './OutboundCallModal'
 import { ToolbarSettingsModal } from './ToolbarSettingsModal'
 import { TransferModal } from './TransferModal'
 
+interface CallIdentification {
+  label: string
+  value: string
+}
+
 interface AgentToolbarProps {
   agentStatus: AgentStatus
   autoAnswerSeconds: number
   baseElapsedSeconds: number | null
+  callIdentification?: CallIdentification | null
   callStatus: CallStatus
   timerLabel: string
   timerStartedAt: number
@@ -42,6 +48,7 @@ export function AgentToolbar({
   agentStatus,
   autoAnswerSeconds,
   baseElapsedSeconds,
+  callIdentification,
   callStatus,
   timerLabel,
   timerStartedAt,
@@ -94,15 +101,27 @@ export function AgentToolbar({
     <>
       <div className="aicc-agent-toolbar" aria-label="Call controls">
         {!isInCall && (
-          <ToolbarButton
-            disabled={!isIncoming}
-            flashing={isIncoming}
-            icon={<PhoneIcon />}
-            tone={isIncoming ? 'incoming' : 'default'}
-            onClick={onAnswer}
-          >
-            Answer
-          </ToolbarButton>
+          <>
+            <ToolbarButton
+              disabled={!isIncoming}
+              flashing={isIncoming}
+              icon={<PhoneIcon />}
+              tone={isIncoming ? 'incoming' : 'default'}
+              onClick={onAnswer}
+            >
+              Answer
+            </ToolbarButton>
+            {callIdentification && (
+              <div
+                aria-label={`${callIdentification.label}: ${callIdentification.value}`}
+                className="aicc-agent-toolbar__identification"
+                title={`${callIdentification.label}: ${callIdentification.value}`}
+              >
+                <span>{callIdentification.label}:</span>
+                <strong>{callIdentification.value}</strong>
+              </div>
+            )}
+          </>
         )}
 
         {isInCall && (
@@ -114,6 +133,16 @@ export function AgentToolbar({
             >
               Hold
             </ToolbarButton>
+            {callIdentification && (
+              <div
+                aria-label={`${callIdentification.label}: ${callIdentification.value}`}
+                className="aicc-agent-toolbar__identification"
+                title={`${callIdentification.label}: ${callIdentification.value}`}
+              >
+                <span>{callIdentification.label}:</span>
+                <strong>{callIdentification.value}</strong>
+              </div>
+            )}
             <ToolbarButton
               active={callStatus === 'Mute'}
               icon={<AudioMutedOutlined />}
