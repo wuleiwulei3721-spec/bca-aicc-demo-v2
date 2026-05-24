@@ -1,22 +1,23 @@
-import { useState } from 'react'
-import { InputNumber } from 'antd'
+import { Segmented } from 'antd'
 import { AppButton, BaseModal } from '../../components'
 
+type ToolbarDisplayMode = 'icon' | 'text'
+
 interface ToolbarSettingsModalProps {
-  autoAnswerSeconds: number
+  displayMode: ToolbarDisplayMode
   open: boolean
   onClose: () => void
-  onConfirm: (seconds: number) => void
+  onConfirm: () => void
+  onDisplayModeChange: (displayMode: ToolbarDisplayMode) => void
 }
 
 export function ToolbarSettingsModal({
-  autoAnswerSeconds,
+  displayMode,
   open,
   onClose,
   onConfirm,
+  onDisplayModeChange,
 }: ToolbarSettingsModalProps) {
-  const [draftSeconds, setDraftSeconds] = useState(autoAnswerSeconds)
-
   return (
     <BaseModal
       className="aicc-transfer-modal aicc-toolbar-settings-modal"
@@ -27,19 +28,25 @@ export function ToolbarSettingsModal({
       onCancel={onClose}
     >
       <div className="aicc-toolbar-settings">
-        <label>
-          <span>Automatically answer the call after ringing for</span>
-          <InputNumber
-            min={1}
-            max={60}
-            value={draftSeconds}
-            onChange={(value) => setDraftSeconds(value ?? autoAnswerSeconds)}
+        <div className="aicc-toolbar-settings__section">
+          <div>
+            <strong>Toolbar display</strong>
+            <span>Choose how call control buttons are displayed.</span>
+          </div>
+          <Segmented
+            options={[
+              { label: 'Icon + Text', value: 'text' },
+              { label: 'Icon Only', value: 'icon' },
+            ]}
+            value={displayMode}
+            onChange={(value) =>
+              onDisplayModeChange(value as ToolbarDisplayMode)
+            }
           />
-          <span>seconds</span>
-        </label>
+        </div>
         <div className="aicc-modal-footer aicc-toolbar-settings__footer">
           <AppButton onClick={onClose}>Cancel</AppButton>
-          <AppButton type="primary" onClick={() => onConfirm(draftSeconds)}>
+          <AppButton type="primary" onClick={onConfirm}>
             Confirm
           </AppButton>
         </div>

@@ -303,6 +303,16 @@
 - 只改话务条，不改 Customer Information 电话号码、Contact Management 或外呼申请按钮。
 - BankApp / WhatsApp Live Chat 文字接入不显示 IVR/BankID，因为没有电话/视频话务条接入识别需求。
 
+## 2026-05-24 话务条 Identification 样式与 Settings
+
+- Incoming identification 固定放在动作按钮组最左侧；Incoming 时在 Answer 左侧，Talking/Hold/Mute 时在 Hold 左侧。
+- 展示文案不加冒号：`IVR 08123456789`、`BankID 00012345`。
+- 不使用背景框、边框或圆角 pill；只用纯文本和右侧竖线分隔，保持和状态时长一致的克制风格。
+- 重新开放话务条 More > Settings。
+- Settings 只保留 Toolbar display：`Icon + Text` / `Icon Only`，默认 `Icon + Text`。
+- `Icon Only` 隐藏话务按钮文字，但保留图标、`aria-label` 和 `title`。
+- 自动接听/振铃时长设置在 UI 中隐藏，默认 3 秒逻辑保留。
+
 ## 2026-05-23 版本与素材策略
 
 - 后续按里程碑分支推进：`v0.3.0` BankApp 基线、`v0.3.1` 菜单与 WhatsApp、`v0.4.0` Video screen share、`v0.5.0` 客户远程演示优化。

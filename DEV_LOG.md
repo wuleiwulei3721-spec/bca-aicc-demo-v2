@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-24 19:16 +08:00
+最后更新：2026-05-24 19:48 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,58 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-24 19:48 +08:00 - 话务条 Identification 样式与显示模式
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/layouts/components/ToolbarSettingsModal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-05-24-1948.md`
+- `.codex-backup/current-todo-2026-05-24-1948.md`
+- `.codex-backup/page-state-2026-05-24-1948.md`
+
+修改原因：
+
+- 用户确认 incoming identification 应固定放在动作按钮左侧：Incoming 在 Answer 左侧，通话中在 Hold 左侧。
+- 用户要求去掉 identification 背景框和冒号，使用类似状态时长的纯文本和竖线分隔。
+- 用户希望重新开放话务条 Settings，并支持 `Icon + Text` / `Icon Only` 显示模式，以缩短长期使用时的话务条。
+
+修改结果：
+
+- Identification 改为纯文本：`IVR 08123456789` / `BankID 00012345`，无背景、无边框、无冒号。
+- Identification 现在是动作按钮组第一个元素，右侧用竖线分隔。
+- `AgentToolbar` 新增 `ToolbarDisplayMode`，由 `BasicLayout` 用本地 state 保存，默认 `text`。
+- More 菜单重新加入 `Settings`，Settings 弹框只展示 Toolbar display 分段控件。
+- `Icon Only` 模式隐藏 Answer/Hold/Mute/Transfer/Hang Up/Ready 的可见文字，但保留图标、`aria-label` 和 `title`。
+- 自动接听仍固定使用默认 3 秒逻辑，但不再在 Settings 中显示或配置。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：More > Settings 可打开，弹框只显示 Toolbar display，不显示自动接听秒数。
+- Browser smoke check `/`：默认 `Icon + Text` 保持按钮文字，切换 `Icon Only` 后按钮文字隐藏且可访问标签保留。
+- Browser smoke check `/`：PSTN Incoming 中 `IVR 08123456789` 位于 Answer 左侧；Talking 中位于 Hold 左侧。
+- Browser smoke check `/`：BankApp Voice / Video 中 `BankID 00012345` 位于动作按钮最左侧；Hang Up 后隐藏。
+- Browser smoke check `/`：BankApp/WhatsApp Live Chat 不显示 IVR/BankID。
+- Browser layout check `/` at 1366x768：话务条不遮挡 BANK 1 logo 或右侧 profile/actions。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚显示模式，可移除 `ToolbarDisplayMode` state、Settings 菜单项和 `ToolbarSettingsModal` 的分段控件，恢复按钮始终显示文字。
+- 如需回滚 identification 样式，可恢复 `aicc-agent-toolbar__identification` 的 pill 样式和原插入位置。
+
+当前风险点：
+
+- Toolbar display mode 仅保存在当前页面运行状态，刷新后恢复默认 `Icon + Text`。
+- 自动接听秒数仍是前端固定默认 3 秒；如果后续客户需要设置入口，需要重新设计 Settings。
 
 ### 2026-05-24 19:16 +08:00 - 话务条 Incoming Identification 展示
 

@@ -5,6 +5,7 @@ import {
   DisconnectOutlined,
   EllipsisOutlined,
   PauseCircleOutlined,
+  SettingOutlined,
   SwapOutlined,
 } from '@ant-design/icons'
 import { Dropdown } from 'antd'
@@ -16,6 +17,8 @@ import { OutboundCallModal } from './OutboundCallModal'
 import { ToolbarSettingsModal } from './ToolbarSettingsModal'
 import { TransferModal } from './TransferModal'
 
+export type ToolbarDisplayMode = 'icon' | 'text'
+
 interface CallIdentification {
   label: string
   value: string
@@ -23,18 +26,18 @@ interface CallIdentification {
 
 interface AgentToolbarProps {
   agentStatus: AgentStatus
-  autoAnswerSeconds: number
   baseElapsedSeconds: number | null
   callIdentification?: CallIdentification | null
   callStatus: CallStatus
   timerLabel: string
   timerStartedAt: number
+  toolbarDisplayMode: ToolbarDisplayMode
   onAnswer: () => void
-  onAutoAnswerSecondsChange: (seconds: number) => void
   onHangUp: () => void
   onHoldToggle: () => void
   onMuteToggle: () => void
   onReadyToggle: () => void
+  onToolbarDisplayModeChange: (displayMode: ToolbarDisplayMode) => void
 }
 
 function formatDuration(totalSeconds: number) {
@@ -46,20 +49,22 @@ function formatDuration(totalSeconds: number) {
 
 export function AgentToolbar({
   agentStatus,
-  autoAnswerSeconds,
   baseElapsedSeconds,
   callIdentification,
   callStatus,
   timerLabel,
   timerStartedAt,
+  toolbarDisplayMode,
   onAnswer,
-  onAutoAnswerSecondsChange,
   onHangUp,
   onHoldToggle,
   onMuteToggle,
   onReadyToggle,
+  onToolbarDisplayModeChange,
 }: AgentToolbarProps) {
   const [now, setNow] = useState(() => Date.now())
+  const [draftToolbarDisplayMode, setDraftToolbarDisplayMode] =
+    useState<ToolbarDisplayMode>(toolbarDisplayMode)
   const [isOutboundOpen, setIsOutboundOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isTransferOpen, setIsTransferOpen] = useState(false)
@@ -75,6 +80,7 @@ export function AgentToolbar({
     callStatus === 'Talking' || callStatus === 'Hold' || callStatus === 'Mute'
   const isReady = agentStatus === 'Ready'
   const readyLabel = isReady ? 'Ready' : 'Not Ready'
+  const showButtonText = toolbarDisplayMode === 'text'
   const elapsedSeconds = Math.max(
     0,
     (baseElapsedSeconds ?? 0) + Math.floor((now - timerStartedAt) / 1000),
@@ -85,6 +91,11 @@ export function AgentToolbar({
       icon: <PhoneIcon />,
       label: 'Outbound Call',
     },
+    {
+      key: 'settings',
+      icon: <SettingOutlined />,
+      label: 'Settings',
+    },
   ]
 
   const handleMoreMenuClick: MenuProps['onClick'] = ({ key }) => {
@@ -93,6 +104,7 @@ export function AgentToolbar({
     }
 
     if (key === 'settings') {
+      setDraftToolbarDisplayMode(toolbarDisplayMode)
       setIsSettingsOpen(true)
     }
   }
@@ -102,79 +114,91 @@ export function AgentToolbar({
       <div className="aicc-agent-toolbar" aria-label="Call controls">
         {!isInCall && (
           <>
-            <ToolbarButton
-              disabled={!isIncoming}
-              flashing={isIncoming}
-              icon={<PhoneIcon />}
-              tone={isIncoming ? 'incoming' : 'default'}
-              onClick={onAnswer}
-            >
-              Answer
-            </ToolbarButton>
             {callIdentification && (
               <div
-                aria-label={`${callIdentification.label}: ${callIdentification.value}`}
+                aria-label={`${callIdentification.label} ${callIdentification.value}`}
                 className="aicc-agent-toolbar__identification"
-                title={`${callIdentification.label}: ${callIdentification.value}`}
+                title={`${callIdentification.label} ${callIdentification.value}`}
               >
-                <span>{callIdentification.label}:</span>
+                <span>{callIdentification.label}</span>
                 <strong>{callIdentification.value}</strong>
               </div>
             )}
+            <ToolbarButton
+              aria-label="Answer"
+              disabled={!isIncoming}
+              flashing={isIncoming}
+              icon={<PhoneIcon />}
+              title="Answer"
+              tone={isIncoming ? 'incoming' : 'default'}
+              onClick={onAnswer}
+            >
+              {showButtonText ? 'Answer' : undefined}
+            </ToolbarButton>
           </>
         )}
 
         {isInCall && (
           <>
-            <ToolbarButton
-              active={callStatus === 'Hold'}
-              icon={<PauseCircleOutlined />}
-              onClick={onHoldToggle}
-            >
-              Hold
-            </ToolbarButton>
             {callIdentification && (
               <div
-                aria-label={`${callIdentification.label}: ${callIdentification.value}`}
+                aria-label={`${callIdentification.label} ${callIdentification.value}`}
                 className="aicc-agent-toolbar__identification"
-                title={`${callIdentification.label}: ${callIdentification.value}`}
+                title={`${callIdentification.label} ${callIdentification.value}`}
               >
-                <span>{callIdentification.label}:</span>
+                <span>{callIdentification.label}</span>
                 <strong>{callIdentification.value}</strong>
               </div>
             )}
             <ToolbarButton
+              active={callStatus === 'Hold'}
+              aria-label="Hold"
+              icon={<PauseCircleOutlined />}
+              title="Hold"
+              onClick={onHoldToggle}
+            >
+              {showButtonText ? 'Hold' : undefined}
+            </ToolbarButton>
+            <ToolbarButton
               active={callStatus === 'Mute'}
+              aria-label="Mute"
               icon={<AudioMutedOutlined />}
+              title="Mute"
               onClick={onMuteToggle}
             >
-              Mute
+              {showButtonText ? 'Mute' : undefined}
             </ToolbarButton>
             <ToolbarButton
               active={isTransferOpen}
+              aria-label="Transfer"
               icon={<SwapOutlined />}
+              title="Transfer"
               onClick={() => setIsTransferOpen(true)}
             >
-              Transfer
+              {showButtonText ? 'Transfer' : undefined}
             </ToolbarButton>
             <ToolbarButton
+              aria-label="Hang Up"
               icon={<DisconnectOutlined />}
+              title="Hang Up"
               tone="danger"
               onClick={onHangUp}
             >
-              Hang Up
+              {showButtonText ? 'Hang Up' : undefined}
             </ToolbarButton>
           </>
         )}
 
         <ToolbarButton
+          aria-label={readyLabel}
           aria-pressed={isReady}
           icon={isReady ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
           selected={isReady}
+          title={readyLabel}
           tone={isReady ? 'ready' : 'default'}
           onClick={onReadyToggle}
         >
-          {readyLabel}
+          {showButtonText ? readyLabel : undefined}
         </ToolbarButton>
 
         <div className="aicc-agent-toolbar__timer">
@@ -211,13 +235,14 @@ export function AgentToolbar({
         onClose={() => setIsOutboundOpen(false)}
       />
       <ToolbarSettingsModal
-        autoAnswerSeconds={autoAnswerSeconds}
+        displayMode={draftToolbarDisplayMode}
         open={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        onConfirm={(seconds) => {
-          onAutoAnswerSecondsChange(seconds)
+        onConfirm={() => {
+          onToolbarDisplayModeChange(draftToolbarDisplayMode)
           setIsSettingsOpen(false)
         }}
+        onDisplayModeChange={setDraftToolbarDisplayMode}
       />
     </>
   )

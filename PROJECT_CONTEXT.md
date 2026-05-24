@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-05-24 19:16 +08:00
+最后更新：2026-05-24 19:48 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：`codex/customer-demo-incoming-identification` 基于 `v0.5.0` 增加话务条 incoming identification 展示，PSTN / IVR 呼入显示 `IVR: 08123456789`，BankApp Voice / Video 呼入显示脱敏后的 `BankID: 00012345`。本轮只改话务条展示，不改 Customer Information 手机号、Contact Management 或外呼申请逻辑；完成后发布 `v0.5.1`。
+当前目标：`codex/toolbar-identification-display-mode` 基于 `v0.5.1` 调整话务条 incoming identification 和显示模式：识别信息改为无背景纯文本且固定在动作按钮组最左侧，Settings 重新开放并支持 `Icon + Text` / `Icon Only` 切换；完成后发布 `v0.5.2`。
 
 ## 0. 使用规则
 
@@ -40,8 +40,8 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`codex/customer-demo-incoming-identification`
-当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于客户远程演示版话务条 incoming identification 优化，完成验证后发布 `v0.5.1`
+当前分支：`codex/toolbar-identification-display-mode`
+当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于客户远程演示版话务条 identification 样式和显示模式优化，完成验证后发布 `v0.5.2`
 部署目标：Vercel 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -156,7 +156,7 @@ codex-recovered-context.md
 - 可展开/收起左侧系统菜单，默认收起，`collapsedWidth` 为 `48px`，展开宽度使用 `--aicc-layout-sider-width`。
 - 左侧菜单支持 2 层级：展开态顶部显示折叠按钮与菜单搜索框，点击一级菜单在下方展开二级菜单；收起态仅显示一级图标，鼠标悬浮在一级图标时在右侧显示二级菜单浮层，鼠标移出浮层或点击菜单后浮层关闭。
 - 当前侧栏菜单使用英文企业呼叫中心文案：Channel Simulation（PSTN、BankApp、WhatsApp）、Agent Center（Agent Profile、Service History）、Operations（Alert KPI Management、Floor Management）、Call Management、Reports。
-- Agent Toolbar：Answer、Hold、Mute、Transfer、Hang Up、More；电话/视频呼入时可展示 incoming identification pill。
+- Agent Toolbar：Answer、Hold、Mute、Transfer、Hang Up、More；电话/视频呼入时可在动作按钮最左侧展示 incoming identification；More 菜单包含 Outbound Call 与 Settings。
 - Agent Profile Area：仍显示 Ready、Not Ready、AUX - Ibadah、AUX - Makan、Unsigned 等业务状态菜单；头像右下状态点使用 `effectiveAgentPresence`，由坐席状态和活跃客户互动共同决定。
 - Notifications 和 Internal Chat 入口。
 - Internal Chat Modal。
@@ -189,7 +189,8 @@ type CallStatus =
 - Sign In 后如果暂无电话、视频或文字客户接入，右上角状态点为绿色；Sign Out 为灰色。
 - `BasicLayout` 计算 `effectiveAgentPresence`：`callStatus !== 'Idle'` 或 `activeLiveChatSessionIds.length > 0` 时为 busy 红色，覆盖 Ready/Talking/Hold/Mute/Incoming 等展示；Ready 且无互动为绿色；AUX / Not Ready / ACW 且无互动为黄色。
 - Ready + Idle 时点击 `Channel Simulation > PSTN` 可触发电话弹屏。
-- 话务条 incoming identification 只在 `Incoming`、`Talking`、`Hold`、`Mute` 时显示：PSTN 显示 `IVR: 08123456789`，BankApp Voice / Video 显示 `BankID: 00012345`；Hang Up 后随 `callStatus` 回 Idle 自动隐藏。
+- 话务条 incoming identification 只在 `Incoming`、`Talking`、`Hold`、`Mute` 时显示：PSTN 显示 `IVR 08123456789`，BankApp Voice / Video 显示 `BankID 00012345`；Hang Up 后随 `callStatus` 回 Idle 自动隐藏。
+- 话务条 Settings 当前只配置显示模式，默认 `Icon + Text`；切换为 `Icon Only` 后 Answer/Hold/Mute/Transfer/Hang Up/Ready 等按钮隐藏文字但保留图标、`aria-label` 和 `title`。自动接听仍固定使用默认 3 秒，但不在 Settings 中展示。
 - BankApp Demo 的 `Livechat` 路径会打开 Live Chat 并聚焦 BankApp 客户；`Voice Call` / `Video Call` 路径通过 store request id 触发现有坐席话务状态机，并可在 `Agent Workspace` 步骤切到对应坐席 workspace。
 - WhatsApp Demo 默认走 Live Chat 路径并聚焦 WhatsApp 客户 `live-chat-001`；已签入后仍可通过固定 Live Chat tab 承载会话工作台。
 - Incoming 支持手动 Answer，也支持按 `autoAnswerSeconds` 自动接听。
@@ -454,6 +455,29 @@ Live Chat 当前 mock：
 - GitHub remote 与基础提交。
 
 ## 10. 当前开发状态
+
+截至 2026-05-24 19:48 +08:00，当前工作在 `codex/toolbar-identification-display-mode` 分支处理 `v0.5.1` 后续话务条优化，目标发布 `v0.5.2`。本轮继续只改话务条和 Settings，不修改 Customer Information、外呼申请、BankApp/WhatsApp 客户侧流程、OpenEye 桌面共享或状态点机制。
+
+本轮话务条 identification 与显示模式优化：
+
+- Incoming identification 从独立浅色 pill 改为无背景纯文本，去掉冒号，显示为 `IVR 08123456789` / `BankID 00012345`。
+- 识别信息固定放在动作按钮组最左侧：Incoming 时在 Answer 左侧，Talking/Hold/Mute 时在 Hold 左侧；右侧用竖线和按钮区分。
+- More 菜单重新开放 `Settings`。
+- Settings 弹框不再展示自动接听/振铃时长设置，只显示 `Toolbar display` 的 `Icon + Text` / `Icon Only` 选项。
+- 默认 `Icon + Text` 保持既有按钮文字；`Icon Only` 隐藏 Answer、Hold、Mute、Transfer、Hang Up、Ready/Not Ready 的可见文字，但保留图标、`aria-label` 和 `title`。
+- `autoAnswerSeconds` 仍保留默认 3 秒逻辑，不在 UI 中配置。
+
+本轮话务条 identification 与显示模式验证：
+
+- `npm run lint`：通过。
+- `npm run build`：通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：Sign In 后 More > Settings 可打开；弹框只显示 Toolbar display，不显示 Automatically answer / ringing / seconds。
+- Browser smoke check `/`：默认 `Icon + Text` 下 Answer/Ready 保持文字；切换 `Icon Only` 后按钮文字隐藏，图标、`aria-label`、`title` 保留。
+- Browser smoke check `/`：PSTN Incoming 显示 `IVR 08123456789` 在 Answer 左侧；Talking 显示在 Hold 左侧；无背景、无冒号，右侧只有分隔线。
+- Browser smoke check `/`：BankApp Voice / Video 首项显示 `BankID 00012345`，Hang Up 后 identification 隐藏；BankApp Video 的 OpenEye `Desktop Share` 仍可见。
+- Browser smoke check `/`：BankApp Live Chat 和 WhatsApp Demo Live Chat 均不显示 IVR/BankID。
+- Browser layout check `/` at 1366x768：话务条不遮挡 BANK 1 logo 或右侧 profile/actions。
+- Browser smoke check `/design-system`：页面正常加载，标题为 `BANK 1 AICC Demo`。
 
 截至 2026-05-24 19:16 +08:00，当前工作在 `codex/customer-demo-incoming-identification` 分支处理客户远程演示版话务条 incoming identification。该分支从 `main@v0.5.0` 拉出，目标发布 `v0.5.1`；本轮只新增话务条识别信息，不修改 Customer Information 卡片、外呼申请、Contact Management、BankApp/WhatsApp 客户侧流程或状态点机制。
 

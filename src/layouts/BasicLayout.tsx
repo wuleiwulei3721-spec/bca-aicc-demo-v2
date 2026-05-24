@@ -179,7 +179,10 @@ export function BasicLayout() {
     useState<CallTiming>(initialCallTiming)
   const [activeCallChannel, setActiveCallChannel] =
     useState<ActiveCallChannel>(null)
-  const [autoAnswerSeconds, setAutoAnswerSeconds] = useState(3)
+  const [autoAnswerSeconds] = useState(3)
+  const [toolbarDisplayMode, setToolbarDisplayMode] = useState<
+    'icon' | 'text'
+  >('text')
   const [isInternalChatOpen, setIsInternalChatOpen] = useState(false)
   const [isAfterCallWork, setIsAfterCallWork] = useState(false)
   const [closedFlyoutKey, setClosedFlyoutKey] = useState<string | null>(null)
@@ -640,18 +643,18 @@ export function BasicLayout() {
         {isSignedIn && (
           <AgentToolbar
             agentStatus={agentStatus}
-            autoAnswerSeconds={autoAnswerSeconds}
             callStatus={callStatus}
             callIdentification={callIdentification}
             baseElapsedSeconds={timerState.elapsedSeconds}
             timerLabel={timerState.label}
             timerStartedAt={timerState.startedAt}
+            toolbarDisplayMode={toolbarDisplayMode}
             onAnswer={handleAnswer}
-            onAutoAnswerSecondsChange={setAutoAnswerSeconds}
             onHangUp={handleHangUp}
             onHoldToggle={handleHoldToggle}
             onMuteToggle={handleMuteToggle}
             onReadyToggle={handleReadyToggle}
+            onToolbarDisplayModeChange={setToolbarDisplayMode}
           />
         )}
         <div className="aicc-header__actions">
