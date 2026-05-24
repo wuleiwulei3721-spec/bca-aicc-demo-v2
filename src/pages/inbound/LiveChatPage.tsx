@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNow } from '../../hooks/useNow'
 import { liveChatSessions } from '../../mock/inbound'
 import { useAppStore } from '../../store'
 import type { LiveChatConversationMessage, LiveChatSession } from '../../types'
+import {
+  getElapsedSeconds,
+  getLiveChatSlaState,
+  parseDurationSeconds,
+} from '../../utils/duration'
 import { LiveChatCustomerList } from './components/LiveChatCustomerList'
 import { InteractionWorkspace } from './InteractionWorkspace'
 
@@ -43,6 +49,9 @@ export function LiveChatPage() {
   const liveChatFocusSessionId = useAppStore(
     (state) => state.liveChatFocusSessionId,
   )
+  const liveChatSessionTimings = useAppStore(
+    (state) => state.liveChatSessionTimings,
+  )
   const [activeSessionId, setActiveSessionId] = useState(
     activeLiveChatSessionIds[0] ?? '',
   )
@@ -57,6 +66,7 @@ export function LiveChatPage() {
   const [sessionSummariesById, setSessionSummariesById] = useState<
     Record<string, LiveChatSessionSummary>
   >({})
+  const now = useNow(activeLiveChatSessionIds.length > 0)
 
   const availableSessions = useMemo(
     () =>
@@ -68,6 +78,28 @@ export function LiveChatPage() {
           ...(sessionSummariesById[session.id] ?? {}),
         })),
     [activeLiveChatSessionIds, sessionSummariesById],
+  )
+
+  const sessionRuntimeStates = useMemo(
+    () =>
+      Object.fromEntries(
+        availableSessions.map((session) => {
+          const timing = liveChatSessionTimings[session.id]
+          const elapsedSeconds = timing
+            ? getElapsedSeconds(timing.startedAt, now)
+            : parseDurationSeconds(session.customer.accessDuration)
+
+          return [
+            session.id,
+            {
+              elapsedSeconds,
+              isFlashing: timing ? timing.flashUntil > now : false,
+              slaState: getLiveChatSlaState(elapsedSeconds),
+            },
+          ]
+        }),
+      ),
+    [availableSessions, liveChatSessionTimings, now],
   )
 
   useEffect(() => {
@@ -222,6 +254,7 @@ export function LiveChatPage() {
           activeSessionId=""
           collapsed={isCustomerListCollapsed}
           selectedChannels={selectedChannels}
+          sessionRuntimeStates={sessionRuntimeStates}
           sessions={filteredSessions}
           onActiveSessionChange={setActiveSessionId}
           onChannelFilterChange={handleChannelFilterChange}
@@ -250,6 +283,9 @@ export function LiveChatPage() {
         .filter(Boolean)
         .join(' ')}
       conversation={{
+        elapsedSeconds:
+          sessionRuntimeStates[activeSession.id]?.elapsedSeconds ??
+          parseDurationSeconds(activeSession.customer.accessDuration),
         messages:
           conversationMessagesBySessionId[activeSession.id] ??
           activeSession.conversation,
@@ -263,6 +299,7 @@ export function LiveChatPage() {
           activeSessionId={activeSession.id}
           collapsed={isCustomerListCollapsed}
           selectedChannels={selectedChannels}
+          sessionRuntimeStates={sessionRuntimeStates}
           sessions={filteredSessions}
           onActiveSessionChange={setActiveSessionId}
           onChannelFilterChange={handleChannelFilterChange}

@@ -127,6 +127,9 @@ export function BasicLayout() {
   const clearLiveChatSessions = useAppStore(
     (state) => state.clearLiveChatSessions,
   )
+  const clearCallInteractionTimings = useAppStore(
+    (state) => state.clearCallInteractionTimings,
+  )
   const bankAppVideoCallActivateWorkspace = useAppStore(
     (state) => state.bankAppVideoCallActivateWorkspace,
   )
@@ -204,11 +207,13 @@ export function BasicLayout() {
       setCallTiming(initialCallTiming)
       setActiveCallChannel(null)
       setIsAfterCallWork(false)
+      clearCallInteractionTimings()
       clearLiveChatSessions()
       setOpenEyeVideoWindowVisible(false)
       resetBankAppVideoDesktopShare()
     }
   }, [
+    clearCallInteractionTimings,
     clearLiveChatSessions,
     resetBankAppVideoDesktopShare,
     setLiveChatTabOpen,
@@ -466,8 +471,10 @@ export function BasicLayout() {
     setIsAfterCallWork(true)
     setOpenEyeVideoWindowVisible(false)
     resetBankAppVideoDesktopShare()
+    clearCallInteractionTimings()
     updateAgentStatus('Not Ready')
   }, [
+    clearCallInteractionTimings,
     resetBankAppVideoDesktopShare,
     setOpenEyeVideoWindowVisible,
     updateAgentStatus,

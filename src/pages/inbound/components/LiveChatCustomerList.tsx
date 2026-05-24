@@ -8,14 +8,22 @@ import {
 import { Badge } from 'antd'
 import type { ReactNode } from 'react'
 import type { LiveChatSession } from '../../../types'
+import { formatDuration, type InteractionSlaState } from '../../../utils/duration'
 
 type LiveChatChannelFilter = 'all' | LiveChatSession['channel']
 type LiveChatChannel = LiveChatSession['channel']
+
+export interface LiveChatSessionRuntimeState {
+  elapsedSeconds: number
+  isFlashing: boolean
+  slaState: InteractionSlaState
+}
 
 interface LiveChatCustomerListProps {
   activeSessionId: string
   collapsed: boolean
   selectedChannels: LiveChatChannel[]
+  sessionRuntimeStates: Record<string, LiveChatSessionRuntimeState>
   sessions: LiveChatSession[]
   onActiveSessionChange: (sessionId: string) => void
   onChannelFilterChange: (channel: LiveChatChannelFilter) => void
@@ -107,6 +115,7 @@ export function LiveChatCustomerList({
   activeSessionId,
   collapsed,
   selectedChannels,
+  sessionRuntimeStates,
   sessions,
   onActiveSessionChange,
   onChannelFilterChange,
@@ -184,6 +193,11 @@ export function LiveChatCustomerList({
         {sessions.map((session) => {
           const isActive = session.id === activeSessionId
           const { profile } = session.customer
+          const runtimeState = sessionRuntimeStates[session.id]
+          const slaState = runtimeState?.slaState ?? 'normal'
+          const durationLabel = runtimeState
+            ? formatDuration(runtimeState.elapsedSeconds)
+            : session.customer.accessDuration
 
           return (
             <button
@@ -191,23 +205,56 @@ export function LiveChatCustomerList({
               className={[
                 'live-chat-customer-list__item',
                 isActive ? 'live-chat-customer-list__item--active' : '',
+                slaState !== 'normal'
+                  ? `live-chat-customer-list__item--${slaState}`
+                  : '',
+                runtimeState?.isFlashing
+                  ? 'live-chat-customer-list__item--flash'
+                  : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
               key={session.id}
-              title={`${profile.name} - ${getChannelLabel(session.channel)}`}
+              title={`${profile.name} - ${getChannelLabel(
+                session.channel,
+              )} - ${durationLabel}`}
               type="button"
               onClick={() => onActiveSessionChange(session.id)}
             >
               <Badge count={session.unreadCount} size="small">
-                {getSessionIcon(session)}
+                <span className="live-chat-customer-list__icon-slot">
+                  {getSessionIcon(session)}
+                  {slaState !== 'normal' && (
+                    <span
+                      aria-hidden="true"
+                      className={[
+                        'live-chat-customer-list__sla-marker',
+                        `live-chat-customer-list__sla-marker--${slaState}`,
+                      ].join(' ')}
+                    />
+                  )}
+                </span>
               </Badge>
 
               {!collapsed && (
                 <span className="live-chat-customer-list__content">
                   <span className="live-chat-customer-list__topline">
                     <strong>{profile.name}</strong>
-                    <em>{session.lastMessageTime}</em>
+                    <span className="live-chat-customer-list__meta">
+                      <em>{session.lastMessageTime}</em>
+                      <span
+                        className={[
+                          'live-chat-customer-list__duration',
+                          slaState !== 'normal'
+                            ? `live-chat-customer-list__duration--${slaState}`
+                            : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                      >
+                        · {durationLabel}
+                      </span>
+                    </span>
                   </span>
                   <span className="live-chat-customer-list__message">
                     {session.lastMessage}

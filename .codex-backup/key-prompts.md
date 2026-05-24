@@ -319,6 +319,17 @@
 - `Icon Only` 模式下话务按钮应是统一 29px 方形，按钮图标和 More 图标放大到 14px；默认 `Icon + Text` 不受影响。
 - More 菜单作为 Settings 入口，应按点击打开，不依赖 hover。
 
+## 2026-05-25 交互页签与 Live Chat 计时/SLA/短闪
+
+- 客户要求交互页签按来源展示名称和持续时间：PSTN 呼入显示 `PSTN (mm:ss)`，BankApp Voice 显示 `Voice Call (mm:ss)`，Video Call 显示 `Video Call (mm:ss)`。
+- Live Chat 有 active session 时显示 `Live Chat (mm:ss)`，取当前 active sessions 中最长持续时间；无客户接入时只显示 `Live Chat`。
+- 新交互进入且当前不在对应 workspace tab 时，tab 轻微短闪约 5 秒；不能改变 `inbound`、`video-call`、`live-chat` 等 tab key。
+- Live Chat 客户列表也需要展示每个 active customer 的持续时间，格式为 `lastMessageTime · mm:ss`。
+- Live Chat SLA 本阶段固定为 60 秒 warning、120 秒 breach；展开态用左侧细 accent 和 duration 颜色表达，收起态用渠道 icon 小角标表达。
+- Live Chat 新客户进入列表时短闪约 5 秒；End Service 后移除该 session 的 runtime timing，没有 active sessions 时状态和 Live Chat tab duration 回到空态。
+- `ConversationWorkspace` 的头部计时必须与客户列表和 workspace tab 使用同一份 runtime timing，不能各自 setInterval 单独计算。
+- 本轮不做多路 PSTN 并发架构改造，不改 BankApp/WhatsApp/Video 客户侧流程，不重新开放 Webchat。
+
 ## 2026-05-23 版本与素材策略
 
 - 后续按里程碑分支推进：`v0.3.0` BankApp 基线、`v0.3.1` 菜单与 WhatsApp、`v0.4.0` Video screen share、`v0.5.0` 客户远程演示优化。

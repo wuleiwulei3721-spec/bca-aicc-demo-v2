@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-05-24 22:31 +08:00
+最后更新：2026-05-25 00:00 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：`codex/toolbar-compact-visual-balance` 基于 `main@v0.5.3` 统一话务条 identification/timer 文本层级、简化 Settings 布局，并优化 `Icon Only` 模式下的图标尺寸；完成后发布 `v0.5.4`。
+当前目标：`codex/interaction-tab-duration-sla` 基于 `main@v0.5.4` 为 workspace 交互页签和 Live Chat 客户列表增加持续时间、SLA 状态和新交互短闪；完成后发布 `v0.5.5`。
 
 ## 0. 使用规则
 
@@ -40,8 +40,8 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`codex/toolbar-compact-visual-balance`
-当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于客户远程演示版话务条文字层级、Settings 简化和 icon-only 视觉平衡，完成验证后发布 `v0.5.4`
+当前分支：`codex/interaction-tab-duration-sla`
+当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于客户远程演示版 workspace tab 与 Live Chat 客户列表计时、SLA、闪烁提示，完成验证后发布 `v0.5.5`
 部署目标：Vercel 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -80,12 +80,14 @@ src/
   routes.tsx
   assets/
   components/
+  hooks/
   layouts/
   mock/
   pages/
   store/
   styles/
   types/
+  utils/
 public/
   favicon.svg
   icons.svg
@@ -104,19 +106,21 @@ codex-recovered-context.md
 - `src/App.tsx`：Ant Design `ConfigProvider` + `RouterProvider`。
 - `src/routes.tsx`：定义 `/`、`/design-system` 和通配重定向。
 - `src/layouts/BasicLayout.tsx`：全局 Header、可展开/收起左侧菜单、坐席工具条、内部聊天入口和主内容出口。
-- `src/pages/AgentWorkspace.tsx`：Home tab 与 Inbound tab 容器。
+- `src/pages/AgentWorkspace.tsx`：Home tab 与工作区交互 tab 容器，负责 PSTN / Voice Call / Video Call / Live Chat 页签名称、持续时间、SLA 和短闪提示。
 - `src/pages/bankapp/BankAppDemoPage.tsx`：BankApp 客户侧模拟器，采用真实手机比例的客户端舞台和轻量 AICC Process rail，坐席侧结果通过真实 workspace tab 跳转体现。
 - `src/pages/inbound/InteractionWorkspace.tsx`：电话与视频弹屏共用的三栏工作台。
 - `src/pages/inbound/InboundPage.tsx`：PSTN / Voice Call 电话弹屏 wrapper。
 - `src/pages/inbound/VideoCallPage.tsx`：Video Call 弹屏 wrapper，复用三栏工作台并叠加 OpenEye 浮窗。
 - `src/pages/inbound/LiveChatPage.tsx`：Live Chat 固定页签页面，复用三栏工作台并增加文字聊天客户列表。
-- `src/pages/inbound/components/LiveChatCustomerList.tsx`：WhatsApp / BankApp / Webchat 客户聊天列表，默认收起，支持 ALL 与渠道图标筛选，可收起展开。
+- `src/pages/inbound/components/LiveChatCustomerList.tsx`：WhatsApp / BankApp / Webchat 客户聊天列表，默认收起，支持 ALL 与渠道图标筛选、会话持续时间、SLA 状态、短闪提示，可收起展开。
 - `src/pages/DesignSystem.tsx`：设计系统展示页。
-- `src/store/appStore.ts`：workspace tab、BankApp demo tab、WhatsApp demo tab、Live Chat 聚焦、inbound popup 和 demo-only screen share 全局状态。
+- `src/store/appStore.ts`：workspace tab、BankApp demo tab、WhatsApp demo tab、Live Chat 聚焦、interaction timing、inbound popup 和 demo-only screen share 全局状态。
+- `src/hooks/useNow.ts`：前端运行时每秒 tick hook，用于 workspace tab 和 Live Chat 列表计时刷新。
 - `src/mock/bankapp.ts`：BankApp 联系方式、业务类型、客户身份/语言驱动的技能路由和截图素材路径配置。
 - `src/mock/inbound.ts`：Inbound 演示数据。
 - `src/types/bankapp.ts`：BankApp demo 联系方式、业务类型和步骤类型。
 - `src/types/inbound.ts`：Inbound 业务类型。
+- `src/utils/duration.ts`：共享持续时间解析、格式化、elapsed 计算和 Live Chat SLA 阈值工具。
 - `src/styles/index.less`：全局样式与页面样式主文件。
 - `.github/workflows/ci.yml`：GitHub Actions 最小 CI，PR 到 `main` 或 push 到 `main` / `codex/**` 时运行 `npm ci`、`npm run lint`、`npm run build`。
 
@@ -143,6 +147,8 @@ codex-recovered-context.md
 - `requestBankAppVoiceCall(activate?)` / `requestBankAppVideoCall(activate?)` 会通过 request id 触发 `BasicLayout` 话务状态机，并携带是否激活坐席工作台的语义。
 - `bankAppVideoShareState` / `isScreenShareActive` 表示 demo-only 桌面共享状态；BankApp Video 的桌面共享入口已移到坐席侧 OpenEye 浮窗，点击 `桌面共享` 后显示选择共享程序截图，点击 `确定` 后切回 BankApp Demo 展示客户侧共享画面；Hang Up、关闭 Video Call tab、新普通视频呼叫、Reset BankApp Demo 会清理该状态。
 - `requestLiveChatWorkspace(sessionId?, activate?)` 会打开固定 Live Chat tab；传入 WhatsApp 或 BankApp 会话 id 时会把该会话加入 `activeLiveChatSessionIds` 并聚焦对应客户，`activate` 默认为 `true`，BankApp 演示可传 `false` 在后台准备文字坐席页；`setLiveChatTabOpen(false)`、Sign Out、AUX 会清空 active live chat sessions。
+- Workspace 交互页签现在显示运行时持续时间：PSTN 电话呼入为 `PSTN (mm:ss)`，BankApp Voice 为 `Voice Call (mm:ss)`，BankApp Video 为 `Video Call (mm:ss)`，Live Chat 有 active session 时显示最长会话时长 `Live Chat (mm:ss)`。
+- 新交互进入且当前不在该 tab 时，workspace tab 会轻微短闪约 5 秒；当前 tab key 仍保持 `inbound`、`video-call`、`live-chat` 不变，避免破坏关闭、切换、OpenEye 和 Demo 回跳逻辑。
 - Inbound tab 可关闭，关闭后回到 Home tab。
 - Live Chat tab 不可关闭，签出后自动从 workspace tabs 移除。
 - Video Call tab 可关闭，关闭后隐藏 OpenEye 独立客户端截图浮窗。
@@ -193,10 +199,13 @@ type CallStatus =
 - 话务条 Settings 当前只配置显示模式，默认 `Icon + Text`；选择控件使用项目自定义 segmented button 风格，与 BankApp Customer type 控件保持一致；弹框只保留一行 `Toolbar display` + 横向选择控件。切换为 `Icon Only` 后 Answer/Hold/Mute/Transfer/Hang Up/Ready 等按钮隐藏文字但保留图标、`aria-label` 和 `title`，图标在该模式下放大到 14px。自动接听仍固定使用默认 3 秒，但不在 Settings 中展示。
 - BankApp Demo 的 `Livechat` 路径会打开 Live Chat 并聚焦 BankApp 客户；`Voice Call` / `Video Call` 路径通过 store request id 触发现有坐席话务状态机，并可在 `Agent Workspace` 步骤切到对应坐席 workspace。
 - WhatsApp Demo 默认走 Live Chat 路径并聚焦 WhatsApp 客户 `live-chat-001`；已签入后仍可通过固定 Live Chat tab 承载会话工作台。
+- Live Chat 客户列表只展示 active sessions，并为每个 active customer 显示 `lastMessageTime · mm:ss`；SLA 仅用于 Live Chat，60 秒 warning、120 秒 breach，展开列表用左侧细 accent 与 duration 颜色表达，收起列表用渠道 icon 角标表达。
+- Live Chat 新客户进入列表时会短闪约 5 秒；`ConversationWorkspace` 的头部计时与客户列表、workspace tab 使用同一份 store runtime timing，避免三处计时不一致。
 - Incoming 支持手动 Answer，也支持按 `autoAnswerSeconds` 自动接听。
 - Talking 可切换 Hold 或 Mute。
 - Hold 和 Mute 有独立累计计时。
 - Hang Up 后进入 After Call Work 逻辑：先 Not Ready，约 5 秒后回 Ready。
+- Hang Up、关闭 Inbound/Video Call tab、Sign Out、AUX 会清理对应 voice/video interaction timing；End Service、关闭 Live Chat tab、Sign Out、AUX 会清理对应 Live Chat active session timing。
 - Unsigned 或 AUX 状态会重置 call 状态与计时，并清空 active live chat sessions。
 
 ## 6. Inbound 工作台

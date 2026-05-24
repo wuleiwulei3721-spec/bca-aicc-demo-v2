@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-24 22:31 +08:00
+最后更新：2026-05-25 00:00 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,66 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-25 00:00 +08:00 - 交互页签与 Live Chat 计时/SLA/短闪
+
+修改页面或文件：
+
+- `src/store/appStore.ts`
+- `src/hooks/useNow.ts`
+- `src/utils/duration.ts`
+- `src/pages/AgentWorkspace.tsx`
+- `src/pages/inbound/LiveChatPage.tsx`
+- `src/pages/inbound/components/LiveChatCustomerList.tsx`
+- `src/pages/inbound/components/ConversationWorkspace.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-05-25-0000.md`
+- `.codex-backup/current-todo-2026-05-25-0000.md`
+- `.codex-backup/page-state-2026-05-25-0000.md`
+
+修改原因：
+
+- 客户要求来电弹屏页签名称按来源区分：PSTN 呼入显示 `PSTN`，BankApp Voice 显示 `Voice Call`，不再统一显示 `PSTN / Voice Call`。
+- 客户希望在交互页签附近显示持续时间，并为多交互场景提供服务级别提示、新交互短闪。
+- 用户补充 Live Chat 客户列表也应展示持续时间和新客户短闪，且不能影响既有 BankApp、WhatsApp、Video、话务条功能。
+
+修改结果：
+
+- `appStore` 增加 voice/video interaction timing 和 Live Chat session timing，包含 `startedAt`、`flashUntil`。
+- PSTN tab 显示 `PSTN (mm:ss)`，BankApp Voice 显示 `Voice Call (mm:ss)`，Video Call 显示 `Video Call (mm:ss)`。
+- Live Chat 有 active session 时显示最长会话持续时间；无 active session 时仍显示 `Live Chat`。
+- 新交互进入且当前不在该 tab 时，workspace tab 使用轻量短闪，不改变 tab key。
+- Live Chat 客户列表为每个 active customer 显示 `lastMessageTime · mm:ss`，并增加 60 秒 warning、120 秒 breach 的 SLA 视觉状态。
+- Live Chat 展开态通过左侧细 accent 和 duration 颜色表达 SLA；收起态通过渠道 icon 角标表达 SLA。
+- `ConversationWorkspace` 不再自行维护独立 elapsed interval，改为接收 Live Chat runtime elapsed，保持聊天头部、客户列表和 workspace tab 计时一致。
+- `BasicLayout` 在 Hang Up、Unsigned、AUX 等路径清理 voice/video interaction timing，End Service 清理对应 Live Chat session timing。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/` at 1366x768：Sign In 后 Live Chat tab 无持续时间。
+- Browser smoke check `/`：PSTN 呼入 tab 显示 `PSTN (mm:ss)`，旧 `PSTN / Voice Call` 不再出现。
+- Browser smoke check `/`：BankApp Voice tab 显示 `Voice Call (mm:ss)`；BankApp Video tab 显示 `Video Call (mm:ss)`。
+- Browser smoke check `/`：BankApp Live Chat tab 显示最长 active session duration，客户列表显示 `lastMessageTime · duration`，BankApp backdated session 命中 breach 状态。
+- Browser smoke check `/`：Live Chat 收起态 SLA marker 显示为红色 breach；End Service 后 Live Chat tab duration 清理。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚页签持续时间，可恢复 `AgentWorkspace` 的静态 label，并移除 `interaction-tab-label` 样式。
+- 如需回滚 Live Chat SLA/短闪，可恢复 `LiveChatCustomerList` 的原始 topline，仅保留 last message time。
+- 如需回滚 store runtime timing，可移除 `InteractionTiming`、`liveChatSessionTimings`、`inboundInteractionTiming`、`videoCallInteractionTiming` 及相关清理逻辑。
+
+当前风险点：
+
+- 当前架构仍只支持一路 voice call、一路 video call 和一个 Live Chat workspace；客户提到的多个交互本轮仅覆盖多个类型或多个 Live Chat active sessions。
+- Live Chat SLA 阈值当前按客户示例固定为 warning 60 秒、breach 120 秒，未来若客户给出不同渠道 SLA，需要改成配置化。
+- Webchat mock 仍保留但隐藏，不参与 active sessions、SLA、tab timing。
 
 ### 2026-05-24 22:31 +08:00 - 话务条文字层级、Settings 简化与 Icon Only 优化
 

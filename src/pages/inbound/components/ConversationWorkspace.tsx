@@ -13,40 +13,14 @@ import {
 import { BaseButton, BaseModal } from '../../../components'
 import { TransferModal } from '../../../layouts/components/TransferModal'
 import type { LiveChatConversationMessage, LiveChatSession } from '../../../types'
+import { formatDuration } from '../../../utils/duration'
 
 export interface ConversationWorkspaceConfig {
+  elapsedSeconds: number
   messages: LiveChatConversationMessage[]
   session: LiveChatSession
   onEndService: (sessionId: string) => void
   onSendMessage: (sessionId: string, message: string) => void
-}
-
-function parseDurationSeconds(duration: string) {
-  const parts = duration
-    .split(':')
-    .map((part) => Number.parseInt(part, 10))
-    .filter((part) => Number.isFinite(part))
-
-  if (parts.length === 2) {
-    return parts[0] * 60 + parts[1]
-  }
-
-  if (parts.length === 3) {
-    return parts[0] * 3600 + parts[1] * 60 + parts[2]
-  }
-
-  return 0
-}
-
-function formatDuration(seconds: number) {
-  const safeSeconds = Math.max(0, seconds)
-  const hours = Math.floor(safeSeconds / 3600)
-  const minutes = Math.floor((safeSeconds % 3600) / 60)
-  const remainingSeconds = safeSeconds % 60
-  const segments =
-    hours > 0 ? [hours, minutes, remainingSeconds] : [minutes, remainingSeconds]
-
-  return segments.map((segment) => String(segment).padStart(2, '0')).join(':')
 }
 
 function getMessageDisplayType(message: LiveChatConversationMessage) {
@@ -147,6 +121,7 @@ function renderChannelIcon(channel: LiveChatSession['channel']) {
 }
 
 export function ConversationWorkspace({
+  elapsedSeconds,
   messages,
   session,
   onEndService,
@@ -155,9 +130,6 @@ export function ConversationWorkspace({
   const [draftMessage, setDraftMessage] = useState('')
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [isTransferOpen, setIsTransferOpen] = useState(false)
-  const [elapsedSeconds, setElapsedSeconds] = useState(() =>
-    parseDurationSeconds(session.customer.accessDuration),
-  )
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { profile } = session.customer
   const trimmedDraftMessage = draftMessage.trim()
@@ -166,14 +138,6 @@ export function ConversationWorkspace({
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ block: 'end' })
   }, [messages.length, session.id])
-
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      setElapsedSeconds((currentElapsedSeconds) => currentElapsedSeconds + 1)
-    }, 1000)
-
-    return () => window.clearInterval(intervalId)
-  }, [session.id])
 
   const handleSendMessage = () => {
     if (!trimmedDraftMessage) {
