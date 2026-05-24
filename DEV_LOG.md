@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-25 03:39 +08:00
+最后更新：2026-05-25 03:58 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,55 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-25 03:58 +08:00 - Live Chat 闪烁范围与 SLA 颜色优化
+
+修改页面或文件：
+
+- `src/pages/AgentWorkspace.tsx`
+- `src/styles/index.less`
+- `src/styles/tokens.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-05-25-0358.md`
+- `.codex-backup/current-todo-2026-05-25-0358.md`
+- `.codex-backup/page-state-2026-05-25-0358.md`
+
+修改原因：
+
+- 用户指出 Live Chat 新接入闪烁边框没有贴合整块背景边框，客户列表中的 flash 范围偏小。
+- 用户反馈 Live Chat tab、客户列表和 Conversation header 的 warning / breach 计时颜色偏暗，需要更明亮、更统一。
+
+修改结果：
+
+- `WorkspaceTabLabel` 新增 `flashScope`，Live Chat 使用 tab 级闪烁标记，PSTN / Voice / Video 保持原 label 级闪烁。
+- `index.less` 使用 `:has(.workspace-tab-label--tab-flash)` 将 Live Chat flash 动画作用到整个 AntD tab item。
+- 客户列表 flash overlay 改为 `inset: 0` 和 `border-radius: inherit`，闪烁范围贴合整行 item 背景。
+- `tokens.less` 新增 Live Chat SLA token：warning `#f59e0b`，breach `#f04438`，并提供 RGB token 供阴影和 accent 使用。
+- Live Chat tab duration、客户列表 duration、Conversation timer、SLA marker、左侧 accent 统一使用新的 SLA token。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：Sign In 后 Live Chat 无 active session 时无 duration。
+- Browser smoke check `/`：WhatsApp Live Chat 新接入时，Live Chat tab item 使用 `aicc-interaction-tab-flash`，label 本身无单独动画。
+- Browser smoke check `/`：BankApp Live Chat 新接入时，客户列表 flash `::after` 为 `inset: 0px`，边框贴合整行。
+- Browser smoke check `/`：warning / breach 在 tab duration、list duration、Conversation timer、SLA marker 四处分别统一为 `rgb(245, 158, 11)` 和 `rgb(240, 68, 56)`。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚 Live Chat tab 整块闪烁，可移除 `flashScope="tab"` 和 `:has(.workspace-tab-label--tab-flash)` 样式，恢复 label 级 `.workspace-tab-label--flash`。
+- 如需回滚客户列表整行 flash，可将 `.live-chat-customer-list__item--flash::after` 的 `inset` 恢复为 `3px 5px`。
+- 如需回滚 SLA 颜色，可恢复旧色值 `#c77a00` / `#b42318` 和 marker/accent 旧色。
+
+当前风险点：
+
+- Live Chat tab 整块闪烁依赖现代浏览器支持 CSS `:has()`；当前演示目标浏览器 Chrome/Edge 支持该选择器。
+- 本轮仅优化现有新 active session 视觉，不新增真实消息到达事件或 unread 模型。
+- 本轮未改 store 状态机和多通话 tab 架构，风险集中在样式层。
 
 ### 2026-05-25 03:39 +08:00 - Live Chat 新接入可见性与已读状态优化
 

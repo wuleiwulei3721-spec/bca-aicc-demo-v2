@@ -2414,8 +2414,8 @@ a {
   45% {
     background: rgba(255, 239, 184, 0.95);
     box-shadow:
-      0 0 0 1px rgba(245, 164, 0, 0.68),
-      0 0 0 4px rgba(245, 164, 0, 0.16);
+      0 0 0 1px rgba(var(--aicc-livechat-sla-warning-rgb), 0.72),
+      0 0 0 4px rgba(var(--aicc-livechat-sla-warning-rgb), 0.18);
   }
 }
 
@@ -2455,14 +2455,20 @@ a {
   .ant-tabs-tab-btn
   .workspace-tab-label--warning
   .workspace-tab-label__duration {
-  color: #c77a00;
+  color: var(--aicc-livechat-sla-warning);
 }
 
 .agent-workspace-tabs
   .ant-tabs-tab-btn
   .workspace-tab-label--breach
   .workspace-tab-label__duration {
-  color: #b42318;
+  color: var(--aicc-livechat-sla-breach);
+}
+
+.agent-workspace-tabs.ant-tabs-card
+  > .ant-tabs-nav
+  .ant-tabs-tab:has(.workspace-tab-label--tab-flash) {
+  animation: aicc-interaction-tab-flash 1.2s ease-in-out 4;
 }
 
 .agent-workspace-tabs
@@ -2783,12 +2789,12 @@ a {
 
 .live-chat-customer-list__item--warning,
 .live-chat-customer-list__item--active.live-chat-customer-list__item--warning {
-  box-shadow: inset 3px 0 0 rgba(245, 164, 0, 0.95);
+  box-shadow: inset 3px 0 0 rgba(var(--aicc-livechat-sla-warning-rgb), 0.95);
 }
 
 .live-chat-customer-list__item--breach,
 .live-chat-customer-list__item--active.live-chat-customer-list__item--breach {
-  box-shadow: inset 3px 0 0 rgba(196, 45, 45, 0.9);
+  box-shadow: inset 3px 0 0 rgba(var(--aicc-livechat-sla-breach-rgb), 0.9);
 }
 
 .live-chat-customer-list__item--flash {
@@ -2799,12 +2805,12 @@ a {
   content: '';
   position: absolute;
   z-index: 0;
-  inset: 3px 5px;
-  border-radius: 6px;
-  background: rgba(255, 239, 184, 0.8);
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(255, 246, 214, 0.88);
   box-shadow:
-    inset 0 0 0 1px rgba(245, 164, 0, 0.6),
-    0 0 0 3px rgba(245, 164, 0, 0.12);
+    inset 0 0 0 1px rgba(var(--aicc-livechat-sla-warning-rgb), 0.68),
+    0 0 0 3px rgba(var(--aicc-livechat-sla-warning-rgb), 0.14);
   opacity: 0;
   pointer-events: none;
   animation: live-chat-session-flash-overlay 1.2s ease-in-out 4;
@@ -2838,11 +2844,11 @@ a {
 }
 
 .live-chat-customer-list__sla-marker--warning {
-  background: #f5a400;
+  background: var(--aicc-livechat-sla-warning);
 }
 
 .live-chat-customer-list__sla-marker--breach {
-  background: #c42d2d;
+  background: var(--aicc-livechat-sla-breach);
 }
 
 .live-chat-customer-list__content {
@@ -2896,11 +2902,11 @@ a {
 }
 
 .live-chat-customer-list__duration--warning {
-  color: #c77a00;
+  color: var(--aicc-livechat-sla-warning);
 }
 
 .live-chat-customer-list__duration--breach {
-  color: #b42318;
+  color: var(--aicc-livechat-sla-breach);
 }
 
 .live-chat-customer-list__message {
@@ -3998,12 +4004,12 @@ button.inbound-list-row .inbound-list-row__title {
 
 .live-chat-conversation__timer--warning,
 .live-chat-conversation__timer--warning .anticon {
-  color: #c77a00;
+  color: var(--aicc-livechat-sla-warning);
 }
 
 .live-chat-conversation__timer--breach,
 .live-chat-conversation__timer--breach .anticon {
-  color: #b42318;
+  color: var(--aicc-livechat-sla-breach);
 }
 
 .live-chat-conversation__header-actions {

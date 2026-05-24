@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-05-25 03:39 +08:00
+最后更新：2026-05-25 03:58 +08:00
 
 ## 项目方向
 
@@ -106,6 +106,14 @@
 - 已读状态需要存入 `appStore.readLiveChatSessionIds`，不能只放在 LiveChatPage 本地 state，因为切到 BankApp Demo / WhatsApp Demo 时 LiveChatPage 会卸载。
 - End Service、Sign Out、AUX 或关闭 Live Chat 时应清理对应 active session timing 和已读状态。
 - SLA marker 的白色边框保持 `1px`，避免收起态头像右下角标识过厚。
+
+## 2026-05-25 Live Chat 闪烁范围与 SLA 颜色
+
+- Live Chat 新 active session 的 tab flash 应覆盖整个 workspace tab item 背景范围，不只包住 `Live Chat (mm:ss)` 文字 label。
+- PSTN / Voice Call / Video Call 的既有 interaction tab flash 继续保持原行为，不因 Live Chat tab 视觉优化而改变。
+- Live Chat 客户列表 flash overlay 必须贴合整行 item 边界，使用 `inset: 0` 与 `border-radius: inherit`，避免出现中间小框。
+- Live Chat SLA warning / breach 颜色需要在 tab duration、客户列表 duration、Conversation timer、SLA marker 和左侧 accent 中统一。
+- 当前 Live Chat SLA token：warning `#f59e0b`，breach `#f04438`；不使用大面积红黄背景，只提升计时和提示边框识别度。
 
 ## 2026-05-22 BankApp 客户侧接入演示
 

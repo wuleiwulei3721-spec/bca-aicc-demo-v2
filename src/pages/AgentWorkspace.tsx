@@ -30,6 +30,7 @@ const LIVE_CHAT_TAB_KEY = 'live-chat'
 interface WorkspaceTabLabelProps {
   durationEndedAt?: number | null
   durationStartedAt?: number | null
+  flashScope?: 'label' | 'tab'
   icon: ReactNode
   isFlashing?: boolean
   label: string
@@ -87,6 +88,7 @@ function getCallInteractionIcon(interaction: CallInteraction) {
 function WorkspaceTabLabel({
   durationEndedAt,
   durationStartedAt,
+  flashScope = 'label',
   icon,
   isFlashing = false,
   label,
@@ -103,7 +105,12 @@ function WorkspaceTabLabel({
       className={[
         'workspace-tab-label',
         slaState !== 'normal' ? `workspace-tab-label--${slaState}` : '',
-        isFlashing ? 'workspace-tab-label--flash' : '',
+        isFlashing && flashScope === 'label'
+          ? 'workspace-tab-label--flash'
+          : '',
+        isFlashing && flashScope === 'tab'
+          ? 'workspace-tab-label--tab-flash'
+          : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -235,6 +242,7 @@ export function AgentWorkspace() {
         label: (
           <WorkspaceTabLabel
             durationStartedAt={liveChatDurationStartedAt}
+            flashScope="tab"
             icon={<MessageOutlined />}
             isFlashing={latestLiveChatFlashUntil > now}
             label="Live Chat"
