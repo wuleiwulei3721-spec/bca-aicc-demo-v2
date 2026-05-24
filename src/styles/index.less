@@ -91,6 +91,8 @@ a {
 }
 
 .aicc-agent-toolbar {
+  --aicc-agent-toolbar-divider: rgba(86, 122, 166, 0.52);
+
   position: absolute;
   top: 50%;
   left: 50%;
@@ -258,7 +260,7 @@ a {
   height: 29px;
   min-width: 104px;
   padding: 0 9px;
-  border-left: 1px solid rgba(126, 160, 204, 0.32);
+  border-left: 1px solid var(--aicc-agent-toolbar-divider);
   color: #4f647d;
   font-size: 11px;
   font-weight: 700;
@@ -275,8 +277,8 @@ a {
   display: inline-flex;
   align-items: center;
   height: 29px;
-  padding: 0 10px 0 4px;
-  border-right: 1px solid rgba(126, 160, 204, 0.32);
+  padding: 0 12px 0 4px;
+  border-right: 1px solid var(--aicc-agent-toolbar-divider);
   color: #4f647d;
   font-size: 11px;
   font-weight: 700;
@@ -291,6 +293,7 @@ a {
 
 .aicc-agent-toolbar__identification strong {
   color: var(--aicc-text);
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -530,12 +533,54 @@ a {
   font-size: 12px;
 }
 
-.aicc-toolbar-settings .ant-segmented {
+.aicc-segmented-control {
+  display: inline-flex;
   width: fit-content;
-  padding: 3px;
-  border: 1px solid #d9e5f3;
+  padding: 2px;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius);
+  background: #ffffff;
+  gap: 2px;
+}
+
+.aicc-segmented-control__button {
+  min-width: 86px;
+  height: 24px;
+  padding: 0 10px;
+  border: 0;
   border-radius: var(--aicc-radius-sm);
-  background: #f5f8fc;
+  background: transparent;
+  color: var(--aicc-text-secondary);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.aicc-segmented-control__button:hover,
+.aicc-segmented-control__button:focus-visible {
+  background: var(--aicc-hover);
+  color: var(--aicc-text);
+  outline: none;
+}
+
+.aicc-segmented-control__button:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--aicc-primary);
+}
+
+.aicc-segmented-control__button--active,
+.aicc-segmented-control__button--active:hover,
+.aicc-segmented-control__button--active:focus-visible {
+  background: var(--aicc-selected);
+  color: var(--aicc-primary);
+  box-shadow: inset 0 0 0 1px rgba(23, 105, 224, 0.18);
+}
+
+.aicc-toolbar-settings .aicc-segmented-control {
+  width: fit-content;
 }
 
 .aicc-toolbar-settings__footer {

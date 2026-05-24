@@ -210,6 +210,7 @@ export function AgentToolbar({
           classNames={{ root: 'aicc-agent-status-menu' }}
           menu={{ items: moreItems, onClick: handleMoreMenuClick }}
           placement="bottomRight"
+          trigger={['click']}
         >
           <button
             aria-label="More call actions"

@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-24 19:48 +08:00
+最后更新：2026-05-24 22:07 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,55 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-24 22:07 +08:00 - 话务条视觉细节与 Settings 控件统一
+
+修改页面或文件：
+
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/layouts/components/ToolbarSettingsModal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-05-24-2207.md`
+- `.codex-backup/current-todo-2026-05-24-2207.md`
+- `.codex-backup/page-state-2026-05-24-2207.md`
+
+修改原因：
+
+- 用户发现话务条上 identification 右侧和 timer 左侧两条竖线不明显，需要在不增加背景框和不加粗线的前提下优化可见度。
+- 用户要求评估接入号码是否应加粗；本轮选择保留号码半粗，避免抢占动作按钮视觉焦点。
+- 用户指出 Settings 中 Toolbar display 选择控件样式不明显，需与系统内 BankApp Customer type 单选风格统一。
+
+修改结果：
+
+- 两条话务条 divider 统一为更清晰的 `rgba(86, 122, 166, 0.52)`，保持 1px。
+- `IVR` / `BankID` 标签保持 800 字重，接入号码显式设置为 700 字重和 tabular nums。
+- `ToolbarSettingsModal` 移除 Ant Design `Segmented`，改用项目自定义 `.aicc-segmented-control` 按钮组。
+- 自定义 segmented 控件使用白底、细边框、浅蓝选中态和统一 hover/focus 样式，贴近 BankApp Customer type 的视觉。
+- More Dropdown 明确使用 click trigger，点击 More 后可稳定打开 Settings 入口。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/` at 1366x768：Sign In 后 More 点击可打开菜单，Settings 可打开。
+- Browser smoke check `/`：Settings 只显示 Toolbar display；`Icon + Text` / `Icon Only` 为自定义 segmented buttons。
+- Browser smoke check `/`：切换 `Icon Only` 并 Confirm 后，话务条按钮文字隐藏，图标和可访问标签保留。
+- Browser smoke check `/`：PSTN Incoming 显示 `IVR 08123456789` 在 Answer 左侧。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚 Settings 控件视觉，可恢复 `ToolbarSettingsModal` 使用 Ant Design `Segmented`，并删除 `.aicc-segmented-control` 样式。
+- 如需回滚 divider 视觉，可恢复 `rgba(126, 160, 204, 0.32)`。
+- 如需回滚 More 触发方式，可移除 `Dropdown` 的 `trigger={['click']}`。
+
+当前风险点：
+
+- Toolbar display mode 仍只保存在当前页面运行状态，刷新后恢复默认 `Icon + Text`。
+- 本轮只验证 PSTN Incoming 的 divider 与 Settings；BankApp Voice / Video 的 BankID 位置沿用同一 `AgentToolbar` 渲染路径，未改动状态机。
 
 ### 2026-05-24 19:48 +08:00 - 话务条 Identification 样式与显示模式
 

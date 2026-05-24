@@ -1,7 +1,14 @@
-import { Segmented } from 'antd'
 import { AppButton, BaseModal } from '../../components'
 
 type ToolbarDisplayMode = 'icon' | 'text'
+
+const toolbarDisplayOptions: Array<{
+  label: string
+  value: ToolbarDisplayMode
+}> = [
+  { label: 'Icon + Text', value: 'text' },
+  { label: 'Icon Only', value: 'icon' },
+]
 
 interface ToolbarSettingsModalProps {
   displayMode: ToolbarDisplayMode
@@ -33,16 +40,27 @@ export function ToolbarSettingsModal({
             <strong>Toolbar display</strong>
             <span>Choose how call control buttons are displayed.</span>
           </div>
-          <Segmented
-            options={[
-              { label: 'Icon + Text', value: 'text' },
-              { label: 'Icon Only', value: 'icon' },
-            ]}
-            value={displayMode}
-            onChange={(value) =>
-              onDisplayModeChange(value as ToolbarDisplayMode)
-            }
-          />
+          <div
+            aria-label="Toolbar display"
+            className="aicc-segmented-control"
+            role="group"
+          >
+            {toolbarDisplayOptions.map((option) => (
+              <button
+                aria-pressed={option.value === displayMode}
+                className={
+                  option.value === displayMode
+                    ? 'aicc-segmented-control__button aicc-segmented-control__button--active'
+                    : 'aicc-segmented-control__button'
+                }
+                key={option.value}
+                type="button"
+                onClick={() => onDisplayModeChange(option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="aicc-modal-footer aicc-toolbar-settings__footer">
           <AppButton onClick={onClose}>Cancel</AppButton>
