@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-05-25 01:31 +08:00
+最后更新：2026-05-25 02:10 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：`codex/live-chat-timing-visual-cleanup` 基于 `main@v0.5.5` 清理 workspace tab 视觉间距、Live Chat 运行计时、Customer Information 渠道接入时长展示和 SLA warning 色；完成后发布 `v0.5.6`。
+当前目标：`codex/multi-inbound-interaction-tabs` 基于 `main@v0.5.6` 实现 PSTN、BankApp Voice、BankApp Video 多通话弹屏 tab；完成后发布 `v0.6.0`。
 
 ## 0. 使用规则
 
@@ -40,8 +40,8 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`codex/live-chat-timing-visual-cleanup`
-当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于客户远程演示版 v0.5.6 视觉与计时清理，完成验证后合入 `main` 并打 tag `v0.5.6`
+当前分支：`codex/multi-inbound-interaction-tabs`
+当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于 v0.6.0 多 Inbound 弹屏与通话 tab 架构，完成验证后合入 `main` 并打 tag `v0.6.0`
 部署目标：Vercel 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -106,7 +106,7 @@ codex-recovered-context.md
 - `src/App.tsx`：Ant Design `ConfigProvider` + `RouterProvider`。
 - `src/routes.tsx`：定义 `/`、`/design-system` 和通配重定向。
 - `src/layouts/BasicLayout.tsx`：全局 Header、可展开/收起左侧菜单、坐席工具条、内部聊天入口和主内容出口。
-- `src/pages/AgentWorkspace.tsx`：Home tab 与工作区交互 tab 容器，负责 PSTN / Voice Call / Video Call / Live Chat 页签名称、持续时间、SLA 和短闪提示。
+- `src/pages/AgentWorkspace.tsx`：Home tab 与工作区交互 tab 容器，负责 Demo tabs、Live Chat 固定 tab、多个 PSTN / Voice Call / Video Call 通话实例 tab 的页签名称、持续时间、SLA 和短闪提示。
 - `src/pages/bankapp/BankAppDemoPage.tsx`：BankApp 客户侧模拟器，采用真实手机比例的客户端舞台和轻量 AICC Process rail，坐席侧结果通过真实 workspace tab 跳转体现。
 - `src/pages/inbound/InteractionWorkspace.tsx`：电话与视频弹屏共用的三栏工作台。
 - `src/pages/inbound/InboundPage.tsx`：PSTN / Voice Call 电话弹屏 wrapper。
@@ -115,7 +115,7 @@ codex-recovered-context.md
 - `src/pages/inbound/components/LiveChatCustomerList.tsx`：WhatsApp / BankApp 客户聊天列表，默认收起，支持 ALL 与渠道图标筛选、会话运行持续时间、SLA 状态、短闪提示，可收起展开；Webchat mock 暂时隐藏。
 - `src/pages/inbound/components/ChannelTag.tsx`：统一渠道标签，Customer Information 中可合并展示静态渠道接入耗时，例如 `PSTN · 05:23`、`BankApp · 02:11`。
 - `src/pages/DesignSystem.tsx`：设计系统展示页。
-- `src/store/appStore.ts`：workspace tab、BankApp demo tab、WhatsApp demo tab、Live Chat 聚焦、interaction timing、inbound popup 和 demo-only screen share 全局状态。
+- `src/store/appStore.ts`：workspace tab、BankApp demo tab、WhatsApp demo tab、Live Chat 聚焦、多 `CallInteraction` 通话实例、interaction timing 和 demo-only screen share 全局状态。
 - `src/hooks/useNow.ts`：前端运行时每秒 tick hook，用于 workspace tab 和 Live Chat 列表计时刷新。
 - `src/mock/bankapp.ts`：BankApp 联系方式、业务类型、客户身份/语言驱动的技能路由和截图素材路径配置。
 - `src/mock/inbound.ts`：Inbound 演示数据。
@@ -142,17 +142,15 @@ codex-recovered-context.md
 - 坐席点击右上角 `Sign In` 后，`Live Chat` tab 会固定插入 Home tab 旁边，`closable: false`，用于承载实时文字聊天工作台。
 - 当坐席处于 Ready 且无通话时，点击左侧 `Channel Simulation > PSTN` 进入 Incoming 并打开电话弹屏 tab。
 - `Video Call` 与 `Live Chat` 已从左侧可见菜单移除；底层 workspace、store 和页面能力保留，供 BankApp Video、WhatsApp/BankApp chat 和后续调试复用。
-- `requestInboundPopup(source?, activate?)` 会打开 Inbound tab；`activate` 默认为 `true`，BankApp 演示可传 `true` 切到坐席工作台，也可传 `false` 后台准备电话弹屏。
-- `requestInboundPopup('bankapp-voice')` 会打开 Inbound tab，并以 BankApp 客户资料展示语音接入。
-- `requestVideoCallPopup(source?, activate?)` 会打开 Video Call tab；`activate` 默认为 `true`，BankApp 演示可传 `true` 切到坐席工作台，也可传 `false` 后台准备视频弹屏。
+- `createCallInteraction(kind, source?, activate?)` 会创建独立通话实例 tab；tab key 使用稳定递增格式 `call-1`、`call-2`、`call-3`，不会覆盖旧通话弹屏。
+- PSTN 创建 `voice/pstn` 实例，tab 显示 `PSTN (mm:ss)`；BankApp Voice 创建 `voice/bankapp-voice` 实例，tab 显示 `Voice Call (mm:ss)`；BankApp Video 创建 `video/bankapp-video` 实例，tab 显示 `Video Call (mm:ss)`。
 - `requestBankAppVoiceCall(activate?)` / `requestBankAppVideoCall(activate?)` 会通过 request id 触发 `BasicLayout` 话务状态机，并携带是否激活坐席工作台的语义。
 - `bankAppVideoShareState` / `isScreenShareActive` 表示 demo-only 桌面共享状态；BankApp Video 的桌面共享入口已移到坐席侧 OpenEye 浮窗，点击 `桌面共享` 后显示选择共享程序截图，点击 `确定` 后切回 BankApp Demo 展示客户侧共享画面；Hang Up、关闭 Video Call tab、新普通视频呼叫、Reset BankApp Demo 会清理该状态。
 - `requestLiveChatWorkspace(sessionId?, activate?)` 会打开固定 Live Chat tab；传入 WhatsApp 或 BankApp 会话 id 时会把该会话加入 `activeLiveChatSessionIds` 并聚焦对应客户，`activate` 默认为 `true`，BankApp 演示可传 `false` 在后台准备文字坐席页；`setLiveChatTabOpen(false)`、Sign Out、AUX 会清空 active live chat sessions。
 - Workspace 交互页签现在统一使用同一套 label 结构和样式，图标与文字间距保持普通 tab 的 4px；PSTN 电话呼入为 `PSTN (mm:ss)`，BankApp Voice 为 `Voice Call (mm:ss)`，BankApp Video 为 `Video Call (mm:ss)`，Live Chat 有 active session 时显示最长会话运行时长 `Live Chat (mm:ss)`。
-- 新交互进入且当前不在该 tab 时，workspace tab 会轻微短闪约 5 秒；当前 tab key 仍保持 `inbound`、`video-call`、`live-chat` 不变，避免破坏关闭、切换、OpenEye 和 Demo 回跳逻辑。
-- Inbound tab 可关闭，关闭后回到 Home tab。
+- 新通话交互进入且当前不在该 tab 时，workspace tab 会轻微短闪约 5 秒；Live Chat tab key 仍保持 `live-chat`，通话 tab key 改为动态 `call-n`。
+- 当前正在通话的 call tab 不可关闭；Hang Up 后该 tab 保留、duration 冻结并变为可关闭。旧 ended tab 用于坐席继续登记，不代表仍有客户互动。
 - Live Chat tab 不可关闭，签出后自动从 workspace tabs 移除。
-- Video Call tab 可关闭，关闭后隐藏 OpenEye 独立客户端截图浮窗。
 - `/design-system` 独立展示设计规范与基础组件，不参与通话流程。
 
 ## 5. 全局布局与状态机
@@ -205,8 +203,9 @@ type CallStatus =
 - Incoming 支持手动 Answer，也支持按 `autoAnswerSeconds` 自动接听。
 - Talking 可切换 Hold 或 Mute。
 - Hold 和 Mute 有独立累计计时。
-- Hang Up 后进入 After Call Work 逻辑：先 Not Ready，约 5 秒后回 Ready。
-- Hang Up、关闭 Inbound/Video Call tab、Sign Out、AUX 会清理对应 voice/video interaction timing；End Service、关闭 Live Chat tab、Sign Out、AUX 会清理对应 Live Chat active session timing。
+- Hang Up 后当前 `CallInteraction` 被标记为 `ended`，tab duration 停止并冻结；随后进入 After Call Work 逻辑：先 Not Ready，约 5 秒后回 Ready。
+- 旧 ended call tab 被选中查看时，右上角状态点和话务条仍按当前坐席状态显示，不回放旧通话状态。
+- Sign Out 会关闭所有 call tabs；AUX 会结束当前 active call 并保留 ended tab，同时清理 Live Chat active sessions。End Service、关闭 Live Chat tab、Sign Out、AUX 会清理对应 Live Chat active session timing。
 - Unsigned 或 AUX 状态会重置 call 状态与计时，并清空 active live chat sessions。
 
 ## 6. Inbound 工作台
@@ -436,6 +435,7 @@ Live Chat 当前 mock：
 - Sign In 后自动显示固定不可关闭 Live Chat tab。
 - Live Chat 页面复用 `InteractionWorkspace`，新增默认收起的客户文字聊天列表，支持 ALL、WhatsApp、BankApp 图标筛选和会话切换；Webchat mock 暂时隐藏，等待未来入口。
 - Workspace tabs 已统一到 `workspace-tab-label` 结构，Home、BankApp Demo、WhatsApp Demo、Live Chat、PSTN、Voice Call、Video Call 的图标与文字间距一致；交互类 tab 保留 `(mm:ss)` 持续时间。
+- PSTN、BankApp Voice、BankApp Video 已支持多通话实例 tab：Hang Up 后旧 tab 保留并冻结时长，新呼叫会创建新的 `call-n` tab，不再覆盖旧弹屏。
 - BankApp / WhatsApp Live Chat 的 tab、客户列表和 Conversation header 运行计时现在从新接入 `00:00` 开始，并共享同一份 store timing；mock `accessDuration` 仅作为 Customer Information 的静态渠道接入耗时展示。
 - Customer Information 的渠道标签已整合 access duration，显示为 `渠道 · 接入时长`，不再额外显示单独时钟图标。
 - Live Chat SLA warning 色已调整为更明确的 amber/yellow，breach 红色逻辑保持不变。
@@ -471,6 +471,29 @@ Live Chat 当前 mock：
 - GitHub remote 与基础提交。
 
 ## 10. 当前开发状态
+
+截至 2026-05-25 02:10 +08:00，当前工作在 `codex/multi-inbound-interaction-tabs` 分支处理 `v0.6.0` 多 Inbound 弹屏与通话 tab 架构。PSTN、BankApp Voice、BankApp Video 现在使用多 `CallInteraction` 实例；Hang Up 后旧弹屏保留并冻结时长，新呼叫会创建新 tab。Live Chat 继续使用固定 tab + 多客户列表，不改为多个 workspace tabs。
+
+本轮多通话弹屏架构：
+
+- `appStore` 新增 `CallInteraction` 模型：`id`、`tabKey`、`kind`、`source`、`title`、`startedAt`、`endedAt`、`flashUntil`、`phase`。
+- Store 以 `callInteractions` + `callInteractionOrder` 渲染多个通话 tab，并用 `currentCallInteractionId` 绑定当前话务条状态机。
+- `AgentWorkspace` 按 `callInteractionOrder` 渲染动态 `call-n` tabs；running tab 实时计时，ended tab 使用 `endedAt` 冻结时长。
+- 当前 active call tab 在 Hang Up 前不可关闭；Hang Up 后变为可关闭。
+- `InboundPage` / `VideoCallPage` 改为接收 interaction source，旧 tab 的客户资料不会被新呼叫覆盖。
+- OpenEye 浮窗和 BankApp Video desktop share 只绑定当前 active video interaction；ended video tab 不显示浮窗。
+
+本轮多通话弹屏验证：
+
+- `npm run lint`：通过。
+- `npm run build`：通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/` at 1366x768：Sign In 后 Live Chat tab 无 duration。
+- Browser smoke check `/`：PSTN Incoming 创建不可关闭 `PSTN (00:xx)` tab；Answer -> Hang Up 后 tab 保留、时长冻结并变为可关闭。
+- Browser smoke check `/`：旧 PSTN tab 未关闭时再次触发 PSTN，会创建第二个 PSTN tab，不覆盖旧 tab。
+- Browser smoke check `/`：BankApp Voice 创建 `Voice Call (00:xx)` tab，Hang Up 后变为可关闭。
+- Browser smoke check `/`：BankApp Video 创建 `Video Call (00:xx)` tab，旧 Voice Call tab 保留，Answer 后 OpenEye 浮窗正常显示。
+- Browser smoke check `/`：WhatsApp Demo 仍能进入 Live Chat，Webchat mock 仍不可见。
+- Browser smoke check `/design-system`：页面正常加载。
 
 截至 2026-05-25 01:31 +08:00，当前工作在 `codex/live-chat-timing-visual-cleanup` 分支处理 `v0.5.5` 后续 Live Chat 计时与 tab 视觉清理，目标发布 `v0.5.6`。本轮只清理 workspace tab label 间距、Live Chat 运行计时起点、Customer Information 渠道接入时长展示和 Live Chat SLA warning 色；不修改话务状态机，不做多 inbound tabs，不改变 BankApp/WhatsApp/Video 客户侧流程。
 
@@ -1043,7 +1066,7 @@ M src/types/inbound.ts
 - BankApp 演示触发 voice/video/livechat 坐席页时会先进入 `Agent Workspace` 步骤并激活对应 workspace tab；切回 BankApp Demo 后状态保持，再点击下一步显示客户侧 `Service Closed`。
 - `Conversation` tab 的发送、Transfer、End Service 均为前端演示状态；Transfer 弹框 action 点击只关闭弹框，不接真实转移/会议流程；发送消息只存在于当前页面内存，刷新后恢复 mock 初始值。End Service 会关闭当前 active session，但不进入电话 ACW 或工单关闭流程。
 - Live Chat 扩展为四列布局，当前客户列表默认收起；仍需在目标演示分辨率下复查展开态是否会压缩三栏内容。
-- Hang Up 后保留旧电话/语音/视频弹屏并允许新呼叫新开 tab 的多 inbound 架构尚未实现；该需求已规划为后续 `v0.6.0`，不能在当前单 `inbound` tab 架构上临时扩展。
+- 当前仍只支持同一时间一路 active call；多通话 tab 解决的是旧弹屏保留和新呼叫新开 tab，不支持两路电话或视频同时通话。
 - 关闭 Video Call tab 只隐藏 workspace 与 OpenEye 浮窗，不自动 Hang Up；Hang Up 会同步隐藏 OpenEye 浮窗。
 - 菜单搜索当前只在展开态显示，收起菜单时会清空搜索条件，避免影响收起态图标列表。
 - 收起态二级菜单浮层当前通过 CSS hover 打开，并通过 `closedFlyoutKey` 控制点击后关闭；如后续增加键盘导航，需要再补充键盘触发规则。
@@ -1069,7 +1092,7 @@ P0：
 - 在目标演示分辨率下复查 Live Chat 默认收起态、展开态与渠道过滤交互，确认客户列表不会让 Customer Information、CRM、Assistant 三栏不可用。
 - 在目标演示分辨率下复查 Conversation tab 的顶部轻量操作区、历史消息区和发送框，确认不会压缩 CRM/Assistant 三栏到不可用。
 - 在目标演示分辨率下复查客户远程演示路径：Sign In 空 Live Chat、PSTN 红/黄/绿状态点、BankApp/WhatsApp 文字接入与 End Service 回空态。
-- 在目标演示分辨率下复查 v0.5.6 计时展示：workspace tab 图标文字间距、Live Chat 从 `00:00` 开始计时、Customer Information 渠道标签整合接入时长和 SLA warning amber 色。
+- 在目标演示分辨率下复查 v0.6.0 多通话 tab：旧 ended tab 保留登记、新 PSTN/BankApp Voice/BankApp Video 新开 tab、active tab 不可关闭、ended tab 可关闭。
 - 在目标演示分辨率下复查左侧菜单展开态是否不会压缩 Inbound 三栏到不可用宽度。
 - 确认 Video Call 演示是否接受“关闭 tab 不自动 Hang Up”的行为；如需关闭页签即挂断，后续应统一调整 tab 与话务状态机关系。
 - 重新打开浏览器后检查 `/` 主 Workspace 是否恢复蓝色渐变 Header、旧版背景、Customer Information 卡片和话务条风格。
@@ -1085,13 +1108,13 @@ P1：
 - 明确顶部是否还需要独立会议/协作入口；当前 Conversation header 已移除 `Invite`，Transfer 弹框内已统一使用 `Conference` 语义。
 - 如后续重新处理 Modal/Dialog，必须先明确新的设计方向，避免再次影响主 Workspace 视觉体系。
 - 如演示必须使用真实系统图，补充已脱敏 BANK 1 CRM/Assistant 截图，再恢复图片加载策略。
-- `v0.5.6` 完成后 push `codex/live-chat-timing-visual-cleanup`，合入 `main`，打 tag `v0.5.6`，并确认 Vercel production 绑定的 `main` 可用于客户演示。
+- `v0.6.0` 完成后 push `codex/multi-inbound-interaction-tabs`，合入 `main`，打 tag `v0.6.0`，并确认 Vercel production 绑定的 `main` 可用于客户演示。
 
 P2：
 
 - 后续新增 Online Chat、Video Call、Dashboard、Admin、Supervisor 页面时复用已恢复的主 Workspace 视觉体系。
 - 考虑补充 Playwright smoke test。
-- 单独规划 `codex/multi-inbound-interaction-tabs` / `v0.6.0`，实现 Hang Up 后旧弹屏停止计时但保留、新呼叫创建新弹屏 tab 的多 inbound interaction 架构。
+- 如客户后续要求真正多路同时通话，需要在 `v0.6.x` 或新主版本中进一步拆分话务条状态机；当前 `v0.6.0` 仍保持单 active call。
 - 如 Vite chunk warning 影响部署评分，再考虑 code splitting。
 
 ## 13. 关键 prompt 摘要

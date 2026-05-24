@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-25 01:31 +08:00
+最后更新：2026-05-25 02:10 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,63 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-25 02:10 +08:00 - 多 Inbound 弹屏与通话 Tab 架构
+
+修改页面或文件：
+
+- `src/store/appStore.ts`
+- `src/pages/AgentWorkspace.tsx`
+- `src/pages/inbound/InboundPage.tsx`
+- `src/pages/inbound/VideoCallPage.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-05-25-0210.md`
+- `.codex-backup/current-todo-2026-05-25-0210.md`
+- `.codex-backup/page-state-2026-05-25-0210.md`
+
+修改原因：
+
+- 用户要求 Hang Up 后当前 PSTN / BankApp Voice / BankApp Video 弹屏不要被新呼叫覆盖，应保留旧 tab 供坐席继续登记。
+- 新呼叫进入时需要创建新的 workspace tab，并且当前正在通话的 tab 在 Hang Up 前不可关闭，避免误关导致话务条和弹屏状态不一致。
+- Live Chat 已有固定 tab + 多客户列表，本轮不纳入多 workspace tab 重构。
+
+修改结果：
+
+- `appStore` 新增 `CallInteraction` 多实例模型，使用 `callInteractions`、`callInteractionOrder`、`currentCallInteractionId` 和 `callInteractionSeq` 管理多个通话弹屏。
+- 新通话 tab key 使用 `call-1`、`call-2`、`call-3` 稳定递增，不再使用单例 `inbound` / `video-call` tab。
+- `AgentWorkspace` 按 `callInteractionOrder` 渲染多个通话 tab；running tab 实时计时，ended tab 使用 `endedAt` 冻结时长。
+- 当前 active call tab 不可关闭；Hang Up 后 tab 保留、时长冻结并变为可关闭。
+- `BasicLayout` 保留单一路当前通话状态机，但 Answer / Hang Up 会同步更新当前 `CallInteraction` 的 `phase`。
+- `InboundPage` / `VideoCallPage` 改为接收 interaction source，旧 tab 的客户资料不会被新呼叫覆盖。
+- OpenEye 浮窗和 BankApp Video desktop share 只绑定当前 active video interaction；ended video tab 不显示浮窗。
+- Sign Out 会关闭所有 call tabs；AUX 会结束当前 active call 并保留 ended tab，同时清理文字 active sessions。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/` at 1366x768：Sign In 后 Live Chat tab 无 duration。
+- Browser smoke check `/`：PSTN Incoming 创建不可关闭 `PSTN (00:xx)` tab；Answer -> Hang Up 后 tab 保留、duration 冻结并变为可关闭。
+- Browser smoke check `/`：旧 PSTN tab 未关闭时再次触发 PSTN，会创建第二个 PSTN tab，不覆盖旧 tab。
+- Browser smoke check `/`：BankApp Voice 创建 `Voice Call (00:xx)` tab，Hang Up 后变为可关闭。
+- Browser smoke check `/`：BankApp Video 创建 `Video Call (00:xx)` tab，旧 Voice Call tab 保留，Answer 后 OpenEye 浮窗正常显示。
+- Browser smoke check `/`：WhatsApp Demo 仍能进入 Live Chat，Webchat mock 仍不可见。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚多通话 tab，可恢复 `appStore` 的单例 `isInboundTabOpen`、`inboundPopupSource`、`inboundInteractionTiming`、`isVideoCallTabOpen`、`videoCallPopupSource`、`videoCallInteractionTiming` 字段，并恢复 `AgentWorkspace` 中固定 `inbound` / `video-call` tab 渲染。
+- 如需只回滚 active tab 不可关闭，可将 call tab 的 `closable` 恢复为 true，但需要同步定义关闭 active call 是否挂断，否则容易出现状态不一致。
+- 如需回滚页面 source 传递，可恢复 `InboundPage` / `VideoCallPage` 从 store 读取单例 source。
+
+当前风险点：
+
+- 当前仍只支持同一时间一路 active call；多通话 tab 解决旧弹屏保留和新呼叫新开 tab，不支持两路通话同时由话务条控制。
+- 旧 ended tab 保留的是前端组件内存状态，刷新页面后不会恢复未提交登记内容。
+- 关闭 ended tab 会丢弃该 tab 内未落盘的动态 CRM tab 状态；这是当前前端 demo 的预期行为。
 
 ### 2026-05-25 01:31 +08:00 - Live Chat 计时与 Tab 视觉清理
 

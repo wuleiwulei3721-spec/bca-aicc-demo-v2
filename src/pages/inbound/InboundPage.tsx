@@ -1,11 +1,14 @@
 import { bankAppVoiceCustomer, inboundCustomer } from '../../mock/inbound'
-import { useAppStore } from '../../store'
+import type { CallInteraction } from '../../store'
 import { InteractionWorkspace } from './InteractionWorkspace'
 
-export function InboundPage() {
-  const inboundPopupSource = useAppStore((state) => state.inboundPopupSource)
+interface InboundPageProps {
+  interaction: CallInteraction
+}
+
+export function InboundPage({ interaction }: InboundPageProps) {
   const customer =
-    inboundPopupSource === 'bankapp-voice'
+    interaction.source === 'bankapp-voice'
       ? bankAppVoiceCustomer
       : inboundCustomer
 

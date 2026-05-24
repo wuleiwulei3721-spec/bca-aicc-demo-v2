@@ -11,7 +11,7 @@ import type { TabsProps } from 'antd'
 import { BaseTabs, PageContainer } from '../components'
 import { useNow } from '../hooks/useNow'
 import { useAppStore } from '../store'
-import type { InteractionTiming } from '../store'
+import type { CallInteraction, InteractionTiming } from '../store'
 import type { InteractionSlaState } from '../utils/duration'
 import {
   formatDuration,
@@ -26,10 +26,9 @@ const HOME_TAB_KEY = 'home'
 const BANKAPP_DEMO_TAB_KEY = 'bankapp-demo'
 const WHATSAPP_DEMO_TAB_KEY = 'whatsapp-demo'
 const LIVE_CHAT_TAB_KEY = 'live-chat'
-const INBOUND_TAB_KEY = 'inbound'
-const VIDEO_CALL_TAB_KEY = 'video-call'
 
 interface WorkspaceTabLabelProps {
+  durationEndedAt?: number | null
   durationStartedAt?: number | null
   icon: ReactNode
   isFlashing?: boolean
@@ -77,7 +76,16 @@ function getLatestFlashUntil(timings: InteractionTiming[]) {
   return Math.max(...timings.map((timing) => timing.flashUntil))
 }
 
+function getCallInteractionIcon(interaction: CallInteraction) {
+  return interaction.kind === 'video' ? (
+    <VideoCameraOutlined />
+  ) : (
+    <CustomerServiceOutlined />
+  )
+}
+
 function WorkspaceTabLabel({
+  durationEndedAt,
   durationStartedAt,
   icon,
   isFlashing = false,
@@ -88,7 +96,7 @@ function WorkspaceTabLabel({
   const elapsedSeconds =
     durationStartedAt === null || durationStartedAt === undefined
       ? null
-      : getElapsedSeconds(durationStartedAt, now)
+      : getElapsedSeconds(durationStartedAt, durationEndedAt ?? now)
 
   return (
     <span
@@ -123,17 +131,15 @@ export function AgentWorkspace() {
     (state) => state.isWhatsAppDemoTabOpen,
   )
   const hasLiveChatTab = useAppStore((state) => state.isLiveChatTabOpen)
-  const hasInboundTab = useAppStore((state) => state.isInboundTabOpen)
-  const hasVideoCallTab = useAppStore((state) => state.isVideoCallTabOpen)
-  const inboundInteractionTiming = useAppStore(
-    (state) => state.inboundInteractionTiming,
+  const callInteractionOrder = useAppStore(
+    (state) => state.callInteractionOrder,
   )
-  const inboundPopupSource = useAppStore((state) => state.inboundPopupSource)
+  const callInteractions = useAppStore((state) => state.callInteractions)
+  const currentCallInteractionId = useAppStore(
+    (state) => state.currentCallInteractionId,
+  )
   const liveChatSessionTimings = useAppStore(
     (state) => state.liveChatSessionTimings,
-  )
-  const videoCallInteractionTiming = useAppStore(
-    (state) => state.videoCallInteractionTiming,
   )
   const closeBankAppDemoTab = useAppStore(
     (state) => state.closeBankAppDemoTab,
@@ -141,15 +147,18 @@ export function AgentWorkspace() {
   const closeWhatsAppDemoTab = useAppStore(
     (state) => state.closeWhatsAppDemoTab,
   )
-  const closeInboundTab = useAppStore((state) => state.closeInboundTab)
-  const closeVideoCallTab = useAppStore((state) => state.closeVideoCallTab)
+  const closeCallInteractionTab = useAppStore(
+    (state) => state.closeCallInteractionTab,
+  )
   const setActiveKey = useAppStore(
     (state) => state.setActiveWorkspaceTabKey,
   )
   const now = useNow(
     Boolean(
-      inboundInteractionTiming ||
-        videoCallInteractionTiming ||
+      callInteractionOrder.some(
+        (interactionId) =>
+          callInteractions[interactionId]?.phase !== 'ended',
+      ) ||
         activeLiveChatSessionIds.length > 0,
     ),
   )
@@ -166,8 +175,6 @@ export function AgentWorkspace() {
   const liveChatSlaState = getLiveChatTabSlaState(activeLiveChatTimings, now)
   const latestLiveChatFlashUntil =
     getLatestFlashUntil(activeLiveChatTimings)
-  const inboundTabLabel =
-    inboundPopupSource === 'bankapp-voice' ? 'Voice Call' : 'PSTN'
 
   const tabItems = useMemo<TabsProps['items']>(() => {
     const items: TabsProps['items'] = [
@@ -243,64 +250,59 @@ export function AgentWorkspace() {
       })
     }
 
-    if (hasInboundTab) {
-      items.push({
-        key: INBOUND_TAB_KEY,
-        closable: true,
-        label: (
-          <WorkspaceTabLabel
-            durationStartedAt={inboundInteractionTiming?.startedAt}
-            icon={<CustomerServiceOutlined />}
-            isFlashing={
-              activeKey !== INBOUND_TAB_KEY &&
-              Boolean(inboundInteractionTiming?.flashUntil) &&
-              (inboundInteractionTiming?.flashUntil ?? 0) > now
-            }
-            label={inboundTabLabel}
-            now={now}
-          />
-        ),
-        children: <InboundPage />,
-      })
-    }
+    callInteractionOrder.forEach((interactionId) => {
+      const interaction = callInteractions[interactionId]
 
-    if (hasVideoCallTab) {
+      if (!interaction) {
+        return
+      }
+
+      const isCurrentActiveInteraction =
+        interaction.id === currentCallInteractionId &&
+        interaction.phase !== 'ended'
+
       items.push({
-        key: VIDEO_CALL_TAB_KEY,
-        closable: true,
+        key: interaction.tabKey,
+        closable: interaction.phase === 'ended',
         label: (
           <WorkspaceTabLabel
-            durationStartedAt={videoCallInteractionTiming?.startedAt}
-            icon={<VideoCameraOutlined />}
+            durationEndedAt={interaction.endedAt}
+            durationStartedAt={interaction.startedAt}
+            icon={getCallInteractionIcon(interaction)}
             isFlashing={
-              activeKey !== VIDEO_CALL_TAB_KEY &&
-              Boolean(videoCallInteractionTiming?.flashUntil) &&
-              (videoCallInteractionTiming?.flashUntil ?? 0) > now
+              activeKey !== interaction.tabKey &&
+              interaction.phase !== 'ended' &&
+              interaction.flashUntil > now
             }
-            label="Video Call"
+            label={interaction.title}
             now={now}
           />
         ),
         children:
-          activeKey === VIDEO_CALL_TAB_KEY ? <VideoCallPage /> : null,
+          interaction.kind === 'video' ? (
+            <VideoCallPage
+              interaction={interaction}
+              isCurrentActive={isCurrentActiveInteraction}
+            />
+          ) : (
+            <InboundPage interaction={interaction} />
+          ),
       })
-    }
+    })
 
     return items
   }, [
     activeKey,
-    inboundInteractionTiming,
-    inboundTabLabel,
+    callInteractionOrder,
+    callInteractions,
+    currentCallInteractionId,
     latestLiveChatFlashUntil,
     hasBankAppDemoTab,
-    hasInboundTab,
     hasLiveChatTab,
-    hasVideoCallTab,
     hasWhatsAppDemoTab,
     liveChatDurationStartedAt,
     liveChatSlaState,
     now,
-    videoCallInteractionTiming,
   ])
 
   const handleEdit: TabsProps['onEdit'] = (targetKey, action) => {
@@ -312,12 +314,14 @@ export function AgentWorkspace() {
       closeWhatsAppDemoTab()
     }
 
-    if (action === 'remove' && targetKey === INBOUND_TAB_KEY) {
-      closeInboundTab()
-    }
+    if (action === 'remove' && typeof targetKey === 'string') {
+      const interaction = Object.values(callInteractions).find(
+        (item) => item.tabKey === targetKey,
+      )
 
-    if (action === 'remove' && targetKey === VIDEO_CALL_TAB_KEY) {
-      closeVideoCallTab()
+      if (interaction) {
+        closeCallInteractionTab(interaction.id)
+      }
     }
   }
 

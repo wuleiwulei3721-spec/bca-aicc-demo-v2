@@ -3,10 +3,25 @@ import { create } from 'zustand'
 export type InboundPopupSource = 'pstn' | 'bankapp-voice'
 export type VideoCallPopupSource = 'standard' | 'bankapp-video'
 export type BankAppVideoShareState = 'idle' | 'selecting-program' | 'sharing'
+export type CallInteractionKind = 'voice' | 'video'
+export type CallInteractionPhase = 'incoming' | 'active' | 'ended'
+export type CallInteractionSource = InboundPopupSource | VideoCallPopupSource
 
 export interface InteractionTiming {
   flashUntil: number
   startedAt: number
+}
+
+export interface CallInteraction {
+  endedAt: number | null
+  flashUntil: number
+  id: string
+  kind: CallInteractionKind
+  phase: CallInteractionPhase
+  source: CallInteractionSource
+  startedAt: number
+  tabKey: string
+  title: string
 }
 
 const INTERACTION_FLASH_MS = 5000
@@ -20,6 +35,17 @@ function createInteractionTiming(): InteractionTiming {
   }
 }
 
+function getCallInteractionTitle(
+  kind: CallInteractionKind,
+  source: CallInteractionSource,
+) {
+  if (kind === 'video') {
+    return 'Video Call'
+  }
+
+  return source === 'bankapp-voice' ? 'Voice Call' : 'PSTN'
+}
+
 interface AppState {
   activeWorkspaceTabKey: string
   activeLiveChatSessionIds: string[]
@@ -28,40 +54,38 @@ interface AppState {
   bankAppVideoShareState: BankAppVideoShareState
   bankAppVoiceCallActivateWorkspace: boolean
   bankAppVoiceCallRequestId: number
+  callInteractionOrder: string[]
+  callInteractionSeq: number
+  callInteractions: Record<string, CallInteraction>
   collapsed: boolean
+  currentCallInteractionId: string | null
   customerOutboundCallRequestId: number
-  inboundPopupSource: InboundPopupSource
-  videoCallPopupSource: VideoCallPopupSource
-  inboundInteractionTiming: InteractionTiming | null
   isBankAppDemoTabOpen: boolean
-  isInboundTabOpen: boolean
   isLiveChatTabOpen: boolean
   isOpenEyeVideoWindowVisible: boolean
   isScreenShareActive: boolean
-  isVideoCallTabOpen: boolean
   isWhatsAppDemoTabOpen: boolean
   liveChatSessionTimings: Record<string, InteractionTiming>
-  videoCallInteractionTiming: InteractionTiming | null
-  inboundPopupRequestId: number
   liveChatFocusRequestId: number
   liveChatFocusSessionId: string | null
-  videoCallPopupRequestId: number
+  closeAllCallInteractionTabs: () => void
   closeBankAppDemoTab: () => void
-  closeInboundTab: () => void
+  closeCallInteractionTab: (interactionId: string) => void
   closeLiveChatSession: (sessionId: string) => void
-  closeVideoCallTab: () => void
   closeWhatsAppDemoTab: () => void
   confirmBankAppVideoScreenShare: () => void
-  clearCallInteractionTimings: () => void
+  createCallInteraction: (
+    kind: CallInteractionKind,
+    source?: CallInteractionSource,
+    activate?: boolean,
+  ) => string
+  markCallInteractionActive: (interactionId: string) => void
+  markCallInteractionEnded: (interactionId: string, endedAt?: number) => void
+  clearCurrentCallInteraction: () => void
   requestBankAppDemoWorkspace: () => void
   requestBankAppVideoCall: (activate?: boolean) => void
   requestBankAppVoiceCall: (activate?: boolean) => void
   requestLiveChatWorkspace: (sessionId?: string, activate?: boolean) => void
-  requestInboundPopup: (source?: InboundPopupSource, activate?: boolean) => void
-  requestVideoCallPopup: (
-    source?: VideoCallPopupSource,
-    activate?: boolean,
-  ) => void
   requestCustomerOutboundCall: () => void
   requestWhatsAppDemoWorkspace: () => void
   setActiveWorkspaceTabKey: (tabKey: string) => void
@@ -82,24 +106,34 @@ export const useAppStore = create<AppState>((set) => ({
   bankAppVideoShareState: 'idle',
   bankAppVoiceCallActivateWorkspace: false,
   bankAppVoiceCallRequestId: 0,
+  callInteractionOrder: [],
+  callInteractionSeq: 0,
+  callInteractions: {},
   collapsed: true,
+  currentCallInteractionId: null,
   customerOutboundCallRequestId: 0,
-  inboundPopupSource: 'pstn',
-  videoCallPopupSource: 'standard',
-  inboundInteractionTiming: null,
   isBankAppDemoTabOpen: false,
-  isInboundTabOpen: false,
   isLiveChatTabOpen: false,
   isOpenEyeVideoWindowVisible: false,
   isScreenShareActive: false,
-  isVideoCallTabOpen: false,
   isWhatsAppDemoTabOpen: false,
   liveChatSessionTimings: {},
-  videoCallInteractionTiming: null,
-  inboundPopupRequestId: 0,
   liveChatFocusRequestId: 0,
   liveChatFocusSessionId: null,
-  videoCallPopupRequestId: 0,
+  closeAllCallInteractionTabs: () =>
+    set((state) => ({
+      activeWorkspaceTabKey: state.activeWorkspaceTabKey.startsWith('call-')
+        ? state.isLiveChatTabOpen
+          ? 'live-chat'
+          : 'home'
+        : state.activeWorkspaceTabKey,
+      bankAppVideoShareState: 'idle',
+      callInteractionOrder: [],
+      callInteractions: {},
+      currentCallInteractionId: null,
+      isOpenEyeVideoWindowVisible: false,
+      isScreenShareActive: false,
+    })),
   closeBankAppDemoTab: () =>
     set((state) => ({
       activeWorkspaceTabKey:
@@ -108,17 +142,38 @@ export const useAppStore = create<AppState>((set) => ({
           : state.activeWorkspaceTabKey,
       isBankAppDemoTabOpen: false,
     })),
-  closeInboundTab: () =>
-    set((state) => ({
-      activeWorkspaceTabKey:
-        state.activeWorkspaceTabKey === 'inbound'
-          ? state.isVideoCallTabOpen
-            ? 'video-call'
-            : 'home'
-          : state.activeWorkspaceTabKey,
-      inboundInteractionTiming: null,
-      isInboundTabOpen: false,
-    })),
+  closeCallInteractionTab: (interactionId) =>
+    set((state) => {
+      const interaction = state.callInteractions[interactionId]
+
+      if (!interaction || interaction.phase !== 'ended') {
+        return {}
+      }
+
+      const removedIndex = state.callInteractionOrder.indexOf(interactionId)
+      const nextCallInteractionOrder = state.callInteractionOrder.filter(
+        (itemId) => itemId !== interactionId,
+      )
+      const nextCallInteractions = { ...state.callInteractions }
+      delete nextCallInteractions[interactionId]
+
+      const fallbackInteractionId =
+        nextCallInteractionOrder[Math.max(0, removedIndex - 1)] ??
+        nextCallInteractionOrder[0]
+      const fallbackInteraction = fallbackInteractionId
+        ? nextCallInteractions[fallbackInteractionId]
+        : null
+
+      return {
+        activeWorkspaceTabKey:
+          state.activeWorkspaceTabKey === interaction.tabKey
+            ? fallbackInteraction?.tabKey ??
+              (state.isLiveChatTabOpen ? 'live-chat' : 'home')
+            : state.activeWorkspaceTabKey,
+        callInteractionOrder: nextCallInteractionOrder,
+        callInteractions: nextCallInteractions,
+      }
+    }),
   closeLiveChatSession: (sessionId) =>
     set((state) => {
       const nextActiveSessionIds = state.activeLiveChatSessionIds.filter(
@@ -138,20 +193,6 @@ export const useAppStore = create<AppState>((set) => ({
             : state.liveChatFocusSessionId,
       }
     }),
-  closeVideoCallTab: () =>
-    set((state) => ({
-      activeWorkspaceTabKey:
-        state.activeWorkspaceTabKey === 'video-call'
-          ? state.isInboundTabOpen
-            ? 'inbound'
-            : 'home'
-          : state.activeWorkspaceTabKey,
-      isOpenEyeVideoWindowVisible: false,
-      isScreenShareActive: false,
-      bankAppVideoShareState: 'idle',
-      isVideoCallTabOpen: false,
-      videoCallInteractionTiming: null,
-    })),
   closeWhatsAppDemoTab: () =>
     set((state) => ({
       activeWorkspaceTabKey:
@@ -167,10 +208,111 @@ export const useAppStore = create<AppState>((set) => ({
       isBankAppDemoTabOpen: true,
       isScreenShareActive: true,
     }),
-  clearCallInteractionTimings: () =>
+  createCallInteraction: (kind, rawSource, activate = true) => {
+    let createdId = ''
+
+    set((state) => {
+      const nextSeq = state.callInteractionSeq + 1
+      const id = `call-${nextSeq}`
+      const now = Date.now()
+      const source =
+        rawSource ??
+        (kind === 'voice' ? 'pstn' : 'standard')
+      const interaction: CallInteraction = {
+        endedAt: null,
+        flashUntil: now + INTERACTION_FLASH_MS,
+        id,
+        kind,
+        phase: 'incoming',
+        source,
+        startedAt: now,
+        tabKey: id,
+        title: getCallInteractionTitle(kind, source),
+      }
+
+      createdId = id
+
+      return {
+        activeWorkspaceTabKey: activate
+          ? interaction.tabKey
+          : state.activeWorkspaceTabKey,
+        bankAppVideoShareState:
+          kind === 'video' && source === 'bankapp-video'
+            ? state.bankAppVideoShareState
+            : kind === 'video'
+              ? 'idle'
+              : state.bankAppVideoShareState,
+        callInteractionOrder: [...state.callInteractionOrder, id],
+        callInteractionSeq: nextSeq,
+        callInteractions: {
+          ...state.callInteractions,
+          [id]: interaction,
+        },
+        currentCallInteractionId: id,
+        isOpenEyeVideoWindowVisible: false,
+        isScreenShareActive:
+          kind === 'video' && source === 'bankapp-video'
+            ? state.isScreenShareActive
+            : kind === 'video'
+              ? false
+              : state.isScreenShareActive,
+      }
+    })
+
+    return createdId
+  },
+  markCallInteractionActive: (interactionId) =>
+    set((state) => {
+      const interaction = state.callInteractions[interactionId]
+
+      if (!interaction || interaction.phase === 'ended') {
+        return {}
+      }
+
+      return {
+        callInteractions: {
+          ...state.callInteractions,
+          [interactionId]: {
+            ...interaction,
+            phase: 'active',
+          },
+        },
+      }
+    }),
+  markCallInteractionEnded: (interactionId, endedAt = Date.now()) =>
+    set((state) => {
+      const interaction = state.callInteractions[interactionId]
+
+      if (!interaction || interaction.phase === 'ended') {
+        return {}
+      }
+
+      return {
+        bankAppVideoShareState:
+          interaction.kind === 'video' ? 'idle' : state.bankAppVideoShareState,
+        callInteractions: {
+          ...state.callInteractions,
+          [interactionId]: {
+            ...interaction,
+            endedAt,
+            phase: 'ended',
+          },
+        },
+        currentCallInteractionId:
+          state.currentCallInteractionId === interactionId
+            ? null
+            : state.currentCallInteractionId,
+        isOpenEyeVideoWindowVisible:
+          interaction.kind === 'video'
+            ? false
+            : state.isOpenEyeVideoWindowVisible,
+        isScreenShareActive:
+          interaction.kind === 'video' ? false : state.isScreenShareActive,
+      }
+    }),
+  clearCurrentCallInteraction: () =>
     set({
-      inboundInteractionTiming: null,
-      videoCallInteractionTiming: null,
+      currentCallInteractionId: null,
     }),
   requestBankAppDemoWorkspace: () =>
     set({
@@ -219,29 +361,6 @@ export const useAppStore = create<AppState>((set) => ({
         liveChatSessionTimings: nextLiveChatSessionTimings,
       }
     }),
-  requestInboundPopup: (source = 'pstn', activate = true) =>
-    set((state) => ({
-      activeWorkspaceTabKey: activate ? 'inbound' : state.activeWorkspaceTabKey,
-      inboundInteractionTiming: createInteractionTiming(),
-      inboundPopupSource: source,
-      isInboundTabOpen: true,
-      inboundPopupRequestId: state.inboundPopupRequestId + 1,
-    })),
-  requestVideoCallPopup: (source = 'standard', activate = true) =>
-    set((state) => ({
-      activeWorkspaceTabKey: activate
-        ? 'video-call'
-        : state.activeWorkspaceTabKey,
-      bankAppVideoShareState:
-        source === 'bankapp-video' ? state.bankAppVideoShareState : 'idle',
-      isOpenEyeVideoWindowVisible: false,
-      isScreenShareActive:
-        source === 'bankapp-video' ? state.isScreenShareActive : false,
-      isVideoCallTabOpen: true,
-      videoCallInteractionTiming: createInteractionTiming(),
-      videoCallPopupRequestId: state.videoCallPopupRequestId + 1,
-      videoCallPopupSource: source,
-    })),
   requestCustomerOutboundCall: () =>
     set((state) => ({
       customerOutboundCallRequestId:

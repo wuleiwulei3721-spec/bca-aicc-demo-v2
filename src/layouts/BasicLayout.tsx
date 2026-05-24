@@ -127,8 +127,21 @@ export function BasicLayout() {
   const clearLiveChatSessions = useAppStore(
     (state) => state.clearLiveChatSessions,
   )
-  const clearCallInteractionTimings = useAppStore(
-    (state) => state.clearCallInteractionTimings,
+  const callInteractions = useAppStore((state) => state.callInteractions)
+  const closeAllCallInteractionTabs = useAppStore(
+    (state) => state.closeAllCallInteractionTabs,
+  )
+  const createCallInteraction = useAppStore(
+    (state) => state.createCallInteraction,
+  )
+  const currentCallInteractionId = useAppStore(
+    (state) => state.currentCallInteractionId,
+  )
+  const markCallInteractionActive = useAppStore(
+    (state) => state.markCallInteractionActive,
+  )
+  const markCallInteractionEnded = useAppStore(
+    (state) => state.markCallInteractionEnded,
   )
   const bankAppVideoCallActivateWorkspace = useAppStore(
     (state) => state.bankAppVideoCallActivateWorkspace,
@@ -143,21 +156,12 @@ export function BasicLayout() {
     (state) => state.bankAppVoiceCallRequestId,
   )
   const setCollapsed = useAppStore((state) => state.setCollapsed)
-  const requestInboundPopup = useAppStore((state) => state.requestInboundPopup)
   const requestBankAppDemoWorkspace = useAppStore(
     (state) => state.requestBankAppDemoWorkspace,
   )
   const requestWhatsAppDemoWorkspace = useAppStore(
     (state) => state.requestWhatsAppDemoWorkspace,
   )
-  const requestVideoCallPopup = useAppStore(
-    (state) => state.requestVideoCallPopup,
-  )
-  const inboundPopupSource = useAppStore((state) => state.inboundPopupSource)
-  const videoCallPopupSource = useAppStore(
-    (state) => state.videoCallPopupSource,
-  )
-  const isVideoCallTabOpen = useAppStore((state) => state.isVideoCallTabOpen)
   const setLiveChatTabOpen = useAppStore(
     (state) => state.setLiveChatTabOpen,
   )
@@ -195,26 +199,48 @@ export function BasicLayout() {
   const handledBankAppVideoCallRequestIdRef = useRef(0)
   const handledBankAppVoiceCallRequestIdRef = useRef(0)
   const handledOutboundCallRequestIdRef = useRef(0)
+  const currentCallInteraction = currentCallInteractionId
+    ? callInteractions[currentCallInteractionId]
+    : null
 
   const updateAgentStatus = useCallback((status: AgentStatus) => {
     setAgentStatus(status)
     setStatusStartedAt(Date.now())
     setLiveChatTabOpen(status !== 'Unsigned')
 
-    if (status === 'Unsigned' || status.startsWith('AUX')) {
+    if (status === 'Unsigned') {
       setCallStatus('Idle')
       setCallStatusStartedAt(Date.now())
       setCallTiming(initialCallTiming)
       setActiveCallChannel(null)
       setIsAfterCallWork(false)
-      clearCallInteractionTimings()
+      closeAllCallInteractionTabs()
+      clearLiveChatSessions()
+      setOpenEyeVideoWindowVisible(false)
+      resetBankAppVideoDesktopShare()
+      return
+    }
+
+    if (status.startsWith('AUX')) {
+      if (callStatus !== 'Idle' && currentCallInteractionId) {
+        markCallInteractionEnded(currentCallInteractionId)
+      }
+
+      setCallStatus('Idle')
+      setCallStatusStartedAt(Date.now())
+      setCallTiming(initialCallTiming)
+      setActiveCallChannel(null)
+      setIsAfterCallWork(false)
       clearLiveChatSessions()
       setOpenEyeVideoWindowVisible(false)
       resetBankAppVideoDesktopShare()
     }
   }, [
-    clearCallInteractionTimings,
+    callStatus,
+    closeAllCallInteractionTabs,
+    currentCallInteractionId,
     clearLiveChatSessions,
+    markCallInteractionEnded,
     resetBankAppVideoDesktopShare,
     setLiveChatTabOpen,
     setOpenEyeVideoWindowVisible,
@@ -242,12 +268,15 @@ export function BasicLayout() {
 
   useEffect(() => {
     setOpenEyeVideoWindowVisible(
-      activeCallChannel === 'video' && isConnectedCall && isVideoCallTabOpen,
+      activeCallChannel === 'video' &&
+        isConnectedCall &&
+        currentCallInteraction?.kind === 'video' &&
+        currentCallInteraction.phase !== 'ended',
     )
   }, [
     activeCallChannel,
+    currentCallInteraction,
     isConnectedCall,
-    isVideoCallTabOpen,
     setOpenEyeVideoWindowVisible,
   ])
 
@@ -279,13 +308,13 @@ export function BasicLayout() {
       setIsAfterCallWork(false)
       setOpenEyeVideoWindowVisible(false)
       resetBankAppVideoDesktopShare()
+      createCallInteraction('voice', source ?? 'pstn', activateWorkspace)
       updateCallStatus('Incoming')
-      requestInboundPopup(source, activateWorkspace)
     },
     [
       agentStatus,
       callStatus,
-      requestInboundPopup,
+      createCallInteraction,
       resetBankAppVideoDesktopShare,
       setOpenEyeVideoWindowVisible,
       updateCallStatus,
@@ -305,13 +334,13 @@ export function BasicLayout() {
       if (source !== 'bankapp-video') {
         resetBankAppVideoDesktopShare()
       }
+      createCallInteraction('video', source ?? 'standard', activateWorkspace)
       updateCallStatus('Incoming')
-      requestVideoCallPopup(source, activateWorkspace)
     },
     [
       agentStatus,
       callStatus,
-      requestVideoCallPopup,
+      createCallInteraction,
       resetBankAppVideoDesktopShare,
       setOpenEyeVideoWindowVisible,
       updateCallStatus,
@@ -325,9 +354,18 @@ export function BasicLayout() {
       talkingStartedAt: now,
     })
     setIsAfterCallWork(false)
+    if (currentCallInteractionId) {
+      markCallInteractionActive(currentCallInteractionId)
+    }
     setOpenEyeVideoWindowVisible(activeCallChannel === 'video')
     updateCallStatus('Talking')
-  }, [activeCallChannel, setOpenEyeVideoWindowVisible, updateCallStatus])
+  }, [
+    activeCallChannel,
+    currentCallInteractionId,
+    markCallInteractionActive,
+    setOpenEyeVideoWindowVisible,
+    updateCallStatus,
+  ])
 
   const handleAnswer = useCallback(() => {
     if (callStatus === 'Incoming') {
@@ -465,16 +503,20 @@ export function BasicLayout() {
   }, [callStatus, updateCallStatus])
 
   const handleHangUp = useCallback(() => {
+    if (currentCallInteractionId) {
+      markCallInteractionEnded(currentCallInteractionId)
+    }
+
     updateCallStatus('Idle')
     setCallTiming(initialCallTiming)
     setActiveCallChannel(null)
     setIsAfterCallWork(true)
     setOpenEyeVideoWindowVisible(false)
     resetBankAppVideoDesktopShare()
-    clearCallInteractionTimings()
     updateAgentStatus('Not Ready')
   }, [
-    clearCallInteractionTimings,
+    currentCallInteractionId,
+    markCallInteractionEnded,
     resetBankAppVideoDesktopShare,
     setOpenEyeVideoWindowVisible,
     updateAgentStatus,
@@ -621,25 +663,25 @@ export function BasicLayout() {
     statusStartedAt,
   ])
   const callIdentification = useMemo(() => {
-    if (callStatus === 'Idle') {
+    if (callStatus === 'Idle' || !currentCallInteraction) {
       return null
     }
 
-    if (activeCallChannel === 'voice') {
-      return inboundPopupSource === 'bankapp-voice'
+    if (currentCallInteraction.kind === 'voice') {
+      return currentCallInteraction.source === 'bankapp-voice'
         ? { label: 'BankID', value: '00012345' }
         : { label: 'IVR', value: '08123456789' }
     }
 
     if (
-      activeCallChannel === 'video' &&
-      videoCallPopupSource === 'bankapp-video'
+      currentCallInteraction.kind === 'video' &&
+      currentCallInteraction.source === 'bankapp-video'
     ) {
       return { label: 'BankID', value: '00012345' }
     }
 
     return null
-  }, [activeCallChannel, callStatus, inboundPopupSource, videoCallPopupSource])
+  }, [callStatus, currentCallInteraction])
 
   return (
     <Layout className="aicc-app-shell">

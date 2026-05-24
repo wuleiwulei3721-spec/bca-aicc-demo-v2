@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-05-25 01:31 +08:00
+最后更新：2026-05-25 02:10 +08:00
 
 ## 项目方向
 
@@ -339,6 +339,19 @@
 - Customer Information 不再额外显示独立时钟图标和单独 duration 文本，减少 Live Chat 页面里的重复时间感。
 - Live Chat SLA warning 仍为 60 秒，但颜色应使用更明确的 amber/yellow；breach 仍为 120 秒红色。
 - Hang Up 后保留旧弹屏并为新呼叫创建新弹屏 tab 的多 inbound 架构不放入 v0.5.6，后续单独规划 `v0.6.0`。
+
+## 2026-05-25 多 Inbound 弹屏与通话 Tab 架构
+
+- v0.6.0 覆盖 PSTN、BankApp Voice、BankApp Video：Hang Up 后当前弹屏 tab 保留，duration 停止并冻结；新呼叫进来时创建新的 workspace tab，不覆盖旧 tab。
+- Live Chat 不纳入多 workspace tab 重构，继续保持固定 `Live Chat` tab 与多客户列表模式。
+- 通话实例使用 `CallInteraction` 模型：`id`、`tabKey`、`kind`、`source`、`title`、`startedAt`、`endedAt`、`flashUntil`、`phase`。
+- tab key 使用稳定递增格式：`call-1`、`call-2`、`call-3`。
+- Running tab 显示实时 duration：`PSTN (00:12)`、`Voice Call (00:12)`、`Video Call (00:12)`；ended tab 冻结原标题和最终时长，不增加 `Ended` 文案。
+- 当前 active call tab 在 Hang Up 前不可关闭；Hang Up 后变为可关闭。
+- 话务条和右上角状态点只跟当前 active call 联动；旧 ended tab 被选中查看时，不回放旧通话状态，也不让状态点保持红色。
+- `InboundPage` / `VideoCallPage` 必须接收 interaction source，不再读取全局单例 source，避免旧 tab 客户资料被新呼叫覆盖。
+- OpenEye 浮窗和 BankApp Video desktop share 只绑定当前 active video interaction；ended video tab 不显示浮窗。
+- 本轮仍只支持同一时间一路 active call，不支持多路电话/视频同时由话务条控制。
 
 ## 2026-05-23 版本与素材策略
 
