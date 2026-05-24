@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import type { BankAppVideoShareState } from '../../../store'
 
 const OPEN_EYE_CLIENT_SRC = '/screenshots/openeye-video-call.png'
+const OPEN_EYE_SHARE_SELECTION_SRC = '/screenshots/openeye-share-selection.png'
 const WINDOW_WIDTH = 340
 const WINDOW_MARGIN = 24
 const WINDOW_TOP = 92
@@ -40,12 +42,22 @@ function clampPosition(x: number, y: number) {
 }
 
 export function OpenEyeVideoWindow({
+  bankAppVideoShareState = 'idle',
+  isBankAppVideo = false,
   isScreenShareActive = false,
+  onConfirmScreenShare,
+  onStartScreenShare,
 }: {
+  bankAppVideoShareState?: BankAppVideoShareState
+  isBankAppVideo?: boolean
   isScreenShareActive?: boolean
+  onConfirmScreenShare?: () => void
+  onStartScreenShare?: () => void
 }) {
   const [position, setPosition] = useState(getInitialPosition)
   const [dragState, setDragState] = useState<DragState | null>(null)
+  const isSelectingShareProgram =
+    isBankAppVideo && bankAppVideoShareState === 'selecting-program'
 
   useEffect(() => {
     if (!dragState) {
@@ -88,11 +100,17 @@ export function OpenEyeVideoWindow({
       className={`openeye-video-window ${
         dragState ? 'openeye-video-window--dragging' : ''
       }`}
-      role="img"
+      role="dialog"
       style={{
         transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
       }}
       onPointerDown={(event) => {
+        const target = event.target as HTMLElement
+
+        if (target.closest('button')) {
+          return
+        }
+
         event.preventDefault()
         setDragState({
           pointerId: event.pointerId,
@@ -105,9 +123,31 @@ export function OpenEyeVideoWindow({
         <img
           alt="OpenEye video call client"
           draggable={false}
-          src={OPEN_EYE_CLIENT_SRC}
+          src={
+            isSelectingShareProgram
+              ? OPEN_EYE_SHARE_SELECTION_SRC
+              : OPEN_EYE_CLIENT_SRC
+          }
         />
-        {isScreenShareActive ? (
+        {isBankAppVideo && bankAppVideoShareState === 'idle' ? (
+          <button
+            aria-label="Start desktop sharing"
+            className="openeye-video-window__share-button"
+            type="button"
+            onClick={onStartScreenShare}
+          >
+            Desktop Share
+          </button>
+        ) : null}
+        {isSelectingShareProgram ? (
+          <button
+            aria-label="Confirm selected sharing program"
+            className="openeye-video-window__share-confirm-hotspot"
+            type="button"
+            onClick={onConfirmScreenShare}
+          />
+        ) : null}
+        {isScreenShareActive && !isBankAppVideo ? (
           <div
             aria-label="Customer desktop share preview"
             className="openeye-video-window__screen-share"

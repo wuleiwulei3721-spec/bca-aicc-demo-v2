@@ -77,6 +77,16 @@ export const bankAppScreenshotSources = {
   textChat: '/screenshots/bankapp/livechat-chat.png',
   textLogin: '/screenshots/bankapp/text-login-sanitized.png',
   textQueue: '/screenshots/bankapp/livechat-queue.png',
-  videoConnected: '/screenshots/bankapp/video-connected.png',
+  videoConnected: '/screenshots/bankapp/video-connected-new.png',
+  videoScreenSharing: '/screenshots/bankapp/video-screen-sharing.png',
+  voiceCalling: '/screenshots/bankapp/voice-calling.png',
+  voiceConnected: '/screenshots/bankapp/voice-connected.png',
   voicePhoneNumber: '/screenshots/bankapp/voice-phone-number-sanitized.png',
+}
+
+export const whatsAppScreenshotSources = {
+  agentChat: '/screenshots/whatsapp/agent-chat.png',
+  businessSelection: '/screenshots/whatsapp/business-selection.png',
+  chatRequest: '/screenshots/whatsapp/chat-request.png',
+  satisfactionRating: '/screenshots/whatsapp/satisfaction-rating.png',
 }

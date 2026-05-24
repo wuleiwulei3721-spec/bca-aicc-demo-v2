@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-23 19:40 +08:00
+最后更新：2026-05-24 14:12 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,570 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-24 14:12 +08:00 - BankApp Video 桌面共享附件与按钮修正
+
+修改页面或文件：
+
+- `public/screenshots/openeye-share-selection.png`
+- `public/screenshots/bankapp/video-screen-sharing.png`
+- `src/pages/inbound/components/OpenEyeVideoWindow.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户反馈 OpenEye 选择共享程序图不应绘制，必须直接使用附件一原图。
+- 用户反馈 BankApp 第八步 `View Agent Screen Sharing` 必须直接使用附件二原图。
+- 用户要求 OpenEye 桌面共享按钮改成英文，并使背景更半透明。
+
+修改结果：
+
+- 从当前 Codex session 中的用户消息 `data:image/png;base64` 直接解码两张附件，覆盖 `openeye-share-selection.png` 和 `video-screen-sharing.png`。
+- OpenEye 共享按钮可见文案从 `桌面共享` 改为 `Desktop Share`，背景改为半透明深色覆盖样式。
+- 既有 BankApp Video step、store 状态机和 Netinfo 标签逻辑保持不变。
+
+验证：
+
+- Local image check 通过：`openeye-share-selection.png` 为附件一原图，尺寸 `533x920`。
+- Local image check 通过：`video-screen-sharing.png` 为附件二原图，尺寸 `750x1624`。
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：BankApp Video 到 `Agent Workspace` 后 OpenEye 显示 `Desktop Share` 按钮。
+- Browser smoke check `/`：点击 `Desktop Share` 后 OpenEye 加载 `/screenshots/openeye-share-selection.png`。
+- Browser smoke check `/`：点击 `确定` 后 BankApp 第八步加载 `/screenshots/bankapp/video-screen-sharing.png`，并保留 `Select Sharing Program` / `View Agent Screen Sharing` 两个 Netinfo 步骤。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚按钮文案和透明度，可恢复 `OpenEyeVideoWindow.tsx` 与 `.openeye-video-window__share-button` 上一版样式。
+- 如需替换附件，只需要覆盖同名 PNG 资源，不需要修改流程代码。
+
+当前风险点：
+
+- 两张截图来自用户当前会话附件；发布公开环境前仍需确认授权与脱敏口径。
+
+### 2026-05-24 13:48 +08:00 - BankApp Video 桌面共享流程修正
+
+修改页面或文件：
+
+- `public/screenshots/openeye-share-selection.png`
+- `public/screenshots/bankapp/video-screen-sharing.png`
+- `src/store/appStore.ts`
+- `src/types/bankapp.ts`
+- `src/mock/bankapp.ts`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/pages/inbound/VideoCallPage.tsx`
+- `src/pages/inbound/components/OpenEyeVideoWindow.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求 BankApp Demo 的 Video Call 桌面共享从 OpenEye 浮窗发起，而不是从 BankApp connected 手机页发起。
+- 用户要求 OpenEye 点击 `桌面共享` 后展示“选择共享程序”截图，点击 `确定` 后跳回 BankApp Demo 展示客户侧查看坐席共享画面。
+- 用户要求新增步骤属于 BankApp 流程第 6 步 Agent Workspace 后续步骤，标签均为 `Netinfo`，且不影响其它功能。
+
+修改结果：
+
+- BankApp Video 流程在 `Agent Workspace` 后新增 `Select Sharing Program` 和 `View Agent Screen Sharing` 两个 Netinfo 步骤。
+- OpenEye 浮窗仅在 `bankapp-video` 来源下显示 `桌面共享` 按钮；点击后切换到 `openeye-share-selection.png`，确认热区点击后设置共享状态并激活 `BankApp Demo` tab。
+- BankApp Demo 的共享查看画面通过 `video-screen-sharing.png` 展示，旧的 connected 页内 `Screen share / Start / Stop` 覆盖控件已移除。
+- `appStore` 新增 BankApp Video 共享选择、确认和重置状态；Reset、Hang Up、关闭 Video Call tab、非 BankApp Video 呼叫、签出/AUX 会清理共享状态。
+- Voice、Live Chat、WhatsApp 和普通 Video Call 代码路径未增加 BankApp 桌面共享入口。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：BankApp Video Registered 到 `Agent Workspace` 后激活 `Video Call` tab，OpenEye 出现 `桌面共享` 按钮。
+- Browser smoke check `/`：点击 `桌面共享` 后 OpenEye 显示选择共享程序截图，且存在 `确定` 确认热区。
+- Browser smoke check `/`：点击 `确定` 后自动切回 `BankApp Demo`，手机区显示 `BankApp agent screen sharing`，AICC Process rail 显示 `Select Sharing Program` 和 `View Agent Screen Sharing` 两个 Netinfo 步骤。
+- Browser smoke check `/`：共享画面后点击 `Next Step` 进入 `Service Closed`，Reset 后回到 `Choose Channel` 且不再显示共享画面。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚本轮桌面共享流程，可移除 `share-select` / `screen-sharing` 步骤与 `bankAppVideoShareState` 相关 store 字段，恢复 `BankAppDemoPage` 中 Video connected 的旧 screen share 覆盖控件，并删除新增两张截图资源。
+- 如只需替换附件视觉，可直接替换 `openeye-share-selection.png` 和 `video-screen-sharing.png`，无需改流程代码。
+
+当前风险点：
+
+- `openeye-share-selection.png` 为按用户附件视觉生成的演示截图；如后续拿到原始附件文件，可直接覆盖同名资源。
+- `video-screen-sharing.png` 当前复用已有客户侧共享截图内容，发布公开环境前仍需确认授权与脱敏口径。
+
+### 2026-05-24 13:04 +08:00 - BankApp Video Connected 图片缓存规避修复
+
+修改页面或文件：
+
+- `public/screenshots/bankapp/video-connected-new.png`
+- `src/mock/bankapp.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户反馈 Video connected 没有展示其附件截图。
+- 检查发现附件原图已经覆盖到 `video-connected.png`，但页面仍沿用旧文件名，浏览器或 dev server 容易命中同名资源缓存，导致视觉上像没有替换。
+
+修改结果：
+
+- 将用户附件原图复制为 `public/screenshots/bankapp/video-connected-new.png`。
+- `bankAppScreenshotSources.videoConnected` 改为 `/screenshots/bankapp/video-connected-new.png`，强制运行时加载新的资源 URL。
+- Video `Calling Agent` 继续复用 `/screenshots/bankapp/voice-calling.png`，Voice、Live Chat、WhatsApp 路径未改变。
+
+验证：
+
+- Local image check 通过：`video-connected-new.png` 已打开确认，内容与用户附件一致。
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：BankApp Video Registered 的 `Calling Agent` 加载 `/screenshots/bankapp/voice-calling.png`，`Connected` 加载 `/screenshots/bankapp/video-connected-new.png`。
+- Browser smoke check `/`：切回 BankApp Demo 后仍显示 `/screenshots/bankapp/video-connected-new.png`，再下一步进入 `Service Closed` 并加载 `/screenshots/bankapp/service-closed.png`。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚本轮缓存规避修复，可将 `src/mock/bankapp.ts` 的 `videoConnected` 指回 `/screenshots/bankapp/video-connected.png`，并删除 `video-connected-new.png`。
+- 如需回滚 Video connected 图片内容，则用上一版截图覆盖当前 `video-connected.png` / `video-connected-new.png`。
+
+当前风险点：
+
+- `video-connected-new.png` 为用户附件原图，发布公开环境前仍需确认授权与可分享性。
+- `video-connected.png` 仍保留同一份原图副本，但当前运行时引用新文件名，后续清理资源时需避免误删 `video-connected-new.png`。
+
+### 2026-05-24 12:45 +08:00 - BankApp Video Calling / Connected 截图替换
+
+修改页面或文件：
+
+- `public/screenshots/bankapp/video-connected.png`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户要求 BankApp Demo 中 Video 渠道第四步 `Calling Agent` 使用 Voice 渠道第四步同一张 calling 截图。
+- 用户要求 Video 渠道第五步 `Connected` 使用本轮附件 1 原图。
+- 用户明确要求直接使用附件截图，不重新脱敏或前端绘制。
+
+修改结果：
+
+- 已从当前 Codex session 中提取用户本轮 Video connected 附件原图，并覆盖 `public/screenshots/bankapp/video-connected.png`。
+- BankApp Demo 的 Video `Calling Agent` 改为直接显示 `bankAppScreenshotSources.voiceCalling`，即复用 `/screenshots/bankapp/voice-calling.png`。
+- BankApp Demo 的 Video `Connected` 继续引用 `/screenshots/bankapp/video-connected.png`，该文件已换成本轮用户附件原图。
+- Video connected 上既有 screen share 演示控件保持不变；Voice、Live Chat、WhatsApp 路径未改变。
+
+验证：
+
+- Local image check 通过：`video-connected.png` 已打开确认，尺寸为 `750x1624`，内容与用户附件一致。
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning，并出现一次插件耗时提示。
+- Browser smoke check `/`：BankApp Video Registered 的 `Calling Agent` 加载 `/screenshots/bankapp/voice-calling.png`，`Connected` 加载 `/screenshots/bankapp/video-connected.png`。
+- Browser smoke check `/`：BankApp Video 在 `Agent Workspace` 步骤激活 `Video Call`；切回 BankApp Demo 后仍显示新的 connected 截图，并可继续到 `Service Closed`。
+- Browser smoke check `/`：BankApp Video Guest 仍保留 `Input Phone Number` 分支，后续 Calling / Connected 使用指定截图。
+- Browser smoke check `/`：BankApp Voice 和 Chat 路径截图引用未回归。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚 Video connected 图片，可用上一版 `public/screenshots/bankapp/video-connected.png` 覆盖当前文件。
+- 如需恢复 Video `Calling Agent` 前端绘制，可移除 `BankAppDemoPage.tsx` 中 `contactMethod === 'video'` 的 calling 图片分支，并从 `isScreenshotStep` 中移除 Video calling 条件。
+
+当前风险点：
+
+- Video connected 图为用户附件原图，发布公开环境前仍需确认授权与可分享性。
+- Video connected 仍保留既有 screen share 演示控件；如果客户要求纯截图无叠加控件，需另行移除或调整该控件。
+
+### 2026-05-24 02:42 +08:00 - BankApp Voice Calling / Connected 截图替换
+
+修改页面或文件：
+
+- `public/screenshots/bankapp/voice-calling.png`
+- `public/screenshots/bankapp/voice-connected.png`
+- `src/mock/bankapp.ts`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户要求 BankApp Demo 中 Voice 渠道的第四步 `Calling Agent` 使用附件 1，第五步 `Connected` 使用附件 2。
+- 用户明确要求直接使用附件截图，不重新脱敏或前端绘制。
+
+修改结果：
+
+- 已从当前 Codex session 中提取两张用户附件原图，并落盘为 `voice-calling.png` 与 `voice-connected.png`。
+- `bankAppScreenshotSources` 新增 `voiceCalling` / `voiceConnected`。
+- BankApp Demo 的 Voice `Calling Agent` / `Connected` / Voice `Agent Workspace` 返回状态改为直接展示这两张截图。
+- Video 的 `Calling Agent`、Video `Connected`、Live Chat 路径、坐席工作台跳转与返回保活逻辑未改变。
+
+验证：
+
+- Local image check 通过：两张 Voice 图片均已打开确认，尺寸为 `747x1624`，内容与用户附件一致。
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：BankApp Voice Registered 的 `Calling Agent` 加载 `/screenshots/bankapp/voice-calling.png`，`Connected` 加载 `/screenshots/bankapp/voice-connected.png`。
+- Browser smoke check `/`：BankApp Voice 在 `Agent Workspace` 步骤激活 `PSTN / Voice Call`；切回 BankApp Demo 后仍显示新的 connected 截图，并可继续到 `Service Closed`。
+- Browser smoke check `/`：BankApp Voice Guest 仍保留 `Input Phone Number` 分支，后续 Calling / Connected 使用新截图。
+- Browser smoke check `/`：BankApp Video 和 Chat 路径截图引用未回归。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 删除 `voice-calling.png` / `voice-connected.png` 并恢复 `BankAppDemoPage.tsx` 中 Voice `Calling Agent` / `Connected` 的前端绘制分支即可。
+- 同时移除 `bankAppScreenshotSources.voiceCalling` / `voiceConnected` 配置。
+
+当前风险点：
+
+- 两张 Voice 通话图为用户附件原图，发布公开环境前仍需确认授权与可分享性。
+
+### 2026-05-24 01:50 +08:00 - WhatsApp Demo Channel 显示文案改为 chat
+
+修改页面或文件：
+
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户在浏览器评论中标注 WhatsApp Demo 右侧 AICC Process 的只读 Channel 值，要求文字从 `WhatsApp` 改为 `chat`。
+
+修改结果：
+
+- WhatsApp Demo 右侧只读 Channel 控件显示值改为小写 `chat`。
+- 本次只改右侧控件展示，不改变 WhatsApp Demo tab、左侧菜单、截图资源、Live Chat 会话渠道或坐席侧 WhatsApp 客户资料。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：WhatsApp Demo 右侧只读 Channel 显示为 `chat`，未再出现 `Channel: WhatsApp`。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 将 `BankAppDemoPage.tsx` 中 WhatsApp 只读 Channel 文案从 `chat` 改回 `WhatsApp` 即可。
+
+当前风险点：
+
+- 无已知技术风险；仅需浏览器复查该控件文案。
+
+### 2026-05-24 01:44 +08:00 - BankApp / WhatsApp Demo 顶部信息减负
+
+修改页面或文件：
+
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户反馈统一画布顶部元素仍偏多，要求 BankApp Demo 和 WhatsApp Demo 一起去除顶部 `Customer Access Demo` 整块。
+- 用户要求去除手机图片区域右上角的当前步骤说明和 `Bank1` / `Netinfo` badge，因为右侧 AICC Process 已经显示当前步骤。
+
+修改结果：
+
+- 删除 `bankapp-demo__canvas-header` DOM，不再显示跨列 `Customer Access Demo` 顶部标题条。
+- 手机区标题行只保留 `Customer BankApp` / `Customer WhatsApp`，不再显示当前步骤名称和开发方 badge。
+- `bankapp-demo__stage` 改为单内容行网格，继续保留统一外框、背景、阴影和左右浅分隔线。
+- 右侧 AICC Process 继续负责当前步骤、开发方 badge、Next/Reset 和 Completed 终态表达；流程逻辑、store、mock 和类型未修改。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：BankApp Demo 无顶部 `Customer Access Demo`，手机区右上角不再显示步骤名称或 badge；Channel / Customer Type 切换正常。
+- Browser smoke check `/`：WhatsApp Demo 无顶部 `Customer Access Demo`，手机区右上角不再显示步骤名称或 badge；切到 Live Chat 后返回保活，并可进入禁用 `Completed` 终态。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 可恢复 `BankAppDemoPage.tsx` 中的 `bankapp-demo__canvas-header` 和手机标题行右侧 `bankapp-step-title`，并恢复 `index.less` 中相关样式与双行 grid 设置。
+
+当前风险点：
+
+- 仍需在目标演示分辨率下复查顶部信息减负后的留白和手机高度是否符合领导观感。
+
+### 2026-05-24 01:24 +08:00 - BankApp / WhatsApp Demo 统一画布布局
+
+修改页面或文件：
+
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户反馈领导认为原“左手机面板 + 右 AICC Process 面板”的视觉关系过于分离，要求改为一个统一大画布，让 AICC Process 内容放在 App 图片旁边并被感知为同一个客户接入演示内容。
+
+修改结果：
+
+- `bankapp-demo__stage` 改为统一画布容器，承载整体边框、圆角、背景、阴影和跨两列标题条。
+- `bankapp-demo__phone-panel` 与 `bankapp-process` 去除独立卡片边框和背景，改为同一画布内的 App Preview 区与 AICC Process 区。
+- 手机区与流程区之间改为浅分隔线；画布最大宽度和左侧预览列已收紧，降低宽屏下 App 与 Process 的距离。
+- BankApp 与 WhatsApp 共用该布局，保留现有流程状态、Channel / Customer Type 控件、Completed 结束态、`Bank1` / `Netinfo` badge 和截图资源。
+- 窄屏下保持同一大容器内上下排列，AICC Process 通过顶部浅分隔线接续手机区。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：BankApp Demo 手机和 AICC Process 位于同一个统一画布内；Channel / Customer Type 仍可选中，`aria-pressed` 状态正确。
+- Browser smoke check `/`：WhatsApp Demo 使用同一统一画布布局；第三步切到 Live Chat 后返回 WhatsApp Demo 保持 `View Agent Workspace`，再下一步进入禁用 `Completed` 终态。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 可回滚 `BankAppDemoPage.tsx` 中新增的 `bankapp-demo__canvas-header`，并恢复 `index.less` 中 `bankapp-demo__stage`、`bankapp-demo__phone-panel`、`bankapp-process` 的独立卡片样式。
+
+当前风险点：
+
+- 仍需在领导实际演示屏幕分辨率下复查统一画布的最大宽度、左右距离和手机截图裁切感。
+
+### 2026-05-24 01:08 +08:00 - BankApp 分段控件 hover / selected 状态修复
+
+修改页面或文件：
+
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户反馈 BankApp Demo 的渠道选择和客户类型选择控件在选中 Video / Chat 时，鼠标悬浮或选中视觉可能让 Voice 看起来也有悬浮效果。
+
+修改结果：
+
+- `SegmentedControl` 从 `<label>` 包裹多个 `<button>` 改为 `role="group"` 容器，避免浏览器将多个按钮错误关联到同一个 label。
+- 分段按钮增加 `aria-pressed`，当前选中项由 pressed 状态表达。
+- hover / focus 和 selected 样式拆分：hover 使用中性浅色，selected 才使用蓝色选中态。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：BankApp Channel / Customer Type 按钮名称独立，不再串联成一组长名称。
+- Browser smoke check `/`：点击 Video 后只有 Video 为 `[pressed]`；点击 Chat 后只有 Chat 为 `[pressed]`，Voice 不会被错误标记。
+
+回滚说明：
+
+- 可将 `SegmentedControl` 恢复为原 `<label>` 包裹结构，并恢复 hover / selected 共用样式，但不建议回滚。
+
+当前风险点：
+
+- 本轮只修复分段控件交互与视觉状态，仍需在目标演示分辨率下做最终目视确认。
+
+### 2026-05-24 00:58 +08:00 - BankApp / WhatsApp Demo 右侧流程区优化
+
+修改页面或文件：
+
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户要求 BankApp Demo 和 WhatsApp Demo 右侧渠道、客户类型和操作按钮放在同一行。
+- 用户要求流程最后一步走完后体现流程结束，避免 `Next Step` 继续可点。
+- 用户指出步骤图标蓝绿状态和 `Bank1` / `Netinfo` 蓝绿 badge 容易混淆，要求优化 step rail 图标样式。
+- 用户要求 WhatsApp Demo 第四步 `View Agent Workspace` 的标签从 `Bank1` 改为 `Netinfo`。
+
+修改结果：
+
+- BankApp Demo 右侧控制条同区展示 `Channel`、`Customer Type`、`Next Step / Reset`；`Channel` 为可点击分段控件，切换 Voice / Video / Chat 会重置流程到起点。
+- WhatsApp Demo 右侧控制条同区展示只读 `Channel: WhatsApp` 和操作按钮，不显示 `Customer Type`。
+- 当流程到达最后一步时，`Next Step` 变为禁用的 `Completed`，`Reset` 继续作为唯一重启入口。
+- 步骤 rail 从蓝色/绿色状态图标改为中性编号 marker 和细灰色箭头连接；当前步骤用边框、轻背景和字重强调。
+- `getStepOwner()` 增加 WhatsApp 第四步例外：`agent-workspace` 返回 `Netinfo`，其它 WhatsApp 步骤保持 `Bank1`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：BankApp Demo 右侧同区显示 Channel、Customer Type、Next/Reset；右侧 Channel 切换到 Video 后流程重置到 `Choose Channel`。
+- Browser smoke check `/`：BankApp Demo 最后一步显示禁用 `Completed`，`Reset` 仍可见；流程 rail 显示中性编号 marker。
+- Browser smoke check `/`：WhatsApp Demo 右侧只显示 `Channel: WhatsApp` 和操作按钮，不显示 `Customer Type`。
+- Browser smoke check `/`：WhatsApp Demo 第四步 `View Agent Workspace` 显示 `Netinfo` badge。
+- Browser smoke check `/`：WhatsApp Demo 最后一步显示禁用 `Completed`。
+- Browser smoke check `/design-system`：页面正常加载，`UI Design System` 可见。
+
+回滚说明：
+
+- 可恢复 `BankAppDemoPage.tsx` 中右侧控制区为原 `Customer Type + 操作按钮` 与单独 Channel summary。
+- 可恢复 `Next Step` 始终可点击并保持最后一步不变的旧逻辑。
+- 可恢复 step rail 使用 `CheckCircleOutlined` / `ClockCircleOutlined` 与蓝绿状态色。
+- 可移除 WhatsApp `agent-workspace` 的 `Netinfo` 例外，使 WhatsApp 全步骤回到 `Bank1`。
+
+当前风险点：
+
+- 右侧控制条在目标演示分辨率下仍需人工复查是否保持一行可读；极窄视口允许换行以避免文字溢出。
+- 本轮浏览器验证为手工 smoke check，项目仍没有自动化浏览器测试体系。
+
+### 2026-05-24 00:10 +08:00 - BankApp Demo 同步坐席工作台步骤与渐进流程 rail
+
+修改页面或文件：
+
+- `src/store/appStore.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/AgentWorkspace.tsx`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户要求把 WhatsApp Demo 的策略同步到 BankApp Demo 操作上。
+- BankApp Voice、Video、Live Chat 都需要在客户侧接通/聊天后新增“查看坐席工作台”步骤。
+- 从坐席工作台切回 BankApp Demo 时不能刷新页面内容，因为还要继续点击下一步进入服务结束。
+- BankApp 的流程步骤也需要只显示当前已经到达的步骤，后续步骤点击下一步后再显示。
+
+修改结果：
+
+- BankApp Live Chat 流程调整为 `channel -> personal-info? -> business -> confirm -> calling -> chat -> agent-workspace -> closed`。
+- BankApp Voice / Video 流程调整为 `channel -> phone-number? -> business -> confirm -> calling -> connected -> agent-workspace -> closed`。
+- `agent-workspace` 步骤沿用 BankApp 现有开发责任口径显示 `Netinfo`；`Customer Type` 保持不变。
+- `requestBankAppVoiceCall(activate?)` / `requestBankAppVideoCall(activate?)` 新增激活参数，并由 `BasicLayout` 传递给真实 voice/video workspace 打开逻辑。
+- `AgentWorkspace` 中 BankApp Demo tab 改为保持挂载，切到坐席工作台后再切回不会重置本地步骤状态。
+- BankApp Demo 的 AICC Process rail 改为只渲染已到达步骤，后续步骤不会提前显示。
+- BankApp Voice 在 `Connected` 后点击 `Next Step` 会进入 `Agent Workspace` 并激活 `PSTN / Voice Call`；Video 激活 `Video Call`；Live Chat 激活 `Live Chat` 并聚焦 BankApp 客户。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：BankApp Voice Registered 路径进入 `PSTN / Voice Call`，切回 BankApp Demo 后保持 `Agent Workspace`，再下一步进入 `Service Closed`。
+- Browser smoke check `/`：BankApp Voice Guest 仍保留 `Input Phone Number` 分支，流程 rail 渐进显示。
+- Browser smoke check `/`：BankApp Video 路径进入 `Video Call`，切回后保持 `Agent Workspace` 并保留视频接通画面，再下一步进入 `Service Closed`。
+- Browser smoke check `/`：BankApp Live Chat 路径进入 `Live Chat` 并聚焦 BankApp 客户，切回后保持 `Agent Workspace`，再下一步进入 `Service Closed`。
+- Browser smoke check `/design-system`：页面正常加载，`UI Design System` 可见。
+
+回滚说明：
+
+- 可从 BankApp 的 `getStepSequence()` 中移除 `agent-workspace`，并恢复 handoff 步骤直接进入 `closed`。
+- 可恢复 `AgentWorkspace.tsx` 中 BankApp Demo tab 只在激活时渲染的逻辑，但会重新引入切出后状态重置行为。
+- 可恢复 `requestBankAppVoiceCall()` / `requestBankAppVideoCall()` 为无参数 request id，并在 `BasicLayout` 固定以后台方式打开 voice/video workspace。
+
+当前风险点：
+
+- BankApp Voice / Video 触发仍依赖坐席处于 `Ready` 且当前话务为 `Idle`；如果坐席未签入、未 Ready 或已有通话，客户侧会进入 `Agent Workspace`，但坐席侧不会打开新通话。
+- 本轮浏览器验证为手工 smoke check，项目仍没有自动化浏览器测试体系。
+
+### 2026-05-23 23:54 +08:00 - WhatsApp Demo 坐席工作台步骤与渐进流程 rail
+
+修改页面或文件：
+
+- `src/types/bankapp.ts`
+- `src/pages/AgentWorkspace.tsx`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户要求在 WhatsApp Demo 第三步后新增一步查看坐席工作台。
+- 新增步骤需要跳转到 `Live Chat` 来电弹屏页面，并且接入渠道是 WhatsApp。
+- 用户要求从 Live Chat 切回 WhatsApp Demo 时页面内容不刷新，因为还要继续点击下一步进入服务结束。
+- 用户要求流程步骤文字的后续步骤不要提前显示，点击下一步时再显示当前步骤。
+
+修改结果：
+
+- `BankAppDemoStep` 新增 `agent-workspace`。
+- WhatsApp Demo 流程从 4 步改为 5 步：`channel -> business -> chat -> agent-workspace -> closed`。
+- WhatsApp Demo 在 `Queue & Agent Chat` 后点击 `Next Step` 会进入 `View Agent Workspace` 并激活 `Live Chat` tab，聚焦 WhatsApp 会话 `live-chat-001`。
+- `AgentWorkspace` 中 WhatsApp Demo tab 改为保持挂载，切到 Live Chat 后再切回不会重置 WhatsApp Demo 本地步骤状态。
+- WhatsApp Demo 的 AICC Process rail 只渲染已到达步骤，后续步骤在点击 `Next Step` 后才显示。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：初始只显示 `Request Human Agent`，不提前显示后续步骤。
+- Browser smoke check `/`：点击下一步后才依次显示 `Business Selection`、`Queue & Agent Chat`、`View Agent Workspace`、`Satisfaction Rating`。
+- Browser smoke check `/`：第三步后点击下一步会切到 `Live Chat` tab，并可见 WhatsApp 客户会话。
+- Browser smoke check `/`：切回 `WhatsApp Demo` 后仍停留在 `View Agent Workspace`，未刷新回第一步；再点下一步进入满意度评价。
+- Browser smoke check `/design-system`：页面正常加载，`UI Design System` 可见。
+
+回滚说明：
+
+- 可从 `BankAppDemoStep` 移除 `agent-workspace`，恢复 WhatsApp sequence 为 `channel -> business -> chat -> closed`。
+- 可恢复 `AgentWorkspace.tsx` 中 WhatsApp Demo tab 只在激活时渲染的逻辑，但会重新引入切出后状态重置行为。
+- 可恢复 `BankAppDemoPage.tsx` 中 WhatsApp rail 渲染完整 `currentSequence` 的逻辑。
+
+当前风险点：
+
+- Live Chat 仍为静态前端 demo，不接真实 WhatsApp 网关。
+- WhatsApp Demo tab 保持挂载是为保留演示步骤状态；如后续新增重型资源，需要复查内存和 inactive tab 行为。
+
+### 2026-05-23 23:11 +08:00 - WhatsApp Demo 四步截图流程
+
+修改页面或文件：
+
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/mock/bankapp.ts`
+- `src/styles/index.less`
+- `public/screenshots/whatsapp/chat-request.png`
+- `public/screenshots/whatsapp/business-selection.png`
+- `public/screenshots/whatsapp/agent-chat.png`
+- `public/screenshots/whatsapp/satisfaction-rating.png`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+
+修改原因：
+
+- 用户要求 WhatsApp 接入的 WhatsApp Demo 去除 `Customer Type`。
+- 用户要求流程改为 4 步：进入客服聊天页面并要求转坐席、业务选择、排队并接入坐席沟通、服务结束满意度评价。
+- 用户要求步骤流程每一步标签都是 `Bank1`。
+- 用户提供的 4 张截图已经脱敏，要求直接使用附件截图，不重新绘制。
+
+修改结果：
+
+- 从当前 Codex session 中提取用户本轮 4 张脱敏附件，落盘到 `public/screenshots/whatsapp/`。
+- `src/mock/bankapp.ts` 新增 `whatsAppScreenshotSources`，WhatsApp Demo 不再复用 BankApp livechat 图片。
+- `BankAppDemoPage` 在 `variant="whatsapp"` 时使用独立四步 sequence：`channel -> business -> chat -> closed`。
+- WhatsApp Demo 的 AICC Process 控制区隐藏 `Customer Type`，只保留 `Next Step` 和 `Reset`。
+- WhatsApp Demo 手机当前步骤标题与右侧流程 rail 每一步都显示 `Bank1` badge。
+- WhatsApp Demo 的 `Queue & Agent Chat` 后继续后台打开 Live Chat 并聚焦 WhatsApp 会话 `live-chat-001`，同时保持 WhatsApp Demo 展示满意度评价终态。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：`Channel Simulation > WhatsApp` 可打开 `WhatsApp Demo` tab。
+- Browser smoke check `/`：WhatsApp Demo 不再出现 `Customer Type`。
+- Browser smoke check `/`：四步流程和每步 `Bank1` badge 可见。
+- Browser smoke check `/`：四步分别引用 WhatsApp 专用截图资源。
+- Browser smoke check `/`：进入满意度评价终态时后台出现 `Live Chat` tab。
+- Browser smoke check `/design-system`：页面正常加载，`UI Design System` 可见。
+
+回滚说明：
+
+- 可删除 `public/screenshots/whatsapp/` 四张图片，并移除 `whatsAppScreenshotSources`。
+- 可恢复 `BankAppDemoPage.tsx` 中 WhatsApp variant 继续复用 BankApp livechat sequence 和 Customer Type 控制。
+- 可删除 `src/styles/index.less` 中 `.bankapp-demo--whatsapp`、`.bankapp-whatsapp-hotspot*` 和 `.bankapp-process__controls--actions-only` 相关样式。
+
+当前风险点：
+
+- WhatsApp 截图是静态演示资源，不接真实 WhatsApp 消息网关。
+- 发布公开环境前仍需确认 4 张用户附件截图的授权和脱敏口径。
+- 当前项目仍没有自动化浏览器测试体系，本轮依赖 lint/build 和手工 Browser smoke check。
 
 ### 2026-05-23 19:40 +08:00 - GitHub Actions CI
 

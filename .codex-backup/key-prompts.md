@@ -170,7 +170,7 @@
 - BankApp voice/video 转坐席后，Customer Information 卡片里的渠道图标必须是 BankApp 移动端图标，文字必须显示 `BankApp`。
 - 普通 `Channel Simulation > Video Call` 不能因为 BankApp Video 改动而显示 BankApp，应继续显示 `Video Call` 渠道。
 - Live Chat 流程只有 Guest 才需要 `Personal Information`；Registered Customer 选择 Live Chat 后直接进入 `Select Business`。
-- Video Call 的客户侧 connected 通话界面引用 `public/screenshots/bankapp/video-connected.png` 图片资源；该文件必须直接使用用户提供的视频通话截图原图，不绘制、不脱敏。
+- Video Call 的客户侧 connected 通话界面运行时引用 `public/screenshots/bankapp/video-connected-new.png` 图片资源；该文件必须直接使用用户提供的视频通话截图原图，不绘制、不脱敏。
 - 渠道选择脱敏图中的 `Voice Call`、`Video Call`、`Live Chat` 字体需要足够大，保证演示时客户能看清。
 
 ## 2026-05-23 BankApp Live Chat 排队与聊天截图
@@ -190,16 +190,96 @@
 
 ## 2026-05-23 BankApp Video Connected 原图
 
-- `public/screenshots/bankapp/video-connected.png` 已替换为用户本轮提供的视频通话截图原图。
+- `public/screenshots/bankapp/video-connected-new.png` 已替换为用户本轮提供的视频通话截图原图；`video-connected.png` 仍是同内容副本，但不作为当前运行时路径。
 - 该图片不需要脱敏处理，也不允许前端重新绘制。
 - BankApp Video 的 `Connected` 步骤必须直接显示这张图。
 
+## 2026-05-24 BankApp Voice Calling / Connected 原图
+
+- `public/screenshots/bankapp/voice-calling.png` 是用户本轮提供的 Voice `Calling Agent` 附件原图。
+- `public/screenshots/bankapp/voice-connected.png` 是用户本轮提供的 Voice `Connected` 附件原图。
+- 这两张图片不需要脱敏处理，也不允许前端重新绘制。
+- BankApp Voice 的 `Calling Agent`、`Connected` 和从坐席工作台切回 BankApp Demo 后的 `Agent Workspace` 客户侧画面必须直接显示这两张图中的对应 connected/calling 资源。
+
+## 2026-05-24 BankApp Video Calling / Connected 原图
+
+- BankApp Video 的 `Calling Agent` 步骤必须复用 `public/screenshots/bankapp/voice-calling.png`，即和 Voice 第四步使用同一张 calling 原图。
+- `public/screenshots/bankapp/video-connected.png` 已覆盖为用户本轮提供的 Video `Connected` 附件原图。
+- 运行时 `bankAppScreenshotSources.videoConnected` 指向 `public/screenshots/bankapp/video-connected-new.png`；该文件是同一张用户附件原图的新文件名副本，用于规避浏览器或 dev server 继续缓存旧同名资源。
+- 该图片不需要脱敏处理，也不允许前端重新绘制。
+- Video `Connected` 的既有 screen share 演示控件本轮保持不变；如果后续客户要求纯截图展示，再单独移除叠加控件。
+
 ## 2026-05-23 BankApp 步骤开发方标识
 
-- BankApp 手机当前步骤标题和右侧 AICC Process rail 的步骤名称后都要显示开发方标识。
+- BankApp 右侧 AICC Process rail 的步骤名称后要显示开发方标识；手机区标题行已在 2026-05-24 顶部信息减负中取消重复显示。
 - `Choose Channel`、`Input Phone Number`、`Personal Information`、`Service Closed` 后显示 `BANK1`。
 - 其它步骤后显示 `Netinfo`，包括 `Select Business`、`Confirm Business`、`Calling Agent`、`Connected`、`Chat Page`。
 - 该标识用于演示说明页面由谁开发，不改变实际路由、坐席联动或截图引用。
+
+## 2026-05-23 WhatsApp Demo 四步截图流程
+
+- WhatsApp 接入的 `WhatsApp Demo` 要去除 `Customer Type` 控件。
+- WhatsApp Demo 流程后续已调整为 5 步：进入客服聊天页面并要求转坐席、业务选择、排队并接入坐席进行沟通、查看坐席 Live Chat 工作台、服务结束进行满意度评价。
+- WhatsApp Demo 的每一步流程标签都显示 `Bank1`，不再沿用 BankApp 的 `BANK1` / `Netinfo` 分工标识。
+- 用户本轮提供的 4 张 WhatsApp 截图已经脱敏，必须直接落盘引用，不重新绘制。
+- 当前落盘路径为：
+  - `public/screenshots/whatsapp/chat-request.png`
+  - `public/screenshots/whatsapp/business-selection.png`
+  - `public/screenshots/whatsapp/agent-chat.png`
+  - `public/screenshots/whatsapp/satisfaction-rating.png`
+- WhatsApp Demo 第三步后点击下一步会切到 `Live Chat` 坐席工作台，并聚焦 WhatsApp mock session `live-chat-001`。
+- 切回 WhatsApp Demo 时页面状态不能刷新，必须保留在 `View Agent Workspace`，再点击下一步才进入满意度评价。
+- WhatsApp Demo 的 AICC Process rail 只显示已到达步骤；后续步骤不要提前显示，点击下一步后再显示当前步骤。
+
+## 2026-05-24 BankApp Demo 同步坐席工作台策略
+
+- BankApp Demo 也要采用 WhatsApp Demo 的“当前步骤 -> 查看坐席工作台 -> 返回继续服务结束”策略。
+- 适用范围为 BankApp 的全部接入方式：Voice、Video、Live Chat。
+- BankApp 保留 `Customer Type`，继续支持 Registered / Guest 分支，不按 WhatsApp 规则移除。
+- BankApp 新增的 `Agent Workspace` 步骤沿用现有开发责任口径显示 `Netinfo`，不改为全 `Bank1`。
+- BankApp 的 AICC Process rail 也只显示已到达步骤，后续步骤点击 `Next Step` 后再显示。
+- Voice 在 `Connected` 后进入 `Agent Workspace` 并激活 `PSTN / Voice Call`；Video 激活 `Video Call`；Live Chat 激活 `Live Chat` 并聚焦 BankApp 客户。
+- 从坐席工作台切回 BankApp Demo 时，页面内容不能刷新，必须保留在 `Agent Workspace`，再点击下一步才进入 `Service Closed`。
+
+## 2026-05-24 BankApp / WhatsApp 右侧流程区优化
+
+- BankApp Demo 和 WhatsApp Demo 右侧 AICC Process 顶部控件要统一优化。
+- BankApp 右侧同一行展示可点击 `Channel`、`Customer Type`、`Next Step`、`Reset`；Channel 支持 Voice / Video / Chat 切换，并在切换后重置流程。
+- WhatsApp 右侧同一行只展示只读 `Channel: chat` 与 `Next Step` / `Reset`，不显示 `Customer Type`。
+- 流程到最后一步后，`Next Step` 改为禁用的 `Completed`，`Reset` 保持为唯一重新开始入口。
+- 步骤 rail 不再使用蓝色/绿色强状态图标，避免和 `Bank1` / `Netinfo` badge 混淆；改为中性简洁编号 marker 和箭头连接。
+- WhatsApp Demo 第四步 `View Agent Workspace` 的开发方标签要从 `Bank1` 改为 `Netinfo`，其它 WhatsApp 步骤仍为 `Bank1`。
+
+## 2026-05-24 WhatsApp Demo Channel 文案
+
+- WhatsApp Demo 右侧 AICC Process 的只读 Channel 值显示为小写 `chat`。
+- 该文案只影响 WhatsApp Demo 右侧控件展示，不改变左侧菜单、workspace tab、截图资源或坐席侧 WhatsApp 会话渠道。
+
+## 2026-05-24 BankApp / WhatsApp 统一画布布局
+
+- 领导反馈原左右独立布局让手机 App 与 AICC Process 像两个不相关内容块，需要改成一个统一大画布。
+- BankApp Demo 和 WhatsApp Demo 要共用统一画布：统一边框、统一背景，手机 App 图片和 AICC Process 仍左右并排。
+- `AICC Process` 是 App 图片旁边的解释/流程区，不覆盖到手机截图上，也不下置为单独流程页。
+- 宽屏下需要收紧手机预览列和画布最大宽度，避免 App 图片与流程区距离过大；窄屏可上下排列但仍保持在同一个容器内。
+- 本轮只调整布局和视觉归属感，不改变既有流程状态、坐席工作台跳转、Completed 结束态、`Bank1` / `Netinfo` badge 或截图资源。
+
+## 2026-05-24 BankApp / WhatsApp 顶部信息减负
+
+- BankApp Demo 和 WhatsApp Demo 不再显示统一画布顶部 `Customer Access Demo` 标题整块。
+- 手机图片区域标题行只保留 `Customer BankApp` / `Customer WhatsApp`，不再在右上角重复显示当前步骤名称和 `Bank1` / `Netinfo` badge。
+- 当前步骤、开发方 badge、Next/Reset 和 Completed 终态只在右侧 AICC Process 表达。
+- 保留统一大画布、左右并排关系、右侧流程 rail 和所有客户侧/坐席侧跳转逻辑。
+
+## 2026-05-24 BankApp Video 桌面共享流程修正
+
+- BankApp Video 的桌面共享必须从坐席侧 OpenEye 浮窗发起，不再从 BankApp connected 手机页发起。
+- OpenEye 挂机按钮上方显示英文 `Desktop Share` 按钮，仅适用于 `bankapp-video` 来源，按钮背景需要保持半透明。
+- 点击 `Desktop Share` 后 OpenEye 画面切换为“选择共享程序”截图；点击截图内 `确定` 后才切回 BankApp Demo。
+- BankApp Demo 切回后展示客户侧查看坐席共享画面，即 `video-screen-sharing.png`。
+- BankApp Video 在 `Agent Workspace` 后新增 `Select Sharing Program` 与 `View Agent Screen Sharing` 两个步骤，标签均为 `Netinfo`。
+- `openeye-share-selection.png` 必须直接使用用户附件一原图，不要绘制；`video-screen-sharing.png` 必须直接使用用户附件二原图，不要绘制。
+- Voice、Live Chat、WhatsApp 和普通 Video Call 不应继承 BankApp Video 的桌面共享入口或新增步骤。
+- Reset、Hang Up、关闭 Video Call tab、签出/AUX、非 BankApp Video 呼叫必须清理共享状态。
 
 ## 2026-05-23 版本与素材策略
 
@@ -207,7 +287,7 @@
 - `main` 作为生产演示分支，合入后打 tag 冻结版本。
 - 仓库内只保留脱敏或明确可分享素材；明显未脱敏或旧版原始截图已迁出 `public/screenshots/bankapp/`，避免误提交。
 - `v0.3.1` 左侧菜单只显示 `Channel Simulation > PSTN / BankApp / WhatsApp`，普通 `Video Call` 和 `Live Chat` 菜单入口隐藏但底层能力保留。
-- WhatsApp 初版模拟器复用 BankApp 客户侧流程壳，默认 Live Chat，并在 handoff 时聚焦 WhatsApp mock session `live-chat-001`。
+- WhatsApp 模拟器当前已从初版 BankApp 复用壳升级为 WhatsApp 专用五步流程，默认 Live Chat，并在 handoff 时聚焦 WhatsApp mock session `live-chat-001`。
 - `v0.4.0` Video screen share 是前端 demo-only 状态：BankApp Video connected 页 Start/Stop，OpenEye 浮窗同步显示共享预览，Hang Up/关闭 Video tab/Reset 清理状态。
 - GitHub Actions CI 需要在 PR 到 `main` 或 push 到 `main` / `codex/**` 时运行 `npm ci`、`npm run lint`、`npm run build`。
 

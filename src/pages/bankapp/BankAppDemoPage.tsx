@@ -2,8 +2,6 @@ import { useMemo, useState } from 'react'
 import {
   AudioOutlined,
   CheckCircleOutlined,
-  ClockCircleOutlined,
-  DesktopOutlined,
   FileDoneOutlined,
   IdcardOutlined,
   MobileOutlined,
@@ -18,8 +16,9 @@ import {
   bankAppBusinessOptions,
   bankAppContactMethods,
   bankAppScreenshotSources,
+  whatsAppScreenshotSources,
 } from '../../mock/bankapp'
-import { useAppStore } from '../../store'
+import { useAppStore, type BankAppVideoShareState } from '../../store'
 import type {
   BankAppBusinessOption,
   BankAppBusinessType,
@@ -63,6 +62,7 @@ const demoConfigs: Record<CustomerAppDemoVariant, CustomerAppDemoConfig> = {
 }
 
 const stepLabels: Record<BankAppDemoStep, string> = {
+  'agent-workspace': 'Agent Workspace',
   business: 'Select Business',
   calling: 'Calling Agent',
   channel: 'Choose Channel',
@@ -72,6 +72,16 @@ const stepLabels: Record<BankAppDemoStep, string> = {
   connected: 'Connected',
   'personal-info': 'Personal Information',
   'phone-number': 'Input Phone Number',
+  'screen-sharing': 'View Agent Screen Sharing',
+  'share-select': 'Select Sharing Program',
+}
+
+const whatsAppStepLabels: Partial<Record<BankAppDemoStep, string>> = {
+  'agent-workspace': 'View Agent Workspace',
+  business: 'Business Selection',
+  channel: 'Request Human Agent',
+  chat: 'Queue & Agent Chat',
+  closed: 'Satisfaction Rating',
 }
 
 const bankOwnedSteps = new Set<BankAppDemoStep>([
@@ -80,6 +90,14 @@ const bankOwnedSteps = new Set<BankAppDemoStep>([
   'personal-info',
   'phone-number',
 ])
+
+const whatsAppStepSequence: BankAppDemoStep[] = [
+  'channel',
+  'business',
+  'chat',
+  'agent-workspace',
+  'closed',
+]
 
 const businessHotspots: BankAppBusinessType[] = [
   'mobile-login',
@@ -91,7 +109,12 @@ const businessHotspots: BankAppBusinessType[] = [
 function getStepSequence(
   contactMethod: BankAppContactMethod,
   customerType: BankAppCustomerType,
+  variant: CustomerAppDemoVariant,
 ): BankAppDemoStep[] {
+  if (variant === 'whatsapp') {
+    return whatsAppStepSequence
+  }
+
   const phoneStep: BankAppDemoStep[] =
     customerType === 'guest' ? ['phone-number'] : []
 
@@ -106,9 +129,13 @@ function getStepSequence(
       'confirm',
       'calling',
       'chat',
+      'agent-workspace',
       'closed',
     ]
   }
+
+  const desktopShareSteps: BankAppDemoStep[] =
+    contactMethod === 'video' ? ['share-select', 'screen-sharing'] : []
 
   return [
     'channel',
@@ -117,6 +144,8 @@ function getStepSequence(
     'confirm',
     'calling',
     'connected',
+    'agent-workspace',
+    ...desktopShareSteps,
     'closed',
   ]
 }
@@ -135,7 +164,23 @@ function getMethodLabel(method: BankAppContactMethod) {
   )
 }
 
-function getStepOwner(step: BankAppDemoStep) {
+function getStepLabel(step: BankAppDemoStep, variant: CustomerAppDemoVariant) {
+  if (variant === 'whatsapp') {
+    return whatsAppStepLabels[step] ?? stepLabels[step]
+  }
+
+  return stepLabels[step]
+}
+
+function getStepOwner(step: BankAppDemoStep, variant: CustomerAppDemoVariant) {
+  if (variant === 'whatsapp') {
+    if (step === 'agent-workspace') {
+      return 'Netinfo'
+    }
+
+    return 'Bank1'
+  }
+
   return bankOwnedSteps.has(step) ? 'BANK1' : 'Netinfo'
 }
 
@@ -163,8 +208,25 @@ function getRoutedSkill(
   return `${baseSkill} / ${methodLabel}`
 }
 
-function getProcessDescription(step: BankAppDemoStep, channelLabel: string) {
+function getProcessDescription(
+  step: BankAppDemoStep,
+  channelLabel: string,
+  variant: CustomerAppDemoVariant,
+) {
+  if (variant === 'whatsapp') {
+    const descriptions: Partial<Record<BankAppDemoStep, string>> = {
+      business: 'Customer chooses Chat CS Bank 1 from the WhatsApp business menu.',
+      'agent-workspace': 'Agent reviews the inbound WhatsApp conversation in Live Chat.',
+      channel: 'Customer opens WhatsApp chat and requests transfer to human service.',
+      chat: 'Customer waits in queue and is connected with a Bank 1 agent.',
+      closed: 'Customer receives the satisfaction rating menu after service ends.',
+    }
+
+    return descriptions[step] ?? ''
+  }
+
   const descriptions: Record<BankAppDemoStep, string> = {
+    'agent-workspace': 'Agent reviews the customer conversation in the workspace.',
     business: 'AICC displays skills from customer identity, language, and channel.',
     calling: 'AICC queues the request and starts agent routing.',
     channel: `Customer chooses a ${channelLabel} contact method.`,
@@ -174,9 +236,45 @@ function getProcessDescription(step: BankAppDemoStep, channelLabel: string) {
     connected: 'Customer sees the connected call timer before agent desktop opens.',
     'personal-info': `${channelLabel} passes customer profile context to AICC.`,
     'phone-number': 'Guest customer provides a callback phone number.',
+    'screen-sharing': 'Customer views the agent desktop share inside the BankApp video call.',
+    'share-select': 'Agent selects the desktop source from the OpenEye sharing dialog.',
   }
 
   return descriptions[step]
+}
+
+function getVisibleDemoStep({
+  bankAppVideoShareState,
+  contactMethod,
+  demoStep,
+  variant,
+}: {
+  bankAppVideoShareState: BankAppVideoShareState
+  contactMethod: BankAppContactMethod
+  demoStep: BankAppDemoStep
+  variant: CustomerAppDemoVariant
+}): BankAppDemoStep {
+  if (variant !== 'bankapp' || contactMethod !== 'video') {
+    return demoStep
+  }
+
+  if (demoStep === 'closed') {
+    return demoStep
+  }
+
+  if (bankAppVideoShareState === 'selecting-program') {
+    return 'share-select'
+  }
+
+  if (bankAppVideoShareState === 'sharing') {
+    return 'screen-sharing'
+  }
+
+  if (demoStep === 'share-select' || demoStep === 'screen-sharing') {
+    return 'agent-workspace'
+  }
+
+  return demoStep
 }
 
 export function BankAppDemoPage({
@@ -194,11 +292,11 @@ export function BankAppDemoPage({
   const requestLiveChatWorkspace = useAppStore(
     (state) => state.requestLiveChatWorkspace,
   )
-  const isScreenShareActive = useAppStore(
-    (state) => state.isScreenShareActive,
+  const bankAppVideoShareState = useAppStore(
+    (state) => state.bankAppVideoShareState,
   )
-  const setScreenShareActive = useAppStore(
-    (state) => state.setScreenShareActive,
+  const resetBankAppVideoDesktopShare = useAppStore(
+    (state) => state.resetBankAppVideoDesktopShare,
   )
   const [customerType, setCustomerType] =
     useState<BankAppCustomerType>('registered')
@@ -216,10 +314,17 @@ export function BankAppDemoPage({
     [businessType],
   )
   const currentSequence = useMemo(
-    () => getStepSequence(contactMethod, customerType),
-    [contactMethod, customerType],
+    () => getStepSequence(contactMethod, customerType, variant),
+    [contactMethod, customerType, variant],
   )
-  const currentStepIndex = Math.max(0, currentSequence.indexOf(demoStep))
+  const visibleDemoStep = getVisibleDemoStep({
+    bankAppVideoShareState,
+    contactMethod,
+    demoStep,
+    variant,
+  })
+  const currentStepIndex = Math.max(0, currentSequence.indexOf(visibleDemoStep))
+  const isFlowComplete = currentStepIndex === currentSequence.length - 1
   const routedSkill = getRoutedSkill(
     selectedBusiness,
     customerType,
@@ -227,18 +332,18 @@ export function BankAppDemoPage({
     contactMethod,
   )
 
-  const triggerAgentWorkspace = () => {
+  const triggerAgentWorkspace = (activateWorkspace = false) => {
     if (contactMethod === 'livechat') {
-      requestLiveChatWorkspace(config.liveChatSessionId, false)
+      requestLiveChatWorkspace(config.liveChatSessionId, activateWorkspace)
       return
     }
 
     if (contactMethod === 'voice') {
-      requestBankAppVoiceCall()
+      requestBankAppVoiceCall(activateWorkspace)
       return
     }
 
-    requestBankAppVideoCall()
+    requestBankAppVideoCall(activateWorkspace)
   }
 
   const goToStep = (nextStep: BankAppDemoStep) => {
@@ -247,12 +352,12 @@ export function BankAppDemoPage({
 
   const handleNextStep = () => {
     const isAgentHandoffStep =
-      (contactMethod === 'livechat' && demoStep === 'chat') ||
-      (contactMethod !== 'livechat' && demoStep === 'connected')
+      (contactMethod === 'livechat' && visibleDemoStep === 'chat') ||
+      (contactMethod !== 'livechat' && visibleDemoStep === 'connected')
 
     if (isAgentHandoffStep) {
-      triggerAgentWorkspace()
-      goToStep('closed')
+      triggerAgentWorkspace(true)
+      goToStep('agent-workspace')
       return
     }
 
@@ -265,11 +370,13 @@ export function BankAppDemoPage({
   }
 
   const handleCustomerTypeChange = (nextCustomerType: BankAppCustomerType) => {
+    resetBankAppVideoDesktopShare()
     setCustomerType(nextCustomerType)
     setDemoStep('channel')
   }
 
   const handleMethodChange = (nextMethod: BankAppContactMethod) => {
+    resetBankAppVideoDesktopShare()
     setContactMethod(nextMethod)
     setDemoStep('channel')
   }
@@ -279,7 +386,7 @@ export function BankAppDemoPage({
     setContactMethod(config.defaultContactMethod)
     setBusinessType('mobile-login')
     setDemoStep('channel')
-    setScreenShareActive(false)
+    resetBankAppVideoDesktopShare()
   }
 
   const renderPhoneStatus = () => (
@@ -297,33 +404,55 @@ export function BankAppDemoPage({
       <img
         alt={`${config.channelLabel} service channel`}
         className="bankapp-phone-screen__reference"
-        src={bankAppScreenshotSources.channel}
+        src={
+          variant === 'whatsapp'
+            ? whatsAppScreenshotSources.chatRequest
+            : bankAppScreenshotSources.channel
+        }
       />
-      <div className="bankapp-channel-hotspots" aria-label="Choose service channel">
-        {bankAppContactMethods
-          .filter((method) => config.contactMethods.includes(method.id))
-          .map((method) => (
+      {variant === 'whatsapp' ? (
+        <div
+          className="bankapp-whatsapp-hotspots"
+          aria-label="Open WhatsApp business menu"
+        >
           <button
-            aria-label={method.label}
-            className={`bankapp-channel-hotspot bankapp-channel-hotspot--${method.id}`}
-            key={method.id}
-            title={method.label}
+            aria-label="Open Menu Awal"
+            className="bankapp-whatsapp-hotspot bankapp-whatsapp-hotspot--menu"
+            title="Menu Awal"
             type="button"
-            onClick={() => {
-              handleMethodChange(method.id)
-              goToStep(
-                method.id === 'livechat'
-                  ? customerType === 'guest'
-                    ? 'personal-info'
-                    : 'business'
-                  : customerType === 'guest'
-                    ? 'phone-number'
-                    : 'business',
-              )
-            }}
+            onClick={() => goToStep('business')}
           />
-        ))}
-      </div>
+        </div>
+      ) : (
+        <div
+          className="bankapp-channel-hotspots"
+          aria-label="Choose service channel"
+        >
+          {bankAppContactMethods
+            .filter((method) => config.contactMethods.includes(method.id))
+            .map((method) => (
+              <button
+                aria-label={method.label}
+                className={`bankapp-channel-hotspot bankapp-channel-hotspot--${method.id}`}
+                key={method.id}
+                title={method.label}
+                type="button"
+                onClick={() => {
+                  handleMethodChange(method.id)
+                  goToStep(
+                    method.id === 'livechat'
+                      ? customerType === 'guest'
+                        ? 'personal-info'
+                        : 'business'
+                      : customerType === 'guest'
+                        ? 'phone-number'
+                        : 'business',
+                  )
+                }}
+              />
+            ))}
+        </div>
+      )}
     </div>
   )
 
@@ -354,27 +483,47 @@ export function BankAppDemoPage({
           contactMethod,
         )} business selection`}
         className="bankapp-phone-screen__reference"
-        src={bankAppScreenshotSources.businessSelection[contactMethod]}
+        src={
+          variant === 'whatsapp'
+            ? whatsAppScreenshotSources.businessSelection
+            : bankAppScreenshotSources.businessSelection[contactMethod]
+        }
       />
-      <div className="bankapp-business-hotspots" aria-label="Choose business">
-        {businessHotspots.map((optionId) => (
+      {variant === 'whatsapp' ? (
+        <div
+          className="bankapp-whatsapp-hotspots"
+          aria-label="Send WhatsApp business selection"
+        >
           <button
-            aria-label={getBusinessLabel(
-              bankAppBusinessOptions.find((option) => option.id === optionId) ??
-                selectedBusiness,
-              language,
-            )}
-            className={`bankapp-business-hotspot bankapp-business-hotspot--${optionId}`}
-            key={optionId}
-            title={optionId}
+            aria-label="Send selected WhatsApp business"
+            className="bankapp-whatsapp-hotspot bankapp-whatsapp-hotspot--send"
+            title="Send"
             type="button"
-            onClick={() => {
-              setBusinessType(optionId)
-              goToStep('confirm')
-            }}
+            onClick={() => goToStep('chat')}
           />
-        ))}
-      </div>
+        </div>
+      ) : (
+        <div className="bankapp-business-hotspots" aria-label="Choose business">
+          {businessHotspots.map((optionId) => (
+            <button
+              aria-label={getBusinessLabel(
+                bankAppBusinessOptions.find(
+                  (option) => option.id === optionId,
+                ) ?? selectedBusiness,
+                language,
+              )}
+              className={`bankapp-business-hotspot bankapp-business-hotspot--${optionId}`}
+              key={optionId}
+              title={optionId}
+              type="button"
+              onClick={() => {
+                setBusinessType(optionId)
+                goToStep('confirm')
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 
@@ -419,6 +568,30 @@ export function BankAppDemoPage({
       )
     }
 
+    if (contactMethod === 'voice') {
+      return (
+        <div className="bankapp-phone-screen bankapp-phone-screen--voice-calling">
+          <img
+            alt={`${config.channelLabel} Voice Call calling agent`}
+            className="bankapp-phone-screen__reference"
+            src={bankAppScreenshotSources.voiceCalling}
+          />
+        </div>
+      )
+    }
+
+    if (contactMethod === 'video') {
+      return (
+        <div className="bankapp-phone-screen bankapp-phone-screen--video-calling">
+          <img
+            alt={`${config.channelLabel} Video Call calling agent`}
+            className="bankapp-phone-screen__reference"
+            src={bankAppScreenshotSources.voiceCalling}
+          />
+        </div>
+      )
+    }
+
     return (
       <div className="bankapp-call-screen">
         <div className="bankapp-call-screen__background" />
@@ -448,20 +621,18 @@ export function BankAppDemoPage({
             className="bankapp-phone-screen__reference"
             src={bankAppScreenshotSources.videoConnected}
           />
-          <div className="bankapp-screen-share-control">
-            <div>
-              <DesktopOutlined />
-              <span>
-                {isScreenShareActive ? 'Desktop sharing' : 'Screen share'}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setScreenShareActive(!isScreenShareActive)}
-            >
-              {isScreenShareActive ? 'Stop' : 'Start'}
-            </button>
-          </div>
+        </div>
+      )
+    }
+
+    if (contactMethod === 'voice') {
+      return (
+        <div className="bankapp-phone-screen bankapp-phone-screen--voice-connected">
+          <img
+            alt={`${config.channelLabel} Voice Call connected`}
+            className="bankapp-phone-screen__reference"
+            src={bankAppScreenshotSources.voiceConnected}
+          />
         </div>
       )
     }
@@ -482,12 +653,26 @@ export function BankAppDemoPage({
     )
   }
 
+  const renderScreenSharingScreen = () => (
+    <div className="bankapp-phone-screen bankapp-phone-screen--video-screen-sharing">
+      <img
+        alt={`${config.channelLabel} agent screen sharing`}
+        className="bankapp-phone-screen__reference"
+        src={bankAppScreenshotSources.videoScreenSharing}
+      />
+    </div>
+  )
+
   const renderChatScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--livechat-chat">
       <img
         alt={`${config.channelLabel} Live Chat conversation`}
         className="bankapp-phone-screen__reference"
-        src={bankAppScreenshotSources.textChat}
+        src={
+          variant === 'whatsapp'
+            ? whatsAppScreenshotSources.agentChat
+            : bankAppScreenshotSources.textChat
+        }
       />
     </div>
   )
@@ -497,42 +682,62 @@ export function BankAppDemoPage({
       <img
         alt={`${config.channelLabel} satisfaction evaluation`}
         className="bankapp-phone-screen__reference"
-        src={bankAppScreenshotSources.serviceClosed}
+        src={
+          variant === 'whatsapp'
+            ? whatsAppScreenshotSources.satisfactionRating
+            : bankAppScreenshotSources.serviceClosed
+        }
       />
     </div>
   )
 
   const renderPhoneContent = () => {
-    if (demoStep === 'channel') {
+    if (visibleDemoStep === 'channel') {
       return renderChannelScreen()
     }
 
-    if (demoStep === 'phone-number') {
+    if (visibleDemoStep === 'phone-number') {
       return renderPhoneNumberScreen()
     }
 
-    if (demoStep === 'personal-info') {
+    if (visibleDemoStep === 'personal-info') {
       return renderPersonalInfoScreen()
     }
 
-    if (demoStep === 'business') {
+    if (visibleDemoStep === 'business') {
       return renderBusinessScreen()
     }
 
-    if (demoStep === 'confirm') {
+    if (visibleDemoStep === 'confirm') {
       return renderConfirmScreen()
     }
 
-    if (demoStep === 'calling') {
+    if (visibleDemoStep === 'calling') {
       return renderCallingScreen()
     }
 
-    if (demoStep === 'connected') {
+    if (visibleDemoStep === 'connected') {
       return renderConnectedScreen()
     }
 
-    if (demoStep === 'chat') {
+    if (visibleDemoStep === 'chat') {
       return renderChatScreen()
+    }
+
+    if (visibleDemoStep === 'agent-workspace' && contactMethod === 'livechat') {
+      return renderChatScreen()
+    }
+
+    if (visibleDemoStep === 'agent-workspace') {
+      return renderConnectedScreen()
+    }
+
+    if (visibleDemoStep === 'share-select') {
+      return renderConnectedScreen()
+    }
+
+    if (visibleDemoStep === 'screen-sharing') {
+      return renderScreenSharingScreen()
     }
 
     return renderClosedScreen()
@@ -541,7 +746,7 @@ export function BankAppDemoPage({
   const renderRailStatus = (step: BankAppDemoStep) => {
     const stepIndex = currentSequence.indexOf(step)
 
-    if (stepIndex < currentStepIndex) {
+    if (stepIndex < currentStepIndex || isFlowComplete) {
       return 'complete'
     }
 
@@ -552,31 +757,34 @@ export function BankAppDemoPage({
     return 'pending'
   }
   const isScreenshotStep =
-    demoStep === 'channel' ||
-    demoStep === 'phone-number' ||
-    demoStep === 'personal-info' ||
-    demoStep === 'closed' ||
+    visibleDemoStep === 'channel' ||
+    visibleDemoStep === 'phone-number' ||
+    visibleDemoStep === 'personal-info' ||
+    visibleDemoStep === 'screen-sharing' ||
+    visibleDemoStep === 'share-select' ||
+    visibleDemoStep === 'closed' ||
+    variant === 'whatsapp' ||
+    (visibleDemoStep === 'agent-workspace' && contactMethod !== 'voice') ||
     (contactMethod === 'livechat' &&
-      (demoStep === 'calling' || demoStep === 'chat')) ||
-    (contactMethod === 'video' && demoStep === 'connected')
+      (visibleDemoStep === 'calling' || visibleDemoStep === 'chat')) ||
+    (contactMethod === 'voice' &&
+      (visibleDemoStep === 'calling' ||
+        visibleDemoStep === 'connected' ||
+        visibleDemoStep === 'agent-workspace')) ||
+    (contactMethod === 'video' && visibleDemoStep === 'calling') ||
+    (contactMethod === 'video' && visibleDemoStep === 'connected')
+  const visibleProcessSteps = currentSequence.slice(0, currentStepIndex + 1)
 
   return (
-    <section className="bankapp-demo" aria-label={config.ariaLabel}>
+    <section
+      className={`bankapp-demo bankapp-demo--${variant}`}
+      aria-label={config.ariaLabel}
+    >
       <div className="bankapp-demo__stage">
         <section className="bankapp-demo__phone-panel">
           <div className="bankapp-demo__panel-heading">
             <MobileOutlined />
             <strong>{config.phoneTitle}</strong>
-            <span className="bankapp-step-title">
-              {stepLabels[demoStep]}
-              <span
-                className={`bankapp-step-owner bankapp-step-owner--${getStepOwner(
-                  demoStep,
-                ).toLowerCase()}`}
-              >
-                {getStepOwner(demoStep)}
-              </span>
-            </span>
           </div>
           <div className="bankapp-phone">
             {isScreenshotStep ? null : renderPhoneStatus()}
@@ -592,27 +800,64 @@ export function BankAppDemoPage({
             </div>
           </div>
 
-          <div className="bankapp-process__controls">
-            <SegmentedControl
-              label="Customer Type"
-              options={[
-                ['registered', 'Registered Customer'],
-                ['guest', 'Guest'],
-              ]}
-              value={customerType}
-              onChange={(value) =>
-                handleCustomerTypeChange(value as BankAppCustomerType)
-              }
-            />
+          <div
+            className={[
+              'bankapp-process__controls',
+              variant === 'whatsapp'
+                ? 'bankapp-process__controls--actions-only'
+                : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            {variant === 'bankapp' ? (
+              <>
+                <SegmentedControl
+                  label="Channel"
+                  options={[
+                    ['voice', 'Voice'],
+                    ['video', 'Video'],
+                    ['livechat', 'Chat'],
+                  ]}
+                  value={contactMethod}
+                  onChange={(value) =>
+                    handleMethodChange(value as BankAppContactMethod)
+                  }
+                />
+                <SegmentedControl
+                  label="Customer Type"
+                  options={[
+                    ['registered', 'Registered'],
+                    ['guest', 'Guest'],
+                  ]}
+                  value={customerType}
+                  onChange={(value) =>
+                    handleCustomerTypeChange(value as BankAppCustomerType)
+                  }
+                />
+              </>
+            ) : (
+              <div className="bankapp-process__readonly-control">
+                <span>Channel</span>
+                <strong>chat</strong>
+              </div>
+            )}
             <div className="bankapp-process__actions">
               <BaseButton
-                icon={<PlayCircleOutlined />}
+                disabled={isFlowComplete}
+                icon={
+                  isFlowComplete ? (
+                    <CheckCircleOutlined />
+                  ) : (
+                    <PlayCircleOutlined />
+                  )
+                }
                 size="small"
-                type="primary"
-                variant="primary"
+                type={isFlowComplete ? undefined : 'primary'}
+                variant={isFlowComplete ? 'secondary' : 'primary'}
                 onClick={handleNextStep}
               >
-                Next Step
+                {isFlowComplete ? 'Completed' : 'Next Step'}
               </BaseButton>
               <BaseButton
                 icon={<ReloadOutlined />}
@@ -625,17 +870,8 @@ export function BankAppDemoPage({
             </div>
           </div>
 
-          <div className="bankapp-process__summary">
-            <InfoRow
-              label="Channel"
-              value={`${config.channelLabel} / ${getMethodLabel(
-                contactMethod,
-              )}`}
-            />
-          </div>
-
           <ol className="bankapp-process__rail">
-            {currentSequence.map((step) => {
+            {visibleProcessSteps.map((step, stepIndex) => {
               const status = renderRailStatus(step)
 
               return (
@@ -643,25 +879,31 @@ export function BankAppDemoPage({
                   className={`bankapp-process__step bankapp-process__step--${status}`}
                   key={step}
                 >
-                  <span className="bankapp-process__marker">
-                    {status === 'complete' ? (
-                      <CheckCircleOutlined />
-                    ) : (
-                      <ClockCircleOutlined />
-                    )}
+                  <span
+                    aria-label={`${status} step ${stepIndex + 1}`}
+                    className="bankapp-process__marker"
+                  >
+                    {stepIndex + 1}
                   </span>
                   <div>
                     <strong className="bankapp-process__step-title">
-                      {stepLabels[step]}
+                      {getStepLabel(step, variant)}
                       <span
                         className={`bankapp-step-owner bankapp-step-owner--${getStepOwner(
                           step,
+                          variant,
                         ).toLowerCase()}`}
                       >
-                        {getStepOwner(step)}
+                        {getStepOwner(step, variant)}
                       </span>
                     </strong>
-                    <p>{getProcessDescription(step, config.channelLabel)}</p>
+                    <p>
+                      {getProcessDescription(
+                        step,
+                        config.channelLabel,
+                        variant,
+                      )}
+                    </p>
                   </div>
                 </li>
               )
@@ -670,15 +912,6 @@ export function BankAppDemoPage({
         </aside>
       </div>
     </section>
-  )
-}
-
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="bankapp-info-row">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
   )
 }
 
@@ -694,11 +927,12 @@ function SegmentedControl({
   onChange: (value: string) => void
 }) {
   return (
-    <label className="bankapp-segmented">
+    <div aria-label={label} className="bankapp-segmented" role="group">
       <span>{label}</span>
       <div>
         {options.map(([optionValue, optionLabel]) => (
           <button
+            aria-pressed={optionValue === value}
             className={
               optionValue === value ? 'bankapp-segmented__option--active' : ''
             }
@@ -710,7 +944,7 @@ function SegmentedControl({
           </button>
         ))}
       </div>
-    </label>
+    </div>
   )
 }
 

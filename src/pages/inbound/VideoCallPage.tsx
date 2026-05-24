@@ -16,8 +16,17 @@ export function VideoCallPage() {
   const isScreenShareActive = useAppStore(
     (state) => state.isScreenShareActive,
   )
+  const bankAppVideoShareState = useAppStore(
+    (state) => state.bankAppVideoShareState,
+  )
   const videoCallPopupSource = useAppStore(
     (state) => state.videoCallPopupSource,
+  )
+  const startBankAppVideoShareSelection = useAppStore(
+    (state) => state.startBankAppVideoShareSelection,
+  )
+  const confirmBankAppVideoScreenShare = useAppStore(
+    (state) => state.confirmBankAppVideoScreenShare,
   )
   const customer =
     videoCallPopupSource === 'bankapp-video'
@@ -30,7 +39,13 @@ export function VideoCallPage() {
       customer={customer}
       overlay={
         showOpenEyeVideoWindow ? (
-          <OpenEyeVideoWindow isScreenShareActive={isScreenShareActive} />
+          <OpenEyeVideoWindow
+            bankAppVideoShareState={bankAppVideoShareState}
+            isBankAppVideo={videoCallPopupSource === 'bankapp-video'}
+            isScreenShareActive={isScreenShareActive}
+            onConfirmScreenShare={confirmBankAppVideoScreenShare}
+            onStartScreenShare={startBankAppVideoShareSelection}
+          />
         ) : null
       }
     />

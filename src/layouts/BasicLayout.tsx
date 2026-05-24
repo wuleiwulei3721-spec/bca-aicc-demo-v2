@@ -118,8 +118,14 @@ const sideMenuItems: SideMenuItem[] = [
 
 export function BasicLayout() {
   const collapsed = useAppStore((state) => state.collapsed)
+  const bankAppVideoCallActivateWorkspace = useAppStore(
+    (state) => state.bankAppVideoCallActivateWorkspace,
+  )
   const bankAppVideoCallRequestId = useAppStore(
     (state) => state.bankAppVideoCallRequestId,
+  )
+  const bankAppVoiceCallActivateWorkspace = useAppStore(
+    (state) => state.bankAppVoiceCallActivateWorkspace,
   )
   const bankAppVoiceCallRequestId = useAppStore(
     (state) => state.bankAppVoiceCallRequestId,
@@ -142,8 +148,8 @@ export function BasicLayout() {
   const setOpenEyeVideoWindowVisible = useAppStore(
     (state) => state.setOpenEyeVideoWindowVisible,
   )
-  const setScreenShareActive = useAppStore(
-    (state) => state.setScreenShareActive,
+  const resetBankAppVideoDesktopShare = useAppStore(
+    (state) => state.resetBankAppVideoDesktopShare,
   )
   const customerOutboundCallRequestId = useAppStore(
     (state) => state.customerOutboundCallRequestId,
@@ -183,9 +189,13 @@ export function BasicLayout() {
       setActiveCallChannel(null)
       setIsAfterCallWork(false)
       setOpenEyeVideoWindowVisible(false)
-      setScreenShareActive(false)
+      resetBankAppVideoDesktopShare()
     }
-  }, [setLiveChatTabOpen, setOpenEyeVideoWindowVisible, setScreenShareActive])
+  }, [
+    resetBankAppVideoDesktopShare,
+    setLiveChatTabOpen,
+    setOpenEyeVideoWindowVisible,
+  ])
 
   const updateCallStatus = useCallback((status: CallStatus) => {
     setCallStatus(status)
@@ -234,7 +244,7 @@ export function BasicLayout() {
       setActiveCallChannel('voice')
       setIsAfterCallWork(false)
       setOpenEyeVideoWindowVisible(false)
-      setScreenShareActive(false)
+      resetBankAppVideoDesktopShare()
       updateCallStatus('Incoming')
       requestInboundPopup(source, activateWorkspace)
     },
@@ -242,8 +252,8 @@ export function BasicLayout() {
       agentStatus,
       callStatus,
       requestInboundPopup,
+      resetBankAppVideoDesktopShare,
       setOpenEyeVideoWindowVisible,
-      setScreenShareActive,
       updateCallStatus,
     ],
   )
@@ -259,7 +269,7 @@ export function BasicLayout() {
       setIsAfterCallWork(false)
       setOpenEyeVideoWindowVisible(false)
       if (source !== 'bankapp-video') {
-        setScreenShareActive(false)
+        resetBankAppVideoDesktopShare()
       }
       updateCallStatus('Incoming')
       requestVideoCallPopup(source, activateWorkspace)
@@ -268,8 +278,8 @@ export function BasicLayout() {
       agentStatus,
       callStatus,
       requestVideoCallPopup,
+      resetBankAppVideoDesktopShare,
       setOpenEyeVideoWindowVisible,
-      setScreenShareActive,
       updateCallStatus,
     ],
   )
@@ -331,8 +341,15 @@ export function BasicLayout() {
     }
 
     handledBankAppVoiceCallRequestIdRef.current = bankAppVoiceCallRequestId
-    triggerVoiceInboundCall('bankapp-voice', false)
-  }, [bankAppVoiceCallRequestId, triggerVoiceInboundCall])
+    triggerVoiceInboundCall(
+      'bankapp-voice',
+      bankAppVoiceCallActivateWorkspace,
+    )
+  }, [
+    bankAppVoiceCallActivateWorkspace,
+    bankAppVoiceCallRequestId,
+    triggerVoiceInboundCall,
+  ])
 
   useEffect(() => {
     if (
@@ -343,8 +360,15 @@ export function BasicLayout() {
     }
 
     handledBankAppVideoCallRequestIdRef.current = bankAppVideoCallRequestId
-    triggerVideoInboundCall('bankapp-video', false)
-  }, [bankAppVideoCallRequestId, triggerVideoInboundCall])
+    triggerVideoInboundCall(
+      'bankapp-video',
+      bankAppVideoCallActivateWorkspace,
+    )
+  }, [
+    bankAppVideoCallActivateWorkspace,
+    bankAppVideoCallRequestId,
+    triggerVideoInboundCall,
+  ])
 
   const handleHoldToggle = useCallback(() => {
     const now = Date.now()
@@ -412,11 +436,11 @@ export function BasicLayout() {
     setActiveCallChannel(null)
     setIsAfterCallWork(true)
     setOpenEyeVideoWindowVisible(false)
-    setScreenShareActive(false)
+    resetBankAppVideoDesktopShare()
     updateAgentStatus('Not Ready')
   }, [
+    resetBankAppVideoDesktopShare,
     setOpenEyeVideoWindowVisible,
-    setScreenShareActive,
     updateAgentStatus,
     updateCallStatus,
   ])

@@ -19,6 +19,9 @@ export type BankAppDemoStep =
   | 'calling'
   | 'connected'
   | 'chat'
+  | 'agent-workspace'
+  | 'share-select'
+  | 'screen-sharing'
   | 'closed'
 
 export interface BankAppBusinessOption {

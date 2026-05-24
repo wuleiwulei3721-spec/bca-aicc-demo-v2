@@ -2,10 +2,14 @@ import { create } from 'zustand'
 
 export type InboundPopupSource = 'pstn' | 'bankapp-voice'
 export type VideoCallPopupSource = 'standard' | 'bankapp-video'
+export type BankAppVideoShareState = 'idle' | 'selecting-program' | 'sharing'
 
 interface AppState {
   activeWorkspaceTabKey: string
+  bankAppVideoCallActivateWorkspace: boolean
   bankAppVideoCallRequestId: number
+  bankAppVideoShareState: BankAppVideoShareState
+  bankAppVoiceCallActivateWorkspace: boolean
   bankAppVoiceCallRequestId: number
   collapsed: boolean
   customerOutboundCallRequestId: number
@@ -26,9 +30,10 @@ interface AppState {
   closeInboundTab: () => void
   closeVideoCallTab: () => void
   closeWhatsAppDemoTab: () => void
+  confirmBankAppVideoScreenShare: () => void
   requestBankAppDemoWorkspace: () => void
-  requestBankAppVideoCall: () => void
-  requestBankAppVoiceCall: () => void
+  requestBankAppVideoCall: (activate?: boolean) => void
+  requestBankAppVoiceCall: (activate?: boolean) => void
   requestLiveChatWorkspace: (sessionId?: string, activate?: boolean) => void
   requestInboundPopup: (source?: InboundPopupSource, activate?: boolean) => void
   requestVideoCallPopup: (
@@ -42,11 +47,16 @@ interface AppState {
   setLiveChatTabOpen: (open: boolean) => void
   setOpenEyeVideoWindowVisible: (visible: boolean) => void
   setScreenShareActive: (active: boolean) => void
+  startBankAppVideoShareSelection: () => void
+  resetBankAppVideoDesktopShare: () => void
 }
 
 export const useAppStore = create<AppState>((set) => ({
   activeWorkspaceTabKey: 'home',
+  bankAppVideoCallActivateWorkspace: false,
   bankAppVideoCallRequestId: 0,
+  bankAppVideoShareState: 'idle',
+  bankAppVoiceCallActivateWorkspace: false,
   bankAppVoiceCallRequestId: 0,
   collapsed: true,
   customerOutboundCallRequestId: 0,
@@ -91,6 +101,7 @@ export const useAppStore = create<AppState>((set) => ({
           : state.activeWorkspaceTabKey,
       isOpenEyeVideoWindowVisible: false,
       isScreenShareActive: false,
+      bankAppVideoShareState: 'idle',
       isVideoCallTabOpen: false,
     })),
   closeWhatsAppDemoTab: () =>
@@ -101,6 +112,13 @@ export const useAppStore = create<AppState>((set) => ({
           : state.activeWorkspaceTabKey,
       isWhatsAppDemoTabOpen: false,
     })),
+  confirmBankAppVideoScreenShare: () =>
+    set({
+      activeWorkspaceTabKey: 'bankapp-demo',
+      bankAppVideoShareState: 'sharing',
+      isBankAppDemoTabOpen: true,
+      isScreenShareActive: true,
+    }),
   requestBankAppDemoWorkspace: () =>
     set({
       activeWorkspaceTabKey: 'bankapp-demo',
@@ -111,12 +129,14 @@ export const useAppStore = create<AppState>((set) => ({
       activeWorkspaceTabKey: 'whatsapp-demo',
       isWhatsAppDemoTabOpen: true,
     }),
-  requestBankAppVideoCall: () =>
+  requestBankAppVideoCall: (activate = false) =>
     set((state) => ({
+      bankAppVideoCallActivateWorkspace: activate,
       bankAppVideoCallRequestId: state.bankAppVideoCallRequestId + 1,
     })),
-  requestBankAppVoiceCall: () =>
+  requestBankAppVoiceCall: (activate = false) =>
     set((state) => ({
+      bankAppVoiceCallActivateWorkspace: activate,
       bankAppVoiceCallRequestId: state.bankAppVoiceCallRequestId + 1,
     })),
   requestLiveChatWorkspace: (sessionId, activate = true) =>
@@ -142,6 +162,8 @@ export const useAppStore = create<AppState>((set) => ({
       activeWorkspaceTabKey: activate
         ? 'video-call'
         : state.activeWorkspaceTabKey,
+      bankAppVideoShareState:
+        source === 'bankapp-video' ? state.bankAppVideoShareState : 'idle',
       isOpenEyeVideoWindowVisible: false,
       isScreenShareActive:
         source === 'bankapp-video' ? state.isScreenShareActive : false,
@@ -175,5 +197,15 @@ export const useAppStore = create<AppState>((set) => ({
   setScreenShareActive: (active) =>
     set({
       isScreenShareActive: active,
+    }),
+  startBankAppVideoShareSelection: () =>
+    set({
+      bankAppVideoShareState: 'selecting-program',
+      isScreenShareActive: false,
+    }),
+  resetBankAppVideoDesktopShare: () =>
+    set({
+      bankAppVideoShareState: 'idle',
+      isScreenShareActive: false,
     }),
 }))

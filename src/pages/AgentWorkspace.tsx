@@ -78,8 +78,7 @@ export function AgentWorkspace() {
             BankApp Demo
           </span>
         ),
-        children:
-          activeKey === BANKAPP_DEMO_TAB_KEY ? <BankAppDemoPage /> : null,
+        children: <BankAppDemoPage />,
       })
     }
 
@@ -93,8 +92,7 @@ export function AgentWorkspace() {
             WhatsApp Demo
           </span>
         ),
-        children:
-          activeKey === WHATSAPP_DEMO_TAB_KEY ? <WhatsAppDemoPage /> : null,
+        children: <WhatsAppDemoPage />,
       })
     }
 
