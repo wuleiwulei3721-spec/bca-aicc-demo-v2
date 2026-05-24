@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-24 14:12 +08:00
+最后更新：2026-05-24 17:57 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,58 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-24 17:57 +08:00 - 客户远程演示状态机制优化
+
+修改页面或文件：
+
+- `src/store/appStore.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/layouts/components/AgentProfileArea.tsx`
+- `src/pages/inbound/LiveChatPage.tsx`
+- `src/pages/inbound/components/LiveChatCustomerList.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-05-24-1757.md`
+- `.codex-backup/current-todo-2026-05-24-1757.md`
+- `.codex-backup/page-state-2026-05-24-1757.md`
+
+修改原因：
+
+- 客户要求右上角坐席状态圆点表达真实客户互动状态：有电话、语音、视频、聊天等客户接入时显示红色忙碌；AUX/离开显示黄色；绿色仅表示坐席已 Ready 且尚无客户接入。
+- 需要让 Live Chat 登录后默认无客户接入，只有 BankApp / WhatsApp 客户侧入口触发后才出现对应客户；Webchat 在尚无入口前暂时隐藏。
+
+修改结果：
+
+- `appStore` 新增 `activeLiveChatSessionIds`、`closeLiveChatSession(sessionId)`、`clearLiveChatSessions()`。
+- `requestLiveChatWorkspace(sessionId?, activate?)` 只有在传入 session id 时才把客户加入 active sessions；Sign Out、AUX、关闭 Live Chat tab 会清理 active sessions。
+- `BasicLayout` 新增 `effectiveAgentPresence`：Unsigned 灰色；Ready 且无互动绿色；电话/视频 `Incoming/Talking/Hold/Mute` 或存在 active live chat session 时红色；AUX / Not Ready / ACW 且无互动黄色。
+- `AgentProfileArea` 改为接收 presence 渲染状态点，保留原坐席状态菜单和状态机。
+- `LiveChatPage` 只展示 active sessions；Sign In 后 Live Chat 页面为空态，BankApp Live Chat 只显示 Sari Amelia，WhatsApp Demo 只显示 Dimas Abimanyu。
+- `LiveChatCustomerList` 暂时移除 Webchat 筛选项，Webchat mock 数据仍保留，后续新增入口时可恢复。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：Sign In 后状态点绿色，Live Chat 为空态且 Webchat 不可见。
+- Browser smoke check `/`：PSTN Incoming 和 Talking 状态点红色；Hang Up 后 ACW 黄色，约 5 秒后 Ready 绿色。
+- Browser smoke check `/`：BankApp Live Chat 触发后仅显示 Sari Amelia，状态点红色；Confirm End Service 后回空态和绿色。
+- Browser smoke check `/`：WhatsApp Demo 触发后仅显示 Dimas Abimanyu，状态点红色；Confirm End Service 后回空态和绿色。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚状态点规则，可恢复 `AgentProfileArea` 直接按 `AgentStatus` 映射状态类，并移除 `BasicLayout` 的 `effectiveAgentPresence`。
+- 如需恢复 Live Chat 默认显示全部 mock 客户，可移除 `activeLiveChatSessionIds` gating，恢复 `LiveChatPage` 本地 `openSessionIds` 初始为全部 `liveChatSessions`，并把 Webchat 筛选项加回 `LiveChatCustomerList`。
+
+当前风险点：
+
+- Webchat mock 数据仍在代码中，只是暂时不进入 visible/active 列表；后续新增 Webchat 客户入口时，需要同步恢复 active session 触发和筛选项。
+- End Service 目前只关闭文字 active session，不触发电话 ACW、工单关闭或真实路由释放。
+- 当前项目仍没有自动化测试体系，发布前仍依赖 lint/build 与浏览器 smoke check。
 
 ### 2026-05-24 14:12 +08:00 - BankApp Video 桌面共享附件与按钮修正
 

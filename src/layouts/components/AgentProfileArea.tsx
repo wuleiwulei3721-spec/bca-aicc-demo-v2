@@ -10,20 +10,23 @@ import type { MenuProps } from 'antd'
 import { headerAgentProfile } from '../../mock/agent'
 import type { AgentStatus } from '../../types'
 
-const statusClassName: Record<AgentStatus, string> = {
-  Unsigned: 'aicc-agent-status--unsigned',
-  Ready: 'aicc-agent-status--ready',
-  'Not Ready': 'aicc-agent-status--not-ready',
-  'AUX - Ibadah': 'aicc-agent-status--aux',
-  'AUX - Makan': 'aicc-agent-status--aux',
+export type AgentPresence = 'away' | 'busy' | 'offline' | 'ready'
+
+const presenceClassName: Record<AgentPresence, string> = {
+  away: 'aicc-agent-status--away',
+  busy: 'aicc-agent-status--busy',
+  offline: 'aicc-agent-status--offline',
+  ready: 'aicc-agent-status--ready',
 }
 
 interface AgentProfileAreaProps {
+  presence: AgentPresence
   status: AgentStatus
   onStatusChange: (status: AgentStatus) => void
 }
 
 export function AgentProfileArea({
+  presence,
   status,
   onStatusChange,
 }: AgentProfileAreaProps) {
@@ -88,7 +91,7 @@ export function AgentProfileArea({
         <span
           className={[
             'aicc-agent-profile__status-dot',
-            statusClassName[status],
+            presenceClassName[presence],
           ]
             .filter(Boolean)
             .join(' ')}

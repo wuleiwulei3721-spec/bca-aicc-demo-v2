@@ -18,7 +18,10 @@ import { headerAgentProfile } from '../mock/agent'
 import { useAppStore } from '../store'
 import type { InboundPopupSource, VideoCallPopupSource } from '../store'
 import type { AgentStatus, CallStatus } from '../types'
-import { AgentProfileArea } from './components/AgentProfileArea'
+import {
+  AgentProfileArea,
+  type AgentPresence,
+} from './components/AgentProfileArea'
 import { AgentToolbar } from './components/AgentToolbar'
 import { InternalChatModal } from './components/InternalChatModal'
 
@@ -118,6 +121,12 @@ const sideMenuItems: SideMenuItem[] = [
 
 export function BasicLayout() {
   const collapsed = useAppStore((state) => state.collapsed)
+  const activeLiveChatSessionIds = useAppStore(
+    (state) => state.activeLiveChatSessionIds,
+  )
+  const clearLiveChatSessions = useAppStore(
+    (state) => state.clearLiveChatSessions,
+  )
   const bankAppVideoCallActivateWorkspace = useAppStore(
     (state) => state.bankAppVideoCallActivateWorkspace,
   )
@@ -188,10 +197,12 @@ export function BasicLayout() {
       setCallTiming(initialCallTiming)
       setActiveCallChannel(null)
       setIsAfterCallWork(false)
+      clearLiveChatSessions()
       setOpenEyeVideoWindowVisible(false)
       resetBankAppVideoDesktopShare()
     }
   }, [
+    clearLiveChatSessions,
     resetBankAppVideoDesktopShare,
     setLiveChatTabOpen,
     setOpenEyeVideoWindowVisible,
@@ -205,6 +216,17 @@ export function BasicLayout() {
   const isSignedIn = agentStatus !== 'Unsigned'
   const isConnectedCall =
     callStatus === 'Talking' || callStatus === 'Hold' || callStatus === 'Mute'
+  const hasActiveCallInteraction = callStatus !== 'Idle'
+  const hasActiveTextInteraction = activeLiveChatSessionIds.length > 0
+  const hasActiveCustomerInteraction =
+    isSignedIn && (hasActiveCallInteraction || hasActiveTextInteraction)
+  const effectiveAgentPresence: AgentPresence = !isSignedIn
+    ? 'offline'
+    : hasActiveCustomerInteraction
+      ? 'busy'
+      : agentStatus === 'Ready'
+        ? 'ready'
+        : 'away'
 
   useEffect(() => {
     setOpenEyeVideoWindowVisible(
@@ -627,6 +649,7 @@ export function BasicLayout() {
           </button>
           <span className="aicc-header__divider" />
           <AgentProfileArea
+            presence={effectiveAgentPresence}
             status={agentStatus}
             onStatusChange={updateAgentStatus}
           />

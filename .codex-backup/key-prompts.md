@@ -281,6 +281,19 @@
 - Voice、Live Chat、WhatsApp 和普通 Video Call 不应继承 BankApp Video 的桌面共享入口或新增步骤。
 - Reset、Hang Up、关闭 Video Call tab、签出/AUX、非 BankApp Video 呼叫必须清理共享状态。
 
+## 2026-05-24 客户远程演示状态机制
+
+- 客户要求右上角坐席状态圆点不能只看坐席菜单状态，还要体现是否已有客户接入。
+- Unsigned 显示灰色。
+- Ready 且没有任何客户接入时显示绿色；绿色仅表示坐席已准备好但尚无电话、视频或文字客户互动。
+- 电话、语音、视频、聊天等任一客户接入时显示红色忙碌；电话/视频从 Incoming 即算接入，直到 Hang Up。
+- AUX / Not Ready / ACW 且无客户互动时显示黄色离开。
+- Live Chat 登录后默认无客户接入，显示 `No active conversation` 空态。
+- BankApp Live Chat 入口触发后才把 BankApp 客户 `live-chat-002` 加入 Live Chat active sessions。
+- WhatsApp Demo 入口触发后才把 WhatsApp 客户 `live-chat-001` 加入 Live Chat active sessions。
+- End Service 只关闭当前文字 active session；如果没有其它 active sessions，状态点回到绿色。
+- Webchat mock 数据暂时保留但不可见，不显示 Webchat 客户或筛选项，直到后续新增 Webchat 入口。
+
 ## 2026-05-23 版本与素材策略
 
 - 后续按里程碑分支推进：`v0.3.0` BankApp 基线、`v0.3.1` 菜单与 WhatsApp、`v0.4.0` Video screen share、`v0.5.0` 客户远程演示优化。

@@ -31,7 +31,6 @@ const channelLabels: Record<LiveChatSession['channel'], string> = {
 const liveChatChannels: LiveChatChannel[] = [
   'WhatsApp',
   'Haloapps',
-  'Webchat',
 ]
 
 const channelFilterOptions: Array<{
@@ -53,11 +52,6 @@ const channelFilterOptions: Array<{
     icon: <MobileOutlined />,
     label: channelLabels.Haloapps,
     value: 'Haloapps',
-  },
-  {
-    icon: <GlobalOutlined />,
-    label: channelLabels.Webchat,
-    value: 'Webchat',
   },
 ]
 

@@ -6,6 +6,7 @@ export type BankAppVideoShareState = 'idle' | 'selecting-program' | 'sharing'
 
 interface AppState {
   activeWorkspaceTabKey: string
+  activeLiveChatSessionIds: string[]
   bankAppVideoCallActivateWorkspace: boolean
   bankAppVideoCallRequestId: number
   bankAppVideoShareState: BankAppVideoShareState
@@ -28,6 +29,7 @@ interface AppState {
   videoCallPopupRequestId: number
   closeBankAppDemoTab: () => void
   closeInboundTab: () => void
+  closeLiveChatSession: (sessionId: string) => void
   closeVideoCallTab: () => void
   closeWhatsAppDemoTab: () => void
   confirmBankAppVideoScreenShare: () => void
@@ -49,10 +51,12 @@ interface AppState {
   setScreenShareActive: (active: boolean) => void
   startBankAppVideoShareSelection: () => void
   resetBankAppVideoDesktopShare: () => void
+  clearLiveChatSessions: () => void
 }
 
 export const useAppStore = create<AppState>((set) => ({
   activeWorkspaceTabKey: 'home',
+  activeLiveChatSessionIds: [],
   bankAppVideoCallActivateWorkspace: false,
   bankAppVideoCallRequestId: 0,
   bankAppVideoShareState: 'idle',
@@ -91,6 +95,20 @@ export const useAppStore = create<AppState>((set) => ({
           : state.activeWorkspaceTabKey,
       isInboundTabOpen: false,
     })),
+  closeLiveChatSession: (sessionId) =>
+    set((state) => {
+      const nextActiveSessionIds = state.activeLiveChatSessionIds.filter(
+        (activeSessionId) => activeSessionId !== sessionId,
+      )
+
+      return {
+        activeLiveChatSessionIds: nextActiveSessionIds,
+        liveChatFocusSessionId:
+          state.liveChatFocusSessionId === sessionId
+            ? nextActiveSessionIds[0] ?? null
+            : state.liveChatFocusSessionId,
+      }
+    }),
   closeVideoCallTab: () =>
     set((state) => ({
       activeWorkspaceTabKey:
@@ -141,6 +159,10 @@ export const useAppStore = create<AppState>((set) => ({
     })),
   requestLiveChatWorkspace: (sessionId, activate = true) =>
     set((state) => ({
+      activeLiveChatSessionIds:
+        sessionId && !state.activeLiveChatSessionIds.includes(sessionId)
+          ? [...state.activeLiveChatSessionIds, sessionId]
+          : state.activeLiveChatSessionIds,
       activeWorkspaceTabKey: activate
         ? 'live-chat'
         : state.activeWorkspaceTabKey,
@@ -183,6 +205,7 @@ export const useAppStore = create<AppState>((set) => ({
   setCollapsed: (collapsed) => set({ collapsed }),
   setLiveChatTabOpen: (open) =>
     set((state) => ({
+      activeLiveChatSessionIds: open ? state.activeLiveChatSessionIds : [],
       activeWorkspaceTabKey:
         !open && state.activeWorkspaceTabKey === 'live-chat'
           ? 'home'
@@ -207,5 +230,10 @@ export const useAppStore = create<AppState>((set) => ({
     set({
       bankAppVideoShareState: 'idle',
       isScreenShareActive: false,
+    }),
+  clearLiveChatSessions: () =>
+    set({
+      activeLiveChatSessionIds: [],
+      liveChatFocusSessionId: null,
     }),
 }))

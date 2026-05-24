@@ -14,7 +14,6 @@ type LiveChatSessionSummary = Pick<
 const liveChatChannels: LiveChatChannel[] = [
   'WhatsApp',
   'Haloapps',
-  'Webchat',
 ]
 
 function createInitialConversationMessages() {
@@ -32,6 +31,12 @@ function getCurrentMessageTime() {
 }
 
 export function LiveChatPage() {
+  const activeLiveChatSessionIds = useAppStore(
+    (state) => state.activeLiveChatSessionIds,
+  )
+  const closeLiveChatSession = useAppStore(
+    (state) => state.closeLiveChatSession,
+  )
   const liveChatFocusRequestId = useAppStore(
     (state) => state.liveChatFocusRequestId,
   )
@@ -39,10 +44,7 @@ export function LiveChatPage() {
     (state) => state.liveChatFocusSessionId,
   )
   const [activeSessionId, setActiveSessionId] = useState(
-    liveChatSessions[0]?.id ?? '',
-  )
-  const [openSessionIds, setOpenSessionIds] = useState(() =>
-    liveChatSessions.map((session) => session.id),
+    activeLiveChatSessionIds[0] ?? '',
   )
   const [isCustomerListCollapsed, setIsCustomerListCollapsed] =
     useState(true)
@@ -59,26 +61,30 @@ export function LiveChatPage() {
   const availableSessions = useMemo(
     () =>
       liveChatSessions
-        .filter((session) => openSessionIds.includes(session.id))
+        .filter((session) => activeLiveChatSessionIds.includes(session.id))
+        .filter((session) => liveChatChannels.includes(session.channel))
         .map((session) => ({
           ...session,
           ...(sessionSummariesById[session.id] ?? {}),
         })),
-    [openSessionIds, sessionSummariesById],
+    [activeLiveChatSessionIds, sessionSummariesById],
   )
 
   useEffect(() => {
-    if (
-      !liveChatFocusSessionId ||
-      !availableSessions.some(
-        (session) => session.id === liveChatFocusSessionId,
-      )
-    ) {
+    const focusedSession = availableSessions.find(
+      (session) => session.id === liveChatFocusSessionId,
+    )
+
+    if (!liveChatFocusSessionId || !focusedSession) {
       return
     }
 
     const timer = window.setTimeout(() => {
-      setSelectedChannels(liveChatChannels)
+      setSelectedChannels((currentChannels) =>
+        currentChannels.includes(focusedSession.channel)
+          ? currentChannels
+          : liveChatChannels,
+      )
       setActiveSessionId(liveChatFocusSessionId)
     }, 0)
 
@@ -159,9 +165,7 @@ export function LiveChatPage() {
       remainingSelectableSessions[currentIndex - 1] ??
       remainingSelectableSessions[0]
 
-    setOpenSessionIds((currentSessionIds) =>
-      currentSessionIds.filter((id) => id !== sessionId),
-    )
+    closeLiveChatSession(sessionId)
 
     if (activeSessionId === sessionId) {
       setActiveSessionId(nextSession?.id ?? '')
@@ -225,7 +229,10 @@ export function LiveChatPage() {
         />
         <div className="live-chat-empty-workspace">
           <strong>No active conversation</strong>
-          <span>All selected live chat customers have been closed.</span>
+          <span>
+            New BankApp or WhatsApp customers will appear here after they
+            enter the AICC queue.
+          </span>
         </div>
       </section>
     )
