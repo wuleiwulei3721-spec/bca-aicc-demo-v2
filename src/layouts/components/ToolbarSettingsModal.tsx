@@ -31,15 +31,14 @@ export function ToolbarSettingsModal({
       kind="settings"
       open={open}
       title="Settings"
-      width={520}
+      width={420}
       onCancel={onClose}
     >
       <div className="aicc-toolbar-settings">
-        <div className="aicc-toolbar-settings__section">
-          <div>
-            <strong>Toolbar display</strong>
-            <span>Choose how call control buttons are displayed.</span>
-          </div>
+        <div className="aicc-toolbar-settings__row">
+          <span className="aicc-toolbar-settings__label">
+            Toolbar display
+          </span>
           <div
             aria-label="Toolbar display"
             className="aicc-segmented-control"

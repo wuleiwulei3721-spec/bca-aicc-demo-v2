@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-05-24 22:07 +08:00
+最后更新：2026-05-24 22:31 +08:00
 
 ## 项目方向
 
@@ -313,8 +313,10 @@
 - `Icon Only` 隐藏话务按钮文字，但保留图标、`aria-label` 和 `title`。
 - 自动接听/振铃时长设置在 UI 中隐藏，默认 3 秒逻辑保留。
 - 话务条 identification 右侧 divider 和 timer 左侧 divider 必须清晰一致，当前使用 1px `rgba(86, 122, 166, 0.52)`。
-- `IVR` / `BankID` 标签保持更突出，号码保持半粗 700 和 tabular nums，不升到 800/900。
+- `IVR` / `BankID` 标签和 timer label 统一为灰色 metadata 文本，号码和 timer value 统一为黑色 700 和 tabular nums；避免话务条一块粗一块细、一块灰一块黑。
 - Settings 的 Toolbar display 选择控件必须使用项目自定义 segmented button 风格，视觉参考 BankApp Customer type，不使用 Ant Design 默认 `Segmented` 外观。
+- Settings 弹框只保留一行 `Toolbar display` + 横向选择控件，不显示解释文案。
+- `Icon Only` 模式下话务按钮应是统一 29px 方形，按钮图标和 More 图标放大到 14px；默认 `Icon + Text` 不受影响。
 - More 菜单作为 Settings 入口，应按点击打开，不依赖 hover。
 
 ## 2026-05-23 版本与素材策略

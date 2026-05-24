@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-24 22:07 +08:00
+最后更新：2026-05-24 22:31 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,54 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-24 22:31 +08:00 - 话务条文字层级、Settings 简化与 Icon Only 优化
+
+修改页面或文件：
+
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/layouts/components/ToolbarSettingsModal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-05-24-2231.md`
+- `.codex-backup/current-todo-2026-05-24-2231.md`
+- `.codex-backup/page-state-2026-05-24-2231.md`
+
+修改原因：
+
+- 用户发现话务条左侧号码与右侧时长的粗细、颜色层级不统一，整体看起来一块粗一块细、一块灰一块黑。
+- 用户希望 Settings 弹框减少文字，只保留 `Toolbar display` 和选择控件，并横向展示。
+- 用户指出 `Icon Only` 模式下图标偏小，需要在紧凑模式中提升识别度。
+
+修改结果：
+
+- `IVR` / `BankID` 标签改为灰色 600，不再使用蓝色 800。
+- 接入号码与右侧状态时长使用相同黑色、700 字重和 tabular nums。
+- Settings 弹框宽度从 520 收到 420，删除说明文案，改为一行 `Toolbar display` + segmented control。
+- `AgentToolbar` 增加 `aicc-agent-toolbar--icon-only` 模式 class。
+- `Icon Only` 模式下话务按钮固定为 29px 方形、padding 归零，按钮图标和 More 图标放大到 14px；默认 `Icon + Text` 模式保持原尺寸。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/` at 1366x768：Sign In 后 More > Settings 可打开，Settings 只显示一行 `Toolbar display` + `Icon + Text` / `Icon Only`，没有说明文案。
+- Browser smoke check `/`：切换 `Icon Only` 后 toolbar 增加 `aicc-agent-toolbar--icon-only`，按钮宽度 29px，按钮图标和 More 图标均为 14px。
+- Browser smoke check `/`：PSTN Incoming 显示 `IVR 08123456789`；identification label 与 timer label 的计算样式一致，identification value 与 timer value 的计算样式一致。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚文字层级，可恢复 `aicc-agent-toolbar__identification span` 的蓝色和 800 字重，并恢复 timer label 700。
+- 如需回滚 Settings 简化，可恢复说明文案和 520 宽弹框。
+- 如需回滚 icon-only 优化，可移除 `aicc-agent-toolbar--icon-only` class 和对应 CSS。
+
+当前风险点：
+
+- Toolbar display mode 仍只保存在当前页面运行状态，刷新后恢复默认 `Icon + Text`。
+- 本轮仍只影响话务条与 Settings，不改变 BankApp/WhatsApp/Video 状态联动。
 
 ### 2026-05-24 22:07 +08:00 - 话务条视觉细节与 Settings 控件统一
 

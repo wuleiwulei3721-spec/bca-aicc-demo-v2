@@ -248,6 +248,18 @@ a {
   font-size: 12px;
 }
 
+.aicc-agent-toolbar--icon-only .aicc-agent-toolbar__icon-control .anticon,
+.aicc-agent-toolbar--icon-only .aicc-toolbar-button .anticon {
+  font-size: 14px;
+}
+
+.aicc-agent-toolbar--icon-only .aicc-toolbar-button {
+  width: 29px;
+  min-width: 29px;
+  padding: 0;
+  gap: 0;
+}
+
 .aicc-agent-toolbar__control[disabled],
 .aicc-agent-toolbar__icon-control[disabled] {
   cursor: not-allowed;
@@ -263,13 +275,14 @@ a {
   border-left: 1px solid var(--aicc-agent-toolbar-divider);
   color: #4f647d;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   gap: 6px;
   white-space: nowrap;
 }
 
 .aicc-agent-toolbar__timer strong {
   color: var(--aicc-text);
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -281,14 +294,14 @@ a {
   border-right: 1px solid var(--aicc-agent-toolbar-divider);
   color: #4f647d;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
   gap: 5px;
 }
 
 .aicc-agent-toolbar__identification span {
-  color: var(--aicc-primary-strong);
-  font-weight: 800;
+  color: #4f647d;
+  font-weight: 600;
 }
 
 .aicc-agent-toolbar__identification strong {
@@ -508,29 +521,23 @@ a {
 
 .aicc-toolbar-settings {
   display: grid;
+  gap: 12px;
+}
+
+.aicc-toolbar-settings__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
   gap: 14px;
 }
 
-.aicc-toolbar-settings__section {
-  display: grid;
-  gap: 12px;
-  padding: 4px 0;
-}
-
-.aicc-toolbar-settings__section > div {
-  display: grid;
-  gap: 3px;
-}
-
-.aicc-toolbar-settings__section strong {
-  color: var(--aicc-text);
-  font-size: 13px;
-  font-weight: 750;
-}
-
-.aicc-toolbar-settings__section span {
+.aicc-toolbar-settings__label {
+  min-width: 98px;
   color: var(--aicc-text-muted);
   font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .aicc-segmented-control {

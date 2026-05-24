@@ -111,7 +111,17 @@ export function AgentToolbar({
 
   return (
     <>
-      <div className="aicc-agent-toolbar" aria-label="Call controls">
+      <div
+        className={[
+          'aicc-agent-toolbar',
+          toolbarDisplayMode === 'icon'
+            ? 'aicc-agent-toolbar--icon-only'
+            : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        aria-label="Call controls"
+      >
         {!isInCall && (
           <>
             {callIdentification && (

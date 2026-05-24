@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-05-24 22:07 +08:00
+最后更新：2026-05-24 22:31 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：`codex/toolbar-visual-polish` 基于 `main@v0.5.2` 微调话务条分隔线、incoming identification 字重和 Settings 的 Toolbar display 选择控件；完成后发布 `v0.5.3`。
+当前目标：`codex/toolbar-compact-visual-balance` 基于 `main@v0.5.3` 统一话务条 identification/timer 文本层级、简化 Settings 布局，并优化 `Icon Only` 模式下的图标尺寸；完成后发布 `v0.5.4`。
 
 ## 0. 使用规则
 
@@ -40,8 +40,8 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`codex/toolbar-visual-polish`
-当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于客户远程演示版话务条视觉细节修正，完成验证后发布 `v0.5.3`
+当前分支：`codex/toolbar-compact-visual-balance`
+当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于客户远程演示版话务条文字层级、Settings 简化和 icon-only 视觉平衡，完成验证后发布 `v0.5.4`
 部署目标：Vercel 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -189,8 +189,8 @@ type CallStatus =
 - Sign In 后如果暂无电话、视频或文字客户接入，右上角状态点为绿色；Sign Out 为灰色。
 - `BasicLayout` 计算 `effectiveAgentPresence`：`callStatus !== 'Idle'` 或 `activeLiveChatSessionIds.length > 0` 时为 busy 红色，覆盖 Ready/Talking/Hold/Mute/Incoming 等展示；Ready 且无互动为绿色；AUX / Not Ready / ACW 且无互动为黄色。
 - Ready + Idle 时点击 `Channel Simulation > PSTN` 可触发电话弹屏。
-- 话务条 incoming identification 只在 `Incoming`、`Talking`、`Hold`、`Mute` 时显示：PSTN 显示 `IVR 08123456789`，BankApp Voice / Video 显示 `BankID 00012345`；Hang Up 后随 `callStatus` 回 Idle 自动隐藏。识别标签 `IVR` / `BankID` 更重，号码保持 700 字重和 tabular nums，右侧使用与 timer 一致的清晰 1px divider。
-- 话务条 Settings 当前只配置显示模式，默认 `Icon + Text`；选择控件使用项目自定义 segmented button 风格，与 BankApp Customer type 控件保持一致；切换为 `Icon Only` 后 Answer/Hold/Mute/Transfer/Hang Up/Ready 等按钮隐藏文字但保留图标、`aria-label` 和 `title`。自动接听仍固定使用默认 3 秒，但不在 Settings 中展示。
+- 话务条 incoming identification 只在 `Incoming`、`Talking`、`Hold`、`Mute` 时显示：PSTN 显示 `IVR 08123456789`，BankApp Voice / Video 显示 `BankID 00012345`；Hang Up 后随 `callStatus` 回 Idle 自动隐藏。识别标签、号码、timer label 与 timer value 使用统一 metadata 层级：灰色 label、黑色 700 数值、tabular nums、清晰 1px divider。
+- 话务条 Settings 当前只配置显示模式，默认 `Icon + Text`；选择控件使用项目自定义 segmented button 风格，与 BankApp Customer type 控件保持一致；弹框只保留一行 `Toolbar display` + 横向选择控件。切换为 `Icon Only` 后 Answer/Hold/Mute/Transfer/Hang Up/Ready 等按钮隐藏文字但保留图标、`aria-label` 和 `title`，图标在该模式下放大到 14px。自动接听仍固定使用默认 3 秒，但不在 Settings 中展示。
 - BankApp Demo 的 `Livechat` 路径会打开 Live Chat 并聚焦 BankApp 客户；`Voice Call` / `Video Call` 路径通过 store request id 触发现有坐席话务状态机，并可在 `Agent Workspace` 步骤切到对应坐席 workspace。
 - WhatsApp Demo 默认走 Live Chat 路径并聚焦 WhatsApp 客户 `live-chat-001`；已签入后仍可通过固定 Live Chat tab 承载会话工作台。
 - Incoming 支持手动 Answer，也支持按 `autoAnswerSeconds` 自动接听。
@@ -455,6 +455,25 @@ Live Chat 当前 mock：
 - GitHub remote 与基础提交。
 
 ## 10. 当前开发状态
+
+截至 2026-05-24 22:31 +08:00，当前工作在 `codex/toolbar-compact-visual-balance` 分支处理 `v0.5.3` 后续话务条视觉平衡，目标发布 `v0.5.4`。本轮只改话务条文字层级、Settings 布局和 `Icon Only` 图标尺寸，不修改话务状态机、Customer Information、外呼申请、BankApp/WhatsApp 客户侧流程、OpenEye 桌面共享或状态点机制。
+
+本轮话务条文字层级、Settings 简化和 Icon Only 优化：
+
+- `IVR` / `BankID` 标签不再使用蓝色和 800 字重，改为与 timer label 一致的灰色 600。
+- `08123456789` / `00012345` 与右侧 timer value 使用相同黑色、700 字重和 tabular nums，降低“左重右轻、灰黑跳跃”的视觉差。
+- Settings 弹框宽度收窄到 `420`，删除说明文案，只保留一行 `Toolbar display` + 自定义 segmented control。
+- `AgentToolbar` 在 `toolbarDisplayMode === 'icon'` 时增加 `aicc-agent-toolbar--icon-only` class。
+- `Icon Only` 模式下 `.aicc-toolbar-button` 固定为 29px 方形按钮、padding 归零，按钮和 More 图标放大到 14px；默认 `Icon + Text` 模式不受影响。
+
+本轮话务条文字层级、Settings 简化和 Icon Only 验证：
+
+- `npm run lint`：通过。
+- `npm run build`：通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/` at 1366x768：Sign In 后 More > Settings 可打开；Settings 只显示一行 `Toolbar display` + `Icon + Text` / `Icon Only`，没有说明文案。
+- Browser smoke check `/`：切换 `Icon Only` 后 toolbar 增加 `aicc-agent-toolbar--icon-only`，按钮宽度 29px，按钮图标和 More 图标均为 14px。
+- Browser smoke check `/`：PSTN Incoming 显示 `IVR 08123456789`；identification label 与 timer label 的计算样式一致，identification value 与 timer value 的计算样式一致。
+- Browser smoke check `/design-system`：页面正常加载，标题为 `BANK 1 AICC Demo`。
 
 截至 2026-05-24 22:07 +08:00，当前工作在 `codex/toolbar-visual-polish` 分支处理 `v0.5.2` 后续话务条视觉细节，目标发布 `v0.5.3`。本轮只改话务条 divider、Settings Toolbar display 控件和 More 菜单触发方式，不修改话务状态机、Customer Information、外呼申请、BankApp/WhatsApp 客户侧流程、OpenEye 桌面共享或状态点机制。
 
