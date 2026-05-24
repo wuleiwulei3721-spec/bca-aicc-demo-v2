@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNow } from '../../hooks/useNow'
 import { liveChatSessions } from '../../mock/inbound'
 import { useAppStore } from '../../store'
@@ -52,6 +52,12 @@ export function LiveChatPage() {
   const liveChatSessionTimings = useAppStore(
     (state) => state.liveChatSessionTimings,
   )
+  const markLiveChatSessionRead = useAppStore(
+    (state) => state.markLiveChatSessionRead,
+  )
+  const readLiveChatSessionIds = useAppStore(
+    (state) => state.readLiveChatSessionIds,
+  )
   const [activeSessionId, setActiveSessionId] = useState(
     activeLiveChatSessionIds[0] ?? '',
   )
@@ -67,17 +73,51 @@ export function LiveChatPage() {
     Record<string, LiveChatSessionSummary>
   >({})
   const now = useNow(activeLiveChatSessionIds.length > 0)
+  const markSessionAsRead = useCallback((sessionId: string) => {
+    const sourceSession = liveChatSessions.find(
+      (session) => session.id === sessionId,
+    )
+    markLiveChatSessionRead(sessionId)
+
+    setSessionSummariesById((currentSummariesById) => {
+      const currentSummary = currentSummariesById[sessionId]
+
+      if (currentSummary?.unreadCount === 0) {
+        return currentSummariesById
+      }
+
+      return {
+        ...currentSummariesById,
+        [sessionId]: {
+          lastMessage:
+            currentSummary?.lastMessage ?? sourceSession?.lastMessage ?? '',
+          lastMessageTime:
+            currentSummary?.lastMessageTime ??
+            sourceSession?.lastMessageTime ??
+            '',
+          unreadCount: 0,
+        },
+      }
+    })
+  }, [markLiveChatSessionRead])
 
   const availableSessions = useMemo(
     () =>
       liveChatSessions
         .filter((session) => activeLiveChatSessionIds.includes(session.id))
         .filter((session) => liveChatChannels.includes(session.channel))
-        .map((session) => ({
-          ...session,
-          ...(sessionSummariesById[session.id] ?? {}),
-        })),
-    [activeLiveChatSessionIds, sessionSummariesById],
+        .map((session) => {
+          const summary = sessionSummariesById[session.id]
+
+          return {
+            ...session,
+            ...(summary ?? {}),
+            unreadCount: readLiveChatSessionIds.includes(session.id)
+              ? 0
+              : summary?.unreadCount ?? session.unreadCount,
+          }
+        }),
+    [activeLiveChatSessionIds, readLiveChatSessionIds, sessionSummariesById],
   )
 
   const sessionRuntimeStates = useMemo(
@@ -103,8 +143,11 @@ export function LiveChatPage() {
   )
 
   useEffect(() => {
-    const focusedSession = availableSessions.find(
-      (session) => session.id === liveChatFocusSessionId,
+    const focusedSession = liveChatSessions.find(
+      (session) =>
+        session.id === liveChatFocusSessionId &&
+        activeLiveChatSessionIds.includes(session.id) &&
+        liveChatChannels.includes(session.channel),
     )
 
     if (!liveChatFocusSessionId || !focusedSession) {
@@ -118,10 +161,16 @@ export function LiveChatPage() {
           : liveChatChannels,
       )
       setActiveSessionId(liveChatFocusSessionId)
+      markSessionAsRead(liveChatFocusSessionId)
     }, 0)
 
     return () => window.clearTimeout(timer)
-  }, [availableSessions, liveChatFocusRequestId, liveChatFocusSessionId])
+  }, [
+    activeLiveChatSessionIds,
+    liveChatFocusRequestId,
+    liveChatFocusSessionId,
+    markSessionAsRead,
+  ])
 
   const filteredSessions = useMemo(
     () =>
@@ -144,6 +193,11 @@ export function LiveChatPage() {
     [activeSessionId, availableSessions, filteredSessions, selectedChannels],
   )
 
+  const handleActiveSessionChange = (sessionId: string) => {
+    setActiveSessionId(sessionId)
+    markSessionAsRead(sessionId)
+  }
+
   const updateSelectedChannels = (nextSelectedChannels: LiveChatChannel[]) => {
     setSelectedChannels(nextSelectedChannels)
 
@@ -158,7 +212,7 @@ export function LiveChatPage() {
       nextSessions.length > 0 &&
       !nextSessions.some((session) => session.id === activeSessionId)
     ) {
-      setActiveSessionId(nextSessions[0].id)
+      handleActiveSessionChange(nextSessions[0].id)
     }
   }
 
@@ -200,7 +254,11 @@ export function LiveChatPage() {
     closeLiveChatSession(sessionId)
 
     if (activeSessionId === sessionId) {
-      setActiveSessionId(nextSession?.id ?? '')
+      if (nextSession) {
+        handleActiveSessionChange(nextSession.id)
+      } else {
+        setActiveSessionId('')
+      }
     }
   }
 
@@ -256,7 +314,7 @@ export function LiveChatPage() {
           selectedChannels={selectedChannels}
           sessionRuntimeStates={sessionRuntimeStates}
           sessions={filteredSessions}
-          onActiveSessionChange={setActiveSessionId}
+          onActiveSessionChange={handleActiveSessionChange}
           onChannelFilterChange={handleChannelFilterChange}
           onCollapsedChange={setIsCustomerListCollapsed}
         />
@@ -290,6 +348,8 @@ export function LiveChatPage() {
           conversationMessagesBySessionId[activeSession.id] ??
           activeSession.conversation,
         session: activeSession,
+        slaState:
+          sessionRuntimeStates[activeSession.id]?.slaState ?? 'normal',
         onEndService: handleEndService,
         onSendMessage: handleSendConversationMessage,
       }}
@@ -301,7 +361,7 @@ export function LiveChatPage() {
           selectedChannels={selectedChannels}
           sessionRuntimeStates={sessionRuntimeStates}
           sessions={filteredSessions}
-          onActiveSessionChange={setActiveSessionId}
+          onActiveSessionChange={handleActiveSessionChange}
           onChannelFilterChange={handleChannelFilterChange}
           onCollapsedChange={setIsCustomerListCollapsed}
         />

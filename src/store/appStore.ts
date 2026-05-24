@@ -68,6 +68,7 @@ interface AppState {
   liveChatSessionTimings: Record<string, InteractionTiming>
   liveChatFocusRequestId: number
   liveChatFocusSessionId: string | null
+  readLiveChatSessionIds: string[]
   closeAllCallInteractionTabs: () => void
   closeBankAppDemoTab: () => void
   closeCallInteractionTab: (interactionId: string) => void
@@ -81,6 +82,7 @@ interface AppState {
   ) => string
   markCallInteractionActive: (interactionId: string) => void
   markCallInteractionEnded: (interactionId: string, endedAt?: number) => void
+  markLiveChatSessionRead: (sessionId: string) => void
   clearCurrentCallInteraction: () => void
   requestBankAppDemoWorkspace: () => void
   requestBankAppVideoCall: (activate?: boolean) => void
@@ -120,6 +122,7 @@ export const useAppStore = create<AppState>((set) => ({
   liveChatSessionTimings: {},
   liveChatFocusRequestId: 0,
   liveChatFocusSessionId: null,
+  readLiveChatSessionIds: [],
   closeAllCallInteractionTabs: () =>
     set((state) => ({
       activeWorkspaceTabKey: state.activeWorkspaceTabKey.startsWith('call-')
@@ -187,6 +190,9 @@ export const useAppStore = create<AppState>((set) => ({
       return {
         activeLiveChatSessionIds: nextActiveSessionIds,
         liveChatSessionTimings: nextLiveChatSessionTimings,
+        readLiveChatSessionIds: state.readLiveChatSessionIds.filter(
+          (readSessionId) => readSessionId !== sessionId,
+        ),
         liveChatFocusSessionId:
           state.liveChatFocusSessionId === sessionId
             ? nextActiveSessionIds[0] ?? null
@@ -314,6 +320,17 @@ export const useAppStore = create<AppState>((set) => ({
     set({
       currentCallInteractionId: null,
     }),
+  markLiveChatSessionRead: (sessionId) =>
+    set((state) =>
+      state.readLiveChatSessionIds.includes(sessionId)
+        ? {}
+        : {
+            readLiveChatSessionIds: [
+              ...state.readLiveChatSessionIds,
+              sessionId,
+            ],
+          },
+    ),
   requestBankAppDemoWorkspace: () =>
     set({
       activeWorkspaceTabKey: 'bankapp-demo',
@@ -347,6 +364,12 @@ export const useAppStore = create<AppState>((set) => ({
               [sessionId]: createInteractionTiming(),
             }
           : state.liveChatSessionTimings
+      const nextReadLiveChatSessionIds =
+        sessionId && !state.activeLiveChatSessionIds.includes(sessionId)
+          ? state.readLiveChatSessionIds.filter(
+              (readSessionId) => readSessionId !== sessionId,
+            )
+          : state.readLiveChatSessionIds
 
       return {
         activeLiveChatSessionIds: nextActiveLiveChatSessionIds,
@@ -359,6 +382,7 @@ export const useAppStore = create<AppState>((set) => ({
           : state.liveChatFocusRequestId,
         liveChatFocusSessionId: sessionId ?? state.liveChatFocusSessionId,
         liveChatSessionTimings: nextLiveChatSessionTimings,
+        readLiveChatSessionIds: nextReadLiveChatSessionIds,
       }
     }),
   requestCustomerOutboundCall: () =>
@@ -381,6 +405,7 @@ export const useAppStore = create<AppState>((set) => ({
       isLiveChatTabOpen: open,
       liveChatFocusSessionId: open ? state.liveChatFocusSessionId : null,
       liveChatSessionTimings: open ? state.liveChatSessionTimings : {},
+      readLiveChatSessionIds: open ? state.readLiveChatSessionIds : [],
     })),
   setOpenEyeVideoWindowVisible: (visible) =>
     set({
@@ -405,5 +430,6 @@ export const useAppStore = create<AppState>((set) => ({
       activeLiveChatSessionIds: [],
       liveChatFocusSessionId: null,
       liveChatSessionTimings: {},
+      readLiveChatSessionIds: [],
     }),
 }))

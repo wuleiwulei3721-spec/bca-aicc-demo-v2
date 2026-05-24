@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-05-25 02:10 +08:00
+最后更新：2026-05-25 03:39 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：`codex/multi-inbound-interaction-tabs` 基于 `main@v0.5.6` 实现 PSTN、BankApp Voice、BankApp Video 多通话弹屏 tab；完成后发布 `v0.6.0`。
+当前目标：`codex/live-chat-visibility-read-state` 基于 `main@v0.6.0` 优化 Live Chat 新接入可见性、SLA 计时颜色与未读已读状态；完成后发布 `v0.6.1`。
 
 ## 0. 使用规则
 
@@ -40,8 +40,8 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`codex/multi-inbound-interaction-tabs`
-当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于 v0.6.0 多 Inbound 弹屏与通话 tab 架构，完成验证后合入 `main` 并打 tag `v0.6.0`
+当前分支：`codex/live-chat-visibility-read-state`
+当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于 v0.6.1 Live Chat 新接入可见性与已读状态优化，完成验证后合入 `main` 并打 tag `v0.6.1`
 部署目标：Vercel 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -115,7 +115,7 @@ codex-recovered-context.md
 - `src/pages/inbound/components/LiveChatCustomerList.tsx`：WhatsApp / BankApp 客户聊天列表，默认收起，支持 ALL 与渠道图标筛选、会话运行持续时间、SLA 状态、短闪提示，可收起展开；Webchat mock 暂时隐藏。
 - `src/pages/inbound/components/ChannelTag.tsx`：统一渠道标签，Customer Information 中可合并展示静态渠道接入耗时，例如 `PSTN · 05:23`、`BankApp · 02:11`。
 - `src/pages/DesignSystem.tsx`：设计系统展示页。
-- `src/store/appStore.ts`：workspace tab、BankApp demo tab、WhatsApp demo tab、Live Chat 聚焦、多 `CallInteraction` 通话实例、interaction timing 和 demo-only screen share 全局状态。
+- `src/store/appStore.ts`：workspace tab、BankApp demo tab、WhatsApp demo tab、Live Chat 聚焦/已读状态、多 `CallInteraction` 通话实例、interaction timing 和 demo-only screen share 全局状态。
 - `src/hooks/useNow.ts`：前端运行时每秒 tick hook，用于 workspace tab 和 Live Chat 列表计时刷新。
 - `src/mock/bankapp.ts`：BankApp 联系方式、业务类型、客户身份/语言驱动的技能路由和截图素材路径配置。
 - `src/mock/inbound.ts`：Inbound 演示数据。
@@ -146,9 +146,9 @@ codex-recovered-context.md
 - PSTN 创建 `voice/pstn` 实例，tab 显示 `PSTN (mm:ss)`；BankApp Voice 创建 `voice/bankapp-voice` 实例，tab 显示 `Voice Call (mm:ss)`；BankApp Video 创建 `video/bankapp-video` 实例，tab 显示 `Video Call (mm:ss)`。
 - `requestBankAppVoiceCall(activate?)` / `requestBankAppVideoCall(activate?)` 会通过 request id 触发 `BasicLayout` 话务状态机，并携带是否激活坐席工作台的语义。
 - `bankAppVideoShareState` / `isScreenShareActive` 表示 demo-only 桌面共享状态；BankApp Video 的桌面共享入口已移到坐席侧 OpenEye 浮窗，点击 `桌面共享` 后显示选择共享程序截图，点击 `确定` 后切回 BankApp Demo 展示客户侧共享画面；Hang Up、关闭 Video Call tab、新普通视频呼叫、Reset BankApp Demo 会清理该状态。
-- `requestLiveChatWorkspace(sessionId?, activate?)` 会打开固定 Live Chat tab；传入 WhatsApp 或 BankApp 会话 id 时会把该会话加入 `activeLiveChatSessionIds` 并聚焦对应客户，`activate` 默认为 `true`，BankApp 演示可传 `false` 在后台准备文字坐席页；`setLiveChatTabOpen(false)`、Sign Out、AUX 会清空 active live chat sessions。
+- `requestLiveChatWorkspace(sessionId?, activate?)` 会打开固定 Live Chat tab；传入 WhatsApp 或 BankApp 会话 id 时会把该会话加入 `activeLiveChatSessionIds` 并聚焦对应客户，`activate` 默认为 `true`，BankApp 演示可传 `false` 在后台准备文字坐席页；`setLiveChatTabOpen(false)`、Sign Out、AUX 会清空 active live chat sessions 和已读状态。
 - Workspace 交互页签现在统一使用同一套 label 结构和样式，图标与文字间距保持普通 tab 的 4px；PSTN 电话呼入为 `PSTN (mm:ss)`，BankApp Voice 为 `Voice Call (mm:ss)`，BankApp Video 为 `Video Call (mm:ss)`，Live Chat 有 active session 时显示最长会话运行时长 `Live Chat (mm:ss)`。
-- 新通话交互进入且当前不在该 tab 时，workspace tab 会轻微短闪约 5 秒；Live Chat tab key 仍保持 `live-chat`，通话 tab key 改为动态 `call-n`。
+- 新通话交互进入且当前不在该 tab 时，workspace tab 会轻微短闪约 5 秒；Live Chat tab key 仍保持 `live-chat`，只要有新 active session 进入就会短闪，即使当前已停留在 Live Chat tab；通话 tab key 改为动态 `call-n`。
 - 当前正在通话的 call tab 不可关闭；Hang Up 后该 tab 保留、duration 冻结并变为可关闭。旧 ended tab 用于坐席继续登记，不代表仍有客户互动。
 - Live Chat tab 不可关闭，签出后自动从 workspace tabs 移除。
 - `/design-system` 独立展示设计规范与基础组件，不参与通话流程。
@@ -199,7 +199,9 @@ type CallStatus =
 - BankApp Demo 的 `Livechat` 路径会打开 Live Chat 并聚焦 BankApp 客户；`Voice Call` / `Video Call` 路径通过 store request id 触发现有坐席话务状态机，并可在 `Agent Workspace` 步骤切到对应坐席 workspace。
 - WhatsApp Demo 默认走 Live Chat 路径并聚焦 WhatsApp 客户 `live-chat-001`；已签入后仍可通过固定 Live Chat tab 承载会话工作台。
 - Live Chat 客户列表只展示 active sessions，并为每个 active customer 显示 `lastMessageTime · mm:ss`；BankApp / WhatsApp Live Chat 运行计时从入口接入时的 `00:00` 开始，不再用 mock `customer.accessDuration` 回推。SLA 仅用于 Live Chat，60 秒 warning、120 秒 breach，展开列表用左侧细 accent 与 duration 颜色表达，收起列表用渠道 icon 角标表达；warning 色使用更明确的 amber/yellow，避免偏深棕。
-- Live Chat 新客户进入列表时会短闪约 5 秒；`ConversationWorkspace` 的头部计时与客户列表、workspace tab 使用同一份 store runtime timing，避免三处计时不一致。
+- Live Chat 新客户进入列表时会短闪约 5 秒；active 和 inactive 客户列表项使用一致的浅 amber 闪烁样式，避免 active 白底压住提示。
+- Live Chat 客户 unread badge 以“会话被打开/选中”为已读点，已读 session id 存在 `appStore.readLiveChatSessionIds` 中，避免切换 BankApp / WhatsApp Demo tab 后已读状态丢失；End Service、Sign Out、AUX 或关闭 Live Chat 会清理对应已读状态。
+- `ConversationWorkspace` 的头部计时与客户列表、workspace tab 使用同一份 store runtime timing，避免三处计时不一致；头部计时会按 Live Chat SLA 状态变色：normal 灰色、warning amber、breach red。
 - Incoming 支持手动 Answer，也支持按 `autoAnswerSeconds` 自动接听。
 - Talking 可切换 Hold 或 Mute。
 - Hold 和 Mute 有独立累计计时。

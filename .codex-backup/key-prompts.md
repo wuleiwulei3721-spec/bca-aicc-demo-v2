@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-05-25 02:10 +08:00
+最后更新：2026-05-25 03:39 +08:00
 
 ## 项目方向
 
@@ -96,6 +96,16 @@
 - 文字渠道邀请语义在 Transfer 弹框内统一为 `Conference`，不再使用 `Invite` 作为 Agent 行动作文案。
 - 话务条 Transfer 弹框保持原 `Consult` / `Transfer` / `Conference` 与三页签行为。
 - 话务条 Transfer 弹框的 `Consult` / `Transfer` / `Conference` 必须保持同一行，不允许因为 Conversation 专用动作收纳影响 call 变体。
+
+## 2026-05-25 Live Chat 新接入可见性与已读状态
+
+- Live Chat 新 active session 进入时，workspace `Live Chat` tab 必须短闪约 5 秒；即使当前已经停留在 Live Chat tab，也要闪烁。
+- Live Chat 客户列表新客户接入时，active 和 inactive 客户项的 flash 样式应一致，使用浅 amber 背景、细边框/内阴影，不改变行高、头像或筛选器布局。
+- Conversation header 中客户姓名旁边的实时 timer 必须随 SLA 状态变色：normal 灰色，warning amber，breach red；图标和时间文字一起变色。
+- 点击/激活某个 Live Chat customer 后，该 session 的 unread badge 必须清零；坐席发送消息后继续保持已读。
+- 已读状态需要存入 `appStore.readLiveChatSessionIds`，不能只放在 LiveChatPage 本地 state，因为切到 BankApp Demo / WhatsApp Demo 时 LiveChatPage 会卸载。
+- End Service、Sign Out、AUX 或关闭 Live Chat 时应清理对应 active session timing 和已读状态。
+- SLA marker 的白色边框保持 `1px`，避免收起态头像右下角标识过厚。
 
 ## 2026-05-22 BankApp 客户侧接入演示
 

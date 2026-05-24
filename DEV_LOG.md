@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-25 02:10 +08:00
+最后更新：2026-05-25 03:39 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,61 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-25 03:39 +08:00 - Live Chat 新接入可见性与已读状态优化
+
+修改页面或文件：
+
+- `src/store/appStore.ts`
+- `src/pages/AgentWorkspace.tsx`
+- `src/pages/inbound/LiveChatPage.tsx`
+- `src/pages/inbound/components/ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-05-25-0339.md`
+- `.codex-backup/current-todo-2026-05-25-0339.md`
+- `.codex-backup/page-state-2026-05-25-0339.md`
+
+修改原因：
+
+- 用户发现 Live Chat 新客户接入时，Live Chat workspace tab 没有在当前已选中 Live Chat 的情况下闪烁。
+- 用户认为客户列表新接入闪烁不够明显，且 active customer 与 inactive customer 闪烁视觉不一致。
+- 用户要求 Conversation header 中客户姓名旁边的计时也要随 SLA 状态变色。
+- 用户指出点击客户后头像右上角 unread badge 应消失，头像右下 SLA marker 的白色边框偏厚。
+
+修改结果：
+
+- `AgentWorkspace` 中 Live Chat tab 只要存在最新 session `flashUntil > now` 就短闪，不再要求当前 active tab 不是 Live Chat。
+- `.workspace-tab-label--flash` 增强为浅 amber 背景、细 outline 与轻 glow，不改变 tab 尺寸。
+- `LiveChatCustomerList` 的 flash 改为统一 overlay 样式，active/inactive 客户项使用同一套浅 amber 闪烁，不受 active 白底影响。
+- `ConversationWorkspace` 接收当前 session 的 `slaState`，客户姓名旁边 timer 的图标和文字会随 warning / breach 变色。
+- `appStore` 新增 `readLiveChatSessionIds` 和 `markLiveChatSessionRead()`；会话被聚焦、点击、筛选切换到或 End Service 后自动选中时会清 unread badge。
+- 已读状态提升到 store，避免从 Live Chat 切到 BankApp / WhatsApp Demo 再回来时 unread badge 重新出现；End Service、Sign Out、AUX 或关闭 Live Chat 会清理对应已读状态。
+- Live Chat SLA marker 白色边框从 `2px` 调整为 `1px`，保留可读性但降低厚重感。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：Sign In 后通过 WhatsApp Demo 进入 Live Chat，Live Chat tab 和客户列表行短闪，active unread badge 已清零。
+- Browser smoke check `/`：当前停留在 Live Chat 时通过 BankApp Demo 新接入第二个客户，Live Chat tab 仍短闪，两个客户列表项均出现明显 flash。
+- Browser smoke check `/`：点击已存在的 WhatsApp 客户后 active customer 切换正常，unread badge 不再恢复。
+- Browser smoke check `/`：SLA marker CSS 边框为 `1px`。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚 Live Chat tab 闪烁，可恢复 `AgentWorkspace` 中 `activeKey !== LIVE_CHAT_TAB_KEY` 的闪烁条件。
+- 如需回滚 unread 已读状态，可移除 `readLiveChatSessionIds` / `markLiveChatSessionRead()`，并恢复 `LiveChatPage` 仅使用本地 `sessionSummariesById`。
+- 如需回滚闪烁视觉，可恢复 `live-chat-session-flash` 旧 keyframes 和 `.live-chat-customer-list__item--flash` 的原动画。
+
+当前风险点：
+
+- unread 已读状态仍是前端 demo 级别，不接真实消息已读回执；刷新页面后不会持久化。
+- Live Chat SLA 阈值仍按客户示例固定为 warning 60 秒、breach 120 秒，未来多渠道 SLA 需要配置化。
+- 本轮未改 v0.6.0 多通话 tab 架构，PSTN / BankApp Voice / BankApp Video 多弹屏风险边界保持不变。
 
 ### 2026-05-25 02:10 +08:00 - 多 Inbound 弹屏与通话 Tab 架构
 

@@ -14,11 +14,13 @@ import { BaseButton, BaseModal } from '../../../components'
 import { TransferModal } from '../../../layouts/components/TransferModal'
 import type { LiveChatConversationMessage, LiveChatSession } from '../../../types'
 import { formatDuration } from '../../../utils/duration'
+import type { InteractionSlaState } from '../../../utils/duration'
 
 export interface ConversationWorkspaceConfig {
   elapsedSeconds: number
   messages: LiveChatConversationMessage[]
   session: LiveChatSession
+  slaState: InteractionSlaState
   onEndService: (sessionId: string) => void
   onSendMessage: (sessionId: string, message: string) => void
 }
@@ -124,6 +126,7 @@ export function ConversationWorkspace({
   elapsedSeconds,
   messages,
   session,
+  slaState,
   onEndService,
   onSendMessage,
 }: ConversationWorkspaceConfig) {
@@ -211,7 +214,16 @@ export function ConversationWorkspace({
         <div className="live-chat-conversation__identity">
           {renderChannelIcon(session.channel)}
           <strong>{profile.name}</strong>
-          <span className="live-chat-conversation__timer">
+          <span
+            className={[
+              'live-chat-conversation__timer',
+              slaState !== 'normal'
+                ? `live-chat-conversation__timer--${slaState}`
+                : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
             <ClockCircleOutlined />
             {elapsedTime}
           </span>

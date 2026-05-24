@@ -236,10 +236,7 @@ export function AgentWorkspace() {
           <WorkspaceTabLabel
             durationStartedAt={liveChatDurationStartedAt}
             icon={<MessageOutlined />}
-            isFlashing={
-              activeKey !== LIVE_CHAT_TAB_KEY &&
-              latestLiveChatFlashUntil > now
-            }
+            isFlashing={latestLiveChatFlashUntil > now}
             label="Live Chat"
             now={now}
             slaState={liveChatSlaState}
