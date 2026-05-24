@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-05-24 22:31 +08:00
+最后更新：2026-05-25 01:31 +08:00
 
 ## 项目方向
 
@@ -329,6 +329,16 @@
 - Live Chat 新客户进入列表时短闪约 5 秒；End Service 后移除该 session 的 runtime timing，没有 active sessions 时状态和 Live Chat tab duration 回到空态。
 - `ConversationWorkspace` 的头部计时必须与客户列表和 workspace tab 使用同一份 runtime timing，不能各自 setInterval 单独计算。
 - 本轮不做多路 PSTN 并发架构改造，不改 BankApp/WhatsApp/Video 客户侧流程，不重新开放 Webchat。
+
+## 2026-05-25 Live Chat 计时与 Tab 视觉清理
+
+- Workspace tab label 必须统一结构和视觉间距；Home、BankApp Demo、WhatsApp Demo、Live Chat、PSTN、Voice Call、Video Call 的图标与文字距离保持一致。
+- BankApp / WhatsApp Live Chat 模拟客户接入时，tab、客户列表和 Conversation header 的运行计时从新接入 `00:00` 开始，不再用 mock `accessDuration` 回推。
+- Live Chat 客户列表始终显示每个 active customer 的运行 duration，即使只有一个客户也显示，避免规则忽有忽无。
+- Customer Information 中的 `accessDuration` 语义保留为客户从渠道接入、排队、转坐席成功前的静态耗时；展示上合并到渠道标签内，例如 `PSTN · 05:23`、`BankApp · 02:11`、`WhatsApp · 00:48`。
+- Customer Information 不再额外显示独立时钟图标和单独 duration 文本，减少 Live Chat 页面里的重复时间感。
+- Live Chat SLA warning 仍为 60 秒，但颜色应使用更明确的 amber/yellow；breach 仍为 120 秒红色。
+- Hang Up 后保留旧弹屏并为新呼叫创建新弹屏 tab 的多 inbound 架构不放入 v0.5.6，后续单独规划 `v0.6.0`。
 
 ## 2026-05-23 版本与素材策略
 

@@ -248,7 +248,13 @@ export function DesignSystem() {
         <DesignSection title="6. Card System">
           <div className="design-component-grid design-component-grid--cards">
             <CustomerInformationPanel
-              accessChannelNode={<ChannelTag compact value="Phone" />}
+              accessChannelNode={
+                <ChannelTag
+                  compact
+                  duration={inboundCustomer.accessDuration}
+                  value="Phone"
+                />
+              }
               customer={inboundCustomer}
             />
             <BaseCard compact expandable expanded title="Customer Journey">

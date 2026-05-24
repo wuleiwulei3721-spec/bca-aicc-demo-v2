@@ -252,7 +252,8 @@ export function LiveChatCustomerList({
                           .filter(Boolean)
                           .join(' ')}
                       >
-                        · {durationLabel}
+                        <span aria-hidden="true">&middot;</span>
+                        {durationLabel}
                       </span>
                     </span>
                   </span>

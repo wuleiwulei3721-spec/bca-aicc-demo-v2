@@ -151,7 +151,13 @@ export function CustomerInformationCard({
   return (
     <>
       <CustomerInformationPanel
-        accessChannelNode={<ChannelTag compact value={customer.accessChannel} />}
+        accessChannelNode={
+          <ChannelTag
+            compact
+            duration={customer.accessDuration}
+            value={customer.accessChannel}
+          />
+        }
         className="inbound-section-card inbound-section-card--customer"
         customer={customer}
         headerExtra={

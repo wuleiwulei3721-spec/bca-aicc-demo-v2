@@ -2,7 +2,6 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   CheckOutlined,
-  ClockCircleOutlined,
   IdcardOutlined,
   MailOutlined,
 } from '@ant-design/icons'
@@ -85,6 +84,15 @@ export function CustomerInformationPanel({
       : onRequestOutbound
   const levelLabel = customerLevelLabel(profile.customerType)
   const avatarSrc = profile.avatarUrl.trim() || undefined
+  const defaultAccessChannelNode = (
+    <span className="aicc-customer-info__channel-fallback">
+      <span>{customer.accessChannel}</span>
+      <span className="aicc-customer-info__channel-duration">
+        <span aria-hidden="true">&middot;</span>
+        {customer.accessDuration}
+      </span>
+    </span>
+  )
 
   return (
     <BaseCard
@@ -176,12 +184,8 @@ export function CustomerInformationPanel({
             type="button"
             onClick={onOpenCallFlow}
           >
-            {accessChannelNode ?? customer.accessChannel}
+            {accessChannelNode ?? defaultAccessChannelNode}
           </button>
-          <span>
-            <ClockCircleOutlined />
-            {customer.accessDuration}
-          </span>
           <StatusBadge
             className="aicc-customer-info__verification"
             label={badge.label}

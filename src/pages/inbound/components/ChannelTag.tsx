@@ -15,6 +15,7 @@ type ChannelTagValue = AccessChannel | JourneyChannel
 interface ChannelTagProps {
   value: ChannelTagValue
   compact?: boolean
+  duration?: string
 }
 
 const channelClassNames: Record<string, string> = {
@@ -75,7 +76,7 @@ function renderIcon(value: ChannelTagValue) {
   return <MessageOutlined />
 }
 
-export function ChannelTag({ value, compact }: ChannelTagProps) {
+export function ChannelTag({ value, compact, duration }: ChannelTagProps) {
   return (
     <Tag
       className={[
@@ -87,7 +88,17 @@ export function ChannelTag({ value, compact }: ChannelTagProps) {
         .join(' ')}
       icon={renderIcon(value)}
     >
-      {channelDisplayLabels[value] ?? value}
+      <span className="inbound-channel-tag__label">
+        {channelDisplayLabels[value] ?? value}
+      </span>
+      {duration && (
+        <span className="inbound-channel-tag__duration">
+          <span aria-hidden="true" className="inbound-channel-tag__separator">
+            &middot;
+          </span>
+          {duration}
+        </span>
+      )}
     </Tag>
   )
 }

@@ -1,6 +1,4 @@
 import { create } from 'zustand'
-import { liveChatSessions } from '../mock/inbound'
-import { parseDurationSeconds } from '../utils/duration'
 
 export type InboundPopupSource = 'pstn' | 'bankapp-voice'
 export type VideoCallPopupSource = 'standard' | 'bankapp-video'
@@ -13,19 +11,12 @@ export interface InteractionTiming {
 
 const INTERACTION_FLASH_MS = 5000
 
-const liveChatInitialElapsedSecondsById = Object.fromEntries(
-  liveChatSessions.map((session) => [
-    session.id,
-    parseDurationSeconds(session.customer.accessDuration),
-  ]),
-) as Record<string, number>
-
-function createInteractionTiming(initialElapsedSeconds = 0): InteractionTiming {
+function createInteractionTiming(): InteractionTiming {
   const now = Date.now()
 
   return {
     flashUntil: now + INTERACTION_FLASH_MS,
-    startedAt: now - initialElapsedSeconds * 1000,
+    startedAt: now,
   }
 }
 
@@ -207,14 +198,11 @@ export const useAppStore = create<AppState>((set) => ({
         sessionId && !state.activeLiveChatSessionIds.includes(sessionId)
           ? [...state.activeLiveChatSessionIds, sessionId]
           : state.activeLiveChatSessionIds
-      const initialElapsedSeconds = sessionId
-        ? liveChatInitialElapsedSecondsById[sessionId] ?? 0
-        : 0
       const nextLiveChatSessionTimings =
         sessionId && !state.liveChatSessionTimings[sessionId]
           ? {
               ...state.liveChatSessionTimings,
-              [sessionId]: createInteractionTiming(initialElapsedSeconds),
+              [sessionId]: createInteractionTiming(),
             }
           : state.liveChatSessionTimings
 

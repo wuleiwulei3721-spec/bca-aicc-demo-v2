@@ -29,7 +29,7 @@ const LIVE_CHAT_TAB_KEY = 'live-chat'
 const INBOUND_TAB_KEY = 'inbound'
 const VIDEO_CALL_TAB_KEY = 'video-call'
 
-interface InteractionTabLabelProps {
+interface WorkspaceTabLabelProps {
   durationStartedAt?: number | null
   icon: ReactNode
   isFlashing?: boolean
@@ -77,14 +77,14 @@ function getLatestFlashUntil(timings: InteractionTiming[]) {
   return Math.max(...timings.map((timing) => timing.flashUntil))
 }
 
-function InteractionTabLabel({
+function WorkspaceTabLabel({
   durationStartedAt,
   icon,
   isFlashing = false,
   label,
   now,
   slaState = 'normal',
-}: InteractionTabLabelProps) {
+}: WorkspaceTabLabelProps) {
   const elapsedSeconds =
     durationStartedAt === null || durationStartedAt === undefined
       ? null
@@ -93,17 +93,17 @@ function InteractionTabLabel({
   return (
     <span
       className={[
-        'interaction-tab-label',
-        slaState !== 'normal' ? `interaction-tab-label--${slaState}` : '',
-        isFlashing ? 'interaction-tab-label--flash' : '',
+        'workspace-tab-label',
+        slaState !== 'normal' ? `workspace-tab-label--${slaState}` : '',
+        isFlashing ? 'workspace-tab-label--flash' : '',
       ]
         .filter(Boolean)
         .join(' ')}
     >
-      {icon}
-      <span className="interaction-tab-label__text">{label}</span>
+      <span className="workspace-tab-label__icon">{icon}</span>
+      <span className="workspace-tab-label__text">{label}</span>
       {elapsedSeconds !== null && (
-        <span className="interaction-tab-label__duration">
+        <span className="workspace-tab-label__duration">
           ({formatDuration(elapsedSeconds)})
         </span>
       )}
@@ -175,10 +175,7 @@ export function AgentWorkspace() {
         key: HOME_TAB_KEY,
         closable: false,
         label: (
-          <span>
-            <HomeOutlined />
-            Home
-          </span>
+          <WorkspaceTabLabel icon={<HomeOutlined />} label="Home" now={now} />
         ),
         children: (
           <section className="home-workspace">
@@ -199,10 +196,11 @@ export function AgentWorkspace() {
         key: BANKAPP_DEMO_TAB_KEY,
         closable: true,
         label: (
-          <span>
-            <MobileOutlined />
-            BankApp Demo
-          </span>
+          <WorkspaceTabLabel
+            icon={<MobileOutlined />}
+            label="BankApp Demo"
+            now={now}
+          />
         ),
         children: <BankAppDemoPage />,
       })
@@ -213,10 +211,11 @@ export function AgentWorkspace() {
         key: WHATSAPP_DEMO_TAB_KEY,
         closable: true,
         label: (
-          <span>
-            <MessageOutlined />
-            WhatsApp Demo
-          </span>
+          <WorkspaceTabLabel
+            icon={<MessageOutlined />}
+            label="WhatsApp Demo"
+            now={now}
+          />
         ),
         children: <WhatsAppDemoPage />,
       })
@@ -227,7 +226,7 @@ export function AgentWorkspace() {
         key: LIVE_CHAT_TAB_KEY,
         closable: false,
         label: (
-          <InteractionTabLabel
+          <WorkspaceTabLabel
             durationStartedAt={liveChatDurationStartedAt}
             icon={<MessageOutlined />}
             isFlashing={
@@ -249,7 +248,7 @@ export function AgentWorkspace() {
         key: INBOUND_TAB_KEY,
         closable: true,
         label: (
-          <InteractionTabLabel
+          <WorkspaceTabLabel
             durationStartedAt={inboundInteractionTiming?.startedAt}
             icon={<CustomerServiceOutlined />}
             isFlashing={
@@ -270,7 +269,7 @@ export function AgentWorkspace() {
         key: VIDEO_CALL_TAB_KEY,
         closable: true,
         label: (
-          <InteractionTabLabel
+          <WorkspaceTabLabel
             durationStartedAt={videoCallInteractionTiming?.startedAt}
             icon={<VideoCameraOutlined />}
             isFlashing={

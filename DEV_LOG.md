@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-25 00:00 +08:00
+最后更新：2026-05-25 01:31 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,66 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-25 01:31 +08:00 - Live Chat 计时与 Tab 视觉清理
+
+修改页面或文件：
+
+- `src/store/appStore.ts`
+- `src/pages/AgentWorkspace.tsx`
+- `src/pages/inbound/components/ChannelTag.tsx`
+- `src/components/CustomerInformationPanel.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/pages/inbound/components/LiveChatCustomerList.tsx`
+- `src/pages/DesignSystem.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-05-25-0131.md`
+- `.codex-backup/current-todo-2026-05-25-0131.md`
+- `.codex-backup/page-state-2026-05-25-0131.md`
+
+修改原因：
+
+- 用户发现 workspace tab 中 Live Chat、PSTN、Voice Call、Video Call 的图标与文字距离比其它 tab 更远，需要统一 tab label 结构和间距。
+- 用户希望 BankApp / WhatsApp Live Chat 模拟客户接入时，运行计时从新接入 `00:00` 开始，而不是沿用 mock access duration 回推。
+- 用户明确 Customer Information 中的 access duration 是客户从渠道接入、排队、转坐席成功前的静态耗时，应保留但与渠道标签合并展示，避免页面出现过多分散时间。
+- 用户指出 Live Chat 60 秒 warning 色偏深棕，需要更明确的 amber/yellow。
+
+修改结果：
+
+- `AgentWorkspace` 中所有 workspace tab 统一使用 `WorkspaceTabLabel` 结构，修复 nested `span` 被通用 gap 样式影响导致交互 tab 间距变宽的问题。
+- `appStore` 的 Live Chat session timing 改为接入时从 `00:00` 开始，不再根据 `customer.accessDuration` 初始化回推。
+- Live Chat 客户列表仍始终显示每个 active customer 的运行 duration；Conversation header、客户列表和 Live Chat tab 继续共用同一份 runtime timing。
+- `ChannelTag` 支持可选 duration，Customer Information 的 access strip 改为 `渠道 · 接入时长`，移除独立时钟图标与单独 duration 文本。
+- `CustomerInformationCard` 和 `/design-system` 示例同步使用新的渠道标签 duration 形态。
+- Live Chat SLA warning 色更新为更清晰的 amber/yellow；breach 红色逻辑不变。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/` at 1366x768：Sign In 后 Live Chat tab 无 duration，Home 和 Live Chat tab 图标文字间距一致。
+- Browser smoke check `/`：PSTN Incoming 显示 `PSTN (00:xx)`，BankApp Voice 显示 `Voice Call (00:xx)`，BankApp Video 显示 `Video Call (00:xx)`，旧 `PSTN / Voice Call` 不再出现。
+- Browser smoke check `/`：BankApp / WhatsApp Live Chat 均从 `00:00` 开始计时，列表和 Conversation header 同步增长，单个 active customer 仍显示 duration。
+- Browser smoke check `/`：Customer Information access strip 显示 `渠道 · 接入时长`，不再出现独立时钟时长。
+- Browser smoke check `/`：End Service 后清理该 session timing，无 active sessions 时 Live Chat tab 恢复无 duration。
+- Browser smoke check `/`：warning duration 色为 `#c77a00`，收起态 marker 色为 `#f5a400`。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚 tab 间距，可恢复 `interaction-tab-label` 结构和旧 `.agent-workspace-tabs .ant-tabs-tab-btn span` 样式，但会重新带来嵌套 span 间距风险。
+- 如需回滚 Live Chat 起始计时，可恢复 `liveChatInitialElapsedSecondsById` 和 `parseDurationSeconds(customer.accessDuration)` 初始化逻辑。
+- 如需回滚 Customer Information 渠道时长整合，可恢复 `ClockCircleOutlined` 和 `aicc-customer-info__access-duration` 单独展示。
+- 如需回滚 SLA warning 色，可恢复原 warning 色 token。
+
+当前风险点：
+
+- 本轮未实现 Hang Up 后旧弹屏保留且新呼叫新开 tab 的多 inbound 架构，该需求需在 `v0.6.0` 单独处理。
+- 当前仍只支持一个 `inbound` tab、一个 `video-call` tab 和一个固定 `live-chat` workspace；多路电话并发会涉及 store 和 tab key 架构改造。
+- Customer Information 静态接入耗时与 Live Chat 运行计时现在同时存在，但语义不同：前者是渠道/排队耗时，后者是坐席服务运行时长。
 
 ### 2026-05-25 00:00 +08:00 - 交互页签与 Live Chat 计时/SLA/短闪
 
