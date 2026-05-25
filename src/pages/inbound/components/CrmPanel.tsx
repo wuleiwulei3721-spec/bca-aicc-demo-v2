@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import {
   BankOutlined,
+  BulbOutlined,
   CloseOutlined,
   FileDoneOutlined,
   MessageOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons'
 import type { TabsProps } from 'antd'
 import { BaseTabs } from '../../../components'
@@ -23,6 +26,27 @@ interface CrmPanelProps {
   workspaceTabs: CrmWorkspaceTab[]
   onActiveKeyChange: (activeKey: string) => void
   onCloseTab: (tabKey: string) => void
+}
+
+function renderCrmTabLabel(label: string, icon: ReactNode) {
+  return (
+    <span className="inbound-crm-tab-label" title={label}>
+      <span className="inbound-crm-tab-label__icon">{icon}</span>
+      <span className="inbound-crm-tab-label__text">{label}</span>
+    </span>
+  )
+}
+
+function renderWorkspaceTabIcon(kind: CrmWorkspaceTab['kind']) {
+  if (kind === 'next-best-action') {
+    return <BulbOutlined />
+  }
+
+  if (kind === 'quick-action') {
+    return <ThunderboltOutlined />
+  }
+
+  return <FileDoneOutlined />
 }
 
 function CrmScreenshotArea() {
@@ -207,12 +231,7 @@ export function CrmPanel({
       {
         key: CRM_TAB_KEY,
         closable: false,
-        label: (
-          <span>
-            <BankOutlined />
-            CRM
-          </span>
-        ),
+        label: renderCrmTabLabel('CRM', <BankOutlined />),
         children: <CrmScreenshotArea />,
       },
       ...(conversation
@@ -220,12 +239,7 @@ export function CrmPanel({
             {
               key: CONVERSATION_TAB_KEY,
               closable: false,
-              label: (
-                <span>
-                  <MessageOutlined />
-                  Conversation
-                </span>
-              ),
+              label: renderCrmTabLabel('Conversation', <MessageOutlined />),
               children: (
                 <ConversationWorkspace
                   key={conversation.session.id}
@@ -238,12 +252,7 @@ export function CrmPanel({
       ...workspaceTabs.map((tab) => ({
         key: tab.key,
         closable: true,
-        label: (
-          <span>
-            <FileDoneOutlined />
-            {tab.title}
-          </span>
-        ),
+        label: renderCrmTabLabel(tab.title, renderWorkspaceTabIcon(tab.kind)),
         children: <WorkspaceBusinessDetail tab={tab} />,
       })),
     ],

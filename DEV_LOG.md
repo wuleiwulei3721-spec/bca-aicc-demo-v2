@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-25 13:17 +08:00
+最后更新：2026-05-25 15:34 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,51 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-25 15:34 +08:00 - 弹屏卡片与 CRM Tab 视觉稳定优化
+
+修改页面或文件：
+
+- `src/pages/inbound/components/TicketingHistoryCard.tsx`
+- `src/pages/inbound/components/CrmPanel.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-25-1534.md`
+- `.codex-backup/current-todo-2026-05-25-1534.md`
+- `.codex-backup/page-state-2026-05-25-1534.md`
+
+修改原因：
+
+- 用户指出 `Ticketing History` 中 CRM 编号和日期未与上方 `Customer Journey` 右侧结果/日期列形成一致对齐。
+- 用户指出中部 CRM tabs 在多开动态 tab 后存在高度不稳定、下方间隙、部分 tab 图标不一致和最右侧更多按钮过宽的问题。
+- 当前外网链接已提供给客户查看，本轮需保持低风险，只做弹屏视觉稳定优化，不改业务状态与流程。
+
+修改结果：
+
+- `Ticketing History` 行调整为“票据类型 + 右侧 meta 区 + 箭头”，右侧 meta 区内 ticket 编号与日期统一右对齐。
+- `CrmPanel` 新增统一 `inbound-crm-tab-label` label 结构，CRM、Conversation、Ticketing、Next Best Action、Quick Action 均使用固定图标尺寸、4px 图文间距和文字 ellipsis。
+- 中部 CRM tabs nav 锁定单行固定高度，content holder 使用剩余高度，避免多 tab 后撑高 nav 或在 tab 下方留下异常间隙。
+- CRM tabs overflow 更多按钮压缩为紧凑图标按钮，保留 AntD overflow 和动态 tab 关闭能力。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：主路由正常加载，Sign In 成功后出现固定 `Live Chat` tab。
+- Browser smoke check `/design-system`：页面正常加载。
+- 受 in-app browser 当前可见导航区域限制，本轮未能完整通过浏览器点击 PSTN 并逐项打开 CRM 动态 tab；需要在常规浏览器或客户目标分辨率下补做视觉复查。
+
+回滚说明：
+
+- 如需回滚 Ticketing 对齐，只需恢复 `TicketingHistoryCard.tsx` 中 ticket 编号/日期的直接渲染结构，并恢复 `.inbound-ticket-row` 原 grid columns。
+- 如需回滚 CRM tabs 视觉，可恢复 `CrmPanel.tsx` 中原始 inline label，并移除 `.inbound-crm-tab-label`、CRM nav 固定高度和 `.ant-tabs-nav-more` 压缩样式。
+- 本轮未修改 store、mock、tab key、路由或业务状态机。
+
+当前风险点：
+
+- 本轮为视觉优化，需在客户目标演示分辨率下复查多个 CRM 动态 tab 打开后的 overflow 下拉与右侧 Assistant 对齐效果。
+- 当前项目仍缺少自动化视觉回归测试，主要依赖 lint/build 和浏览器 smoke check。
 
 ### 2026-05-25 13:17 +08:00 - Ready-aware 通话接入提示
 

@@ -70,8 +70,14 @@ export function TicketingHistoryCard({
             }
           >
             <span className="inbound-ticket-type">{item.ticketType}</span>
-            <Tag className="inbound-neutral-tag">{item.ticketNumber}</Tag>
-            <span className="inbound-compact-row__date">{item.createdDate}</span>
+            <span className="inbound-ticket-row__meta">
+              <Tag className="inbound-neutral-tag inbound-ticket-row__number">
+                {item.ticketNumber}
+              </Tag>
+              <span className="inbound-compact-row__date">
+                {item.createdDate}
+              </span>
+            </span>
             <ArrowRightOutlined className="inbound-ticket-row__hint" />
           </button>
         ))}
