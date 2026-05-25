@@ -3732,7 +3732,8 @@ a {
 }
 
 .inbound-ticket-row {
-  grid-template-columns: minmax(0, 1fr) minmax(112px, auto) 14px;
+  position: relative;
+  grid-template-columns: minmax(0, 1fr) minmax(112px, auto);
 }
 
 .inbound-ticket-type {
@@ -3784,14 +3785,30 @@ a {
 }
 
 .inbound-ticket-row__hint {
-  align-self: center;
+  position: absolute;
+  top: 50%;
+  right: 0;
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: var(--aicc-radius-sm);
+  background: linear-gradient(
+    90deg,
+    rgba(247, 251, 255, 0.15),
+    #f7fbff 38%,
+    #f7fbff 100%
+  );
   color: var(--aicc-primary);
   font-size: 11px;
   opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%);
   transition: opacity 0.16s ease;
 }
 
-.inbound-ticket-row--clickable:hover .inbound-ticket-row__hint {
+.inbound-ticket-row--clickable:hover .inbound-ticket-row__hint,
+.inbound-ticket-row--clickable:focus-visible .inbound-ticket-row__hint {
   opacity: 0.78;
 }
 
