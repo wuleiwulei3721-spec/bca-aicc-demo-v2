@@ -381,6 +381,16 @@
 - BankApp Live Chat / WhatsApp Live Chat 不受该限制影响，仍可在固定 Live Chat tab 内接入。
 - 本轮不新增多路同时 active call，也不改变 `CallInteraction` 多 tab 保留架构；只是让现有限制可见。
 
+## 2026-05-25 Ready-aware 通话接入提示
+
+- 仅提示“先挂机”不完整，因为 Hang Up 后坐席会进入 ACW / Not Ready，必须等坐席回 Ready 后才能接入新的电话、语音或视频。
+- 新增统一 readiness：`available` 表示 Ready + Idle + 无未结束 call；`active-call` 表示当前仍有未挂断 voice/video；`not-ready` 表示没有未挂断 call 但坐席不是 Ready。
+- PSTN / voice / video 被 `active-call` 阻塞时提示：`Active call in progress. Please hang up and wait until the agent is Ready before accepting another voice or video interaction.`
+- PSTN / voice / video 被 `not-ready` 阻塞时提示：`Agent is not Ready. Please switch to Ready before accepting another voice or video interaction.`
+- BankApp Voice / Video handoff 被 `active-call` 阻塞时提示：`Please hang up the current call and wait until the agent is Ready before routing this interaction to Agent Workspace.`
+- BankApp Voice / Video handoff 被 `not-ready` 阻塞时提示：`Agent must be Ready before routing this interaction to Agent Workspace.`
+- Answer 黄色按钮继续使用深色文字和图标；黄色底上白字对比不足，不作为本轮修改。
+
 ## 2026-05-23 版本与素材策略
 
 - 后续按里程碑分支推进：`v0.3.0` BankApp 基线、`v0.3.1` 菜单与 WhatsApp、`v0.4.0` Video screen share、`v0.5.0` 客户远程演示优化。

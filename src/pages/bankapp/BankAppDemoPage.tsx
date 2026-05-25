@@ -19,7 +19,11 @@ import {
   bankAppScreenshotSources,
   whatsAppScreenshotSources,
 } from '../../mock/bankapp'
-import { useAppStore, type BankAppVideoShareState } from '../../store'
+import {
+  useAppStore,
+  type BankAppVideoShareState,
+  type VoiceVideoHandoffReadiness,
+} from '../../store'
 import type {
   BankAppBusinessOption,
   BankAppBusinessType,
@@ -31,6 +35,10 @@ import type {
 
 const BANKAPP_LIVE_CHAT_SESSION_ID = 'live-chat-002'
 const WHATSAPP_LIVE_CHAT_SESSION_ID = 'live-chat-001'
+type HandoffWarningReason = Exclude<
+  VoiceVideoHandoffReadiness,
+  'available'
+>
 
 type CustomerAppDemoVariant = 'bankapp' | 'whatsapp'
 
@@ -293,9 +301,8 @@ export function BankAppDemoPage({
   const requestLiveChatWorkspace = useAppStore(
     (state) => state.requestLiveChatWorkspace,
   )
-  const callInteractions = useAppStore((state) => state.callInteractions)
-  const currentCallInteractionId = useAppStore(
-    (state) => state.currentCallInteractionId,
+  const voiceVideoHandoffReadiness = useAppStore(
+    (state) => state.voiceVideoHandoffReadiness,
   )
   const bankAppVideoShareState = useAppStore(
     (state) => state.bankAppVideoShareState,
@@ -311,7 +318,8 @@ export function BankAppDemoPage({
   const [businessType, setBusinessType] =
     useState<BankAppBusinessType>('mobile-login')
   const [demoStep, setDemoStep] = useState<BankAppDemoStep>('channel')
-  const [handoffWarningVisible, setHandoffWarningVisible] = useState(false)
+  const [handoffWarningReason, setHandoffWarningReason] =
+    useState<HandoffWarningReason | null>(null)
 
   const selectedBusiness = useMemo(
     () =>
@@ -337,32 +345,30 @@ export function BankAppDemoPage({
     language,
     contactMethod,
   )
-  const currentCallInteraction = currentCallInteractionId
-    ? callInteractions[currentCallInteractionId]
-    : null
-  const hasUnfinishedCurrentCall =
-    currentCallInteraction !== null &&
-    currentCallInteraction.phase !== 'ended'
+  const handoffWarningMessage =
+    handoffWarningReason === 'active-call'
+      ? 'Please hang up the current call and wait until the agent is Ready before routing this interaction to Agent Workspace.'
+      : 'Agent must be Ready before routing this interaction to Agent Workspace.'
 
   const triggerAgentWorkspace = (activateWorkspace = false) => {
     if (contactMethod === 'livechat') {
-      setHandoffWarningVisible(false)
+      setHandoffWarningReason(null)
       requestLiveChatWorkspace(config.liveChatSessionId, activateWorkspace)
       return true
     }
 
-    if (hasUnfinishedCurrentCall) {
-      setHandoffWarningVisible(true)
+    if (voiceVideoHandoffReadiness !== 'available') {
+      setHandoffWarningReason(voiceVideoHandoffReadiness)
       return false
     }
 
     if (contactMethod === 'voice') {
-      setHandoffWarningVisible(false)
+      setHandoffWarningReason(null)
       requestBankAppVoiceCall(activateWorkspace)
       return true
     }
 
-    setHandoffWarningVisible(false)
+    setHandoffWarningReason(null)
     requestBankAppVideoCall(activateWorkspace)
     return true
   }
@@ -393,14 +399,14 @@ export function BankAppDemoPage({
 
   const handleCustomerTypeChange = (nextCustomerType: BankAppCustomerType) => {
     resetBankAppVideoDesktopShare()
-    setHandoffWarningVisible(false)
+    setHandoffWarningReason(null)
     setCustomerType(nextCustomerType)
     setDemoStep('channel')
   }
 
   const handleMethodChange = (nextMethod: BankAppContactMethod) => {
     resetBankAppVideoDesktopShare()
-    setHandoffWarningVisible(false)
+    setHandoffWarningReason(null)
     setContactMethod(nextMethod)
     setDemoStep('channel')
   }
@@ -410,7 +416,7 @@ export function BankAppDemoPage({
     setContactMethod(config.defaultContactMethod)
     setBusinessType('mobile-login')
     setDemoStep('channel')
-    setHandoffWarningVisible(false)
+    setHandoffWarningReason(null)
     resetBankAppVideoDesktopShare()
   }
 
@@ -893,17 +899,14 @@ export function BankAppDemoPage({
                 Reset
               </BaseButton>
             </div>
-            {handoffWarningVisible && contactMethod !== 'livechat' && (
+            {handoffWarningReason && contactMethod !== 'livechat' && (
               <div
                 aria-live="polite"
                 className="bankapp-process__handoff-warning"
                 role="status"
               >
                 <ExclamationCircleOutlined />
-                <span>
-                  Please hang up the current call before routing this
-                  interaction to Agent Workspace.
-                </span>
+                <span>{handoffWarningMessage}</span>
               </div>
             )}
           </div>

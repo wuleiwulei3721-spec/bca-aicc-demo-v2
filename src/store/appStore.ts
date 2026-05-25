@@ -6,6 +6,10 @@ export type BankAppVideoShareState = 'idle' | 'selecting-program' | 'sharing'
 export type CallInteractionKind = 'voice' | 'video'
 export type CallInteractionPhase = 'incoming' | 'active' | 'ended'
 export type CallInteractionSource = InboundPopupSource | VideoCallPopupSource
+export type VoiceVideoHandoffReadiness =
+  | 'active-call'
+  | 'available'
+  | 'not-ready'
 
 export interface InteractionTiming {
   flashUntil: number
@@ -69,6 +73,7 @@ interface AppState {
   liveChatFocusRequestId: number
   liveChatFocusSessionId: string | null
   readLiveChatSessionIds: string[]
+  voiceVideoHandoffReadiness: VoiceVideoHandoffReadiness
   closeAllCallInteractionTabs: () => void
   closeBankAppDemoTab: () => void
   closeCallInteractionTab: (interactionId: string) => void
@@ -95,6 +100,9 @@ interface AppState {
   setLiveChatTabOpen: (open: boolean) => void
   setOpenEyeVideoWindowVisible: (visible: boolean) => void
   setScreenShareActive: (active: boolean) => void
+  setVoiceVideoHandoffReadiness: (
+    readiness: VoiceVideoHandoffReadiness,
+  ) => void
   startBankAppVideoShareSelection: () => void
   resetBankAppVideoDesktopShare: () => void
   clearLiveChatSessions: () => void
@@ -123,6 +131,7 @@ export const useAppStore = create<AppState>((set) => ({
   liveChatFocusRequestId: 0,
   liveChatFocusSessionId: null,
   readLiveChatSessionIds: [],
+  voiceVideoHandoffReadiness: 'not-ready',
   closeAllCallInteractionTabs: () =>
     set((state) => ({
       activeWorkspaceTabKey: state.activeWorkspaceTabKey.startsWith('call-')
@@ -414,6 +423,10 @@ export const useAppStore = create<AppState>((set) => ({
   setScreenShareActive: (active) =>
     set({
       isScreenShareActive: active,
+    }),
+  setVoiceVideoHandoffReadiness: (voiceVideoHandoffReadiness) =>
+    set({
+      voiceVideoHandoffReadiness,
     }),
   startBankAppVideoShareSelection: () =>
     set({

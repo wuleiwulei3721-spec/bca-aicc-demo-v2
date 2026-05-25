@@ -17,7 +17,11 @@ import type { ReactNode } from 'react'
 import { Outlet } from 'react-router-dom'
 import { headerAgentProfile } from '../mock/agent'
 import { useAppStore } from '../store'
-import type { InboundPopupSource, VideoCallPopupSource } from '../store'
+import type {
+  InboundPopupSource,
+  VideoCallPopupSource,
+  VoiceVideoHandoffReadiness,
+} from '../store'
 import type { AgentStatus, CallStatus } from '../types'
 import {
   AgentProfileArea,
@@ -49,6 +53,10 @@ interface CallTiming {
 }
 
 type ActiveCallChannel = 'voice' | 'video' | null
+type CallHandoffNoticeReason = Exclude<
+  VoiceVideoHandoffReadiness,
+  'available'
+>
 
 const initialCallTiming: CallTiming = {
   talkingStartedAt: null,
@@ -175,6 +183,9 @@ export function BasicLayout() {
   const customerOutboundCallRequestId = useAppStore(
     (state) => state.customerOutboundCallRequestId,
   )
+  const setVoiceVideoHandoffReadiness = useAppStore(
+    (state) => state.setVoiceVideoHandoffReadiness,
+  )
   const [agentStatus, setAgentStatus] = useState<AgentStatus>(
     headerAgentProfile.status,
   )
@@ -193,9 +204,12 @@ export function BasicLayout() {
   >('text')
   const [isInternalChatOpen, setIsInternalChatOpen] = useState(false)
   const [isAfterCallWork, setIsAfterCallWork] = useState(false)
-  const [callHandoffNotice, setCallHandoffNotice] = useState({
+  const [callHandoffNotice, setCallHandoffNotice] = useState<{
+    id: number
+    reason: CallHandoffNoticeReason | null
+  }>({
     id: 0,
-    visible: false,
+    reason: null,
   })
   const [closedFlyoutKey, setClosedFlyoutKey] = useState<string | null>(null)
   const [menuSearchQuery, setMenuSearchQuery] = useState('')
@@ -211,20 +225,33 @@ export function BasicLayout() {
     callStatus !== 'Idle' &&
     currentCallInteraction !== null &&
     currentCallInteraction.phase !== 'ended'
+  const voiceVideoHandoffReadiness: VoiceVideoHandoffReadiness =
+    hasUnfinishedCurrentCall
+      ? 'active-call'
+      : agentStatus === 'Ready' && callStatus === 'Idle'
+        ? 'available'
+        : 'not-ready'
+  const callHandoffNoticeMessage =
+    callHandoffNotice.reason === 'active-call'
+      ? 'Active call in progress. Please hang up and wait until the agent is Ready before accepting another voice or video interaction.'
+      : 'Agent is not Ready. Please switch to Ready before accepting another voice or video interaction.'
 
-  const showCallHandoffNotice = useCallback(() => {
-    setCallHandoffNotice((current) => ({
-      id: current.id + 1,
-      visible: true,
-    }))
-  }, [])
+  const showCallHandoffNotice = useCallback(
+    (reason: CallHandoffNoticeReason) => {
+      setCallHandoffNotice((current) => ({
+        id: current.id + 1,
+        reason,
+      }))
+    },
+    [],
+  )
 
   const hideCallHandoffNotice = useCallback(() => {
     setCallHandoffNotice((current) =>
-      current.visible
+      current.reason
         ? {
             ...current,
-            visible: false,
+            reason: null,
           }
         : current,
     )
@@ -297,7 +324,11 @@ export function BasicLayout() {
         : 'away'
 
   useEffect(() => {
-    if (!callHandoffNotice.visible) {
+    setVoiceVideoHandoffReadiness(voiceVideoHandoffReadiness)
+  }, [setVoiceVideoHandoffReadiness, voiceVideoHandoffReadiness])
+
+  useEffect(() => {
+    if (!callHandoffNotice.reason) {
       return undefined
     }
 
@@ -307,14 +338,14 @@ export function BasicLayout() {
         current.id === noticeId
           ? {
               ...current,
-              visible: false,
+              reason: null,
             }
           : current,
       )
     }, 4500)
 
     return () => window.clearTimeout(timer)
-  }, [callHandoffNotice.id, callHandoffNotice.visible])
+  }, [callHandoffNotice.id, callHandoffNotice.reason])
 
   useEffect(() => {
     setOpenEyeVideoWindowVisible(
@@ -349,12 +380,8 @@ export function BasicLayout() {
 
   const triggerVoiceInboundCall = useCallback(
     (source?: InboundPopupSource, activateWorkspace = true) => {
-      if (hasUnfinishedCurrentCall) {
-        showCallHandoffNotice()
-        return
-      }
-
-      if (agentStatus !== 'Ready' || callStatus !== 'Idle') {
+      if (voiceVideoHandoffReadiness !== 'available') {
+        showCallHandoffNotice(voiceVideoHandoffReadiness)
         return
       }
 
@@ -368,26 +395,20 @@ export function BasicLayout() {
       updateCallStatus('Incoming')
     },
     [
-      agentStatus,
-      callStatus,
       createCallInteraction,
-      hasUnfinishedCurrentCall,
       hideCallHandoffNotice,
       resetBankAppVideoDesktopShare,
       setOpenEyeVideoWindowVisible,
       showCallHandoffNotice,
       updateCallStatus,
+      voiceVideoHandoffReadiness,
     ],
   )
 
   const triggerVideoInboundCall = useCallback(
     (source?: VideoCallPopupSource, activateWorkspace = true) => {
-      if (hasUnfinishedCurrentCall) {
-        showCallHandoffNotice()
-        return
-      }
-
-      if (agentStatus !== 'Ready' || callStatus !== 'Idle') {
+      if (voiceVideoHandoffReadiness !== 'available') {
+        showCallHandoffNotice(voiceVideoHandoffReadiness)
         return
       }
 
@@ -403,15 +424,13 @@ export function BasicLayout() {
       updateCallStatus('Incoming')
     },
     [
-      agentStatus,
-      callStatus,
       createCallInteraction,
-      hasUnfinishedCurrentCall,
       hideCallHandoffNotice,
       resetBankAppVideoDesktopShare,
       setOpenEyeVideoWindowVisible,
       showCallHandoffNotice,
       updateCallStatus,
+      voiceVideoHandoffReadiness,
     ],
   )
 
@@ -802,17 +821,14 @@ export function BasicLayout() {
           />
         </div>
       </Header>
-      {callHandoffNotice.visible && (
+      {callHandoffNotice.reason && (
         <div
           aria-live="polite"
           className="aicc-call-handoff-warning"
           role="status"
         >
           <ExclamationCircleOutlined />
-          <span>
-            Active call in progress. Please hang up before accepting another
-            voice or video interaction.
-          </span>
+          <span>{callHandoffNoticeMessage}</span>
         </div>
       )}
       <InternalChatModal

@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-25 12:53 +08:00
+最后更新：2026-05-25 13:17 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,58 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-25 13:17 +08:00 - Ready-aware 通话接入提示
+
+修改页面或文件：
+
+- `src/store/appStore.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-05-25-1317.md`
+- `.codex-backup/current-todo-2026-05-25-1317.md`
+- `.codex-backup/page-state-2026-05-25-1317.md`
+
+修改原因：
+
+- 用户指出仅提示“先挂机”不完整，因为 Hang Up 后坐席会进入 ACW / Not Ready，只有自动回 Ready 后才能接入下一路电话/语音/视频。
+- BankApp Voice / Video 在挂机后 ACW/Not Ready 阶段可能触发 request 后被 `BasicLayout` 静默 return，需要在 BankApp handoff 前就给出明确反馈。
+- 用户询问 Answer 黄色按钮是否应改白字；本轮确认深色文字/图标是可读性设计，保持不变。
+
+修改结果：
+
+- `appStore` 新增 `VoiceVideoHandoffReadiness`：`available`、`active-call`、`not-ready`，以及 `setVoiceVideoHandoffReadiness()`。
+- `BasicLayout` 根据坐席状态、话务状态和当前未结束 `CallInteraction` 计算 readiness，并同步到 store。
+- PSTN / voice / video 入口使用 readiness 统一拦截：`active-call` 提示先挂机并等待 Ready，`not-ready` 提示坐席需要切回 Ready。
+- BankApp Voice / Video handoff 读取同一 readiness：`active-call` 时提示 `Please hang up the current call and wait until the agent is Ready before routing this interaction to Agent Workspace.`；`not-ready` 时提示 `Agent must be Ready before routing this interaction to Agent Workspace.`。
+- BankApp Live Chat / WhatsApp Live Chat 不受 voice/video readiness 限制影响。
+- Answer 按钮仍使用黄色背景 + 深色文字/图标，不改为白色。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：PSTN Incoming 未挂机时再次点击 PSTN，不新增 tab，顶部提示包含 hang up 和 Ready。
+- Browser smoke check `/`：PSTN Hang Up 后 ACW/Not Ready 阶段点击 PSTN，不新增 tab，顶部提示 `Agent is not Ready`。
+- Browser smoke check `/`：PSTN 未挂机时 BankApp Voice / Video `Next Step` 均显示 hang up + Ready inline warning，且不创建对应 call tab。
+- Browser smoke check `/`：PSTN Hang Up 后 ACW/Not Ready 阶段 BankApp Video `Next Step` 显示 `Agent must be Ready`，不创建 `Video Call` tab。
+- Browser smoke check `/`：自动回 Ready 后 BankApp Video `Next Step` 可正常创建 `Video Call` tab。
+- Browser smoke check `/`：Incoming 状态下 Answer 按钮仍为黄色背景、深色文字和深色图标。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚 readiness 共享，可移除 `VoiceVideoHandoffReadiness`、`voiceVideoHandoffReadiness` 和 `setVoiceVideoHandoffReadiness()`，恢复 BankApp 只判断当前未结束 call 的逻辑。
+- 如需回滚文案，可恢复 v0.6.3 的两个 warning 文案；但会重新出现 ACW/Not Ready 阶段提示不完整的问题。
+- Answer 按钮未修改，无需回滚。
+
+当前风险点：
+
+- 当前仍只支持同一时间一路未挂断电话/语音/视频通话；本轮不支持多路同时接入。
+- `voiceVideoHandoffReadiness` 由 `BasicLayout` 同步到 store，当前路由均在 `BasicLayout` 下，适配现有架构。
 
 ### 2026-05-25 12:53 +08:00 - 通话接入阻塞提示
 
