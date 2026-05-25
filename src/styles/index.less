@@ -3732,7 +3732,7 @@ a {
 }
 
 .inbound-ticket-row {
-  grid-template-columns: minmax(0, 1fr) minmax(76px, auto) 14px;
+  grid-template-columns: minmax(0, 1fr) minmax(112px, auto) 14px;
 }
 
 .inbound-ticket-type {
@@ -3747,18 +3747,21 @@ a {
 .inbound-ticket-row__meta {
   display: inline-flex;
   min-width: 0;
-  align-items: flex-end;
-  justify-content: center;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
   text-align: right;
+  white-space: nowrap;
 }
 
 .inbound-ticket-row__number {
-  max-width: 100%;
+  flex: 0 0 auto;
   margin-inline-end: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inbound-ticket-row__meta .inbound-compact-row__date {
+  flex: 0 0 auto;
 }
 
 .inbound-action-service {
@@ -4009,20 +4012,34 @@ button.inbound-list-row .inbound-list-row__title {
 }
 
 .inbound-crm-workspace-tabs .ant-tabs-nav-operations {
+  display: inline-flex;
+  width: 28px !important;
+  min-width: 28px !important;
+  max-width: 28px;
   height: 32px;
   align-items: center;
+  justify-content: center;
   padding-left: 2px;
 }
 
 .inbound-crm-workspace-tabs .ant-tabs-nav-more {
-  display: inline-grid;
+  display: inline-flex;
   width: 26px;
   height: 26px;
   min-width: 26px;
-  place-items: center;
+  align-items: center;
+  justify-content: center;
   padding: 0;
   border-radius: var(--aicc-radius-sm);
   color: var(--aicc-text-tertiary);
+  line-height: 1;
+}
+
+.inbound-crm-workspace-tabs .ant-tabs-nav-more .anticon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
 }
 
 .inbound-crm-workspace-tabs .ant-tabs-nav-more:hover,

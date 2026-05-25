@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-05-25 15:34 +08:00
+最后更新：2026-05-25 17:12 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：`codex/inbound-tab-card-visual-polish` 基于 `main@v0.6.4` 优化 Inbound 弹屏 Ticketing History 与中部 CRM tabs 视觉稳定性；完成后发布 `v0.6.5`。
+当前目标：`codex/inbound-tab-visual-hotfix` 基于 `main@v0.6.5` 修复 Ticketing History 编号/日期换行与 CRM tabs 更多按钮宽度/居中问题；完成后发布 `v0.6.6`。
 
 ## 0. 使用规则
 
@@ -40,8 +40,8 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`codex/inbound-tab-card-visual-polish`
-当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于 v0.6.5 弹屏卡片与 CRM tab 视觉稳定优化，完成验证后合入 `main` 并打 tag `v0.6.5`
+当前分支：`codex/inbound-tab-visual-hotfix`
+当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于 v0.6.6 Ticketing 与 CRM tabs 更多按钮 hotfix，完成验证后合入 `main` 并打 tag `v0.6.6`
 部署目标：Vercel 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -241,7 +241,7 @@ Inbound 是当前最核心演示页面，采用三栏结构：
 
 - Customer Journey 支持打开详情 modal。
 - Ticketing History 支持打开 CRM 动态业务 tab。
-- Ticketing History 行内右侧 meta 区统一右对齐 CRM 编号与日期，使其和 Customer Journey 的结果/日期列节奏一致。
+- Ticketing History 行内 CRM 编号与日期保持同一行，并作为右侧 meta 区整体右对齐，避免换行且与 Customer Journey 的结果/日期列节奏一致。
 - Next Best Action 支持打开 CRM 动态业务 tab。
 - Quick Action 支持打开 CRM 动态业务 tab。
 - Customer Verification Modal 包含 10 个验证问题。
@@ -258,7 +258,7 @@ Inbound 是当前最核心演示页面，采用三栏结构：
 - 动态业务 tabs 来自 `CrmWorkspaceTab[]`。
 - 动态 tab 可关闭。
 - CRM、Conversation 和动态业务 tabs 统一使用 `inbound-crm-tab-label` label 结构，固定图标尺寸、文字 ellipsis 和 4px 图文间距。
-- CRM tabs nav 已锁定单行固定高度；tab 文本过长使用 ellipsis，overflow 更多按钮压缩为紧凑图标按钮，避免开多个 tab 后拉高中心区域。
+- CRM tabs nav 已锁定单行固定高度；tab 文本过长使用 ellipsis，overflow 外层操作区和更多按钮均压缩为紧凑方形并居中，避免开多个 tab 后拉高中心区域或出现过宽更多按钮。
 - CRM tab 优先加载客户提供的截图资源：`public/screenshots/crm-workspace.jpg`。
 - 截图采用 `object-fit: contain`，完整等比显示在 CRM 面板内，不拉伸面板、不裁切图片、不变形。
 - 截图加载失败时显示代码内 BANK 1 CRM fallback。
@@ -1088,6 +1088,7 @@ M src/types/inbound.ts
 
 P0：
 
+- 在目标演示分辨率下复查 v0.6.6 hotfix：Ticketing History 编号/日期必须同一行右对齐，CRM tabs 更多按钮必须窄且图标居中。
 - 在目标演示分辨率下复查 v0.6.5 弹屏视觉：Ticketing History 编号/日期右对齐、CRM tab nav 多标签时高度稳定、更多按钮紧凑且动态 tab 开关不回归。
 - 在目标演示分辨率下复查 BankApp / WhatsApp Demo 统一画布布局和顶部减负效果，确认手机区和 AICC Process 区在领导评审屏幕上足够像同一个客户接入演示内容，且没有文本挤压或重叠。
 - 在目标演示分辨率下复查 BankApp / WhatsApp Demo 右侧同一行控制条，确认 Channel、Customer Type、Next/Reset 和 Completed 状态不换行到难以扫描。

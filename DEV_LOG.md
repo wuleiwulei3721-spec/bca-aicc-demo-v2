@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-25 15:34 +08:00
+最后更新：2026-05-25 17:12 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,45 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-25 17:12 +08:00 - Ticketing 与 CRM 更多按钮 Hotfix
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-25-1712.md`
+- `.codex-backup/current-todo-2026-05-25-1712.md`
+- `.codex-backup/page-state-2026-05-25-1712.md`
+
+修改原因：
+
+- 用户指出 v0.6.5 将 `Ticketing History` 卡片中的 CRM 编号和日期改成了上下换行，实际要求是同一行右对齐。
+- 用户指出中部 CRM 顶部 tabs 多开后的更多按钮仍偏宽，且图标未居中。
+
+修改结果：
+
+- `Ticketing History` 右侧 meta 区改回横向一行排列：ticket 编号和日期不换行，整体靠右。
+- CRM tabs overflow 外层 `.ant-tabs-nav-operations` 与内层 `.ant-tabs-nav-more` 同时锁定为紧凑方形区域。
+- 更多按钮图标改为 flex 居中，避免按钮宽度和图标位置受 AntD 默认 operation 容器影响。
+- 本轮未修改 `TicketingHistoryCard.tsx`、`CrmPanel.tsx`、store、mock、tab key、路由或业务状态机。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning，并额外出现插件耗时提示。
+- Browser smoke check `/`：主路由正常加载。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚本 hotfix，可恢复 `.inbound-ticket-row__meta`、`.inbound-ticket-row__number`、`.ant-tabs-nav-operations` 和 `.ant-tabs-nav-more` 的 v0.6.5 样式。
+- 不需要回滚业务组件或状态逻辑，因为本轮只改样式。
+
+当前风险点：
+
+- 仍建议在客户目标演示分辨率下人工复查多个 CRM 动态 tab 打开后的 overflow 下拉与更多按钮点击区域。
 
 ### 2026-05-25 15:34 +08:00 - 弹屏卡片与 CRM Tab 视觉稳定优化
 
