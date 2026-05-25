@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-25 03:58 +08:00
+最后更新：2026-05-25 12:53 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,54 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-25 12:53 +08:00 - 通话接入阻塞提示
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-05-25-1253.md`
+- `.codex-backup/current-todo-2026-05-25-1253.md`
+- `.codex-backup/page-state-2026-05-25-1253.md`
+
+修改原因：
+
+- 演示时当前 PSTN 未挂机，再操作 PSTN、BankApp Voice 或 BankApp Video handoff 时，因为系统限制同一时间只有一路未挂断电话/语音/视频通话，页面看起来像点击无响应。
+- 用户要求在跳转坐席工作页面之前判断当前是否已有未挂断通话，并给出可见提示，引导先挂机。
+
+修改结果：
+
+- `BasicLayout` 新增通话 handoff notice：当 `triggerVoiceInboundCall()` / `triggerVideoInboundCall()` 因当前未结束通话被阻塞时，在 Header / 话务条下方显示轻量 warning，不打开 modal、不新增 tab、不改变当前通话。
+- PSTN 阻塞文案为 `Active call in progress. Please hang up before accepting another voice or video interaction.`，短暂展示后自动隐藏。
+- `BankAppDemoPage` 在 Voice / Video 的 `Connected -> Agent Workspace` handoff 前检查当前未结束 `CallInteraction`；如有未挂断通话，阻止 `requestBankAppVoiceCall()` / `requestBankAppVideoCall()` 和 `agent-workspace` 步骤跳转。
+- BankApp inline warning 文案为 `Please hang up the current call before routing this interaction to Agent Workspace.`；切换渠道、Reset、Live Chat 或成功 handoff 后清除。
+- Live Chat 路径不受影响，仍可在当前通话存在时进入 Live Chat。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：Sign In -> PSTN Incoming 后再次点击 PSTN，不新增 tab，并显示顶部 active call warning。
+- Browser smoke check `/`：PSTN 未挂机时 BankApp Voice 在 `Connected -> Next Step` 显示 inline warning，未创建 `Voice Call` tab。
+- Browser smoke check `/`：Hang Up 当前 PSTN 并自动回 Ready 后，BankApp Voice `Next Step` 可正常创建 `Voice Call` tab。
+- Browser smoke check `/`：PSTN 未挂机时 BankApp Video 在 `Connected -> Next Step` 显示 inline warning，未创建 `Video Call` tab。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚顶部提示，可移除 `BasicLayout` 中 `callHandoffNotice` 状态、`showCallHandoffNotice()` / `hideCallHandoffNotice()` 和 `.aicc-call-handoff-warning` 样式。
+- 如需回滚 BankApp inline 提示，可移除 `BankAppDemoPage` 中 `handoffWarningVisible` 状态、current call 检查和 `.bankapp-process__handoff-warning` 样式。
+- 本轮没有修改 `appStore` 多通话实例模型，也没有改变 Hang Up、ACW、Live Chat 或 workspace tab 架构。
+
+当前风险点：
+
+- 当前仍只支持同一时间一路未挂断电话/语音/视频通话；本轮只是让阻塞可见，不支持多路同时接入。
+- 如果后续要区分 Not Ready / AUX / ACW 导致的接入失败，需要再增加单独的 Agent not Ready 提示文案，避免和未挂机提示混用。
 
 ### 2026-05-25 03:58 +08:00 - Live Chat 闪烁范围与 SLA 颜色优化
 

@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-05-25 03:58 +08:00
+最后更新：2026-05-25 12:53 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：`codex/live-chat-flash-sla-visual-polish` 基于 `main@v0.6.1` 优化 Live Chat 新接入闪烁范围与 SLA 颜色；完成后发布 `v0.6.2`。
+当前目标：`codex/call-handoff-blocking-feedback` 基于 `main@v0.6.2` 增加通话接入阻塞提示；完成后发布 `v0.6.3`。
 
 ## 0. 使用规则
 
@@ -40,8 +40,8 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`codex/live-chat-flash-sla-visual-polish`
-当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于 v0.6.2 Live Chat 闪烁范围与 SLA 颜色优化，完成验证后合入 `main` 并打 tag `v0.6.2`
+当前分支：`codex/call-handoff-blocking-feedback`
+当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于 v0.6.3 通话接入阻塞提示，完成验证后合入 `main` 并打 tag `v0.6.3`
 部署目标：Vercel 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -105,9 +105,9 @@ codex-recovered-context.md
 - `src/main.tsx`：React 入口，引入 Ant Design reset 和全局 Less。
 - `src/App.tsx`：Ant Design `ConfigProvider` + `RouterProvider`。
 - `src/routes.tsx`：定义 `/`、`/design-system` 和通配重定向。
-- `src/layouts/BasicLayout.tsx`：全局 Header、可展开/收起左侧菜单、坐席工具条、内部聊天入口和主内容出口。
+- `src/layouts/BasicLayout.tsx`：全局 Header、可展开/收起左侧菜单、坐席工具条、通话接入阻塞顶部提示、内部聊天入口和主内容出口。
 - `src/pages/AgentWorkspace.tsx`：Home tab 与工作区交互 tab 容器，负责 Demo tabs、Live Chat 固定 tab、多个 PSTN / Voice Call / Video Call 通话实例 tab 的页签名称、持续时间、SLA 和短闪提示。
-- `src/pages/bankapp/BankAppDemoPage.tsx`：BankApp 客户侧模拟器，采用真实手机比例的客户端舞台和轻量 AICC Process rail，坐席侧结果通过真实 workspace tab 跳转体现。
+- `src/pages/bankapp/BankAppDemoPage.tsx`：BankApp 客户侧模拟器，采用真实手机比例的客户端舞台和轻量 AICC Process rail；Voice / Video handoff 会在已有未挂断通话时显示 inline warning，坐席侧结果通过真实 workspace tab 跳转体现。
 - `src/pages/inbound/InteractionWorkspace.tsx`：电话与视频弹屏共用的三栏工作台。
 - `src/pages/inbound/InboundPage.tsx`：PSTN / Voice Call 电话弹屏 wrapper。
 - `src/pages/inbound/VideoCallPage.tsx`：Video Call 弹屏 wrapper，复用三栏工作台并叠加 OpenEye 浮窗。
@@ -141,11 +141,11 @@ codex-recovered-context.md
 - 点击左侧 `Channel Simulation > BankApp` 会打开可关闭的 `BankApp Demo` tab，用于演示客户在 BankApp 内选择文字、语音或视频服务后进入 AICC；BankApp Demo tab 在切到坐席工作台时保持挂载，返回后不会重置当前步骤。
 - 点击左侧 `Channel Simulation > WhatsApp` 会打开可关闭的 `WhatsApp Demo` tab；当前使用用户提供的脱敏 WhatsApp 原图，并在第三步后切到 Live Chat 坐席工作台查看 WhatsApp 接入会话。
 - 坐席点击右上角 `Sign In` 后，`Live Chat` tab 会固定插入 Home tab 旁边，`closable: false`，用于承载实时文字聊天工作台。
-- 当坐席处于 Ready 且无通话时，点击左侧 `Channel Simulation > PSTN` 进入 Incoming 并打开电话弹屏 tab。
+- 当坐席处于 Ready 且无通话时，点击左侧 `Channel Simulation > PSTN` 进入 Incoming 并打开电话弹屏 tab；如果已有未挂断电话、语音或视频通话，PSTN 入口不会新建 tab，而是在 Header / 话务条下方显示短暂提示 `Active call in progress. Please hang up before accepting another voice or video interaction.`。
 - `Video Call` 与 `Live Chat` 已从左侧可见菜单移除；底层 workspace、store 和页面能力保留，供 BankApp Video、WhatsApp/BankApp chat 和后续调试复用。
 - `createCallInteraction(kind, source?, activate?)` 会创建独立通话实例 tab；tab key 使用稳定递增格式 `call-1`、`call-2`、`call-3`，不会覆盖旧通话弹屏。
 - PSTN 创建 `voice/pstn` 实例，tab 显示 `PSTN (mm:ss)`；BankApp Voice 创建 `voice/bankapp-voice` 实例，tab 显示 `Voice Call (mm:ss)`；BankApp Video 创建 `video/bankapp-video` 实例，tab 显示 `Video Call (mm:ss)`。
-- `requestBankAppVoiceCall(activate?)` / `requestBankAppVideoCall(activate?)` 会通过 request id 触发 `BasicLayout` 话务状态机，并携带是否激活坐席工作台的语义。
+- `requestBankAppVoiceCall(activate?)` / `requestBankAppVideoCall(activate?)` 会通过 request id 触发 `BasicLayout` 话务状态机，并携带是否激活坐席工作台的语义；BankApp Demo 在 Voice / Video 的 `Connected -> Agent Workspace` handoff 前会先检查当前未结束通话，如有未挂断通话则阻止跳转并显示 `Please hang up the current call before routing this interaction to Agent Workspace.`。
 - `bankAppVideoShareState` / `isScreenShareActive` 表示 demo-only 桌面共享状态；BankApp Video 的桌面共享入口已移到坐席侧 OpenEye 浮窗，点击 `桌面共享` 后显示选择共享程序截图，点击 `确定` 后切回 BankApp Demo 展示客户侧共享画面；Hang Up、关闭 Video Call tab、新普通视频呼叫、Reset BankApp Demo 会清理该状态。
 - `requestLiveChatWorkspace(sessionId?, activate?)` 会打开固定 Live Chat tab；传入 WhatsApp 或 BankApp 会话 id 时会把该会话加入 `activeLiveChatSessionIds` 并聚焦对应客户，`activate` 默认为 `true`，BankApp 演示可传 `false` 在后台准备文字坐席页；`setLiveChatTabOpen(false)`、Sign Out、AUX 会清空 active live chat sessions 和已读状态。
 - Workspace 交互页签现在统一使用同一套 label 结构和样式，图标与文字间距保持普通 tab 的 4px；PSTN 电话呼入为 `PSTN (mm:ss)`，BankApp Voice 为 `Voice Call (mm:ss)`，BankApp Video 为 `Video Call (mm:ss)`，Live Chat 有 active session 时显示最长会话运行时长 `Live Chat (mm:ss)`。
@@ -194,10 +194,10 @@ type CallStatus =
 - Sign In 后 `BasicLayout` 调用 `setLiveChatTabOpen(true)`，使 Home 旁出现固定 `Live Chat` tab；Sign Out 后调用 `setLiveChatTabOpen(false)` 并在当前 tab 是 Live Chat 时退回 Home。
 - Sign In 后如果暂无电话、视频或文字客户接入，右上角状态点为绿色；Sign Out 为灰色。
 - `BasicLayout` 计算 `effectiveAgentPresence`：`callStatus !== 'Idle'` 或 `activeLiveChatSessionIds.length > 0` 时为 busy 红色，覆盖 Ready/Talking/Hold/Mute/Incoming 等展示；Ready 且无互动为绿色；AUX / Not Ready / ACW 且无互动为黄色。
-- Ready + Idle 时点击 `Channel Simulation > PSTN` 可触发电话弹屏。
+- Ready + Idle 时点击 `Channel Simulation > PSTN` 可触发电话弹屏；如果当前已有未结束 `CallInteraction` 且话务状态不是 Idle，则只显示轻量顶部 warning，不改变当前通话、不打开 modal、不新增 tab。
 - 话务条 incoming identification 只在 `Incoming`、`Talking`、`Hold`、`Mute` 时显示：PSTN 显示 `IVR 08123456789`，BankApp Voice / Video 显示 `BankID 00012345`；Hang Up 后随 `callStatus` 回 Idle 自动隐藏。识别标签、号码、timer label 与 timer value 使用统一 metadata 层级：灰色 label、黑色 700 数值、tabular nums、清晰 1px divider。
 - 话务条 Settings 当前只配置显示模式，默认 `Icon + Text`；选择控件使用项目自定义 segmented button 风格，与 BankApp Customer type 控件保持一致；弹框只保留一行 `Toolbar display` + 横向选择控件。切换为 `Icon Only` 后 Answer/Hold/Mute/Transfer/Hang Up/Ready 等按钮隐藏文字但保留图标、`aria-label` 和 `title`，图标在该模式下放大到 14px。自动接听仍固定使用默认 3 秒，但不在 Settings 中展示。
-- BankApp Demo 的 `Livechat` 路径会打开 Live Chat 并聚焦 BankApp 客户；`Voice Call` / `Video Call` 路径通过 store request id 触发现有坐席话务状态机，并可在 `Agent Workspace` 步骤切到对应坐席 workspace。
+- BankApp Demo 的 `Livechat` 路径会打开 Live Chat 并聚焦 BankApp 客户；`Voice Call` / `Video Call` 路径通过 store request id 触发现有坐席话务状态机，并可在 `Agent Workspace` 步骤切到对应坐席 workspace。若已有未挂断通话，Voice / Video handoff 会停留在当前 BankApp 步骤并显示 inline warning，Live Chat 路径不受该限制影响。
 - WhatsApp Demo 默认走 Live Chat 路径并聚焦 WhatsApp 客户 `live-chat-001`；已签入后仍可通过固定 Live Chat tab 承载会话工作台。
 - Live Chat 客户列表只展示 active sessions，并为每个 active customer 显示 `lastMessageTime · mm:ss`；BankApp / WhatsApp Live Chat 运行计时从入口接入时的 `00:00` 开始，不再用 mock `customer.accessDuration` 回推。SLA 仅用于 Live Chat，60 秒 warning、120 秒 breach，展开列表用左侧细 accent 与 duration 颜色表达，收起列表用渠道 icon 角标表达；warning 色使用更明确的 amber/yellow，避免偏深棕。
 - Live Chat 新客户进入列表时会短闪约 5 秒；active 和 inactive 客户列表项使用一致的浅 amber 整行闪烁样式，overlay `inset: 0` 贴合客户列表项边界，避免出现中间小框。
@@ -1069,7 +1069,7 @@ M src/types/inbound.ts
 - BankApp 演示触发 voice/video/livechat 坐席页时会先进入 `Agent Workspace` 步骤并激活对应 workspace tab；切回 BankApp Demo 后状态保持，再点击下一步显示客户侧 `Service Closed`。
 - `Conversation` tab 的发送、Transfer、End Service 均为前端演示状态；Transfer 弹框 action 点击只关闭弹框，不接真实转移/会议流程；发送消息只存在于当前页面内存，刷新后恢复 mock 初始值。End Service 会关闭当前 active session，但不进入电话 ACW 或工单关闭流程。
 - Live Chat 扩展为四列布局，当前客户列表默认收起；仍需在目标演示分辨率下复查展开态是否会压缩三栏内容。
-- 当前仍只支持同一时间一路 active call；多通话 tab 解决的是旧弹屏保留和新呼叫新开 tab，不支持两路电话或视频同时通话。
+- 当前仍只支持同一时间一路 active call；多通话 tab 解决的是旧弹屏保留和新呼叫新开 tab，不支持两路电话或视频同时通话。v0.6.3 已为 PSTN、BankApp Voice、BankApp Video 的被阻塞入口补充可见提示，避免演示时误以为点击无响应。
 - 关闭 Video Call tab 只隐藏 workspace 与 OpenEye 浮窗，不自动 Hang Up；Hang Up 会同步隐藏 OpenEye 浮窗。
 - 菜单搜索当前只在展开态显示，收起菜单时会清空搜索条件，避免影响收起态图标列表。
 - 收起态二级菜单浮层当前通过 CSS hover 打开，并通过 `closedFlyoutKey` 控制点击后关闭；如后续增加键盘导航，需要再补充键盘触发规则。

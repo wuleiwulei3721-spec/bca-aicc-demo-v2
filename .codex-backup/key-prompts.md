@@ -371,6 +371,16 @@
 - OpenEye 浮窗和 BankApp Video desktop share 只绑定当前 active video interaction；ended video tab 不显示浮窗。
 - 本轮仍只支持同一时间一路 active call，不支持多路电话/视频同时由话务条控制。
 
+## 2026-05-25 通话接入阻塞提示
+
+- 当前限制继续保持：电话、BankApp Voice、BankApp Video 同一时间只能有一路未挂断通话。
+- 如果当前 PSTN / BankApp Voice / BankApp Video 还没有 Hang Up，再触发 PSTN 或普通 voice/video 接入，应显示可见提示，而不是静默无响应。
+- PSTN 左侧菜单入口在被未挂断通话阻塞时显示顶部轻量提示：`Active call in progress. Please hang up before accepting another voice or video interaction.`。
+- BankApp Voice / Video 在 `Connected -> Agent Workspace` handoff 前先检查当前未结束通话；被阻塞时停留在 BankApp 当前步骤，不调用 `requestBankAppVoiceCall()` / `requestBankAppVideoCall()`，不进入 `agent-workspace`。
+- BankApp inline warning 文案：`Please hang up the current call before routing this interaction to Agent Workspace.`。
+- BankApp Live Chat / WhatsApp Live Chat 不受该限制影响，仍可在固定 Live Chat tab 内接入。
+- 本轮不新增多路同时 active call，也不改变 `CallInteraction` 多 tab 保留架构；只是让现有限制可见。
+
 ## 2026-05-23 版本与素材策略
 
 - 后续按里程碑分支推进：`v0.3.0` BankApp 基线、`v0.3.1` 菜单与 WhatsApp、`v0.4.0` Video screen share、`v0.5.0` 客户远程演示优化。

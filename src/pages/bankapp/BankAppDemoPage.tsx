@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import {
   AudioOutlined,
   CheckCircleOutlined,
+  ExclamationCircleOutlined,
   FileDoneOutlined,
   IdcardOutlined,
   MobileOutlined,
@@ -292,6 +293,10 @@ export function BankAppDemoPage({
   const requestLiveChatWorkspace = useAppStore(
     (state) => state.requestLiveChatWorkspace,
   )
+  const callInteractions = useAppStore((state) => state.callInteractions)
+  const currentCallInteractionId = useAppStore(
+    (state) => state.currentCallInteractionId,
+  )
   const bankAppVideoShareState = useAppStore(
     (state) => state.bankAppVideoShareState,
   )
@@ -306,6 +311,7 @@ export function BankAppDemoPage({
   const [businessType, setBusinessType] =
     useState<BankAppBusinessType>('mobile-login')
   const [demoStep, setDemoStep] = useState<BankAppDemoStep>('channel')
+  const [handoffWarningVisible, setHandoffWarningVisible] = useState(false)
 
   const selectedBusiness = useMemo(
     () =>
@@ -331,19 +337,34 @@ export function BankAppDemoPage({
     language,
     contactMethod,
   )
+  const currentCallInteraction = currentCallInteractionId
+    ? callInteractions[currentCallInteractionId]
+    : null
+  const hasUnfinishedCurrentCall =
+    currentCallInteraction !== null &&
+    currentCallInteraction.phase !== 'ended'
 
   const triggerAgentWorkspace = (activateWorkspace = false) => {
     if (contactMethod === 'livechat') {
+      setHandoffWarningVisible(false)
       requestLiveChatWorkspace(config.liveChatSessionId, activateWorkspace)
-      return
+      return true
+    }
+
+    if (hasUnfinishedCurrentCall) {
+      setHandoffWarningVisible(true)
+      return false
     }
 
     if (contactMethod === 'voice') {
+      setHandoffWarningVisible(false)
       requestBankAppVoiceCall(activateWorkspace)
-      return
+      return true
     }
 
+    setHandoffWarningVisible(false)
     requestBankAppVideoCall(activateWorkspace)
+    return true
   }
 
   const goToStep = (nextStep: BankAppDemoStep) => {
@@ -356,8 +377,9 @@ export function BankAppDemoPage({
       (contactMethod !== 'livechat' && visibleDemoStep === 'connected')
 
     if (isAgentHandoffStep) {
-      triggerAgentWorkspace(true)
-      goToStep('agent-workspace')
+      if (triggerAgentWorkspace(true)) {
+        goToStep('agent-workspace')
+      }
       return
     }
 
@@ -371,12 +393,14 @@ export function BankAppDemoPage({
 
   const handleCustomerTypeChange = (nextCustomerType: BankAppCustomerType) => {
     resetBankAppVideoDesktopShare()
+    setHandoffWarningVisible(false)
     setCustomerType(nextCustomerType)
     setDemoStep('channel')
   }
 
   const handleMethodChange = (nextMethod: BankAppContactMethod) => {
     resetBankAppVideoDesktopShare()
+    setHandoffWarningVisible(false)
     setContactMethod(nextMethod)
     setDemoStep('channel')
   }
@@ -386,6 +410,7 @@ export function BankAppDemoPage({
     setContactMethod(config.defaultContactMethod)
     setBusinessType('mobile-login')
     setDemoStep('channel')
+    setHandoffWarningVisible(false)
     resetBankAppVideoDesktopShare()
   }
 
@@ -868,6 +893,19 @@ export function BankAppDemoPage({
                 Reset
               </BaseButton>
             </div>
+            {handoffWarningVisible && contactMethod !== 'livechat' && (
+              <div
+                aria-live="polite"
+                className="bankapp-process__handoff-warning"
+                role="status"
+              >
+                <ExclamationCircleOutlined />
+                <span>
+                  Please hang up the current call before routing this
+                  interaction to Agent Workspace.
+                </span>
+              </div>
+            )}
           </div>
 
           <ol className="bankapp-process__rail">

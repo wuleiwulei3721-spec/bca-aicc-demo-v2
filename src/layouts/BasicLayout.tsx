@@ -2,6 +2,7 @@ import {
   AppstoreOutlined,
   BarChartOutlined,
   BellOutlined,
+  ExclamationCircleOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   MessageOutlined,
@@ -192,6 +193,10 @@ export function BasicLayout() {
   >('text')
   const [isInternalChatOpen, setIsInternalChatOpen] = useState(false)
   const [isAfterCallWork, setIsAfterCallWork] = useState(false)
+  const [callHandoffNotice, setCallHandoffNotice] = useState({
+    id: 0,
+    visible: false,
+  })
   const [closedFlyoutKey, setClosedFlyoutKey] = useState<string | null>(null)
   const [menuSearchQuery, setMenuSearchQuery] = useState('')
   const [openMenuKeys, setOpenMenuKeys] = useState<string[]>([])
@@ -202,6 +207,28 @@ export function BasicLayout() {
   const currentCallInteraction = currentCallInteractionId
     ? callInteractions[currentCallInteractionId]
     : null
+  const hasUnfinishedCurrentCall =
+    callStatus !== 'Idle' &&
+    currentCallInteraction !== null &&
+    currentCallInteraction.phase !== 'ended'
+
+  const showCallHandoffNotice = useCallback(() => {
+    setCallHandoffNotice((current) => ({
+      id: current.id + 1,
+      visible: true,
+    }))
+  }, [])
+
+  const hideCallHandoffNotice = useCallback(() => {
+    setCallHandoffNotice((current) =>
+      current.visible
+        ? {
+            ...current,
+            visible: false,
+          }
+        : current,
+    )
+  }, [])
 
   const updateAgentStatus = useCallback((status: AgentStatus) => {
     setAgentStatus(status)
@@ -218,6 +245,7 @@ export function BasicLayout() {
       clearLiveChatSessions()
       setOpenEyeVideoWindowVisible(false)
       resetBankAppVideoDesktopShare()
+      hideCallHandoffNotice()
       return
     }
 
@@ -234,12 +262,14 @@ export function BasicLayout() {
       clearLiveChatSessions()
       setOpenEyeVideoWindowVisible(false)
       resetBankAppVideoDesktopShare()
+      hideCallHandoffNotice()
     }
   }, [
     callStatus,
     closeAllCallInteractionTabs,
     currentCallInteractionId,
     clearLiveChatSessions,
+    hideCallHandoffNotice,
     markCallInteractionEnded,
     resetBankAppVideoDesktopShare,
     setLiveChatTabOpen,
@@ -265,6 +295,26 @@ export function BasicLayout() {
       : agentStatus === 'Ready'
         ? 'ready'
         : 'away'
+
+  useEffect(() => {
+    if (!callHandoffNotice.visible) {
+      return undefined
+    }
+
+    const noticeId = callHandoffNotice.id
+    const timer = window.setTimeout(() => {
+      setCallHandoffNotice((current) =>
+        current.id === noticeId
+          ? {
+              ...current,
+              visible: false,
+            }
+          : current,
+      )
+    }, 4500)
+
+    return () => window.clearTimeout(timer)
+  }, [callHandoffNotice.id, callHandoffNotice.visible])
 
   useEffect(() => {
     setOpenEyeVideoWindowVisible(
@@ -299,10 +349,16 @@ export function BasicLayout() {
 
   const triggerVoiceInboundCall = useCallback(
     (source?: InboundPopupSource, activateWorkspace = true) => {
+      if (hasUnfinishedCurrentCall) {
+        showCallHandoffNotice()
+        return
+      }
+
       if (agentStatus !== 'Ready' || callStatus !== 'Idle') {
         return
       }
 
+      hideCallHandoffNotice()
       setCallTiming(initialCallTiming)
       setActiveCallChannel('voice')
       setIsAfterCallWork(false)
@@ -315,18 +371,27 @@ export function BasicLayout() {
       agentStatus,
       callStatus,
       createCallInteraction,
+      hasUnfinishedCurrentCall,
+      hideCallHandoffNotice,
       resetBankAppVideoDesktopShare,
       setOpenEyeVideoWindowVisible,
+      showCallHandoffNotice,
       updateCallStatus,
     ],
   )
 
   const triggerVideoInboundCall = useCallback(
     (source?: VideoCallPopupSource, activateWorkspace = true) => {
+      if (hasUnfinishedCurrentCall) {
+        showCallHandoffNotice()
+        return
+      }
+
       if (agentStatus !== 'Ready' || callStatus !== 'Idle') {
         return
       }
 
+      hideCallHandoffNotice()
       setCallTiming(initialCallTiming)
       setActiveCallChannel('video')
       setIsAfterCallWork(false)
@@ -341,8 +406,11 @@ export function BasicLayout() {
       agentStatus,
       callStatus,
       createCallInteraction,
+      hasUnfinishedCurrentCall,
+      hideCallHandoffNotice,
       resetBankAppVideoDesktopShare,
       setOpenEyeVideoWindowVisible,
+      showCallHandoffNotice,
       updateCallStatus,
     ],
   )
@@ -511,11 +579,13 @@ export function BasicLayout() {
     setCallTiming(initialCallTiming)
     setActiveCallChannel(null)
     setIsAfterCallWork(true)
+    hideCallHandoffNotice()
     setOpenEyeVideoWindowVisible(false)
     resetBankAppVideoDesktopShare()
     updateAgentStatus('Not Ready')
   }, [
     currentCallInteractionId,
+    hideCallHandoffNotice,
     markCallInteractionEnded,
     resetBankAppVideoDesktopShare,
     setOpenEyeVideoWindowVisible,
@@ -732,6 +802,19 @@ export function BasicLayout() {
           />
         </div>
       </Header>
+      {callHandoffNotice.visible && (
+        <div
+          aria-live="polite"
+          className="aicc-call-handoff-warning"
+          role="status"
+        >
+          <ExclamationCircleOutlined />
+          <span>
+            Active call in progress. Please hang up before accepting another
+            voice or video interaction.
+          </span>
+        </div>
+      )}
       <InternalChatModal
         open={isInternalChatOpen}
         onClose={() => setIsInternalChatOpen(false)}
