@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-25 17:42 +08:00
+最后更新：2026-05-25 17:51 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,45 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-25 17:51 +08:00 - Next Best Action 箭头 Overlay Hotfix
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-25-1751.md`
+- `.codex-backup/current-todo-2026-05-25-1751.md`
+- `.codex-backup/page-state-2026-05-25-1751.md`
+
+修改原因：
+
+- 用户要求把 `Next Best Action` 卡片的 hover 箭头改成和 `Ticketing History` 一致的 overlay 效果，保证左栏卡片交互统一。
+- 用户指出 `Next Best Action` 箭头存在错乱；根因是该行复用了绝对定位的 `.inbound-ticket-row__hint`，但 `.inbound-action-row` 仍保留箭头 grid 占位且没有定位上下文。
+
+修改结果：
+
+- `.inbound-action-row` 增加 `position: relative`，为复用的 overlay 箭头提供定位上下文。
+- `.inbound-action-row` 去掉箭头占位列，改为单列布局，避免 hover 箭头参与默认排版。
+- `Next Best Action` hover/focus-visible 时使用和 `Ticketing History` 一致的右侧浮层箭头效果。
+- 本轮未修改 `NextBestActionCard.tsx`、store、mock、tab key、路由或话务状态机。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：主路由正常加载。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚，可恢复 `.inbound-action-row` 的两列 grid 和原 hover selector。
+- 回滚会重新让 `Next Best Action` 箭头占位，并可能再次受 `.inbound-ticket-row__hint` 绝对定位影响而错位。
+
+当前风险点：
+
+- 仍建议在客户目标演示分辨率下人工 hover `Next Best Action` 行，确认箭头位置、遮罩和点击区域符合预期。
 
 ### 2026-05-25 17:42 +08:00 - Ticketing History 日期对齐 Hotfix
 

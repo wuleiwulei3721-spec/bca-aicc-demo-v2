@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-05-25 17:42 +08:00
+最后更新：2026-05-25 17:51 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：`codex/ticketing-hover-arrow-overlay` 基于 `main@v0.6.6` 修复 Ticketing History 日期对齐；完成后发布 `v0.6.7`。
+当前目标：`codex/next-best-action-arrow-overlay` 基于 `main@v0.6.7` 统一 Next Best Action hover 箭头 overlay 效果；完成后发布 `v0.6.8`。
 
 ## 0. 使用规则
 
@@ -40,8 +40,8 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`codex/ticketing-hover-arrow-overlay`
-当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于 v0.6.7 Ticketing History 日期对齐 hotfix，完成验证后合入 `main` 并打 tag `v0.6.7`
+当前分支：`codex/next-best-action-arrow-overlay`
+当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于 v0.6.8 Next Best Action hover 箭头 overlay hotfix，完成验证后合入 `main` 并打 tag `v0.6.8`
 部署目标：Vercel 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -242,7 +242,7 @@ Inbound 是当前最核心演示页面，采用三栏结构：
 - Customer Journey 支持打开详情 modal。
 - Ticketing History 支持打开 CRM 动态业务 tab。
 - Ticketing History 行内 CRM 编号与日期保持同一行，并作为右侧 meta 区整体右对齐；行尾箭头不再占用 grid 列，hover/focus 时以绝对定位覆盖在日期上方，避免默认状态日期被挤离最右侧。
-- Next Best Action 支持打开 CRM 动态业务 tab。
+- Next Best Action 支持打开 CRM 动态业务 tab；行尾 hover/focus 箭头与 Ticketing History 使用同一套绝对定位 overlay 效果，不再占用 grid 列或错位。
 - Quick Action 支持打开 CRM 动态业务 tab。
 - Customer Verification Modal 包含 10 个验证问题。
 - Send Email Modal 已存在。
@@ -1088,6 +1088,7 @@ M src/types/inbound.ts
 
 P0：
 
+- 在目标演示分辨率下复查 v0.6.8 hotfix：Next Best Action hover/focus 箭头应浮在行最右侧，不占位、不错位，点击仍打开 CRM 动态 tab。
 - 在目标演示分辨率下复查 v0.6.7 hotfix：Ticketing History 日期默认状态应贴到行内容最右侧并与 Customer Journey 日期列对齐，hover 箭头只覆盖不占位。
 - 在目标演示分辨率下复查 v0.6.6 hotfix：Ticketing History 编号/日期必须同一行右对齐，CRM tabs 更多按钮必须窄且图标居中。
 - 在目标演示分辨率下复查 v0.6.5 弹屏视觉：Ticketing History 编号/日期右对齐、CRM tab nav 多标签时高度稳定、更多按钮紧凑且动态 tab 开关不回归。

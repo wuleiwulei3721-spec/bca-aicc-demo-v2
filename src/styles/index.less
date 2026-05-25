@@ -3630,12 +3630,12 @@ a {
 }
 
 .inbound-action-row {
+  position: relative;
   display: grid;
   align-items: start;
   width: 100%;
   min-height: 32px;
-  grid-template-columns: minmax(0, 1fr) 14px;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr);
   padding: 6px 2px;
   border: 0;
   border-bottom: 1px solid #edf2f8;
@@ -3655,7 +3655,8 @@ a {
   background: #f7fbff;
 }
 
-.inbound-action-row:hover .inbound-ticket-row__hint {
+.inbound-action-row:hover .inbound-ticket-row__hint,
+.inbound-action-row:focus-visible .inbound-ticket-row__hint {
   opacity: 0.78;
 }
 
