@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-05-25 17:51 +08:00
+最后更新：2026-05-27 02:07 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：`codex/next-best-action-arrow-overlay` 基于 `main@v0.6.7` 统一 Next Best Action hover 箭头 overlay 效果；完成后发布 `v0.6.8`。
+当前目标：`codex/fix-toolbar-chat-modals` 回调 Modal 视觉，修复 Transfer / Outbound / Internal Chat 弹框过白、内容贴边、标题栏缺少系统感与按钮尺寸不统一问题；完成后合入 `main`。
 
 ## 0. 使用规则
 
@@ -40,8 +40,8 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`codex/next-best-action-arrow-overlay`
-当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于 v0.6.8 Next Best Action hover 箭头 overlay hotfix，完成验证后合入 `main` 并打 tag `v0.6.8`
+当前分支：`codex/fix-toolbar-chat-modals`
+当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于修复话务条 Transfer / Outbound 号码页动作布局、Internal Chat 弹框视觉回归，并收敛 Modal / Tabs / Table 通用样式层级。
 部署目标：Vercel 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -477,6 +477,68 @@ Live Chat 当前 mock：
 - GitHub remote 与基础提交。
 
 ## 10. 当前开发状态
+
+截至 2026-05-27 02:07 +08:00，当前继续在 `codex/fix-toolbar-chat-modals` 分支回调 Modal 视觉。用户指出上一轮全白收敛后出现内容区贴边、标题栏蓝色背景消失、整体白花花且 Search 按钮仍与输入框和其它按钮不统一；本轮采用用户选择的“浅蓝标题栏”方向。
+
+本轮 Modal 视觉回调：
+
+- `.aicc-modal` 恢复浅蓝标题栏，使用 `#f8fbff -> #eef6ff` 轻渐变与清晰底部分隔线，标题改用 `var(--aicc-primary-strong)`。
+- `.aicc-modal` body 使用单层 `var(--aicc-surface-l3)` 灰蓝底，`.aicc-modal-section` 恢复白色内容面、12px padding、轻边框和圆角，解决文字与背景边紧贴的问题。
+- Modal tabs 保持导航职责，使用 10px 下边距、12px 字号和紧凑 padding，避免再变成独立浅蓝容器。
+- Transfer / Outbound toolbar 控件统一到 `var(--aicc-modal-button-height)` 即 30px；Search 固定 88px 宽，Outbound Call 固定 76px 宽，避免按钮比输入框高或过厚。
+- Transfer 行内 `Consult` / `Transfer` / `Conference` 小按钮统一为 82px x 28px；Conversation 场景的 `Request Transfer` / `Request Conference` 单独设为 132px x 28px，避免文本截断但保持同高度。
+- Internal Chat 继续保持单个白色工作区，左侧列表使用轻灰蓝背景，消息区和 composer 保持清晰分区，不增加多层背景框。
+- `/design-system` Modal preview 同步恢复浅蓝标题栏和灰蓝 body，保持展示与真实弹框一致。
+- 本轮不修改 `BaseModal` React 结构、不修改 Transfer / Outbound tab 数量、mock 数据、store、路由或话务状态机。
+
+本轮验证：
+
+- `npm run lint`：通过。
+- `npm run build`：通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/`：Internal Chat 可打开，弹框使用浅蓝标题栏、单一白色聊天工作区和轻灰蓝列表/消息区。
+- Browser `/`：签入后触发 PSTN 并打开 Transfer；`Transfer Agent` / `Transfer Skill` / `Transfer Number` 三个 tab 存在，`Transfer Number` 无 `Cancel`。
+- Browser `/`：Transfer 弹框恢复内容 padding，Search 与搜索框视觉等高，行内动作按钮尺寸统一。
+- Browser `/`：`More > Outbound Call` 可打开；`Call Number` 仍为 `Phone Number` 输入框 + `Call` 单行布局，无 `Cancel`、无旧 footer。
+- Browser `/design-system`：页面正常加载，`UI Design System`、Modal system、Table system 均存在。
+
+截至 2026-05-27 01:47 +08:00，当前继续在 `codex/fix-toolbar-chat-modals` 分支收敛 Modal 样式系统。用户指出 Transfer 弹框仍有多层接近浅蓝背景，Search 按钮与搜索框高度不齐，整体不够简洁专业；本轮允许调整通用 modal/table/tabs 样式。
+
+本轮 Modal 样式系统收敛：
+
+- `.aicc-modal` 主体改为白色内容面，Header / Body 不再使用浅蓝渐变或浅蓝底色，只保留轻量灰色分隔线。
+- `.aicc-modal-section` 不再生成额外浅蓝背景、内阴影或圆角容器，避免 Transfer / Outbound 的 tab 内容区出现多层相近颜色。
+- Modal tabs 只承担导航，使用白底、蓝色 active underline 和轻量间距，不再像一层独立浅蓝容器。
+- Transfer / Outbound 搜索行统一搜索框和 Search / Call 按钮高度为 32px，按钮去掉额外阴影，宽度按内容紧凑显示。
+- Transfer / Outbound 表格改为白底 + 浅灰 header + 清晰行分隔线，hover 色从浅蓝收敛到浅灰。
+- Transfer 行内 `Consult` / `Transfer` / `Conference` 小按钮统一为 80px x 28px，减少同一弹框内按钮尺寸跳变。
+- `/design-system` 的 Modal preview surface 同步改为白色内容面和轻量灰色分隔，避免设计系统继续展示旧浅蓝层级。
+- 本轮不修改 `BaseModal` React 结构、不修改 Transfer / Outbound tab 数量、mock 数据、store、路由或话务状态机。
+
+本轮验证：
+
+- `npm run lint`：通过。
+- `npm run build`：通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：Outbound Call 弹框可打开，Call Number 页仍为输入框 + Call 按钮。
+- Browser smoke check `/`：Internal Chat 弹框仍可打开，保留 Agent Sessions、消息列表和 composer 结构。
+- Browser smoke check `/design-system`：页面正常加载，`UI Design System`、Modal preview 和 Table preview 均存在。
+
+截至 2026-05-26 11:32 +08:00，当前工作在 `codex/fix-toolbar-chat-modals` 分支修复用户指出的三个弹框回归：话务条 Transfer 的 `Transfer Number` 页、话务条 More > Outbound Call 的 `Call Number` 页，以及 Header 内部聊天弹框视觉。
+
+本轮话务条与内部聊天弹框修复：
+
+- `Transfer Number` 页移除多余 `Cancel`，只保留 `Transfer` 与 `Conference`，保持与 Transfer Agent / Transfer Skill 不出现底部取消按钮的口径一致。
+- `Outbound Call > Call Number` 页改回单行布局：`Phone Number` 输入框后直接跟 `Call` 按钮；移除底部 footer 和 `Cancel`。
+- `Internal Chat` 弹框保留现有会话结构，只调整 `.aicc-internal-chat*` 样式：主背景回到白灰层级，减少淡蓝大背景和多层框，消息区参考 Live Chat Conversation 的清晰气泡、白色头部和简洁 composer。
+- 本轮不修改 `BaseModal` 全局结构，不修改 Transfer / Outbound 的 tab 数量、mock 数据、话务状态机、store、路由或 Inbound 主流程。
+
+本轮验证：
+
+- `npm run lint`：通过。
+- `npm run build`：通过，仍保留既有 Vite/Rolldown chunk size warning 和 plugin timings 提示。
+- Browser smoke check `/`：签入后触发 PSTN，进入通话并打开话务条 `Transfer`；`Transfer Number` 页 `Cancel` 数量为 0，`Transfer` 与 `Conference` 各 1 个。
+- Browser smoke check `/`：话务条 `More > Outbound Call` 打开后，`Call Number` 页 `Cancel` 数量为 0，输入框 1 个，右侧 `Call` 按钮 1 个，旧 `.aicc-outbound-number__actions` footer 不再出现。
+- Browser visual check `/`：打开 `Internal Chat` 后，弹框为白灰主导，左侧会话列表、右侧消息区和 composer 结构清晰，不再呈现大面积浑浊淡蓝背景或多层内框。
+- Browser smoke check `/design-system`：页面正常加载，标题为 `BANK 1 AICC Demo`，`UI Design System` 文本可见。
 
 截至 2026-05-25 02:10 +08:00，当前工作在 `codex/multi-inbound-interaction-tabs` 分支处理 `v0.6.0` 多 Inbound 弹屏与通话 tab 架构。PSTN、BankApp Voice、BankApp Video 现在使用多 `CallInteraction` 实例；Hang Up 后旧弹屏保留并冻结时长，新呼叫会创建新 tab。Live Chat 继续使用固定 tab + 多客户列表，不改为多个 workspace tabs。
 
@@ -1059,6 +1121,9 @@ M src/types/inbound.ts
 
 ## 11. 已知问题与风险
 
+- 本轮已将 Modal 从全白贴边状态回调为浅蓝标题栏、灰蓝 body 和白色内容面；已通过 Browser 检查 Transfer / Outbound / Internal Chat，但仍建议用户在当前本地页面做最终视觉确认。
+- Browser 截图输出在 Codex app 中偶发出现重复画面拼接，但 DOM 与交互检查正常，实际页面可直接在 in-app browser 中查看。
+- 本轮话务条 Transfer / Outbound 和 Internal Chat 弹框回归已通过本地 lint/build 与 Browser smoke check；仍建议在客户目标演示分辨率下人工复查 Internal Chat 视觉是否符合客户截图口径。
 - CRM/Assistant 当前使用客户提供的截图资源，组件保留代码 fallback；如截图资源丢失，页面会自动显示 fallback。
 - 左侧菜单当前已有 `Channel Simulation > PSTN` 电话来电模拟入口；其他菜单仍主要负责展示和选中态，后续若新增页面，需要再明确路由、权限和菜单选中规则。
 - `PSTN / Voice Call` 触发来电后仍保留既有 `autoAnswerSeconds` 自动接听倒计时；如演示需要必须手动 Answer，需另行停用自动接听。
@@ -1088,6 +1153,8 @@ M src/types/inbound.ts
 
 P0：
 
+- 在当前本地页面最终人工确认 Modal 回调视觉：Transfer / Outbound / Internal Chat 应为浅蓝标题栏、灰蓝 body、白色内容面、内容不贴边，Search / Call 与输入框高度一致，行内动作按钮尺寸统一。
+- 在客户目标演示分辨率下复查本轮弹框 hotfix：`Transfer Number` 无 `Cancel`，`Outbound Call > Call Number` 为输入框 + `Call` 单行布局，`Internal Chat` 视觉清晰且不回到浑浊淡蓝背景。
 - 在目标演示分辨率下复查 v0.6.8 hotfix：Next Best Action hover/focus 箭头应浮在行最右侧，不占位、不错位，点击仍打开 CRM 动态 tab。
 - 在目标演示分辨率下复查 v0.6.7 hotfix：Ticketing History 日期默认状态应贴到行内容最右侧并与 Customer Journey 日期列对齐，hover 箭头只覆盖不占位。
 - 在目标演示分辨率下复查 v0.6.6 hotfix：Ticketing History 编号/日期必须同一行右对齐，CRM tabs 更多按钮必须窄且图标居中。

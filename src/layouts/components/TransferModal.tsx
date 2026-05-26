@@ -234,13 +234,7 @@ function TransferSkillTab({ onComplete }: { onComplete: () => void }) {
   )
 }
 
-function TransferNumberTab({
-  onCancel,
-  onComplete,
-}: {
-  onCancel: () => void
-  onComplete: () => void
-}) {
+function TransferNumberTab({ onComplete }: { onComplete: () => void }) {
   const [selectedNumber, setSelectedNumber] = useState<string>()
   const [manualNumber, setManualNumber] = useState('')
 
@@ -276,7 +270,6 @@ function TransferNumberTab({
         />
       </section>
       <div className="aicc-modal-footer aicc-transfer-number__actions">
-        <AppButton onClick={onCancel}>Cancel</AppButton>
         <AppButton type="primary" onClick={onComplete}>
           Transfer
         </AppButton>
@@ -307,9 +300,7 @@ export function TransferModal({
           {
             key: 'number',
             label: 'Transfer Number',
-            children: (
-              <TransferNumberTab onCancel={onClose} onComplete={onClose} />
-            ),
+            children: <TransferNumberTab onComplete={onClose} />,
           },
         ]
       : []),

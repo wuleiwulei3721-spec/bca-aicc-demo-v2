@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-25 17:51 +08:00
+最后更新：2026-05-27 02:07 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,142 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-27 02:07 +08:00 - Modal 视觉回调修复
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-27-0207.md`
+- `.codex-backup/current-todo-2026-05-27-0207.md`
+- `.codex-backup/page-state-2026-05-27-0207.md`
+
+修改原因：
+
+- 用户指出上一轮 Modal 收敛后内容区 padding 被清掉，文字和背景边紧贴，界面显得粗糙。
+- 用户指出弹框标题栏蓝色背景被清掉后整体白花花，与 BANK 1 系统风格不搭。
+- 用户指出 Search 按钮仍与输入框和其它按钮大小不统一、未对齐。
+
+修改结果：
+
+- `.aicc-modal` 恢复浅蓝标题栏，使用 `#f8fbff -> #eef6ff` 轻渐变、清晰底部分隔线和品牌蓝标题文字。
+- `.aicc-modal` body 改为单层灰蓝底，`.aicc-modal-section` 恢复白色内容面、12px padding、轻边框和圆角，避免内容贴边。
+- Modal tabs 回到紧凑导航样式，不再做独立浅蓝容器。
+- Transfer / Outbound toolbar 输入框、Search、Call 统一到 30px 高度；Search 固定 88px，Call 固定 76px。
+- Transfer 行内 `Consult` / `Transfer` / `Conference` 统一为 82px x 28px；Conversation 长动作按钮统一为 132px x 28px。
+- Internal Chat 保持单个白色工作区，左侧列表和消息区使用轻灰蓝分区，不增加多层背景框。
+- `/design-system` Modal preview 同步恢复浅蓝标题栏与灰蓝 body。
+- 本轮未修改 `BaseModal` JSX、业务流程、tab 数量、mock 数据、store、路由或话务状态机。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/`：Internal Chat 可打开，浅蓝标题栏、白色聊天工作区和轻灰蓝列表/消息区存在。
+- Browser `/`：签入后触发 PSTN 并打开 Transfer；三个 tab 存在，`Transfer Number` 无 `Cancel`。
+- Browser `/`：Transfer 搜索框与 Search 按钮视觉等高，行内动作按钮尺寸统一。
+- Browser `/`：`More > Outbound Call` 可打开，Call Number 仍为输入框 + Call 单行布局，无 `Cancel` 和旧 footer。
+- Browser `/design-system`：页面正常加载，`UI Design System`、Modal system、Table system 均存在。
+
+回滚说明：
+
+- 如需回滚本轮视觉回调，可恢复 `src/styles/index.less` 中 `.aicc-modal*`、`.aicc-tabs--modal`、`.aicc-transfer*`、`.aicc-internal-chat*` 和 `.design-modal-surface*` 相关规则到 2026-05-27 01:47 版本。
+- 本轮只改样式和文档，不涉及业务逻辑回滚。
+
+当前风险点：
+
+- Codex Browser 截图输出偶发重复拼接画面，但 DOM 与交互验证正常；仍建议用户在当前 in-app browser 里做最终视觉判断。
+
+### 2026-05-27 01:47 +08:00 - Modal 样式系统收敛修复
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-27-0147.md`
+- `.codex-backup/current-todo-2026-05-27-0147.md`
+- `.codex-backup/page-state-2026-05-27-0147.md`
+
+修改原因：
+
+- 用户指出 Transfer 弹框仍存在多层接近浅蓝色背景，tab 内容区、section、table header 等层级不清晰。
+- 用户指出 Search 按钮过大且与搜索框高度不齐，弹框整体不够简洁清爽专业。
+
+修改结果：
+
+- `.aicc-modal` 主体、Header、Body 改为白色内容面，仅保留轻量灰色分隔线。
+- `.aicc-modal-section` 去掉额外浅蓝背景、内阴影和圆角容器，避免 tab 内容区重复套框。
+- Modal tabs 改为单纯导航样式，白底、蓝色 active underline、统一间距。
+- Transfer / Outbound 搜索框与 Search / Call 按钮统一 32px 高度，按钮去掉额外阴影并按内容紧凑显示。
+- Transfer / Outbound 表格改为白底、浅灰 header、浅灰 hover 和清晰行分隔线。
+- Transfer 行内 `Consult` / `Transfer` / `Conference` 小按钮统一为 80px x 28px。
+- `/design-system` Modal preview surface 同步更新为白色内容面。
+- 本轮未修改 `BaseModal` JSX、业务流程、tab 数量、mock 数据、store、路由或话务状态机。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser smoke check `/`：Outbound Call 弹框可打开，Call Number 页仍保留输入框 + Call 按钮。
+- Browser smoke check `/`：Internal Chat 弹框可打开，Agent Sessions、消息列表和 composer 结构仍存在。
+- Browser smoke check `/design-system`：页面正常加载，`UI Design System`、Modal preview 和 Table preview 均存在。
+
+回滚说明：
+
+- 如需回滚本轮视觉收敛，可恢复 `src/styles/index.less` 中 `.aicc-modal*`、`.aicc-tabs--modal`、`.aicc-table`、`.aicc-transfer*` 和 `.design-modal-surface*` 的上一版样式。
+- 本轮只改样式和文档，不涉及业务逻辑回滚。
+
+当前风险点：
+
+- in-app browser 本轮截图能力不稳定，自动化视觉截图未能稳定产出；建议用户在当前本地页面人工复查 Transfer 弹框视觉。
+
+### 2026-05-26 11:32 +08:00 - 话务条与内部聊天弹框回归修复
+
+修改页面或文件：
+
+- `src/layouts/components/TransferModal.tsx`
+- `src/layouts/components/OutboundCallModal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-26-1132.md`
+- `.codex-backup/current-todo-2026-05-26-1132.md`
+- `.codex-backup/page-state-2026-05-26-1132.md`
+
+修改原因：
+
+- 用户指出话务条 Transfer 弹框的 `Transfer Number` 页多出 `Cancel`，与 Transfer Agent / Transfer Skill 不一致。
+- 用户指出话务条 Outbound Call 的 `Call Number` 页变复杂，期望恢复为输入框后直接跟外呼按钮。
+- 用户指出 Internal Chat 弹框颜色变得浑浊、背景框过多，期望参考 Live Chat Conversation 区域的清晰简洁风格。
+
+修改结果：
+
+- `Transfer Number` 页移除 `Cancel`，只保留 `Transfer` 与 `Conference`。
+- `Outbound Call > Call Number` 页改为单行 `Phone Number` 输入框 + `Call` 按钮，移除底部 footer 和 `Cancel`。
+- `Internal Chat` 弹框保留现有结构，样式改为白灰主导、轻边界、清晰消息气泡和简洁 composer，减少淡蓝大背景与多层框。
+- 本轮未修改 `BaseModal` 全局结构、Transfer / Outbound tab 数量、mock 数据、store、路由或话务状态机。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning 和 plugin timings 提示。
+- Browser smoke check `/`：PSTN 通话中打开 `Transfer`，`Transfer Number` 页无 `Cancel`，`Transfer` / `Conference` 均存在。
+- Browser smoke check `/`：`More > Outbound Call` 的 `Call Number` 页无 `Cancel`，输入框和右侧 `Call` 按钮存在，旧 footer 不存在。
+- Browser visual check `/`：`Internal Chat` 弹框视觉回到白灰主导，消息区清晰，未见大面积浑浊淡蓝背景。
+- Browser smoke check `/design-system`：页面正常加载，`UI Design System` 可见。
+
+回滚说明：
+
+- 如需回滚号码页动作布局，可恢复 `TransferNumberTab` / `CallNumberTab` 的 `onCancel` 参数和对应 `Cancel` 按钮。
+- 如需回滚 Internal Chat 视觉，可恢复 `.aicc-internal-chat*` 相关样式到上一版本。
+- 不需要回滚全局 Modal 或业务状态机，因为本轮未改这些模块。
+
+当前风险点：
+
+- 仍建议在客户目标演示分辨率下人工复查 Internal Chat 与用户历史截图的视觉一致性。
 
 ### 2026-05-25 17:51 +08:00 - Next Best Action 箭头 Overlay Hotfix
 

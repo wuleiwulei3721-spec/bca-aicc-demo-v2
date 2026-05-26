@@ -18,28 +18,20 @@ interface OutboundCallModalProps {
   onClose: () => void
 }
 
-function CallNumberTab({
-  onCancel,
-  onComplete,
-}: {
-  onCancel: () => void
-  onComplete: () => void
-}) {
+function CallNumberTab({ onComplete }: { onComplete: () => void }) {
   const [phoneNumber, setPhoneNumber] = useState('')
 
   return (
     <div className="aicc-modal-section aicc-outbound-number">
-      <label className="aicc-outbound-number__field">
-        <span>Phone Number</span>
+      <div className="aicc-outbound-number__field">
+        <label htmlFor="aicc-outbound-phone-number">Phone Number</label>
         <Input
+          id="aicc-outbound-phone-number"
           placeholder="Enter phone number"
           prefix={<PhoneIcon />}
           value={phoneNumber}
           onChange={(event) => setPhoneNumber(event.target.value)}
         />
-      </label>
-      <div className="aicc-modal-footer aicc-outbound-number__actions">
-        <AppButton onClick={onCancel}>Cancel</AppButton>
         <AppButton icon={<PhoneIcon />} type="primary" onClick={onComplete}>
           Call
         </AppButton>
@@ -138,7 +130,7 @@ export function OutboundCallModal({ open, onClose }: OutboundCallModalProps) {
     {
       key: 'number',
       label: 'Call Number',
-      children: <CallNumberTab onCancel={onClose} onComplete={onClose} />,
+      children: <CallNumberTab onComplete={onClose} />,
     },
     {
       key: 'agent',
