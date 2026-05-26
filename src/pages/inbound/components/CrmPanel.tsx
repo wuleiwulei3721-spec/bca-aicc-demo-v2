@@ -23,6 +23,8 @@ const CRM_SCREENSHOT_SRC = '/screenshots/crm-workspace.jpg'
 interface CrmPanelProps {
   activeKey: string
   conversation?: ConversationWorkspaceConfig
+  conversationContent?: ReactNode
+  conversationKey?: string
   workspaceTabs: CrmWorkspaceTab[]
   onActiveKeyChange: (activeKey: string) => void
   onCloseTab: (tabKey: string) => void
@@ -222,6 +224,8 @@ function WorkspaceBusinessDetail({ tab }: { tab: CrmWorkspaceTab }) {
 export function CrmPanel({
   activeKey,
   conversation,
+  conversationContent,
+  conversationKey,
   workspaceTabs,
   onActiveKeyChange,
   onCloseTab,
@@ -234,16 +238,16 @@ export function CrmPanel({
         label: renderCrmTabLabel('CRM', <BankOutlined />),
         children: <CrmScreenshotArea />,
       },
-      ...(conversation
+      ...(conversation || conversationContent
         ? [
             {
               key: CONVERSATION_TAB_KEY,
               closable: false,
               label: renderCrmTabLabel('Conversation', <MessageOutlined />),
-              children: (
+              children: conversationContent ?? (
                 <ConversationWorkspace
-                  key={conversation.session.id}
-                  {...conversation}
+                  key={conversationKey ?? conversation?.session.id}
+                  {...conversation!}
                 />
               ),
             },
@@ -256,7 +260,7 @@ export function CrmPanel({
         children: <WorkspaceBusinessDetail tab={tab} />,
       })),
     ],
-    [conversation, workspaceTabs],
+    [conversation, conversationContent, conversationKey, workspaceTabs],
   )
 
   const handleEdit: TabsProps['onEdit'] = (targetKey, action) => {

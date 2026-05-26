@@ -19,13 +19,14 @@ import {
   getLiveChatSlaState,
 } from '../utils/duration'
 import { BankAppDemoPage } from './bankapp'
-import { InboundPage, LiveChatPage, VideoCallPage } from './inbound'
+import { InboundPage, LiveChat2Page, LiveChatPage, VideoCallPage } from './inbound'
 import { WhatsAppDemoPage } from './whatsapp'
 
 const HOME_TAB_KEY = 'home'
 const BANKAPP_DEMO_TAB_KEY = 'bankapp-demo'
 const WHATSAPP_DEMO_TAB_KEY = 'whatsapp-demo'
 const LIVE_CHAT_TAB_KEY = 'live-chat'
+const LIVE_CHAT2_TAB_KEY = 'livechat2'
 
 interface WorkspaceTabLabelProps {
   durationEndedAt?: number | null
@@ -131,6 +132,9 @@ export function AgentWorkspace() {
   const activeLiveChatSessionIds = useAppStore(
     (state) => state.activeLiveChatSessionIds,
   )
+  const activeLiveChat2SessionIds = useAppStore(
+    (state) => state.activeLiveChat2SessionIds,
+  )
   const hasBankAppDemoTab = useAppStore(
     (state) => state.isBankAppDemoTabOpen,
   )
@@ -138,6 +142,7 @@ export function AgentWorkspace() {
     (state) => state.isWhatsAppDemoTabOpen,
   )
   const hasLiveChatTab = useAppStore((state) => state.isLiveChatTabOpen)
+  const hasLiveChat2Tab = useAppStore((state) => state.isLiveChat2TabOpen)
   const callInteractionOrder = useAppStore(
     (state) => state.callInteractionOrder,
   )
@@ -166,7 +171,8 @@ export function AgentWorkspace() {
         (interactionId) =>
           callInteractions[interactionId]?.phase !== 'ended',
       ) ||
-        activeLiveChatSessionIds.length > 0,
+        activeLiveChatSessionIds.length > 0 ||
+        activeLiveChat2SessionIds.length > 0,
     ),
   )
 
@@ -255,6 +261,23 @@ export function AgentWorkspace() {
       })
     }
 
+    if (hasLiveChat2Tab) {
+      items.push({
+        key: LIVE_CHAT2_TAB_KEY,
+        closable: false,
+        label: (
+          <WorkspaceTabLabel
+            flashScope="tab"
+            icon={<MessageOutlined />}
+            label="livechat2"
+            now={now}
+          />
+        ),
+        children:
+          activeKey === LIVE_CHAT2_TAB_KEY ? <LiveChat2Page /> : null,
+      })
+    }
+
     callInteractionOrder.forEach((interactionId) => {
       const interaction = callInteractions[interactionId]
 
@@ -304,6 +327,7 @@ export function AgentWorkspace() {
     latestLiveChatFlashUntil,
     hasBankAppDemoTab,
     hasLiveChatTab,
+    hasLiveChat2Tab,
     hasWhatsAppDemoTab,
     liveChatDurationStartedAt,
     liveChatSlaState,

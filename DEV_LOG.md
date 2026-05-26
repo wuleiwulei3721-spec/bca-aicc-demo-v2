@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-27 02:07 +08:00
+最后更新：2026-05-27 02:45 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,65 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-27 02:45 +08:00 - 新增 livechat2 并行弹屏
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/AgentWorkspace.tsx`
+- `src/pages/inbound/InteractionWorkspace.tsx`
+- `src/pages/inbound/components/CrmPanel.tsx`
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/mock/inbound.ts`
+- `src/types/inbound.ts`
+- `src/store/appStore.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-27-0245.md`
+- `.codex-backup/current-todo-2026-05-27-0245.md`
+- `.codex-backup/page-state-2026-05-27-0245.md`
+
+修改原因：
+
+- 用户新增 live chat 弹屏需求文档，要求基于旧 Live Chat 的优秀能力做并行新版方案，tab 名称为 `livechat2`。
+- 用户要求在 WhatsApp 菜单下方新增 `livechat2` 菜单，点击后模拟多个客户接入并跳转到新版弹屏。
+- 用户明确不替换旧 Live Chat，不影响其他功能；弹框修复分支只做本地 commit，不 push 到 GitHub。
+
+修改结果：
+
+- 已在本地提交 `codex/fix-toolbar-chat-modals` 为 `9408bc9 fix: refine toolbar modal styles`，并从该本地 commit 创建 `codex/livechat2-popup`；本轮未 push。
+- 新增 `Channel Simulation > livechat2` 菜单项，位于 `WhatsApp` 下方，点击后打开独立 `livechat2` workspace tab。
+- 新增独立 `liveChat2*` store 状态和动作，覆盖批量接入、聚焦、已读、排序、星标、草稿、未回复计时、结束/关闭、历史列表、发送消息、撤回消息和清理。
+- 新增 `LiveChat2Session`、`LiveChat2Message`、`LiveChat2SortMode`、`LiveChat2StarColor`、`LiveChat2SessionStatus` 等类型和 `liveChat2Sessions` mock 数据，不修改旧 `liveChatSessions`。
+- 新增 `LiveChat2Page`、`LiveChat2CustomerPanel`、`LiveChat2ConversationWorkspace`；UI 风格沿用现有 livechat 工作台，需求文档截图仅作功能参考。
+- `InteractionWorkspace` / `CrmPanel` 增加可选自定义 Conversation 插槽，旧 Live Chat 仍使用原 `ConversationWorkspace`。
+- `livechat2` 当前支持当前服务用户、历史用户、新接入提醒、当前接待数、接入/消息排序、渠道头像、转移来源提示、未读清零、未回复计时、星标、草稿、快捷回复、消息记录、引用、撤回、Transfer、End/Close 等演示交互。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/`：Sign In 后旧 `Live Chat` tab 仍可打开并显示空态。
+- Browser `/`：`Channel Simulation > livechat2` 可打开 `livechat2` tab，显示 4 个当前服务客户和 1 个历史客户。
+- Browser `/`：`livechat2` 选择 Sari Amelia 后 Customer Information、Conversation 和客户列表同步；快捷回复 `/aa` 可带入并发送；未回复计时清零；Message Record 可打开。
+- Browser `/`：`livechat2` Conversation Transfer 可打开 conversation 版 Transfer 弹框。
+- Browser `/`：`Channel Simulation > WhatsApp` 仍可打开 WhatsApp Demo。
+- Browser `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚 `livechat2`，可删除新增 `LiveChat2*` 页面/组件/mock/types/store 字段，并移除 `BasicLayout` 菜单项、`AgentWorkspace` tab 接入、`InteractionWorkspace` / `CrmPanel` 自定义 Conversation 插槽和 `livechat2-*` 样式。
+- 旧 `Live Chat` 未被替换；如只撤销新版方案，应保留旧 `LiveChatPage`、`LiveChatCustomerList`、旧 `liveChat*` store 和旧 mock。
+
+当前风险点：
+
+- `livechat2` 为前端演示模拟，不接真实消息网关、文件库、拼写检查、截图插件、敏感词服务或后台配置。
+- `livechat2` 基于本地弹框修复 commit，当前未 push 到 GitHub；后续若要公开给客户，需要先决定弹框修复分支是否发布。
+- 仍需在目标演示分辨率下人工复查四列布局、消息记录侧栏和快捷回复浮层的视觉密度。
 
 ### 2026-05-27 02:07 +08:00 - Modal 视觉回调修复
 

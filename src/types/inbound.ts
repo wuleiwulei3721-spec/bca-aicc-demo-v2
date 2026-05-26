@@ -62,6 +62,59 @@ export interface LiveChatSession {
   unreadCount: number
 }
 
+export type LiveChat2SortMode = 'access-time' | 'message-time'
+
+export type LiveChat2StarColor = 'gray' | 'red' | 'blue' | 'yellow'
+
+export type LiveChat2SessionStatus = 'active' | 'ended'
+
+export type LiveChat2EndReason = 'agent' | 'customer' | 'timeout'
+
+export type LiveChat2MessageSender = 'agent' | 'bot' | 'customer' | 'system'
+
+export type LiveChat2MessageKind = 'file' | 'image' | 'system' | 'text'
+
+export interface LiveChat2TransferSource {
+  agentName: string
+  employeeId: string
+  team: string
+  transferredAt: string
+}
+
+export interface LiveChat2Message {
+  id: string
+  kind: LiveChat2MessageKind
+  message: string
+  sender: LiveChat2MessageSender
+  senderName: string
+  time: string
+  timestamp: string
+  fileName?: string
+  isCurrentAgent?: boolean
+  quotedMessage?: string
+}
+
+export interface LiveChat2Session {
+  id: string
+  accessSequence: number
+  channel: Extract<AccessChannel, 'WhatsApp' | 'Haloapps' | 'Webchat'>
+  customer: CustomerInformation
+  historyMessages: LiveChat2Message[]
+  initialStarColor: LiveChat2StarColor
+  initialUnansweredSeconds: number | null
+  intent: string
+  isInitialHistory?: boolean
+  lastMessage: string
+  lastMessageAt: string
+  lastMessageTime: string
+  messages: LiveChat2Message[]
+  queueName: string
+  serviceStartedAt: string
+  status: LiveChat2SessionStatus
+  transferSource?: LiveChat2TransferSource
+  unreadCount: number
+}
+
 export interface CallFlowStep {
   id: string
   nodeName: string

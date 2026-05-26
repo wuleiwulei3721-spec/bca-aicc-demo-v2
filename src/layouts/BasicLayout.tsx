@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Outlet } from 'react-router-dom'
 import { headerAgentProfile } from '../mock/agent'
+import { liveChat2Sessions } from '../mock/inbound'
 import { useAppStore } from '../store'
 import type {
   InboundPopupSource,
@@ -84,6 +85,10 @@ const sideMenuItems: SideMenuItem[] = [
         key: 'customer-whatsapp',
         label: 'WhatsApp',
       },
+      {
+        key: 'customer-livechat2',
+        label: 'livechat2',
+      },
     ],
   },
   {
@@ -133,6 +138,12 @@ export function BasicLayout() {
   const activeLiveChatSessionIds = useAppStore(
     (state) => state.activeLiveChatSessionIds,
   )
+  const activeLiveChat2SessionIds = useAppStore(
+    (state) => state.activeLiveChat2SessionIds,
+  )
+  const clearLiveChat2Sessions = useAppStore(
+    (state) => state.clearLiveChat2Sessions,
+  )
   const clearLiveChatSessions = useAppStore(
     (state) => state.clearLiveChatSessions,
   )
@@ -170,6 +181,9 @@ export function BasicLayout() {
   )
   const requestWhatsAppDemoWorkspace = useAppStore(
     (state) => state.requestWhatsAppDemoWorkspace,
+  )
+  const requestLiveChat2Workspace = useAppStore(
+    (state) => state.requestLiveChat2Workspace,
   )
   const setLiveChatTabOpen = useAppStore(
     (state) => state.setLiveChatTabOpen,
@@ -269,6 +283,7 @@ export function BasicLayout() {
       setActiveCallChannel(null)
       setIsAfterCallWork(false)
       closeAllCallInteractionTabs()
+      clearLiveChat2Sessions()
       clearLiveChatSessions()
       setOpenEyeVideoWindowVisible(false)
       resetBankAppVideoDesktopShare()
@@ -286,6 +301,7 @@ export function BasicLayout() {
       setCallTiming(initialCallTiming)
       setActiveCallChannel(null)
       setIsAfterCallWork(false)
+      clearLiveChat2Sessions()
       clearLiveChatSessions()
       setOpenEyeVideoWindowVisible(false)
       resetBankAppVideoDesktopShare()
@@ -295,6 +311,7 @@ export function BasicLayout() {
     callStatus,
     closeAllCallInteractionTabs,
     currentCallInteractionId,
+    clearLiveChat2Sessions,
     clearLiveChatSessions,
     hideCallHandoffNotice,
     markCallInteractionEnded,
@@ -312,7 +329,9 @@ export function BasicLayout() {
   const isConnectedCall =
     callStatus === 'Talking' || callStatus === 'Hold' || callStatus === 'Mute'
   const hasActiveCallInteraction = callStatus !== 'Idle'
-  const hasActiveTextInteraction = activeLiveChatSessionIds.length > 0
+  const hasActiveTextInteraction =
+    activeLiveChatSessionIds.length > 0 ||
+    activeLiveChat2SessionIds.length > 0
   const hasActiveCustomerInteraction =
     isSignedIn && (hasActiveCallInteraction || hasActiveTextInteraction)
   const effectiveAgentPresence: AgentPresence = !isSignedIn
@@ -654,8 +673,32 @@ export function BasicLayout() {
       if (childKey === 'customer-whatsapp') {
         requestWhatsAppDemoWorkspace()
       }
+
+      if (childKey === 'customer-livechat2') {
+        const activeSessionIds = liveChat2Sessions
+          .filter((session) => !session.isInitialHistory)
+          .map((session) => session.id)
+        const initialStarColors = Object.fromEntries(
+          liveChat2Sessions.map((session) => [
+            session.id,
+            session.initialStarColor,
+          ]),
+        )
+        const initialUnansweredSeconds = Object.fromEntries(
+          liveChat2Sessions.map((session) => [
+            session.id,
+            session.initialUnansweredSeconds,
+          ]),
+        )
+
+        requestLiveChat2Workspace(activeSessionIds, {
+          initialStarColors,
+          initialUnansweredSeconds,
+        })
+      }
     },
     [
+      requestLiveChat2Workspace,
       requestBankAppDemoWorkspace,
       requestWhatsAppDemoWorkspace,
       triggerVoiceInboundCall,

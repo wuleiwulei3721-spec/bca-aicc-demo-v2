@@ -18,6 +18,8 @@ interface InteractionWorkspaceProps {
   ariaLabel: string
   className?: string
   conversation?: ConversationWorkspaceConfig
+  conversationContent?: ReactNode
+  conversationKey?: string
   customer: CustomerInformation
   leadPanel?: ReactNode
   overlay?: ReactNode
@@ -27,6 +29,8 @@ export function InteractionWorkspace({
   ariaLabel,
   className,
   conversation,
+  conversationContent,
+  conversationKey,
   customer,
   leadPanel,
   overlay,
@@ -35,7 +39,8 @@ export function InteractionWorkspace({
     activeKey: string
     tabs: CrmWorkspaceTab[]
   }>({
-    activeKey: conversation ? CONVERSATION_TAB_KEY : CRM_TAB_KEY,
+    activeKey:
+      conversation || conversationContent ? CONVERSATION_TAB_KEY : CRM_TAB_KEY,
     tabs: [],
   })
 
@@ -85,6 +90,8 @@ export function InteractionWorkspace({
         <CrmPanel
           activeKey={crmWorkspace.activeKey}
           conversation={conversation}
+          conversationContent={conversationContent}
+          conversationKey={conversationKey}
           workspaceTabs={crmWorkspace.tabs}
           onActiveKeyChange={(activeKey) =>
             setCrmWorkspace((current) => ({ ...current, activeKey }))
