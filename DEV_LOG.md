@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-27 02:45 +08:00
+最后更新：2026-05-27 03:02 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,51 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-27 03:02 +08:00 - livechat2 客户列表功能补齐
+
+修改页面或文件：
+
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-27-0302.md`
+- `.codex-backup/current-todo-2026-05-27-0302.md`
+- `.codex-backup/page-state-2026-05-27-0302.md`
+
+修改原因：
+
+- 用户指出 `livechat2` 新客户列表缺少旧 Live Chat 顶部的收起/展开和渠道筛选能力。
+- 用户要求渠道图标继续使用旧版方形风格。
+- 用户要求每个客户行去掉第三行渠道名称和业务类型，节省纵向空间。
+- 用户要求当前列表和历史列表采用左右切换，不要上下同时展示。
+
+修改结果：
+
+- `livechat2` 客户列表顶部新增 ALL / WhatsApp / BankApp / Webchat 渠道筛选按钮和收起/展开按钮。
+- `livechat2` 收起态会把工作台第一列缩到 56px，只保留渠道筛选图标和客户渠道图标。
+- 渠道头像恢复为方形图标样式，不再使用圆形头像。
+- 客户卡片压缩为两行：第一行客户名 + 最后消息时间，第二行最后消息或草稿提醒；未回复计时移到右侧工具区。
+- Current / History 改为横向切换按钮，只显示当前选中列表。
+
+验证：
+
+- `npm run lint` 通过。
+- Browser `/`：`livechat2` 顶部存在 ALL / WhatsApp / BankApp / Webchat 筛选。
+- Browser `/`：Current / History 左右切换可用，History 显示 Raka Aditya。
+- Browser `/`：客户卡片不再出现 `WhatsApp Card Services` 或 `BankApp Digital Banking` 第三行。
+- Browser `/`：收起后显示 `Expand livechat2 customer list`，且隐藏 `Serving` 文案。
+
+回滚说明：
+
+- 如需回滚本轮列表 hotfix，可恢复 `LiveChat2CustomerPanel.tsx`、`LiveChat2Page.tsx` 和 `styles/index.less` 中 `livechat2-customer-panel` 相关规则到 `567f65e`。
+
+当前风险点：
+
+- 当前筛选、收起和 Current/History 切换为前端本地 UI 状态，不写入全局 store；刷新页面后恢复默认。
+- 仍需在客户目标分辨率下人工确认收起态和两行客户卡片的视觉密度。
 
 ### 2026-05-27 02:45 +08:00 - 新增 livechat2 并行弹屏
 

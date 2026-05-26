@@ -3,13 +3,16 @@ import {
   DownOutlined,
   EditOutlined,
   GlobalOutlined,
+  LeftOutlined,
   MobileOutlined,
+  RightOutlined,
   SortAscendingOutlined,
   StarFilled,
   SwapOutlined,
   WhatsAppOutlined,
 } from '@ant-design/icons'
 import { Badge, Dropdown, Select, Tooltip } from 'antd'
+import type { ReactNode } from 'react'
 import type { MenuProps } from 'antd'
 import type {
   LiveChat2Session,
@@ -17,6 +20,10 @@ import type {
   LiveChat2StarColor,
 } from '../../../types'
 import { formatDuration, type InteractionSlaState } from '../../../utils/duration'
+
+type LiveChat2Channel = LiveChat2Session['channel']
+type LiveChat2ChannelFilter = 'all' | LiveChat2Channel
+type LiveChat2ListView = 'current' | 'history'
 
 export interface LiveChat2SessionView extends LiveChat2Session {
   draftMessage: string
@@ -33,18 +40,24 @@ export interface LiveChat2SessionView extends LiveChat2Session {
 
 interface LiveChat2CustomerPanelProps {
   activeSessionId: string
+  collapsed: boolean
   historySessions: LiveChat2SessionView[]
   newAccessCount: number
+  selectedChannels: LiveChat2Channel[]
   serviceSessions: LiveChat2SessionView[]
   sortMode: LiveChat2SortMode
   totalServingCount: number
+  view: LiveChat2ListView
   onCloseSession: (sessionId: string) => void
+  onCollapsedChange: (collapsed: boolean) => void
+  onChannelFilterChange: (channel: LiveChat2ChannelFilter) => void
   onSelectSession: (sessionId: string) => void
   onSortModeChange: (sortMode: LiveChat2SortMode) => void
   onStarColorChange: (
     sessionId: string,
     starColor: LiveChat2StarColor,
   ) => void
+  onViewChange: (view: LiveChat2ListView) => void
 }
 
 const channelLabels: Record<LiveChat2Session['channel'], string> = {
@@ -52,6 +65,39 @@ const channelLabels: Record<LiveChat2Session['channel'], string> = {
   Webchat: 'Webchat',
   WhatsApp: 'WhatsApp',
 }
+
+const liveChat2Channels: LiveChat2Channel[] = [
+  'WhatsApp',
+  'Haloapps',
+  'Webchat',
+]
+
+const channelFilterOptions: Array<{
+  icon: ReactNode
+  label: string
+  value: LiveChat2ChannelFilter
+}> = [
+  {
+    icon: <span className="livechat2-channel-avatar__all-label">ALL</span>,
+    label: 'All channels',
+    value: 'all',
+  },
+  {
+    icon: <WhatsAppOutlined />,
+    label: channelLabels.WhatsApp,
+    value: 'WhatsApp',
+  },
+  {
+    icon: <MobileOutlined />,
+    label: channelLabels.Haloapps,
+    value: 'Haloapps',
+  },
+  {
+    icon: <GlobalOutlined />,
+    label: channelLabels.Webchat,
+    value: 'Webchat',
+  },
+]
 
 const starColorLabels: Record<LiveChat2StarColor, string> = {
   blue: 'Blue flag',
@@ -72,7 +118,11 @@ function getChannelIcon(channel: LiveChat2Session['channel']) {
   return <GlobalOutlined />
 }
 
-function getChannelClassName(channel: LiveChat2Session['channel']) {
+function getChannelClassName(channel: LiveChat2ChannelFilter) {
+  if (channel === 'all') {
+    return 'livechat2-channel-avatar--all'
+  }
+
   if (channel === 'Haloapps') {
     return 'livechat2-channel-avatar--bankapp'
   }
@@ -200,28 +250,24 @@ function renderSessionCard({
             session.lastMessageDisplay
           )}
         </span>
-        <span className="livechat2-session-card__meta">
-          <span>{channelLabels[session.channel]}</span>
-          <span>{session.queueName}</span>
-          {unansweredLabel && (
-            <span
-              className={[
-                'livechat2-session-card__unanswered',
-                session.slaState !== 'normal'
-                  ? `livechat2-session-card__unanswered--${session.slaState}`
-                  : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              <ClockCircleOutlined />
-              {unansweredLabel}
-            </span>
-          )}
-        </span>
       </span>
 
       <span className="livechat2-session-card__tools">
+        {unansweredLabel && !isHistory && (
+          <span
+            className={[
+              'livechat2-session-card__unanswered',
+              session.slaState !== 'normal'
+                ? `livechat2-session-card__unanswered--${session.slaState}`
+                : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            <ClockCircleOutlined />
+            {unansweredLabel}
+          </span>
+        )}
         {renderTransferSource(session)}
         {!isHistory && (
           <Dropdown
@@ -265,72 +311,169 @@ function renderSessionCard({
 
 export function LiveChat2CustomerPanel({
   activeSessionId,
+  collapsed,
   historySessions,
   newAccessCount,
+  selectedChannels,
   serviceSessions,
   sortMode,
   totalServingCount,
+  view,
   onCloseSession,
+  onCollapsedChange,
+  onChannelFilterChange,
   onSelectSession,
   onSortModeChange,
   onStarColorChange,
+  onViewChange,
 }: LiveChat2CustomerPanelProps) {
+  const isAllChannelsSelected = liveChat2Channels.every((channel) =>
+    selectedChannels.includes(channel),
+  )
+  const visibleServiceSessions = serviceSessions.filter((session) =>
+    selectedChannels.includes(session.channel),
+  )
+  const visibleHistorySessions = historySessions.filter((session) =>
+    selectedChannels.includes(session.channel),
+  )
+  const visibleSessions =
+    view === 'current' ? visibleServiceSessions : visibleHistorySessions
+
   return (
-    <aside className="livechat2-customer-panel" aria-label="livechat2 customers">
+    <aside
+      className={[
+        'livechat2-customer-panel',
+        collapsed ? 'livechat2-customer-panel--collapsed' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      aria-label="livechat2 customers"
+    >
       <header className="livechat2-customer-panel__header">
-        <div className="livechat2-customer-panel__metrics">
-          <Badge count={newAccessCount} overflowCount={99} size="small">
-            <span className="livechat2-customer-panel__metric-icon">
-              <WhatsAppOutlined />
-            </span>
-          </Badge>
-          <span>Serving: {totalServingCount}</span>
+        <div
+          aria-label="Filter livechat2 customers by channel"
+          className="livechat2-customer-panel__filters"
+          role="group"
+        >
+          {channelFilterOptions.map((option) => {
+            const isActive =
+              option.value === 'all'
+                ? isAllChannelsSelected
+                : selectedChannels.includes(option.value)
+
+            return (
+              <button
+                aria-label={`Show ${option.label}`}
+                aria-pressed={isActive}
+                className={[
+                  'livechat2-customer-panel__filter',
+                  isActive ? 'livechat2-customer-panel__filter--active' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                key={option.value}
+                title={option.label}
+                type="button"
+                onClick={() => onChannelFilterChange(option.value)}
+              >
+                <span
+                  className={[
+                    'livechat2-channel-avatar',
+                    getChannelClassName(option.value),
+                  ].join(' ')}
+                >
+                  {option.icon}
+                </span>
+              </button>
+            )
+          })}
         </div>
-        <Select
-          aria-label="Sort livechat2 customers"
-          className="livechat2-customer-panel__sort"
-          options={[
-            {
-              label: 'Access time',
-              value: 'access-time',
-            },
-            {
-              label: 'Message time',
-              value: 'message-time',
-            },
-          ]}
-          prefix={<SortAscendingOutlined />}
-          size="small"
-          value={sortMode}
-          onChange={onSortModeChange}
-        />
+
+        <button
+          aria-label={
+            collapsed
+              ? 'Expand livechat2 customer list'
+              : 'Collapse livechat2 customer list'
+          }
+          className="livechat2-customer-panel__toggle"
+          title={collapsed ? 'Expand' : 'Collapse'}
+          type="button"
+          onClick={() => onCollapsedChange(!collapsed)}
+        >
+          {collapsed ? <RightOutlined /> : <LeftOutlined />}
+        </button>
       </header>
 
-      <section className="livechat2-customer-panel__section">
-        <div className="livechat2-customer-panel__section-title">
-          <strong>Current Service</strong>
-          <span>{serviceSessions.length}</span>
+      {!collapsed && (
+        <div className="livechat2-customer-panel__tools">
+          <div className="livechat2-customer-panel__metrics">
+            <Badge count={newAccessCount} overflowCount={99} size="small">
+              <span className="livechat2-customer-panel__metric-icon">
+                <WhatsAppOutlined />
+              </span>
+            </Badge>
+            <span>Serving: {totalServingCount}</span>
+          </div>
+          <Select
+            aria-label="Sort livechat2 customers"
+            className="livechat2-customer-panel__sort"
+            options={[
+              {
+                label: 'Access time',
+                value: 'access-time',
+              },
+              {
+                label: 'Message time',
+                value: 'message-time',
+              },
+            ]}
+            prefix={<SortAscendingOutlined />}
+            size="small"
+            value={sortMode}
+            onChange={onSortModeChange}
+          />
         </div>
-        <div className="livechat2-customer-panel__list" role="list">
-          {serviceSessions.map((session) =>
-            renderSessionCard({
-              activeSessionId,
-              session,
-              onCloseSession,
-              onSelectSession,
-              onStarColorChange,
-            }),
-          )}
-        </div>
-      </section>
+      )}
 
-      <section className="livechat2-customer-panel__section livechat2-customer-panel__section--history">
-        <div className="livechat2-customer-panel__section-title">
-          <strong>History</strong>
-          <span>{historySessions.length}</span>
+      {!collapsed && (
+        <div
+          className="livechat2-customer-panel__view-toggle"
+          role="tablist"
+        >
+          <button
+            aria-selected={view === 'current'}
+            className={
+              view === 'current'
+                ? 'livechat2-customer-panel__view-toggle-button livechat2-customer-panel__view-toggle-button--active'
+                : 'livechat2-customer-panel__view-toggle-button'
+            }
+            role="tab"
+            type="button"
+            onClick={() => onViewChange('current')}
+          >
+            Current
+            <span>{visibleServiceSessions.length}</span>
+          </button>
+          <button
+            aria-selected={view === 'history'}
+            className={
+              view === 'history'
+                ? 'livechat2-customer-panel__view-toggle-button livechat2-customer-panel__view-toggle-button--active'
+                : 'livechat2-customer-panel__view-toggle-button'
+            }
+            role="tab"
+            type="button"
+            onClick={() => onViewChange('history')}
+          >
+            History
+            <span>{visibleHistorySessions.length}</span>
+          </button>
         </div>
-        <div className="livechat2-customer-panel__history" role="list">
-          {historySessions.slice(0, 30).map((session) =>
+      )}
+
+      <section className="livechat2-customer-panel__section">
+        <div className="livechat2-customer-panel__list" role="list">
+          {visibleSessions.slice(0, view === 'history' ? 30 : undefined).map((session) =>
             renderSessionCard({
               activeSessionId,
               session,

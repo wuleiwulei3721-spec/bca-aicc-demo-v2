@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-05-27 02:45 +08:00
+最后更新：2026-05-27 03:02 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
 当前目标：`codex/livechat2-popup` 在弹框修复本地 commit 基线上新增并行 `livechat2` 来电弹屏方案；不 push 到 GitHub，后续由用户继续调试是否替换旧 Live Chat。
 
@@ -113,7 +113,7 @@ codex-recovered-context.md
 - `src/pages/inbound/VideoCallPage.tsx`：Video Call 弹屏 wrapper，复用三栏工作台并叠加 OpenEye 浮窗。
 - `src/pages/inbound/LiveChatPage.tsx`：Live Chat 固定页签页面，复用三栏工作台并增加文字聊天客户列表。
 - `src/pages/inbound/LiveChat2Page.tsx`：新增 `livechat2` 并行弹屏页面，独立使用 `liveChat2*` store、mock 和组件，不替换旧 Live Chat。
-- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`：`livechat2` 当前服务用户与历史用户列表，包含新接入数、排序、未读、未回复计时、星标、转移来源和关闭结束会话。
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`：`livechat2` 客户列表，包含收起/展开、渠道筛选、新接入数、排序、Current/History 左右切换、未读、未回复计时、星标、转移来源和关闭结束会话；客户行保持两行信息并使用方形渠道图标。
 - `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`：`livechat2` Conversation tab 内容，包含消息记录、快捷回复、引用、撤回、Transfer、End/Close 和发送消息演示。
 - `src/pages/inbound/components/LiveChatCustomerList.tsx`：WhatsApp / BankApp 客户聊天列表，默认收起，支持 ALL 与渠道图标筛选、会话运行持续时间、SLA 状态、短闪提示，可收起展开；Webchat mock 暂时隐藏。
 - `src/pages/inbound/components/ChannelTag.tsx`：统一渠道标签，Customer Information 中可合并展示静态渠道接入耗时，例如 `PSTN · 05:23`、`BankApp · 02:11`。
@@ -1134,7 +1134,7 @@ M src/types/inbound.ts
 - `PSTN / Voice Call` 触发来电后仍保留既有 `autoAnswerSeconds` 自动接听倒计时；如演示需要必须手动 Answer，需另行停用自动接听。
 - `Video Call` 当前为演示型弹屏和截图浮窗，不接真实 OpenEye 协议、不实现真实音视频能力。
 - `Live Chat` 当前为演示型固定工作台与静态 mock 会话，不接真实 WhatsApp / BankApp / Webchat 消息网关，也不实现真实消息发送；默认空态，只有 BankApp / WhatsApp 客户侧入口会加入 active session，Webchat 暂时隐藏。
-- `livechat2` 当前为并行演示型新版弹屏，不接真实消息网关、文件库、拼写检查、截图插件、敏感词服务或后台配置；消息记录、快捷回复、引用、撤回、排序、星标、结束/关闭和历史用户均为前端模拟。
+- `livechat2` 当前为并行演示型新版弹屏，不接真实消息网关、文件库、拼写检查、截图插件、敏感词服务或后台配置；消息记录、快捷回复、引用、撤回、排序、渠道筛选、收起/展开、星标、结束/关闭和历史用户均为前端模拟。
 - `livechat2` 分支基于本地弹框修复 commit，尚未 push 到 GitHub；如后续要让客户查看，需要先决定弹框分支是否也要合入或重新整理分支链。
 - Live Chat tab/list/header 的运行计时与 Customer Information 的静态渠道接入耗时是两类不同时间：前者从坐席接入后 `00:00` 开始，后者表示客户在渠道、排队和转坐席成功前的耗时。
 - `BankApp Demo` 当前为客户侧前端模拟，不接真实 BankApp、真实消息网关、真实语音/视频协议或真实 AICC 路由服务。
@@ -1175,7 +1175,7 @@ P0：
 - 在目标演示分辨率下复查 BankApp Video 桌面共享新增步骤，确认 OpenEye `桌面共享` 按钮、选择共享程序截图和 BankApp 客户侧共享画面与演示附件视觉一致。
 - 在目标演示分辨率下复查 Live Chat 默认收起态、展开态与渠道过滤交互，确认客户列表不会让 Customer Information、CRM、Assistant 三栏不可用。
 - 在目标演示分辨率下复查 Conversation tab 的顶部轻量操作区、历史消息区和发送框，确认不会压缩 CRM/Assistant 三栏到不可用。
-- 在目标演示分辨率下复查 `livechat2` 当前服务用户列表、历史用户列表、消息记录侧栏和快捷回复浮层，确认四列布局不压缩 Customer Information、Conversation 和 Assistant。
+- 在目标演示分辨率下复查 `livechat2` 客户列表收起/展开、渠道筛选、Current/History 左右切换、消息记录侧栏和快捷回复浮层，确认四列布局不压缩 Customer Information、Conversation 和 Assistant。
 - 继续人工调试 `livechat2` 的排序、星标、End/Close、Transfer、消息记录搜索和快捷回复交互，决定是否替换旧 `Live Chat`。
 - 在目标演示分辨率下复查客户远程演示路径：Sign In 空 Live Chat、PSTN 红/黄/绿状态点、BankApp/WhatsApp 文字接入与 End Service 回空态。
 - 在目标演示分辨率下复查 v0.6.0 多通话 tab：旧 ended tab 保留登记、新 PSTN/BankApp Voice/BankApp Video 新开 tab、active tab 不可关闭、ended tab 可关闭。

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { liveChat2Sessions } from '../../mock/inbound'
 import { useAppStore } from '../../store'
 import type {
@@ -19,6 +19,12 @@ import {
   LiveChat2CustomerPanel,
   type LiveChat2SessionView,
 } from './components/LiveChat2CustomerPanel'
+
+const liveChat2Channels: Array<LiveChat2Session['channel']> = [
+  'WhatsApp',
+  'Haloapps',
+  'Webchat',
+]
 
 const liveChat2SessionById = Object.fromEntries(
   liveChat2Sessions.map((session) => [session.id, session]),
@@ -45,6 +51,13 @@ function sortSessions(
 }
 
 export function LiveChat2Page() {
+  const [isCustomerPanelCollapsed, setIsCustomerPanelCollapsed] =
+    useState(false)
+  const [selectedChannels, setSelectedChannels] =
+    useState<Array<LiveChat2Session['channel']>>(liveChat2Channels)
+  const [customerPanelView, setCustomerPanelView] = useState<
+    'current' | 'history'
+  >('current')
   const activeLiveChat2SessionIds = useAppStore(
     (state) => state.activeLiveChat2SessionIds,
   )
@@ -249,21 +262,46 @@ export function LiveChat2Page() {
     }
   }
 
+  const handleChannelFilterChange = (
+    nextChannel: 'all' | LiveChat2Session['channel'],
+  ) => {
+    if (nextChannel === 'all') {
+      const isAllChannelsSelected = liveChat2Channels.every((channel) =>
+        selectedChannels.includes(channel),
+      )
+
+      setSelectedChannels(isAllChannelsSelected ? [] : liveChat2Channels)
+      return
+    }
+
+    setSelectedChannels((currentChannels) =>
+      currentChannels.includes(nextChannel)
+        ? currentChannels.filter((channel) => channel !== nextChannel)
+        : [...currentChannels, nextChannel],
+    )
+  }
+
   const leadPanel = (
     <LiveChat2CustomerPanel
       activeSessionId={activeSession?.id ?? ''}
+      collapsed={isCustomerPanelCollapsed}
       historySessions={historySessions}
       newAccessCount={newAccessCount}
+      selectedChannels={selectedChannels}
       serviceSessions={serviceSessions}
       sortMode={liveChat2SortMode}
       totalServingCount={totalServingCount}
+      view={customerPanelView}
       onCloseSession={closeLiveChat2Session}
+      onCollapsedChange={setIsCustomerPanelCollapsed}
+      onChannelFilterChange={handleChannelFilterChange}
       onSelectSession={handleSelectSession}
       onSortModeChange={setLiveChat2SortMode}
       onStarColorChange={(
         sessionId: string,
         starColor: LiveChat2StarColor,
       ) => setLiveChat2StarColor(sessionId, starColor)}
+      onViewChange={setCustomerPanelView}
     />
   )
 
@@ -271,7 +309,15 @@ export function LiveChat2Page() {
     return (
       <section
         aria-label="livechat2 workspace"
-        className="inbound-page inbound-page--livechat2"
+        className={[
+          'inbound-page',
+          'inbound-page--livechat2',
+          isCustomerPanelCollapsed
+            ? 'inbound-page--livechat2-list-collapsed'
+            : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
       >
         {leadPanel}
         <div className="livechat2-empty-workspace">
@@ -285,7 +331,14 @@ export function LiveChat2Page() {
   return (
     <InteractionWorkspace
       ariaLabel="livechat2 workspace"
-      className="inbound-page--livechat2"
+      className={[
+        'inbound-page--livechat2',
+        isCustomerPanelCollapsed
+          ? 'inbound-page--livechat2-list-collapsed'
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       conversationContent={
         <LiveChat2ConversationWorkspace
           draftMessage={liveChat2DraftMessages[activeSession.id] ?? ''}
