@@ -397,22 +397,63 @@ a {
 }
 
 .aicc-transfer-search {
+  --aicc-transfer-control-height: 30px;
+
   background: transparent;
+  gap: 6px;
 }
 
 .aicc-transfer-search .ant-input-affix-wrapper {
-  width: 336px;
-  max-width: min(336px, 100%);
-  height: var(--aicc-modal-button-height);
+  width: 240px;
+  max-width: min(240px, 100%);
+  height: var(--aicc-transfer-control-height);
+  min-height: var(--aicc-transfer-control-height);
+  padding-block: 0;
+  display: inline-flex;
+  align-items: center;
 }
 
-.aicc-transfer-search .aicc-button {
-  width: 88px;
-  min-width: 88px;
-  height: var(--aicc-modal-button-height);
-  padding-inline: 10px;
+.aicc-transfer-search .ant-input-affix-wrapper > input.ant-input {
+  height: calc(var(--aicc-transfer-control-height) - 2px);
+  line-height: calc(var(--aicc-transfer-control-height) - 2px);
+}
+
+.aicc-transfer-filter {
+  width: 150px;
+}
+
+.aicc-transfer-filter--status {
+  width: 116px;
+}
+
+.aicc-transfer-search .ant-select {
+  height: var(--aicc-transfer-control-height);
+}
+
+.aicc-transfer-search .ant-select-single .ant-select-selector {
+  display: flex;
+  align-items: center;
+  height: var(--aicc-transfer-control-height);
+  min-height: var(--aicc-transfer-control-height);
+  padding-block: 0;
+}
+
+.aicc-transfer-search .ant-select-single .ant-select-selection-item,
+.aicc-transfer-search .ant-select-single .ant-select-selection-placeholder {
+  display: flex;
+  align-items: center;
+  height: calc(var(--aicc-transfer-control-height) - 2px);
+  line-height: calc(var(--aicc-transfer-control-height) - 2px);
+}
+
+.aicc-transfer-search .aicc-button.ant-btn {
+  width: 72px;
+  min-width: 72px;
+  height: var(--aicc-transfer-control-height);
+  min-height: var(--aicc-transfer-control-height);
+  padding-inline: 8px;
   border-radius: var(--aicc-radius-sm);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   box-shadow: none;
 }
@@ -434,8 +475,9 @@ a {
 
 .aicc-transfer-modal .aicc-table .ant-table-thead > tr > th,
 .aicc-transfer-modal .aicc-table .ant-table-tbody > tr > td {
-  padding: 7px 10px;
-  font-size: 12px;
+  padding: 5px 7px;
+  font-size: 11.5px;
+  line-height: 16px;
 }
 
 .aicc-transfer-modal .aicc-table .ant-table-tbody > tr:hover > td {
@@ -447,7 +489,7 @@ a {
 }
 
 .aicc-transfer-tag {
-  min-width: 34px;
+  min-width: 30px;
   margin-inline-end: 0;
   border-color: #c9dcf5;
   border-radius: var(--aicc-radius-sm);
@@ -459,13 +501,41 @@ a {
   text-align: center;
 }
 
+.aicc-transfer-status-tag {
+  min-width: 68px;
+  margin-inline-end: 0;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 17px;
+  text-align: center;
+}
+
+.aicc-transfer-status-tag--ready {
+  border-color: #b8e4c9;
+  background: #ecfdf3;
+  color: #067647;
+}
+
+.aicc-transfer-status-tag--talking {
+  border-color: #bfd7ff;
+  background: #eff6ff;
+  color: #175cd3;
+}
+
+.aicc-transfer-status-tag--not-ready {
+  border-color: #fedf89;
+  background: #fffaeb;
+  color: #b54708;
+}
+
 .aicc-transfer-modal .aicc-button.ant-btn-sm {
-  width: 82px;
-  min-width: 82px;
-  height: 28px;
-  padding-inline: 10px;
+  width: auto;
+  min-width: 52px;
+  height: 24px;
+  padding-inline: 7px;
   border-radius: var(--aicc-radius-sm);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
 }
 
@@ -496,14 +566,14 @@ a {
 .aicc-transfer-modal
   .aicc-transfer-agent-actions
   .aicc-button.ant-btn-sm:not(.aicc-transfer-agent-actions__more) {
-  width: 132px;
-  min-width: 132px;
+  width: 112px;
+  min-width: 112px;
 }
 
 .aicc-transfer-modal
   .aicc-transfer-agent-actions__more.aicc-button.ant-btn-sm {
-  width: 26px;
-  min-width: 26px;
+  width: 24px;
+  min-width: 24px;
   padding-inline: 0;
 }
 
@@ -512,15 +582,16 @@ a {
 }
 
 .aicc-transfer-number {
-  display: grid;
-  gap: 8px;
+  --aicc-number-control-height: 30px;
+
+  display: block;
 }
 
-.aicc-transfer-number__field {
+.aicc-transfer-number__line {
   display: grid;
-  grid-template-columns: 132px minmax(0, 1fr);
+  grid-template-columns: minmax(260px, 420px) 82px 104px;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .aicc-transfer-number__field > span,
@@ -534,14 +605,28 @@ a {
 
 .aicc-transfer-number .ant-select,
 .aicc-transfer-number .ant-input {
-  max-width: 420px;
+  width: 100%;
 }
 
-.aicc-transfer-number__actions {
-  margin-top: 2px;
+.aicc-transfer-number__line .ant-input {
+  height: var(--aicc-number-control-height);
+  padding-block: 0;
+  line-height: calc(var(--aicc-number-control-height) - 2px);
+}
+
+.aicc-transfer-number__line .aicc-button.ant-btn {
+  height: var(--aicc-number-control-height);
+  min-height: var(--aicc-number-control-height);
+  padding-inline: 10px;
+  border-radius: var(--aicc-radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: none;
 }
 
 .aicc-outbound-number {
+  --aicc-number-control-height: 30px;
+
   display: grid;
   gap: 0;
 }
@@ -555,15 +640,30 @@ a {
 
 .aicc-outbound-number__field .ant-input-affix-wrapper {
   width: 100%;
+  height: var(--aicc-number-control-height);
+  min-height: var(--aicc-number-control-height);
+  padding-block: 0;
 }
 
-.aicc-outbound-number__field .aicc-button {
+.aicc-outbound-number__field .ant-input-affix-wrapper > input.ant-input {
+  height: calc(var(--aicc-number-control-height) - 2px);
+  padding-block: 0;
+  line-height: calc(var(--aicc-number-control-height) - 2px);
+}
+
+.aicc-outbound-number__field .ant-input-prefix {
+  display: inline-flex;
+  align-items: center;
+}
+
+.aicc-outbound-number__field .aicc-button.ant-btn {
   width: 76px;
   min-width: 76px;
-  height: var(--aicc-modal-button-height);
+  height: var(--aicc-number-control-height);
+  min-height: var(--aicc-number-control-height);
   padding-inline: 12px;
   border-radius: var(--aicc-radius-sm);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   box-shadow: none;
 }
@@ -1077,31 +1177,15 @@ a {
 }
 
 .aicc-internal-chat__composer-box {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 84px;
+  align-items: end;
   padding: 8px 10px;
   border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  gap: 4px;
-}
-
-.aicc-internal-chat__composer button:not(.aicc-button) {
-  display: inline-grid;
-  width: 26px;
-  height: 26px;
-  place-items: center;
-  border: 0;
-  border-radius: var(--aicc-radius-sm);
-  background: transparent;
-  color: var(--aicc-text-secondary);
-  cursor: pointer;
-}
-
-.aicc-internal-chat__composer button:not(.aicc-button):hover {
-  background: #eef4fb;
-  color: var(--aicc-primary);
+  gap: 8px;
 }
 
 .aicc-internal-chat__composer .ant-input,
@@ -1114,31 +1198,22 @@ a {
 }
 
 .aicc-internal-chat__composer .ant-input-textarea textarea {
-  min-height: 68px;
-  padding: 2px 0;
+  min-height: 44px;
+  padding: 4px 0;
   line-height: 17px;
   resize: none;
 }
 
-.aicc-internal-chat__composer-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 28px;
-  padding-top: 2px;
-  border-top: 0;
-  gap: 8px;
+.aicc-internal-chat__composer .ant-input-textarea textarea:focus {
+  border-color: transparent;
+  box-shadow: none;
+  outline: none;
 }
 
-.aicc-internal-chat__composer-actions span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.aicc-internal-chat__composer-actions .aicc-button {
-  min-width: 88px;
-  height: var(--aicc-modal-button-height);
+.aicc-internal-chat__composer-box .aicc-button {
+  width: 84px;
+  min-width: 84px;
+  height: 30px;
   padding-inline: 12px;
   font-size: 12px;
   font-weight: 700;
@@ -1649,8 +1724,23 @@ a {
 }
 
 .aicc-search-input.ant-input-affix-wrapper {
+  display: inline-flex;
+  align-items: center;
+  padding-block: 0;
   border-color: #d8e0ea;
   border-radius: var(--aicc-radius-sm);
+}
+
+.aicc-search-input.ant-input-affix-wrapper .ant-input {
+  height: calc(var(--aicc-control-height-sm) - 2px);
+  padding-block: 0;
+  line-height: calc(var(--aicc-control-height-sm) - 2px);
+}
+
+.aicc-search-input.ant-input-affix-wrapper .ant-input-prefix,
+.aicc-search-input.ant-input-affix-wrapper .ant-input-suffix {
+  display: inline-flex;
+  align-items: center;
 }
 
 .ant-modal-root .ant-modal-mask {
@@ -1802,10 +1892,74 @@ a {
   font-size: var(--aicc-modal-input-size);
 }
 
+.aicc-modal .ant-input:not(textarea) {
+  height: var(--aicc-control-height-sm);
+  padding-block: 0;
+  line-height: calc(var(--aicc-control-height-sm) - 2px);
+}
+
+.aicc-modal .ant-input-affix-wrapper {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--aicc-control-height-sm);
+  padding-block: 0;
+}
+
+.aicc-modal .ant-input-affix-wrapper > input.ant-input {
+  height: calc(var(--aicc-control-height-sm) - 2px);
+  padding-block: 0;
+  line-height: calc(var(--aicc-control-height-sm) - 2px);
+}
+
+.aicc-modal .ant-input-affix-wrapper .ant-input-prefix,
+.aicc-modal .ant-input-affix-wrapper .ant-input-suffix {
+  display: inline-flex;
+  align-items: center;
+}
+
+.aicc-modal .ant-select-single .ant-select-selector {
+  display: flex;
+  align-items: center;
+  height: var(--aicc-control-height-sm);
+  min-height: var(--aicc-control-height-sm);
+}
+
+.aicc-modal .ant-select-single .ant-select-selection-item,
+.aicc-modal .ant-select-single .ant-select-selection-placeholder {
+  line-height: calc(var(--aicc-control-height-sm) - 2px);
+}
+
 .aicc-modal-toolbar .ant-input,
 .aicc-modal-toolbar .ant-input-affix-wrapper,
 .aicc-modal-toolbar .aicc-button.ant-btn {
-  height: var(--aicc-modal-button-height);
+  height: var(--aicc-control-height-sm);
+}
+
+.aicc-modal-toolbar.aicc-transfer-search .ant-input-affix-wrapper,
+.aicc-modal-toolbar.aicc-transfer-search .ant-select,
+.aicc-modal-toolbar.aicc-transfer-search .aicc-button.ant-btn {
+  height: var(--aicc-transfer-control-height);
+  min-height: var(--aicc-transfer-control-height);
+}
+
+.aicc-modal-toolbar.aicc-transfer-search
+  .ant-select-single
+  .ant-select-selector {
+  height: var(--aicc-transfer-control-height);
+  min-height: var(--aicc-transfer-control-height);
+}
+
+.aicc-modal-toolbar.aicc-transfer-search
+  .ant-input-affix-wrapper
+  > input.ant-input,
+.aicc-modal-toolbar.aicc-transfer-search
+  .ant-select-single
+  .ant-select-selection-item,
+.aicc-modal-toolbar.aicc-transfer-search
+  .ant-select-single
+  .ant-select-selection-placeholder {
+  height: calc(var(--aicc-transfer-control-height) - 2px);
+  line-height: calc(var(--aicc-transfer-control-height) - 2px);
 }
 
 .aicc-modal .ant-input::placeholder,

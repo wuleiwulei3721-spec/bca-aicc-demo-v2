@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-27 03:02 +08:00
+最后更新：2026-05-28 00:19 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -18,6 +18,49 @@
 
 ## 日志
 
+### 2026-05-28 00:19 +08:00 - 合并弹框评审改动到 livechat2
+
+修改页面或文件：
+
+- `src/layouts/components/InternalChatModal.tsx`
+- `src/layouts/components/OutboundCallModal.tsx`
+- `src/layouts/components/TransferModal.tsx`
+- `src/mock/transfer.ts`
+- `src/styles/index.less`
+- `src/types/transfer.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-0019.md`
+- `.codex-backup/current-todo-2026-05-28-0019.md`
+- `.codex-backup/page-state-2026-05-28-0019.md`
+
+修改原因：
+
+- 用户要求把弹框发布线的最新本地改动合并回 `codex/livechat2-popup`，以便继续调试 livechat2，同时不 push 到 GitHub。
+
+修改结果：
+
+- 已在 `codex/modal-review-fixes` 本地提交 `5917330 fix: refine review modal controls`。
+- 已切到 `codex/livechat2-popup` 并合并 `codex/modal-review-fixes`。
+- 合并保留 `livechat2` 菜单、tab、store、mock、页面组件和客户列表能力。
+- 合并带入 Transfer / Outbound / Internal Chat 最新弹框评审改动。
+- 文档冲突按规则处理：`PROJECT_CONTEXT.md` 保留 livechat2 当前上下文，`DEV_LOG.md` 保留弹框评审记录并补回 livechat2 记录。
+- 本轮未 push 到 GitHub。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+
+回滚说明：
+
+- 如需撤销合并，可在确认无新调试改动后回退本次 merge commit；不要回退 `codex/livechat2-popup` 上的 `567f65e` / `7809b58` livechat2 commits。
+
+当前风险点：
+
+- 需要在浏览器中人工复查 `livechat2` 入口和客户列表，以及 Transfer / Outbound / Internal Chat 弹框视觉。
+- 当前分支仍为本地调试分支，未 push；如后续要给客户看，需要先确认发布策略。
+
 ### 2026-05-27 03:02 +08:00 - livechat2 客户列表功能补齐
 
 修改页面或文件：
@@ -33,26 +76,20 @@
 
 修改原因：
 
-- 用户指出 `livechat2` 新客户列表缺少旧 Live Chat 顶部的收起/展开和渠道筛选能力。
-- 用户要求渠道图标继续使用旧版方形风格。
-- 用户要求每个客户行去掉第三行渠道名称和业务类型，节省纵向空间。
-- 用户要求当前列表和历史列表采用左右切换，不要上下同时展示。
+- 用户要求补回旧 Live Chat 客户列表顶部能力：收起/展开、渠道筛选、方形渠道图标。
+- 用户要求客户行去掉第三行渠道名称和业务类型，并将当前/历史列表改为左右切换。
 
 修改结果：
 
-- `livechat2` 客户列表顶部新增 ALL / WhatsApp / BankApp / Webchat 渠道筛选按钮和收起/展开按钮。
-- `livechat2` 收起态会把工作台第一列缩到 56px，只保留渠道筛选图标和客户渠道图标。
-- 渠道头像恢复为方形图标样式，不再使用圆形头像。
-- 客户卡片压缩为两行：第一行客户名 + 最后消息时间，第二行最后消息或草稿提醒；未回复计时移到右侧工具区。
-- Current / History 改为横向切换按钮，只显示当前选中列表。
+- `livechat2` 客户列表新增 ALL / WhatsApp / BankApp / Webchat 渠道筛选和收起/展开。
+- 渠道头像恢复方形图标样式。
+- 客户卡片压缩为两行，未回复计时移到右侧工具区。
+- Current / History 改为横向切换，只显示当前选中列表。
 
 验证：
 
 - `npm run lint` 通过。
-- Browser `/`：`livechat2` 顶部存在 ALL / WhatsApp / BankApp / Webchat 筛选。
-- Browser `/`：Current / History 左右切换可用，History 显示 Raka Aditya。
-- Browser `/`：客户卡片不再出现 `WhatsApp Card Services` 或 `BankApp Digital Banking` 第三行。
-- Browser `/`：收起后显示 `Expand livechat2 customer list`，且隐藏 `Serving` 文案。
+- Browser `/`：`livechat2` 顶部筛选、Current / History 左右切换、History 用户和收起态均可用。
 
 回滚说明：
 
@@ -60,7 +97,7 @@
 
 当前风险点：
 
-- 当前筛选、收起和 Current/History 切换为前端本地 UI 状态，不写入全局 store；刷新页面后恢复默认。
+- 筛选、收起和 Current/History 切换为前端本地 UI 状态，不写入全局 store。
 - 仍需在客户目标分辨率下人工确认收起态和两行客户卡片的视觉密度。
 
 ### 2026-05-27 02:45 +08:00 - 新增 livechat2 并行弹屏
@@ -69,8 +106,6 @@
 
 - `src/layouts/BasicLayout.tsx`
 - `src/pages/AgentWorkspace.tsx`
-- `src/pages/inbound/InteractionWorkspace.tsx`
-- `src/pages/inbound/components/CrmPanel.tsx`
 - `src/pages/inbound/LiveChat2Page.tsx`
 - `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
 - `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
@@ -80,47 +115,312 @@
 - `src/styles/index.less`
 - `PROJECT_CONTEXT.md`
 - `DEV_LOG.md`
-- `.codex-backup/context-snapshot-2026-05-27-0245.md`
-- `.codex-backup/current-todo-2026-05-27-0245.md`
-- `.codex-backup/page-state-2026-05-27-0245.md`
 
 修改原因：
 
-- 用户新增 live chat 弹屏需求文档，要求基于旧 Live Chat 的优秀能力做并行新版方案，tab 名称为 `livechat2`。
-- 用户要求在 WhatsApp 菜单下方新增 `livechat2` 菜单，点击后模拟多个客户接入并跳转到新版弹屏。
-- 用户明确不替换旧 Live Chat，不影响其他功能；弹框修复分支只做本地 commit，不 push 到 GitHub。
+- 用户要求基于旧 Live Chat 的优秀能力做并行新版 `livechat2`，新增菜单和 tab，不替换旧 Live Chat，不影响其他功能。
 
 修改结果：
 
-- 已在本地提交 `codex/fix-toolbar-chat-modals` 为 `9408bc9 fix: refine toolbar modal styles`，并从该本地 commit 创建 `codex/livechat2-popup`；本轮未 push。
-- 新增 `Channel Simulation > livechat2` 菜单项，位于 `WhatsApp` 下方，点击后打开独立 `livechat2` workspace tab。
+- 新增 `Channel Simulation > livechat2` 菜单项，位于 WhatsApp 下方。
 - 新增独立 `liveChat2*` store 状态和动作，覆盖批量接入、聚焦、已读、排序、星标、草稿、未回复计时、结束/关闭、历史列表、发送消息、撤回消息和清理。
-- 新增 `LiveChat2Session`、`LiveChat2Message`、`LiveChat2SortMode`、`LiveChat2StarColor`、`LiveChat2SessionStatus` 等类型和 `liveChat2Sessions` mock 数据，不修改旧 `liveChatSessions`。
-- 新增 `LiveChat2Page`、`LiveChat2CustomerPanel`、`LiveChat2ConversationWorkspace`；UI 风格沿用现有 livechat 工作台，需求文档截图仅作功能参考。
-- `InteractionWorkspace` / `CrmPanel` 增加可选自定义 Conversation 插槽，旧 Live Chat 仍使用原 `ConversationWorkspace`。
-- `livechat2` 当前支持当前服务用户、历史用户、新接入提醒、当前接待数、接入/消息排序、渠道头像、转移来源提示、未读清零、未回复计时、星标、草稿、快捷回复、消息记录、引用、撤回、Transfer、End/Close 等演示交互。
+- 新增 `LiveChat2Page`、`LiveChat2CustomerPanel`、`LiveChat2ConversationWorkspace`、`liveChat2Sessions` mock 和相关类型。
+- 旧 `Live Chat` 未被替换。
+
+验证：
+
+- `npm run lint` 通过。
+- Browser `/`：旧 `Live Chat`、WhatsApp Demo、`livechat2` tab、快捷回复、消息记录和 Transfer 入口均可演示。
+- Browser `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚 `livechat2`，可删除新增 `LiveChat2*` 页面/组件/mock/types/store 字段，并移除 `BasicLayout` 菜单项、`AgentWorkspace` tab 接入和 `livechat2-*` 样式。
+
+当前风险点：
+
+- `livechat2` 为前端演示模拟，不接真实消息网关、文件库、拼写检查、截图插件、敏感词服务或后台配置。
+- 后续如果要公开给客户，需要先决定弹框修复分支和 livechat2 分支的发布策略。
+
+### 2026-05-28 00:04 +08:00 - 号码页签输入框与按钮对齐
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-0004.md`
+- `.codex-backup/current-todo-2026-05-28-0004.md`
+- `.codex-backup/page-state-2026-05-28-0004.md`
+
+修改原因：
+
+- 用户指出 `Transfer Number` 和 `Call Number` 页签里的号码输入框与按钮仍和其它 tab 控件大小、高低不一致，需要继续对齐。
+
+修改结果：
+
+- `Transfer Number` 号码输入框、`Transfer`、`Conference` 统一到 30px 控件高度，并使用与其它 tab 查询按钮一致的紧凑字号、圆角和内边距。
+- `Outbound Call > Call Number` 号码输入框、prefix icon、`Call` 按钮统一到 30px 控件高度，修正输入框与按钮高低不齐。
+- 本轮只调整号码页签样式，不修改弹框结构、数据、store、路由或 livechat2。
 
 验证：
 
 - `npm run lint` 通过。
 - `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
-- Browser `/`：Sign In 后旧 `Live Chat` tab 仍可打开并显示空态。
-- Browser `/`：`Channel Simulation > livechat2` 可打开 `livechat2` tab，显示 4 个当前服务客户和 1 个历史客户。
-- Browser `/`：`livechat2` 选择 Sari Amelia 后 Customer Information、Conversation 和客户列表同步；快捷回复 `/aa` 可带入并发送；未回复计时清零；Message Record 可打开。
-- Browser `/`：`livechat2` Conversation Transfer 可打开 conversation 版 Transfer 弹框。
-- Browser `/`：`Channel Simulation > WhatsApp` 仍可打开 WhatsApp Demo。
-- Browser `/design-system`：页面正常加载。
 
 回滚说明：
 
-- 如需回滚 `livechat2`，可删除新增 `LiveChat2*` 页面/组件/mock/types/store 字段，并移除 `BasicLayout` 菜单项、`AgentWorkspace` tab 接入、`InteractionWorkspace` / `CrmPanel` 自定义 Conversation 插槽和 `livechat2-*` 样式。
-- 旧 `Live Chat` 未被替换；如只撤销新版方案，应保留旧 `LiveChatPage`、`LiveChatCustomerList`、旧 `liveChat*` store 和旧 mock。
+- 如需回滚本次对齐，只需恢复 `src/styles/index.less` 中 `.aicc-transfer-number`、`.aicc-transfer-number__line`、`.aicc-outbound-number`、`.aicc-outbound-number__field` 相关控件高度覆盖。
 
 当前风险点：
 
-- `livechat2` 为前端演示模拟，不接真实消息网关、文件库、拼写检查、截图插件、敏感词服务或后台配置。
-- `livechat2` 基于本地弹框修复 commit，当前未 push 到 GitHub；后续若要公开给客户，需要先决定弹框修复分支是否发布。
-- 仍需在目标演示分辨率下人工复查四列布局、消息记录侧栏和快捷回复浮层的视觉密度。
+- 当前仍未 push；发布前需确认 `codex/modal-review-fixes` 不包含 livechat2 文件。
+- Transfer / Outbound 深层弹框仍建议在目标演示分辨率下做一次人工视觉复查。
+
+### 2026-05-27 23:46 +08:00 - Internal Chat 输入区回退到上上版本
+
+修改页面或文件：
+
+- `src/layouts/components/InternalChatModal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-27-2346.md`
+- `.codex-backup/current-todo-2026-05-27-2346.md`
+- `.codex-backup/page-state-2026-05-27-2346.md`
+
+修改原因：
+
+- 用户明确要求停止继续当前视觉方向，并将 Internal Chat 输入区改回上上版本。
+
+修改结果：
+
+- 回退 23:34 / 23:39 两次 Internal Chat composer 视觉尝试。
+- 当前 composer 为 23:30 版本：两列布局，左侧无边框 textarea，右侧纯文本 `Send` 按钮。
+- 不显示 Emoji、Upload image、Attach file 或 Send icon。
+- 本轮只回退 Internal Chat composer，不影响 Transfer / Outbound 的弹框评审修改。
+
+验证：
+
+- `npm run lint` 第一次执行超时，重新执行通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `http://127.0.0.1:5174/`：Internal Chat 可打开；DOM 中无 `Emoji` / `Choose emoji` / `Upload image` / `Attach file` / `send` icon，存在 `Type internal message` textarea 和纯文本 `Send` button。
+
+回滚说明：
+
+- 如需再次恢复图标 Send 或 Live Chat 风格 toolbar，可参考本日志之前 23:34 / 23:39 记录，但当前用户明确要求回到上上版本，不建议再继续试探式调整。
+
+当前风险点：
+
+- 当前仍未 push；发布前需确认 `codex/modal-review-fixes` 不包含 livechat2 文件。
+- Internal Chat 输入区后续建议只在用户明确指明具体目标版本或截图标注后再改。
+
+### 2026-05-27 23:39 +08:00 - Internal Chat 发送区按截图收敛
+
+修改页面或文件：
+
+- `src/layouts/components/InternalChatModal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-27-2339.md`
+- `.codex-backup/current-todo-2026-05-27-2339.md`
+- `.codex-backup/page-state-2026-05-27-2339.md`
+
+修改原因：
+
+- 用户提供截图，要求 Internal Chat 输入区使用最简洁样式：输入框无边框、无背景，只保留右下角发送按钮。
+- 用户要求发送按钮与截图一致，使用图标 + `Send` 文案。
+
+修改结果：
+
+- Internal Chat composer 保持白底、无输入框边框、无输入框背景和无 focus 阴影。
+- toolbar 左侧继续不显示任何工具图标。
+- Send 按钮改为右下角蓝色大按钮，包含 `SendOutlined` 图标和 `Send` 文案。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `http://127.0.0.1:5174/`：Internal Chat 可打开；DOM 中无 `Emoji` / `Choose emoji` / `Upload image` / `Attach file`，存在 `Type internal message` textarea、`Send` button 和 `send` 图标。
+
+回滚说明：
+
+- 如需恢复无图标 Send，可回退 `InternalChatModal.tsx` 中 `SendOutlined` 引用和 `index.less` 中 Send 按钮尺寸样式。
+
+当前风险点：
+
+- 本轮仍未 push；发布前需确认 `codex/modal-review-fixes` 不包含 livechat2 文件。
+- 建议用户在本地浏览器最终复查按钮尺寸是否与截图视觉一致。
+
+### 2026-05-27 23:34 +08:00 - Internal Chat 输入区对齐 Live Chat 口径
+
+修改页面或文件：
+
+- `src/layouts/components/InternalChatModal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-27-2334.md`
+- `.codex-backup/current-todo-2026-05-27-2334.md`
+- `.codex-backup/page-state-2026-05-27-2334.md`
+
+修改原因：
+
+- 用户指出 Internal Chat 底部应参考 Live Chat 弹屏中间 Conversation 的信息发送区域，只去掉左下角工具图标。
+- 上一版两列输入 + Send 的布局不像 Live Chat 的聊天输入区。
+
+修改结果：
+
+- Internal Chat composer 改为上方 textarea、下方 toolbar 的结构，与 Live Chat Conversation composer 一致。
+- toolbar 左侧不显示任何 Emoji / Attach / Upload image 工具按钮。
+- toolbar 右侧只保留文本 `Send` 按钮。
+- textarea 继续保持无边框，并恢复 3-5 行输入高度。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `http://127.0.0.1:5174/`：Internal Chat 可打开；DOM 中无 `Emoji` / `Choose emoji` / `Upload image` / `Attach file`，存在 `Type internal message` textarea 和 `Send` button。
+
+回滚说明：
+
+- 如需恢复上一版两列布局，可回退本轮对 `InternalChatModal.tsx` composer 结构和 `.aicc-internal-chat__composer*` 样式的修改。
+
+当前风险点：
+
+- 本轮仍未 push；发布前需确认 `codex/modal-review-fixes` 不包含 livechat2 文件。
+- 建议用户在本地浏览器最终复查 Internal Chat 输入区与 Live Chat Conversation 底部是否足够一致。
+
+### 2026-05-27 23:30 +08:00 - Internal Chat 输入区简化
+
+修改页面或文件：
+
+- `src/layouts/components/InternalChatModal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-27-2330.md`
+- `.codex-backup/current-todo-2026-05-27-2330.md`
+- `.codex-backup/page-state-2026-05-27-2330.md`
+
+修改原因：
+
+- 用户要求 Internal Chat 弹框底部去掉表情和图片图标，只保留输入和发送按钮。
+- 用户要求输入框边框不用展示。
+
+修改结果：
+
+- 移除 Internal Chat composer 中的 Emoji 与 Upload image 图标按钮。
+- Send 按钮移除图标，仅保留文本。
+- composer 改为无边框输入区 + Send 按钮的两列布局。
+- textarea 边框、focus 边框和阴影均隐藏。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `http://127.0.0.1:5174/`：Internal Chat 可打开；DOM 中不再有 `Emoji` / `Upload image`，存在 `Type internal message` textarea 和 `Send` button。
+
+回滚说明：
+
+- 如需恢复底部图标，可回退 `InternalChatModal.tsx` 中 composer actions 结构和 `index.less` 中 `.aicc-internal-chat__composer*` 相关样式。
+
+当前风险点：
+
+- 本轮仍未 push；发布前需确认 `codex/modal-review-fixes` 不包含 livechat2 文件。
+- 建议用户在本地浏览器最终复查 Internal Chat 输入区视觉，确认无边框输入区符合评审口径。
+
+### 2026-05-27 23:11 +08:00 - 弹框坐席列表宽度与查询栏对齐修复
+
+修改页面或文件：
+
+- `src/layouts/components/TransferModal.tsx`
+- `src/layouts/components/OutboundCallModal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-27-2311.md`
+- `.codex-backup/current-todo-2026-05-27-2311.md`
+- `.codex-backup/page-state-2026-05-27-2311.md`
+
+修改原因：
+
+- 用户指出坐席列表宽度不足，动作按钮显示不完整。
+- 用户指出查询条件中的输入框、下拉框、按钮高低和大小不一致。
+
+修改结果：
+
+- `Transfer Agent` 与 `Outbound Call > Call Agent` 坐席列表移除 `Department` 列。
+- `Name` 与 `Skill Name` 列宽增加，Conversation Transfer 动作列补足宽度，避免行内按钮被挤掉。
+- `.aicc-transfer-search` 统一使用 30px 控件高度，且用更高优先级覆盖通用 modal toolbar 规则。
+- SearchInput、Skill Queue、Status、Search 按钮的外框高度、内部文字 line-height 和选择项高度统一。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+
+回滚说明：
+
+- 如需恢复 Department 列，可回退本次对 `TransferModal.tsx`、`OutboundCallModal.tsx` 的 columns 修改。
+- 如需恢复 28px 查询栏控件高度，可回退本次 `.aicc-transfer-search` 相关样式覆盖。
+
+当前风险点：
+
+- 本轮仍未 push；发布前需确认 `codex/modal-review-fixes` 不包含 livechat2 文件。
+- 仍建议用户在本地浏览器中最终人工复查 Transfer / Outbound 弹框视觉。
+
+### 2026-05-27 22:56 +08:00 - 弹框评审分支查询与密度优化
+
+修改页面或文件：
+
+- `src/layouts/components/TransferModal.tsx`
+- `src/layouts/components/OutboundCallModal.tsx`
+- `src/mock/transfer.ts`
+- `src/types/transfer.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-27-2256.md`
+- `.codex-backup/current-todo-2026-05-27-2256.md`
+- `.codex-backup/page-state-2026-05-27-2256.md`
+
+修改原因：
+
+- 下午内部评审前，用户要求继续优化弹框而不混入仍在本地调整的 `livechat2`。
+- Transfer / Outbound Agent 查询需要增加技能队列和坐席状态筛选，列表需要展示技能名称和状态。
+- Transfer Number 页需要去掉 `System Number` 与 `Manual Number`，改为一行号码输入框加两个动作按钮。
+- 弹框搜索框文字和 placeholder 偏下，Search / 行内按钮偏大导致表格一页展示行数少。
+
+修改结果：
+
+- `codex/modal-review-fixes` 保持为弹框评审分支，本轮未切入或修改 `codex/livechat2-popup`。
+- `TransferAgent` 新增 `skillName`、`status`；状态类型为 `Ready | Talking | Not Ready`。
+- `transferAgents` mock 补齐技能名称和状态，供 Transfer 与 Outbound 两个弹框共用。
+- `Transfer Agent` 与 `Outbound Call > Call Agent` 查询栏新增 `Skill Queue`、`Status` 筛选，筛选逻辑同时支持姓名/工号、技能队列、状态。
+- Agent 列表新增 `Skill Name` 与 `Status` 列，状态用紧凑 tag 区分 Ready / Talking / Not Ready。
+- `Transfer Number` 页仅保留号码输入框、`Transfer`、`Conference`，同一行展示。
+- 弹框 SearchInput、普通输入框、Select、Search / Call 按钮和行内动作按钮统一收紧，并补充垂直居中样式。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- `git diff --check` 通过，仅提示 Windows 下 LF 将由 Git 转为 CRLF。
+- Browser `http://127.0.0.1:5174/`：主页面可加载，Internal Chat 弹框可通过可见 DOM 打开，搜索输入框存在。
+- Browser `http://127.0.0.1:5174/design-system`：页面正常加载，Design System、Modal System、Table System 存在。
+- `git diff --name-only | Select-String 'livechat2|LiveChat2'` 无匹配。
+
+回滚说明：
+
+- 如需回滚本轮弹框评审修改，可恢复上述 5 个源码文件及本轮文档/备份。
+- `transferSystemNumbers` mock 暂未删除，只是当前 Transfer Number UI 不再引用；如需恢复系统号码下拉，可从本轮 diff 回退 `TransferNumberTab`。
+
+当前风险点：
+
+- Codex in-app browser 对隐藏侧栏/话务工具条的 Playwright 点击不稳定，本轮无法自动深点 Transfer / Outbound 全路径；用户仍需在本地浏览器中最终人工复查这两个弹框。
+- 发布前必须再次确认 `codex/modal-review-fixes` 不包含 livechat2 commits 或文件。
 
 ### 2026-05-27 02:07 +08:00 - Modal 视觉回调修复
 

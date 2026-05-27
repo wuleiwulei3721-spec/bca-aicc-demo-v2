@@ -11,6 +11,8 @@ export const transferAgents: TransferAgent[] = [
     employeeId: 'AICC1024',
     department: 'Priority Banking',
     name: 'Siti Rahmawati',
+    skillName: 'Priority Customer',
+    status: 'Ready',
     extension: '81024',
   },
   {
@@ -19,6 +21,8 @@ export const transferAgents: TransferAgent[] = [
     employeeId: 'AICC1088',
     department: 'Card Service',
     name: 'Rangga Aditya',
+    skillName: 'Credit Card',
+    status: 'Talking',
     extension: '81088',
   },
   {
@@ -26,6 +30,8 @@ export const transferAgents: TransferAgent[] = [
     employeeId: 'AICC1142',
     department: 'Loan Service',
     name: 'Maya Anggraini',
+    skillName: 'Loan',
+    status: 'Not Ready',
     extension: '81142',
   },
   {
@@ -33,6 +39,8 @@ export const transferAgents: TransferAgent[] = [
     employeeId: 'AICC1167',
     department: 'Digital Banking',
     name: 'Arif Prasetyo',
+    skillName: 'Banking Service',
+    status: 'Ready',
     extension: '81167',
   },
   {
@@ -40,6 +48,8 @@ export const transferAgents: TransferAgent[] = [
     employeeId: 'AICC1205',
     department: 'Credit Card',
     name: 'Nadia Putri',
+    skillName: 'Credit Card',
+    status: 'Ready',
     extension: '81205',
   },
   {
@@ -47,6 +57,8 @@ export const transferAgents: TransferAgent[] = [
     employeeId: 'AICC1244',
     department: 'Branch Support',
     name: 'Bambang Wijaya',
+    skillName: 'Debit Card',
+    status: 'Not Ready',
     extension: '81244',
   },
 ]

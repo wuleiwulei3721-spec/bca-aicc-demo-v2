@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
-import { Input, Space, Tag } from 'antd'
+import { Input, Select, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
   AppButton,
@@ -11,11 +11,35 @@ import {
   SearchInput,
 } from '../../components'
 import { transferAgents } from '../../mock/transfer'
-import type { TransferAgent } from '../../types'
+import type { TransferAgent, TransferAgentStatus } from '../../types'
 
 interface OutboundCallModalProps {
   open: boolean
   onClose: () => void
+}
+
+const allFilterValue = 'all'
+const transferAgentStatusOptions: TransferAgentStatus[] = [
+  'Ready',
+  'Talking',
+  'Not Ready',
+]
+const transferStatusClassNames: Record<TransferAgentStatus, string> = {
+  Ready: 'ready',
+  Talking: 'talking',
+  'Not Ready': 'not-ready',
+}
+
+type AgentStatusFilter = TransferAgentStatus | typeof allFilterValue
+
+function renderAgentStatus(status: TransferAgentStatus) {
+  return (
+    <Tag
+      className={`aicc-transfer-status-tag aicc-transfer-status-tag--${transferStatusClassNames[status]}`}
+    >
+      {status}
+    </Tag>
+  )
 }
 
 function CallNumberTab({ onComplete }: { onComplete: () => void }) {
@@ -42,59 +66,79 @@ function CallNumberTab({ onComplete }: { onComplete: () => void }) {
 
 function CallAgentTab({ onComplete }: { onComplete: () => void }) {
   const [keyword, setKeyword] = useState('')
+  const [skillQueue, setSkillQueue] = useState(allFilterValue)
+  const [statusFilter, setStatusFilter] =
+    useState<AgentStatusFilter>(allFilterValue)
+
+  const skillQueueOptions = useMemo(
+    () => Array.from(new Set(transferAgents.map((agent) => agent.skillName))),
+    [],
+  )
 
   const filteredAgents = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLowerCase()
 
-    if (!normalizedKeyword) {
-      return transferAgents
-    }
+    return transferAgents.filter((agent) => {
+      const matchesKeyword =
+        !normalizedKeyword ||
+        [agent.name, agent.employeeId].some((value) =>
+          value.toLowerCase().includes(normalizedKeyword),
+        )
+      const matchesSkillQueue =
+        skillQueue === allFilterValue || agent.skillName === skillQueue
+      const matchesStatus =
+        statusFilter === allFilterValue || agent.status === statusFilter
 
-    return transferAgents.filter((agent) =>
-      [agent.name, agent.employeeId].some((value) =>
-        value.toLowerCase().includes(normalizedKeyword),
-      ),
-    )
-  }, [keyword])
+      return matchesKeyword && matchesSkillQueue && matchesStatus
+    })
+  }, [keyword, skillQueue, statusFilter])
 
   const columns: ColumnsType<TransferAgent> = [
     {
       dataIndex: 'marker',
       title: '',
-      width: 64,
+      width: 42,
       render: (marker?: TransferAgent['marker']) =>
         marker ? <Tag className="aicc-transfer-tag">{marker}</Tag> : null,
     },
     {
       dataIndex: 'employeeId',
       title: 'Employee ID',
-      width: 110,
-    },
-    {
-      dataIndex: 'department',
-      title: 'Department',
-      width: 140,
+      width: 92,
     },
     {
       dataIndex: 'name',
       title: 'Name',
-      width: 150,
+      ellipsis: true,
+      width: 142,
+    },
+    {
+      dataIndex: 'skillName',
+      title: 'Skill Name',
+      ellipsis: true,
+      width: 136,
+    },
+    {
+      dataIndex: 'status',
+      title: 'Status',
+      width: 90,
+      render: renderAgentStatus,
     },
     {
       dataIndex: 'extension',
       title: 'Extension',
-      width: 90,
+      width: 70,
     },
     {
       key: 'action',
       title: 'Action',
-      width: 90,
+      width: 74,
       render: () => (
-        <Space size={4}>
+        <div className="aicc-transfer-row-actions">
           <AppButton size="small" onClick={onComplete}>
             Call
           </AppButton>
-        </Space>
+        </div>
       ),
     },
   ]
@@ -106,6 +150,30 @@ function CallAgentTab({ onComplete }: { onComplete: () => void }) {
           placeholder="Search name or employee ID"
           value={keyword}
           onChange={(event) => setKeyword(event.target.value)}
+        />
+        <Select
+          className="aicc-transfer-filter"
+          options={[
+            { label: 'All skill queues', value: allFilterValue },
+            ...skillQueueOptions.map((skill) => ({
+              label: skill,
+              value: skill,
+            })),
+          ]}
+          value={skillQueue}
+          onChange={setSkillQueue}
+        />
+        <Select<AgentStatusFilter>
+          className="aicc-transfer-filter aicc-transfer-filter--status"
+          options={[
+            { label: 'All status', value: allFilterValue },
+            ...transferAgentStatusOptions.map((status) => ({
+              label: status,
+              value: status,
+            })),
+          ]}
+          value={statusFilter}
+          onChange={setStatusFilter}
         />
         <AppButton icon={<SearchOutlined />} type="primary">
           Search

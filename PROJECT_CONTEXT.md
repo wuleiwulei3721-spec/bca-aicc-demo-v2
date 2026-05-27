@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-05-27 03:02 +08:00
+最后更新：2026-05-28 00:19 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：`codex/livechat2-popup` 在弹框修复本地 commit 基线上新增并行 `livechat2` 来电弹屏方案；不 push 到 GitHub，后续由用户继续调试是否替换旧 Live Chat。
+当前目标：`codex/livechat2-popup` 已合并本地 `codex/modal-review-fixes` 弹框评审改动，继续在并行 `livechat2` 来电弹屏方案上调试；不 push 到 GitHub，后续由用户决定是否替换旧 Live Chat。
 
 ## 0. 使用规则
 
@@ -41,7 +41,7 @@
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
 当前分支：`codex/livechat2-popup`
-当前 HEAD：以 `git rev-parse HEAD` 为准；该分支基于本地 `codex/fix-toolbar-chat-modals` commit `9408bc9`，用于新增并行 `livechat2` 文字客服弹屏，不替换旧 `Live Chat`。
+当前 HEAD：以 `git rev-parse HEAD` 为准；该分支包含本地 `codex/fix-toolbar-chat-modals` commit `9408bc9`、`livechat2` 两个本地 commit，以及已合入的 `codex/modal-review-fixes` commit `5917330`；用于继续调试并行 `livechat2` 文字客服弹屏，不替换旧 `Live Chat`。
 部署目标：Vercel 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -482,6 +482,19 @@ Live Chat 当前 mock：
 - GitHub remote 与基础提交。
 
 ## 10. 当前开发状态
+
+截至 2026-05-28 00:19 +08:00，本轮将 `codex/modal-review-fixes` 的弹框评审提交 `5917330 fix: refine review modal controls` 合并到 `codex/livechat2-popup`：
+
+- 当前工作区已切回 `codex/livechat2-popup`，后续可继续调试 `livechat2`。
+- 合并保留 `livechat2` 菜单、tab、store、mock、页面组件、客户列表收起/展开、渠道筛选和 Current/History 左右切换。
+- 合并带入 Transfer / Outbound / Internal Chat 最新弹框评审改动，包括坐席技能队列与状态筛选、列表状态列、号码页控件对齐和 Internal Chat composer 回退。
+- `PROJECT_CONTEXT.md` 以 livechat2 分支上下文为基线，`DEV_LOG.md` 保留弹框评审记录并补回 livechat2 记录。
+- 本轮未 push 到 GitHub。
+
+本轮验证：
+
+- `npm run lint`：通过。
+- `npm run build`：通过，仍保留既有 Vite/Rolldown chunk size warning。
 
 截至 2026-05-27 02:07 +08:00，当前继续在 `codex/fix-toolbar-chat-modals` 分支回调 Modal 视觉。用户指出上一轮全白收敛后出现内容区贴边、标题栏蓝色背景消失、整体白花花且 Search 按钮仍与输入框和其它按钮不统一；本轮采用用户选择的“浅蓝标题栏”方向。
 
@@ -1160,6 +1173,8 @@ M src/types/inbound.ts
 
 P0：
 
+- 在 `codex/livechat2-popup` 上继续复查：`Channel Simulation > livechat2` 菜单仍在 WhatsApp 下方，点击后能打开 `livechat2` tab，客户列表收起/展开、渠道筛选、Current/History 左右切换不回退。
+- 在 `codex/livechat2-popup` 上复查合并后的弹框：Transfer / Outbound Agent 查询栏、`Transfer Number`、`Call Number`、Internal Chat composer 应继承 `codex/modal-review-fixes` 的最新效果。
 - 在当前本地页面最终人工确认 Modal 回调视觉：Transfer / Outbound / Internal Chat 应为浅蓝标题栏、灰蓝 body、白色内容面、内容不贴边，Search / Call 与输入框高度一致，行内动作按钮尺寸统一。
 - 在客户目标演示分辨率下复查本轮弹框 hotfix：`Transfer Number` 无 `Cancel`，`Outbound Call > Call Number` 为输入框 + `Call` 单行布局，`Internal Chat` 视觉清晰且不回到浑浊淡蓝背景。
 - 在目标演示分辨率下复查 v0.6.8 hotfix：Next Best Action hover/focus 箭头应浮在行最右侧，不占位、不错位，点击仍打开 CRM 动态 tab。
