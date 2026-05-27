@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-05-27 02:07 +08:00
+最后更新：2026-05-28 00:04 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：`codex/fix-toolbar-chat-modals` 回调 Modal 视觉，修复 Transfer / Outbound / Internal Chat 弹框过白、内容贴边、标题栏缺少系统感与按钮尺寸不统一问题；完成后合入 `main`。
+当前目标：`codex/modal-review-fixes` 作为弹框评审发布线，在不引入 `livechat2` 的前提下继续优化 Transfer / Outbound 弹框查询、列表字段、号码页单行布局和控件对齐。
 
 ## 0. 使用规则
 
@@ -40,8 +40,8 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`codex/fix-toolbar-chat-modals`
-当前 HEAD：以 `git rev-parse HEAD` 为准；该分支用于修复话务条 Transfer / Outbound 号码页动作布局、Internal Chat 弹框视觉回归，并收敛 Modal / Tabs / Table 通用样式层级。
+当前分支：`codex/modal-review-fixes`
+当前 HEAD：以 `git rev-parse HEAD` 为准；该分支基于本地 `codex/fix-toolbar-chat-modals` 的弹框样式 commit，继续承载下午评审所需的弹框调整；`codex/livechat2-popup` 仍为本地并行实验分支，不应在本分支发布时带出。
 部署目标：Vercel 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -197,6 +197,8 @@ type CallStatus =
 - Ready + Idle 且没有未结束 `CallInteraction` 时点击 `Channel Simulation > PSTN` 可触发电话弹屏；`BasicLayout` 会计算并同步 `voiceVideoHandoffReadiness` 到 store，统一区分 `available`、`active-call` 和 `not-ready`。被阻塞时只显示轻量顶部 warning，不改变当前通话、不打开 modal、不新增 tab。
 - 话务条 incoming identification 只在 `Incoming`、`Talking`、`Hold`、`Mute` 时显示：PSTN 显示 `IVR 08123456789`，BankApp Voice / Video 显示 `BankID 00012345`；Hang Up 后随 `callStatus` 回 Idle 自动隐藏。识别标签、号码、timer label 与 timer value 使用统一 metadata 层级：灰色 label、黑色 700 数值、tabular nums、清晰 1px divider。
 - 话务条 Settings 当前只配置显示模式，默认 `Icon + Text`；选择控件使用项目自定义 segmented button 风格，与 BankApp Customer type 控件保持一致；弹框只保留一行 `Toolbar display` + 横向选择控件。切换为 `Icon Only` 后 Answer/Hold/Mute/Transfer/Hang Up/Ready 等按钮隐藏文字但保留图标、`aria-label` 和 `title`，图标在该模式下放大到 14px。自动接听仍固定使用默认 3 秒，但不在 Settings 中展示。
+- 话务条 Transfer 与 More > Outbound Call 的 Agent 查询页支持姓名/工号、Skill Queue 和 Status 三类筛选；坐席 mock 数据新增 `skillName` 与 `status`，列表同步展示 `Skill Name` 和 `Status`，状态范围为 `Ready`、`Talking`、`Not Ready`。
+- 话务条 Transfer Number 页只保留号码输入框、`Transfer`、`Conference` 三个元素并同一行展示；不再显示 `System Number` 下拉或 `Manual Number` label。
 - BankApp Demo 的 `Livechat` 路径会打开 Live Chat 并聚焦 BankApp 客户；`Voice Call` / `Video Call` 路径通过 store request id 触发现有坐席话务状态机，并可在 `Agent Workspace` 步骤切到对应坐席 workspace。若 readiness 为 `active-call` 或 `not-ready`，Voice / Video handoff 会停留在当前 BankApp 步骤并显示对应 inline warning，Live Chat 路径不受该限制影响。
 - WhatsApp Demo 默认走 Live Chat 路径并聚焦 WhatsApp 客户 `live-chat-001`；已签入后仍可通过固定 Live Chat tab 承载会话工作台。
 - Live Chat 客户列表只展示 active sessions，并为每个 active customer 显示 `lastMessageTime · mm:ss`；BankApp / WhatsApp Live Chat 运行计时从入口接入时的 `00:00` 开始，不再用 mock `customer.accessDuration` 回推。SLA 仅用于 Live Chat，60 秒 warning、120 秒 breach，展开列表用左侧细 accent 与 duration 颜色表达，收起列表用渠道 icon 角标表达；warning 色使用更明确的 amber/yellow，避免偏深棕。
@@ -477,6 +479,100 @@ Live Chat 当前 mock：
 - GitHub remote 与基础提交。
 
 ## 10. 当前开发状态
+
+截至 2026-05-28 00:04 +08:00，本轮继续修正弹框号码页签控件对齐：
+
+- `Transfer Modal > Transfer Number` 的号码输入框、`Transfer`、`Conference` 统一使用 30px 控件高度，按钮半径、字号、内边距与其它 tab 的紧凑查询控件保持一致。
+- `Outbound Call Modal > Call Number` 的号码输入框、prefix icon、`Call` 按钮统一使用 30px 控件高度，修正输入框和按钮高低不齐的问题。
+- 本轮只修改 `src/styles/index.less` 中号码页签样式，不修改弹框结构、mock、store、路由、旧 Live Chat 或 `livechat2` 分支。
+
+本轮验证：
+
+- `npm run lint`：通过。
+- `npm run build`：通过，仍保留既有 Vite/Rolldown chunk size warning。
+
+截至 2026-05-27 23:46 +08:00，本轮按用户要求将 Internal Chat composer 回退到上上版本：
+
+- 回退 23:34 / 23:39 两次 Internal Chat composer 视觉尝试。
+- 当前 composer 为 23:30 版本：`aicc-internal-chat__composer-box` 两列布局，左侧无边框 textarea，右侧纯文本 `Send` 按钮。
+- 不显示 Emoji、Upload image、Attach file 或 Send icon。
+- 本轮只回退 Internal Chat composer，不修改 Transfer / Outbound、本地 livechat2 分支、store、路由或 mock 数据。
+
+本轮验证：
+
+- `npm run lint`：通过；第一次执行曾超时，重新执行通过。
+- `npm run build`：通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `http://127.0.0.1:5174/`：Internal Chat 可打开；DOM 中无 `Emoji` / `Choose emoji` / `Upload image` / `Attach file` / `send` icon，存在 `Type internal message` textarea 和纯文本 `Send` button。
+
+截至 2026-05-27 23:39 +08:00，本轮按用户截图再次修正 Internal Chat composer：
+
+- 输入区保持极简：白底、无输入框边框、无输入框背景、focus 不显示阴影。
+- composer 保持上方 textarea、下方 toolbar，toolbar 左侧不放任何工具图标。
+- Send 按钮位于右下角，改为与截图一致的蓝色大按钮，包含 `SendOutlined` 图标和 `Send` 文案。
+- 本轮不修改 Internal Chat 会话列表、消息内容、搜索、mock 数据、store、路由或 livechat2 分支。
+
+本轮验证：
+
+- `npm run lint`：通过。
+- `npm run build`：通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `http://127.0.0.1:5174/`：Internal Chat 可打开；DOM 中无 `Emoji` / `Choose emoji` / `Upload image` / `Attach file`，存在 `Type internal message` textarea、`Send` button 和 `send` 图标。
+
+截至 2026-05-27 23:34 +08:00，本轮按旧 Live Chat Conversation 底部发送区口径再次调整 Internal Chat composer：
+
+- Internal Chat composer 改为与 Live Chat 一致的上下结构：上方无边框 textarea，下方 toolbar。
+- toolbar 左侧不放 Emoji / Attach / Upload image 等工具图标，只保留右侧文本 `Send` 按钮。
+- textarea 高度恢复为 Live Chat 口径的 3-5 行，避免上一版两列布局显得不像聊天输入区。
+- 本轮不修改 Internal Chat 会话列表、消息内容、搜索、mock 数据、store、路由或 livechat2 分支。
+
+本轮验证：
+
+- `npm run lint`：通过。
+- `npm run build`：通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `http://127.0.0.1:5174/`：Internal Chat 可打开；DOM 中无 `Emoji` / `Choose emoji` / `Upload image` / `Attach file`，存在 `Type internal message` textarea 和 `Send` button。
+
+截至 2026-05-27 23:30 +08:00，本轮继续修正 Internal Chat 弹框底部输入区：
+
+- `InternalChatModal` 移除 composer 底部的 Emoji 与 Upload image 图标按钮。
+- Send 按钮移除图标，仅保留文本 `Send`。
+- composer 底部改为无边框输入区 + Send 按钮的两列布局；输入框不展示边框，focus 时也不显示边框或阴影。
+- 本轮不修改 Internal Chat 会话列表、消息内容、搜索、mock 数据、store、路由或 livechat2 分支。
+
+本轮验证：
+
+- `npm run lint`：通过。
+- `npm run build`：通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `http://127.0.0.1:5174/`：Internal Chat 可打开；DOM 中不再有 `Emoji` / `Upload image`，存在 `Type internal message` textarea 和 `Send` button。
+
+截至 2026-05-27 23:11 +08:00，本轮继续修正弹框评审反馈：
+
+- `Transfer Agent` 与 `Outbound Call > Call Agent` 坐席列表移除 `Department` 列，释放宽度给 `Name`、`Skill Name`、`Status` 和动作按钮。
+- Conversation Transfer 的动作列宽度补足，确保 `Request Transfer`、`Request Conference` 和更多按钮同一行展示。
+- `.aicc-transfer-search` 使用统一的 30px 控件高度，并增加高优先级覆盖，确保 SearchInput、Skill Queue、Status 和 Search 按钮不再出现高低不齐。
+- 本轮继续不修改 livechat2、路由、store 或话务状态机。
+
+本轮验证：
+
+- `npm run lint`：通过。
+- `npm run build`：通过，仍保留既有 Vite/Rolldown chunk size warning。
+
+截至 2026-05-27 22:56 +08:00，当前工作在 `codex/modal-review-fixes` 弹框评审分支。该分支从 `codex/fix-toolbar-chat-modals` 创建，包含昨天弹框样式优化，但不包含 `codex/livechat2-popup` 上的 livechat2 新增页面和状态。
+
+本轮弹框评审修改：
+
+- `Transfer Agent` 与 `Outbound Call > Call Agent` 查询栏新增 `Skill Queue` 与 `Status` 筛选，继续保留姓名/工号搜索。
+- `TransferAgent` 类型与 `transferAgents` mock 新增 `skillName`、`status`；列表新增 `Skill Name` 与 `Status` 列，状态使用紧凑 tag 展示 `Ready`、`Talking`、`Not Ready`。
+- `Transfer Number` 页移除 `System Number`、`Manual Number` 文案和系统号码下拉，只保留号码输入框、`Transfer`、`Conference` 同一行。
+- `.aicc-modal` 输入框、SearchInput、Select、Search / Call 按钮和行内动作按钮统一压缩到 28px / 24px 级别，并补充输入文字与 placeholder 垂直居中样式。
+- Transfer / Outbound 表格 padding 收紧，Conversation 变体的 `Request Transfer` / `Request Conference` / More 保持语义不变但尺寸更紧凑。
+- 本轮不修改路由、store、话务状态机、旧 Live Chat、`livechat2` 分支或 GitHub 远端。
+
+本轮验证：
+
+- `npm run lint`：通过。
+- `npm run build`：通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `http://127.0.0.1:5174/`：主页面可加载，Internal Chat 弹框可通过可见 DOM 打开，搜索输入框存在。
+- Browser `http://127.0.0.1:5174/design-system`：页面正常加载，Design System、Modal System、Table System 存在。
+- Codex in-app browser 对隐藏侧栏/话务工具条的 Playwright 点击仍不稳定，本轮 Transfer / Outbound 深层弹框交互仍需用户在当前浏览器中最终人工复查。
 
 截至 2026-05-27 02:07 +08:00，当前继续在 `codex/fix-toolbar-chat-modals` 分支回调 Modal 视觉。用户指出上一轮全白收敛后出现内容区贴边、标题栏蓝色背景消失、整体白花花且 Search 按钮仍与输入框和其它按钮不统一；本轮采用用户选择的“浅蓝标题栏”方向。
 
@@ -1121,6 +1217,8 @@ M src/types/inbound.ts
 
 ## 11. 已知问题与风险
 
+- 本轮弹框评审修改已通过 lint/build，但 Codex in-app browser 对当前页面隐藏侧栏/话务工具条点击不稳定，Transfer / Outbound 弹框的最终视觉仍建议在用户当前本地浏览器中人工复查。
+- `codex/modal-review-fixes` 是弹框发布线，不能混入 `codex/livechat2-popup` 的 livechat2 commits；发布前需再次确认 diff 中没有 `LiveChat2` / `livechat2` 文件。
 - 本轮已将 Modal 从全白贴边状态回调为浅蓝标题栏、灰蓝 body 和白色内容面；已通过 Browser 检查 Transfer / Outbound / Internal Chat，但仍建议用户在当前本地页面做最终视觉确认。
 - Browser 截图输出在 Codex app 中偶发出现重复画面拼接，但 DOM 与交互检查正常，实际页面可直接在 in-app browser 中查看。
 - 本轮话务条 Transfer / Outbound 和 Internal Chat 弹框回归已通过本地 lint/build 与 Browser smoke check；仍建议在客户目标演示分辨率下人工复查 Internal Chat 视觉是否符合客户截图口径。
@@ -1153,6 +1251,9 @@ M src/types/inbound.ts
 
 P0：
 
+- 在目标演示分辨率下人工复查 `Transfer Modal > Transfer Number` 和 `Outbound Call Modal > Call Number`：号码输入框、prefix icon 和行内按钮应与其它 tab 的 30px 查询控件高度一致，不再出现高低不齐。
+- 在目标演示分辨率下人工复查 `codex/modal-review-fixes`：Transfer / Outbound Agent 查询栏的 `Skill Queue`、`Status`、新增 `Skill Name` / `Status` 列、紧凑按钮和输入框垂直居中应符合下午评审口径。
+- 发布弹框分支前再次确认 `git diff main..HEAD` 不包含 `livechat2` / `LiveChat2` 相关文件，只发布 `codex/modal-review-fixes`。
 - 在当前本地页面最终人工确认 Modal 回调视觉：Transfer / Outbound / Internal Chat 应为浅蓝标题栏、灰蓝 body、白色内容面、内容不贴边，Search / Call 与输入框高度一致，行内动作按钮尺寸统一。
 - 在客户目标演示分辨率下复查本轮弹框 hotfix：`Transfer Number` 无 `Cancel`，`Outbound Call > Call Number` 为输入框 + `Call` 单行布局，`Internal Chat` 视觉清晰且不回到浑浊淡蓝背景。
 - 在目标演示分辨率下复查 v0.6.8 hotfix：Next Best Action hover/focus 箭头应浮在行最右侧，不占位、不错位，点击仍打开 CRM 动态 tab。

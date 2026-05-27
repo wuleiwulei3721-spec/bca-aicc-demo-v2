@@ -1,9 +1,4 @@
 import { useMemo, useState } from 'react'
-import {
-  FileImageOutlined,
-  SendOutlined,
-  SmileOutlined,
-} from '@ant-design/icons'
 import { Avatar, Badge, Input } from 'antd'
 import { AppButton, BaseModal, SearchInput } from '../../components'
 import { internalChatSessions } from '../../mock/chat'
@@ -138,24 +133,12 @@ export function InternalChatModal({ open, onClose }: InternalChatModalProps) {
           <footer className="aicc-internal-chat__composer">
             <div className="aicc-internal-chat__composer-box">
               <TextArea
-                autoSize={{ minRows: 3, maxRows: 5 }}
+                autoSize={{ minRows: 2, maxRows: 4 }}
                 placeholder="Type internal message"
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
               />
-              <div className="aicc-internal-chat__composer-actions">
-                <span>
-                  <button aria-label="Emoji" type="button">
-                    <SmileOutlined />
-                  </button>
-                  <button aria-label="Upload image" type="button">
-                    <FileImageOutlined />
-                  </button>
-                </span>
-                <AppButton icon={<SendOutlined />} type="primary">
-                  Send
-                </AppButton>
-              </div>
+              <AppButton type="primary">Send</AppButton>
             </div>
           </footer>
         </section>
