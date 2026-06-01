@@ -8,6 +8,7 @@ import {
 } from '../../mock/inbound'
 import type { CrmWorkspaceTab, CustomerInformation } from '../../types'
 import { AssistantPanel } from './components/AssistantPanel'
+import type { AssistantPanelExtraTab } from './components/AssistantPanel'
 import { CONVERSATION_TAB_KEY, CrmPanel } from './components/CrmPanel'
 import type { ConversationWorkspaceConfig } from './components/ConversationWorkspace'
 import { LeftColumn } from './components/LeftColumn'
@@ -16,26 +17,39 @@ const CRM_TAB_KEY = 'crm'
 
 interface InteractionWorkspaceProps {
   ariaLabel: string
+  assistantActiveKey?: string
+  assistantExtraTabs?: AssistantPanelExtraTab[]
   className?: string
   conversation?: ConversationWorkspaceConfig
+  conversationContent?: ReactNode
+  conversationKey?: string
   customer: CustomerInformation
   leadPanel?: ReactNode
+  onAssistantActiveKeyChange?: (activeKey: string) => void
+  onAssistantCloseExtraTab?: (targetKey: string) => void
   overlay?: ReactNode
 }
 
 export function InteractionWorkspace({
   ariaLabel,
+  assistantActiveKey,
+  assistantExtraTabs,
   className,
   conversation,
+  conversationContent,
+  conversationKey,
   customer,
   leadPanel,
+  onAssistantActiveKeyChange,
+  onAssistantCloseExtraTab,
   overlay,
 }: InteractionWorkspaceProps) {
   const [crmWorkspace, setCrmWorkspace] = useState<{
     activeKey: string
     tabs: CrmWorkspaceTab[]
   }>({
-    activeKey: conversation ? CONVERSATION_TAB_KEY : CRM_TAB_KEY,
+    activeKey:
+      conversation || conversationContent ? CONVERSATION_TAB_KEY : CRM_TAB_KEY,
     tabs: [],
   })
 
@@ -85,13 +99,20 @@ export function InteractionWorkspace({
         <CrmPanel
           activeKey={crmWorkspace.activeKey}
           conversation={conversation}
+          conversationContent={conversationContent}
+          conversationKey={conversationKey}
           workspaceTabs={crmWorkspace.tabs}
           onActiveKeyChange={(activeKey) =>
             setCrmWorkspace((current) => ({ ...current, activeKey }))
           }
           onCloseTab={closeCrmWorkspaceTab}
         />
-        <AssistantPanel />
+        <AssistantPanel
+          activeKey={assistantActiveKey}
+          extraTabs={assistantExtraTabs}
+          onActiveKeyChange={onAssistantActiveKeyChange}
+          onCloseExtraTab={onAssistantCloseExtraTab}
+        />
       </section>
       {overlay}
     </>

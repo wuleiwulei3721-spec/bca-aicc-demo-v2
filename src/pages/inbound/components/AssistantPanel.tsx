@@ -1,8 +1,17 @@
 import { useState } from 'react'
-import { ApiOutlined, RobotOutlined } from '@ant-design/icons'
+import { ApiOutlined, CloseOutlined, RobotOutlined } from '@ant-design/icons'
+import type { ReactNode } from 'react'
 import { BaseTabs } from '../../../components'
 
 const ASSISTANT_SCREENSHOT_SRC = '/screenshots/assistant-workspace.jpg'
+
+export interface AssistantPanelExtraTab {
+  children: ReactNode
+  closable?: boolean
+  icon?: ReactNode
+  key: string
+  title: string
+}
 
 function AssistantScreenshotArea() {
   const [screenshotLoaded, setScreenshotLoaded] = useState(false)
@@ -80,34 +89,105 @@ function ConnectionSystemArea() {
   )
 }
 
-export function AssistantPanel() {
+interface AssistantPanelProps {
+  activeKey?: string
+  extraTabs?: AssistantPanelExtraTab[]
+  onActiveKeyChange?: (activeKey: string) => void
+  onCloseExtraTab?: (targetKey: string) => void
+}
+
+function renderAssistantTabLabel({
+  closable = false,
+  icon,
+  key,
+  title,
+  onClose,
+}: {
+  closable?: boolean
+  icon: ReactNode
+  key: string
+  title: string
+  onClose?: (targetKey: string) => void
+}) {
+  return (
+    <span
+      className={[
+        'inbound-assistant-tabs__label',
+        closable ? 'inbound-assistant-tabs__label--closable' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      title={title}
+    >
+      <span className="inbound-assistant-tabs__label-icon">{icon}</span>
+      <span className="inbound-assistant-tabs__label-text">{title}</span>
+      {closable && (
+        <button
+          aria-label={`Close ${title}`}
+          type="button"
+          onClick={(event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            onClose?.(key)
+          }}
+        >
+          <CloseOutlined />
+        </button>
+      )}
+    </span>
+  )
+}
+
+export function AssistantPanel({
+  activeKey,
+  extraTabs = [],
+  onActiveKeyChange,
+  onCloseExtraTab,
+}: AssistantPanelProps) {
+  const [internalActiveKey, setInternalActiveKey] = useState('assistant')
+  const currentActiveKey = activeKey ?? internalActiveKey
+  const handleActiveKeyChange = (nextActiveKey: string) => {
+    setInternalActiveKey(nextActiveKey)
+    onActiveKeyChange?.(nextActiveKey)
+  }
+
   return (
     <div className="inbound-right-panel">
       <BaseTabs
+        activeKey={currentActiveKey}
         className="inbound-assistant-tabs"
-        defaultActiveKey="assistant"
         items={[
           {
             key: 'assistant',
-            label: (
-              <span>
-                <RobotOutlined />
-                Assistant
-              </span>
-            ),
+            label: renderAssistantTabLabel({
+              icon: <RobotOutlined />,
+              key: 'assistant',
+              title: 'Assistant',
+            }),
             children: <AssistantScreenshotArea />,
           },
           {
             key: 'connection',
-            label: (
-              <span>
-                <ApiOutlined />
-                Connection
-              </span>
-            ),
+            label: renderAssistantTabLabel({
+              icon: <ApiOutlined />,
+              key: 'connection',
+              title: 'Connection',
+            }),
             children: <ConnectionSystemArea />,
           },
+          ...extraTabs.map((tab) => ({
+            key: tab.key,
+            label: renderAssistantTabLabel({
+              closable: tab.closable !== false,
+              icon: tab.icon,
+              key: tab.key,
+              title: tab.title,
+              onClose: onCloseExtraTab,
+            }),
+            children: tab.children,
+          })),
         ]}
+        onChange={handleActiveKeyChange}
         variant="assistant"
       />
     </div>

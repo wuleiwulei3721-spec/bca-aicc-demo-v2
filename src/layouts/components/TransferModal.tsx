@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react'
-import { DownOutlined, SearchOutlined } from '@ant-design/icons'
-import { Dropdown, Input, Select, Space, Tag } from 'antd'
+import { SearchOutlined } from '@ant-design/icons'
+import { Input, Select, Space, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import type { MenuProps } from 'antd'
 import {
   AppButton,
   AppTable,
@@ -10,16 +9,8 @@ import {
   BaseTabs,
   SearchInput,
 } from '../../components'
-import {
-  transferAgents,
-  transferSkills,
-  transferSystemNumbers,
-} from '../../mock/transfer'
-import type {
-  TransferAgent,
-  TransferSkill,
-  TransferSystemNumber,
-} from '../../types'
+import { transferAgents, transferSkills } from '../../mock/transfer'
+import type { TransferAgent, TransferAgentStatus, TransferSkill } from '../../types'
 
 interface TransferModalProps {
   open: boolean
@@ -30,20 +21,30 @@ interface TransferModalProps {
 type TransferModalVariant = 'call' | 'conversation'
 
 const callAgentActions = ['Consult', 'Transfer', 'Conference']
-const conversationPrimaryAgentActions = [
-  'Request Transfer',
-  'Request Conference',
+const conversationPrimaryAgentActions = ['Transfer', 'Conference']
+const allFilterValue = 'all'
+const transferAgentStatusOptions: TransferAgentStatus[] = [
+  'Ready',
+  'Talking',
+  'Not Ready',
 ]
-const conversationOverflowAgentActions: MenuProps['items'] = [
-  {
-    key: 'force-transfer',
-    label: 'Force Transfer',
-  },
-  {
-    key: 'force-conference',
-    label: 'Force Conference',
-  },
-]
+const transferStatusClassNames: Record<TransferAgentStatus, string> = {
+  Ready: 'ready',
+  Talking: 'talking',
+  'Not Ready': 'not-ready',
+}
+
+type AgentStatusFilter = TransferAgentStatus | typeof allFilterValue
+
+function renderAgentStatus(status: TransferAgentStatus) {
+  return (
+    <Tag
+      className={`aicc-transfer-status-tag aicc-transfer-status-tag--${transferStatusClassNames[status]}`}
+    >
+      {status}
+    </Tag>
+  )
+}
 
 function rowActions(actions: string[], onComplete: () => void) {
   return (
@@ -65,22 +66,6 @@ function ConversationAgentActions({ onComplete }: { onComplete: () => void }) {
           {action}
         </AppButton>
       ))}
-      <Dropdown
-        menu={{
-          items: conversationOverflowAgentActions,
-          onClick: () => onComplete(),
-        }}
-        placement="bottomRight"
-        trigger={['click']}
-      >
-        <AppButton
-          aria-label="More transfer actions"
-          className="aicc-transfer-agent-actions__more"
-          icon={<DownOutlined />}
-          size="small"
-          title="More actions"
-        />
-      </Dropdown>
     </div>
   )
 }
@@ -93,53 +78,73 @@ function TransferAgentTab({
   onComplete: () => void
 }) {
   const [keyword, setKeyword] = useState('')
+  const [skillQueue, setSkillQueue] = useState(allFilterValue)
+  const [statusFilter, setStatusFilter] =
+    useState<AgentStatusFilter>(allFilterValue)
+
+  const skillQueueOptions = useMemo(
+    () => Array.from(new Set(transferAgents.map((agent) => agent.skillName))),
+    [],
+  )
 
   const filteredAgents = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLowerCase()
 
-    if (!normalizedKeyword) {
-      return transferAgents
-    }
+    return transferAgents.filter((agent) => {
+      const matchesKeyword =
+        !normalizedKeyword ||
+        [agent.name, agent.employeeId].some((value) =>
+          value.toLowerCase().includes(normalizedKeyword),
+        )
+      const matchesSkillQueue =
+        skillQueue === allFilterValue || agent.skillName === skillQueue
+      const matchesStatus =
+        statusFilter === allFilterValue || agent.status === statusFilter
 
-    return transferAgents.filter((agent) =>
-      [agent.name, agent.employeeId].some((value) =>
-        value.toLowerCase().includes(normalizedKeyword),
-      ),
-    )
-  }, [keyword])
+      return matchesKeyword && matchesSkillQueue && matchesStatus
+    })
+  }, [keyword, skillQueue, statusFilter])
 
   const columns: ColumnsType<TransferAgent> = [
     {
       dataIndex: 'marker',
       title: '',
-      width: 64,
+      width: 42,
       render: (marker?: TransferAgent['marker']) =>
         marker ? <Tag className="aicc-transfer-tag">{marker}</Tag> : null,
     },
     {
       dataIndex: 'employeeId',
       title: 'Employee ID',
-      width: 110,
-    },
-    {
-      dataIndex: 'department',
-      title: 'Department',
-      width: 140,
+      width: 92,
     },
     {
       dataIndex: 'name',
       title: 'Name',
-      width: 150,
+      ellipsis: true,
+      width: 142,
+    },
+    {
+      dataIndex: 'skillName',
+      title: 'Skill Name',
+      ellipsis: true,
+      width: 136,
+    },
+    {
+      dataIndex: 'status',
+      title: 'Status',
+      width: 90,
+      render: renderAgentStatus,
     },
     {
       dataIndex: 'extension',
       title: 'Extension',
-      width: 90,
+      width: 70,
     },
     {
       key: 'actions',
       title: 'Actions',
-      width: variant === 'conversation' ? 286 : 250,
+      width: 180,
       render: () =>
         variant === 'conversation' ? (
           <ConversationAgentActions onComplete={onComplete} />
@@ -156,6 +161,30 @@ function TransferAgentTab({
           placeholder="Search name or employee ID"
           value={keyword}
           onChange={(event) => setKeyword(event.target.value)}
+        />
+        <Select
+          className="aicc-transfer-filter"
+          options={[
+            { label: 'All skill queues', value: allFilterValue },
+            ...skillQueueOptions.map((skill) => ({
+              label: skill,
+              value: skill,
+            })),
+          ]}
+          value={skillQueue}
+          onChange={setSkillQueue}
+        />
+        <Select<AgentStatusFilter>
+          className="aicc-transfer-filter aicc-transfer-filter--status"
+          options={[
+            { label: 'All status', value: allFilterValue },
+            ...transferAgentStatusOptions.map((status) => ({
+              label: status,
+              value: status,
+            })),
+          ]}
+          value={statusFilter}
+          onChange={setStatusFilter}
         />
         <AppButton icon={<SearchOutlined />} type="primary">
           Search
@@ -190,6 +219,23 @@ function TransferSkillTab({ onComplete }: { onComplete: () => void }) {
     )
   }, [keyword])
 
+  const skillAgentCounts = useMemo(
+    () =>
+      transferAgents.reduce<Record<string, { ready: number; total: number }>>(
+        (counts, agent) => {
+          const current = counts[agent.skillName] ?? { ready: 0, total: 0 }
+          counts[agent.skillName] = {
+            ready: current.ready + (agent.status === 'Ready' ? 1 : 0),
+            total: current.total + 1,
+          }
+
+          return counts
+        },
+        {},
+      ),
+    [],
+  )
+
   const columns: ColumnsType<TransferSkill> = [
     {
       dataIndex: 'skillId',
@@ -199,6 +245,21 @@ function TransferSkillTab({ onComplete }: { onComplete: () => void }) {
     {
       dataIndex: 'skillName',
       title: 'Skill Name',
+      ellipsis: true,
+    },
+    {
+      align: 'center',
+      key: 'agentCount',
+      title: 'Agents',
+      width: 78,
+      render: (_, skill) => skillAgentCounts[skill.skillName]?.total ?? 0,
+    },
+    {
+      align: 'center',
+      key: 'readyCount',
+      title: 'Ready',
+      width: 78,
+      render: (_, skill) => skillAgentCounts[skill.skillName]?.ready ?? 0,
     },
     {
       key: 'action',
@@ -234,49 +295,17 @@ function TransferSkillTab({ onComplete }: { onComplete: () => void }) {
   )
 }
 
-function TransferNumberTab({
-  onCancel,
-  onComplete,
-}: {
-  onCancel: () => void
-  onComplete: () => void
-}) {
-  const [selectedNumber, setSelectedNumber] = useState<string>()
-  const [manualNumber, setManualNumber] = useState('')
+function TransferNumberTab({ onComplete }: { onComplete: () => void }) {
+  const [phoneNumber, setPhoneNumber] = useState('')
 
   return (
     <div className="aicc-modal-section aicc-transfer-number">
-      <section className="aicc-transfer-number__field">
-        <span>System Number</span>
-        <Select
-          allowClear
-          showSearch
-          filterOption={(input, option) =>
-            String(option?.label ?? '')
-              .toLowerCase()
-              .includes(input.trim().toLowerCase())
-          }
-          options={transferSystemNumbers.map(
-            (number: TransferSystemNumber) => ({
-              label: `${number.label} (${number.number})`,
-              value: number.id,
-            }),
-          )}
-          placeholder="Select maintained number"
-          value={selectedNumber}
-          onChange={setSelectedNumber}
-        />
-      </section>
-      <section className="aicc-transfer-number__field">
-        <span>Manual Number</span>
+      <div className="aicc-transfer-number__line">
         <Input
           placeholder="Enter phone number"
-          value={manualNumber}
-          onChange={(event) => setManualNumber(event.target.value)}
+          value={phoneNumber}
+          onChange={(event) => setPhoneNumber(event.target.value)}
         />
-      </section>
-      <div className="aicc-modal-footer aicc-transfer-number__actions">
-        <AppButton onClick={onCancel}>Cancel</AppButton>
         <AppButton type="primary" onClick={onComplete}>
           Transfer
         </AppButton>
@@ -307,9 +336,7 @@ export function TransferModal({
           {
             key: 'number',
             label: 'Transfer Number',
-            children: (
-              <TransferNumberTab onCancel={onClose} onComplete={onClose} />
-            ),
+            children: <TransferNumberTab onComplete={onClose} />,
           },
         ]
       : []),

@@ -133,6 +133,12 @@ export function BasicLayout() {
   const activeLiveChatSessionIds = useAppStore(
     (state) => state.activeLiveChatSessionIds,
   )
+  const activeLiveChat2SessionIds = useAppStore(
+    (state) => state.activeLiveChat2SessionIds,
+  )
+  const clearLiveChat2Sessions = useAppStore(
+    (state) => state.clearLiveChat2Sessions,
+  )
   const clearLiveChatSessions = useAppStore(
     (state) => state.clearLiveChatSessions,
   )
@@ -269,6 +275,7 @@ export function BasicLayout() {
       setActiveCallChannel(null)
       setIsAfterCallWork(false)
       closeAllCallInteractionTabs()
+      clearLiveChat2Sessions()
       clearLiveChatSessions()
       setOpenEyeVideoWindowVisible(false)
       resetBankAppVideoDesktopShare()
@@ -286,6 +293,7 @@ export function BasicLayout() {
       setCallTiming(initialCallTiming)
       setActiveCallChannel(null)
       setIsAfterCallWork(false)
+      clearLiveChat2Sessions()
       clearLiveChatSessions()
       setOpenEyeVideoWindowVisible(false)
       resetBankAppVideoDesktopShare()
@@ -295,6 +303,7 @@ export function BasicLayout() {
     callStatus,
     closeAllCallInteractionTabs,
     currentCallInteractionId,
+    clearLiveChat2Sessions,
     clearLiveChatSessions,
     hideCallHandoffNotice,
     markCallInteractionEnded,
@@ -312,7 +321,9 @@ export function BasicLayout() {
   const isConnectedCall =
     callStatus === 'Talking' || callStatus === 'Hold' || callStatus === 'Mute'
   const hasActiveCallInteraction = callStatus !== 'Idle'
-  const hasActiveTextInteraction = activeLiveChatSessionIds.length > 0
+  const hasActiveTextInteraction =
+    activeLiveChatSessionIds.length > 0 ||
+    activeLiveChat2SessionIds.length > 0
   const hasActiveCustomerInteraction =
     isSignedIn && (hasActiveCallInteraction || hasActiveTextInteraction)
   const effectiveAgentPresence: AgentPresence = !isSignedIn
@@ -654,6 +665,7 @@ export function BasicLayout() {
       if (childKey === 'customer-whatsapp') {
         requestWhatsAppDemoWorkspace()
       }
+
     },
     [
       requestBankAppDemoWorkspace,
