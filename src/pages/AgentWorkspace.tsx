@@ -10,23 +10,26 @@ import {
 import type { TabsProps } from 'antd'
 import { BaseTabs, PageContainer } from '../components'
 import { useNow } from '../hooks/useNow'
+import { liveChat2Sessions } from '../mock/inbound'
 import { useAppStore } from '../store'
 import type { CallInteraction, InteractionTiming } from '../store'
+import type { LiveChat2Session } from '../types'
 import type { InteractionSlaState } from '../utils/duration'
 import {
   formatDuration,
   getElapsedSeconds,
-  getLiveChatSlaState,
 } from '../utils/duration'
 import { BankAppDemoPage } from './bankapp'
-import { InboundPage, LiveChat2Page, LiveChatPage, VideoCallPage } from './inbound'
+import { InboundPage, LiveChat2Page, VideoCallPage } from './inbound'
 import { WhatsAppDemoPage } from './whatsapp'
 
 const HOME_TAB_KEY = 'home'
 const BANKAPP_DEMO_TAB_KEY = 'bankapp-demo'
 const WHATSAPP_DEMO_TAB_KEY = 'whatsapp-demo'
 const LIVE_CHAT_TAB_KEY = 'live-chat'
-const LIVE_CHAT2_TAB_KEY = 'livechat2'
+const staticLiveChat2SessionById = Object.fromEntries(
+  liveChat2Sessions.map((session) => [session.id, session]),
+) as Record<string, LiveChat2Session>
 
 interface WorkspaceTabLabelProps {
   durationEndedAt?: number | null
@@ -37,37 +40,11 @@ interface WorkspaceTabLabelProps {
   label: string
   now: number
   slaState?: InteractionSlaState
+  unreadCount?: number
 }
 
-function getLiveChatTabSlaState(
-  timings: InteractionTiming[],
-  now: number,
-): InteractionSlaState {
-  if (
-    timings.some(
-      (timing) => getLiveChatSlaState(getElapsedSeconds(timing.startedAt, now)) === 'breach',
-    )
-  ) {
-    return 'breach'
-  }
-
-  if (
-    timings.some(
-      (timing) => getLiveChatSlaState(getElapsedSeconds(timing.startedAt, now)) === 'warning',
-    )
-  ) {
-    return 'warning'
-  }
-
-  return 'normal'
-}
-
-function getLongestRunningStartedAt(timings: InteractionTiming[]) {
-  if (timings.length === 0) {
-    return null
-  }
-
-  return Math.min(...timings.map((timing) => timing.startedAt))
+interface WorkspaceDurationTiming extends InteractionTiming {
+  endedAt?: number | null
 }
 
 function getLatestFlashUntil(timings: InteractionTiming[]) {
@@ -76,6 +53,39 @@ function getLatestFlashUntil(timings: InteractionTiming[]) {
   }
 
   return Math.max(...timings.map((timing) => timing.flashUntil))
+}
+
+function getLongestDurationTiming(
+  timings: WorkspaceDurationTiming[],
+  now: number,
+) {
+  if (timings.length === 0) {
+    return null
+  }
+
+  return timings.reduce((longestTiming, timing) => {
+    const longestElapsedSeconds = getElapsedSeconds(
+      longestTiming.startedAt,
+      longestTiming.endedAt ?? now,
+    )
+    const elapsedSeconds = getElapsedSeconds(
+      timing.startedAt,
+      timing.endedAt ?? now,
+    )
+
+    if (elapsedSeconds > longestElapsedSeconds) {
+      return timing
+    }
+
+    if (
+      elapsedSeconds === longestElapsedSeconds &&
+      timing.startedAt < longestTiming.startedAt
+    ) {
+      return timing
+    }
+
+    return longestTiming
+  })
 }
 
 function getCallInteractionIcon(interaction: CallInteraction) {
@@ -95,6 +105,7 @@ function WorkspaceTabLabel({
   label,
   now,
   slaState = 'normal',
+  unreadCount = 0,
 }: WorkspaceTabLabelProps) {
   const elapsedSeconds =
     durationStartedAt === null || durationStartedAt === undefined
@@ -123,15 +134,17 @@ function WorkspaceTabLabel({
           ({formatDuration(elapsedSeconds)})
         </span>
       )}
+      {unreadCount > 0 && (
+        <span className="workspace-tab-label__unread">
+          {unreadCount > 99 ? '99+' : unreadCount}
+        </span>
+      )}
     </span>
   )
 }
 
 export function AgentWorkspace() {
   const activeKey = useAppStore((state) => state.activeWorkspaceTabKey)
-  const activeLiveChatSessionIds = useAppStore(
-    (state) => state.activeLiveChatSessionIds,
-  )
   const activeLiveChat2SessionIds = useAppStore(
     (state) => state.activeLiveChat2SessionIds,
   )
@@ -142,7 +155,6 @@ export function AgentWorkspace() {
     (state) => state.isWhatsAppDemoTabOpen,
   )
   const hasLiveChatTab = useAppStore((state) => state.isLiveChatTabOpen)
-  const hasLiveChat2Tab = useAppStore((state) => state.isLiveChat2TabOpen)
   const callInteractionOrder = useAppStore(
     (state) => state.callInteractionOrder,
   )
@@ -150,8 +162,20 @@ export function AgentWorkspace() {
   const currentCallInteractionId = useAppStore(
     (state) => state.currentCallInteractionId,
   )
-  const liveChatSessionTimings = useAppStore(
-    (state) => state.liveChatSessionTimings,
+  const liveChat2LastMessageOverrides = useAppStore(
+    (state) => state.liveChat2LastMessageOverrides,
+  )
+  const liveChat2ReadSessionIds = useAppStore(
+    (state) => state.liveChat2ReadSessionIds,
+  )
+  const liveChat2SessionInstances = useAppStore(
+    (state) => state.liveChat2SessionInstances,
+  )
+  const liveChat2SessionStatuses = useAppStore(
+    (state) => state.liveChat2SessionStatuses,
+  )
+  const liveChat2SessionTimings = useAppStore(
+    (state) => state.liveChat2SessionTimings,
   )
   const closeBankAppDemoTab = useAppStore(
     (state) => state.closeBankAppDemoTab,
@@ -171,23 +195,75 @@ export function AgentWorkspace() {
         (interactionId) =>
           callInteractions[interactionId]?.phase !== 'ended',
       ) ||
-        activeLiveChatSessionIds.length > 0 ||
         activeLiveChat2SessionIds.length > 0,
     ),
   )
 
-  const activeLiveChatTimings = useMemo(
+  const activeLiveChat2Timings = useMemo(
     () =>
-      activeLiveChatSessionIds
-        .map((sessionId) => liveChatSessionTimings[sessionId])
-        .filter((timing): timing is InteractionTiming => Boolean(timing)),
-    [activeLiveChatSessionIds, liveChatSessionTimings],
+      activeLiveChat2SessionIds
+        .map((sessionId) => {
+          const timing = liveChat2SessionTimings[sessionId]
+          const status = liveChat2SessionStatuses[sessionId]
+
+          if (!timing || status?.status === 'ended') {
+            return null
+          }
+
+          return timing
+        })
+        .filter(
+          (timing): timing is WorkspaceDurationTiming => Boolean(timing),
+        ),
+    [
+      activeLiveChat2SessionIds,
+      liveChat2SessionStatuses,
+      liveChat2SessionTimings,
+    ],
   )
-  const liveChatDurationStartedAt =
-    getLongestRunningStartedAt(activeLiveChatTimings)
-  const liveChatSlaState = getLiveChatTabSlaState(activeLiveChatTimings, now)
-  const latestLiveChatFlashUntil =
-    getLatestFlashUntil(activeLiveChatTimings)
+  const liveChat2DurationTiming = getLongestDurationTiming(
+    activeLiveChat2Timings,
+    now,
+  )
+  const latestLiveChat2FlashUntil =
+    getLatestFlashUntil(activeLiveChat2Timings)
+  const liveChat2SessionById = useMemo(
+    () => ({
+      ...staticLiveChat2SessionById,
+      ...liveChat2SessionInstances,
+    }),
+    [liveChat2SessionInstances],
+  )
+  const liveChatUnreadCount = useMemo(
+    () =>
+      activeLiveChat2SessionIds.reduce((total, sessionId) => {
+        const session = liveChat2SessionById[sessionId]
+        const status =
+          liveChat2SessionStatuses[sessionId]?.status ?? session?.status
+
+        if (
+          !session ||
+          session.isInitialHistory ||
+          status === 'ended' ||
+          liveChat2ReadSessionIds.includes(sessionId)
+        ) {
+          return total
+        }
+
+        const unreadCount =
+          liveChat2LastMessageOverrides[sessionId]?.unreadCount ??
+          session.unreadCount
+
+        return total + Math.max(0, unreadCount)
+      }, 0),
+    [
+      activeLiveChat2SessionIds,
+      liveChat2SessionById,
+      liveChat2LastMessageOverrides,
+      liveChat2ReadSessionIds,
+      liveChat2SessionStatuses,
+    ],
+  )
 
   const tabItems = useMemo<TabsProps['items']>(() => {
     const items: TabsProps['items'] = [
@@ -247,34 +323,18 @@ export function AgentWorkspace() {
         closable: false,
         label: (
           <WorkspaceTabLabel
-            durationStartedAt={liveChatDurationStartedAt}
+            durationEndedAt={liveChat2DurationTiming?.endedAt}
+            durationStartedAt={liveChat2DurationTiming?.startedAt}
             flashScope="tab"
             icon={<MessageOutlined />}
-            isFlashing={latestLiveChatFlashUntil > now}
+            isFlashing={latestLiveChat2FlashUntil > now}
             label="Live Chat"
             now={now}
-            slaState={liveChatSlaState}
+            unreadCount={liveChatUnreadCount}
           />
         ),
         children:
-          activeKey === LIVE_CHAT_TAB_KEY ? <LiveChatPage /> : null,
-      })
-    }
-
-    if (hasLiveChat2Tab) {
-      items.push({
-        key: LIVE_CHAT2_TAB_KEY,
-        closable: false,
-        label: (
-          <WorkspaceTabLabel
-            flashScope="tab"
-            icon={<MessageOutlined />}
-            label="livechat2"
-            now={now}
-          />
-        ),
-        children:
-          activeKey === LIVE_CHAT2_TAB_KEY ? <LiveChat2Page /> : null,
+          activeKey === LIVE_CHAT_TAB_KEY ? <LiveChat2Page /> : null,
       })
     }
 
@@ -324,13 +384,12 @@ export function AgentWorkspace() {
     callInteractionOrder,
     callInteractions,
     currentCallInteractionId,
-    latestLiveChatFlashUntil,
     hasBankAppDemoTab,
     hasLiveChatTab,
-    hasLiveChat2Tab,
     hasWhatsAppDemoTab,
-    liveChatDurationStartedAt,
-    liveChatSlaState,
+    liveChat2DurationTiming,
+    liveChatUnreadCount,
+    latestLiveChat2FlashUntil,
     now,
   ])
 

@@ -1,11 +1,14 @@
-import { useRef, useState } from 'react'
+import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  CalendarOutlined,
+  AimOutlined,
   CloseOutlined,
   ClockCircleOutlined,
+  ExclamationCircleOutlined,
   FileImageOutlined,
   FolderOpenOutlined,
+  GlobalOutlined,
   HistoryOutlined,
+  MobileOutlined,
   PaperClipOutlined,
   ReloadOutlined,
   RollbackOutlined,
@@ -13,62 +16,51 @@ import {
   SendOutlined,
   SmileOutlined,
   SwapOutlined,
+  WhatsAppOutlined,
 } from '@ant-design/icons'
-import { Input, Select } from 'antd'
+import { DatePicker, Input } from 'antd'
+import dayjs from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import { BaseButton, BaseModal } from '../../../components'
 import { TransferModal } from '../../../layouts/components/TransferModal'
 import type { LiveChat2Message } from '../../../types'
 import { formatDuration } from '../../../utils/duration'
 import type { LiveChat2SessionView } from './LiveChat2CustomerPanel'
+import {
+  getLiveChat2VisibleMessages,
+  type LiveChat2MessageLocateRequest,
+} from './liveChat2MessageUtils'
+import type { LiveChat2QuickReplyOption } from './liveChat2QuickReplies'
+
+const { RangePicker } = DatePicker
 
 interface LiveChat2ConversationWorkspaceProps {
+  composerFocusRequest: LiveChat2ComposerFocusRequest | null
   draftMessage: string
+  isMessageRecordOpen: boolean
+  messageLocateRequest: LiveChat2MessageLocateRequest | null
   messages: LiveChat2Message[]
+  quickReplies: LiveChat2QuickReplyOption[]
   recalledMessageIds: string[]
   session: LiveChat2SessionView
   onCloseSession: (sessionId: string) => void
   onDraftChange: (sessionId: string, message: string) => void
   onEndSession: (sessionId: string, baseMessages: LiveChat2Message[]) => void
+  onOpenMessageRecord: () => void
   onRecallMessage: (messageId: string) => void
   onSendMessage: (
     sessionId: string,
     message: string,
     baseMessages: LiveChat2Message[],
+    quotedMessage?: string | null,
   ) => void
 }
 
-const quickReplies = [
-  {
-    code: 'aa',
-    source: 'My phrases',
-    text: 'Thank you for waiting. I am checking the latest record now.',
-  },
-  {
-    code: 'ab',
-    source: 'Public phrases',
-    text: 'Please provide your registered mobile number for verification.',
-  },
-  {
-    code: 'ac',
-    source: 'My phrases',
-    text: 'I have submitted the request. Please wait for confirmation.',
-  },
-  {
-    code: 'ad',
-    source: 'Public phrases',
-    text: 'For your security, please do not share OTP or PIN in this chat.',
-  },
-  {
-    code: 'ae',
-    source: 'My phrases',
-    text: 'The ticket has been created and will be followed up by the related team.',
-  },
-  {
-    code: 'af',
-    source: 'Public phrases',
-    text: 'Is there anything else I can help you with today?',
-  },
-]
+interface LiveChat2ComposerFocusRequest {
+  caretPosition: number
+  requestId: number
+  sessionId: string
+}
 
 function getMessageDisplayType(message: LiveChat2Message) {
   if (message.sender === 'system') {
@@ -94,6 +86,34 @@ function getInitials(name: string) {
     .map((part) => part[0])
     .join('')
     .toUpperCase()
+}
+
+function getChannelLabel(channel: LiveChat2SessionView['channel']) {
+  if (channel === 'Haloapps') {
+    return 'BankApp'
+  }
+
+  return channel
+}
+
+function getChannelIcon(channel: LiveChat2SessionView['channel']) {
+  if (channel === 'WhatsApp') {
+    return <WhatsAppOutlined />
+  }
+
+  if (channel === 'Haloapps') {
+    return <MobileOutlined />
+  }
+
+  return <GlobalOutlined />
+}
+
+function getChannelClassName(channel: LiveChat2SessionView['channel']) {
+  if (channel === 'Haloapps') {
+    return 'livechat2-channel-avatar--bankapp'
+  }
+
+  return `livechat2-channel-avatar--${channel.toLowerCase()}`
 }
 
 function highlightSearch(value: string, search: string) {
@@ -148,39 +168,212 @@ function renderMessageContent(
   return <p>{highlightSearch(message.message, search)}</p>
 }
 
-export function LiveChat2ConversationWorkspace({
-  draftMessage,
+interface LiveChat2MessageRecordPanelProps {
+  messages: LiveChat2Message[]
+  onLocateMessage: (messageId: string) => void
+}
+
+type MessageRecordDateRange = [Dayjs, Dayjs]
+
+interface MessageRecordFilters {
+  dateRange: MessageRecordDateRange
+  keyword: string
+}
+
+function getDefaultRecordDateRange(): MessageRecordDateRange {
+  const today = dayjs()
+
+  return [today.subtract(6, 'day'), today]
+}
+
+function getDefaultRecordFilters(): MessageRecordFilters {
+  return {
+    dateRange: getDefaultRecordDateRange(),
+    keyword: '',
+  }
+}
+
+function getDateBoundary(dateValue: Dayjs, type: 'end' | 'start') {
+  return type === 'start'
+    ? dateValue.startOf('day').valueOf()
+    : dateValue.endOf('day').valueOf()
+}
+
+function getMessageTime(message: LiveChat2Message) {
+  const time = new Date(message.timestamp).getTime()
+
+  return Number.isFinite(time) ? time : 0
+}
+
+export function LiveChat2MessageRecordPanel({
   messages,
+  onLocateMessage,
+}: LiveChat2MessageRecordPanelProps) {
+  const [draftFilters, setDraftFilters] = useState<MessageRecordFilters>(() =>
+    getDefaultRecordFilters(),
+  )
+  const [appliedFilters, setAppliedFilters] = useState<MessageRecordFilters>(
+    () => getDefaultRecordFilters(),
+  )
+  const [isSearchResultMode, setIsSearchResultMode] = useState(false)
+  const appliedKeyword = appliedFilters.keyword.trim()
+  const matchedRecordMessages = useMemo(() => {
+    const fromTime = getDateBoundary(appliedFilters.dateRange[0], 'start')
+    const toTime = getDateBoundary(appliedFilters.dateRange[1], 'end')
+    const normalizedKeyword = appliedKeyword.toLowerCase()
+
+    return messages
+      .filter((message) => {
+        const messageTime = getMessageTime(message)
+        const isInDateRange = messageTime >= fromTime && messageTime <= toTime
+        const isKeywordMatch = normalizedKeyword
+          ? message.message.toLowerCase().includes(normalizedKeyword)
+          : true
+
+        return isInDateRange && isKeywordMatch
+      })
+      .sort((first, second) => getMessageTime(second) - getMessageTime(first))
+  }, [
+    appliedFilters.dateRange,
+    appliedKeyword,
+    messages,
+  ])
+  const handleSearch = () => {
+    setIsSearchResultMode(true)
+    setAppliedFilters({
+      dateRange: [draftFilters.dateRange[0], draftFilters.dateRange[1]],
+      keyword: draftFilters.keyword.trim(),
+    })
+  }
+  const handleLocateMessage = (messageId: string) => {
+    const nextFilters = getDefaultRecordFilters()
+    setDraftFilters(nextFilters)
+    setAppliedFilters(nextFilters)
+    setIsSearchResultMode(false)
+    onLocateMessage(messageId)
+  }
+
+  return (
+    <aside
+      aria-label="Message record"
+      className="livechat2-records livechat2-records--right-tab"
+    >
+      <form
+        className="livechat2-records__search"
+        onSubmit={(event) => {
+          event.preventDefault()
+          handleSearch()
+        }}
+      >
+        <RangePicker
+          allowClear={false}
+          className="livechat2-records__range-picker"
+          format="MM-DD"
+          inputReadOnly
+          size="small"
+          value={draftFilters.dateRange}
+          onChange={(dates) => {
+            if (!dates?.[0] || !dates?.[1]) {
+              return
+            }
+
+            setDraftFilters((current) => ({
+              ...current,
+              dateRange: [dates[0], dates[1]],
+            }))
+          }}
+        />
+        <Input
+          allowClear
+          aria-label="Search message record"
+          placeholder="Search messages"
+          prefix={<SearchOutlined />}
+          size="small"
+          value={draftFilters.keyword}
+          onChange={(event) =>
+            setDraftFilters((current) => ({
+              ...current,
+              keyword: event.target.value,
+            }))
+          }
+        />
+        <BaseButton htmlType="submit" size="small" type="primary" variant="primary">
+          Search
+        </BaseButton>
+        <span
+          className="livechat2-records__result-count"
+          title={`${matchedRecordMessages.length} records found`}
+        >
+          {matchedRecordMessages.length}
+        </span>
+      </form>
+      <div className="livechat2-records__list">
+        {matchedRecordMessages.length > 0 ? (
+          matchedRecordMessages.map((message) => (
+            <article key={`record-${message.id}`} tabIndex={0}>
+              <div className="livechat2-records__item-head">
+                <strong>{message.senderName}</strong>
+                <time>
+                  {message.timestamp.slice(0, 10)} {message.time}
+                </time>
+              </div>
+              <p>{highlightSearch(message.message, appliedKeyword)}</p>
+              {isSearchResultMode && (
+                <button
+                  className="livechat2-records__locate"
+                  type="button"
+                  onClick={() => handleLocateMessage(message.id)}
+                >
+                  <AimOutlined />
+                  Locate
+                </button>
+              )}
+            </article>
+          ))
+        ) : (
+          <div className="livechat2-records__empty">No records found</div>
+        )}
+      </div>
+    </aside>
+  )
+}
+
+export function LiveChat2ConversationWorkspace({
+  composerFocusRequest,
+  draftMessage,
+  isMessageRecordOpen,
+  messageLocateRequest,
+  messages,
+  quickReplies,
   recalledMessageIds,
   session,
   onCloseSession,
   onDraftChange,
   onEndSession,
+  onOpenMessageRecord,
   onRecallMessage,
   onSendMessage,
 }: LiveChat2ConversationWorkspaceProps) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
-  const [isRecordOpen, setIsRecordOpen] = useState(false)
   const [isTransferOpen, setIsTransferOpen] = useState(false)
-  const [loadCount, setLoadCount] = useState(0)
   const [quoteMessage, setQuoteMessage] = useState<string | null>(null)
-  const [recordSearch, setRecordSearch] = useState('')
-  const [recordScope, setRecordScope] = useState('all')
+  const [quickReplySelection, setQuickReplySelection] = useState({
+    index: 0,
+    listKey: '',
+  })
   const composerRef = useRef<HTMLTextAreaElement>(null)
+  const messageNodeRefs = useRef<Record<string, HTMLElement | null>>({})
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(
+    null,
+  )
   const readOnly = session.statusDisplay === 'history'
   const isEnded = session.statusDisplay === 'ended'
   const canCompose = !readOnly && !isEnded
   const trimmedDraft = draftMessage.trim()
-  const visibleHistory = session.historyMessages.slice(
-    Math.max(0, session.historyMessages.length - loadCount * 20),
+  const visibleMessages = getLiveChat2VisibleMessages(
+    session.historyMessages,
+    messages,
   )
-  const visibleMessages = [...visibleHistory, ...messages]
-  const recordMessages = [...session.historyMessages, ...messages]
-  const matchedRecordMessages = recordSearch.trim()
-    ? recordMessages.filter((message) =>
-        message.message.toLowerCase().includes(recordSearch.trim().toLowerCase()),
-      )
-    : recordMessages
   const quickReplyKeyword = draftMessage.startsWith('/')
     ? draftMessage.slice(1).trim().toLowerCase()
     : ''
@@ -193,22 +386,140 @@ export function LiveChat2ConversationWorkspace({
         )
         .slice(0, 10)
     : []
+  const quickReplyListKey = filteredQuickReplies
+    .map((reply) => reply.id)
+    .join('|')
+  const selectedQuickReplyIndex =
+    filteredQuickReplies.length > 0 &&
+    quickReplySelection.listKey === quickReplyListKey
+      ? Math.min(quickReplySelection.index, filteredQuickReplies.length - 1)
+      : 0
+
+  useEffect(() => {
+    if (!messageLocateRequest) {
+      return undefined
+    }
+
+    const targetNode = messageNodeRefs.current[messageLocateRequest.messageId]
+
+    if (!targetNode) {
+      return undefined
+    }
+
+    targetNode.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    })
+    setHighlightedMessageId(messageLocateRequest.messageId)
+
+    const timeoutId = window.setTimeout(() => {
+      setHighlightedMessageId((currentMessageId) =>
+        currentMessageId === messageLocateRequest.messageId
+          ? null
+          : currentMessageId,
+      )
+    }, 1800)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [messageLocateRequest])
+
+  useEffect(() => {
+    if (
+      !composerFocusRequest ||
+      composerFocusRequest.sessionId !== session.id ||
+      !canCompose
+    ) {
+      return
+    }
+
+    const caretPosition = Math.min(
+      composerFocusRequest.caretPosition,
+      draftMessage.length,
+    )
+
+    composerRef.current?.focus()
+    composerRef.current?.setSelectionRange(caretPosition, caretPosition)
+  }, [
+    canCompose,
+    composerFocusRequest,
+    draftMessage.length,
+    session.id,
+  ])
 
   const handleSend = () => {
     if (!trimmedDraft || !canCompose) {
       return
     }
 
-    const message = quoteMessage
-      ? `Replying to "${quoteMessage}": ${trimmedDraft}`
-      : trimmedDraft
-
-    onSendMessage(session.id, message, messages)
+    onSendMessage(session.id, trimmedDraft, messages, quoteMessage)
     setQuoteMessage(null)
   }
 
-  const handleQuickReplySelect = (reply: (typeof quickReplies)[number]) => {
+  const handleQuickReplySelect = (reply: LiveChat2QuickReplyOption) => {
     onDraftChange(session.id, reply.text)
+    window.setTimeout(() => {
+      composerRef.current?.focus()
+      composerRef.current?.setSelectionRange(reply.text.length, reply.text.length)
+    }, 0)
+  }
+
+  const handleComposerKeyDown = (
+    event: KeyboardEvent<HTMLTextAreaElement>,
+  ) => {
+    if (filteredQuickReplies.length > 0) {
+      if (event.key === 'ArrowDown') {
+        event.preventDefault()
+        setQuickReplySelection((currentSelection) => {
+          const currentIndex =
+            currentSelection.listKey === quickReplyListKey
+              ? currentSelection.index
+              : selectedQuickReplyIndex
+
+          return {
+            index: (currentIndex + 1) % filteredQuickReplies.length,
+            listKey: quickReplyListKey,
+          }
+        })
+        return
+      }
+
+      if (event.key === 'ArrowUp') {
+        event.preventDefault()
+        setQuickReplySelection((currentSelection) => {
+          const currentIndex =
+            currentSelection.listKey === quickReplyListKey
+              ? currentSelection.index
+              : selectedQuickReplyIndex
+
+          return {
+            index:
+              (currentIndex - 1 + filteredQuickReplies.length) %
+              filteredQuickReplies.length,
+            listKey: quickReplyListKey,
+          }
+        })
+        return
+      }
+
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault()
+        handleQuickReplySelect(
+          filteredQuickReplies[selectedQuickReplyIndex] ??
+            filteredQuickReplies[0],
+        )
+        return
+      }
+    }
+
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault()
+      handleSend()
+    }
+  }
+
+  const handleReEditMessage = (message: LiveChat2Message) => {
+    setQuoteMessage(null)
+    onDraftChange(session.id, message.message)
     window.setTimeout(() => composerRef.current?.focus(), 0)
   }
 
@@ -216,21 +527,33 @@ export function LiveChat2ConversationWorkspace({
     <div
       className={[
         'livechat2-conversation',
-        isRecordOpen ? 'livechat2-conversation--record-open' : '',
+        isEnded ? 'livechat2-conversation--ended' : '',
       ]
         .filter(Boolean)
         .join(' ')}
     >
       <header className="livechat2-conversation__header">
         <div className="livechat2-conversation__identity">
+          <span
+            aria-label={getChannelLabel(session.channel)}
+            className={[
+              'livechat2-channel-avatar',
+              'livechat2-conversation__channel-icon',
+              getChannelClassName(session.channel),
+            ].join(' ')}
+            role="img"
+            title={getChannelLabel(session.channel)}
+          >
+            {getChannelIcon(session.channel)}
+          </span>
           <strong>{session.customer.profile.name}</strong>
-          <span>{session.intent}</span>
           <span className="livechat2-conversation__duration">
             <ClockCircleOutlined />
             {formatDuration(session.elapsedSeconds)}
           </span>
           {session.unansweredSeconds !== null && !isEnded && (
             <span
+              aria-label={`Unanswered ${formatDuration(session.unansweredSeconds)}`}
               className={[
                 'livechat2-conversation__unanswered',
                 session.slaState !== 'normal'
@@ -239,36 +562,19 @@ export function LiveChat2ConversationWorkspace({
               ]
                 .filter(Boolean)
                 .join(' ')}
+              title={`Unanswered ${formatDuration(session.unansweredSeconds)}`}
             >
-              Unanswered {formatDuration(session.unansweredSeconds)}
+              <ExclamationCircleOutlined />
+              {formatDuration(session.unansweredSeconds)}
             </span>
           )}
         </div>
 
         {!readOnly && (
           <div className="livechat2-conversation__actions" role="group">
-            {!isEnded && (
-              <button
-                title="Transfer"
-                type="button"
-                onClick={() => setIsTransferOpen(true)}
-              >
-                <SwapOutlined />
-                Transfer
-              </button>
-            )}
-            <button
-              className="livechat2-conversation__record-action"
-              title="Message record"
-              type="button"
-              onClick={() => setIsRecordOpen((current) => !current)}
-            >
-              <HistoryOutlined />
-              Message Record
-            </button>
             {isEnded ? (
               <button
-                className="livechat2-conversation__end-action"
+                className="livechat2-conversation__close-action"
                 title="Close"
                 type="button"
                 onClick={() => onCloseSession(session.id)}
@@ -277,14 +583,25 @@ export function LiveChat2ConversationWorkspace({
                 Close
               </button>
             ) : (
-              <button
-                className="livechat2-conversation__end-action"
-                title="End service"
-                type="button"
-                onClick={() => setIsConfirmOpen(true)}
-              >
-                <CloseOutlined />
-              </button>
+              <>
+                <button
+                  title="Transfer"
+                  type="button"
+                  onClick={() => setIsTransferOpen(true)}
+                >
+                  <SwapOutlined />
+                  Transfer
+                </button>
+                <button
+                  className="livechat2-conversation__end-action"
+                  title="End service"
+                  type="button"
+                  onClick={() => setIsConfirmOpen(true)}
+                >
+                  <CloseOutlined />
+                  End Service
+                </button>
+              </>
             )}
           </div>
         )}
@@ -292,20 +609,6 @@ export function LiveChat2ConversationWorkspace({
 
       <div className="livechat2-conversation__body">
         <section className="livechat2-conversation__messages" role="log">
-          {loadCount < 3 ? (
-            <button
-              className="livechat2-conversation__load-more"
-              type="button"
-              onClick={() => setLoadCount((current) => current + 1)}
-            >
-              Click to load more
-            </button>
-          ) : (
-            <span className="livechat2-conversation__load-end">
-              No more records. Open Message Record for full history.
-            </span>
-          )}
-
           {visibleMessages.map((message) => {
             const displayType = getMessageDisplayType(message)
             const isRecalled = recalledMessageIds.includes(message.id)
@@ -315,8 +618,15 @@ export function LiveChat2ConversationWorkspace({
                 className={[
                   'livechat2-message',
                   `livechat2-message--${displayType}`,
+                  highlightedMessageId === message.id
+                    ? 'livechat2-message--located'
+                    : '',
                 ].join(' ')}
+                data-livechat2-message-id={message.id}
                 key={message.id}
+                ref={(node) => {
+                  messageNodeRefs.current[message.id] = node
+                }}
               >
                 {displayType !== 'system' && displayType !== 'current-agent' && (
                   <span className="livechat2-message__avatar">
@@ -342,20 +652,33 @@ export function LiveChat2ConversationWorkspace({
                   </div>
                   {displayType !== 'system' && (
                     <div className="livechat2-message__tools">
-                      <button
-                        type="button"
-                        onClick={() => setQuoteMessage(message.message)}
-                      >
-                        <RollbackOutlined />
-                        Quote
-                      </button>
-                      {message.isCurrentAgent && !isRecalled && (
+                      {!isRecalled && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setQuoteMessage(message.message)}
+                          >
+                            <RollbackOutlined />
+                            Quote
+                          </button>
+                          {message.isCurrentAgent && (
+                            <button
+                              type="button"
+                              onClick={() => onRecallMessage(message.id)}
+                            >
+                              <ReloadOutlined />
+                              Recall
+                            </button>
+                          )}
+                        </>
+                      )}
+                      {message.isCurrentAgent && isRecalled && canCompose && (
                         <button
                           type="button"
-                          onClick={() => onRecallMessage(message.id)}
+                          onClick={() => handleReEditMessage(message)}
                         >
                           <ReloadOutlined />
-                          Recall
+                          Re-edit
                         </button>
                       )}
                     </div>
@@ -366,66 +689,6 @@ export function LiveChat2ConversationWorkspace({
           })}
         </section>
 
-        {isRecordOpen && (
-          <aside
-            className="livechat2-records"
-            aria-label={`${session.customer.profile.name} message record`}
-          >
-            <header className="livechat2-records__header">
-              <strong>Message Record</strong>
-              <button
-                aria-label="Close message record"
-                type="button"
-                onClick={() => setIsRecordOpen(false)}
-              >
-                <CloseOutlined />
-              </button>
-            </header>
-            <div className="livechat2-records__search">
-              <Select
-                aria-label="Message record scope"
-                options={[
-                  { label: 'All', value: 'all' },
-                  { label: 'Last month', value: 'month' },
-                  { label: 'Last 3 months', value: 'quarter' },
-                  { label: 'Last year', value: 'year' },
-                ]}
-                size="small"
-                value={recordScope}
-                onChange={setRecordScope}
-              />
-              <Input
-                allowClear
-                aria-label="Search message record"
-                placeholder="Search messages"
-                prefix={<SearchOutlined />}
-                size="small"
-                value={recordSearch}
-                onChange={(event) => setRecordSearch(event.target.value)}
-              />
-              <span>
-                {recordSearch
-                  ? `${matchedRecordMessages.length} records found`
-                  : `${recordMessages.length} records`}
-              </span>
-            </div>
-            <div className="livechat2-records__date">
-              <CalendarOutlined />
-              <span>2026-05-27</span>
-            </div>
-            <div className="livechat2-records__list">
-              {matchedRecordMessages.map((message) => (
-                <article key={`record-${message.id}`}>
-                  <time>
-                    {message.timestamp.slice(0, 10)} {message.time}
-                  </time>
-                  <strong>{message.senderName}</strong>
-                  <p>{highlightSearch(message.message, recordSearch)}</p>
-                </article>
-              ))}
-            </div>
-          </aside>
-        )}
       </div>
 
       {canCompose && (
@@ -448,19 +711,25 @@ export function LiveChat2ConversationWorkspace({
             ref={composerRef}
             value={draftMessage}
             onChange={(event) => onDraftChange(session.id, event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault()
-                handleSend()
-              }
-            }}
+            onKeyDown={handleComposerKeyDown}
           />
           {filteredQuickReplies.length > 0 && (
-            <div className="livechat2-quick-replies">
-              {filteredQuickReplies.map((reply) => (
+            <div className="livechat2-quick-replies" role="listbox">
+              {filteredQuickReplies.map((reply, index) => (
                 <button
-                  key={reply.code}
+                  aria-selected={index === selectedQuickReplyIndex}
+                  className={
+                    index === selectedQuickReplyIndex ? 'is-selected' : ''
+                  }
+                  key={reply.id}
+                  role="option"
                   type="button"
+                  onMouseEnter={() =>
+                    setQuickReplySelection({
+                      index,
+                      listKey: quickReplyListKey,
+                    })
+                  }
                   onClick={() => handleQuickReplySelect(reply)}
                 >
                   <strong>{reply.code}</strong>
@@ -475,16 +744,15 @@ export function LiveChat2ConversationWorkspace({
               <button title="Emoji" type="button">
                 <SmileOutlined />
               </button>
-              <button title="Image" type="button">
-                <FileImageOutlined />
-              </button>
               <button title="File" type="button">
                 <FolderOpenOutlined />
               </button>
               <button
+                aria-label="Message record"
+                className={isMessageRecordOpen ? 'is-active' : ''}
                 title="Message record"
                 type="button"
-                onClick={() => setIsRecordOpen((current) => !current)}
+                onClick={onOpenMessageRecord}
               >
                 <HistoryOutlined />
               </button>

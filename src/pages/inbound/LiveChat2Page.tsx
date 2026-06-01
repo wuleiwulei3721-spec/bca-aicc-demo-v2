@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { HistoryOutlined, MessageOutlined } from '@ant-design/icons'
 import { liveChat2Sessions } from '../../mock/inbound'
 import { useAppStore } from '../../store'
 import type {
@@ -8,17 +9,31 @@ import type {
   LiveChat2StarColor,
 } from '../../types'
 import {
+  formatDuration,
   getElapsedSeconds,
   getLiveChatSlaState,
   parseDurationSeconds,
 } from '../../utils/duration'
 import { useNow } from '../../hooks/useNow'
 import { InteractionWorkspace } from './InteractionWorkspace'
-import { LiveChat2ConversationWorkspace } from './components/LiveChat2ConversationWorkspace'
+import {
+  LiveChat2ConversationWorkspace,
+  LiveChat2MessageRecordPanel,
+} from './components/LiveChat2ConversationWorkspace'
 import {
   LiveChat2CustomerPanel,
   type LiveChat2SessionView,
 } from './components/LiveChat2CustomerPanel'
+import { LiveChat2QuickRepliesPanel } from './components/LiveChat2QuickRepliesPanel'
+import {
+  getLiveChat2VisibleMessages,
+  type LiveChat2MessageLocateRequest,
+} from './components/liveChat2MessageUtils'
+import {
+  defaultLiveChat2QuickReplyGroups,
+  flattenLiveChat2QuickReplies,
+} from './components/liveChat2QuickReplies'
+import type { LiveChat2QuickReplyGroup } from './components/liveChat2QuickReplies'
 
 const liveChat2Channels: Array<LiveChat2Session['channel']> = [
   'WhatsApp',
@@ -26,9 +41,11 @@ const liveChat2Channels: Array<LiveChat2Session['channel']> = [
   'Webchat',
 ]
 
-const liveChat2SessionById = Object.fromEntries(
+const staticLiveChat2SessionById = Object.fromEntries(
   liveChat2Sessions.map((session) => [session.id, session]),
 ) as Record<string, LiveChat2Session>
+const LIVECHAT2_MESSAGE_RECORD_TAB_KEY = 'livechat2-message-record'
+const LIVECHAT2_QUICK_REPLIES_TAB_KEY = 'livechat2-quick-replies'
 
 function getMessageTimestamp(session: LiveChat2SessionView) {
   return new Date(session.lastMessageAt).getTime()
@@ -50,6 +67,38 @@ function sortSessions(
   })
 }
 
+function formatHistoryEndTime(endedAt: number | string | null) {
+  if (endedAt === null) {
+    return null
+  }
+
+  const date = new Date(endedAt)
+
+  if (!Number.isFinite(date.getTime())) {
+    return null
+  }
+
+  const now = new Date()
+  const isToday =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+  const pad = (value: number) => String(value).padStart(2, '0')
+  const time = [
+    date.getHours(),
+    date.getMinutes(),
+    date.getSeconds(),
+  ]
+    .map(pad)
+    .join(':')
+
+  if (isToday) {
+    return time
+  }
+
+  return `${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${time}`
+}
+
 export function LiveChat2Page() {
   const [isCustomerPanelCollapsed, setIsCustomerPanelCollapsed] =
     useState(false)
@@ -58,6 +107,18 @@ export function LiveChat2Page() {
   const [customerPanelView, setCustomerPanelView] = useState<
     'current' | 'history'
   >('current')
+  const [isMessageRecordTabOpen, setIsMessageRecordTabOpen] = useState(false)
+  const [quickReplyGroups, setQuickReplyGroups] = useState<
+    LiveChat2QuickReplyGroup[]
+  >(() => defaultLiveChat2QuickReplyGroups)
+  const [composerFocusRequest, setComposerFocusRequest] = useState<{
+    caretPosition: number
+    requestId: number
+    sessionId: string
+  } | null>(null)
+  const [messageLocateRequest, setMessageLocateRequest] =
+    useState<LiveChat2MessageLocateRequest | null>(null)
+  const [rightPanelActiveKey, setRightPanelActiveKey] = useState('assistant')
   const activeLiveChat2SessionIds = useAppStore(
     (state) => state.activeLiveChat2SessionIds,
   )
@@ -87,6 +148,9 @@ export function LiveChat2Page() {
   )
   const liveChat2RecalledMessageIds = useAppStore(
     (state) => state.liveChat2RecalledMessageIds,
+  )
+  const liveChat2SessionInstances = useAppStore(
+    (state) => state.liveChat2SessionInstances,
   )
   const liveChat2SessionStatuses = useAppStore(
     (state) => state.liveChat2SessionStatuses,
@@ -123,6 +187,17 @@ export function LiveChat2Page() {
     (state) => state.setLiveChat2StarColor,
   )
   const now = useNow(activeLiveChat2SessionIds.length > 0)
+  const quickReplyOptions = useMemo(
+    () => flattenLiveChat2QuickReplies(quickReplyGroups),
+    [quickReplyGroups],
+  )
+  const liveChat2SessionById = useMemo(
+    () => ({
+      ...staticLiveChat2SessionById,
+      ...liveChat2SessionInstances,
+    }),
+    [liveChat2SessionInstances],
+  )
 
   const createSessionView = useCallback(
     (session: LiveChat2Session): LiveChat2SessionView => {
@@ -135,6 +210,13 @@ export function LiveChat2Page() {
           ? 'history'
           : statusState?.status ?? session.status
       const endedAt = statusState?.endedAt ?? null
+      const endReason = statusState?.endReason ?? session.endReason ?? null
+      const endTimeDisplay =
+        statusDisplay === 'history'
+          ? formatHistoryEndTime(
+              endedAt ?? summaryOverride?.lastMessageAt ?? session.lastMessageAt,
+            )
+          : null
       const elapsedSeconds = timing
         ? getElapsedSeconds(timing.startedAt, endedAt ?? now)
         : parseDurationSeconds(session.customer.accessDuration)
@@ -143,7 +225,7 @@ export function LiveChat2Page() {
           ? liveChat2UnansweredSinceBySessionId[session.id]
           : undefined
       const unansweredSeconds = unansweredSince
-        ? getElapsedSeconds(unansweredSince, now)
+        ? Math.min(getElapsedSeconds(unansweredSince, now), elapsedSeconds)
         : null
       const isRead = liveChat2ReadSessionIds.includes(session.id)
 
@@ -151,6 +233,8 @@ export function LiveChat2Page() {
         ...session,
         draftMessage: liveChat2DraftMessages[session.id] ?? '',
         elapsedSeconds,
+        endReason,
+        endTimeDisplay,
         isFlashing:
           statusDisplay === 'active' && timing
             ? timing.flashUntil > now
@@ -161,11 +245,8 @@ export function LiveChat2Page() {
           summaryOverride?.lastMessage ?? session.lastMessage,
         lastMessageTime:
           summaryOverride?.lastMessageTime ?? session.lastMessageTime,
-        lastMessageTimeDisplay:
-          summaryOverride?.lastMessageTime ?? session.lastMessageTime,
         slaState: getLiveChatSlaState(unansweredSeconds ?? 0),
-        starColor:
-          liveChat2StarColors[session.id] ?? session.initialStarColor ?? 'gray',
+        starColor: liveChat2StarColors[session.id] ?? 'gray',
         statusDisplay,
         unansweredSeconds,
         unreadCount: isRead
@@ -201,6 +282,7 @@ export function LiveChat2Page() {
     [
       activeLiveChat2SessionIds,
       liveChat2SortMode,
+      liveChat2SessionById,
       createSessionView,
     ],
   )
@@ -221,6 +303,7 @@ export function LiveChat2Page() {
       .sort((first, second) => getMessageTimestamp(second) - getMessageTimestamp(first))
   }, [
     liveChat2ClosedSessionIds,
+    liveChat2SessionById,
     createSessionView,
   ])
 
@@ -232,12 +315,6 @@ export function LiveChat2Page() {
   const messages = activeSession
     ? liveChat2MessagesBySessionId[activeSession.id] ?? activeSession.messages
     : []
-  const newAccessCount = serviceSessions.filter(
-    (session) => !liveChat2ReadSessionIds.includes(session.id),
-  ).length
-  const totalServingCount = serviceSessions.filter(
-    (session) => session.statusDisplay === 'active',
-  ).length
 
   useEffect(() => {
     if (
@@ -281,16 +358,63 @@ export function LiveChat2Page() {
     )
   }
 
+  const handleCloseRightPanelTab = (targetKey: string) => {
+    if (targetKey !== LIVECHAT2_MESSAGE_RECORD_TAB_KEY) {
+      return
+    }
+
+    setIsMessageRecordTabOpen(false)
+    setRightPanelActiveKey((currentKey) =>
+      currentKey === LIVECHAT2_MESSAGE_RECORD_TAB_KEY ? 'connection' : currentKey,
+    )
+  }
+
+  const handleToggleMessageRecord = () => {
+    if (isMessageRecordTabOpen) {
+      handleCloseRightPanelTab(LIVECHAT2_MESSAGE_RECORD_TAB_KEY)
+      return
+    }
+
+    setIsMessageRecordTabOpen(true)
+    setRightPanelActiveKey(LIVECHAT2_MESSAGE_RECORD_TAB_KEY)
+  }
+
+  const handleLocateMessageRecord = (messageId: string) => {
+    setMessageLocateRequest((currentRequest) => ({
+      messageId,
+      requestId: (currentRequest?.requestId ?? 0) + 1,
+    }))
+  }
+
+  const handleInsertQuickReply = (text: string) => {
+    if (!activeSession) {
+      return
+    }
+
+    setLiveChat2DraftMessage(activeSession.id, text)
+    setComposerFocusRequest((currentRequest) => ({
+      caretPosition: text.length,
+      requestId: (currentRequest?.requestId ?? 0) + 1,
+      sessionId: activeSession.id,
+    }))
+  }
+
+  const handleEndService = (
+    sessionId: string,
+    baseMessages: LiveChat2Message[],
+  ) => {
+    endLiveChat2Session(sessionId, 'agent', baseMessages)
+    closeLiveChat2Session(sessionId)
+  }
+
   const leadPanel = (
     <LiveChat2CustomerPanel
       activeSessionId={activeSession?.id ?? ''}
       collapsed={isCustomerPanelCollapsed}
       historySessions={historySessions}
-      newAccessCount={newAccessCount}
       selectedChannels={selectedChannels}
       serviceSessions={serviceSessions}
       sortMode={liveChat2SortMode}
-      totalServingCount={totalServingCount}
       view={customerPanelView}
       onCloseSession={closeLiveChat2Session}
       onCollapsedChange={setIsCustomerPanelCollapsed}
@@ -308,7 +432,7 @@ export function LiveChat2Page() {
   if (!activeSession) {
     return (
       <section
-        aria-label="livechat2 workspace"
+        aria-label="Live Chat workspace"
         className={[
           'inbound-page',
           'inbound-page--livechat2',
@@ -321,16 +445,53 @@ export function LiveChat2Page() {
       >
         {leadPanel}
         <div className="livechat2-empty-workspace">
-          <strong>No livechat2 customers</strong>
-          <span>Use Channel Simulation &gt; livechat2 to add customers.</span>
+          <strong>No Live Chat customers</strong>
+          <span>Use WhatsApp or BankApp Demo to route a live chat customer.</span>
         </div>
       </section>
     )
   }
 
+  const messageRecordMessages = getLiveChat2VisibleMessages(
+    activeSession.historyMessages,
+    messages,
+  )
+  const assistantExtraTabs = [
+    {
+      children: (
+        <LiveChat2QuickRepliesPanel
+          groups={quickReplyGroups}
+          onGroupsChange={setQuickReplyGroups}
+          onInsertPhrase={handleInsertQuickReply}
+        />
+      ),
+      closable: false,
+      icon: <MessageOutlined />,
+      key: LIVECHAT2_QUICK_REPLIES_TAB_KEY,
+      title: 'Quick Replies',
+    },
+    ...(isMessageRecordTabOpen
+      ? [
+          {
+            children: (
+              <LiveChat2MessageRecordPanel
+                messages={messageRecordMessages}
+                onLocateMessage={handleLocateMessageRecord}
+              />
+            ),
+            icon: <HistoryOutlined />,
+            key: LIVECHAT2_MESSAGE_RECORD_TAB_KEY,
+            title: 'Message Record',
+          },
+        ]
+      : []),
+  ]
+
   return (
     <InteractionWorkspace
-      ariaLabel="livechat2 workspace"
+      ariaLabel="Live Chat workspace"
+      assistantActiveKey={rightPanelActiveKey}
+      assistantExtraTabs={assistantExtraTabs}
       className={[
         'inbound-page--livechat2',
         isCustomerPanelCollapsed
@@ -341,22 +502,30 @@ export function LiveChat2Page() {
         .join(' ')}
       conversationContent={
         <LiveChat2ConversationWorkspace
+          composerFocusRequest={composerFocusRequest}
           draftMessage={liveChat2DraftMessages[activeSession.id] ?? ''}
+          isMessageRecordOpen={isMessageRecordTabOpen}
+          messageLocateRequest={messageLocateRequest}
           messages={messages}
+          quickReplies={quickReplyOptions}
           recalledMessageIds={liveChat2RecalledMessageIds}
           session={activeSession}
           onCloseSession={closeLiveChat2Session}
           onDraftChange={setLiveChat2DraftMessage}
-          onEndSession={(sessionId, baseMessages: LiveChat2Message[]) =>
-            endLiveChat2Session(sessionId, 'agent', baseMessages)
-          }
+          onEndSession={handleEndService}
+          onOpenMessageRecord={handleToggleMessageRecord}
           onRecallMessage={recallLiveChat2Message}
           onSendMessage={sendLiveChat2Message}
         />
       }
       conversationKey={activeSession.id}
-      customer={activeSession.customer}
+      customer={{
+        ...activeSession.customer,
+        accessDuration: formatDuration(activeSession.elapsedSeconds),
+      }}
       leadPanel={leadPanel}
+      onAssistantActiveKeyChange={setRightPanelActiveKey}
+      onAssistantCloseExtraTab={handleCloseRightPanelTab}
     />
   )
 }

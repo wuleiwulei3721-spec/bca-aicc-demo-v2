@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-28 00:19 +08:00
+最后更新：2026-05-29 19:23 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,1246 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-05-29 19:23 +08:00 - Live Chat formatDuration runtime error 热修
+
+修改页面或文件：
+
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-29-1923.md`
+- `.codex-backup/current-todo-2026-05-29-1923.md`
+- `.codex-backup/page-state-2026-05-29-1923.md`
+
+修改原因：
+
+- 用户反馈跳转进正式 Live Chat 弹屏时报 `Unexpected Application Error! formatDuration is not defined`，页面无法进入。
+
+修改结果：
+
+- 在 `LiveChat2Page.tsx` 中从 `../../utils/duration` 正确导入 `formatDuration`，修复 `customer.accessDuration: formatDuration(activeSession.elapsedSeconds)` 的未定义引用。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning 和插件耗时提示。
+- Browser `/`：页面可加载，不再出现 `Unexpected Application Error` 或 `formatDuration is not defined`。
+- Browser `/design-system`：页面可加载，不再出现 runtime error。
+
+回滚说明：
+
+- 不建议回滚该热修；如回滚会重新触发 Live Chat runtime error。若必须回滚上一轮运行时 access duration 改动，需要同时移除对应 `formatDuration(...)` 调用。
+
+当前风险点：
+
+- 仍需人工复查正式 Live Chat 内部视觉细节：新接入计时从 `00:00` 开始、默认 no flag、消息满宽、右侧 tabs close 可点。
+
+### 2026-05-29 18:02 +08:00 - Live Chat 计时、星标和 tabs 遮挡修正
+
+修改页面或文件：
+
+- `src/store/appStore.ts`
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `src/pages/inbound/components/AssistantPanel.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-29-1802.md`
+- `.codex-backup/current-todo-2026-05-29-1802.md`
+- `.codex-backup/page-state-2026-05-29-1802.md`
+
+修改原因：
+
+- 用户继续反馈正式 `Live Chat`：文字客户新接入后计时不应继承 mock 时长；列表星标应默认 no flag；无星标时最新消息不应被隐藏星标占宽；上轮右侧 tabs 间距修反了；more 按钮仍遮挡最后一个关闭按钮且占宽过大。
+
+修改结果：
+
+- Demo handoff 生成的新文字客户实例将 `customer.accessDuration` 置为 `00:00`，运行时 timing `startedAt` 使用当前时刻；Customer Information 的 access duration 改用 active session 的运行时服务时长。
+- Live Chat 列表默认星标统一显示为灰色 no flag，不再读 mock 的 `initialStarColor`；handoff 实例也写入灰色星标。
+- no flag 客户行的星标操作改为浮动 hover 区，最新消息在非历史行也能跨满第二行宽度。
+- Assistant tab label 改为扁平 icon/text/close 结构，删除宽泛 span gap 规则，恢复与 Assistant / Connection 一致的紧凑间距。
+- CRM / Assistant more operations 宽度收紧到 18px，并提高 close 按钮层级，降低最后一个页签关闭按钮被遮挡的风险。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/`：页面可加载，Sign In 后固定 `Live Chat` tab 可见；当前 in-app browser 仍未稳定完成进入 Live Chat 细节页的自动化点击验证。
+- Browser `/design-system`：正常加载，`UI Design System` 与 `Color System` 可见。
+
+回滚说明：
+
+- 如需回滚，可恢复 `requestLiveChatWorkspace` 对 mock `accessDuration` / `initialStarColor` 的继承，恢复 `LiveChat2Page` 对 `session.initialStarColor` 的读取，移除 `LiveChat2CustomerPanel` 的 floating action class，并恢复 Assistant / CRM tabs 上轮 more operations 宽度。
+
+当前风险点：
+
+- 仍建议在目标分辨率下人工复查 Live Chat 内部：新接入计时是否从 `00:00` 开始、灰色 no flag 行消息是否满宽、Quick Replies / Message Record 间距是否与 Assistant / Connection 一致，以及 CRM / Assistant 最后一个 tab close 是否可点。
+
+### 2026-05-29 17:42 +08:00 - Live Chat 替换后手工评审问题修正
+
+修改页面或文件：
+
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/pages/inbound/components/CrmPanel.tsx`
+- `src/pages/inbound/components/AssistantPanel.tsx`
+- `src/store/appStore.ts`
+- `src/types/inbound.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-29-1742.md`
+- `.codex-backup/current-todo-2026-05-29-1742.md`
+- `.codex-backup/page-state-2026-05-29-1742.md`
+
+修改原因：
+
+- 用户手工点击正式 `Live Chat` 后反馈：坐席主动结束应直接关闭、Ticketing tab 应显示 CRM ID、右侧 tabs 间距不一致、更多按钮遮挡 close、引用消息展示不自然、demo 再次跳入应作为新客户接入。
+
+修改结果：
+
+- 坐席主动 `End Service` 确认后会追加系统结束语并直接调用 close，将会话移入 History；客户主动结束和超时结束仍保留 `Close` 按钮。
+- Ticketing History 打开的动态 CRM tab label 改为 ticket reference，例如 `CRM000145`，详情区域仍显示原业务类型。
+- Assistant extra tabs 与固定 tabs 使用统一 label renderer，Quick Replies / Message Record 的 icon 和文字间距与 Assistant / Connection 对齐。
+- CRM 与 Assistant tabs 的 nav wrap / operations 增加右侧预留，降低更多按钮遮挡最后一个 close 按钮的风险。
+- 引用消息发送时使用 `quotedMessage` 字段，正文不再包含 `Replying to ...`；消息区用浅灰引用块展示引用内容。
+- `requestLiveChatWorkspace` 每次 demo handoff 都会基于对应 livechat2 mock 创建新的 session instance，重复从 WhatsApp / BankApp Demo 跳入不再复用原客户行。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/`：页面可加载，Sign In 后固定 `Live Chat` tab 可见；本轮 in-app browser 未稳定完成 `Live Chat` tab 切换后的细节自动化复查。
+- Browser `/design-system`：正常加载，`UI Design System` 与基础章节可见。
+
+回滚说明：
+
+- 如需回滚，可恢复 `requestLiveChatWorkspace` 为固定 session id 映射、恢复 `LiveChat2Page` 中 End Service 只调用 `endLiveChat2Session`、恢复 AssistantPanel 的原 extra tab label 结构，并移除 `quotedMessage` 发送参数。
+
+当前风险点：
+
+- 仍建议在目标演示分辨率下人工复查重复 WhatsApp / BankApp handoff 后的多客户列表、未读 badge、CRM/Assistant 最后一项 close 按钮可点击性和引用消息视觉。
+
+### 2026-05-29 16:27 +08:00 - 正式 Live Chat 替换为新版弹屏并补未读 badge
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/AgentWorkspace.tsx`
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `src/store/appStore.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-29-1627.md`
+- `.codex-backup/current-todo-2026-05-29-1627.md`
+- `.codex-backup/page-state-2026-05-29-1627.md`
+
+修改原因：
+
+- 用户确认当前 livechat2 弹屏已足够完善，可以替换原有 `Live Chat`；同时要求正式 `Live Chat` 页签右上角显示总未读消息数，超过 99 显示 `99+`，并移除临时 `livechat2` 菜单入口。
+
+修改结果：
+
+- `AgentWorkspace` 保持正式 tab key `live-chat` 与 label `Live Chat`，但渲染新版 `LiveChat2Page`，不再渲染独立 `livechat2` tab。
+- `Live Chat` tab 右上角新增未读总数 badge，只统计当前 active 且未读的新版会话，已读、ended 和 history 会话不计入，大于 99 显示 `99+`。
+- `requestLiveChatWorkspace` 继续服务旧 WhatsApp / BankApp 跳转流程，但内部映射到 `liveChat2*` 状态：`live-chat-001 -> livechat2-001`、`live-chat-002 -> livechat2-002`、`live-chat-003 -> livechat2-003`。
+- 左侧 `Channel Simulation` 删除临时 `livechat2` 菜单项；旧 `LiveChatPage` 源码未删除，保留作本地回滚参考。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `git diff --check` 通过，仅有 CRLF 提示。
+- Browser `/`：可 Sign In，正式 `Live Chat` tab 可打开并渲染新版 Live Chat workspace，页面中没有可见 `livechat2` 文案。
+- Browser `/design-system`：正常加载。
+
+回滚说明：
+
+- 如需回滚，可恢复 `AgentWorkspace` 中旧 `LiveChatPage` tab children、恢复独立 `LIVE_CHAT2_TAB_KEY` tab 与 `BasicLayout` 的 `customer-livechat2` 菜单处理，并把 `requestLiveChatWorkspace` 恢复为旧 `activeLiveChatSessionIds` 状态。
+
+当前风险点：
+
+- 仍建议在目标演示分辨率下人工复查 WhatsApp Demo、BankApp Live Chat、未读 badge、Quick Replies、Message Record 和菜单入口移除效果。
+
+### 2026-05-29 15:39 +08:00 - livechat2 Quick Replies 加号和箭头样式微调
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-29-1539.md`
+- `.codex-backup/current-todo-2026-05-29-1539.md`
+- `.codex-backup/page-state-2026-05-29-1539.md`
+
+修改原因：
+
+- 用户反馈 `My Phrases` 标题上的加号与下方分类操作加号粗细、居中不一致；收起展开箭头不应为黑色，应与 Customer Journey 等系统卡片样式一致。
+
+修改结果：
+
+- `livechat2-quick-reply-panel__section-add` 调整为与分类操作按钮一致的 22px 小按钮视觉：统一字号、line-height、居中和 margin。
+- section / group 折叠箭头统一为系统次级文本色，hover / focus 时变为主题蓝，贴近 `BaseCard` / Customer Journey 的箭头口径。
+- 本轮不改 Quick Replies 结构、CRUD 逻辑或旧功能。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `git diff --check` 通过，仅有 CRLF 提示。
+- 实际 `livechat2` Quick Replies 视觉仍需在页面中人工复查。
+
+回滚说明：
+
+- 如需回滚，可移除 `.livechat2-quick-reply-panel__section-toggle .anticon` / `.group-toggle .anticon` 颜色规则，并恢复 `.section-add` 原 margin 和字号。
+
+当前风险点：
+
+- 仍需人工确认 hover 出现加号时与标题行视觉对齐。
+
+### 2026-05-29 15:31 +08:00 - livechat2 Quick Replies 面板视觉优化
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2QuickRepliesPanel.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-29-1531.md`
+- `.codex-backup/current-todo-2026-05-29-1531.md`
+- `.codex-backup/page-state-2026-05-29-1531.md`
+
+修改原因：
+
+- 用户反馈 Quick Replies 常用语面板计数冗余、长语句被省略、分类不能折叠、My Phrases 添加按钮占独立行，以及短语操作按钮未悬浮时预留右侧空白导致文本显示不完整。
+
+修改结果：
+
+- 移除 section 和 group 标题可见计数。
+- section 标题继续可折叠，group 标题新增折叠状态并默认展开。
+- My Phrases 添加分组按钮移到标题右侧，hover / focus 时显示加号；不再常驻单独一行。
+- phrase code/text 改为完整换行，不再使用 ellipsis 截断。
+- My phrase 的 Insert/Edit/Delete 操作按钮改为右上角悬浮覆盖层，未 hover / focus 时不占布局列宽。
+- 本轮不改 quick reply 数据模型、公共常用语只读规则、`/` 浮层同步逻辑或旧 `Live Chat`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning，并出现插件耗时提示。
+- Browser smoke check：`/` 与 `/design-system` 均可正常加载。
+- Browser livechat2 点击链路：当前 in-app browser DOM 未暴露 `livechat2` 菜单入口，实际 Quick Replies 视觉仍需人工复查。
+
+回滚说明：
+
+- 如需回滚，可恢复 `LiveChat2QuickRepliesPanel` 中 group header 为非折叠结构，并恢复 Quick Replies CSS 中原先的 grid 两列 phrase 布局、计数 badge 和 ellipsis 文本样式。
+
+当前风险点：
+
+- 仍需在实际 livechat2 页面人工复查 hover 操作层是否遮挡关键文本，以及长语句换行后的面板高度是否符合演示密度。
+
+### 2026-05-29 13:17 +08:00 - livechat2 右侧 Quick Replies tab
+
+修改页面或文件：
+
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/pages/inbound/components/LiveChat2QuickRepliesPanel.tsx`
+- `src/pages/inbound/components/liveChat2QuickReplies.ts`
+- `src/pages/inbound/components/AssistantPanel.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-29-1317.md`
+- `.codex-backup/current-todo-2026-05-29-1317.md`
+- `.codex-backup/page-state-2026-05-29-1317.md`
+
+修改原因：
+
+- 用户要求 livechat2 文字弹屏右侧 Assistant 区新增 `Quick Replies` tab，用于展示和维护聊天输入框 `/` 快捷回复同一份内容；我的常用语可本次演示内增删改，公共常用语只读。
+
+修改结果：
+
+- 新增 livechat2 quick replies 数据模型和默认 groups，并由 `LiveChat2Page` 持有本次运行期 state。
+- Conversation 输入框 `/` 浮层改为读取共享 quick reply options，保留默认选中、上下键切换、Enter 带入和最多 10 条结果。
+- 右侧 Assistant 区新增固定 `Quick Replies` tab；`AssistantPanelExtraTab` 新增 `closable?: boolean` 支持固定 tab。
+- 新增 `LiveChat2QuickRepliesPanel`：支持 code/text 搜索、My/Public 两区块默认展开/收起、My 分组和 phrase 的 inline 增删改、Public 只读点击插入。
+- 右侧 phrase 点击后会写入当前 active livechat2 draft，并通过 focus request 让 Conversation textarea 聚焦且光标位于语句末尾。
+- 本轮不写后端、不写 localStorage，不影响旧 `Live Chat`、电话/视频弹屏或弹框。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser smoke check：`/` 与 `/design-system` 均可正常加载。
+- Browser livechat2 点击链路：当前 in-app browser DOM 未暴露 `livechat2` 菜单入口，实际 `Quick Replies` tab 与 CRUD / 插入交互仍需人工复查。
+
+回滚说明：
+
+- 如需回滚，可移除 `LiveChat2QuickRepliesPanel`、`liveChat2QuickReplies`、`LiveChat2Page` 中的 quick reply groups/focus request/right tab 接线，并将 Conversation quick replies 恢复为本地静态数组。
+
+当前风险点：
+
+- 仍需在实际 livechat2 页面人工复查窄右侧面板下的 inline 表单、hover 操作按钮和 `/` 浮层同步效果。
+
+### 2026-05-29 12:25 +08:00 - livechat2 quick replies 键盘选择
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-29-1225.md`
+- `.codex-backup/current-todo-2026-05-29-1225.md`
+- `.codex-backup/page-state-2026-05-29-1225.md`
+
+修改原因：
+
+- 用户希望 livechat2 聊天输入框输入 `/` 后，快捷回复浮层默认选中第一条，可用上下箭头切换，按 Enter 自动带入选中语句，并把输入光标放到语句末尾。
+
+修改结果：
+
+- quick replies 打开时默认选中第一条候选。
+- `ArrowDown` / `ArrowUp` 支持在当前候选列表中循环切换。
+- quick replies 打开时按 `Enter` 会带入当前选中语句，不触发发送；浮层未打开时保留原 Enter 发送行为。
+- 鼠标悬浮候选会同步选中态，点击候选仍可带入语句。
+- 带入语句后 textarea 保持 focus，selection range 移到语句末尾。
+- 选中候选增加浅蓝背景和左侧主题色强调线。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser smoke check：`/` 与 `/design-system` 均可正常加载。
+- Browser livechat2 点击链路：当前 in-app browser DOM 未暴露 `livechat2` 菜单入口，slash 键盘交互仍需在实际页面人工复查。
+
+回滚说明：
+
+- 如需回滚，可移除 `quickReplySelection` 状态、`handleComposerKeyDown` 中 quick reply 分支，以及 `.livechat2-quick-replies button.is-selected` 样式；恢复后 quick replies 仍可点击，但无键盘选择带入能力。
+
+当前风险点：
+
+- 仍需在实际 livechat2 页面人工复查 `/`、上下键、Enter 和光标位置的完整视觉交互。
+
+### 2026-05-29 12:04 +08:00 - livechat2 quick replies 悬浮层上移
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-29-1204.md`
+- `.codex-backup/current-todo-2026-05-29-1204.md`
+- `.codex-backup/page-state-2026-05-29-1204.md`
+
+修改原因：
+
+- 用户反馈在 livechat2 聊天输入框输入 `/` 时，快捷回复悬浮层挡住输入框，导致看不到正在输入的内容。
+
+修改结果：
+
+- `.livechat2-quick-replies` 从 `bottom: 54px` 改为 `bottom: calc(100% + 6px)`，让悬浮层出现在整个 composer 正上方。
+- quick replies 增加 `max-height: 218px` 和内部纵向滚动，避免回复项过多时遮挡输入区。
+- 本轮不改 quick reply 数据、筛选逻辑或发送逻辑。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser smoke check：`/` 与 `/design-system` 均可正常加载；`livechat2` slash 悬浮层仍需在实际菜单路径下人工复查。
+
+回滚说明：
+
+- 如需回滚，可将 `.livechat2-quick-replies` 恢复为 `bottom: 54px` 和 `overflow: hidden`，但会重新出现遮挡 textarea 的问题。
+
+当前风险点：
+
+- 仍需人工复查 livechat2 实际视觉：输入 `/` 时悬浮层应在输入框正上方，且不遮挡输入内容。
+
+### 2026-05-28 23:26 +08:00 - livechat2 Message Record 视觉与 Locate 状态微调
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-2326.md`
+- `.codex-backup/current-todo-2026-05-28-2326.md`
+- `.codex-backup/page-state-2026-05-28-2326.md`
+
+修改原因：
+
+- 用户反馈 `Message Record` 页签 icon 与文字距离过大、搜索框 placeholder 字号偏大，并指出定位后回到连续文字记录时不应继续显示定位按钮。
+
+修改结果：
+
+- 收紧 right panel extra tab 的 icon/text gap，并覆盖 AntD icon 默认右侧 margin。
+- 将 Message Record 搜索框 input 与 placeholder 字号压到 11px。
+- 新增搜索结果态控制：`Locate` 只在点击 `Search` 后显示，点击 `Locate` 后重置过滤条件并退出搜索结果态，连续记录中不再显示定位按钮。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/` 可加载，Home tab 正常。
+- Browser `/design-system` 可加载，Design System 文本可见。
+- Browser livechat2 点击链路未完成：当前 in-app browser 可见 DOM 未暴露左侧 `livechat2` 菜单项，需人工复查页签间距、placeholder 字号和 Locate 显示时机。
+
+回滚说明：
+
+- 如需回滚本轮调整，可移除 `isSearchResultMode` 状态，让 `Locate` 在所有记录行继续 hover 显示，并恢复 right tab gap 与 placeholder 字号。
+
+当前风险点：
+
+- 仍需人工复查 livechat2 实际视觉：页签 icon/text 间距和 placeholder 字号是否达到预期。
+- 当前 in-app browser 未能自动进入 `Channel Simulation > livechat2`，因此本轮只完成 `/` 与 `/design-system` smoke check。
+
+### 2026-05-28 23:16 +08:00 - livechat2 Message Record 页签与搜索区精简
+
+修改页面或文件：
+
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/AssistantPanel.tsx`
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-2316.md`
+- `.codex-backup/current-todo-2026-05-28-2316.md`
+- `.codex-backup/page-state-2026-05-28-2316.md`
+
+修改原因：
+
+- 用户要求历史消息图标改为双态按钮，右侧 `Message Record` 页签保留页签级关闭后删除面板内重复标题/关闭按钮，并将日期条件合并为一个日期段选择控件，搜索条件尽量一行展示。
+
+修改结果：
+
+- Composer 历史消息按钮改为 toggle：点击打开右侧 `Message Record`，再次点击关闭并回到 `Connection`。
+- `Message Record` 面板删除内部 header、标题和关闭按钮。
+- 搜索区改为一行布局：AntD `RangePicker`、消息内容搜索框、`Search` 按钮和紧凑结果数。
+- 右侧 extra tab label 改为 icon/text/close 紧凑结构，并为 AntD tabs more 操作留出稳定宽度，降低关闭按钮被遮挡风险。
+- 保留搜索倒序、高亮、`Locate` 定位和中间消息短暂高亮。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/` 可加载，Home tab 正常。
+- Browser `/design-system` 可加载，Design System 文本可见。
+- Browser livechat2 点击链路未完成：当前 in-app browser 可见 DOM 未暴露左侧 `livechat2` 菜单项，需人工复查 Message Record 双态按钮、页签关闭和一行搜索区视觉。
+
+回滚说明：
+
+- 如需回滚本轮调整，可将 `handleToggleMessageRecord` 恢复为只打开记录页签，恢复 `LiveChat2MessageRecordPanel` 的内部 header/close，并把 RangePicker 搜索区恢复为 From/To 两个输入行。
+
+当前风险点：
+
+- 仍需人工复查 livechat2 实际视觉：右侧页签关闭按钮、more 图标、一行搜索区和 RangePicker 弹层是否符合目标分辨率。
+- 当前 in-app browser 未能自动进入 `Channel Simulation > livechat2`，因此本轮只完成 `/` 与 `/design-system` smoke check。
+
+### 2026-05-28 23:01 +08:00 - livechat2 Message Record 搜索与定位优化
+
+修改页面或文件：
+
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/pages/inbound/components/liveChat2MessageUtils.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-2301.md`
+- `.codex-backup/current-todo-2026-05-28-2301.md`
+- `.codex-backup/page-state-2026-05-28-2301.md`
+
+修改原因：
+
+- 用户要求调整历史消息记录页签内容：默认近 7 天日期范围、文字搜索、点击搜索后展示倒序结果、关键字高亮，并支持从结果定位到中间聊天记录。
+
+修改结果：
+
+- `Message Record` 搜索区改为日期范围 + 消息内容输入 + `Search` 按钮，修改条件不立即刷新。
+- 搜索结果按日期范围和消息内容过滤，并按发送时间倒序排列。
+- 结果行展示发送人、消息内容、发送时间；匹配文字继续高亮。
+- 结果行 hover / focus 时显示 `Locate`，点击后重置搜索条件，并通过定位请求让 Conversation 滚动到原消息且短暂高亮。
+- 新增 `LiveChat2MessageLocateRequest`，用 `messageId + requestId` 支持重复定位同一条消息。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 plugin timings 与 Vite/Rolldown chunk size warning。
+- Browser `/` 可加载，Home tab 正常。
+- Browser `/design-system` 可加载，Design System 文本可见。
+- Browser livechat2 点击链路未完成：当前 in-app browser 可见 DOM 未暴露左侧 `livechat2` 菜单项，需人工复查 Message Record 搜索与 Locate 定位交互。
+
+回滚说明：
+
+- 如需回滚本轮调整，可恢复 `LiveChat2MessageRecordPanel` 原有范围下拉和输入即过滤逻辑，移除 `messageLocateRequest` 状态、消息 article ref 与定位高亮样式。
+
+当前风险点：
+
+- 仍需人工复查 livechat2 实际交互：日期范围、Search 触发、倒序结果和 Locate 定位高亮是否符合演示预期。
+- 当前 in-app browser 未能自动进入 `Channel Simulation > livechat2`，因此本轮只完成 `/` 与 `/design-system` smoke check。
+
+### 2026-05-28 20:10 +08:00 - livechat2 Message Record 改为右侧可关闭页签
+
+修改页面或文件：
+
+- `src/pages/inbound/components/AssistantPanel.tsx`
+- `src/pages/inbound/InteractionWorkspace.tsx`
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/pages/inbound/components/liveChat2MessageUtils.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-2010.md`
+- `.codex-backup/current-todo-2026-05-28-2010.md`
+- `.codex-backup/page-state-2026-05-28-2010.md`
+
+修改原因：
+
+- 用户要求点击历史消息后，不在 Conversation 内部展示，而是在右侧 `Connection` 页签旁边新开一个可关闭页签展示。
+
+修改结果：
+
+- `AssistantPanel` 支持受控 active tab、额外页签和关闭额外页签。
+- `InteractionWorkspace` 将右侧页签扩展能力透传给 livechat2。
+- `LiveChat2Page` 打开 `Message Record` 时在右侧新增 `Message Record` tab，并切换到该 tab；关闭时回到 `Connection`。
+- `LiveChat2ConversationWorkspace` 移除内嵌记录侧栏，composer 历史消息图标改为打开右侧记录页签；记录面板组件复用于右侧 tab。
+- 新增 `liveChat2MessageUtils.ts` 共享欢迎语过滤后的可见消息源，避免组件文件导出 helper 触发 lint。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/` 可加载，Home tab 正常。
+- Browser `/design-system` 可加载，Design System 文本可见。
+- Browser livechat2 点击链路未完成：当前 in-app browser 可见 DOM 未暴露左侧菜单项，临时桌面 viewport 后仍只能看到 Home tab，需人工复查。
+
+回滚说明：
+
+- 如需回滚本轮调整，可移除 `AssistantPanel` extra tab 扩展，恢复 `LiveChat2ConversationWorkspace` 内部 `isRecordOpen` 侧栏状态与右侧 `livechat2-records` 渲染。
+
+当前风险点：
+
+- 仍需人工复查 livechat2 实际交互：点击 composer 历史消息图标后，右侧 `Message Record` tab 应出现在 `Connection` 旁且可关闭。
+- 当前 in-app browser 未能自动进入 `Channel Simulation > livechat2`，因此本轮只完成 `/` 与 `/design-system` smoke check。
+
+### 2026-05-28 19:56 +08:00 - livechat2 Conversation 输入区移除图片图标
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-1956.md`
+- `.codex-backup/current-todo-2026-05-28-1956.md`
+- `.codex-backup/page-state-2026-05-28-1956.md`
+
+修改原因：
+
+- 用户要求底部内容输入区域去除图片图标，只保留表情、文件、历史消息图标。
+
+修改结果：
+
+- Composer 工具栏移除 `Image` 图标按钮。
+- 输入区保留 `Emoji`、`File`、`Message record` 三个图标和 Send 按钮。
+- 仍保留消息区已有图片消息的渲染能力，不改消息类型或 mock。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/` 可加载，Home tab 正常。
+- Browser `/design-system` 可加载，Design System 文本可见。
+
+回滚说明：
+
+- 如需恢复图片入口，可在 composer 工具栏重新加入 `Image` 按钮并使用 `FileImageOutlined` 图标。
+
+当前风险点：
+
+- 仍需人工复查输入区图标顺序和间距是否符合预期。
+
+### 2026-05-28 19:36 +08:00 - livechat2 Conversation 消息记录与撤回消息优化
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-1936.md`
+- `.codex-backup/current-todo-2026-05-28-1936.md`
+- `.codex-backup/page-state-2026-05-28-1936.md`
+
+修改原因：
+
+- 用户要求历史消息记录图标放到发送文件图标旁边，消息区不显示点击查看更多，坐席端不显示客户端欢迎语，已撤回消息不能引用且改为重新编辑。
+
+修改结果：
+
+- `Message Record` 入口移到 composer 工具栏文件图标旁边，并在记录面板打开时高亮。
+- 删除消息区顶部 `Message Record` 文字按钮以及 `Click to load more` / `No more records` 展示。
+- Conversation 与 Message Record 共用过滤后的消息源，过滤客户端欢迎语系统消息。
+- 已撤回消息不显示 `Quote`；当前坐席已撤回消息显示 `Re-edit`，点击后把原消息内容写入输入框并聚焦。
+- 本轮不修改消息 mock、store 撤回数据结构或发送逻辑。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/` 可加载，Home tab 正常。
+- Browser `/design-system` 可加载，Design System 文本可见。
+
+回滚说明：
+
+- 如需回滚本轮调整，可恢复消息区顶部 `Message Record` 按钮、load-more 状态与样式，并将已撤回消息工具区恢复为原 `Quote` / `Recall` 逻辑。
+
+当前风险点：
+
+- 仍需人工复查 active Conversation：历史记录图标位置、滚动消息区、欢迎语过滤和撤回消息 `Re-edit` 是否符合演示预期。
+
+### 2026-05-28 19:26 +08:00 - Transfer Skill 增加技能人数与空闲人数
+
+修改页面或文件：
+
+- `src/layouts/components/TransferModal.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-1926.md`
+- `.codex-backup/current-todo-2026-05-28-1926.md`
+- `.codex-backup/page-state-2026-05-28-1926.md`
+
+修改原因：
+
+- 用户要求 `Transfer Skill` 页面列表在 `Skill Name` 后增加技能人数和空闲人数两列。
+
+修改结果：
+
+- `Transfer Skill` 表格新增 `Agents` 与 `Ready` 列。
+- `Agents` 按 `transferAgents.skillName` 统计该技能坐席总数。
+- `Ready` 按同一技能下 `status === 'Ready'` 统计空闲人数。
+- 本轮不新增重复 mock 字段，不修改类型结构，避免 skill mock 与 agent mock 数据不一致。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/` 可加载，Home tab 正常。
+- Browser `/design-system` 可加载，Design System 文本可见。
+
+回滚说明：
+
+- 如需回滚本轮调整，可移除 `TransferSkillTab` 中 `skillAgentCounts` 统计以及 `Agents` / `Ready` 两个表格列。
+
+当前风险点：
+
+- 仍需人工复查 `Transfer Skill` 页签表格列宽和数字展示是否符合弹框密度。
+
+### 2026-05-28 19:24 +08:00 - Transfer Agent 移除更多按钮
+
+修改页面或文件：
+
+- `src/layouts/components/TransferModal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-1924.md`
+- `.codex-backup/current-todo-2026-05-28-1924.md`
+- `.codex-backup/page-state-2026-05-28-1924.md`
+
+修改原因：
+
+- 用户要求 Transfer Agent 页面去除更多按钮，只保留转移和三方按钮。
+
+修改结果：
+
+- Conversation 版本 `Transfer Agent` 行内动作只保留 `Transfer` 和 `Conference`。
+- 移除更多按钮、`Force Transfer` / `Force Conference` 下拉入口，以及相关 Dropdown / DownOutlined / MenuProps 代码。
+- 动作列宽从 198px 收窄为 180px，匹配两个按钮。
+- 删除 more 按钮专用样式；通话工具条 Transfer 弹框不受影响。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/` 可加载，Home tab 正常。
+- Browser `/design-system` 可加载，Design System 文本可见。
+
+回滚说明：
+
+- 如需恢复更多按钮，可恢复 `conversationOverflowAgentActions`、Dropdown 渲染和 `.aicc-transfer-agent-actions__more` 样式，并将 conversation actions 列宽恢复为至少 198px。
+
+当前风险点：
+
+- 仍需人工打开 Conversation Transfer 弹框复查 Transfer Agent 行只剩两个按钮，且动作列宽、表头和按钮边框正常。
+
+### 2026-05-28 19:17 +08:00 - Transfer Agent 动作列与按钮宽度修正
+
+修改页面或文件：
+
+- `src/layouts/components/TransferModal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-1917.md`
+- `.codex-backup/current-todo-2026-05-28-1917.md`
+- `.codex-backup/page-state-2026-05-28-1917.md`
+
+修改原因：
+
+- 用户指出去掉 `Request` 文案后按钮宽度没有同步收窄，导致 Transfer Agent 表头被挤压换行，且按钮边框显示不完整。
+
+修改结果：
+
+- Conversation 版本 Transfer Agent 动作列宽从 262px 收窄为 198px。
+- Conversation 行内主按钮宽度从 112px 收窄为 80px，适配 `Transfer` / `Conference`。
+- Transfer 弹框表头设置不换行；conversation 行内按钮补齐 `inline-flex`、`box-sizing` 和行高，避免边框裁切。
+- 本轮不修改动作逻辑、mock、store 或旧 Live Chat。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/` 可加载，Home tab 正常。
+- Browser `/design-system` 可加载，Design System 文本可见。
+
+回滚说明：
+
+- 如需回滚本轮调整，可将 `TransferModal.tsx` 的 conversation actions 列宽恢复到 262px，并将 `.aicc-transfer-agent-actions` 主按钮宽度恢复为 112px，同时移除表头 nowrap 与按钮 box model 修正。
+
+当前风险点：
+
+- 仍需人工打开 Conversation Transfer 弹框复查 `Transfer Agent` 表头不换行、按钮边框完整、动作列不挤压其它列。
+
+### 2026-05-28 19:12 +08:00 - Transfer Agent 行内按钮文案精简
+
+修改页面或文件：
+
+- `src/layouts/components/TransferModal.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-1912.md`
+- `.codex-backup/current-todo-2026-05-28-1912.md`
+- `.codex-backup/page-state-2026-05-28-1912.md`
+
+修改原因：
+
+- 用户要求转移功能中 `Transfer Agent` 页面数据行的两个按钮去除 `Request` 字样。
+
+修改结果：
+
+- Conversation 版本 `Transfer Agent` 行内主按钮从 `Request Transfer` / `Request Conference` 改为 `Transfer` / `Conference`。
+- `Force Transfer` / `Force Conference` 下拉动作保持不变。
+- 本轮只改显示文案，不改变动作逻辑或其它弹框。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+
+回滚说明：
+
+- 如需回滚本轮调整，可将 `TransferModal.tsx` 中 `conversationPrimaryAgentActions` 恢复为 `Request Transfer` 和 `Request Conference`。
+
+当前风险点：
+
+- 需人工复查 Conversation Transfer 弹框的 `Transfer Agent` 表格行按钮文案是否满足演示口径。
+
+### 2026-05-28 19:00 +08:00 - livechat2 时长口径与 ended 提示精简
+
+修改页面或文件：
+
+- `src/store/appStore.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/mock/inbound.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-1900.md`
+- `.codex-backup/current-todo-2026-05-28-1900.md`
+- `.codex-backup/page-state-2026-05-28-1900.md`
+
+修改原因：
+
+- 用户指出服务时长比坐席未回复时长还短不合理，并要求 customer-ended mock 客户服务时长为 `02:53`；同时确认 ended 原因完整文案只保留在对话系统消息中，header 不重复展示。
+
+修改结果：
+
+- `requestLiveChat2Workspace` 增加 `initialElapsedSeconds`，store 初始化 livechat2 timing 时使用 mock access duration 作为已服务时长。
+- `BasicLayout` 打开 livechat2 时解析每个 mock 的 `customer.accessDuration` 并传入 store。
+- `LiveChat2Page` 将 active 未回复计时限制为不超过服务时长。
+- `livechat2-005` 的 `customer.accessDuration` 改为 `02:53`。
+- customer-ended 系统消息统一为 `This user has ended the session.`；timeout 系统消息统一为 `This session was closed due to customer timeout.`。
+- Conversation header 移除 customer/timeout ended 完整提示，保留灰态头像与 `Close`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/` 可加载，Home tab 正常。
+- Browser `/design-system` 可加载，Design System 文本可见。
+- Browser `/` 中 `livechat2` 菜单文字存在于 DOM，但当前自动化判断该入口不可见，未完成菜单点击后的细节复查。
+
+回滚说明：
+
+- 如需回滚本轮调整，可移除 `initialElapsedSeconds` 初始化链路，恢复 `livechat2-005` 原 access duration 和旧结束消息，并恢复 `LiveChat2ConversationWorkspace.tsx` 中 ended notice 渲染与相关样式。
+
+当前风险点：
+
+- 仍需人工在目标演示分辨率下确认 active 服务时长、未回复计时上限、customer-ended `02:53` 和 header 无重复提示的视觉效果。
+
+### 2026-05-28 18:49 +08:00 - livechat2 Header 未回复提示与 End Service hover
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-1849.md`
+- `.codex-backup/current-todo-2026-05-28-1849.md`
+- `.codex-backup/page-state-2026-05-28-1849.md`
+
+修改原因：
+
+- 用户反馈 `Unanswered` 单词太长，希望用图标表示；并指出 `End Service` 鼠标悬浮时也应该呈现红色危险态。
+
+修改结果：
+
+- Conversation header 的未回复提示改为告警图标 + 计时，不再显示可见 `Unanswered` 文案。
+- 未回复提示保留 `title` 和 `aria-label`，便于悬浮说明和可访问语义。
+- `End Service` 按钮增加专属 hover/focus 样式，使用浅红背景与深红文字。
+- 本轮不修改旧 `Live Chat`、mock、store 或弹框。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/` 可加载，Home tab 正常。
+- Browser `/design-system` 可加载，Design System 文本可见。
+
+回滚说明：
+
+- 如需回滚本轮调整，可恢复 `LiveChat2ConversationWorkspace.tsx` 中未回复计时的文案渲染，并移除 `src/styles/index.less` 中 `livechat2-conversation__end-action:hover/focus-visible` 专属样式。
+
+当前风险点：
+
+- 仍需人工在目标演示分辨率下确认未回复图标的视觉是否足够明确，且 End Service hover 红色不显得过重。
+
+### 2026-05-28 18:34 +08:00 - livechat2 Conversation 顶部与结束状态
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/store/appStore.ts`
+- `src/mock/inbound.ts`
+- `src/types/inbound.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-1834.md`
+- `.codex-backup/current-todo-2026-05-28-1834.md`
+- `.codex-backup/page-state-2026-05-28-1834.md`
+
+修改原因：
+
+- 用户要求 livechat2 conversation 顶部参考旧 Live Chat，仅展示渠道图标、客户名和服务时长；右侧 active 状态只保留 Transfer / End Service，客户主动结束或超时结束后改为 Close，并增加一个 mock 客户演示用户主动结束。
+
+修改结果：
+
+- Conversation header 移除 `intent` 业务类型文案，新增渠道图标。
+- Header active 操作为 `Transfer` + `End Service`；ended 操作为 `Close`。
+- `Message Record` 从 header 右侧移到消息区顶部紧凑入口，记录面板保留。
+- `LiveChat2SessionView` 增加 `endReason`，store 的 `requestLiveChat2Workspace` 支持 `initialSessionStatuses`。
+- `BasicLayout` 根据 mock 的 ended 状态初始化 livechat2 session status，避免 ended mock 被转成 active。
+- 新增 Haloapps mock `livechat2-005`，状态为 customer ended，用于展示用户主动结束、头像灰掉和 Close。
+- customer ended / timeout ended 在 conversation header 显示对应提示；坐席主动结束仍使用现有固定系统结束语。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/` 可加载，Home tab 正常。
+- Browser `/design-system` 可加载，Design System 文本可见。
+- 当前 in-app browser 仍未暴露可点击的左侧 livechat2 入口节点，未完成菜单点击自动化验证。
+
+回滚说明：
+
+- 如需回滚本轮调整，可恢复 `LiveChat2ConversationWorkspace.tsx` header 结构和 Message Record header 按钮，移除 `livechat2-005` mock、`endReason` view/type 字段、`initialSessionStatuses` 初始化逻辑，以及新增的 conversation ended/message toolbar 样式。
+
+当前风险点：
+
+- 仍需人工在目标演示分辨率下复查 active 与 customer ended 两类会话的 header、按钮、头像灰度和 Message Record 入口视觉。
+
+### 2026-05-28 18:13 +08:00 - livechat2 History 最新消息满宽修复
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-1813.md`
+- `.codex-backup/current-todo-2026-05-28-1813.md`
+- `.codex-backup/page-state-2026-05-28-1813.md`
+
+修改原因：
+
+- 用户指出 History 行第一行右侧的挂断图标 + 时间仍通过 grid 第二列压缩了第二行最新消息宽度；时间和名字在第一行，不应影响最新消息长度。
+
+修改结果：
+
+- History 会话消息行增加 `livechat2-session-card__message--full-row` modifier。
+- History 最新消息行使用 `grid-column: 1 / -1`，跨过右侧时间列，占满第二行内容区。
+- 当前服务列表不改，保留第二行右侧星标 / Close 操作区。
+- 本轮不修改旧 `Live Chat`、store 数据结构、mock、弹框或 livechat2 其它交互。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/` 可加载，Home tab 正常。
+- Browser `/design-system` 可加载，Design System 文本可见。
+- 当前 in-app browser 仍未暴露可点击的左侧 livechat2 入口节点，未完成菜单点击自动化验证。
+
+回滚说明：
+
+- 如需回滚本轮调整，可移除 `LiveChat2CustomerPanel.tsx` 中 History 消息行的 modifier class，并删除 `src/styles/index.less` 中 `.livechat2-session-card__message--full-row`。
+
+当前风险点：
+
+- 仍需人工在目标演示分辨率下复查 History 第二行消息是否真正满宽，以及当前服务列表右侧星标 / Close 是否不受影响。
+
+### 2026-05-28 18:08 +08:00 - livechat2 历史结束时间图标前缀
+
+修改页面或文件：
+
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-1808.md`
+- `.codex-backup/current-todo-2026-05-28-1808.md`
+- `.codex-backup/page-state-2026-05-28-1808.md`
+
+修改原因：
+
+- 用户澄清不是去掉具体时间，而是把历史结束时间前缀 `Ended` 换成挂断/结束图标，缓解长文案压缩最新消息宽度。
+
+修改结果：
+
+- 历史结束时间格式从 `Ended HH:mm:ss` / `Ended MM-DD HH:mm:ss` 改为纯时间 `HH:mm:ss` / `MM-DD HH:mm:ss`。
+- 历史客户行右侧新增 `DisconnectOutlined` 作为可见结束前缀，时间继续常显。
+- `aria-label` / `title` 保留完整 `Ended ${time}` 语义。
+- 结束标识样式保持浅灰、紧凑、tabular nums。
+- 当前列表、收起态、旧 `Live Chat`、store 数据结构和 mock 不变。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/` 可加载，Home tab 正常。
+- Browser `/design-system` 可加载，Design System 文本可见。
+- 当前 in-app browser 仍未暴露可点击的左侧 livechat2 入口节点，未完成菜单点击自动化验证。
+
+回滚说明：
+
+- 如需回滚本轮调整，可把 `formatHistoryEndTime` 恢复为返回 `Ended ...` 文案，移除 `LiveChat2CustomerPanel.tsx` 中的 `DisconnectOutlined` 渲染和 `.livechat2-session-card__end-time .anticon` 样式。
+
+当前风险点：
+
+- 仍需人工在目标演示分辨率下复查 History 行右侧图标 + 时间是否比长文案更省宽，以及最新消息宽度是否符合预期。
+
+### 2026-05-28 18:00 +08:00 - livechat2 历史列表结束时间展示
+
+修改页面或文件：
+
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-1800.md`
+- `.codex-backup/current-todo-2026-05-28-1800.md`
+- `.codex-backup/page-state-2026-05-28-1800.md`
+
+修改原因：
+
+- 用户确认历史列表需要展示结束会话时间，并使用时分秒口径。
+
+修改结果：
+
+- `LiveChat2SessionView` 新增 `endTimeDisplay`。
+- 历史结束时间优先使用真实 `endedAt`；初始历史 mock 无 `endedAt` 时，用 `lastMessageAt` 兜底。
+- 当天历史显示 `Ended HH:mm:ss`，非当天历史显示 `Ended MM-DD HH:mm:ss`。
+- 展开态历史客户行第一行右侧显示结束时间，使用浅灰文本；当前列表和收起态不显示。
+- 本轮不修改旧 `Live Chat`、store 数据结构、mock、弹框或 livechat2 其它交互。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/` 可加载，Home tab 正常。
+- Browser `/design-system` 可加载，Design System 文本可见。
+- 当前 in-app browser 仍未暴露可点击的左侧 livechat2 入口节点，未完成菜单点击自动化验证。
+
+回滚说明：
+
+- 如需回滚本轮调整，可移除 `LiveChat2Page.tsx` 中 `formatHistoryEndTime` 和 `endTimeDisplay` 计算，移除 `LiveChat2CustomerPanel.tsx` 中历史结束时间渲染，并删除 `src/styles/index.less` 中 `.livechat2-session-card__end-time` 样式。
+
+当前风险点：
+
+- 仍需人工在目标演示分辨率下复查历史列表结束时间是否不挤压客户名，且当前列表和收起态不出现结束时间。
+
+### 2026-05-28 16:42 +08:00 - livechat2 页签计时颜色与历史收起态星标调整
+
+修改页面或文件：
+
+- `src/pages/AgentWorkspace.tsx`
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-1642.md`
+- `.codex-backup/current-todo-2026-05-28-1642.md`
+- `.codex-backup/page-state-2026-05-28-1642.md`
+
+修改原因：
+
+- 用户要求 `livechat2` 页签上的时间不用变色，只展示当前最大服务客户的服务时长；如果当前没有服务客户则不显示时长。历史会话在客户列表面板收起状态时不需要显示星标。
+
+修改结果：
+
+- `livechat2` tab duration 只来自 active livechat2 timings，不再使用 ended 会话兜底显示。
+- `livechat2` tab 不再传入 SLA state，因此页签时间不会因为服务时长进入 warning / breach 颜色。
+- 新客户接入的 tab flash 仍保留，继续使用 active livechat2 timings 的最大 `flashUntil`。
+- 历史会话不再渲染头像内的 collapsed star；当前服务会话的收起态星标保留。
+- 本轮不修改旧 `Live Chat`、电话/视频 tab、store 数据结构、mock、弹框或客户列表其它交互。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/` 可加载，Home tab 正常。
+- Browser `/design-system` 可加载，Design System 文本可见。
+- 当前 in-app browser 仍未暴露可点击的左侧 livechat2 入口节点，未完成菜单点击自动化验证。
+
+回滚说明：
+
+- 如需回滚本轮调整，可恢复 `AgentWorkspace.tsx` 中 livechat2 ended timing fallback 与 `slaState` 传参，并恢复 `LiveChat2CustomerPanel.tsx` 中收起态星标不区分历史会话的渲染条件。
+
+当前风险点：
+
+- 仍需人工在目标演示分辨率下复查 `livechat2` tab：有 active 客户时显示最长服务时长且不变色，无 active 客户时不显示时长，新接入仍短闪；同时复查历史会话收起态无头像星标。
+
+### 2026-05-28 16:20 +08:00 - livechat2 页签最长服务计时与新接入闪烁
+
+修改页面或文件：
+
+- `src/pages/AgentWorkspace.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-1620.md`
+- `.codex-backup/current-todo-2026-05-28-1620.md`
+- `.codex-backup/page-state-2026-05-28-1620.md`
+
+修改原因：
+
+- 用户要求 `livechat2` workspace 页签显示客户服务时间最长的计时，效果与电话/视频来电弹屏一致；有新客户接入时页签也要闪烁。
+
+修改结果：
+
+- `AgentWorkspace` 新增 livechat2 tab timing 计算，读取 `activeLiveChat2SessionIds`、`liveChat2SessionTimings` 和 `liveChat2SessionStatuses`。
+- `livechat2` tab 使用当前 active livechat2 客户中最长服务时长显示 `(mm:ss)`。
+- 如果只剩 ended 未关闭会话，tab 使用 ended 会话 `endedAt` 冻结最长服务时长。
+- 新接入 livechat2 客户继续使用 `flashUntil` 触发 workspace tab 短闪。
+- 本轮不修改旧 `Live Chat`、电话/视频 tab 行为、store 数据结构、客户列表或弹框逻辑。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/` 可加载，Home tab 正常。
+- Browser `/design-system` 可加载，Design System 文本可见。
+- 当前 in-app browser 仍未暴露可点击的左侧 livechat2 入口节点，未完成菜单点击自动化验证。
+
+回滚说明：
+
+- 如需回滚本轮页签行为，可恢复 `AgentWorkspace.tsx` 中 `WorkspaceDurationTiming`、`getLongestDurationTiming`、livechat2 timing/status selector 与 `livechat2` tab label 的 `durationStartedAt` / `isFlashing` / `slaState` 参数。
+
+当前风险点：
+
+- 仍需在目标演示分辨率下人工复查 `livechat2 (mm:ss)` 是否随最长 active 客户增长，并确认新客户接入时 tab 短闪效果符合演示预期。
+
+### 2026-05-28 16:06 +08:00 - livechat2 客户列表文字 tab 与工具精简
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-1606.md`
+- `.codex-backup/current-todo-2026-05-28-1606.md`
+- `.codex-backup/page-state-2026-05-28-1606.md`
+
+修改原因：
+
+- 用户要求继续优化 livechat2 客户列表：Current/History 切换改回文字展示，去除转接图标，并把顶部 ALL 渠道标识文字改为系统主题深蓝色。
+
+修改结果：
+
+- Current / History 从图标-only tab 改回居中文字 tab，继续保留计数与 hover 排序按钮能力。
+- 客户行第二行去除转接图标，只保留星标与 ended 状态 Close，降低列表视觉噪音。
+- `ALL` 渠道头像文字颜色改为 `var(--aicc-primary-strong)`，非选中态也保持主题深蓝色。
+- 本轮不修改旧 `Live Chat`、store、mock、路由或弹框逻辑。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/` 可加载，标题为 `BANK 1 AICC Demo`，Home tab 正常。
+- Browser `/design-system` 可加载，标题为 `BANK 1 AICC Demo`，Design System 文本可见。
+- Browser `/` 可检测到隐藏的 `livechat2` 文本，但当前 in-app browser 没有暴露侧栏入口的可点击可见节点，未完成菜单点击自动化验证。
+
+回滚说明：
+
+- 如需回滚本轮调整，可恢复 `LiveChat2CustomerPanel.tsx` 中 Current/History 的图标 tab 与转接图标渲染，并恢复 `src/styles/index.less` 中 view tab 图标 badge 和 `livechat2-session-card__transfer` 相关样式。
+
+当前风险点：
+
+- 仍需在目标演示分辨率下人工复查 livechat2 菜单入口、文字 tab 密度、客户行无转接图标后的信息完整度，以及 ALL 深蓝色在选中/非选中态下的可读性。
+
+### 2026-05-28 15:48 +08:00 - livechat2 客户列表图标 tab 与星标精简
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-1548.md`
+- `.codex-backup/current-todo-2026-05-28-1548.md`
+- `.codex-backup/page-state-2026-05-28-1548.md`
+
+修改原因：
+
+- 用户要求继续简化 livechat2 客户列表：Current/History 用居中图标 tab，排序按钮只在悬浮整行时显示，客户行计时/操作对齐，灰色星标默认隐藏，收起态星标去掉白色圆底。
+
+修改结果：
+
+- Current / History 改为图标-only tab，保留可访问标签、title 和计数 badge。
+- 排序按钮固定在 tab 行右侧但默认透明隐藏，hover/focus tab 行时显示。
+- 客户卡片改为两行 grid，客户名与未回复计时对齐，最新消息与转接/星标/Close 工具对齐。
+- 星标下拉改为 hover 触发，去掉下拉箭头；灰色未关注星标默认隐藏，hover/focus 客户行时显示空心灰星。
+- 收起态头像内星标去掉白色圆形背景，仅保留星标并加轻量白色描边阴影。
+- 本轮不修改旧 `Live Chat`、store、mock、路由或弹框逻辑。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning；本轮额外出现插件耗时提示，不影响构建结果。
+- Browser `/design-system` 可加载，标题为 `BANK 1 AICC Demo`。
+- Browser `/` 可加载；自动化可数到侧栏和 `livechat2` 按钮，但当前 in-app browser 仍报告侧栏按钮无可点击 bounding box，未完成 `Channel Simulation > livechat2` 菜单点击验证。
+
+回滚说明：
+
+- 如需回滚本轮精简，可恢复 `LiveChat2CustomerPanel.tsx` 中图标 tab、hover 星标和客户行 content grid 结构，以及 `src/styles/index.less` 中 `livechat2-customer-panel__view-*`、`sort-button`、`session-card__content`、`star-button`、`collapsed-star` 相关样式。
+
+当前风险点：
+
+- 仍需在浏览器目标分辨率下人工复查 `livechat2` 入口、图标 tab 是否足够清楚、hover 排序按钮是否容易发现、灰色星标隐藏后是否仍便于标记。
+
+### 2026-05-28 01:28 +08:00 - livechat2 客户列表收起态与 tab 微调
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-0128.md`
+- `.codex-backup/current-todo-2026-05-28-0128.md`
+- `.codex-backup/page-state-2026-05-28-0128.md`
+
+修改原因：
+
+- 用户要求继续优化 livechat2 客户列表：收起态 warning / breach 标识要和展开态一样位于左侧，不再用左下角圆点；星标放进渠道头像；Current / History tab 参考 Assistant；排序按钮取消边框并换更简单图标。
+
+修改结果：
+
+- 移除 livechat2 收起态 SLA 小圆点，收起态继续保留 warning / breach 左侧色条。
+- 收起态星标移入渠道头像右下角，略微放大，只作为只读状态展示。
+- Current / History 切换改为 Assistant 风格的轻量下划线 tab。
+- 排序按钮取消边框和白底，图标改为更简洁的菜单图标。
+- 本轮不修改旧 `Live Chat`、store、mock、路由或弹框逻辑。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+- Browser `/` 可加载并可 Sign In；受当前 in-app browser 中侧栏按钮无可点击 bounding box/后续 CDP timeout 影响，本轮未完成 `livechat2` 菜单入口的自动化点击验证。
+- Browser `/design-system` 可加载，标题为 `BANK 1 AICC Demo`。
+
+回滚说明：
+
+- 如需回滚本轮微调，可恢复 `LiveChat2CustomerPanel.tsx` 中排序图标与头像内星标结构，以及 `src/styles/index.less` 中 `livechat2-customer-panel__view-*`、`sort-button`、`collapsed-star` 和收起态 SLA 相关样式。
+
+当前风险点：
+
+- 仍需在浏览器目标分辨率下人工复查 `livechat2` 菜单入口、收起态左侧色条、头像内星标位置和 Assistant 风格 tab 的视觉效果。
+
+### 2026-05-28 00:54 +08:00 - livechat2 客户列表视觉密度调整
+
+修改页面或文件：
+
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-05-28-0054.md`
+- `.codex-backup/current-todo-2026-05-28-0054.md`
+- `.codex-backup/page-state-2026-05-28-0054.md`
+
+修改原因：
+
+- 用户要求 livechat2 客户列表进一步参考旧 Live Chat：Current / History 用简洁 tab，去掉 Serving 行和消息时间，恢复 SLA 色条/收起态提示，压缩宽度并解决收起态拥挤与横向滚动。
+
+修改结果：
+
+- 删除 Serving 工具行，将排序改为 Current / History tab 行右侧的小图标下拉。
+- 客户卡片不再显示最新消息发送时间；未回复计时去掉时钟图标。
+- warning / breach 客户恢复左侧色条，收起态显示 SLA 小圆点。
+- 转接与星标在右侧同一行；星标菜单只显示颜色图标。
+- 收起态渠道筛选间距、未读 badge 尺寸、头像右下角只读星标和横向溢出已优化。
+- 展开态 livechat2 第一列收窄到接近旧 Live Chat。
+- 本轮不修改旧 `Live Chat`、store、mock、路由或弹框逻辑。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仍保留既有 Vite/Rolldown chunk size warning。
+
+回滚说明：
+
+- 如需回滚本轮客户列表视觉调整，可恢复 `LiveChat2CustomerPanel.tsx`、`LiveChat2Page.tsx` 和 `src/styles/index.less` 中 livechat2 customer panel 相关改动。
+
+当前风险点：
+
+- 仍需在浏览器目标分辨率下人工复查收起态无横向滚动、SLA 左侧提示和星标小标记位置。
 
 ### 2026-05-28 00:19 +08:00 - 合并弹框评审改动到 livechat2
 

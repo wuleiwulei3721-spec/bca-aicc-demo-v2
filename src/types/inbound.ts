@@ -103,6 +103,7 @@ export interface LiveChat2Session {
   initialStarColor: LiveChat2StarColor
   initialUnansweredSeconds: number | null
   intent: string
+  endReason?: LiveChat2EndReason
   isInitialHistory?: boolean
   lastMessage: string
   lastMessageAt: string
@@ -114,6 +115,8 @@ export interface LiveChat2Session {
   transferSource?: LiveChat2TransferSource
   unreadCount: number
 }
+
+export type LiveChat2SessionInstances = Record<string, LiveChat2Session>
 
 export interface CallFlowStep {
   id: string

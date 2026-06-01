@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react'
-import { DownOutlined, SearchOutlined } from '@ant-design/icons'
-import { Dropdown, Input, Select, Space, Tag } from 'antd'
+import { SearchOutlined } from '@ant-design/icons'
+import { Input, Select, Space, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import type { MenuProps } from 'antd'
 import {
   AppButton,
   AppTable,
@@ -22,20 +21,7 @@ interface TransferModalProps {
 type TransferModalVariant = 'call' | 'conversation'
 
 const callAgentActions = ['Consult', 'Transfer', 'Conference']
-const conversationPrimaryAgentActions = [
-  'Request Transfer',
-  'Request Conference',
-]
-const conversationOverflowAgentActions: MenuProps['items'] = [
-  {
-    key: 'force-transfer',
-    label: 'Force Transfer',
-  },
-  {
-    key: 'force-conference',
-    label: 'Force Conference',
-  },
-]
+const conversationPrimaryAgentActions = ['Transfer', 'Conference']
 const allFilterValue = 'all'
 const transferAgentStatusOptions: TransferAgentStatus[] = [
   'Ready',
@@ -80,22 +66,6 @@ function ConversationAgentActions({ onComplete }: { onComplete: () => void }) {
           {action}
         </AppButton>
       ))}
-      <Dropdown
-        menu={{
-          items: conversationOverflowAgentActions,
-          onClick: () => onComplete(),
-        }}
-        placement="bottomRight"
-        trigger={['click']}
-      >
-        <AppButton
-          aria-label="More transfer actions"
-          className="aicc-transfer-agent-actions__more"
-          icon={<DownOutlined />}
-          size="small"
-          title="More actions"
-        />
-      </Dropdown>
     </div>
   )
 }
@@ -174,7 +144,7 @@ function TransferAgentTab({
     {
       key: 'actions',
       title: 'Actions',
-      width: variant === 'conversation' ? 262 : 198,
+      width: 180,
       render: () =>
         variant === 'conversation' ? (
           <ConversationAgentActions onComplete={onComplete} />
@@ -249,6 +219,23 @@ function TransferSkillTab({ onComplete }: { onComplete: () => void }) {
     )
   }, [keyword])
 
+  const skillAgentCounts = useMemo(
+    () =>
+      transferAgents.reduce<Record<string, { ready: number; total: number }>>(
+        (counts, agent) => {
+          const current = counts[agent.skillName] ?? { ready: 0, total: 0 }
+          counts[agent.skillName] = {
+            ready: current.ready + (agent.status === 'Ready' ? 1 : 0),
+            total: current.total + 1,
+          }
+
+          return counts
+        },
+        {},
+      ),
+    [],
+  )
+
   const columns: ColumnsType<TransferSkill> = [
     {
       dataIndex: 'skillId',
@@ -258,6 +245,21 @@ function TransferSkillTab({ onComplete }: { onComplete: () => void }) {
     {
       dataIndex: 'skillName',
       title: 'Skill Name',
+      ellipsis: true,
+    },
+    {
+      align: 'center',
+      key: 'agentCount',
+      title: 'Agents',
+      width: 78,
+      render: (_, skill) => skillAgentCounts[skill.skillName]?.total ?? 0,
+    },
+    {
+      align: 'center',
+      key: 'readyCount',
+      title: 'Ready',
+      width: 78,
+      render: (_, skill) => skillAgentCounts[skill.skillName]?.ready ?? 0,
     },
     {
       key: 'action',

@@ -1,20 +1,20 @@
 import {
-  ClockCircleOutlined,
-  DownOutlined,
+  DisconnectOutlined,
   EditOutlined,
   GlobalOutlined,
   LeftOutlined,
+  MenuOutlined,
   MobileOutlined,
   RightOutlined,
-  SortAscendingOutlined,
   StarFilled,
-  SwapOutlined,
+  StarOutlined,
   WhatsAppOutlined,
 } from '@ant-design/icons'
-import { Badge, Dropdown, Select, Tooltip } from 'antd'
+import { Badge, Dropdown } from 'antd'
 import type { ReactNode } from 'react'
 import type { MenuProps } from 'antd'
 import type {
+  LiveChat2EndReason,
   LiveChat2Session,
   LiveChat2SortMode,
   LiveChat2StarColor,
@@ -28,9 +28,10 @@ type LiveChat2ListView = 'current' | 'history'
 export interface LiveChat2SessionView extends LiveChat2Session {
   draftMessage: string
   elapsedSeconds: number
+  endReason: LiveChat2EndReason | null
+  endTimeDisplay: string | null
   isFlashing: boolean
   lastMessageDisplay: string
-  lastMessageTimeDisplay: string
   slaState: InteractionSlaState
   starColor: LiveChat2StarColor
   statusDisplay: 'active' | 'ended' | 'history'
@@ -42,11 +43,9 @@ interface LiveChat2CustomerPanelProps {
   activeSessionId: string
   collapsed: boolean
   historySessions: LiveChat2SessionView[]
-  newAccessCount: number
   selectedChannels: LiveChat2Channel[]
   serviceSessions: LiveChat2SessionView[]
   sortMode: LiveChat2SortMode
-  totalServingCount: number
   view: LiveChat2ListView
   onCloseSession: (sessionId: string) => void
   onCollapsedChange: (collapsed: boolean) => void
@@ -135,43 +134,45 @@ function getStarMenuItems(): MenuProps['items'] {
     (color) => ({
       key: color,
       label: (
-        <span className="livechat2-star-menu-item">
-          <StarFilled
-            className={[
-              'livechat2-star',
-              `livechat2-star--${color}`,
-            ].join(' ')}
-          />
-          {starColorLabels[color]}
+        <span
+          aria-label={starColorLabels[color]}
+          className="livechat2-star-menu-item"
+          title={starColorLabels[color]}
+        >
+          {color === 'gray' && (
+            <StarOutlined
+              aria-hidden="true"
+              className={[
+                'livechat2-star',
+                `livechat2-star--${color}`,
+              ].join(' ')}
+            />
+          )}
+          {color !== 'gray' && (
+            <StarFilled
+              aria-hidden="true"
+              className={[
+                'livechat2-star',
+                `livechat2-star--${color}`,
+              ].join(' ')}
+            />
+          )}
         </span>
       ),
     }),
   )
 }
 
-function renderTransferSource(session: LiveChat2SessionView) {
-  if (!session.transferSource) {
-    return null
-  }
-
-  const { agentName, employeeId, team, transferredAt } =
-    session.transferSource
-
-  return (
-    <Tooltip
-      placement="right"
-      title={`${agentName} (${employeeId}) transferred this customer from ${team} at ${transferredAt}.`}
-    >
-      <span
-        aria-label="Transferred customer"
-        className="livechat2-session-card__transfer"
-        role="img"
-      >
-        <SwapOutlined />
-      </span>
-    </Tooltip>
-  )
-}
+const sortMenuItems: MenuProps['items'] = [
+  {
+    key: 'access-time',
+    label: 'Access time',
+  },
+  {
+    key: 'message-time',
+    label: 'Message time',
+  },
+]
 
 function renderSessionCard({
   activeSessionId,
@@ -196,6 +197,8 @@ function renderSessionCard({
     session.unansweredSeconds === null
       ? null
       : formatDuration(session.unansweredSeconds)
+  const hasVisibleSecondRowAction =
+    isEnded || (!isHistory && session.starColor !== 'gray')
 
   return (
     <div
@@ -204,6 +207,9 @@ function renderSessionCard({
         'livechat2-session-card',
         isActive ? 'livechat2-session-card--active' : '',
         isEnded || isHistory ? 'livechat2-session-card--ended' : '',
+        session.slaState !== 'normal'
+          ? `livechat2-session-card--${session.slaState}`
+          : '',
         session.isFlashing ? 'livechat2-session-card--flash' : '',
       ]
         .filter(Boolean)
@@ -220,39 +226,35 @@ function renderSessionCard({
       }}
     >
       <Badge count={session.unreadCountDisplay} overflowCount={99} size="small">
-        <span
-          aria-label={channelLabels[session.channel]}
-          className={[
-            'livechat2-channel-avatar',
-            getChannelClassName(session.channel),
-          ].join(' ')}
-          role="img"
-          title={channelLabels[session.channel]}
-        >
-          {getChannelIcon(session.channel)}
+        <span className="livechat2-session-card__icon-slot">
+          <span
+            aria-label={channelLabels[session.channel]}
+            className={[
+              'livechat2-channel-avatar',
+              getChannelClassName(session.channel),
+            ].join(' ')}
+            role="img"
+            title={channelLabels[session.channel]}
+          >
+            {getChannelIcon(session.channel)}
+            {!isHistory && session.starColor !== 'gray' && (
+              <StarFilled
+                aria-hidden="true"
+                className={[
+                  'livechat2-session-card__collapsed-star',
+                  'livechat2-star',
+                  `livechat2-star--${session.starColor}`,
+                ].join(' ')}
+              />
+            )}
+          </span>
         </span>
       </Badge>
 
-      <span className="livechat2-session-card__body">
+      <span className="livechat2-session-card__content">
         <span className="livechat2-session-card__topline">
           <strong>{session.customer.profile.name}</strong>
-          <span className="livechat2-session-card__time">
-            {session.lastMessageTimeDisplay}
-          </span>
         </span>
-        <span className="livechat2-session-card__message">
-          {session.draftMessage && !isActive ? (
-            <em>
-              <EditOutlined />
-              Draft: {session.draftMessage}
-            </em>
-          ) : (
-            session.lastMessageDisplay
-          )}
-        </span>
-      </span>
-
-      <span className="livechat2-session-card__tools">
         {unansweredLabel && !isHistory && (
           <span
             className={[
@@ -264,46 +266,104 @@ function renderSessionCard({
               .filter(Boolean)
               .join(' ')}
           >
-            <ClockCircleOutlined />
             {unansweredLabel}
           </span>
         )}
-        {renderTransferSource(session)}
-        {!isHistory && (
-          <Dropdown
-            menu={{
-              items: getStarMenuItems(),
-              onClick: ({ key }) =>
-                onStarColorChange(session.id, key as LiveChat2StarColor),
-            }}
-            placement="bottomRight"
-            trigger={['click']}
-          >
-            <span
-              className="livechat2-session-card__star-button"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <StarFilled
-                className={[
-                  'livechat2-star',
-                  `livechat2-star--${session.starColor}`,
-                ].join(' ')}
-              />
-              <DownOutlined />
-            </span>
-          </Dropdown>
-        )}
-        {isEnded && (
+        {isHistory && session.endTimeDisplay && (
           <span
-            className="livechat2-session-card__close"
-            onClick={(event) => {
-              event.stopPropagation()
-              onCloseSession(session.id)
-            }}
+            aria-label={`Ended ${session.endTimeDisplay}`}
+            className="livechat2-session-card__end-time"
+            title={`Ended ${session.endTimeDisplay}`}
           >
-            Close
+            <DisconnectOutlined />
+            {session.endTimeDisplay}
           </span>
         )}
+        <span
+          className={[
+            'livechat2-session-card__message',
+            isHistory || !hasVisibleSecondRowAction
+              ? 'livechat2-session-card__message--full-row'
+              : '',
+            !isHistory && !hasVisibleSecondRowAction
+              ? 'livechat2-session-card__message--floating-action'
+              : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          {session.draftMessage && !isActive ? (
+            <em>
+              <EditOutlined />
+              Draft: {session.draftMessage}
+            </em>
+          ) : (
+            session.lastMessageDisplay
+          )}
+        </span>
+        <span
+          className={[
+            'livechat2-session-card__action-row',
+            !hasVisibleSecondRowAction
+              ? 'livechat2-session-card__action-row--floating'
+              : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          {!isHistory && !isEnded && (
+            <Dropdown
+              menu={{
+                items: getStarMenuItems(),
+                onClick: ({ key }) =>
+                  onStarColorChange(session.id, key as LiveChat2StarColor),
+              }}
+              placement="bottomRight"
+              trigger={['hover']}
+            >
+              <span
+                aria-label={starColorLabels[session.starColor]}
+                className={[
+                  'livechat2-session-card__star-button',
+                  session.starColor === 'gray'
+                    ? 'livechat2-session-card__star-button--empty'
+                    : 'livechat2-session-card__star-button--marked',
+                ].join(' ')}
+                role="button"
+                tabIndex={0}
+                title={starColorLabels[session.starColor]}
+                onClick={(event) => event.stopPropagation()}
+              >
+                {session.starColor === 'gray' ? (
+                  <StarOutlined
+                    className={[
+                      'livechat2-star',
+                      `livechat2-star--${session.starColor}`,
+                    ].join(' ')}
+                  />
+                ) : (
+                  <StarFilled
+                    className={[
+                      'livechat2-star',
+                      `livechat2-star--${session.starColor}`,
+                    ].join(' ')}
+                  />
+                )}
+              </span>
+            </Dropdown>
+          )}
+          {isEnded && (
+            <span
+              className="livechat2-session-card__close"
+              onClick={(event) => {
+                event.stopPropagation()
+                onCloseSession(session.id)
+              }}
+            >
+              Close
+            </span>
+          )}
+        </span>
       </span>
     </div>
   )
@@ -313,11 +373,9 @@ export function LiveChat2CustomerPanel({
   activeSessionId,
   collapsed,
   historySessions,
-  newAccessCount,
   selectedChannels,
   serviceSessions,
   sortMode,
-  totalServingCount,
   view,
   onCloseSession,
   onCollapsedChange,
@@ -347,11 +405,11 @@ export function LiveChat2CustomerPanel({
       ]
         .filter(Boolean)
         .join(' ')}
-      aria-label="livechat2 customers"
+      aria-label="Live Chat customers"
     >
       <header className="livechat2-customer-panel__header">
         <div
-          aria-label="Filter livechat2 customers by channel"
+          aria-label="Filter Live Chat customers by channel"
           className="livechat2-customer-panel__filters"
           role="group"
         >
@@ -392,8 +450,8 @@ export function LiveChat2CustomerPanel({
         <button
           aria-label={
             collapsed
-              ? 'Expand livechat2 customer list'
-              : 'Collapse livechat2 customer list'
+              ? 'Expand Live Chat customer list'
+              : 'Collapse Live Chat customer list'
           }
           className="livechat2-customer-panel__toggle"
           title={collapsed ? 'Expand' : 'Collapse'}
@@ -405,69 +463,77 @@ export function LiveChat2CustomerPanel({
       </header>
 
       {!collapsed && (
-        <div className="livechat2-customer-panel__tools">
-          <div className="livechat2-customer-panel__metrics">
-            <Badge count={newAccessCount} overflowCount={99} size="small">
-              <span className="livechat2-customer-panel__metric-icon">
-                <WhatsAppOutlined />
-              </span>
-            </Badge>
-            <span>Serving: {totalServingCount}</span>
-          </div>
-          <Select
-            aria-label="Sort livechat2 customers"
-            className="livechat2-customer-panel__sort"
-            options={[
-              {
-                label: 'Access time',
-                value: 'access-time',
-              },
-              {
-                label: 'Message time',
-                value: 'message-time',
-              },
-            ]}
-            prefix={<SortAscendingOutlined />}
-            size="small"
-            value={sortMode}
-            onChange={onSortModeChange}
-          />
-        </div>
-      )}
-
-      {!collapsed && (
         <div
           className="livechat2-customer-panel__view-toggle"
-          role="tablist"
         >
-          <button
-            aria-selected={view === 'current'}
-            className={
-              view === 'current'
-                ? 'livechat2-customer-panel__view-toggle-button livechat2-customer-panel__view-toggle-button--active'
-                : 'livechat2-customer-panel__view-toggle-button'
-            }
-            role="tab"
-            type="button"
-            onClick={() => onViewChange('current')}
+          <div
+            className="livechat2-customer-panel__view-tabs"
+            role="tablist"
           >
-            Current
-            <span>{visibleServiceSessions.length}</span>
-          </button>
-          <button
-            aria-selected={view === 'history'}
-            className={
-              view === 'history'
-                ? 'livechat2-customer-panel__view-toggle-button livechat2-customer-panel__view-toggle-button--active'
-                : 'livechat2-customer-panel__view-toggle-button'
-            }
-            role="tab"
-            type="button"
-            onClick={() => onViewChange('history')}
+            <button
+              aria-label={`Current conversations, ${visibleServiceSessions.length}`}
+              aria-selected={view === 'current'}
+              className={
+                view === 'current'
+                  ? 'livechat2-customer-panel__view-toggle-button livechat2-customer-panel__view-toggle-button--active'
+                  : 'livechat2-customer-panel__view-toggle-button'
+              }
+              role="tab"
+              title="Current"
+              type="button"
+              onClick={() => onViewChange('current')}
+            >
+              <span className="livechat2-customer-panel__view-label">
+                Current
+              </span>
+              <span className="livechat2-customer-panel__view-count">
+                {visibleServiceSessions.length}
+              </span>
+            </button>
+            <button
+              aria-label={`History conversations, ${visibleHistorySessions.length}`}
+              aria-selected={view === 'history'}
+              className={
+                view === 'history'
+                  ? 'livechat2-customer-panel__view-toggle-button livechat2-customer-panel__view-toggle-button--active'
+                  : 'livechat2-customer-panel__view-toggle-button'
+              }
+              role="tab"
+              title="History"
+              type="button"
+              onClick={() => onViewChange('history')}
+            >
+              <span className="livechat2-customer-panel__view-label">
+                History
+              </span>
+              <span className="livechat2-customer-panel__view-count">
+                {visibleHistorySessions.length}
+              </span>
+            </button>
+          </div>
+          <Dropdown
+            menu={{
+              items: sortMenuItems,
+              onClick: ({ key }) =>
+                onSortModeChange(key as LiveChat2SortMode),
+              selectedKeys: [sortMode],
+            }}
+            placement="bottomRight"
+            trigger={['click']}
           >
-            History
-            <span>{visibleHistorySessions.length}</span>
-          </button>
+            <button
+              aria-label="Sort Live Chat customers"
+              className="livechat2-customer-panel__sort-button"
+              title={
+                sortMode === 'access-time'
+                  ? 'Sort by access time'
+                  : 'Sort by message time'
+              }
+              type="button"
+            >
+              <MenuOutlined />
+            </button>
+          </Dropdown>
         </div>
       )}
 

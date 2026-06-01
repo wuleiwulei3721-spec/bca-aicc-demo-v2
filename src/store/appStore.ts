@@ -2,10 +2,13 @@ import { create } from 'zustand'
 import type {
   LiveChat2EndReason,
   LiveChat2Message,
+  LiveChat2Session,
+  LiveChat2SessionInstances,
   LiveChat2SessionStatus,
   LiveChat2SortMode,
   LiveChat2StarColor,
 } from '../types'
+import { liveChat2Sessions } from '../mock/inbound'
 
 export type InboundPopupSource = 'pstn' | 'bankapp-voice'
 export type VideoCallPopupSource = 'standard' | 'bankapp-video'
@@ -49,15 +52,18 @@ export interface CallInteraction {
 }
 
 const INTERACTION_FLASH_MS = 5000
-
-function createInteractionTiming(): InteractionTiming {
-  const now = Date.now()
-
-  return {
-    flashUntil: now + INTERACTION_FLASH_MS,
-    startedAt: now,
-  }
+const LIVE_CHAT_TAB_KEY = 'live-chat'
+const LEGACY_LIVECHAT2_TAB_KEY = 'livechat2'
+const LIVE_CHAT_TO_LIVECHAT2_SESSION_ID: Record<string, string> = {
+  'live-chat-001': 'livechat2-001',
+  'live-chat-002': 'livechat2-002',
+  'live-chat-003': 'livechat2-003',
 }
+const liveChat2SessionById = Object.fromEntries(
+  liveChat2Sessions.map((session) => [session.id, session]),
+) as Record<string, (typeof liveChat2Sessions)[number]>
+const fallbackLiveChat2SessionId =
+  liveChat2Sessions.find((session) => !session.isInitialHistory)?.id ?? null
 
 function formatCurrentLiveChat2Time() {
   return new Intl.DateTimeFormat('en-GB', {
@@ -75,6 +81,73 @@ function createLiveChat2Status(
     endedAt: status === 'ended' ? Date.now() : null,
     endReason,
     status,
+  }
+}
+
+function getLiveChat2ReplacementSessionId(sessionId?: string) {
+  if (!sessionId) {
+    return null
+  }
+
+  if (LIVE_CHAT_TO_LIVECHAT2_SESSION_ID[sessionId]) {
+    return LIVE_CHAT_TO_LIVECHAT2_SESSION_ID[sessionId]
+  }
+
+  if (liveChat2SessionById[sessionId]) {
+    return sessionId
+  }
+
+  return fallbackLiveChat2SessionId
+}
+
+function cloneLiveChat2MessageForSession(
+  message: LiveChat2Message,
+  sourceSessionId: string,
+  nextSessionId: string,
+) {
+  return {
+    ...message,
+    id: message.id.replace(sourceSessionId, nextSessionId),
+  }
+}
+
+function createLiveChat2HandoffSession(
+  sourceSession: LiveChat2Session,
+  nextSessionId: string,
+  accessSequence: number,
+  now: number,
+): LiveChat2Session {
+  const time = formatCurrentLiveChat2Time()
+
+  return {
+    ...sourceSession,
+    accessSequence,
+    customer: {
+      ...sourceSession.customer,
+      accessDuration: '00:00',
+      profile: {
+        ...sourceSession.customer.profile,
+      },
+    },
+    historyMessages: sourceSession.historyMessages.map((message) =>
+      cloneLiveChat2MessageForSession(
+        message,
+        sourceSession.id,
+        nextSessionId,
+      ),
+    ),
+    id: nextSessionId,
+    lastMessageAt: new Date(now).toISOString(),
+    lastMessageTime: time,
+    messages: sourceSession.messages.map((message) =>
+      cloneLiveChat2MessageForSession(
+        message,
+        sourceSession.id,
+        nextSessionId,
+      ),
+    ),
+    serviceStartedAt: time,
+    status: 'active',
   }
 }
 
@@ -118,9 +191,11 @@ interface AppState {
   liveChat2MessagesBySessionId: Record<string, LiveChat2Message[]>
   liveChat2ReadSessionIds: string[]
   liveChat2RecalledMessageIds: string[]
+  liveChat2SessionInstances: LiveChat2SessionInstances
   liveChat2SessionStatuses: Record<string, LiveChat2SessionStatusState>
   liveChat2SessionTimings: Record<string, InteractionTiming>
   liveChat2SortMode: LiveChat2SortMode
+  liveChat2HandoffSeq: number
   liveChat2StarColors: Record<string, LiveChat2StarColor>
   liveChat2UnansweredSinceBySessionId: Record<string, number>
   liveChatSessionTimings: Record<string, InteractionTiming>
@@ -150,7 +225,9 @@ interface AppState {
   requestLiveChat2Workspace: (
     sessionIds: string[],
     options?: {
+      initialElapsedSeconds?: Record<string, number | null>
       initialStarColors?: Record<string, LiveChat2StarColor>
+      initialSessionStatuses?: Record<string, LiveChat2SessionStatusState>
       initialUnansweredSeconds?: Record<string, number | null>
       activate?: boolean
     },
@@ -186,6 +263,7 @@ interface AppState {
     sessionId: string,
     message: string,
     baseMessages: LiveChat2Message[],
+    quotedMessage?: string | null,
   ) => void
   clearLiveChat2Sessions: () => void
   clearLiveChatSessions: () => void
@@ -220,9 +298,11 @@ export const useAppStore = create<AppState>((set) => ({
   liveChat2MessagesBySessionId: {},
   liveChat2ReadSessionIds: [],
   liveChat2RecalledMessageIds: [],
+  liveChat2SessionInstances: {},
   liveChat2SessionStatuses: {},
   liveChat2SessionTimings: {},
   liveChat2SortMode: 'access-time',
+  liveChat2HandoffSeq: 0,
   liveChat2StarColors: {},
   liveChat2UnansweredSinceBySessionId: {},
   liveChatSessionTimings: {},
@@ -234,9 +314,9 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({
       activeWorkspaceTabKey: state.activeWorkspaceTabKey.startsWith('call-')
         ? state.isLiveChatTabOpen
-          ? 'live-chat'
+          ? LIVE_CHAT_TAB_KEY
           : state.isLiveChat2TabOpen
-            ? 'livechat2'
+            ? LEGACY_LIVECHAT2_TAB_KEY
             : 'home'
         : state.activeWorkspaceTabKey,
       bankAppVideoShareState: 'idle',
@@ -281,9 +361,9 @@ export const useAppStore = create<AppState>((set) => ({
           state.activeWorkspaceTabKey === interaction.tabKey
             ? fallbackInteraction?.tabKey ??
               (state.isLiveChatTabOpen
-                ? 'live-chat'
+                ? LIVE_CHAT_TAB_KEY
                 : state.isLiveChat2TabOpen
-                  ? 'livechat2'
+                  ? LEGACY_LIVECHAT2_TAB_KEY
                   : 'home')
             : state.activeWorkspaceTabKey,
         callInteractionOrder: nextCallInteractionOrder,
@@ -504,15 +584,31 @@ export const useAppStore = create<AppState>((set) => ({
       }
 
       sessionIds.forEach((sessionId) => {
+        const initialElapsedSeconds =
+          options?.initialElapsedSeconds?.[sessionId]
+        const safeInitialElapsedSeconds =
+          typeof initialElapsedSeconds === 'number'
+            ? Math.max(0, initialElapsedSeconds)
+            : 0
+
         if (!nextTimings[sessionId]) {
           nextTimings[sessionId] = {
             flashUntil: now + INTERACTION_FLASH_MS,
-            startedAt: now,
+            startedAt: now - safeInitialElapsedSeconds * 1000,
           }
         }
 
         if (!nextStatuses[sessionId]) {
-          nextStatuses[sessionId] = createLiveChat2Status('active')
+          const initialStatus = options?.initialSessionStatuses?.[sessionId]
+          nextStatuses[sessionId] = initialStatus
+            ? {
+                ...initialStatus,
+                endedAt:
+                  initialStatus.status === 'ended'
+                    ? (initialStatus.endedAt ?? now)
+                    : null,
+              }
+            : createLiveChat2Status('active')
         }
 
         const initialStarColor = options?.initialStarColors?.[sessionId]
@@ -526,8 +622,15 @@ export const useAppStore = create<AppState>((set) => ({
           typeof initialUnansweredSeconds === 'number' &&
           !nextUnanswered[sessionId]
         ) {
+          const safeInitialUnansweredSeconds =
+            safeInitialElapsedSeconds > 0
+              ? Math.min(
+                  Math.max(0, initialUnansweredSeconds),
+                  safeInitialElapsedSeconds,
+                )
+              : Math.max(0, initialUnansweredSeconds)
           nextUnanswered[sessionId] =
-            now - Math.max(0, initialUnansweredSeconds) * 1000
+            now - safeInitialUnansweredSeconds * 1000
         }
       })
 
@@ -536,8 +639,9 @@ export const useAppStore = create<AppState>((set) => ({
         activeWorkspaceTabKey:
           options?.activate === false
             ? state.activeWorkspaceTabKey
-            : 'livechat2',
-        isLiveChat2TabOpen: true,
+            : LIVE_CHAT_TAB_KEY,
+        isLiveChatTabOpen: true,
+        isLiveChat2TabOpen: false,
         liveChat2FocusRequestId:
           sessionIds.length > 0
             ? state.liveChat2FocusRequestId + 1
@@ -552,36 +656,124 @@ export const useAppStore = create<AppState>((set) => ({
     }),
   requestLiveChatWorkspace: (sessionId, activate = true) =>
     set((state) => {
-      const nextActiveLiveChatSessionIds =
-        sessionId && !state.activeLiveChatSessionIds.includes(sessionId)
-          ? [...state.activeLiveChatSessionIds, sessionId]
-          : state.activeLiveChatSessionIds
-      const nextLiveChatSessionTimings =
-        sessionId && !state.liveChatSessionTimings[sessionId]
-          ? {
-              ...state.liveChatSessionTimings,
-              [sessionId]: createInteractionTiming(),
-            }
-          : state.liveChatSessionTimings
-      const nextReadLiveChatSessionIds =
-        sessionId && !state.activeLiveChatSessionIds.includes(sessionId)
-          ? state.readLiveChatSessionIds.filter(
-              (readSessionId) => readSessionId !== sessionId,
+      const liveChat2SessionId = getLiveChat2ReplacementSessionId(sessionId)
+      const sourceSession = liveChat2SessionId
+        ? liveChat2SessionById[liveChat2SessionId]
+        : null
+      const now = Date.now()
+      const nextHandoffSeq = state.liveChat2HandoffSeq + 1
+      const handoffSessionId =
+        liveChat2SessionId && sourceSession
+          ? `${liveChat2SessionId}-handoff-${nextHandoffSeq}`
+          : null
+      const handoffSession =
+        handoffSessionId && sourceSession
+          ? createLiveChat2HandoffSession(
+              sourceSession,
+              handoffSessionId,
+              1000 + nextHandoffSeq,
+              now,
             )
-          : state.readLiveChatSessionIds
+          : null
+      let nextActiveSessionIds = state.activeLiveChat2SessionIds
+      let nextClosedSessionIds = state.liveChat2ClosedSessionIds
+      let nextDrafts = state.liveChat2DraftMessages
+      let nextLastMessageOverrides = state.liveChat2LastMessageOverrides
+      let nextMessagesBySessionId = state.liveChat2MessagesBySessionId
+      let nextReadSessionIds = state.liveChat2ReadSessionIds
+      let nextRecalledMessageIds = state.liveChat2RecalledMessageIds
+      let nextSessionStatuses = state.liveChat2SessionStatuses
+      let nextSessionTimings = state.liveChat2SessionTimings
+      let nextStarColors = state.liveChat2StarColors
+      let nextUnanswered = state.liveChat2UnansweredSinceBySessionId
+      let nextSessionInstances = state.liveChat2SessionInstances
+
+      if (handoffSessionId && handoffSession) {
+        const initialUnansweredSeconds =
+          typeof handoffSession.initialUnansweredSeconds === 'number'
+            ? 0
+            : null
+
+        nextActiveSessionIds = [
+          ...state.activeLiveChat2SessionIds,
+          handoffSessionId,
+        ]
+        nextClosedSessionIds = state.liveChat2ClosedSessionIds.filter(
+          (closedSessionId) => closedSessionId !== handoffSessionId,
+        )
+        nextDrafts = { ...state.liveChat2DraftMessages }
+        nextLastMessageOverrides = {
+          ...state.liveChat2LastMessageOverrides,
+        }
+        nextMessagesBySessionId = {
+          ...state.liveChat2MessagesBySessionId,
+        }
+        nextReadSessionIds = state.liveChat2ReadSessionIds.filter(
+          (readSessionId) => readSessionId !== handoffSessionId,
+        )
+        nextRecalledMessageIds = state.liveChat2RecalledMessageIds.filter(
+          (messageId) => !messageId.includes(handoffSessionId),
+        )
+        nextSessionInstances = {
+          ...state.liveChat2SessionInstances,
+          [handoffSessionId]: handoffSession,
+        }
+        nextSessionStatuses = {
+          ...state.liveChat2SessionStatuses,
+          [handoffSessionId]: createLiveChat2Status('active'),
+        }
+        nextSessionTimings = {
+          ...state.liveChat2SessionTimings,
+          [handoffSessionId]: {
+            flashUntil: now + INTERACTION_FLASH_MS,
+            startedAt: now,
+          },
+        }
+        nextStarColors = {
+          ...state.liveChat2StarColors,
+          [handoffSessionId]: 'gray',
+        }
+        nextUnanswered = { ...state.liveChat2UnansweredSinceBySessionId }
+
+        if (initialUnansweredSeconds === null) {
+          delete nextUnanswered[handoffSessionId]
+        } else {
+          nextUnanswered[handoffSessionId] =
+            now - initialUnansweredSeconds * 1000
+        }
+      }
 
       return {
-        activeLiveChatSessionIds: nextActiveLiveChatSessionIds,
+        activeLiveChat2SessionIds: nextActiveSessionIds,
+        activeLiveChatSessionIds: [],
         activeWorkspaceTabKey: activate
-          ? 'live-chat'
+          ? LIVE_CHAT_TAB_KEY
           : state.activeWorkspaceTabKey,
+        isLiveChat2TabOpen: false,
         isLiveChatTabOpen: true,
-        liveChatFocusRequestId: sessionId
-          ? state.liveChatFocusRequestId + 1
-          : state.liveChatFocusRequestId,
-        liveChatFocusSessionId: sessionId ?? state.liveChatFocusSessionId,
-        liveChatSessionTimings: nextLiveChatSessionTimings,
-        readLiveChatSessionIds: nextReadLiveChatSessionIds,
+        liveChat2ClosedSessionIds: nextClosedSessionIds,
+        liveChat2DraftMessages: nextDrafts,
+        liveChat2FocusRequestId: handoffSessionId
+          ? state.liveChat2FocusRequestId + 1
+          : state.liveChat2FocusRequestId,
+        liveChat2FocusSessionId:
+          handoffSessionId ?? state.liveChat2FocusSessionId,
+        liveChat2LastMessageOverrides: nextLastMessageOverrides,
+        liveChat2MessagesBySessionId: nextMessagesBySessionId,
+        liveChat2ReadSessionIds: nextReadSessionIds,
+        liveChat2RecalledMessageIds: nextRecalledMessageIds,
+        liveChat2SessionInstances: nextSessionInstances,
+        liveChat2SessionStatuses: nextSessionStatuses,
+        liveChat2SessionTimings: nextSessionTimings,
+        liveChat2StarColors: nextStarColors,
+        liveChat2UnansweredSinceBySessionId: nextUnanswered,
+        liveChat2HandoffSeq: handoffSessionId
+          ? nextHandoffSeq
+          : state.liveChat2HandoffSeq,
+        liveChatFocusRequestId: state.liveChatFocusRequestId,
+        liveChatFocusSessionId: null,
+        liveChatSessionTimings: {},
+        readLiveChatSessionIds: [],
       }
     }),
   requestCustomerOutboundCall: () =>
@@ -626,12 +818,35 @@ export const useAppStore = create<AppState>((set) => ({
     })),
   setLiveChatTabOpen: (open) =>
     set((state) => ({
+      activeLiveChat2SessionIds: open ? state.activeLiveChat2SessionIds : [],
       activeLiveChatSessionIds: open ? state.activeLiveChatSessionIds : [],
       activeWorkspaceTabKey:
-        !open && state.activeWorkspaceTabKey === 'live-chat'
+        !open && state.activeWorkspaceTabKey === LIVE_CHAT_TAB_KEY
           ? 'home'
           : state.activeWorkspaceTabKey,
+      isLiveChat2TabOpen: false,
       isLiveChatTabOpen: open,
+      liveChat2ClosedSessionIds: open ? state.liveChat2ClosedSessionIds : [],
+      liveChat2DraftMessages: open ? state.liveChat2DraftMessages : {},
+      liveChat2FocusSessionId: open ? state.liveChat2FocusSessionId : null,
+      liveChat2LastMessageOverrides: open
+        ? state.liveChat2LastMessageOverrides
+        : {},
+      liveChat2MessagesBySessionId: open
+        ? state.liveChat2MessagesBySessionId
+        : {},
+      liveChat2ReadSessionIds: open ? state.liveChat2ReadSessionIds : [],
+      liveChat2RecalledMessageIds: open
+        ? state.liveChat2RecalledMessageIds
+        : [],
+      liveChat2SessionInstances: open ? state.liveChat2SessionInstances : {},
+      liveChat2SessionStatuses: open ? state.liveChat2SessionStatuses : {},
+      liveChat2SessionTimings: open ? state.liveChat2SessionTimings : {},
+      liveChat2StarColors: open ? state.liveChat2StarColors : {},
+      liveChat2UnansweredSinceBySessionId: open
+        ? state.liveChat2UnansweredSinceBySessionId
+        : {},
+      liveChat2HandoffSeq: open ? state.liveChat2HandoffSeq : 0,
       liveChatFocusSessionId: open ? state.liveChatFocusSessionId : null,
       liveChatSessionTimings: open ? state.liveChatSessionTimings : {},
       readLiveChatSessionIds: open ? state.readLiveChatSessionIds : [],
@@ -700,8 +915,8 @@ export const useAppStore = create<AppState>((set) => ({
           endReason === 'agent'
             ? 'Agent ended this service conversation.'
             : endReason === 'customer'
-              ? 'Customer ended this service conversation.'
-              : 'Customer timeout closed this service conversation.',
+              ? 'This user has ended the session.'
+              : 'This session was closed due to customer timeout.',
         sender: 'system',
         senderName: 'System',
         time,
@@ -757,7 +972,7 @@ export const useAppStore = create<AppState>((set) => ({
             ],
           },
     ),
-  sendLiveChat2Message: (sessionId, message, baseMessages) =>
+  sendLiveChat2Message: (sessionId, message, baseMessages, quotedMessage) =>
     set((state) => {
       const now = Date.now()
       const time = formatCurrentLiveChat2Time()
@@ -770,6 +985,7 @@ export const useAppStore = create<AppState>((set) => ({
         senderName: 'Nadia Putri',
         time,
         timestamp: new Date(now).toISOString(),
+        quotedMessage: quotedMessage || undefined,
       }
       const nextDrafts = { ...state.liveChat2DraftMessages }
       const nextUnanswered = {
@@ -809,9 +1025,9 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({
       activeLiveChat2SessionIds: [],
       activeWorkspaceTabKey:
-        state.activeWorkspaceTabKey === 'livechat2'
+        state.activeWorkspaceTabKey === LEGACY_LIVECHAT2_TAB_KEY
           ? state.isLiveChatTabOpen
-            ? 'live-chat'
+            ? LIVE_CHAT_TAB_KEY
             : 'home'
           : state.activeWorkspaceTabKey,
       isLiveChat2TabOpen: false,
@@ -822,10 +1038,12 @@ export const useAppStore = create<AppState>((set) => ({
       liveChat2MessagesBySessionId: {},
       liveChat2ReadSessionIds: [],
       liveChat2RecalledMessageIds: [],
+      liveChat2SessionInstances: {},
       liveChat2SessionStatuses: {},
       liveChat2SessionTimings: {},
       liveChat2StarColors: {},
       liveChat2UnansweredSinceBySessionId: {},
+      liveChat2HandoffSeq: 0,
     })),
   clearLiveChatSessions: () =>
     set({

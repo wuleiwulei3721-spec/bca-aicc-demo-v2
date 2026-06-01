@@ -256,7 +256,10 @@ export function CrmPanel({
       ...workspaceTabs.map((tab) => ({
         key: tab.key,
         closable: true,
-        label: renderCrmTabLabel(tab.title, renderWorkspaceTabIcon(tab.kind)),
+        label: renderCrmTabLabel(
+          tab.kind === 'ticket' && tab.reference ? tab.reference : tab.title,
+          renderWorkspaceTabIcon(tab.kind),
+        ),
         children: <WorkspaceBusinessDetail tab={tab} />,
       })),
     ],
