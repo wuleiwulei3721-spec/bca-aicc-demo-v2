@@ -402,105 +402,77 @@ export const channelMediaSettings: ChannelMedia[] = [
 
 export const mediaServiceRulePlans: MediaServiceRulePlan[] = [
   {
-    agentEndMessage: 'Thank you for contacting us. Have a great day!',
+    accessSuccessWelcomeMessage:
+      'Hello, the intelligent assistant is ready to serve you.',
     agentNoReplyAutoResponseMessage: 'Please wait, we are processing...',
-    agentNoReplyAutoResponseMinutes: 2,
-    agentNoReplyBreachMinutes: 2,
-    agentNoReplyWarningMinutes: 1,
+    agentNoReplyBreachSeconds: 120,
+    agentNoReplyTimeoutSeconds: 120,
+    agentNoReplyWarningSeconds: 60,
+    agentEndReminder: 'Thank you for contacting us. Have a great day!',
     assignedAgentGreeting: '{agentName} is now serving you.',
-    autoCloseAgentNotice:
+    agentTimeoutNotice:
       'Customer timeout no reply, conversation closed automatically.',
-    autoCloseTimeoutMinutes: 5,
+    customerNoReplyTimeoutMinutes: 5,
+    customerTimeoutNotice:
+      'We have not received your reply. The service has been closed automatically. Please contact us again if needed.',
     description: 'Default rule plan for text-based customer service channels.',
-    firstAccessReminderMessage:
-      'Hello, if you do not reply within {timeoutMinutes} minutes, this conversation will close automatically.',
-    maxConcurrentCustomersPerAgent: 3,
+    maxConcurrentAccess: 50,
+    maxQueueCustomers: 20,
     mediaCode: 'TEXT',
+    minScanIntervalSeconds: 30,
     nonWorkingTimeMessage:
       'Sorry, our working time is {workTime}. Please contact us during service hours.',
     planCode: 'MSRP_TEXT_STANDARD',
     planName: 'Standard Text Service',
-    preCloseReminderMessage:
+    preTimeoutReminderMessage:
       'Please reply soon. This conversation will close in {reminderMinutes} minute.',
-    preCloseReminderMinutes: 1,
-    queueAlerts: [
-      {
-        channelCode: 'HALOAPP',
-        enabled: true,
-        recipients: 'Monitoring Team',
-        threshold: 10,
-      },
-      {
-        channelCode: 'WEBCHAT',
-        enabled: true,
-        recipients: 'Monitoring Team',
-        threshold: 10,
-      },
-      {
-        channelCode: 'WHATSAPP',
-        enabled: true,
-        recipients: 'Monitoring Team',
-        threshold: 10,
-      },
-    ],
+    preTimeoutReminderMinutes: 1,
+    queueTimeoutMessage:
+      'Agents are currently busy. Please try again later.',
+    queueTimeoutMinutes: 10,
     queueWaitingMessage:
       'Our agents are busy now. Estimated waiting time is {estimatedWaitMinutes} minutes.',
     status: 'Active',
     updatedAt: '2026-06-03',
     updatedBy: 'Admin',
-    webchatRecallLimitMinutes: 2,
-    welcomeMessage: 'Welcome. We are ready to help you.',
+    webchatRecallLimitSeconds: 120,
   },
   {
-    agentEndMessage: 'Thank you for choosing priority service.',
+    accessSuccessWelcomeMessage:
+      'Hello, the priority service assistant is ready to serve you.',
     agentNoReplyAutoResponseMessage:
       'Please wait a moment, your request is being handled with priority.',
-    agentNoReplyAutoResponseMinutes: 2,
-    agentNoReplyBreachMinutes: 2,
-    agentNoReplyWarningMinutes: 1,
+    agentNoReplyBreachSeconds: 120,
+    agentNoReplyTimeoutSeconds: 120,
+    agentNoReplyWarningSeconds: 60,
+    agentEndReminder: 'Thank you for choosing priority service.',
     assignedAgentGreeting: '{agentName} is now assisting your priority request.',
-    autoCloseAgentNotice:
+    agentTimeoutNotice:
       'Customer timeout no reply, priority conversation closed automatically.',
-    autoCloseTimeoutMinutes: 8,
+    customerNoReplyTimeoutMinutes: 8,
+    customerTimeoutNotice:
+      'We have not received your reply. The priority service has been closed automatically. Please contact us again if needed.',
     description: 'Priority text service with longer customer timeout.',
-    firstAccessReminderMessage:
-      'Hello, this priority conversation will close if there is no reply within {timeoutMinutes} minutes.',
-    maxConcurrentCustomersPerAgent: 2,
+    maxConcurrentAccess: 50,
+    maxQueueCustomers: 20,
     mediaCode: 'TEXT',
+    minScanIntervalSeconds: 30,
     nonWorkingTimeMessage:
       'Sorry, priority service working time is {workTime}. Please contact us during service hours.',
     planCode: 'MSRP_TEXT_PRIORITY',
     planName: 'Priority Text Service',
-    preCloseReminderMessage:
+    preTimeoutReminderMessage:
       'Please reply soon. Priority service will close this conversation in {reminderMinutes} minute.',
-    preCloseReminderMinutes: 1,
-    queueAlerts: [
-      {
-        channelCode: 'HALOAPP',
-        enabled: true,
-        recipients: 'Monitoring Team',
-        threshold: 8,
-      },
-      {
-        channelCode: 'WEBCHAT',
-        enabled: true,
-        recipients: 'Monitoring Team',
-        threshold: 8,
-      },
-      {
-        channelCode: 'WHATSAPP',
-        enabled: true,
-        recipients: 'Monitoring Team',
-        threshold: 8,
-      },
-    ],
+    preTimeoutReminderMinutes: 1,
+    queueTimeoutMessage:
+      'Priority agents are currently busy. Please try again later.',
+    queueTimeoutMinutes: 10,
     queueWaitingMessage:
       'Priority agents are busy now. Estimated waiting time is {estimatedWaitMinutes} minutes.',
     status: 'Active',
     updatedAt: '2026-06-03',
     updatedBy: 'Admin',
-    webchatRecallLimitMinutes: 2,
-    welcomeMessage: 'Welcome to priority service.',
+    webchatRecallLimitSeconds: 120,
   },
 ]
 

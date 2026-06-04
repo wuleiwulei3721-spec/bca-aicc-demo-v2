@@ -2877,44 +2877,32 @@ a {
   font-size: 11px;
 }
 
-.routing-config-media-rule-modal__queue-alerts {
+.routing-config-media-rule-modal__subsections {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;
 }
 
-.routing-config-media-rule-modal__queue-alert-head,
-.routing-config-media-rule-modal__queue-alert-row {
-  display: grid;
-  grid-template-columns: 140px 100px 170px minmax(220px, 1fr);
-  align-items: center;
+.routing-config-media-rule-modal__subsection {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding-top: 10px;
+  border-top: 1px solid var(--aicc-border);
   gap: 10px;
 }
 
-.routing-config-media-rule-modal__queue-alert-head {
+.routing-config-media-rule-modal__subsection:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.routing-config-media-rule-modal__subsection h4 {
+  margin: 0;
   color: var(--aicc-text);
   font-size: 12px;
   font-weight: 800;
   line-height: 18px;
-}
-
-.routing-config-media-rule-modal__queue-alert-row strong {
-  color: var(--aicc-text);
-  font-size: 12px;
-  line-height: 18px;
-}
-
-.routing-config-media-rule-modal__queue-alert-row .ant-input,
-.routing-config-media-rule-modal__queue-alert-row .ant-input-number,
-.routing-config-media-rule-modal__queue-alert-row .ant-input-number-group-wrapper {
-  height: var(--routing-config-control-height);
-  min-height: var(--routing-config-control-height);
-  width: 100%;
-}
-
-.routing-config-media-rule-modal__queue-alert-row .ant-input-number-input {
-  height: calc(var(--routing-config-control-height) - 2px);
-  line-height: calc(var(--routing-config-control-height) - 2px);
 }
 
 .routing-config-site-volume-modal__form {

@@ -1532,48 +1532,47 @@ const mediaServiceTemplateVariables = [
   '{workTime}',
 ]
 
-const queueAlertChannelCodes = ['HALOAPP', 'WEBCHAT', 'WHATSAPP']
-
 function createDefaultMediaServiceRulePlan(
   existingPlans: MediaServiceRulePlan[],
 ): MediaServiceRulePlan {
   const nextIndex = existingPlans.length + 1
 
   return {
-    agentEndMessage: 'Thank you for contacting us. Have a great day!',
+    accessSuccessWelcomeMessage:
+      'Hello, the intelligent assistant is ready to serve you.',
     agentNoReplyAutoResponseMessage: 'Please wait, we are processing...',
-    agentNoReplyAutoResponseMinutes: 2,
-    agentNoReplyBreachMinutes: 2,
-    agentNoReplyWarningMinutes: 1,
-    assignedAgentGreeting: '{agentName} is now serving you.',
-    autoCloseAgentNotice:
+    agentNoReplyBreachSeconds: 120,
+    agentNoReplyTimeoutSeconds: 120,
+    agentNoReplyWarningSeconds: 60,
+    agentEndReminder: 'Thank you for contacting us. Have a great day!',
+    assignedAgentGreeting:
+      'Dear {customerName}, {agentName} will serve you. If you do not reply within {timeoutMinutes} minutes, this conversation will close automatically. Please check messages in time.',
+    agentTimeoutNotice:
       'Customer timeout no reply, conversation closed automatically.',
-    autoCloseTimeoutMinutes: 5,
+    customerNoReplyTimeoutMinutes: 5,
+    customerTimeoutNotice:
+      'We have not received your reply. The service has been closed automatically. Please contact us again if needed.',
     description: '',
-    firstAccessReminderMessage:
-      'Hello, if you do not reply within {timeoutMinutes} minutes, this conversation will close automatically.',
-    maxConcurrentCustomersPerAgent: 3,
+    maxConcurrentAccess: 50,
+    maxQueueCustomers: 20,
     mediaCode: 'TEXT',
+    minScanIntervalSeconds: 30,
     nonWorkingTimeMessage:
       'Sorry, our working time is {workTime}. Please contact us during service hours.',
     planCode: `MSRP_TEXT_${String(nextIndex).padStart(2, '0')}`,
     planName: '',
-    preCloseReminderMessage:
+    preTimeoutReminderMessage:
       'Please reply soon. This conversation will close in {reminderMinutes} minute.',
-    preCloseReminderMinutes: 1,
-    queueAlerts: queueAlertChannelCodes.map((channelCode) => ({
-      channelCode,
-      enabled: true,
-      recipients: 'Monitoring Team',
-      threshold: 10,
-    })),
+    preTimeoutReminderMinutes: 1,
+    queueTimeoutMessage:
+      'Agents are currently busy. Please try again later.',
+    queueTimeoutMinutes: 10,
     queueWaitingMessage:
       'Our agents are busy now. Estimated waiting time is {estimatedWaitMinutes} minutes.',
     status: 'Active',
     updatedAt: '',
     updatedBy: 'Admin',
-    webchatRecallLimitMinutes: 2,
-    welcomeMessage: 'Welcome. We are ready to help you.',
+    webchatRecallLimitSeconds: 120,
   }
 }
 
@@ -1584,7 +1583,6 @@ export function MediaServiceRulePlansPage() {
   const channelMediaRuleBindings = useRoutingConfigStore(
     (state) => state.channelMediaRuleBindings,
   )
-  const channels = useRoutingConfigStore((state) => state.channels)
   const upsertEntity = useRoutingConfigStore((state) => state.upsertEntity)
   const deleteEntity = useRoutingConfigStore((state) => state.deleteEntity)
   const { mediaOptions } = useRoutingLookups()
@@ -1608,10 +1606,6 @@ export function MediaServiceRulePlansPage() {
   const [selectedPlan, setSelectedPlan] =
     useState<MediaServiceRulePlan | null>(null)
   const [submitAttempted, setSubmitAttempted] = useState(false)
-  const channelLabelByCode = useMemo(
-    () => new Map(channels.map((channel) => [channel.channelCode, channel.channelName])),
-    [channels],
-  )
   const mediaLabelByValue = useMemo(
     () => new Map(mediaOptions.map((option) => [option.value, option.label])),
     [mediaOptions],
@@ -1625,12 +1619,7 @@ export function MediaServiceRulePlansPage() {
     setSelectedPlan(record ?? null)
     setDraft(
       record
-        ? {
-            ...record,
-            queueAlerts: record.queueAlerts.map((alertRule) => ({
-              ...alertRule,
-            })),
-          }
+        ? { ...record }
         : createDefaultMediaServiceRulePlan(mediaServiceRulePlans),
     )
     setNotice(null)
@@ -1648,23 +1637,6 @@ export function MediaServiceRulePlansPage() {
     setDraft((currentDraft) => ({
       ...currentDraft,
       [key]: value,
-    }))
-  }
-  const updateQueueAlert = (
-    channelCode: string,
-    key: 'enabled' | 'recipients' | 'threshold',
-    value: boolean | number | string,
-  ) => {
-    setDraft((currentDraft) => ({
-      ...currentDraft,
-      queueAlerts: currentDraft.queueAlerts.map((alertRule) =>
-        alertRule.channelCode === channelCode
-          ? {
-              ...alertRule,
-              [key]: value,
-            }
-          : alertRule,
-      ),
     }))
   }
   const validationErrors = useMemo(() => {
@@ -1693,36 +1665,52 @@ export function MediaServiceRulePlansPage() {
       errors.push('Only Text media rule plans are supported now.')
     }
 
-    if (draft.maxConcurrentCustomersPerAgent <= 0) {
-      errors.push('Max Concurrent Customers per Agent must be greater than 0.')
+    const positiveNumberFields: Array<[keyof MediaServiceRulePlan, string]> = [
+      ['maxConcurrentAccess', 'Max Concurrent Access'],
+      ['minScanIntervalSeconds', 'Minimum Scan Interval'],
+      ['maxQueueCustomers', 'Max Queue Customers'],
+      ['queueTimeoutMinutes', 'Queue Timeout'],
+      ['preTimeoutReminderMinutes', 'Pre-timeout Reminder Time'],
+      ['customerNoReplyTimeoutMinutes', 'No Reply Timeout'],
+      ['agentNoReplyTimeoutSeconds', 'Agent No Reply Timeout'],
+      ['webchatRecallLimitSeconds', 'Webchat Message Recall Limit'],
+      ['agentNoReplyWarningSeconds', 'Agent No Reply Warning Seconds'],
+      ['agentNoReplyBreachSeconds', 'Agent No Reply Breach Seconds'],
+    ]
+
+    positiveNumberFields.forEach(([field, label]) => {
+      const value = draft[field]
+
+      if (typeof value !== 'number' || value <= 0) {
+        errors.push(`${label} must be greater than 0.`)
+      }
+    })
+
+    if (
+      draft.preTimeoutReminderMinutes >= draft.customerNoReplyTimeoutMinutes
+    ) {
+      errors.push('Pre-timeout Reminder Time must be less than No Reply Timeout.')
     }
 
-    if (draft.agentNoReplyAutoResponseMinutes <= 0) {
-      errors.push('Agent No Reply Auto Response Minutes must be greater than 0.')
+    if (draft.agentNoReplyWarningSeconds > draft.agentNoReplyBreachSeconds) {
+      errors.push('Agent No Reply Warning Seconds must be less than or equal to Breach Seconds.')
     }
 
-    if (draft.agentNoReplyWarningMinutes > draft.agentNoReplyBreachMinutes) {
-      errors.push('Agent No Reply Warning Minutes must be less than or equal to Breach Minutes.')
-    }
-
-    if (draft.preCloseReminderMinutes >= draft.autoCloseTimeoutMinutes) {
-      errors.push('Pre-close Reminder Minutes must be less than Auto Close Timeout Minutes.')
-    }
-
-    if (draft.webchatRecallLimitMinutes <= 0) {
-      errors.push('Webchat Recall Limit must be greater than 0.')
+    if (draft.agentNoReplyBreachSeconds > draft.agentNoReplyTimeoutSeconds) {
+      errors.push('Agent No Reply Breach Seconds must be less than or equal to Agent No Reply Timeout.')
     }
 
     const requiredMessageFields: Array<[keyof MediaServiceRulePlan, string]> = [
       ['agentNoReplyAutoResponseMessage', 'Agent No Reply Auto Response Message'],
-      ['firstAccessReminderMessage', 'First Access Reminder Message'],
-      ['preCloseReminderMessage', 'Pre-close Reminder Message'],
-      ['autoCloseAgentNotice', 'Auto Close Agent Notice'],
-      ['welcomeMessage', 'Welcome Message'],
+      ['accessSuccessWelcomeMessage', 'Access Success Welcome Message'],
+      ['preTimeoutReminderMessage', 'Pre-timeout Reminder Message'],
+      ['customerTimeoutNotice', 'Customer Timeout Notice'],
+      ['agentTimeoutNotice', 'Agent Timeout Notice'],
       ['nonWorkingTimeMessage', 'Non-working Time Message'],
       ['queueWaitingMessage', 'Queue Waiting Message'],
+      ['queueTimeoutMessage', 'Queue Timeout Message'],
       ['assignedAgentGreeting', 'Assigned Agent Greeting'],
-      ['agentEndMessage', 'Agent End Message'],
+      ['agentEndReminder', 'Agent End Reminder'],
     ]
 
     requiredMessageFields.forEach(([field, label]) => {
@@ -1733,23 +1721,8 @@ export function MediaServiceRulePlansPage() {
       }
     })
 
-    draft.queueAlerts.forEach((alertRule) => {
-      if (alertRule.enabled && alertRule.threshold <= 0) {
-        errors.push(
-          `${channelLabelByCode.get(alertRule.channelCode) ?? alertRule.channelCode} Queue Alert threshold must be greater than 0.`,
-        )
-      }
-
-      if (alertRule.enabled && !alertRule.recipients.trim()) {
-        errors.push(
-          `${channelLabelByCode.get(alertRule.channelCode) ?? alertRule.channelCode} Queue Alert recipients are required.`,
-        )
-      }
-    })
-
     return errors
   }, [
-    channelLabelByCode,
     draft,
     mediaServiceRulePlans,
     modalMode,
@@ -1840,6 +1813,25 @@ export function MediaServiceRulePlansPage() {
         value={String(draft[field] ?? '')}
         onChange={(event) =>
           updateDraft(field, event.target.value as never)
+        }
+      />
+    </label>
+  )
+  const renderNumberField = (
+    field: keyof MediaServiceRulePlan,
+    label: string,
+    addonAfter: string,
+    min = 1,
+  ) => (
+    <label className="routing-config-crud-modal__field">
+      <span>{label}</span>
+      <InputNumber
+        addonAfter={addonAfter}
+        disabled={isReadOnly}
+        min={min}
+        value={Number(draft[field] ?? 0)}
+        onChange={(value) =>
+          updateDraft(field, (Number(value) || 0) as never)
         }
       />
     </label>
@@ -2142,127 +2134,7 @@ export function MediaServiceRulePlansPage() {
               <section className="routing-config-crud-modal__section">
                 <header>
                   <strong className="routing-config-crud-modal__section-title">
-                    Capacity & Agent No Reply
-                  </strong>
-                </header>
-                <div className="routing-config-crud-modal__section-grid">
-                  <label className="routing-config-crud-modal__field">
-                    <span>Max Concurrent Customers per Agent</span>
-                    <InputNumber
-                      addonAfter="customers"
-                      disabled={isReadOnly}
-                      min={1}
-                      value={draft.maxConcurrentCustomersPerAgent}
-                      onChange={(value) =>
-                        updateDraft(
-                          'maxConcurrentCustomersPerAgent',
-                          Number(value) || 0,
-                        )
-                      }
-                    />
-                  </label>
-                  <label className="routing-config-crud-modal__field">
-                    <span>Auto Response Minutes</span>
-                    <InputNumber
-                      addonAfter="min"
-                      disabled={isReadOnly}
-                      min={1}
-                      value={draft.agentNoReplyAutoResponseMinutes}
-                      onChange={(value) =>
-                        updateDraft(
-                          'agentNoReplyAutoResponseMinutes',
-                          Number(value) || 0,
-                        )
-                      }
-                    />
-                  </label>
-                  <label className="routing-config-crud-modal__field">
-                    <span>Warning Minutes</span>
-                    <InputNumber
-                      addonAfter="min"
-                      disabled={isReadOnly}
-                      min={0}
-                      value={draft.agentNoReplyWarningMinutes}
-                      onChange={(value) =>
-                        updateDraft(
-                          'agentNoReplyWarningMinutes',
-                          Number(value) || 0,
-                        )
-                      }
-                    />
-                  </label>
-                  <label className="routing-config-crud-modal__field">
-                    <span>Breach Minutes</span>
-                    <InputNumber
-                      addonAfter="min"
-                      disabled={isReadOnly}
-                      min={0}
-                      value={draft.agentNoReplyBreachMinutes}
-                      onChange={(value) =>
-                        updateDraft(
-                          'agentNoReplyBreachMinutes',
-                          Number(value) || 0,
-                        )
-                      }
-                    />
-                  </label>
-                  {renderMessageField(
-                    'agentNoReplyAutoResponseMessage',
-                    'Agent No Reply Auto Response Message',
-                  )}
-                </div>
-              </section>
-
-              <section className="routing-config-crud-modal__section">
-                <header>
-                  <strong className="routing-config-crud-modal__section-title">
-                    Customer Timeout
-                  </strong>
-                </header>
-                <div className="routing-config-crud-modal__section-grid">
-                  <label className="routing-config-crud-modal__field">
-                    <span>Pre-close Reminder Minutes</span>
-                    <InputNumber
-                      addonAfter="min"
-                      disabled={isReadOnly}
-                      min={1}
-                      value={draft.preCloseReminderMinutes}
-                      onChange={(value) =>
-                        updateDraft('preCloseReminderMinutes', Number(value) || 0)
-                      }
-                    />
-                  </label>
-                  <label className="routing-config-crud-modal__field">
-                    <span>Auto Close Timeout Minutes</span>
-                    <InputNumber
-                      addonAfter="min"
-                      disabled={isReadOnly}
-                      min={1}
-                      value={draft.autoCloseTimeoutMinutes}
-                      onChange={(value) =>
-                        updateDraft('autoCloseTimeoutMinutes', Number(value) || 0)
-                      }
-                    />
-                  </label>
-                  {renderMessageField(
-                    'firstAccessReminderMessage',
-                    'First Access Reminder Message',
-                  )}
-                  {renderMessageField(
-                    'preCloseReminderMessage',
-                    'Pre-close Reminder Message',
-                  )}
-                  {renderMessageField(
-                    'autoCloseAgentNotice',
-                    'Auto Close Agent Notice',
-                  )}
-                </div>
-              </section>
-
-              <section className="routing-config-crud-modal__section">
-                <header>
-                  <strong className="routing-config-crud-modal__section-title">
-                    Lifecycle Messages
+                    Customer Service Configuration
                   </strong>
                 </header>
                 <div className="routing-config-media-rule-modal__variables">
@@ -2270,99 +2142,147 @@ export function MediaServiceRulePlansPage() {
                     <Tag key={variable}>{variable}</Tag>
                   ))}
                 </div>
-                <div className="routing-config-crud-modal__section-grid">
-                  {renderMessageField('welcomeMessage', 'Welcome Message')}
-                  {renderMessageField(
-                    'nonWorkingTimeMessage',
-                    'Non-working Time Message',
-                  )}
-                  {renderMessageField(
-                    'queueWaitingMessage',
-                    'Queue Waiting Message',
-                  )}
-                  {renderMessageField(
-                    'assignedAgentGreeting',
-                    'Assigned Agent Greeting',
-                  )}
-                  {renderMessageField('agentEndMessage', 'Agent End Message')}
+                <div className="routing-config-media-rule-modal__subsections">
+                  <div className="routing-config-media-rule-modal__subsection">
+                    <h4>Access Configuration</h4>
+                    <div className="routing-config-crud-modal__section-grid">
+                      {renderNumberField(
+                        'maxConcurrentAccess',
+                        'Max Concurrent Access',
+                        'items',
+                      )}
+                      {renderNumberField(
+                        'minScanIntervalSeconds',
+                        'Minimum Scan Interval',
+                        'sec',
+                      )}
+                      {renderMessageField(
+                        'accessSuccessWelcomeMessage',
+                        'Access Success Welcome Message',
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="routing-config-media-rule-modal__subsection">
+                    <h4>Queue Configuration</h4>
+                    <div className="routing-config-crud-modal__section-grid">
+                      {renderMessageField(
+                        'nonWorkingTimeMessage',
+                        'Non-working Time Message',
+                      )}
+                      {renderNumberField(
+                        'maxQueueCustomers',
+                        'Max Queue Customers',
+                        'customers',
+                      )}
+                      {renderNumberField(
+                        'queueTimeoutMinutes',
+                        'Queue Timeout',
+                        'min',
+                      )}
+                      {renderMessageField(
+                        'queueWaitingMessage',
+                        'Queue Waiting Message',
+                      )}
+                      {renderMessageField(
+                        'queueTimeoutMessage',
+                        'Queue Timeout Message',
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="routing-config-media-rule-modal__subsection">
+                    <h4>Agent Opening / Ending Configuration</h4>
+                    <div className="routing-config-crud-modal__section-grid">
+                      {renderMessageField(
+                        'assignedAgentGreeting',
+                        'Assigned Agent Greeting',
+                      )}
+                      {renderMessageField(
+                        'agentEndReminder',
+                        'Agent End Reminder',
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="routing-config-media-rule-modal__subsection">
+                    <h4>Customer No Reply Configuration</h4>
+                    <div className="routing-config-crud-modal__section-grid">
+                      {renderNumberField(
+                        'preTimeoutReminderMinutes',
+                        'Pre-timeout Reminder Time',
+                        'min',
+                      )}
+                      {renderMessageField(
+                        'preTimeoutReminderMessage',
+                        'Pre-timeout Reminder Message',
+                      )}
+                      {renderNumberField(
+                        'customerNoReplyTimeoutMinutes',
+                        'No Reply Timeout',
+                        'min',
+                      )}
+                      {renderMessageField(
+                        'customerTimeoutNotice',
+                        'Customer Timeout Notice',
+                      )}
+                      {renderMessageField(
+                        'agentTimeoutNotice',
+                        'Agent Timeout Notice',
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="routing-config-media-rule-modal__subsection">
+                    <h4>Agent No Reply Configuration</h4>
+                    <div className="routing-config-crud-modal__section-grid">
+                      {renderNumberField(
+                        'agentNoReplyTimeoutSeconds',
+                        'Agent No Reply Timeout',
+                        'sec',
+                      )}
+                      {renderMessageField(
+                        'agentNoReplyAutoResponseMessage',
+                        'Auto Response Message',
+                      )}
+                    </div>
+                  </div>
                 </div>
               </section>
 
               <section className="routing-config-crud-modal__section">
                 <header>
                   <strong className="routing-config-crud-modal__section-title">
-                    Channel-specific Rules
+                    Agent Service Configuration
                   </strong>
                 </header>
-                <div className="routing-config-media-rule-modal__queue-alerts">
-                  <div className="routing-config-media-rule-modal__queue-alert-head">
-                    <span>Channel</span>
-                    <span>Queue Alert</span>
-                    <span>Threshold</span>
-                    <span>Recipients</span>
-                  </div>
-                  {draft.queueAlerts.map((alertRule) => (
-                    <div
-                      className="routing-config-media-rule-modal__queue-alert-row"
-                      key={alertRule.channelCode}
-                    >
-                      <strong>
-                        {channelLabelByCode.get(alertRule.channelCode) ??
-                          alertRule.channelCode}
-                      </strong>
-                      <Switch
-                        className="routing-config-status-switch"
-                        checked={alertRule.enabled}
-                        disabled={isReadOnly}
-                        size="small"
-                        onChange={(checked) =>
-                          updateQueueAlert(
-                            alertRule.channelCode,
-                            'enabled',
-                            checked,
-                          )
-                        }
-                      />
-                      <InputNumber
-                        addonAfter="people"
-                        disabled={isReadOnly || !alertRule.enabled}
-                        min={1}
-                        value={alertRule.threshold}
-                        onChange={(value) =>
-                          updateQueueAlert(
-                            alertRule.channelCode,
-                            'threshold',
-                            Number(value) || 0,
-                          )
-                        }
-                      />
-                      <Input
-                        disabled={isReadOnly || !alertRule.enabled}
-                        value={alertRule.recipients}
-                        onChange={(event) =>
-                          updateQueueAlert(
-                            alertRule.channelCode,
-                            'recipients',
-                            event.target.value,
-                          )
-                        }
-                      />
+                <div className="routing-config-media-rule-modal__subsections">
+                  <div className="routing-config-media-rule-modal__subsection">
+                    <h4>Webchat Message Recall</h4>
+                    <div className="routing-config-crud-modal__section-grid">
+                      {renderNumberField(
+                        'webchatRecallLimitSeconds',
+                        'Webchat Message Recall Limit',
+                        'sec',
+                      )}
                     </div>
-                  ))}
-                </div>
-                <div className="routing-config-crud-modal__section-grid">
-                  <label className="routing-config-crud-modal__field">
-                    <span>Webchat Recall Limit</span>
-                    <InputNumber
-                      addonAfter="min"
-                      disabled={isReadOnly}
-                      min={1}
-                      value={draft.webchatRecallLimitMinutes}
-                      onChange={(value) =>
-                        updateDraft('webchatRecallLimitMinutes', Number(value) || 0)
-                      }
-                    />
-                  </label>
+                  </div>
+
+                  <div className="routing-config-media-rule-modal__subsection">
+                    <h4>Agent No Reply Service Level</h4>
+                    <div className="routing-config-crud-modal__section-grid">
+                      {renderNumberField(
+                        'agentNoReplyWarningSeconds',
+                        'Warning',
+                        'sec',
+                      )}
+                      {renderNumberField(
+                        'agentNoReplyBreachSeconds',
+                        'Breach',
+                        'sec',
+                      )}
+                    </div>
+                  </div>
                 </div>
               </section>
             </>

@@ -97,38 +97,34 @@ export interface ChannelMedia {
   status: RoutingConfigStatus
 }
 
-export interface TextMediaQueueAlertRule {
-  channelCode: string
-  enabled: boolean
-  recipients: string
-  threshold: number
-}
-
 export interface MediaServiceRulePlan {
-  agentEndMessage: string
   agentNoReplyAutoResponseMessage: string
-  agentNoReplyAutoResponseMinutes: number
-  agentNoReplyBreachMinutes: number
-  agentNoReplyWarningMinutes: number
+  agentNoReplyBreachSeconds: number
+  agentNoReplyTimeoutSeconds: number
+  agentNoReplyWarningSeconds: number
+  agentEndReminder: string
   assignedAgentGreeting: string
-  autoCloseAgentNotice: string
-  autoCloseTimeoutMinutes: number
+  accessSuccessWelcomeMessage: string
+  agentTimeoutNotice: string
+  customerNoReplyTimeoutMinutes: number
+  customerTimeoutNotice: string
   description: string
-  firstAccessReminderMessage: string
-  maxConcurrentCustomersPerAgent: number
+  maxConcurrentAccess: number
+  maxQueueCustomers: number
   mediaCode: MediaTypeCode
+  minScanIntervalSeconds: number
   nonWorkingTimeMessage: string
   planCode: string
   planName: string
-  preCloseReminderMessage: string
-  preCloseReminderMinutes: number
-  queueAlerts: TextMediaQueueAlertRule[]
+  preTimeoutReminderMessage: string
+  preTimeoutReminderMinutes: number
+  queueTimeoutMessage: string
+  queueTimeoutMinutes: number
   queueWaitingMessage: string
   status: RoutingConfigStatus
   updatedAt: string
   updatedBy: string
-  webchatRecallLimitMinutes: number
-  welcomeMessage: string
+  webchatRecallLimitSeconds: number
 }
 
 export interface ChannelMediaRuleBinding {

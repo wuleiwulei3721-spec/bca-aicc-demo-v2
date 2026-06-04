@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-06-04 12:36 +08:00
+最后更新：2026-06-04 14:54 +08:00
 
 ## 项目方向
 
@@ -663,11 +663,21 @@
 - 不再把文字媒体业务规则直接塞进 `Channels` 页面；`Channels` 只维护渠道主数据和每个媒体引用的服务规则方案。
 - 新增 `Media Service Rule Plans / 媒体服务规则配置`，当前先完整支持 `Text` 媒体；Voice / Video 只预留规则方案引用能力，页面显示 `Reserved / Not configured`。
 - 新增 `ChannelMediaRuleBinding` 概念：每个 `Channel + Media Type` 最多绑定一个服务规则方案；Active 的 `Channel + Text` 必须绑定 Enabled Text rule plan。
-- Text Media Rule Plan 分区：Basic Info、Capacity & Agent No Reply、Customer Timeout、Lifecycle Messages、Channel-specific Rules。
-- Text 默认业务值：每坐席最多 3 个客户、坐席 2 分钟未回复自动回复、坐席未回复 1 分钟黄色提醒/2 分钟红色提醒、客户 5 分钟未回复自动关闭、关闭前 1 分钟提醒。
-- Lifecycle Messages 支持欢迎语、非工作时间提示语、排队提示语、分配坐席成功问候语、坐席主动结束语；支持变量 `{customerName}`、`{channelName}`、`{agentName}`、`{timeoutMinutes}`、`{reminderMinutes}`、`{estimatedWaitMinutes}`、`{workTime}`。
-- Channel-specific Rules 当前支持 Haloapp / webchat / WhatsApp 排队阈值与通知对象；Webchat Recall Limit 仅针对 webchat 生效。
+- 2026-06-04 后，Text Media Rule Plan 分区更新为 Basic Info、Customer Service Configuration、Agent Service Configuration。
+- Customer Service Configuration 包含 Access Configuration、Queue Configuration、Agent Opening / Ending Configuration、Customer No Reply Configuration、Agent No Reply Configuration。
+- Agent Service Configuration 包含 Webchat Message Recall Limit 和 Agent No Reply Service Level。
+- Text 默认业务值：接入并发 50 items、最小扫描间隔 30 sec、最大排队客户 20 customers、排队超时 10 min、客户超时前提醒 1 min、客户未回复超时 5 min、坐席未回复超时 120 sec、Webchat 撤回 120 sec、坐席 warning 60 sec、breach 120 sec。
+- 所有字段标签和默认话术使用英文；支持变量 `{customerName}`、`{channelName}`、`{agentName}`、`{timeoutMinutes}`、`{reminderMinutes}`、`{estimatedWaitMinutes}`、`{workTime}`。
+- `Media Service Rule Plans` 页面不再维护旧的每渠道 `Queue Alert / Recipients` 区块，也不再使用 `queueAlerts` / `TextMediaQueueAlertRule`；后续如需渠道差异，只在更明确的 Channel 绑定或规则引用层新增。
 - 后续会废弃现有 `Call Management > Text Channel Settings`；本方案不复用旧页面、旧类型或旧交互。
+
+## 2026-06-04 Media Service Rule Plans 文字媒体规则方案改造
+
+- 本轮只改 `Routing Config > Media Service Rule Plans` 的 Text 规则方案新增/编辑/查看页；`Channels` 暂不改，继续只绑定并引用规则方案。
+- `Basic Info` 保持 Plan ID、Plan Name、Media Type、Status、Description；Media Type 固定 `TEXT`。
+- 必填话术覆盖：Access Success Welcome Message、Non-working Time Message、Queue Waiting Message、Queue Timeout Message、Assigned Agent Greeting、Agent End Reminder、Pre-timeout Reminder Message、Customer Timeout Notice、Agent Timeout Notice、Auto Response Message。
+- 校验规则：所有数值必须大于 0；客户超时前提醒时间必须小于客户未回复超时；坐席未回复 warning 必须小于等于 breach；breach 必须小于等于坐席未回复超时；被 Channel Media Rule Binding 引用的规则方案不能删除。
+- 发布/演示口径：Media Service Rule Plans 是文字媒体服务体验规则的主配置来源；Channels 后续只负责 Channel + Media Type 绑定规则方案，具体字段联动等下一步再改。
 
 ## 2026-06-04 客户预览发布屏蔽范围
 

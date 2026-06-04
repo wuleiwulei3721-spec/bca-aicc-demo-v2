@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-04 12:36 +08:00
+最后更新：2026-06-04 14:54 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：客户可访问 Production 版本已发布；当前本地分支 `codex/text-channel-config-settings` 已恢复 `Call Management` / `Routing Config` 菜单与路由，用于继续开发未完成管理功能。
+当前目标：客户可访问 Production 版本已发布；当前本地分支 `codex/text-channel-config-settings` 已恢复 `Call Management` / `Routing Config` 菜单与路由，用于继续开发未完成管理功能。本轮已改造 `Routing Config > Media Service Rule Plans` 的 Text 规则方案新增/编辑/查看页，`Channels` 暂只继续绑定并引用规则方案。
 
 ## 0. 使用规则
 
@@ -119,7 +119,7 @@ codex-recovered-context.md
 - `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`：正式 `Live Chat` Conversation tab 内容，包含消息记录、快捷回复、引用、撤回、Transfer、End/Close 和发送消息演示。
 - `src/pages/call-management/RoutingConfigurationPage.tsx`：旧路由配置入口兼容组件，重定向到 `/routing-config/route-elements`。
 - `src/pages/routing-config/RoutingConfigCrudPage.tsx`：Routing Config 普通主数据页复用的本地 CRUD 容器，提供 Search / Add / View / Edit / Delete 弹窗表单。
-- `src/pages/routing-config/RoutingConfigDataPages.tsx`：Routing Config 主数据独立配置页，覆盖 Route Elements、VDN、Sites、Channels、Media Service Rule Plans、Business Types、Site Access Volume、Access Accounts、Working Time Plans、Skill Queues；Channels 已支持按媒体引用服务规则方案，Media Service Rule Plans 当前完整维护 Text 媒体服务规则；Working Time Plans 已改为印尼单国家自定义排班编辑器，包含 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan，Skill Queues 未选择方案时展示 `Default 24x7`。
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`：Routing Config 主数据独立配置页，覆盖 Route Elements、VDN、Sites、Channels、Media Service Rule Plans、Business Types、Site Access Volume、Access Accounts、Working Time Plans、Skill Queues；Channels 已支持按媒体引用服务规则方案，Media Service Rule Plans 当前完整维护 Text 媒体服务规则，弹框按 Basic Info、Customer Service Configuration、Agent Service Configuration 维护字段且不再展示 Queue Alert / Recipients 区块；Working Time Plans 已改为印尼单国家自定义排班编辑器，包含 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan，Skill Queues 未选择方案时展示 `Default 24x7`。
 - `src/pages/routing-config/SkillRoutingRulesPage.tsx`：独立技能路由规则页，支持按启用路由要素多选查询、规则列表要素拆列、批量新增拆分预览、重复组合勾选覆盖、规则查看/编辑/删除。
 - `src/pages/routing-config/RoutingConfigStatusBadge.tsx`：Routing Config 状态 badge 组件，避免页面组件导出非组件函数触发 Fast Refresh lint。
 - `src/pages/call-management/TextChannelSettingsPage.tsx`：数据呼叫管理下的文字渠道配置页，包含 Service Rules、Customer Timeout & Messages、Channel Queue Alerts 三组配置。
@@ -130,11 +130,11 @@ codex-recovered-context.md
 - `src/hooks/useNow.ts`：前端运行时每秒 tick hook，用于 workspace tab 和 Live Chat 列表计时刷新。
 - `src/mock/bankapp.ts`：BankApp 联系方式、业务类型、客户身份/语言驱动的技能路由和截图素材路径配置。
 - `src/mock/inbound.ts`：Inbound 演示数据。
-- `src/mock/routingConfiguration.ts`：路由配置页默认 mock，包含 route factor、自编码 VDN/站点/渠道/渠道媒体/业务类型/接入账号/接入入口/结构化工作时间方案/技能队列/路由规则。
+- `src/mock/routingConfiguration.ts`：路由配置页默认 mock，包含 route factor、自编码 VDN/站点/渠道/渠道媒体/文字媒体服务规则方案/业务类型/接入账号/接入入口/结构化工作时间方案/技能队列/路由规则。
 - `src/mock/textChannelSettings.ts`：文字渠道配置页默认 mock，包含并发人数、自动回复、Webchat 撤回、客户超时话术、渠道排队阈值和通知对象。
 - `src/types/bankapp.ts`：BankApp demo 联系方式、业务类型和步骤类型。
 - `src/types/inbound.ts`：Inbound 业务类型。
-- `src/types/routingConfiguration.ts`：路由配置页专用类型，覆盖 route factor、channel_media、site_access_ratio、working_time_plan、skill_queue、routing_rule 和 routing_rule_index 等结构。
+- `src/types/routingConfiguration.ts`：路由配置页专用类型，覆盖 route factor、channel_media、media_service_rule_plan、site_access_ratio、working_time_plan、skill_queue、routing_rule 和 routing_rule_index 等结构；Text 媒体规则方案字段按客户服务配置与坐席服务配置维护，不再在该页面类型中使用 `TextMediaQueueAlertRule`。
 - `src/store/routingConfigStore.ts`：Routing Config 前端 demo 本地状态 store，刷新后恢复 mock；普通 CRUD、渠道媒体规则方案、Channel + Media 规则绑定和技能路由规则共用。
 - `src/types/textChannelSettings.ts`：文字渠道配置页专用类型，渠道 code 为 `haloapp | webchat | whatsapp`，避免与现有 `AccessChannel` 耦合。
 - `src/utils/duration.ts`：共享持续时间解析、格式化、elapsed 计算和 Live Chat SLA 阈值工具。
@@ -512,6 +512,29 @@ Live Chat 当前 mock：
 - GitHub remote 与基础提交。
 
 ## 10. 当前开发状态
+
+截至 2026-06-04 14:54 +08:00，本轮改造 `Routing Config > Media Service Rule Plans` 的 Text 媒体规则方案新增/编辑/查看页：
+
+- `Basic Info` 保持 Plan ID、Plan Name、Media Type、Status、Description 不变，Media Type 仍固定为 `TEXT`。
+- `Customer Service Configuration` 拆为 Access Configuration、Queue Configuration、Agent Opening / Ending Configuration、Customer No Reply Configuration、Agent No Reply Configuration。
+- `Agent Service Configuration` 拆为 Webchat Message Recall Limit 和 Agent No Reply Service Level。
+- 默认值已按文字媒体方案重置：Max Concurrent Access 50 items、Minimum Scan Interval 30 sec、Max Queue Customers 20 customers、Queue Timeout 10 min、Pre-timeout Reminder Time 1 min、Customer No Reply Timeout 5 min、Agent No Reply Timeout 120 sec、Webchat Recall Limit 120 sec、Warning 60 sec、Breach 120 sec。
+- 所有新增字段标签与默认话术使用英文，并保留模板变量提示 `{customerName}`、`{agentName}`、`{timeoutMinutes}`、`{reminderMinutes}`、`{estimatedWaitMinutes}`、`{workTime}`。
+- `MediaServiceRulePlan` 类型和 mock 已切到新的客户服务/坐席服务字段；旧的 `queueAlerts` / `TextMediaQueueAlertRule` 不再被 Media Service Rule Plans 页面使用。
+- 删除旧的每渠道 Queue Alert / Recipients 区块；`Channels` 本轮不改字段，只继续展示和维护 Channel + Text 的 Rule Plan 绑定。
+- 保存校验覆盖必填话术、所有数值大于 0、客户超时前提醒小于客户未回复超时、坐席 warning 小于等于 breach、breach 小于等于坐席未回复超时；被 Channels 绑定引用的规则方案仍不允许删除。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `http://127.0.0.1:5178/routing-config/media-service-rule-plans`：Add 弹框显示新分区、模板变量和默认值；旧 `Channel-specific Rules`、`Queue Alert`、`Recipients` 不再出现。
+- Browser Add 弹框：必填校验命中 `Plan Name is required.` 并阻止保存。
+- Browser View 弹框：只读展示新字段分区。
+- Browser Edit 弹框：保存后列表 `Updated Date` 刷新为 `2026-06-04`，`Updated By` 为 `Admin`。
+- Browser Delete 弹框：被 Channel Media Rule Binding 引用的方案显示 `This record cannot be deleted.` 和引用原因。
+- Browser `/routing-config/channels`：页面正常加载，Rule Plan 列仍显示 `Standard Text Service` / `Priority Text Service`；未发现页面渲染错误。
+- Browser 控制台仅出现既有 Google Identity / FedCM 网络日志，未发现本页 TypeScript/React 渲染类错误。
 
 截至 2026-06-03 10:12 +08:00，本轮调整管理台通用页面顶部规范：
 

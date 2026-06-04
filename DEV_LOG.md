@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-04 12:36 +08:00
+最后更新：2026-06-04 14:54 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,61 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-04 14:54 +08:00 - Media Service Rule Plans 文字媒体规则方案改造
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/types/routingConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `src/store/routingConfigStore.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-04-1454.md`
+- `.codex-backup/current-todo-2026-06-04-1454.md`
+- `.codex-backup/page-state-2026-06-04-1454.md`
+
+修改原因：
+
+- 用户确认先改 `Media Service Rule Plans` 中 Text 规则方案新增/编辑页，字段从旧的 Capacity / Timeout / Lifecycle / Channel-specific 结构重组为客户服务配置与坐席服务配置。
+- `Channels` 后续只绑定并引用规则方案，本轮不改 Channels 字段结构。
+
+修改结果：
+
+- `Basic Info` 保持 Plan ID、Plan Name、Media Type、Status、Description 不变，Media Type 仍固定为 `TEXT`。
+- Text 规则方案弹框新增 `Customer Service Configuration`，包含 Access、Queue、Agent Opening / Ending、Customer No Reply、Agent No Reply 五个子分区。
+- Text 规则方案弹框新增 `Agent Service Configuration`，包含 Webchat Message Recall Limit 与 Agent No Reply Service Level。
+- 新默认值已接入：接入并发 50 items、最小扫描间隔 30 sec、最大排队客户 20 customers、排队超时 10 min、客户超时前提醒 1 min、客户未回复超时 5 min、坐席未回复超时 120 sec、Webchat 撤回 120 sec、warning 60 sec、breach 120 sec。
+- 所有新字段标签和默认话术使用英文，并保留模板变量提示。
+- `MediaServiceRulePlan` 类型和 mock 已切换到新的客户服务/坐席服务字段；`routingConfigStore` 不再深拷贝旧 `queueAlerts`。
+- 旧的每渠道 `Queue Alert / Recipients` 区块从 Media Service Rule Plans 页面移除。
+- 保存校验已覆盖关键必填话术、正数校验、客户未回复超时关系、坐席未回复 SLA 关系。
+- 被 `ChannelMediaRuleBinding` 引用的规则方案仍不允许删除。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `http://127.0.0.1:5178/routing-config/media-service-rule-plans`：Add 弹框显示新分区、模板变量和默认值；旧 `Channel-specific Rules`、`Queue Alert`、`Recipients` 不再出现。
+- Browser Add 弹框：必填校验命中 `Plan Name is required.` 并阻止保存。
+- Browser View 弹框：只读展示新字段分区。
+- Browser Edit 弹框：保存后列表 `Updated Date` 刷新为 `2026-06-04`，`Updated By` 为 `Admin`。
+- Browser Delete 弹框：被 Channel Media Rule Binding 引用的方案显示不可删除提示和引用原因。
+- Browser `/routing-config/channels`：页面正常加载，Rule Plan 列仍显示 `Standard Text Service` / `Priority Text Service`。
+- Browser 控制台仅出现既有 Google Identity / FedCM 网络日志，未发现本页渲染类错误。
+
+回滚说明：
+
+- 如需回滚本轮页面结构，可恢复 `MediaServiceRulePlan` 旧字段、mock 中旧字段、页面旧分区渲染和 `queueAlerts` 深拷贝逻辑；同时恢复对应 CSS。回滚前需确认是否仍希望保留客户服务/坐席服务配置口径。
+
+当前风险点：
+
+- `Channels` 本轮仅回归确认绑定展示正常，尚未改为更轻量的规则方案引用配置；后续需要继续按用户要求调整 Channels 菜单。
+- `Call Management > Text Channel Settings` 旧页面仍保留，未来若继续收敛规则来源，需要决定该页废弃、隐藏或迁移关系。
+- 浏览器控制台存在既有 Google Identity / FedCM 网络日志，与本页改造无关，但后续如影响客户演示可单独处理。
 
 ### 2026-06-04 12:36 +08:00 - 本地开发分支恢复管理菜单
 

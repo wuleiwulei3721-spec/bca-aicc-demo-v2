@@ -90,10 +90,7 @@ function cloneInitialState(): RoutingConfigCollections {
       mediaTypes: [...item.mediaTypes],
     })),
     languageTypes: languageTypes.map((item) => ({ ...item })),
-    mediaServiceRulePlans: mediaServiceRulePlans.map((item) => ({
-      ...item,
-      queueAlerts: item.queueAlerts.map((alertRule) => ({ ...alertRule })),
-    })),
+    mediaServiceRulePlans: mediaServiceRulePlans.map((item) => ({ ...item })),
     mediaTypes: mediaTypes.map((item) => ({ ...item })),
     routeFactors: routeFactors.map((item) => ({ ...item })),
     routingRules: routingRules.map((item) => ({
