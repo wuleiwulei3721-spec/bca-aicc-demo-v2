@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-04 12:29 +08:00
+最后更新：2026-06-04 12:36 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：发布客户可访问 Production 版本；`main` 已合入隐藏未完成管理菜单的客户发布版本，等待推送触发 Vercel Production。
+当前目标：客户可访问 Production 版本已发布；当前本地分支 `codex/text-channel-config-settings` 已恢复 `Call Management` / `Routing Config` 菜单与路由，用于继续开发未完成管理功能。
 
 ## 0. 使用规则
 
@@ -40,8 +40,9 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`main`
-当前 HEAD：以 `git rev-parse HEAD` 为准；`main` 已快进合入 `codex/customer-preview-hide-admin-menus`，用于客户 Production 发布。该版本保留主工作台、Channel Simulation、BankApp、WhatsApp、PSTN、Voice/Video handoff、正式 Live Chat 和 Design System；暂时屏蔽未完成的 `Call Management` 与 `Routing Config` 菜单及其直达 URL。发布完成后，本地继续开发应切回 `codex/text-channel-config-settings`，该分支保留管理菜单入口。
+当前分支：`codex/text-channel-config-settings`
+当前 HEAD：以 `git rev-parse HEAD` 为准；当前本地开发分支基于 Production 发布提交 `cf4a94e` 继续开发，并重新开放 `Call Management` 与 `Routing Config` 菜单和页面路由。客户 Production 版本位于 `main`，继续隐藏这两个未完成管理菜单。
+部署状态：`main` 已推送到 `origin/main` 并触发 Vercel Production；客户可访问 URL 为 `https://netinfo-aicc-demo-v2.vercel.app/`。
 部署目标：Vercel Production 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -105,7 +106,7 @@ codex-recovered-context.md
 
 - `src/main.tsx`：React 入口，引入 Ant Design reset 和全局 Less。
 - `src/App.tsx`：Ant Design `ConfigProvider` + `RouterProvider`。
-- `src/routes.tsx`：定义 `/`、`/design-system` 和通配重定向。
+- `src/routes.tsx`：定义 `/`、`/design-system`、`Call Management`、`Routing Config` 和通配重定向；当前开发分支开放管理路由，`main` 客户发布版本仍屏蔽管理路由。
 - `src/layouts/BasicLayout.tsx`：全局 Header、可展开/收起左侧菜单、坐席工具条、通话接入阻塞顶部提示、内部聊天入口和主内容出口。
 - `src/pages/AgentWorkspace.tsx`：Home tab 与工作区交互 tab 容器，负责 Demo tabs、正式 `Live Chat` 固定 tab、多个 PSTN / Voice Call / Video Call 通话实例 tab 的页签名称、最长服务计时、短闪提示和 Live Chat 总未读 badge。
 - `src/pages/bankapp/BankAppDemoPage.tsx`：BankApp 客户侧模拟器，采用真实手机比例的客户端舞台和轻量 AICC Process rail；Voice / Video handoff 会在已有未挂断通话时显示 inline warning，坐席侧结果通过真实 workspace tab 跳转体现。
@@ -147,18 +148,29 @@ codex-recovered-context.md
 
 - `/` -> `BasicLayout` -> `AgentWorkspace`
 - `/design-system` -> `BasicLayout` -> `DesignSystem`
-- `/call-management` -> `BasicLayout` -> 重定向到 `/`
-- `/call-management/*` -> `BasicLayout` -> 重定向到 `/`
-- `/routing-config` -> `BasicLayout` -> 重定向到 `/`
-- `/routing-config/*` -> `BasicLayout` -> 重定向到 `/`
+- `/call-management/routing-configuration` -> `BasicLayout` -> `RoutingConfigurationPage`，兼容旧入口并重定向到 `/routing-config/route-elements`
+- `/call-management/text-channel-settings` -> `BasicLayout` -> `TextChannelSettingsPage`
+- `/routing-config` -> `BasicLayout` -> 重定向到 `/routing-config/route-elements`
+- `/routing-config/route-elements` -> `BasicLayout` -> `RouteElementsPage`
+- `/routing-config/vdn` -> `BasicLayout` -> `VdnPage`
+- `/routing-config/sites` -> `BasicLayout` -> `SitesPage`
+- `/routing-config/channels` -> `BasicLayout` -> `ChannelsPage`
+- `/routing-config/media-service-rule-plans` -> `BasicLayout` -> `MediaServiceRulePlansPage`
+- `/routing-config/business-types` -> `BasicLayout` -> `BusinessTypesPage`
+- `/routing-config/skill-queues` -> `BasicLayout` -> `SkillQueuesPage`
+- `/routing-config/access-accounts` -> `BasicLayout` -> `AccessAccountsPage`
+- `/routing-config/site-access-volume` -> `BasicLayout` -> `SiteAccessVolumePage`
+- `/routing-config/skill-routing-rules` -> `BasicLayout` -> `SkillRoutingRulesPage`
+- `/routing-config/working-time-plans` -> `BasicLayout` -> `WorkingTimePlansPage`
 - `*` -> 重定向到 `/`
 
 页面关系：
 
 - `BasicLayout` 是所有页面的壳，包含顶部 Header、坐席状态、话务工具条、侧栏和内容区。
 - `AgentWorkspace` 默认显示 Home tab。
-- 客户预览发布版暂不显示 `Call Management` 和 `Routing Config` 两个一级菜单，直接访问 `/call-management/*` 或 `/routing-config/*` 也会回到 `/`。
-- `Call Management`、`Routing Config` 相关源码、mock、store 和类型仍保留在仓库中，用于后续继续开发；本轮没有删除功能代码。
+- 当前本地开发分支显示 `Call Management` 和 `Routing Config` 两个一级菜单，用于继续开发 Text Channel Settings 与 Routing Config 管理功能。
+- 客户 Production 分支 `main` 暂不显示 `Call Management` 和 `Routing Config`，并将 `/call-management/*` 与 `/routing-config/*` 重定向到 `/`；不要把本地开发分支的开放状态误认为客户生产状态。
+- `Call Management`、`Routing Config` 相关源码、mock、store 和类型均保留在仓库中；发布给客户时只是屏蔠菜单和直达路由，不删除代码。
 - 点击左侧 `Channel Simulation > BankApp` 会打开可关闭的 `BankApp Demo` tab，用于演示客户在 BankApp 内选择文字、语音或视频服务后进入 AICC；BankApp Demo tab 在切到坐席工作台时保持挂载，返回后不会重置当前步骤。
 - 点击左侧 `Channel Simulation > WhatsApp` 会打开可关闭的 `WhatsApp Demo` tab；当前使用用户提供的脱敏 WhatsApp 原图，并在第三步后切到 Live Chat 坐席工作台查看 WhatsApp 接入会话。
 - 坐席点击右上角 `Sign In` 后，`Live Chat` tab 会固定插入 Home tab 旁边，`closable: false`，用于承载实时文字聊天工作台。
@@ -184,7 +196,7 @@ codex-recovered-context.md
 - 顶部蓝色渐变 BANK 1 Header，恢复旧版主工作台视觉。
 - 可展开/收起左侧系统菜单，默认收起，`collapsedWidth` 为 `48px`，展开宽度使用 `--aicc-layout-sider-width`。
 - 左侧菜单支持 2 层级：展开态顶部显示折叠按钮与菜单搜索框，点击一级菜单在下方展开二级菜单；收起态仅显示一级图标，鼠标悬浮在一级图标时在右侧显示二级菜单浮层，鼠标移出浮层或点击菜单后浮层关闭。
-- 当前侧栏菜单使用英文企业呼叫中心文案：Channel Simulation（PSTN、BankApp、WhatsApp）、Agent Center（Agent Profile、Service History）、Operations（Alert KPI Management、Floor Management）、Reports。客户预览发布版暂不展示 `Call Management` 和 `Routing Config`。
+- 当前开发分支侧栏菜单使用英文企业呼叫中心文案：Channel Simulation（PSTN、BankApp、WhatsApp）、Agent Center（Agent Profile、Service History）、Operations（Alert KPI Management、Floor Management）、Call Management（Text Channel Settings）、Routing Config（Route Elements、VDN、Access Sites、Channels、Media Service Rule Plans、Business Types、Skill Queues、Access Accounts、Site Access Volume、Skill Routing Rules、Working Time Plans）、Reports。
 - Agent Toolbar：Answer、Hold、Mute、Transfer、Hang Up、More；电话/视频呼入时可在动作按钮最左侧展示 incoming identification；More 菜单点击打开，包含 Outbound Call 与 Settings。
 - Agent Profile Area：仍显示 Ready、Not Ready、AUX - Ibadah、AUX - Makan、Unsigned 等业务状态菜单；头像右下状态点使用 `effectiveAgentPresence`，由坐席状态和活跃客户互动共同决定。
 - Notifications 和 Internal Chat 入口。
@@ -535,6 +547,25 @@ Live Chat 当前 mock：
 - Vercel Preview deployment 已成功生成；每次 push 会生成新的 per-commit Preview URL，应以 GitHub deployment status / Vercel 最新部署记录为准。
 - 远端 Preview 在未登录浏览器中会跳转到 Vercel login，说明当前 Preview 受 Vercel Deployment Protection 或访问控制影响；发给客户前需要在 Vercel 中关闭/配置 Preview 访问保护或提供可访问的分享方式。
 
+截至 2026-06-04 12:36 +08:00，本轮完成客户 Production 发布后的本地开发分支恢复：
+
+- `main` 已推送到 `origin/main`，Vercel Production 已部署客户隐藏版，客户 URL 为 `https://netinfo-aicc-demo-v2.vercel.app/`。
+- 当前本地工作区已切回 `codex/text-channel-config-settings`，并基于 `main` 发布提交继续开发。
+- 当前本地开发分支重新显示 `Call Management` 与 `Routing Config` 两个一级菜单。
+- 当前本地开发分支恢复 `/call-management/text-channel-settings`、`/call-management/routing-configuration` 和所有 `/routing-config/*` 页面路由。
+- `main` 客户 Production 分支仍隐藏未完成管理菜单并阻止直达 URL；不要将当前开发分支直接作为客户发布版本。
+
+验证：
+
+- Production URL `/`、`/design-system`、管理路由重定向、BankApp、WhatsApp、Live Chat、PSTN 已完成浏览器 smoke check。
+- 本地开发分支 `npm run lint` 通过。
+- 本地开发分支 `npm run build` 通过；仍只有既有 Vite chunk size warning。
+- Browser `http://127.0.0.1:5177/`：确认首页展开侧栏后显示 `Call Management` 与 `Routing Config`。
+- Browser `/call-management/text-channel-settings`：确认停留在 Text Channel Settings 页面，不再回到 `/`。
+- Browser `/routing-config/route-elements`：确认停留在 Route Elements 页面，不再回到 `/`。
+- Browser `/call-management/routing-configuration`：确认兼容重定向到 `/routing-config/route-elements`。
+- Browser `/design-system`：确认正常加载并出现 Color / Typography / Button 等设计系统内容。
+
 截至 2026-06-04 12:29 +08:00，本轮将客户发布版本合入 `main`，准备 Production 发布：
 
 - `main` 已通过 fast-forward 合入 `codex/customer-preview-hide-admin-menus`。
@@ -542,7 +573,7 @@ Live Chat 当前 mock：
 - 未完成管理功能源码、mock、store 和类型仍保留在仓库中；本地继续开发应切回 `codex/text-channel-config-settings`。
 - `npm run lint` 通过。
 - `npm run build` 通过；仍只有既有 Vite chunk size warning。
-- 下一步推送 `main` 触发 Vercel Production。
+- `main` 已推送到 `origin/main` 并触发 Vercel Production；Production smoke check 已通过。
 
 截至 2026-06-04 11:16 +08:00，本轮继续修正 `Routing Config > Working Time Plans` Holiday / Special 排班行对齐：
 

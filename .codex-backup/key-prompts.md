@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-06-04 12:10 +08:00
+最后更新：2026-06-04 12:36 +08:00
 
 ## 项目方向
 
@@ -683,3 +683,10 @@
 - Production 客户版本继续隐藏 `Call Management` 与 `Routing Config`，同时 `/call-management/*` 和 `/routing-config/*` 回到 `/`。
 - 发布后本地继续开发分支为 `codex/text-channel-config-settings`；该分支保留管理菜单入口，用于继续完成未完成的管理配置功能。
 - 不删除未完成管理功能源码、mock、store 或类型，只通过发布分支/生产分支的菜单和路由屏蔽客户可见入口。
+
+## 2026-06-04 Production 发布后本地开发分支口径
+
+- `main` 是客户 Production 隐藏版，已经发布到客户可访问地址。
+- 当前本地继续开发分支为 `codex/text-channel-config-settings`，该分支需要显示 `Call Management` 和 `Routing Config`。
+- 本地开发分支恢复 `/call-management/text-channel-settings`、`/call-management/routing-configuration` 和 `/routing-config/*` 直达路由，方便继续完成管理配置功能。
+- 后续再发布给客户前，必须重新确认是否需要隐藏这两个管理菜单；不要直接把本地开发开放状态误发到 Production。

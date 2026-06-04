@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-04 12:29 +08:00
+最后更新：2026-06-04 12:36 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,48 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-04 12:36 +08:00 - 本地开发分支恢复管理菜单
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/routes.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-04-1236.md`
+- `.codex-backup/current-todo-2026-06-04-1236.md`
+- `.codex-backup/page-state-2026-06-04-1236.md`
+
+修改原因：
+
+- 客户 Production 版本已经发布隐藏 `Call Management` / `Routing Config` 的版本；用户希望发布后本地恢复管理菜单，继续开发未完成的 Routing Config / Call Management。
+
+修改结果：
+
+- 当前本地分支为 `codex/text-channel-config-settings`。
+- 侧栏重新显示 `Call Management` 与 `Routing Config` 两个一级菜单。
+- `/call-management/text-channel-settings`、旧兼容 `/call-management/routing-configuration`、`/routing-config` 和所有当前 Routing Config 子页面路由恢复可访问。
+- `main` Production 客户版本不受影响，仍隐藏管理菜单并阻止直达 URL。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite chunk size warning。
+- Browser `http://127.0.0.1:5177/`：确认首页展开侧栏后显示 `Call Management` 与 `Routing Config`。
+- Browser `/call-management/text-channel-settings`：确认停留在 Text Channel Settings 页面，不再回到 `/`。
+- Browser `/routing-config/route-elements`：确认停留在 Route Elements 页面，不再回到 `/`。
+- Browser `/call-management/routing-configuration`：确认兼容重定向到 `/routing-config/route-elements`。
+- Browser `/design-system`：确认正常加载并出现 Color / Typography / Button 等设计系统内容。
+
+回滚说明：
+
+- 如需再次做客户隐藏版，只回到 `main` 或恢复 `codex/customer-preview-hide-admin-menus` 中 `BasicLayout` 菜单屏蔽和 `routes.tsx` 重定向即可。
+
+当前风险点：
+
+- 当前本地开发分支与 Production 客户版本行为不同：本地显示管理菜单，Production 隐藏管理菜单；后续发布前必须明确目标分支与发布范围。
 
 ### 2026-06-04 12:29 +08:00 - 客户 Production 发布合入 main
 
@@ -43,7 +85,9 @@
 
 - `npm run lint` 通过。
 - `npm run build` 通过；仍只有既有 Vite chunk size warning。
-- 待推送 `main` 后确认 Vercel Production deployment 状态。
+- `main` 已推送到 `origin/main`。
+- Vercel Production 已部署，Production URL `https://netinfo-aicc-demo-v2.vercel.app/` 可访问。
+- Browser Production smoke check 通过：`/`、`/design-system`、管理路由回 `/`、BankApp、WhatsApp、Live Chat、PSTN 主演示路径可用。
 
 回滚说明：
 
@@ -51,7 +95,7 @@
 
 当前风险点：
 
-- Production 部署是否客户可直接访问取决于 Vercel Production 设置；需要部署完成后检查 Production URL。
+- 当前 Production URL 已确认可访问；如后续修改 Vercel 访问保护或域名绑定，需要重新检查客户侧访问。
 
 ### 2026-06-04 12:10 +08:00 - 客户预览发布屏蔽未完成管理菜单
 
