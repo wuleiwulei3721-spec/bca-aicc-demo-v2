@@ -34,7 +34,7 @@
 - Browser `/routing-config/route-elements`: redirected to `/`.
 - Browser smoke check passed for BankApp Demo, WhatsApp Demo, Live Chat after Sign In, and PSTN popup from Ready state.
 - GitHub branch pushed: `origin/codex/customer-preview-hide-admin-menus`, commit `421aa72`.
-- Vercel Preview deployment succeeded: `https://netinfo-aicc-demo-v2-jt8slfm99-wl-demo-s-projects.vercel.app`.
+- Vercel Preview deployment succeeded; each push creates a new per-commit Preview URL, so use the latest GitHub deployment status / Vercel deployment record.
 - Remote Preview content smoke check is blocked in an unauthenticated browser because the URL redirects to Vercel login.
 
 ## Risk

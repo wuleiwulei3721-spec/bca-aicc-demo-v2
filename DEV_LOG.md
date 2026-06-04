@@ -51,7 +51,7 @@
 - Browser `/call-management/text-channel-settings` 与 `/routing-config/route-elements`：均重定向回 `/`，且未出现对应管理页内容。
 - Browser smoke check：BankApp Demo、WhatsApp Demo、Sign In 后 Live Chat tab、Ready 状态下 PSTN 弹屏均可用。
 - Git commit `421aa72 Prepare customer preview without admin menus` 已创建并推送到 `origin/codex/customer-preview-hide-admin-menus`。
-- GitHub / Vercel status 显示 Preview deployment 成功，Preview URL 为 `https://netinfo-aicc-demo-v2-jt8slfm99-wl-demo-s-projects.vercel.app`。
+- GitHub / Vercel status 显示 Preview deployment 成功；每次 push 会生成新的 per-commit Preview URL，应以 GitHub deployment status / Vercel 最新部署记录为准。
 - 远端 Preview URL 在未登录浏览器中跳转到 Vercel login，未能完成远端页面内容 smoke check。
 
 回滚说明：
