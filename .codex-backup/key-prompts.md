@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-06-04 14:54 +08:00
+最后更新：2026-06-04 15:32 +08:00
 
 ## 项目方向
 
@@ -678,6 +678,14 @@
 - 必填话术覆盖：Access Success Welcome Message、Non-working Time Message、Queue Waiting Message、Queue Timeout Message、Assigned Agent Greeting、Agent End Reminder、Pre-timeout Reminder Message、Customer Timeout Notice、Agent Timeout Notice、Auto Response Message。
 - 校验规则：所有数值必须大于 0；客户超时前提醒时间必须小于客户未回复超时；坐席未回复 warning 必须小于等于 breach；breach 必须小于等于坐席未回复超时；被 Channel Media Rule Binding 引用的规则方案不能删除。
 - 发布/演示口径：Media Service Rule Plans 是文字媒体服务体验规则的主配置来源；Channels 后续只负责 Channel + Media Type 绑定规则方案，具体字段联动等下一步再改。
+
+## 2026-06-04 Media Service Rule Plans 弹框临时中文确认口径
+
+- 仅 `Routing Config > Media Service Rule Plans` 弹框临时中文化；列表页、左侧菜单、路由路径和 `Channels` 结构不改。
+- 中文范围覆盖 Add/Edit/View/Delete 弹框标题、分区、字段、单位、按钮、校验、删除保护提示和 Text rule plan 默认话术。
+- 弹框布局参考 `Working Time Plans`：白色块状 section，基础信息、客户服务配置、坐席服务配置为顶层块，具体配置项为轻量子块。
+- 数字输入框保持约 160px；相关数字参数与提示语按同行展示，尤其是排队、客户未回复和坐席未回复配置。
+- 本轮为中文确认版本，不是最终对外英文版；中文确认无误后必须另起一轮转回英文。
 
 ## 2026-06-04 客户预览发布屏蔽范围
 

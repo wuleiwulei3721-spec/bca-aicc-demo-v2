@@ -2865,10 +2865,66 @@ a {
   min-height: var(--routing-config-control-height);
 }
 
+.routing-config-media-rule-modal__form {
+  --routing-config-control-height: 32px;
+
+  display: flex;
+  max-height: min(70vh, 760px);
+  min-width: 0;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.routing-config-media-rule-modal__section {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 12px;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius-sm);
+  background: #fff;
+  gap: 12px;
+}
+
+.routing-config-media-rule-modal__section header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.routing-config-media-rule-modal__section header strong {
+  color: var(--aicc-text);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 18px;
+}
+
+.routing-config-media-rule-modal__basic-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.routing-config-media-rule-modal__description {
+  grid-column: span 2;
+}
+
 .routing-config-media-rule-modal__variables {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
+}
+
+.routing-config-media-rule-modal__variables > span {
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
 }
 
 .routing-config-media-rule-modal__variables .ant-tag {
@@ -2879,6 +2935,7 @@ a {
 
 .routing-config-media-rule-modal__subsections {
   display: flex;
+  min-width: 0;
   flex-direction: column;
   gap: 12px;
 }
@@ -2887,14 +2944,11 @@ a {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  padding-top: 10px;
-  border-top: 1px solid var(--aicc-border);
+  padding: 10px 12px;
+  border: 1px solid #edf2f8;
+  border-radius: var(--aicc-radius-sm);
+  background: #fbfdff;
   gap: 10px;
-}
-
-.routing-config-media-rule-modal__subsection:first-child {
-  padding-top: 0;
-  border-top: 0;
 }
 
 .routing-config-media-rule-modal__subsection h4 {
@@ -2903,6 +2957,45 @@ a {
   font-size: 12px;
   font-weight: 800;
   line-height: 18px;
+}
+
+.routing-config-media-rule-modal__compact-row,
+.routing-config-media-rule-modal__full-row,
+.routing-config-media-rule-modal__paired-row {
+  display: grid;
+  min-width: 0;
+  align-items: start;
+  gap: 12px;
+}
+
+.routing-config-media-rule-modal__compact-row {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 170px));
+  justify-content: start;
+}
+
+.routing-config-media-rule-modal__full-row {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.routing-config-media-rule-modal__paired-row {
+  grid-template-columns: 160px minmax(0, 1fr);
+}
+
+.routing-config-media-rule-modal__number-field {
+  width: 160px;
+}
+
+.routing-config-media-rule-modal__number-field .ant-input-number,
+.routing-config-media-rule-modal__number-field .ant-input-number-group-wrapper {
+  width: 160px;
+}
+
+.routing-config-media-rule-modal__message-field {
+  min-width: 0;
+}
+
+.routing-config-media-rule-modal__message-field--full {
+  grid-column: 1 / -1;
 }
 
 .routing-config-site-volume-modal__form {

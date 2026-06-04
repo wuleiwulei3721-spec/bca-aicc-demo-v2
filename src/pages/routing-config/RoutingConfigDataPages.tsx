@@ -1532,6 +1532,15 @@ const mediaServiceTemplateVariables = [
   '{workTime}',
 ]
 
+const mediaServiceModalTitleByMode = {
+  add: '新增媒体服务规则方案',
+  delete: '删除媒体服务规则方案',
+  edit: '编辑媒体服务规则方案',
+  view: '查看媒体服务规则方案',
+}
+
+const textMediaModalOptions = [{ label: '文字媒体', value: 'TEXT' }]
+
 function createDefaultMediaServiceRulePlan(
   existingPlans: MediaServiceRulePlan[],
 ): MediaServiceRulePlan {
@@ -1539,36 +1548,34 @@ function createDefaultMediaServiceRulePlan(
 
   return {
     accessSuccessWelcomeMessage:
-      'Hello, the intelligent assistant is ready to serve you.',
-    agentNoReplyAutoResponseMessage: 'Please wait, we are processing...',
+      '您好，智能小助手为您提供服务。',
+    agentNoReplyAutoResponseMessage: '请稍候，我们正在处理。',
     agentNoReplyBreachSeconds: 120,
     agentNoReplyTimeoutSeconds: 120,
     agentNoReplyWarningSeconds: 60,
-    agentEndReminder: 'Thank you for contacting us. Have a great day!',
+    agentEndReminder: '很高兴为您服务，祝您生活愉快！',
     assignedAgentGreeting:
-      'Dear {customerName}, {agentName} will serve you. If you do not reply within {timeoutMinutes} minutes, this conversation will close automatically. Please check messages in time.',
-    agentTimeoutNotice:
-      'Customer timeout no reply, conversation closed automatically.',
+      '尊敬的{customerName}您好，{agentName}将为您服务，若您超过{timeoutMinutes}分钟未回复，会话将自动关闭，请您及时查看。',
+    agentTimeoutNotice: '客户超时未回复，会话自动关闭。',
     customerNoReplyTimeoutMinutes: 5,
     customerTimeoutNotice:
-      'We have not received your reply. The service has been closed automatically. Please contact us again if needed.',
+      '未收到您的回复，已自动关闭服务，若有需要可再次联系客服。',
     description: '',
     maxConcurrentAccess: 50,
     maxQueueCustomers: 20,
     mediaCode: 'TEXT',
     minScanIntervalSeconds: 30,
     nonWorkingTimeMessage:
-      'Sorry, our working time is {workTime}. Please contact us during service hours.',
+      '抱歉，工作时间为{workTime}，请在此时间联系我们。',
     planCode: `MSRP_TEXT_${String(nextIndex).padStart(2, '0')}`,
     planName: '',
     preTimeoutReminderMessage:
-      'Please reply soon. This conversation will close in {reminderMinutes} minute.',
+      '系统未收到回复，将在{reminderMinutes}分钟后结束会话。',
     preTimeoutReminderMinutes: 1,
-    queueTimeoutMessage:
-      'Agents are currently busy. Please try again later.',
+    queueTimeoutMessage: '当前人工服务繁忙，请稍后再试。',
     queueTimeoutMinutes: 10,
     queueWaitingMessage:
-      'Our agents are busy now. Estimated waiting time is {estimatedWaitMinutes} minutes.',
+      '当前人工服务繁忙，预计等待{estimatedWaitMinutes}分钟。',
     status: 'Active',
     updatedAt: '',
     updatedBy: 'Admin',
@@ -1646,78 +1653,85 @@ export function MediaServiceRulePlansPage() {
 
     const errors: string[] = []
 
-    errors.push(
-      ...validateCode(draft.planCode.trim(), 'Plan ID'),
-      ...validateUnique(
-        mediaServiceRulePlans,
-        selectedPlan,
-        'planCode',
-        draft.planCode.trim(),
-        'Plan ID',
-      ),
+    const planCode = draft.planCode.trim()
+
+    if (!planCode) {
+      errors.push('方案ID为必填项。')
+    } else if (!/^[A-Z0-9_-]+$/.test(planCode)) {
+      errors.push('方案ID只能使用大写英文字母、数字、下划线或连字符。')
+    }
+
+    const duplicatedPlanCode = mediaServiceRulePlans.some(
+      (plan) =>
+        plan.planCode === planCode &&
+        plan.planCode !== selectedPlan?.planCode,
     )
 
+    if (duplicatedPlanCode) {
+      errors.push('方案ID已存在。')
+    }
+
     if (!draft.planName.trim()) {
-      errors.push('Plan Name is required.')
+      errors.push('方案名称为必填项。')
     }
 
     if (draft.mediaCode !== 'TEXT') {
-      errors.push('Only Text media rule plans are supported now.')
+      errors.push('当前仅支持文字媒体规则方案。')
     }
 
     const positiveNumberFields: Array<[keyof MediaServiceRulePlan, string]> = [
-      ['maxConcurrentAccess', 'Max Concurrent Access'],
-      ['minScanIntervalSeconds', 'Minimum Scan Interval'],
-      ['maxQueueCustomers', 'Max Queue Customers'],
-      ['queueTimeoutMinutes', 'Queue Timeout'],
-      ['preTimeoutReminderMinutes', 'Pre-timeout Reminder Time'],
-      ['customerNoReplyTimeoutMinutes', 'No Reply Timeout'],
-      ['agentNoReplyTimeoutSeconds', 'Agent No Reply Timeout'],
-      ['webchatRecallLimitSeconds', 'Webchat Message Recall Limit'],
-      ['agentNoReplyWarningSeconds', 'Agent No Reply Warning Seconds'],
-      ['agentNoReplyBreachSeconds', 'Agent No Reply Breach Seconds'],
+      ['maxConcurrentAccess', '接入并发呼叫数'],
+      ['minScanIntervalSeconds', '接入最小扫描间隔'],
+      ['maxQueueCustomers', '最大排队人数'],
+      ['queueTimeoutMinutes', '排队超时时长'],
+      ['preTimeoutReminderMinutes', '未回复超时前提醒时间'],
+      ['customerNoReplyTimeoutMinutes', '客户未回复超时时长'],
+      ['agentNoReplyTimeoutSeconds', '坐席未回复超时时长'],
+      ['webchatRecallLimitSeconds', 'Webchat消息撤回时限'],
+      ['agentNoReplyWarningSeconds', '坐席未回复黄色提醒'],
+      ['agentNoReplyBreachSeconds', '坐席未回复红色警示'],
     ]
 
     positiveNumberFields.forEach(([field, label]) => {
       const value = draft[field]
 
       if (typeof value !== 'number' || value <= 0) {
-        errors.push(`${label} must be greater than 0.`)
+        errors.push(`${label}必须大于0。`)
       }
     })
 
     if (
       draft.preTimeoutReminderMinutes >= draft.customerNoReplyTimeoutMinutes
     ) {
-      errors.push('Pre-timeout Reminder Time must be less than No Reply Timeout.')
+      errors.push('未回复超时前提醒时间必须小于客户未回复超时时长。')
     }
 
     if (draft.agentNoReplyWarningSeconds > draft.agentNoReplyBreachSeconds) {
-      errors.push('Agent No Reply Warning Seconds must be less than or equal to Breach Seconds.')
+      errors.push('坐席未回复黄色提醒时间必须小于或等于红色警示时间。')
     }
 
     if (draft.agentNoReplyBreachSeconds > draft.agentNoReplyTimeoutSeconds) {
-      errors.push('Agent No Reply Breach Seconds must be less than or equal to Agent No Reply Timeout.')
+      errors.push('坐席未回复红色警示时间必须小于或等于坐席未回复超时时长。')
     }
 
     const requiredMessageFields: Array<[keyof MediaServiceRulePlan, string]> = [
-      ['agentNoReplyAutoResponseMessage', 'Agent No Reply Auto Response Message'],
-      ['accessSuccessWelcomeMessage', 'Access Success Welcome Message'],
-      ['preTimeoutReminderMessage', 'Pre-timeout Reminder Message'],
-      ['customerTimeoutNotice', 'Customer Timeout Notice'],
-      ['agentTimeoutNotice', 'Agent Timeout Notice'],
-      ['nonWorkingTimeMessage', 'Non-working Time Message'],
-      ['queueWaitingMessage', 'Queue Waiting Message'],
-      ['queueTimeoutMessage', 'Queue Timeout Message'],
-      ['assignedAgentGreeting', 'Assigned Agent Greeting'],
-      ['agentEndReminder', 'Agent End Reminder'],
+      ['agentNoReplyAutoResponseMessage', '自动回复内容'],
+      ['accessSuccessWelcomeMessage', '接入成功欢迎语'],
+      ['preTimeoutReminderMessage', '未回复超时前提醒'],
+      ['customerTimeoutNotice', '未回复超时客户提醒'],
+      ['agentTimeoutNotice', '未回复超时坐席提醒'],
+      ['nonWorkingTimeMessage', '非人工服务时间提示语'],
+      ['queueWaitingMessage', '排队提示语'],
+      ['queueTimeoutMessage', '排队超时提示语'],
+      ['assignedAgentGreeting', '分配坐席成功问候语'],
+      ['agentEndReminder', '坐席挂断提醒'],
     ]
 
     requiredMessageFields.forEach(([field, label]) => {
       const value = draft[field]
 
       if (typeof value !== 'string' || !value.trim()) {
-        errors.push(`${label} is required.`)
+        errors.push(`${label}为必填项。`)
       }
     })
 
@@ -1758,7 +1772,7 @@ export function MediaServiceRulePlansPage() {
     channelMediaRuleBindings.some(
       (binding) => binding.rulePlanCode === record.planCode,
     )
-      ? 'This rule plan is referenced by channel media bindings.'
+      ? '该规则方案已被渠道媒体绑定引用，不能删除。'
       : null
   const handleSave = () => {
     setSubmitAttempted(true)
@@ -1802,8 +1816,13 @@ export function MediaServiceRulePlansPage() {
     field: keyof MediaServiceRulePlan,
     label: string,
     rows = 2,
+    full = false,
   ) => (
-    <label className="routing-config-crud-modal__field routing-config-crud-modal__field--full">
+    <label
+      className={`routing-config-crud-modal__field routing-config-media-rule-modal__message-field${
+        full ? ' routing-config-media-rule-modal__message-field--full' : ''
+      }`}
+    >
       <span>
         {label} <strong>*</strong>
       </span>
@@ -1823,7 +1842,7 @@ export function MediaServiceRulePlansPage() {
     addonAfter: string,
     min = 1,
   ) => (
-    <label className="routing-config-crud-modal__field">
+    <label className="routing-config-crud-modal__field routing-config-media-rule-modal__number-field">
       <span>{label}</span>
       <InputNumber
         addonAfter={addonAfter}
@@ -1836,6 +1855,22 @@ export function MediaServiceRulePlansPage() {
       />
     </label>
   )
+  const renderModalStatus = () =>
+    isReadOnly ? (
+      <em>{draft.status === 'Active' ? '启用' : '禁用'}</em>
+    ) : (
+      <span className="routing-config-crud-modal__switch-row">
+        <Switch
+          className="routing-config-status-switch"
+          checked={draft.status === 'Active'}
+          size="small"
+          onChange={(checked) =>
+            updateDraft('status', checked ? 'Active' : 'Disabled')
+          }
+        />
+        <em>{draft.status === 'Active' ? '启用' : '禁用'}</em>
+      </span>
+    )
   const columns: ColumnsType<MediaServiceRulePlan> = [
     {
       dataIndex: 'planCode',
@@ -2003,20 +2038,24 @@ export function MediaServiceRulePlansPage() {
       </section>
 
       <BaseModal
-        className="routing-config-crud-modal"
+        className="routing-config-crud-modal routing-config-media-rule-modal"
         destroyOnClose
         kind="detail"
         open={Boolean(modalMode)}
-        title={`${modalMode === 'add' ? 'Add' : modalMode === 'edit' ? 'Edit' : modalMode === 'delete' ? 'Delete' : 'View'} Media Service Rule Plan`}
-        width={1080}
+        title={
+          modalMode
+            ? mediaServiceModalTitleByMode[modalMode]
+            : '媒体服务规则方案'
+        }
+        width={1120}
         onCancel={closeModal}
       >
-        <div className="routing-config-crud-modal__sections">
+        <div className="routing-config-media-rule-modal__form">
           {submitAttempted && validationErrors.length > 0 && (
             <Alert
               showIcon
               className="routing-config-crud-modal__validation"
-              message="Please check the form"
+              message="请检查以下配置"
               description={
                 <ul>
                   {validationErrors.map((error) => (
@@ -2041,30 +2080,28 @@ export function MediaServiceRulePlansPage() {
                 <Alert
                   showIcon
                   description={deleteBlockReason}
-                  message="This record cannot be deleted."
+                  message="当前记录不能删除。"
                   type="warning"
                 />
               ) : (
                 <Alert
                   showIcon
-                  description="This only changes the current demo session."
-                  message={`Delete ${selectedPlan?.planName ?? ''}?`}
+                  description="此操作只影响当前前端演示会话。"
+                  message={`确认删除 ${selectedPlan?.planName ?? ''}？`}
                   type="warning"
                 />
               )}
             </div>
           ) : (
             <>
-              <section className="routing-config-crud-modal__section">
+              <section className="routing-config-media-rule-modal__section">
                 <header>
-                  <strong className="routing-config-crud-modal__section-title">
-                    Basic Info
-                  </strong>
+                  <strong>基础信息</strong>
                 </header>
-                <div className="routing-config-crud-modal__section-grid">
+                <div className="routing-config-media-rule-modal__basic-grid">
                   <label className="routing-config-crud-modal__field">
                     <span>
-                      Plan ID <strong>*</strong>
+                      方案ID <strong>*</strong>
                     </span>
                     <Input
                       disabled={isReadOnly || modalMode === 'edit'}
@@ -2076,7 +2113,7 @@ export function MediaServiceRulePlansPage() {
                   </label>
                   <label className="routing-config-crud-modal__field">
                     <span>
-                      Plan Name <strong>*</strong>
+                      方案名称 <strong>*</strong>
                     </span>
                     <Input
                       disabled={isReadOnly}
@@ -2087,38 +2124,19 @@ export function MediaServiceRulePlansPage() {
                     />
                   </label>
                   <label className="routing-config-crud-modal__field">
-                    <span>Media Type</span>
+                    <span>媒体类型</span>
                     <Select
                       disabled
-                      options={textMediaOptions}
+                      options={textMediaModalOptions}
                       value={draft.mediaCode}
                     />
                   </label>
                   <label className="routing-config-crud-modal__field routing-config-crud-modal__field--status">
-                    <span>Status</span>
-                    {isReadOnly ? (
-                      <RoutingConfigStatusBadge status={draft.status} />
-                    ) : (
-                      <span className="routing-config-crud-modal__switch-row">
-                        <Switch
-                          className="routing-config-status-switch"
-                          checked={draft.status === 'Active'}
-                          size="small"
-                          onChange={(checked) =>
-                            updateDraft(
-                              'status',
-                              checked ? 'Active' : 'Disabled',
-                            )
-                          }
-                        />
-                        <em>
-                          {draft.status === 'Active' ? 'Enabled' : 'Disabled'}
-                        </em>
-                      </span>
-                    )}
+                    <span>状态</span>
+                    {renderModalStatus()}
                   </label>
-                  <label className="routing-config-crud-modal__field routing-config-crud-modal__field--full">
-                    <span>Description</span>
+                  <label className="routing-config-crud-modal__field routing-config-media-rule-modal__description">
+                    <span>备注</span>
                     <Input.TextArea
                       disabled={isReadOnly}
                       rows={2}
@@ -2131,155 +2149,174 @@ export function MediaServiceRulePlansPage() {
                 </div>
               </section>
 
-              <section className="routing-config-crud-modal__section">
+              <section className="routing-config-media-rule-modal__section">
                 <header>
-                  <strong className="routing-config-crud-modal__section-title">
-                    Customer Service Configuration
-                  </strong>
+                  <strong>客户服务配置</strong>
                 </header>
                 <div className="routing-config-media-rule-modal__variables">
+                  <span>可用变量</span>
                   {mediaServiceTemplateVariables.map((variable) => (
                     <Tag key={variable}>{variable}</Tag>
                   ))}
                 </div>
                 <div className="routing-config-media-rule-modal__subsections">
                   <div className="routing-config-media-rule-modal__subsection">
-                    <h4>Access Configuration</h4>
-                    <div className="routing-config-crud-modal__section-grid">
+                    <h4>接入量配置</h4>
+                    <div className="routing-config-media-rule-modal__compact-row">
                       {renderNumberField(
                         'maxConcurrentAccess',
-                        'Max Concurrent Access',
-                        'items',
+                        '接入并发呼叫数',
+                        '个',
                       )}
                       {renderNumberField(
                         'minScanIntervalSeconds',
-                        'Minimum Scan Interval',
-                        'sec',
+                        '接入最小扫描间隔',
+                        '秒',
                       )}
+                    </div>
+                    <div className="routing-config-media-rule-modal__full-row">
                       {renderMessageField(
                         'accessSuccessWelcomeMessage',
-                        'Access Success Welcome Message',
+                        '接入成功欢迎语',
+                        2,
+                        true,
                       )}
                     </div>
                   </div>
 
                   <div className="routing-config-media-rule-modal__subsection">
-                    <h4>Queue Configuration</h4>
-                    <div className="routing-config-crud-modal__section-grid">
+                    <h4>排队配置</h4>
+                    <div className="routing-config-media-rule-modal__full-row">
                       {renderMessageField(
                         'nonWorkingTimeMessage',
-                        'Non-working Time Message',
+                        '非人工服务时间提示语',
+                        2,
+                        true,
                       )}
+                    </div>
+                    <div className="routing-config-media-rule-modal__paired-row">
                       {renderNumberField(
                         'maxQueueCustomers',
-                        'Max Queue Customers',
-                        'customers',
-                      )}
-                      {renderNumberField(
-                        'queueTimeoutMinutes',
-                        'Queue Timeout',
-                        'min',
+                        '最大排队人数',
+                        '人',
                       )}
                       {renderMessageField(
                         'queueWaitingMessage',
-                        'Queue Waiting Message',
+                        '排队提示语',
+                      )}
+                    </div>
+                    <div className="routing-config-media-rule-modal__paired-row">
+                      {renderNumberField(
+                        'queueTimeoutMinutes',
+                        '排队超时时长',
+                        '分',
                       )}
                       {renderMessageField(
                         'queueTimeoutMessage',
-                        'Queue Timeout Message',
+                        '排队超时提示语',
                       )}
                     </div>
                   </div>
 
                   <div className="routing-config-media-rule-modal__subsection">
-                    <h4>Agent Opening / Ending Configuration</h4>
-                    <div className="routing-config-crud-modal__section-grid">
+                    <h4>人工开场/结束配置</h4>
+                    <div className="routing-config-media-rule-modal__full-row">
                       {renderMessageField(
                         'assignedAgentGreeting',
-                        'Assigned Agent Greeting',
+                        '分配坐席成功问候语',
+                        2,
+                        true,
                       )}
+                    </div>
+                    <div className="routing-config-media-rule-modal__full-row">
                       {renderMessageField(
                         'agentEndReminder',
-                        'Agent End Reminder',
+                        '坐席挂断提醒',
+                        2,
+                        true,
                       )}
                     </div>
                   </div>
 
                   <div className="routing-config-media-rule-modal__subsection">
-                    <h4>Customer No Reply Configuration</h4>
-                    <div className="routing-config-crud-modal__section-grid">
+                    <h4>客户未回复配置</h4>
+                    <div className="routing-config-media-rule-modal__paired-row">
                       {renderNumberField(
                         'preTimeoutReminderMinutes',
-                        'Pre-timeout Reminder Time',
-                        'min',
+                        '未回复超时前提醒时间',
+                        '分',
                       )}
                       {renderMessageField(
                         'preTimeoutReminderMessage',
-                        'Pre-timeout Reminder Message',
+                        '未回复超时前提醒',
                       )}
+                    </div>
+                    <div className="routing-config-media-rule-modal__paired-row">
                       {renderNumberField(
                         'customerNoReplyTimeoutMinutes',
-                        'No Reply Timeout',
-                        'min',
+                        '客户未回复超时时长',
+                        '分',
                       )}
                       {renderMessageField(
                         'customerTimeoutNotice',
-                        'Customer Timeout Notice',
+                        '未回复超时客户提醒',
                       )}
+                    </div>
+                    <div className="routing-config-media-rule-modal__full-row">
                       {renderMessageField(
                         'agentTimeoutNotice',
-                        'Agent Timeout Notice',
+                        '未回复超时坐席提醒',
+                        2,
+                        true,
                       )}
                     </div>
                   </div>
 
                   <div className="routing-config-media-rule-modal__subsection">
-                    <h4>Agent No Reply Configuration</h4>
-                    <div className="routing-config-crud-modal__section-grid">
+                    <h4>坐席未回复配置</h4>
+                    <div className="routing-config-media-rule-modal__paired-row">
                       {renderNumberField(
                         'agentNoReplyTimeoutSeconds',
-                        'Agent No Reply Timeout',
-                        'sec',
+                        '坐席未回复超时时长',
+                        '秒',
                       )}
                       {renderMessageField(
                         'agentNoReplyAutoResponseMessage',
-                        'Auto Response Message',
+                        '自动回复内容',
                       )}
                     </div>
                   </div>
                 </div>
               </section>
 
-              <section className="routing-config-crud-modal__section">
+              <section className="routing-config-media-rule-modal__section">
                 <header>
-                  <strong className="routing-config-crud-modal__section-title">
-                    Agent Service Configuration
-                  </strong>
+                  <strong>坐席服务配置</strong>
                 </header>
                 <div className="routing-config-media-rule-modal__subsections">
                   <div className="routing-config-media-rule-modal__subsection">
-                    <h4>Webchat Message Recall</h4>
-                    <div className="routing-config-crud-modal__section-grid">
+                    <h4>Webchat 消息撤回</h4>
+                    <div className="routing-config-media-rule-modal__compact-row">
                       {renderNumberField(
                         'webchatRecallLimitSeconds',
-                        'Webchat Message Recall Limit',
-                        'sec',
+                        'Webchat消息撤回时限',
+                        '秒',
                       )}
                     </div>
                   </div>
 
                   <div className="routing-config-media-rule-modal__subsection">
-                    <h4>Agent No Reply Service Level</h4>
-                    <div className="routing-config-crud-modal__section-grid">
+                    <h4>坐席未回复服务级别</h4>
+                    <div className="routing-config-media-rule-modal__compact-row">
                       {renderNumberField(
                         'agentNoReplyWarningSeconds',
-                        'Warning',
-                        'sec',
+                        '黄色提醒',
+                        '秒',
                       )}
                       {renderNumberField(
                         'agentNoReplyBreachSeconds',
-                        'Breach',
-                        'sec',
+                        '红色警示',
+                        '秒',
                       )}
                     </div>
                   </div>
@@ -2289,17 +2326,29 @@ export function MediaServiceRulePlansPage() {
           )}
         </div>
         <div className="routing-config-crud-modal__footer">
-          <BaseButton variant="secondary" onClick={closeModal}>
-            {modalMode === 'view' ? 'Close' : 'Cancel'}
+          <BaseButton
+            autoInsertSpace={false}
+            variant="secondary"
+            onClick={closeModal}
+          >
+            <span>{modalMode === 'view' ? '关闭' : '取消'}</span>
           </BaseButton>
           {modalMode === 'delete' && !deleteBlockReason && (
-            <BaseButton variant="danger" onClick={handleDelete}>
-              Delete
+            <BaseButton
+              autoInsertSpace={false}
+              variant="danger"
+              onClick={handleDelete}
+            >
+              <span>删除</span>
             </BaseButton>
           )}
           {(modalMode === 'add' || modalMode === 'edit') && (
-            <BaseButton variant="primary" onClick={handleSave}>
-              Save
+            <BaseButton
+              autoInsertSpace={false}
+              variant="primary"
+              onClick={handleSave}
+            >
+              <span>保存</span>
             </BaseButton>
           )}
         </div>

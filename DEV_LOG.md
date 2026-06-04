@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-04 14:54 +08:00
+最后更新：2026-06-04 15:32 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,56 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-04 15:32 +08:00 - Media Service Rule Plans 弹框临时中文化与块状布局
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/mock/routingConfiguration.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-04-1532.md`
+- `.codex-backup/current-todo-2026-06-04-1532.md`
+- `.codex-backup/page-state-2026-06-04-1532.md`
+
+修改原因：
+
+- 用户反馈 `Media Service Rule Plans` 弹框字段较多，当前连续表单不够清晰；数字输入框过宽，参数和提示语可按同一业务维度放在同一行。
+- 用户希望先把该弹框临时改成中文，确认配置逻辑无误后再转换回英文。
+
+修改结果：
+
+- 仅调整 `Media Service Rule Plans` Add/Edit/View/Delete 弹框，不修改 `Channels`、列表列结构、路由或字段类型。
+- 弹框标题、分区标题、字段标签、单位、按钮、校验提示、删除保护提示改成中文。
+- Media Type 在弹框内显示 `文字媒体`，Status 在弹框内显示 `启用/禁用`。
+- Add 默认话术和现有 Text rule plan mock 话术临时改成中文。
+- 弹框新增专属 `routing-config-media-rule-modal__form / __section / __paired-row / __compact-row` 样式，改成类似 Working Time Plans 的块状布局。
+- 数字输入框收窄到约 160px；相关数字参数与提示语按同一行组合展示。
+- 为中文按钮显式关闭 AntD `autoInsertSpace`，避免 `保存` 显示为 `保 存`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/media-service-rule-plans` Add 弹框：中文标题、中文分区、中文字段、中文默认话术正常；旧英文分区标题不再出现。
+- Browser Add 弹框：确认 3 个顶层 section、7 个子块、5 个参数+话术行、3 个紧凑数字行、10 个数字字段；中文必填校验可阻止保存。
+- Browser View 弹框：中文只读展示正常。
+- Browser Edit 弹框：保存后列表 `Updated Date` 更新为 `2026-06-04`，`Updated By` 为 `Admin`。
+- Browser Delete 弹框：被 Channels 绑定引用的方案显示中文不可删除提示。
+- Browser `/routing-config/channels`：Rule Plan 绑定列仍正常显示，无渲染错误。
+
+回滚说明：
+
+- 如需回滚本轮中文和布局，恢复 `MediaServiceRulePlansPage` 弹框的英文标题/字段/校验/按钮，恢复 `src/mock/routingConfiguration.ts` 中 Text plan 话术为英文，并移除本轮新增的 `routing-config-media-rule-modal__form / __section / __paired-row / __compact-row` 样式。
+
+当前风险点：
+
+- 这是临时中文确认版本，后续对外或客户演示管理页前需要再统一转回英文。
+- `Channels` 本轮只做回归，不调整绑定交互。
+- Browser 控制台仍有既有 Google Identity / FedCM 和 AntD deprecation 日志，与本轮改造无直接关系。
 
 ### 2026-06-04 14:54 +08:00 - Media Service Rule Plans 文字媒体规则方案改造
 

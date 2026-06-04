@@ -402,73 +402,69 @@ export const channelMediaSettings: ChannelMedia[] = [
 
 export const mediaServiceRulePlans: MediaServiceRulePlan[] = [
   {
-    accessSuccessWelcomeMessage:
-      'Hello, the intelligent assistant is ready to serve you.',
-    agentNoReplyAutoResponseMessage: 'Please wait, we are processing...',
+    accessSuccessWelcomeMessage: '您好，智能小助手为您提供服务。',
+    agentNoReplyAutoResponseMessage: '请稍候，我们正在处理。',
     agentNoReplyBreachSeconds: 120,
     agentNoReplyTimeoutSeconds: 120,
     agentNoReplyWarningSeconds: 60,
-    agentEndReminder: 'Thank you for contacting us. Have a great day!',
-    assignedAgentGreeting: '{agentName} is now serving you.',
-    agentTimeoutNotice:
-      'Customer timeout no reply, conversation closed automatically.',
+    agentEndReminder: '很高兴为您服务，祝您生活愉快！',
+    assignedAgentGreeting:
+      '尊敬的{customerName}您好，{agentName}将为您服务，若您超过{timeoutMinutes}分钟未回复，会话将自动关闭，请您及时查看。',
+    agentTimeoutNotice: '客户超时未回复，会话自动关闭。',
     customerNoReplyTimeoutMinutes: 5,
     customerTimeoutNotice:
-      'We have not received your reply. The service has been closed automatically. Please contact us again if needed.',
+      '未收到您的回复，已自动关闭服务，若有需要可再次联系客服。',
     description: 'Default rule plan for text-based customer service channels.',
     maxConcurrentAccess: 50,
     maxQueueCustomers: 20,
     mediaCode: 'TEXT',
     minScanIntervalSeconds: 30,
     nonWorkingTimeMessage:
-      'Sorry, our working time is {workTime}. Please contact us during service hours.',
+      '抱歉，工作时间为{workTime}，请在此时间联系我们。',
     planCode: 'MSRP_TEXT_STANDARD',
     planName: 'Standard Text Service',
     preTimeoutReminderMessage:
-      'Please reply soon. This conversation will close in {reminderMinutes} minute.',
+      '系统未收到回复，将在{reminderMinutes}分钟后结束会话。',
     preTimeoutReminderMinutes: 1,
-    queueTimeoutMessage:
-      'Agents are currently busy. Please try again later.',
+    queueTimeoutMessage: '当前人工服务繁忙，请稍后再试。',
     queueTimeoutMinutes: 10,
     queueWaitingMessage:
-      'Our agents are busy now. Estimated waiting time is {estimatedWaitMinutes} minutes.',
+      '当前人工服务繁忙，预计等待{estimatedWaitMinutes}分钟。',
     status: 'Active',
     updatedAt: '2026-06-03',
     updatedBy: 'Admin',
     webchatRecallLimitSeconds: 120,
   },
   {
-    accessSuccessWelcomeMessage:
-      'Hello, the priority service assistant is ready to serve you.',
+    accessSuccessWelcomeMessage: '您好，优先服务智能助手为您提供服务。',
     agentNoReplyAutoResponseMessage:
-      'Please wait a moment, your request is being handled with priority.',
+      '请稍候，我们正在优先处理您的请求。',
     agentNoReplyBreachSeconds: 120,
     agentNoReplyTimeoutSeconds: 120,
     agentNoReplyWarningSeconds: 60,
-    agentEndReminder: 'Thank you for choosing priority service.',
-    assignedAgentGreeting: '{agentName} is now assisting your priority request.',
-    agentTimeoutNotice:
-      'Customer timeout no reply, priority conversation closed automatically.',
+    agentEndReminder: '很高兴为您提供优先服务，祝您生活愉快！',
+    assignedAgentGreeting:
+      '尊敬的{customerName}您好，{agentName}将优先为您服务，若您超过{timeoutMinutes}分钟未回复，会话将自动关闭，请您及时查看。',
+    agentTimeoutNotice: '客户超时未回复，优先服务会话自动关闭。',
     customerNoReplyTimeoutMinutes: 8,
     customerTimeoutNotice:
-      'We have not received your reply. The priority service has been closed automatically. Please contact us again if needed.',
+      '未收到您的回复，优先服务已自动关闭，若有需要可再次联系客服。',
     description: 'Priority text service with longer customer timeout.',
     maxConcurrentAccess: 50,
     maxQueueCustomers: 20,
     mediaCode: 'TEXT',
     minScanIntervalSeconds: 30,
     nonWorkingTimeMessage:
-      'Sorry, priority service working time is {workTime}. Please contact us during service hours.',
+      '抱歉，优先服务工作时间为{workTime}，请在此时间联系我们。',
     planCode: 'MSRP_TEXT_PRIORITY',
     planName: 'Priority Text Service',
     preTimeoutReminderMessage:
-      'Please reply soon. Priority service will close this conversation in {reminderMinutes} minute.',
+      '系统未收到回复，将在{reminderMinutes}分钟后结束优先服务会话。',
     preTimeoutReminderMinutes: 1,
-    queueTimeoutMessage:
-      'Priority agents are currently busy. Please try again later.',
+    queueTimeoutMessage: '当前优先服务坐席繁忙，请稍后再试。',
     queueTimeoutMinutes: 10,
     queueWaitingMessage:
-      'Priority agents are busy now. Estimated waiting time is {estimatedWaitMinutes} minutes.',
+      '当前优先服务坐席繁忙，预计等待{estimatedWaitMinutes}分钟。',
     status: 'Active',
     updatedAt: '2026-06-03',
     updatedBy: 'Admin',

@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-04 14:54 +08:00
+最后更新：2026-06-04 15:32 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：客户可访问 Production 版本已发布；当前本地分支 `codex/text-channel-config-settings` 已恢复 `Call Management` / `Routing Config` 菜单与路由，用于继续开发未完成管理功能。本轮已改造 `Routing Config > Media Service Rule Plans` 的 Text 规则方案新增/编辑/查看页，`Channels` 暂只继续绑定并引用规则方案。
+当前目标：客户可访问 Production 版本已发布；当前本地分支 `codex/text-channel-config-settings` 已恢复 `Call Management` / `Routing Config` 菜单与路由，用于继续开发未完成管理功能。本轮已将 `Routing Config > Media Service Rule Plans` 的 Text 规则方案弹框临时中文化并改成块状布局，方便用户先确认配置逻辑；`Channels` 暂只继续绑定并引用规则方案。
 
 ## 0. 使用规则
 
@@ -119,7 +119,7 @@ codex-recovered-context.md
 - `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`：正式 `Live Chat` Conversation tab 内容，包含消息记录、快捷回复、引用、撤回、Transfer、End/Close 和发送消息演示。
 - `src/pages/call-management/RoutingConfigurationPage.tsx`：旧路由配置入口兼容组件，重定向到 `/routing-config/route-elements`。
 - `src/pages/routing-config/RoutingConfigCrudPage.tsx`：Routing Config 普通主数据页复用的本地 CRUD 容器，提供 Search / Add / View / Edit / Delete 弹窗表单。
-- `src/pages/routing-config/RoutingConfigDataPages.tsx`：Routing Config 主数据独立配置页，覆盖 Route Elements、VDN、Sites、Channels、Media Service Rule Plans、Business Types、Site Access Volume、Access Accounts、Working Time Plans、Skill Queues；Channels 已支持按媒体引用服务规则方案，Media Service Rule Plans 当前完整维护 Text 媒体服务规则，弹框按 Basic Info、Customer Service Configuration、Agent Service Configuration 维护字段且不再展示 Queue Alert / Recipients 区块；Working Time Plans 已改为印尼单国家自定义排班编辑器，包含 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan，Skill Queues 未选择方案时展示 `Default 24x7`。
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`：Routing Config 主数据独立配置页，覆盖 Route Elements、VDN、Sites、Channels、Media Service Rule Plans、Business Types、Site Access Volume、Access Accounts、Working Time Plans、Skill Queues；Channels 已支持按媒体引用服务规则方案，Media Service Rule Plans 当前完整维护 Text 媒体服务规则，弹框按 Basic Info、Customer Service Configuration、Agent Service Configuration 维护字段且不再展示 Queue Alert / Recipients 区块；2026-06-04 15:32 后该弹框临时用中文展示并采用类似 Working Time Plans 的块状布局，待中文确认后再转回英文；Working Time Plans 已改为印尼单国家自定义排班编辑器，包含 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan，Skill Queues 未选择方案时展示 `Default 24x7`。
 - `src/pages/routing-config/SkillRoutingRulesPage.tsx`：独立技能路由规则页，支持按启用路由要素多选查询、规则列表要素拆列、批量新增拆分预览、重复组合勾选覆盖、规则查看/编辑/删除。
 - `src/pages/routing-config/RoutingConfigStatusBadge.tsx`：Routing Config 状态 badge 组件，避免页面组件导出非组件函数触发 Fast Refresh lint。
 - `src/pages/call-management/TextChannelSettingsPage.tsx`：数据呼叫管理下的文字渠道配置页，包含 Service Rules、Customer Timeout & Messages、Channel Queue Alerts 三组配置。
@@ -512,6 +512,28 @@ Live Chat 当前 mock：
 - GitHub remote 与基础提交。
 
 ## 10. 当前开发状态
+
+截至 2026-06-04 15:32 +08:00，本轮优化 `Routing Config > Media Service Rule Plans` 弹框样式并临时中文化：
+
+- 仅修改 `Media Service Rule Plans` 菜单内 Add/Edit/View/Delete 弹框；列表页、左侧菜单、路由路径和 `Channels` 表单结构不改。
+- 弹框标题、分区标题、字段标签、单位、按钮、校验提示和删除保护提示已改成中文；Media Type 在弹框内显示为 `文字媒体`，Status 显示为 `启用/禁用`。
+- Add 默认话术和现有 Text rule plan mock 话术已临时改为中文，方便用户先确认配置逻辑。
+- 弹框布局改为类似 `Working Time Plans` 的白色块状 section：基础信息、客户服务配置、坐席服务配置。
+- 客户服务配置下的接入量、排队、人工开场/结束、客户未回复、坐席未回复均改为轻量子块；坐席服务配置下的 Webchat 消息撤回和坐席未回复服务级别也改为子块。
+- 数字输入框改为约 160px 的窄输入；最大排队人数 + 排队提示语、排队超时时长 + 排队超时提示语、未回复提醒时间 + 提醒话术、客户未回复超时 + 客户提醒、坐席未回复超时 + 自动回复内容均按同一行组合展示。
+- 业务字段结构和校验逻辑不变；后续中文确认无误后，需要再将弹框文案和默认话术统一转回英文。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `http://127.0.0.1:5179/routing-config/media-service-rule-plans`：Add 弹框显示中文标题、中文分区、中文字段、中文默认话术；旧英文分区标题不再出现。
+- Browser Add 弹框：确认 3 个顶层 section、7 个子块、5 个参数+话术行、3 个紧凑数字行、10 个数字字段；必填校验显示中文并阻止保存。
+- Browser View 弹框：中文只读展示正常。
+- Browser Edit 弹框：保存后列表 `Updated Date` 刷新为 `2026-06-04`，`Updated By` 为 `Admin`。
+- Browser Delete 弹框：被 Channel Media Rule Binding 引用的方案显示中文不可删除提示。
+- Browser `/routing-config/channels`：Rule Plan 列仍显示 `Standard Text Service` / `Priority Text Service`，未发现页面渲染错误。
+- Browser 控制台仍有既有 Google Identity / FedCM 和 AntD deprecation 日志；未发现本轮页面渲染类错误。
 
 截至 2026-06-04 14:54 +08:00，本轮改造 `Routing Config > Media Service Rule Plans` 的 Text 媒体规则方案新增/编辑/查看页：
 
