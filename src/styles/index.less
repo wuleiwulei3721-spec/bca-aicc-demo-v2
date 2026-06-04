@@ -1481,7 +1481,7 @@ a {
   overflow: hidden;
   min-width: 0;
   min-height: 0;
-  padding: 12px;
+  padding: 8px 12px 12px;
 }
 
 .aicc-page-container {
@@ -1490,11 +1490,11 @@ a {
 
 .aicc-page-container__header {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  min-height: 50px;
-  margin-bottom: 18px;
-  gap: 16px;
+  min-height: 28px;
+  margin-bottom: 10px;
+  gap: 12px;
 }
 
 .aicc-page-container__eyebrow {
@@ -1509,9 +1509,9 @@ a {
 .aicc-page-container__title {
   margin: 0;
   color: var(--aicc-text);
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 28px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 22px;
   letter-spacing: 0;
 }
 
@@ -1532,7 +1532,1880 @@ a {
 .aicc-page-container__body {
   display: flex;
   flex-direction: column;
+  gap: 12px;
+}
+
+.text-channel-settings {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.text-channel-settings__header-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.text-channel-settings__header-actions > span:not(.ant-tag) {
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.text-channel-settings__notice.ant-alert {
+  border-radius: var(--aicc-radius);
+}
+
+.text-channel-settings__notice ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.text-channel-settings__overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.text-channel-settings__overview > div {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius);
+  background: var(--aicc-bg-elevated);
+  box-shadow: 0 6px 18px rgba(24, 74, 138, 0.05);
+  column-gap: 10px;
+}
+
+.text-channel-settings__overview .anticon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: var(--aicc-primary);
+  background: var(--aicc-primary-soft);
+}
+
+.text-channel-settings__overview span,
+.text-channel-settings__overview strong {
+  min-width: 0;
+}
+
+.text-channel-settings__overview span {
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.text-channel-settings__overview strong {
+  grid-column: 2;
+  color: var(--aicc-text);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.text-channel-settings__tabs > .ant-tabs-nav {
+  margin-bottom: 10px;
+}
+
+.text-channel-settings__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.text-channel-settings__grid--service {
+  grid-template-columns: minmax(320px, 1.2fr) minmax(260px, 0.8fr);
+  align-items: start;
+}
+
+.text-channel-settings__grid--service > .aicc-base-card:first-child {
+  grid-row: span 2;
+}
+
+.text-channel-settings__grid--timeout {
+  grid-template-columns: minmax(300px, 0.8fr) minmax(420px, 1.2fr);
+  align-items: start;
+}
+
+.text-channel-settings__grid--timeout > .aicc-base-card:nth-child(2) {
+  grid-row: span 2;
+}
+
+.text-channel-settings__form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.text-channel-settings__field,
+.text-channel-settings__message-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.text-channel-settings__field > span,
+.text-channel-settings__message-head label {
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.text-channel-settings__field > em,
+.text-channel-settings__message-field > p,
+.text-channel-settings__card-intro {
+  margin: 0;
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.text-channel-settings__number-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px;
+  gap: 6px;
+}
+
+.text-channel-settings__number-control .ant-input-number {
+  width: 100%;
+}
+
+.text-channel-settings__number-control .ant-select-selector,
+.text-channel-settings__number-control .ant-input-number,
+.text-channel-settings__message-field textarea,
+.text-channel-settings .ant-select-selector {
+  border-radius: var(--aicc-radius-sm);
+}
+
+.text-channel-settings__message-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.text-channel-settings__message-field {
+  margin-top: 12px;
+}
+
+.text-channel-settings__message-field:first-child {
+  margin-top: 0;
+}
+
+.text-channel-settings__message-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.text-channel-settings__message-head span {
+  flex-shrink: 0;
+  color: var(--aicc-text-tertiary);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 16px;
+}
+
+.text-channel-settings__variables {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.text-channel-settings__variables button {
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid #cfe0f7;
+  border-radius: var(--aicc-radius-sm);
+  color: var(--aicc-primary-strong);
+  background: var(--aicc-primary-soft);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.text-channel-settings__variables button:hover,
+.text-channel-settings__variables button:focus-visible {
+  border-color: var(--aicc-primary);
+  outline: none;
+}
+
+.text-channel-settings__scoped-rule,
+.text-channel-settings__sla-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.text-channel-settings__sla-row {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+}
+
+.text-channel-settings__sla-dot {
+  width: 10px;
+  height: 10px;
+  margin-top: 32px;
+  border-radius: 50%;
+}
+
+.text-channel-settings__sla-dot--warning {
+  background: var(--aicc-livechat-sla-warning);
+}
+
+.text-channel-settings__sla-dot--breach {
+  background: var(--aicc-livechat-sla-breach);
+}
+
+.text-channel-settings__timeout-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
   gap: 16px;
+}
+
+.text-channel-settings__timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-left: 4px;
+}
+
+.text-channel-settings__timeline::before {
+  position: absolute;
+  top: 18px;
+  bottom: 18px;
+  left: 15px;
+  width: 1px;
+  background: #d6e4f6;
+  content: '';
+}
+
+.text-channel-settings__timeline > div {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.text-channel-settings__timeline span {
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--aicc-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.text-channel-settings__timeline strong {
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.text-channel-settings__timeline p {
+  grid-column: 2;
+  margin: -2px 0 0;
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.text-channel-settings__timeout-form {
+  min-width: 0;
+}
+
+.text-channel-settings__channel-cell {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+}
+
+.text-channel-settings__channel-cell strong {
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.text-channel-settings__channel-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.text-channel-settings__channel-icon--bankapp {
+  background: #1d63c7;
+}
+
+.text-channel-settings__channel-icon--webchat {
+  background: #177ddc;
+}
+
+.text-channel-settings__channel-icon--whatsapp {
+  background: #19a05f;
+}
+
+.text-channel-settings .ant-table-wrapper {
+  margin-top: 12px;
+}
+
+.text-channel-settings .ant-table-cell .ant-input-number,
+.text-channel-settings .ant-table-cell .ant-select {
+  width: 100%;
+}
+
+.text-channel-settings__alert-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.text-channel-settings__summary-row {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid #edf2f8;
+}
+
+.text-channel-settings__summary-row:last-child {
+  border-bottom: 0;
+}
+
+.text-channel-settings__summary-row .anticon {
+  color: var(--aicc-primary);
+}
+
+.text-channel-settings__summary-row span {
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.text-channel-settings__summary-row strong {
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.routing-config {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.routing-config__header-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.routing-config__overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.routing-config__overview > div {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius);
+  background: var(--aicc-bg-elevated);
+  box-shadow: 0 6px 18px rgba(24, 74, 138, 0.05);
+  column-gap: 10px;
+}
+
+.routing-config__overview .anticon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: var(--aicc-primary);
+  background: var(--aicc-primary-soft);
+}
+
+.routing-config__overview span,
+.routing-config__overview strong {
+  min-width: 0;
+}
+
+.routing-config__overview span {
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.routing-config__overview strong {
+  grid-column: 2;
+  color: var(--aicc-text);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.routing-config__validation-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.routing-config__validation-item {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: start;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius-sm);
+  background: #f8fbff;
+  gap: 8px;
+}
+
+.routing-config__validation-item > .anticon {
+  margin-top: 2px;
+  color: var(--aicc-primary);
+}
+
+.routing-config__validation-item--success > .anticon {
+  color: #16a36a;
+}
+
+.routing-config__validation-item--warning {
+  border-color: #f8d89a;
+  background: #fffaf0;
+}
+
+.routing-config__validation-item--warning > .anticon {
+  color: var(--aicc-livechat-sla-warning);
+}
+
+.routing-config__validation-item--error {
+  border-color: #ffd1d1;
+  background: #fff7f7;
+}
+
+.routing-config__validation-item--error > .anticon {
+  color: var(--aicc-livechat-sla-breach);
+}
+
+.routing-config__validation-item span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.routing-config__validation-item strong {
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.routing-config__tabs > .ant-tabs-nav {
+  margin-bottom: 10px;
+}
+
+.routing-config__tabs .ant-tabs-tab .anticon {
+  margin-right: 4px;
+}
+
+.routing-config__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.routing-config__grid--model,
+.routing-config__grid--split {
+  grid-template-columns: minmax(280px, 0.36fr) minmax(520px, 0.64fr);
+  align-items: start;
+}
+
+.routing-config__card-intro {
+  margin: 0 0 12px;
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.routing-config__inline-alert.ant-alert {
+  margin-bottom: 12px;
+  border-radius: var(--aicc-radius);
+}
+
+.routing-config__factor-pills {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.routing-config__factor-pills span {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid #d7e4f5;
+  border-radius: var(--aicc-radius-sm);
+  color: var(--aicc-primary-strong);
+  background: var(--aicc-primary-soft);
+  font-size: 12px;
+  font-weight: 800;
+  gap: 8px;
+}
+
+.routing-config__factor-pills strong {
+  overflow: hidden;
+  min-width: 0;
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routing-config__ratio-stack,
+.routing-config__prompt-list,
+.routing-config__dictionary-list {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.routing-config__ratio-stack span {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  padding: 4px 7px;
+  border: 1px solid #d7e4f5;
+  border-radius: var(--aicc-radius-sm);
+  color: var(--aicc-text-secondary);
+  background: #f8fbff;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 6px;
+}
+
+.routing-config__ratio-stack strong {
+  color: var(--aicc-primary-strong);
+  font-weight: 800;
+}
+
+.routing-config__site-config-line {
+  display: block;
+  min-width: 0;
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.routing-config__dictionary-list {
+  flex-direction: column;
+}
+
+.routing-config__dictionary-list > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.routing-config__dictionary-list strong {
+  min-width: 92px;
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.routing-config__agent-count {
+  display: inline-flex;
+  align-items: center;
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 700;
+  gap: 5px;
+}
+
+.routing-config__agent-count .anticon {
+  color: var(--aicc-primary);
+}
+
+.routing-config__blank-value {
+  display: inline-block;
+  width: 1px;
+  height: 18px;
+}
+
+.routing-config__skill-value {
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 17px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routing-config__skill-value strong {
+  overflow: hidden;
+  color: var(--aicc-text-secondary);
+  font-size: 11px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routing-config__table-factor-value {
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  color: var(--aicc-text);
+  font-size: 12px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routing-config__condition-chips {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.routing-config__condition-chip {
+  display: inline-flex;
+  max-width: 150px;
+  align-items: center;
+  padding: 2px 6px;
+  border: 1px solid #d8e0ec;
+  border-radius: 4px;
+  color: var(--aicc-text);
+  background: #ffffff;
+  font-size: 11px;
+  line-height: 16px;
+  gap: 4px;
+}
+
+.routing-config__condition-chip--any {
+  color: var(--aicc-text-secondary);
+  background: #f7f9fc;
+}
+
+.routing-config__condition-chip small {
+  overflow: hidden;
+  max-width: 58px;
+  color: var(--aicc-text-secondary);
+  font-size: 11px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routing-config__condition-chip strong {
+  overflow: hidden;
+  min-width: 0;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routing-config-batch-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.routing-config-batch-modal__section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--aicc-border);
+}
+
+.routing-config-batch-modal__section:last-of-type {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.routing-config-batch-modal__section h3 {
+  margin: 0;
+  color: var(--aicc-text);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 20px;
+}
+
+.routing-config-batch-modal__hint {
+  margin: -2px 0 0;
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+}
+
+.routing-config__batch-factor-list {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.routing-config__batch-factor-row,
+.routing-config__batch-target-row {
+  display: grid;
+  align-items: center;
+  grid-template-columns: 104px minmax(0, 1fr);
+  min-width: 0;
+  gap: 6px;
+}
+
+.routing-config__batch-factor-row > span,
+.routing-config__batch-target-row > span {
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+}
+
+.routing-config__field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.routing-config__field > span {
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.routing-config__batch-factor-row .ant-select,
+.routing-config__batch-target-row .ant-select,
+.routing-config__field .ant-select,
+.routing-config__field .ant-input-number {
+  width: 100%;
+}
+
+.routing-config__batch-factor-row .ant-select-selector,
+.routing-config__batch-target-row .ant-select-selector,
+.routing-config__field .ant-select-selector,
+.routing-config__field .ant-input-number {
+  border-radius: var(--aicc-radius-sm);
+}
+
+.routing-config__batch-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  gap: 10px;
+}
+
+.routing-config__batch-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.routing-config__batch-summary span {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius-sm);
+  color: var(--aicc-text-secondary);
+  background: #f8fbff;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 8px;
+}
+
+.routing-config__batch-summary strong {
+  overflow: hidden;
+  max-width: 58%;
+  color: var(--aicc-text);
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routing-config__duplicate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.routing-config__duplicate-list span {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.routing-config__duplicate-list strong {
+  color: var(--aicc-text);
+  font-weight: 700;
+}
+
+.routing-config__duplicate-value {
+  display: block;
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routing-config-batch-modal .ant-table-wrapper {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.routing-config__preview-table {
+  max-width: 100%;
+}
+
+.routing-config-batch-modal .aicc-table .ant-table-thead > tr > th,
+.routing-config-batch-modal .aicc-table .ant-table-tbody > tr > td {
+  padding: 5px 6px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.routing-config__preview-table .ant-table-selection-column,
+.routing-config__preview-table .ant-table-thead > tr > th:first-child,
+.routing-config__preview-table .ant-table-tbody > tr > td:first-child {
+  width: 34px;
+  min-width: 34px;
+  max-width: 34px;
+  padding-inline: 4px;
+  text-align: center;
+}
+
+.routing-config__preview-table .aicc-status-badge {
+  height: 20px;
+  padding-inline: 6px;
+  font-size: 11px;
+}
+
+.routing-config__batch-message {
+  align-self: flex-start;
+  padding: 6px 10px;
+  border: 1px solid #f5d18a;
+  border-radius: var(--aicc-radius-sm);
+  color: #8a5b00;
+  background: #fff8e8;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.routing-config__table-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 240px;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.routing-config__table-toolbar .ant-select {
+  width: 100%;
+}
+
+.routing-config-page {
+  --routing-config-control-height: 32px;
+
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.routing-config-page__notice.ant-alert {
+  border-radius: var(--aicc-radius-sm);
+}
+
+.routing-config-page__toolbar {
+  display: grid;
+  align-items: center;
+  grid-template-columns: minmax(260px, 1fr) auto;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.routing-config-page__toolbar > span {
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.routing-config-page__admin-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.routing-config-page__query-group {
+  display: flex;
+  min-width: 0;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.routing-config-page__filters {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.routing-config-page__filters--rules {
+  width: auto;
+}
+
+.routing-config-page__filter {
+  display: flex;
+  min-width: 150px;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.routing-config-page__filter > span {
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.routing-config-page__filter .ant-input,
+.routing-config-page__filter .ant-input-affix-wrapper,
+.routing-config-page__filter .ant-select-selector {
+  border-radius: var(--aicc-radius-sm);
+}
+
+.routing-config-page__filter .ant-input,
+.routing-config-page__filter .ant-input-affix-wrapper,
+.routing-config-page__filter .ant-select-single,
+.routing-config-page__filter .ant-select-multiple,
+.routing-config-page__filter .ant-select-single .ant-select-selector,
+.routing-config-page__filter .ant-select-multiple .ant-select-selector,
+.routing-config-page__admin-actions .aicc-button.ant-btn,
+.routing-config-page__add-action .aicc-button.ant-btn,
+.routing-config-crud-modal__footer .aicc-button.ant-btn {
+  height: var(--routing-config-control-height);
+  min-height: var(--routing-config-control-height);
+}
+
+.routing-config-page__filter .ant-input,
+.routing-config-page__filter .ant-input-affix-wrapper {
+  font-size: 12px;
+}
+
+.routing-config-page__filter .ant-select-single .ant-select-selector {
+  display: flex;
+  align-items: center;
+}
+
+.routing-config-page__filter .ant-select-multiple .ant-select-selector {
+  display: flex;
+  align-items: center;
+  padding-block: 2px;
+}
+
+.routing-config-page__filter .ant-select-single .ant-select-selection-item,
+.routing-config-page__filter
+  .ant-select-single
+  .ant-select-selection-placeholder {
+  line-height: calc(var(--routing-config-control-height) - 2px);
+}
+
+.routing-config-page__filter .ant-select-multiple .ant-select-selection-item {
+  margin-block: 0;
+  font-size: 11px;
+  line-height: 18px;
+}
+
+.routing-config-page__filter .ant-input-affix-wrapper > input.ant-input {
+  height: calc(var(--routing-config-control-height) - 2px);
+  min-height: calc(var(--routing-config-control-height) - 2px);
+}
+
+.routing-config-page__filter .ant-select {
+  width: 100%;
+}
+
+.routing-config-page__admin-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.routing-config-page__add-action {
+  display: flex;
+  align-items: flex-end;
+  margin-left: auto;
+}
+
+.routing-config-page__admin-actions .aicc-button.ant-btn,
+.routing-config-crud-modal__footer .aicc-button.ant-btn {
+  width: 82px;
+}
+
+.routing-config-page__admin-actions .aicc-button.ant-btn,
+.routing-config-page__add-action .aicc-button.ant-btn,
+.routing-config-crud-modal__footer .aicc-button.ant-btn {
+  padding-inline: 12px;
+  border-radius: var(--aicc-radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.routing-config-page__admin-actions > span {
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.routing-config-crud__row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.routing-config-crud__row-actions button {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius-sm);
+  color: var(--aicc-text-secondary);
+  background: #fff;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.routing-config-crud__row-actions button:hover {
+  border-color: var(--aicc-primary);
+  color: var(--aicc-primary);
+  background: #f4f8ff;
+}
+
+.routing-config-crud-modal__form {
+  --routing-config-control-height: 32px;
+
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.routing-config-crud-modal__form--compact {
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+}
+
+.routing-config-crud-modal__form > .ant-alert {
+  grid-column: 1 / -1;
+}
+
+.routing-config-crud-modal__validation.ant-alert {
+  width: fit-content;
+  max-width: 100%;
+  padding: 7px 10px;
+  border-radius: var(--aicc-radius-sm);
+}
+
+.routing-config-crud-modal__validation .ant-alert-message {
+  margin-bottom: 0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.routing-config-crud-modal__validation .ant-alert-description ul {
+  margin: 4px 0 0;
+  padding-left: 16px;
+}
+
+.routing-config-crud-modal__field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.routing-config-crud-modal__field--full {
+  grid-column: 1 / -1;
+}
+
+.routing-config-crud-modal__field > span {
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.routing-config-crud-modal__field > span strong {
+  margin-left: 3px;
+  color: var(--aicc-danger);
+}
+
+.routing-config-crud-modal__field > em {
+  min-height: 32px;
+  padding: 3px 0;
+  border: 0;
+  color: var(--aicc-text);
+  font-style: normal;
+  line-height: 18px;
+}
+
+.routing-config-crud-modal__field small {
+  color: var(--aicc-text-tertiary);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.routing-config-crud-modal__switch-row {
+  display: inline-flex;
+  min-height: var(--routing-config-control-height);
+  align-items: center;
+  gap: 8px;
+}
+
+.routing-config-crud-modal__switch-row em {
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.routing-config-crud-modal__field .ant-input-number,
+.routing-config-crud-modal__field .ant-input-number-group-wrapper,
+.routing-config-crud-modal__field .ant-select {
+  width: 100%;
+}
+
+.routing-config-crud-modal__field .ant-input,
+.routing-config-crud-modal__field .ant-input-number,
+.routing-config-crud-modal__field .ant-input-number-group-addon,
+.routing-config-crud-modal__field .ant-input-number-group-wrapper,
+.routing-config-crud-modal__field .ant-input-number-wrapper,
+.routing-config-crud-modal__field .ant-select-single .ant-select-selector {
+  height: var(--routing-config-control-height);
+  min-height: var(--routing-config-control-height);
+}
+
+.routing-config-crud-modal__field .ant-input-number-input,
+.routing-config-crud-modal__field .ant-select-single .ant-select-selector .ant-select-selection-item,
+.routing-config-crud-modal__field .ant-select-single .ant-select-selector .ant-select-selection-placeholder {
+  height: calc(var(--routing-config-control-height) - 2px);
+  line-height: calc(var(--routing-config-control-height) - 2px);
+}
+
+.routing-config-crud-modal__field .ant-select-multiple .ant-select-selector {
+  min-height: 32px;
+  padding-block: 2px;
+}
+
+.routing-config-rule-plan-summary {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--aicc-text);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.routing-config-rule-plan-summary span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routing-config-crud-modal__sections {
+  --routing-config-control-height: 32px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.routing-config-crud-modal__section-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.routing-config-crud-modal__section {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.routing-config-crud-modal__section + .routing-config-crud-modal__section {
+  padding-top: 12px;
+  border-top: 1px solid var(--aicc-border);
+}
+
+.routing-config-crud-modal__section-title {
+  color: var(--aicc-text);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 20px;
+}
+
+.routing-config-media-binding-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.routing-config-media-binding-row {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 34px;
+}
+
+.routing-config-media-binding-row > span {
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.routing-config-media-binding-row > em {
+  color: var(--aicc-text-tertiary);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.routing-config-media-binding-row .ant-select-single,
+.routing-config-media-binding-row .ant-select-single .ant-select-selector {
+  height: var(--routing-config-control-height);
+  min-height: var(--routing-config-control-height);
+}
+
+.routing-config-media-rule-modal__variables {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.routing-config-media-rule-modal__variables .ant-tag {
+  margin: 0;
+  border-radius: var(--aicc-radius-sm);
+  font-size: 11px;
+}
+
+.routing-config-media-rule-modal__queue-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.routing-config-media-rule-modal__queue-alert-head,
+.routing-config-media-rule-modal__queue-alert-row {
+  display: grid;
+  grid-template-columns: 140px 100px 170px minmax(220px, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+.routing-config-media-rule-modal__queue-alert-head {
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 18px;
+}
+
+.routing-config-media-rule-modal__queue-alert-row strong {
+  color: var(--aicc-text);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.routing-config-media-rule-modal__queue-alert-row .ant-input,
+.routing-config-media-rule-modal__queue-alert-row .ant-input-number,
+.routing-config-media-rule-modal__queue-alert-row .ant-input-number-group-wrapper {
+  height: var(--routing-config-control-height);
+  min-height: var(--routing-config-control-height);
+  width: 100%;
+}
+
+.routing-config-media-rule-modal__queue-alert-row .ant-input-number-input {
+  height: calc(var(--routing-config-control-height) - 2px);
+  line-height: calc(var(--routing-config-control-height) - 2px);
+}
+
+.routing-config-site-volume-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.routing-config-site-volume-modal__top {
+  display: grid;
+  grid-template-columns: 240px 160px;
+  align-items: start;
+  gap: 14px;
+  justify-content: start;
+}
+
+.routing-config-site-volume-modal__media-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.routing-config-site-volume-modal__media {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 10px 12px;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius-sm);
+  background: #fff;
+  gap: 10px;
+}
+
+.routing-config-site-volume-modal__media header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.routing-config-site-volume-modal__media header strong {
+  color: var(--aicc-text);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 18px;
+}
+
+.routing-config-site-volume-modal__site-list {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.routing-config-site-volume-modal__site-list label {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(160px, 220px) 124px;
+  align-items: center;
+  gap: 10px;
+  justify-content: start;
+}
+
+.routing-config-site-volume-modal__site-list label > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.routing-config-site-volume-modal__site-list strong {
+  overflow: hidden;
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routing-config-site-volume-modal__site-list .ant-input-number-group-wrapper,
+.routing-config-site-volume-modal__site-list .ant-input-number {
+  width: 100%;
+}
+
+.routing-config-working-time-modal__form {
+  display: flex;
+  max-height: min(70vh, 760px);
+  min-width: 0;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.routing-config-working-time-modal__section {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 12px;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius-sm);
+  background: #fff;
+  gap: 12px;
+}
+
+.routing-config-working-time-modal__section header,
+.routing-config-working-time-modal__details summary {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.routing-config-working-time-modal__section header {
+  justify-content: space-between;
+}
+
+.routing-config-working-time-modal__section header strong,
+.routing-config-working-time-modal__details summary strong {
+  color: var(--aicc-text);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 18px;
+}
+
+.routing-config-working-time-modal__section-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.routing-config-working-time-modal__section p {
+  margin: -2px 0 0;
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.routing-config-working-time-modal__basic-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.routing-config-working-time-modal__description {
+  grid-column: span 2;
+}
+
+.routing-config-working-time-modal__details {
+  padding: 12px;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius-sm);
+  background: #fff;
+}
+
+.routing-config-working-time-modal__details summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.routing-config-working-time-modal__details summary::-webkit-details-marker {
+  display: none;
+}
+
+.routing-config-working-time-modal__section header .aicc-button.ant-btn,
+.routing-config-working-time-modal__details summary .aicc-button.ant-btn,
+.routing-config-working-time-modal__table > .aicc-button.ant-btn,
+.routing-config-working-time-modal__list > .aicc-button.ant-btn,
+.routing-config-working-time-modal__ramadan-dates .aicc-button.ant-btn {
+  height: 28px;
+  min-height: 28px;
+  padding-inline: 10px;
+  font-size: 12px;
+}
+
+.routing-config-working-time-modal__mode-note,
+.routing-config-working-time-modal__priority-note,
+.routing-config-working-time-modal__empty {
+  padding: 7px 0;
+  border: 0;
+  border-radius: 0;
+  color: var(--aicc-text-secondary);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.routing-config-working-time-modal__priority-note {
+  padding: 7px 10px;
+  border: 1px solid #d7e4f5;
+  border-radius: var(--aicc-radius-sm);
+  color: var(--aicc-primary-strong);
+  background: #f8fbff;
+}
+
+.routing-config-working-time-modal__table {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0;
+}
+
+.routing-config-working-time-modal__list {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0;
+}
+
+.routing-config-working-time-modal__schedule-row {
+  display: grid;
+  min-width: 0;
+  align-items: end;
+  padding: 6px 0;
+  border-bottom: 0;
+  gap: 10px;
+}
+
+.routing-config-working-time-modal__schedule-row--no-label {
+  padding-top: 2px;
+}
+
+.routing-config-working-time-modal__schedule-row--work {
+  grid-template-columns: minmax(240px, 1fr) 120px 120px 30px;
+}
+
+.routing-config-working-time-modal__schedule-row--holiday {
+  grid-template-columns: 150px 150px minmax(360px, 1fr) 120px 120px 30px;
+}
+
+.routing-config-working-time-modal__schedule-row--special {
+  grid-template-columns: 150px 150px minmax(360px, 1fr) 120px 120px 30px;
+}
+
+.routing-config-working-time-modal__row-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.routing-config-working-time-modal__row-field
+  > span:first-child:not(.routing-config-status-control) {
+  color: var(--aicc-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.routing-config-working-time-modal__table-head,
+.routing-config-working-time-modal__table-row {
+  display: grid;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.routing-config-working-time-modal__table-head {
+  padding: 0 0 6px;
+  color: var(--aicc-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.routing-config-working-time-modal__table-row {
+  padding: 7px 0;
+  border-top: 1px solid #edf2f8;
+  background: #fff;
+}
+
+.routing-config-working-time-modal__table-row--work {
+  grid-template-columns: minmax(220px, 1fr) 116px 116px 30px;
+}
+
+.routing-config-working-time-modal__table-row--holiday {
+  grid-template-columns:
+    136px 136px minmax(160px, 1fr) 120px 104px 104px
+    30px;
+}
+
+.routing-config-working-time-modal__table-row--special {
+  grid-template-columns: 136px 136px minmax(180px, 1fr) 104px 104px 30px;
+}
+
+.routing-config-working-time-modal__table .ant-input,
+.routing-config-working-time-modal__table .ant-select-single,
+.routing-config-working-time-modal__table .ant-select-multiple,
+.routing-config-working-time-modal__table .ant-select-selector,
+.routing-config-working-time-modal__list .ant-input,
+.routing-config-working-time-modal__list .ant-picker,
+.routing-config-working-time-modal__list .ant-select-single,
+.routing-config-working-time-modal__list .ant-select-multiple,
+.routing-config-working-time-modal__list .ant-select-selector,
+.routing-config-working-time-modal__ramadan-dates .ant-input,
+.routing-config-working-time-modal__ramadan-dates .ant-picker {
+  height: 32px;
+  min-height: 32px;
+  font-size: 12px;
+}
+
+.routing-config-working-time-modal__list .ant-picker,
+.routing-config-working-time-modal__ramadan-dates .ant-picker {
+  width: 100%;
+}
+
+.routing-config-working-time-modal__ramadan-dates {
+  display: grid;
+  grid-template-columns: 150px 150px auto;
+  align-items: end;
+  justify-content: start;
+  gap: 10px;
+}
+
+.routing-config-working-time-modal__switch-field {
+  min-width: 0;
+}
+
+.routing-config-working-time-modal__switch-field
+  .routing-config-status-control {
+  min-height: 32px;
+}
+
+.routing-config-working-time-modal__icon-button {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius-sm);
+  color: var(--aicc-text-secondary);
+  background: #fff;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.routing-config-working-time-modal__icon-button:hover {
+  border-color: var(--aicc-danger);
+  color: var(--aicc-danger);
+  background: #fff7f7;
+}
+
+.routing-config-status-control {
+  display: inline-flex;
+  min-height: var(--aicc-control-height-sm);
+  align-items: center;
+  gap: 8px;
+}
+
+.routing-config-status-control__text {
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.routing-config-status-switch.ant-switch {
+  min-width: 34px;
+  width: 34px;
+  height: 18px;
+  border-radius: 999px;
+  background: #c8d2df;
+  line-height: 18px;
+}
+
+.routing-config-status-switch.ant-switch.ant-switch-small {
+  min-width: 34px;
+  width: 34px;
+  height: 18px;
+  line-height: 18px;
+}
+
+.routing-config-status-switch.ant-switch.ant-switch-checked {
+  background: var(--aicc-primary);
+}
+
+.routing-config-status-switch.ant-switch.ant-switch-small
+  .ant-switch-handle {
+  top: 2px;
+  inset-inline-start: 2px;
+  width: 14px;
+  height: 14px;
+}
+
+.routing-config-status-switch.ant-switch.ant-switch-small
+  .ant-switch-handle::before {
+  border-radius: 50%;
+}
+
+.routing-config-status-switch.ant-switch.ant-switch-small.ant-switch-checked
+  .ant-switch-handle {
+  inset-inline-start: calc(100% - 16px);
+}
+
+.routing-config-crud-modal__delete {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.routing-config-crud-modal__footer {
+  --routing-config-control-height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 18px;
+  gap: 10px;
+}
+
+.routing-config-crud-modal.aicc-modal .ant-modal-title {
+  color: var(--aicc-text);
+}
+
+.routing-config-crud-modal.aicc-modal .ant-modal-header {
+  background:
+    linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%),
+    #eef6ff;
+}
+
+.routing-config-crud-modal.aicc-modal .ant-modal-body {
+  background: transparent;
+}
+
+.routing-config-crud-modal .aicc-modal__body {
+  gap: 0;
+}
+
+.routing-config-page .aicc-table .ant-table-thead > tr > th {
+  padding: 7px 8px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.routing-config-page .aicc-table .ant-table-tbody > tr > td {
+  padding: 6px 8px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.routing-config-page .aicc-table .ant-pagination {
+  align-items: center;
+  margin: 12px 0 0;
+  font-size: 12px;
+}
+
+.routing-config-page .aicc-table .ant-pagination-total-text {
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+}
+
+.routing-config-rule-modal {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.routing-config-rule-modal__conditions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.routing-config-rule-modal__conditions span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 10px;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius-sm);
+  background: #f8fbff;
+}
+
+.routing-config-rule-modal__conditions small {
+  color: var(--aicc-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.routing-config .ant-table-wrapper {
+  min-width: 0;
 }
 
 .aicc-card {
@@ -9944,6 +11817,60 @@ button.inbound-list-row .inbound-list-row__title {
     flex-direction: column;
   }
 
+  .text-channel-settings__overview,
+  .routing-config__overview,
+  .routing-config__validation-list,
+  .routing-config__grid--model,
+  .routing-config__grid--split,
+  .routing-config__batch-grid,
+  .routing-config__batch-summary,
+  .routing-config__table-toolbar,
+  .routing-config-page__toolbar,
+  .routing-config-crud-modal__form,
+  .routing-config-rule-modal__conditions,
+  .text-channel-settings__grid--service,
+  .text-channel-settings__grid--timeout,
+  .text-channel-settings__alert-summary,
+  .text-channel-settings__form-grid,
+  .text-channel-settings__timeout-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .routing-config-page__admin-toolbar,
+  .routing-config-page__query-group,
+  .routing-config-page__filters,
+  .routing-config-page__admin-actions,
+  .routing-config-page__add-action {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .routing-config-page__query-group,
+  .routing-config-page__add-action {
+    width: 100%;
+  }
+
+  .routing-config-page__add-action {
+    margin-left: 0;
+  }
+
+  .routing-config-page__filter {
+    width: 100% !important;
+  }
+
+  .text-channel-settings__grid--service > .aicc-base-card:first-child,
+  .text-channel-settings__grid--timeout > .aicc-base-card:nth-child(2) {
+    grid-row: auto;
+  }
+
+  .text-channel-settings__header-actions {
+    justify-content: flex-start;
+  }
+
+  .routing-config__header-actions {
+    justify-content: flex-start;
+  }
+
   .aicc-empty-state {
     min-height: calc(100vh - 188px);
     padding: 48px 16px;
@@ -10139,5 +12066,31 @@ button.inbound-list-row .inbound-list-row__title {
 
   .inbound-call-flow__transfer-row {
     grid-template-columns: 1fr;
+  }
+
+  .text-channel-settings__header-actions .aicc-button {
+    width: 100%;
+  }
+
+  .routing-config__header-actions .aicc-button,
+  .routing-config__batch-actions .aicc-button {
+    width: 100%;
+  }
+
+  .routing-config__duplicate-list span,
+  .routing-config__summary-row {
+    grid-template-columns: 1fr;
+  }
+
+  .text-channel-settings__number-control {
+    grid-template-columns: minmax(0, 1fr) 86px;
+  }
+
+  .text-channel-settings__summary-row {
+    grid-template-columns: 18px minmax(0, 1fr);
+  }
+
+  .text-channel-settings__summary-row strong {
+    grid-column: 2;
   }
 }

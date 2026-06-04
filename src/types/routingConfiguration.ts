@@ -1,0 +1,296 @@
+export type RoutingConfigStatus =
+  | 'Active'
+  | 'Disabled'
+  | 'Draft'
+  | 'Replaced'
+
+export type RouteFactorCode =
+  | '10'
+  | '11'
+  | '12'
+  | '13'
+  | '14'
+  | '15'
+  | '16'
+  | '17'
+  | '18'
+
+export type RouteFactorSourceEntity =
+  | 'vdn'
+  | 'channel'
+  | 'media_type'
+  | 'site'
+  | 'country'
+  | 'business_type'
+  | 'language'
+  | 'access_account'
+  | 'access_entry'
+
+export type ChannelCategory =
+  | 'voice'
+  | 'owned-digital'
+  | 'messaging'
+  | 'email'
+  | 'social'
+  | 'app-store'
+
+export type MediaTypeCode = 'VOICE' | 'VIDEO' | 'TEXT'
+
+export type ChannelScanMode = 'webhook' | 'polling' | 'manual'
+
+export type RoutingRiskLevel = 'success' | 'warning' | 'error'
+
+export interface RouteFactor {
+  allowAny: boolean
+  displayOrder: number
+  enabled: boolean
+  factorCode: RouteFactorCode
+  factorName: string
+  required: boolean
+  sourceEntity: RouteFactorSourceEntity
+  status: RoutingConfigStatus
+}
+
+export interface VdnAccessPoint {
+  description: string
+  platformVdnId: string
+  status: RoutingConfigStatus
+  vdnCode: string
+  vdnName: string
+}
+
+export interface AccessSite {
+  address: string
+  countryCode: string
+  ownerName: string
+  ownerPhone: string
+  siteCode: string
+  siteName: string
+  status: RoutingConfigStatus
+}
+
+export interface Channel {
+  channelCategory: ChannelCategory
+  channelCode: string
+  channelId: string
+  channelName: string
+  maxConcurrency: number
+  mediaTypes: MediaTypeCode[]
+  minScanIntervalSeconds: number
+  status: RoutingConfigStatus
+}
+
+export interface MediaType {
+  mediaCode: MediaTypeCode
+  mediaName: string
+  status: RoutingConfigStatus
+}
+
+export interface ChannelMedia {
+  channelCode: string
+  channelMediaCode: string
+  extensionConfig: string
+  maxConcurrency: number
+  mediaCode: MediaTypeCode
+  minScanIntervalSeconds: number | null
+  scanMode: ChannelScanMode
+  status: RoutingConfigStatus
+}
+
+export interface TextMediaQueueAlertRule {
+  channelCode: string
+  enabled: boolean
+  recipients: string
+  threshold: number
+}
+
+export interface MediaServiceRulePlan {
+  agentEndMessage: string
+  agentNoReplyAutoResponseMessage: string
+  agentNoReplyAutoResponseMinutes: number
+  agentNoReplyBreachMinutes: number
+  agentNoReplyWarningMinutes: number
+  assignedAgentGreeting: string
+  autoCloseAgentNotice: string
+  autoCloseTimeoutMinutes: number
+  description: string
+  firstAccessReminderMessage: string
+  maxConcurrentCustomersPerAgent: number
+  mediaCode: MediaTypeCode
+  nonWorkingTimeMessage: string
+  planCode: string
+  planName: string
+  preCloseReminderMessage: string
+  preCloseReminderMinutes: number
+  queueAlerts: TextMediaQueueAlertRule[]
+  queueWaitingMessage: string
+  status: RoutingConfigStatus
+  updatedAt: string
+  updatedBy: string
+  webchatRecallLimitMinutes: number
+  welcomeMessage: string
+}
+
+export interface ChannelMediaRuleBinding {
+  bindingCode: string
+  channelCode: string
+  mediaCode: MediaTypeCode
+  rulePlanCode: string
+  status: RoutingConfigStatus
+}
+
+export interface LanguageType {
+  languageCode: string
+  languageName: string
+  locale: string
+  status: RoutingConfigStatus
+}
+
+export interface BusinessType {
+  businessName: string
+  businessTypeCode: string
+  projectCode: string
+  status: RoutingConfigStatus
+}
+
+export interface SiteAccessRatioDetail {
+  ratioPercent: number
+  siteCode: string
+}
+
+export interface SiteAccessRatioGroup {
+  channelCode: string
+  mediaCode: MediaTypeCode
+  ratioGroupCode: string
+  ratios: SiteAccessRatioDetail[]
+  status: RoutingConfigStatus
+}
+
+export type AccessAccountExtensionConfig = Record<string, string>
+
+export interface AccessAccount {
+  accountCode: string
+  accountName: string
+  channelCode: string
+  externalAccountId: string
+  extensionConfig: AccessAccountExtensionConfig
+  secretRef: string
+  status: RoutingConfigStatus
+}
+
+export interface AccessEntry {
+  accountCode: string
+  channelMediaCode: string
+  entryCode: string
+  entryValue: string
+  status: RoutingConfigStatus
+  vdnCode?: string
+}
+
+export interface WorkingTimeRange {
+  endTime: string
+  startTime: string
+}
+
+export interface WorkScheduleRule {
+  ruleId: string
+  timeRanges: WorkingTimeRange[]
+  weekdays: string[]
+}
+
+export interface HolidayScheduleRule {
+  closedAllDay: boolean
+  dateFrom: string
+  dateTo: string
+  holidayName: string
+  nonWorkingRanges: WorkingTimeRange[]
+  ruleId: string
+}
+
+export interface SpecialWorkingPlanRule {
+  dateFrom: string
+  dateTo: string
+  reason: string
+  ruleId: string
+  workingRanges: WorkingTimeRange[]
+}
+
+export interface RamadanSchedule {
+  dateFrom: string
+  dateTo: string
+  enabled: boolean
+  workSchedules: WorkScheduleRule[]
+}
+
+export interface WorkingTimePlan {
+  description: string
+  holidayRules: HolidayScheduleRule[]
+  planCode: string
+  planName: string
+  ramadanSchedule: RamadanSchedule
+  specialWorkingPlans: SpecialWorkingPlanRule[]
+  status: RoutingConfigStatus
+  updatedAt: string
+  updatedBy: string
+  workSchedules: WorkScheduleRule[]
+}
+
+export interface SkillQueuePrompt {
+  mediaCode: MediaTypeCode
+  promptType: 'Wait Audio' | 'Timeout Message'
+  value: string
+}
+
+export interface SkillQueue {
+  assignedAgentCount: number
+  maxQueueSize: number
+  platformSkillId: string
+  prompts: SkillQueuePrompt[]
+  queueTimeoutSeconds: number
+  skillQueueCode: string
+  skillQueueName: string
+  status: RoutingConfigStatus
+  supportsVideo: boolean
+  vdnCode: string
+  workTimePlanCode: string
+}
+
+export interface RoutingRuleCondition {
+  factorCode: RouteFactorCode
+  factorValueCode: string
+}
+
+export interface RoutingRule {
+  conditions: RoutingRuleCondition[]
+  effectiveFrom: string
+  effectiveTo?: string
+  factorSetVersion: string
+  priority: number
+  ruleCode: string
+  status: RoutingConfigStatus
+  targetSkillQueueCode: string
+  updatedAt: string
+  updatedBy: string
+}
+
+export interface RoutingRuleIndex {
+  factor01Value: string
+  factor02Value: string
+  factor03Value: string
+  factor04Value: string
+  factor05Value: string
+  factor06Value: string
+  factor07Value: string
+  factor08Value: string
+  factor09Value: string
+  factor10Value: string
+  originalRuleCode: string
+  specificityScore: number
+  targetSkillQueueCode: string
+}
+
+export interface RoutingValidationItem {
+  description: string
+  level: RoutingRiskLevel
+  title: string
+}

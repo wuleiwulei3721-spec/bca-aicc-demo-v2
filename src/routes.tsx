@@ -16,6 +16,22 @@ export const router = createBrowserRouter([
         element: <DesignSystem />,
       },
       {
+        path: 'call-management',
+        element: <Navigate replace to="/" />,
+      },
+      {
+        path: 'call-management/*',
+        element: <Navigate replace to="/" />,
+      },
+      {
+        path: 'routing-config',
+        element: <Navigate replace to="/" />,
+      },
+      {
+        path: 'routing-config/*',
+        element: <Navigate replace to="/" />,
+      },
+      {
         path: '*',
         element: <Navigate replace to="/" />,
       },

@@ -6,7 +6,6 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   MessageOutlined,
-  PhoneOutlined,
   SearchOutlined,
   SettingOutlined,
   UserOutlined,
@@ -14,7 +13,7 @@ import {
 import { Badge, Layout } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { headerAgentProfile } from '../mock/agent'
 import { useAppStore } from '../store'
 import type {
@@ -117,11 +116,6 @@ const sideMenuItems: SideMenuItem[] = [
     ],
   },
   {
-    key: 'call-management',
-    icon: <PhoneOutlined className="aicc-sider__menu-phone-icon" />,
-    label: 'Call Management',
-  },
-  {
     key: 'reports',
     icon: <BarChartOutlined />,
     label: 'Reports',
@@ -129,6 +123,7 @@ const sideMenuItems: SideMenuItem[] = [
 ]
 
 export function BasicLayout() {
+  const navigate = useNavigate()
   const collapsed = useAppStore((state) => state.collapsed)
   const activeLiveChatSessionIds = useAppStore(
     (state) => state.activeLiveChatSessionIds,
@@ -655,19 +650,23 @@ export function BasicLayout() {
       setClosedFlyoutKey(parentKey ?? null)
 
       if (childKey === 'test-pstn-voice') {
+        navigate('/')
         triggerVoiceInboundCall()
       }
 
       if (childKey === 'customer-bankapp') {
+        navigate('/')
         requestBankAppDemoWorkspace()
       }
 
       if (childKey === 'customer-whatsapp') {
+        navigate('/')
         requestWhatsAppDemoWorkspace()
       }
 
     },
     [
+      navigate,
       requestBankAppDemoWorkspace,
       requestWhatsAppDemoWorkspace,
       triggerVoiceInboundCall,

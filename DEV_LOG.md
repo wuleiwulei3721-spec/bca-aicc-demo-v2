@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-05-29 19:23 +08:00
+最后更新：2026-06-04 12:10 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,2298 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-04 12:10 +08:00 - 客户预览发布屏蔽未完成管理菜单
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/routes.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-04-1210.md`
+- `.codex-backup/current-todo-2026-06-04-1210.md`
+- `.codex-backup/page-state-2026-06-04-1210.md`
+
+修改原因：
+
+- 用户需要发布 Vercel Preview 给客户查看，但 `Call Management` 和 `Routing Config` 两块管理功能尚未完成，不能暴露给客户。
+
+修改结果：
+
+- 从左侧菜单移除 `Call Management` 与 `Routing Config` 两个一级菜单。
+- `/call-management`、`/call-management/*`、`/routing-config`、`/routing-config/*` 全部重定向到 `/`，避免客户通过直达 URL 打开未完成页面。
+- 保留相关页面源码、mock、store 和类型文件，不删除未完成功能，方便后续继续开发或恢复入口。
+- 创建发布分支 `codex/customer-preview-hide-admin-menus`，目标为 Vercel Preview URL，不直接发布 Production。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite/Rolldown plugin timing 与 chunk size warning。
+- Browser `http://127.0.0.1:5176/`：确认首页正常加载，展开侧栏后仅显示 Channel Simulation、Agent Center、Operations、Reports，不显示 `Call Management` 或 `Routing Config`。
+- Browser `/design-system`：确认正常加载。
+- Browser `/call-management/text-channel-settings` 与 `/routing-config/route-elements`：均重定向回 `/`，且未出现对应管理页内容。
+- Browser smoke check：BankApp Demo、WhatsApp Demo、Sign In 后 Live Chat tab、Ready 状态下 PSTN 弹屏均可用。
+
+回滚说明：
+
+- 如需恢复管理菜单，重新在 `BasicLayout` 接回 `Call Management` 与 `Routing Config` 菜单项，并在 `routes.tsx` 恢复对应页面路由。
+
+当前风险点：
+
+- 当前分支包含此前本地整合分支的大量未提交功能与备份文件；本轮不回滚这些历史改动，客户预览依赖当前工作区整体状态。
+- 推送后需要等待 Vercel 生成 Preview URL，并在远端预览环境再次 smoke check。
+
+### 2026-06-04 11:16 +08:00 - Working Time Plans Holiday/Special Start 列对齐
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-04-1116.md`
+- `.codex-backup/current-todo-2026-06-04-1116.md`
+- `.codex-backup/page-state-2026-06-04-1116.md`
+
+修改原因：
+
+- 用户反馈 Holiday Name / Reason 输入框太短，导致 Holiday / Special 的 `Start` 时间列没有和 Ramadan Work Schedule 对齐。
+
+修改结果：
+
+- Holiday / Special 行 grid 从 `150px 150px 240px 120px 120px 30px` 改为 `150px 150px minmax(360px, 1fr) 120px 120px 30px`。
+- Holiday Name / Reason 列改为弹性列，占用剩余空间；Start Date / End Date 仍为 150px，Start / End 仍为 120px。
+- 未修改字段、校验、保存逻辑或 Working Time Plans 底部提示。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- 源码扫描确认 Holiday / Special grid 已更新为 `minmax(360px, 1fr)`。
+
+回滚说明：
+
+- 如需回滚，将 Holiday/Special grid 恢复为 `150px 150px 240px 120px 120px 30px`。
+
+当前风险点：
+
+- 仍需用户在浏览器中人工复查弹框内实际视觉对齐效果。
+
+### 2026-06-04 11:02 +08:00 - Working Time Plans 提示与行宽调整
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-04-1102.md`
+- `.codex-backup/current-todo-2026-06-04-1102.md`
+- `.codex-backup/page-state-2026-06-04-1102.md`
+
+修改原因：
+
+- 用户指出 `Empty Skill Queue plan means Default 24x7` 语义不准确，实际是技能队列未引用工作时间方案时默认按 24x7 处理，不应放在 Working Time Plans 页面底部解释。
+- 用户要求 Holiday Schedule 与 Special Working Plan 的时间控件宽度更接近 Ramadan Work Schedule，并缩短 Holiday Name / Reason 输入框。
+
+修改结果：
+
+- Working Time Plans 弹框底部提示只保留排班优先级：`Priority: Special Working Plan > Holiday Schedule > Ramadan Work Schedule > Work Schedule.`
+- 移除 `Empty Skill Queue plan means Default 24x7.` 文案。
+- Holiday / Special 行 grid 当时改为 `150px 150px 240px 120px 120px 30px`；后续 11:16 已修正为 `150px 150px minmax(360px, 1fr) 120px 120px 30px`，用于对齐 Start 列。
+- 未修改 `Default 24x7` 在 Skill Queues 中的展示口径。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/working-time-plans`：确认页面正常渲染，列表页不出现旧提示。
+- 源码扫描确认旧提示不存在，新优先级提示存在。
+
+回滚说明：
+
+- 如需回滚，恢复旧优先级提示文本，并将 Holiday/Special grid 恢复为 `136px 136px minmax(180px, 1fr) 104px 104px 30px`。
+
+当前风险点：
+
+- in-app browser 点击 Add 弹框仍受控制接口 3 秒超时影响，未完成弹框内视觉点击验证；源码、lint、build 和页面渲染检查已通过。
+
+### 2026-06-04 10:38 +08:00 - Skill Routing Rules 重复规则区文案调整
+
+修改页面或文件：
+
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-04-1038.md`
+- `.codex-backup/current-todo-2026-06-04-1038.md`
+- `.codex-backup/page-state-2026-06-04-1038.md`
+
+修改原因：
+
+- 用户确认 `Batch Add Skill Routing Rules` 弹框中的 `Generated Routing Rules Preview` 文案不准确；该区域实际应表达“已有重复规则”，不是普通新规则预览。
+
+修改结果：
+
+- 分区标题改为 `Duplicate Routing Rules`。
+- 提示文案改为：`The following route combinations already exist. Selected rows will update the existing skill queue to the current target queue; unselected rows will remain unchanged.`
+- 表格数据源从 `batchPreviewRows` 改为 `duplicatePreviewRows`，该区域只展示重复规则。
+- 新组合仍由现有保存逻辑正常新增，不在重复规则表中展示。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/skill-routing-rules`：确认页面正常渲染且 `Batch Add` 按钮存在。
+- 源码扫描确认新标题、新提示文案和 `dataSource={duplicatePreviewRows}` 已生效，旧标题不再存在。
+
+回滚说明：
+
+- 如需回滚，将标题恢复为 `Generated Routing Rules Preview`，提示文案恢复旧文本，并将表格数据源恢复为 `batchPreviewRows`。
+
+当前风险点：
+
+- in-app browser 点击 `Batch Add` 仍受控制接口 3 秒超时影响，未完成弹框内视觉点击验证；源码和构建验证已通过。
+
+### 2026-06-04 00:28 +08:00 - Skill Routing Rules 主操作按钮右侧独立
+
+修改页面或文件：
+
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-04-0028.md`
+- `.codex-backup/current-todo-2026-06-04-0028.md`
+- `.codex-backup/page-state-2026-06-04-0028.md`
+
+修改原因：
+
+- 用户指出 `Skill Routing Rules` 菜单中按钮应按管理台统一样式规则放在最右侧，而不是紧挨 `Reset`。
+
+修改结果：
+
+- `SkillRoutingRulesPage` 工具栏结构调整为普通管理台结构：左侧 `query-group` 包含筛选条件和 `Search / Reset`，右侧独立 `add-action` 放置 `Batch Add`。
+- 移除规则页此前 `admin-toolbar--rules` 的 block 布局和 `filters--rules` 内部 Add 特殊覆盖。
+- 未修改查询字段、表格列、Batch Add 弹框逻辑或数据结构。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/skill-routing-rules`：确认页面正常渲染，查询区仍显示 Search / Reset / Batch Add。
+
+回滚说明：
+
+- 如需回滚，恢复 `SkillRoutingRulesPage` 将 `Batch Add` 放回 filters 容器，并恢复规则页专属 CSS 覆盖；不建议回滚，因为当前结构更符合管理台统一规范。
+
+当前风险点：
+
+- 无新增技术风险；仍需人工视觉复查不同窗口宽度下 `Batch Add` 是否稳定靠右。
+
+### 2026-06-04 00:13 +08:00 - Site Access Volume 增加媒体类型筛选
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-04-0013.md`
+- `.codex-backup/current-todo-2026-06-04-0013.md`
+- `.codex-backup/page-state-2026-06-04-0013.md`
+
+修改原因：
+
+- 用户要求 `Site Access Volume` 查询条件把媒体类型单独拎出来，使用下拉选择。
+
+修改结果：
+
+- `Site Access Volume` 查询区改为 `Keyword + Media Type + Status`。
+- `Keyword` 只匹配 Channel ID / Channel Code / Channel Name，不再把媒体类型混在关键字里。
+- `Media Type` 独立下拉，选项为 `All / Voice / Video / Text`。
+- 按媒体类型筛选后，表格只展示命中的媒体行，并重新计算同一渠道合并单元格的 `rowSpan`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/site-access-volume`：确认查询区显示 `Keyword / Media Type / Status`，页面正常渲染。
+
+回滚说明：
+
+- 如需回滚，移除 `mediaCode` filter state、Media Type 下拉和媒体过滤逻辑，将 Keyword 恢复为同时匹配媒体名称。
+
+当前风险点：
+
+- 无新增技术风险；仍需人工复查选择不同 Media Type 后的合并单元格和分页体验。
+
+### 2026-06-03 19:52 +08:00 - Routing Config 标题英文统一
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1952.md`
+- `.codex-backup/current-todo-2026-06-03-1952.md`
+- `.codex-backup/page-state-2026-06-03-1952.md`
+
+修改原因：
+
+- 用户要求 `Routing Config` 下的子菜单改成英文名，页面上的菜单名称和弹框标题名称也统一使用英文。
+
+修改结果：
+
+- 左侧 `Routing Config` 二级菜单统一为英文：Route Elements、VDN、Access Sites、Channels、Media Service Rule Plans、Business Types、Skill Queues、Access Accounts、Site Access Volume、Skill Routing Rules、Working Time Plans。
+- `RoutingConfigDataPages.tsx` 所有 Routing Config 子页标题改成英文。
+- `SkillRoutingRulesPage.tsx` 页面标题改成 `Skill Routing Rules`。
+- 普通 CRUD 弹框通过英文页面标题或英文 `entityName` 派生标题；自定义弹框标题保持现有英文文案。
+- 未修改路由 path、字段、mock 数据或管理台样式结构。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/route-elements`、`/routing-config/channels`、`/routing-config/media-service-rule-plans`、`/routing-config/skill-routing-rules`：确认页面主标题显示英文，未发现中文标题残留。
+
+回滚说明：
+
+- 如需回滚，恢复上述页面 title 和 `BasicLayout` 菜单 label；路由 path 无需回滚。
+
+当前风险点：
+
+- 浏览器弹框点击验证在本轮受 in-app browser 控制接口超时影响未完成；源码扫描已确认 `modalLabels`、`modalTitle` 和通用 CRUD 标题派生均为英文。
+
+### 2026-06-03 19:06 +08:00 - 补齐自定义管理页标准根容器
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-03-1906.md`
+- `.codex-backup/current-todo-2026-06-03-1906.md`
+- `.codex-backup/page-state-2026-06-03-1906.md`
+
+修改原因：
+
+- 用户指出新页面仍有明显字号变大、按钮高度不符合管理台规范的问题。
+- 复查发现根因是两个自定义页面缺少标准 `<section className="routing-config-page">` 根容器，导致 `.routing-config-page .aicc-table ...` 等作用域样式未生效。
+
+修改结果：
+
+- `Channels` 与 `Media Service Rule Plans` 的 `BaseCard compact` 现在都包在 `<section className="routing-config-page">` 内。
+- `routing-config-crud-modal__sections` 增加 `--routing-config-control-height: 32px`，让复杂分区弹框内控件继续继承标准高度。
+- 明确后续自定义管理页结构必须为 `PageContainer > section.routing-config-page > BaseCard compact > admin-toolbar + BaseTable`，不能只复制局部 class。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/channels`：确认存在 `.routing-config-page` 根容器，表格、Search、Add 都处于该作用域内。
+- Browser `/routing-config/media-service-rule-plans`：确认存在 `.routing-config-page` 根容器，`Key Rules` 不存在。
+
+回滚说明：
+
+- 如需回滚，删除两个页面新增的 `section.routing-config-page` 包裹和 `routing-config-crud-modal__sections` 中的控件高度变量；但不建议回滚，因为这是管理台标准样式生效的必要条件。
+
+当前风险点：
+
+- 无新增技术风险；后续新增复杂管理页必须优先复用完整页面骨架，而不是只复用局部 class。
+
+### 2026-06-03 19:01 +08:00 - 自定义 Routing Config 页标准化收口
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-03-1901.md`
+- `.codex-backup/current-todo-2026-06-03-1901.md`
+- `.codex-backup/page-state-2026-06-03-1901.md`
+
+修改原因：
+
+- 用户指出不能只修正查询条件间距，其它样式也要检查；自定义页不应自创样式，而应复用管理台标准规范。
+
+修改结果：
+
+- `Channels` 与 `Media Service Rule Plans` 表格操作列改为标准 `routing-config-crud__row-actions` 原生图标按钮。
+- 两个页面的 `BaseModal` 改为标准 `kind="detail"`，取消自定义 `footer` prop；footer 使用标准 `routing-config-crud-modal__footer`。
+- 删除弹框改为标准 `Alert` 结构，引用保护时直接展示不可删除提示。
+- 校验提示类型改为 warning，与普通 CRUD 页一致。
+- 两个复杂弹框的业务分区改用通用 `routing-config-crud-modal__sections / __section / __section-grid / __section-title`，删除 `routing-config-channel-modal__*` 与大部分 `routing-config-media-rule-modal__*` 页面专属布局类。
+- 删除上一轮临时新增的 `routing-config-page__admin-toolbar > label/button` 样式，避免继续支持非标准 toolbar 结构。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/channels`：确认查询栏、Rule Plan 列和 Add Channel 弹框可见。
+- Browser `/routing-config/media-service-rule-plans`：确认查询栏、列表字段和 Add Media Service Rule Plan 弹框可见，`Key Rules` 不存在。
+
+回滚说明：
+
+- 如需回滚，恢复两个页面的自定义 row action、BaseModal footer prop、页面专属 modal layout CSS 和上一轮 toolbar 直子 CSS。
+
+当前风险点：
+
+- Media Service Rule Plan 弹框仍有少量业务专属行布局，如变量 tag、Queue Alert 行和媒体绑定行；这些是业务输入结构所需，但已尽量挂在通用 CRUD modal 框架下。
+
+### 2026-06-03 18:45 +08:00 - 渠道媒体规则页查询栏样式统一
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-03-1845.md`
+- `.codex-backup/current-todo-2026-06-03-1845.md`
+- `.codex-backup/page-state-2026-06-03-1845.md`
+
+修改原因：
+
+- 用户指出新加的自定义管理页没有和其它管理界面保持同一套样式标准，出现查询条件间隔过大、按钮高度不一致等问题。
+- 用户要求 `Media Service Rule Plans` 列表去掉 `Key Rules` 字段。
+
+修改结果：
+
+- `Channels` 和 `Media Service Rule Plans` 的查询栏改回普通 `RoutingConfigCrudPage` 同款结构：`query-group + filters + admin-actions + add-action`。
+- 查询字段不再直接作为 `admin-toolbar` 子元素，避免 `justify-content: space-between` 把字段拉开。
+- Search / Reset / Add 改用统一 `BaseButton variant`，继承其它管理台按钮高度与样式。
+- 两个自定义页表格卡片改为 `BaseCard compact`。
+- `Media Service Rule Plans` 列表删除 `Key Rules` 列。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/channels` 与 `/routing-config/media-service-rule-plans`：确认查询区关键字段和按钮可见，`Key Rules` 不再出现。
+
+回滚说明：
+
+- 如需回滚，恢复两个页面直接使用 `admin-toolbar` 子元素的查询栏结构，并把 `Key Rules` 列加回 `Media Service Rule Plans`。
+
+当前风险点：
+
+- 无新增技术风险；仍需用户继续目测确认自定义页与普通 CRUD 页的视觉完全一致。
+
+### 2026-06-03 18:26 +08:00 - 渠道媒体服务规则方案与绑定
+
+修改页面或文件：
+
+- `src/types/routingConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `src/store/routingConfigStore.ts`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/routes.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1826.md`
+- `.codex-backup/current-todo-2026-06-03-1826.md`
+- `.codex-backup/page-state-2026-06-03-1826.md`
+
+修改原因：
+
+- 用户要求细化 `Channels` 下不同媒体的业务规则，并提出这些参数更适合像工作时间方案一样单独配置，再由 `Channel + Media Type` 引用。
+- 用户明确先忽略现有 `Text Channel Settings`，后续会直接废弃该页。
+
+修改结果：
+
+- 新增 `Media Service Rule Plans / 媒体服务规则配置` 页面和 `/routing-config/media-service-rule-plans` 路由，菜单位置放在 `Channels` 后。
+- 新增 `MediaServiceRulePlan`、`TextMediaQueueAlertRule`、`ChannelMediaRuleBinding` 类型，并在 mock/store 中接入本地 CRUD 数据。
+- 新增两条 Text 规则方案 mock：`Standard Text Service` 与 `Priority Text Service`。
+- 当前所有 Text 渠道 mock 都有 `Channel + Text` 绑定；Haloapp 默认绑定 Priority，其他 Text 渠道默认绑定 Standard。
+- `Channels` 页面改为自定义管理页，列表新增 `Rule Plan` 摘要；Add/Edit 弹框根据媒体类型展示 `Media Rule Plan Binding`，Text 可选 Enabled Text rule plan，Voice / Video 显示 `Reserved / Not configured`。
+- Text 规则方案弹框按 Basic Info、Capacity & Agent No Reply、Customer Timeout、Lifecycle Messages、Channel-specific Rules 分区维护；支持队列阈值、通知对象和 Webchat Recall Limit。
+- 删除 Media Service Rule Plan 时会检查 `ChannelMediaRuleBinding` 引用，被引用时给出阻止提示。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/channels`：确认列表显示 Rule Plan 和两个示例规则方案；Add 弹框显示媒体规则绑定区。
+- Browser `/routing-config/media-service-rule-plans`：确认页面打开、列表和 Add 弹框关键分区可见。
+
+回滚说明：
+
+- 如需回滚，删除新增类型、mock/store 集合、`MediaServiceRulePlansPage`、菜单/路由、Channels 的 Rule Plan 绑定 UI 和相关样式；恢复 Channels 为原 `RoutingConfigCrudPage<Channel>` 实现。
+
+当前风险点：
+
+- Voice / Video 规则仍只是预留，不维护专属字段。
+- 现有 `Call Management > Text Channel Settings` 仍在菜单中保留，等待用户确认后续删除废弃；本轮没有复用它的数据结构。
+
+### 2026-06-03 16:50 +08:00 - Working Time Plans 排班弹框简化
+
+修改页面或文件：
+
+- `package.json`
+- `package-lock.json`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/mock/routingConfiguration.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1650.md`
+- `.codex-backup/current-todo-2026-06-03-1650.md`
+- `.codex-backup/page-state-2026-06-03-1650.md`
+
+修改原因：
+
+- 用户确认上一轮样式方向可用，但要求继续简化：多行排班不再使用横线分隔，`Add Row` 文案简化为 `Add`。
+- 用户要求 Holiday Schedule 去掉 `Closed` / `Closed All Day` 开关，像 Work Schedule 一样直接维护开始和结束时间。
+- 用户指出日期控件显示中文，需要解释并修正。
+
+修改结果：
+
+- Work/Ramadan/Holiday/Special 的 `Add Row` 文案统一改为 `Add`。
+- 排班行移除横向分隔线，仅保留紧凑行间距；多行仍只有首行显示字段名。
+- Holiday Schedule 字段简化为 Start Date、End Date、Holiday Name、Start、End；不再展示 Closed All Day、Non-working Start、Non-working End。
+- Holiday 新增默认时间段改为 `00:00-23:59`，mock 中 New Year Holiday 同步用该时间段表达全天非工作。
+- 保存归一化时将历史 `closedAllDay` 置为 false，并为缺失时间段的 Holiday 补充 `00:00-23:59`。
+- 日期字段从浏览器原生 `input type="date"` 改为 AntD DatePicker，并新增直接依赖 `dayjs`，避免日期控件跟随操作系统语言显示中文。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/working-time-plans`：确认 Add 弹框中没有 `Add Row`、`Closed All Day`、`Non-working` 和原生 date input；编辑已有方案时 DatePicker 数量为 6，弹层显示英文 `Today` / `Select date`。
+
+回滚说明：
+
+- 如需回滚，恢复 `Input type="date"`、Holiday 的 Closed All Day 开关、Non-working Start / End 文案、排班行横向分隔线和 `Add Row` 按钮文案，并从 package 中移除直接 `dayjs` 依赖。
+
+当前风险点：
+
+- `HolidayScheduleRule` 类型中仍保留 `closedAllDay` 兼容旧数据，但页面不再展示该字段；后续真实后端 schema 可考虑移除或废弃该字段。
+
+### 2026-06-03 16:37 +08:00 - Working Time Plans 排班行样式优化
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1637.md`
+- `.codex-backup/current-todo-2026-06-03-1637.md`
+- `.codex-backup/page-state-2026-06-03-1637.md`
+
+修改原因：
+
+- 用户要求 Work Schedule 的 Add Row 放到右上角，并且多行录入时去掉每行外边框、后续行不重复显示字段名称。
+- 用户要求 Ramadan Work Schedule、Holiday Schedule、Special Working Plan 按 Work Schedule 同样优化。
+- 用户要求解释并处理 Holiday 中 `Closed` 后仍显示时间段的问题。
+
+修改结果：
+
+- Work Schedule 的 Add Row 移到分区标题右侧。
+- Ramadan Work Schedule 标题右侧保留 Enabled/Disabled switch，启用后同时显示 Add Row；未启用时不显示排班行和 Add Row。
+- Work/Ramadan/Holiday/Special 的行样式去掉外边框和卡片背景，改为浅分隔线。
+- 多行时只第一行显示字段名，后续行不重复显示 Weekdays/Start/End 等字段名称。
+- Holiday 的 `Closed` 改为 `Closed All Day`；全天关闭时隐藏 Non-working Start / Non-working End；非全天关闭时显示并沿用原时间段校验。
+- 不改变列表字段、Default 24x7 规则、Ramadan 业务规则和现有校验口径。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/working-time-plans`：确认 Add 弹框旧 `Weekdays Start End` 表头短语不存在；编辑已有方案时 `Closed All Day` 可见，全天关闭时不显示 Non-working Start / End；Work/Ramadan 只有首行显示 Weekdays label。
+
+回滚说明：
+
+- 如需回滚，恢复 Work/Ramadan 底部 Add Row、恢复 Holiday 的 `Closed` 文案和禁用时间段展示，并恢复每行边框卡片样式。
+
+当前风险点：
+
+- 如果 Holiday 第一行是全天关闭、第二行是非全天关闭，第二行不会重复显示 Non-working Start / End 标签，这是按“后续行不重复字段名”的用户口径执行。
+
+### 2026-06-03 16:13 +08:00 - Working Time Plans 列表字段与弹框样式回退
+
+修改页面或文件：
+
+- `src/types/routingConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1613.md`
+- `.codex-backup/current-todo-2026-06-03-1613.md`
+- `.codex-backup/page-state-2026-06-03-1613.md`
+
+修改原因：
+
+- 用户要求 Working Time Plans 列表去掉 `Work Schedule` 和 `Ramadan Period`，增加备注字段和更新人。
+- 用户认为上一轮弹框样式比之前更乱，要求先还原弹框样式，再逐步说明后续调整。
+
+修改结果：
+
+- Working Time Plans 列表字段改为 Plan ID、Plan Name、Description、Updated Date、Updated By、Status、Actions。
+- `WorkingTimePlan` 类型和默认 mock 新增 `updatedBy`；保存时默认写入 `Admin`。
+- 删除不再用于列表的 Work Schedule / Ramadan Period 摘要函数。
+- 弹框中的 Work/Ramadan/Holiday/Special 录入行从表头式网格退回普通字段行，每个控件恢复自己的 label。
+- 分区样式恢复为普通边框卡片，减少上一轮表格式样式带来的视觉混乱。
+- 本轮不改变无 timezone、无真实 Default 24x7 记录、Skill Queue 空方案显示 Default 24x7、Ramadan Work Schedule 的业务口径。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/working-time-plans`：确认列表无 Work Schedule / Ramadan Period 列，有 Description / Updated By 列；Add 弹框不再出现 `Weekdays Start End` 表头式录入。
+
+回滚说明：
+
+- 如需回滚本轮列表字段，恢复 Working Time Plans 列表的 Work Schedule / Ramadan Period 列，并移除 `updatedBy`。
+- 如需回滚弹框样式，恢复上一轮 table/list head 结构和对应 CSS。
+
+当前风险点：
+
+- 用户后续会逐项指定弹框交互和样式，因此本轮只做样式回退，不继续扩展复杂交互。
+- PowerShell 机械清理曾导致 `RoutingConfigDataPages.tsx` 编码异常，已转回 UTF-8 并修复被截断的中文标题；lint/build 已通过。
+
+### 2026-06-03 15:57 +08:00 - Working Time Plans 印尼排班与 Default 24x7 调整
+
+修改页面或文件：
+
+- `src/types/routingConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `src/store/routingConfigStore.ts`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1557.md`
+- `.codex-backup/current-todo-2026-06-03-1557.md`
+- `.codex-backup/page-state-2026-06-03-1557.md`
+
+修改原因：
+
+- 用户确认本项目暂时按印尼单国家场景处理，工作时间方案不需要 `timezone`。
+- 用户要求不再维护真实 `Default 24x7` 方案记录；技能队列未选择工作时间方案时明确显示 `Default 24x7`。
+- 印尼存在斋月工作时间差异，斋月不应归入节假日或特殊工作计划，而应作为普通工作日时间的日期段覆盖。
+- 用户要求工作时间方案弹框更简洁整齐，减少大线框和控件高度不一致问题。
+
+修改结果：
+
+- `WorkingTimePlan` 类型移除 `timezone`、`default24x7`、`createdAt`、`weekdayRule`、`holidayRule`、`specialDateRule` 等旧字段，新增 `ramadanSchedule`。
+- 默认 mock 删除真实 `WTP_24X7` 记录，仅保留自定义 `WTP_BANK_HOURS` 示例，并补充 Ramadan date range 与 Ramadan work schedule。
+- `Skill Queues` 的 `workTimePlanCode` 允许为空，空值在列表、详情和弹框中展示为 `Default 24x7`，保存校验不再要求工作时间方案必填。
+- `Working Time Plans` 查询区精简为 `Keyword + Status`；列表字段改为 Plan ID、Plan Name、Work Schedule、Ramadan Period、Updated Date、Status、Actions。
+- Add/Edit/View 弹框按 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan 分区；Ramadan 启用后配置一个日期段和专属工作日时间，并支持 Copy from Work Schedule。
+- 工作时间行录入改为紧凑表格行，控件高度统一为 32px；Ramadan 开关靠近标题，减少标题与控件距离过远的问题。
+- 校验规则更新为：自定义方案至少一条 Work Schedule；Ramadan 启用后必须配置日期段和工作时间；日期、时间范围必须合法；被技能队列引用的自定义方案不能直接删除。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/working-time-plans`：确认列表不再显示 Timezone / Schedule Mode / Default 24x7 真实记录，Add 弹框包含 Ramadan Work Schedule，启用 Ramadan 后显示 Start Date、End Date、Copy from Work Schedule。
+- Browser `/routing-config/skill-queues`：确认列表和 Add 弹框可见 `Default 24x7`，`Work Time Plan` 不再有必填星号。
+- Browser 日志仍有既有 AntD deprecation warnings：`Alert.message`、`InputNumber.addonAfter`。
+
+回滚说明：
+
+- 如需回滚，恢复 `WorkingTimePlan` 的 timezone / 24x7 mode 字段、`WTP_24X7` mock 记录和 Skill Queue 工作时间方案必填校验，并移除 Ramadan Work Schedule 分区及相关样式。
+
+当前风险点：
+
+- 当前每个方案只支持一个 Ramadan date range；后续如需跨年维护多个斋月周期，需要把 `ramadanSchedule` 扩展为数组。
+- 当前工作时间判断规则仅在前端 demo 中表达，不接真实后台运行时。
+- Browser 日志中的 AntD deprecation warnings 为既有问题，本轮未做全局替换。
+
+### 2026-06-03 14:49 +08:00 - Working Time Plans 结构化排班配置
+
+修改页面或文件：
+
+- `src/types/routingConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `src/store/routingConfigStore.ts`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1449.md`
+- `.codex-backup/current-todo-2026-06-03-1449.md`
+- `.codex-backup/page-state-2026-06-03-1449.md`
+
+修改原因：
+
+- 用户要求先解释并落地工作时间方案中的 `timezone` 与 `Default 24x7`，并参考附件将工作日、节假日、特殊工作计划拆开配置。
+- 当前 demo 的 Working Time Plans 只是扁平文本字段，不足以表达真实 AICC 排班、节假日覆盖和特殊工作覆盖。
+
+修改结果：
+
+- `WorkingTimePlan` 类型新增结构化 `workSchedules`、`holidayRules`、`specialWorkingPlans`，并保留旧摘要字段用于列表展示和兼容。
+- 默认 mock 增加 `createdAt`、`updatedAt`、`description`、工作日规则、节假日规则和特殊工作计划示例。
+- `routingConfigStore` 对工作时间方案嵌套数组做深拷贝，避免编辑过程中污染初始 mock。
+- `Working Time Plans` 页面改为自定义管理页：查询区支持 Keyword / Timezone / Schedule Mode / Status，列表展示 Plan ID、Plan Name、Timezone、Schedule Mode、Description、Created Date、Updated Date、Status、Actions。
+- Add/Edit/View 弹框按 Basic Info、Work Schedule、Holiday Schedule、Special Working Plan 分区；24x7 模式显示全天候说明，Custom Schedule 模式展示规则行。
+- Custom Schedule 必须至少有一条 Work Schedule；日期和时间范围做合法性校验；被技能队列引用的方案删除仍受保护。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/working-time-plans`：确认列表字段、Add 弹框、24x7 默认说明、Custom Schedule 分区和空自定义排班校验均可见。
+- Browser 日志仍有既有 AntD deprecation warnings：`Alert.message`、`InputNumber.addonAfter`。
+
+回滚说明：
+
+- 如需回滚，恢复 `WorkingTimePlan` 扁平字段结构、mock 工作时间数据、store 浅拷贝和 `WorkingTimePlansPage` 的泛型 `RoutingConfigCrudPage` 实现，并移除本轮新增样式。
+
+当前风险点：
+
+- 当前排班编辑器每行只编辑一个时间段；如后续需要同一规则内多个 time range，可在现有 `timeRanges` 数组结构上继续扩展 UI。
+- AntD 6 对 `Alert.message` 和 `InputNumber.addonAfter` 有 deprecation warning，项目中已有多处使用；本轮未做全局替换。
+
+### 2026-06-03 14:36 +08:00 - Skill Routing Rules 查询工具栏空白修正
+
+修改页面或文件：
+
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1436.md`
+- `.codex-backup/current-todo-2026-06-03-1436.md`
+- `.codex-backup/page-state-2026-06-03-1436.md`
+
+修改原因：
+
+- 用户指出查询工具栏第一行右侧仍有大块空白，原因不是放不下，而是 `Batch Add` 被单独 `margin-left: auto` 推到右侧。
+- 用户要求 Target Skill Queue 宽度不要比其它查询条件明显更大，并应紧跟 Business Type。
+
+修改结果：
+
+- 规则页 Target Skill Queue 查询框宽度从 `240px` 改为 `180px`。
+- 规则页 Batch Add 的专用 `margin-left` 从 `auto` 改为 `0`，不再单独占据右侧空间。
+- 查询工具栏按 Access Site、Channel、Media Type、Language Type、Business Type、Target Skill Queue、Status、Search、Reset、Batch Add 的自然顺序排列。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser DOM 检查确认 Target Skill Queue 位于 Business Type 后，Batch Add 位于 Reset 后。
+
+回滚说明：
+
+- 如需回滚，恢复 Target Skill Queue 宽度为 `240px`，并将规则页 Add action 的 `margin-left` 改回 `auto`。
+
+当前风险点：
+
+- 若未来启用更多路由要素，查询工具栏仍会自然换行；但不应再为 Batch Add 预留独立大空白。
+
+### 2026-06-03 13:38 +08:00 - Skill Routing Rules 状态开关与操作列固定
+
+修改页面或文件：
+
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1338.md`
+- `.codex-backup/current-todo-2026-06-03-1338.md`
+- `.codex-backup/page-state-2026-06-03-1338.md`
+
+修改原因：
+
+- 用户要求 Edit 弹框中的 Status 不使用下拉框，改为参考其它管理页面的状态开关样式。
+- 用户指出查询工具栏右侧空白过多，Search / Reset 应跟随最后一个查询条件，Batch Add 在同一行有空间时靠右。
+- 用户提出多字段表格横向滚动时操作列应固定，只有非操作列横向滚动。
+
+修改结果：
+
+- Skill Routing Rules Edit 弹框 Status 改为短胶囊 switch + Enabled/Disabled 文案。
+- Skill Routing Rules 查询工具栏改为单行流式布局，Batch Add 在同一行靠右。
+- Skill Routing Rules Actions 列设置为 `fixed: 'right'`，配合横向 scroll 保持操作列可见。
+- 保留通用 CRUD 表格已有的操作列固定逻辑，本轮补齐手写规则表格。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown plugin timing 和 chunk size warning。
+- Browser `/routing-config/skill-routing-rules`：确认列表要素列仍正常，Edit 弹框 Status 为 switch 且不再是 Status combobox。
+
+回滚说明：
+
+- 如需回滚，恢复 Edit 弹框 Status 的 Select 控件，恢复规则页查询工具栏原三段结构，并移除规则列表 Actions 的 `fixed: 'right'`。
+
+当前风险点：
+
+- 其它手写 Routing Config 表格如后续也出现横向滚动，需要逐页确认操作列固定；通用 CRUD 容器已固定操作列。
+
+### 2026-06-03 13:32 +08:00 - Skill Routing Rules 列表拆列与多选查询
+
+修改页面或文件：
+
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1332.md`
+- `.codex-backup/current-todo-2026-06-03-1332.md`
+- `.codex-backup/page-state-2026-06-03-1332.md`
+
+修改原因：
+
+- 用户指出规则保存会按 Batch Add 下方预览表拆分，因此主列表也应把各路由要素列出来，而不是合并在一个 Elements 字段里。
+- 用户要求查询条件中的路由要素直接使用多选下拉，不要 `All` 和 `Empty` 选项。
+- 用户要求详情/编辑弹框按单行数据展示，并与其它管理页面保持一致。
+
+修改结果：
+
+- 主查询区启用路由要素筛选改为多选下拉，空选择表示不限制该要素。
+- 主列表由 `Elements` 合并列改为 Access Site、Channel、Media Type、Language Type、Business Type 独立列。
+- 主列表各列宽度收紧，并保留 Target Skill Queue、Updated Date、Updated By、Status、Actions。
+- View/Edit 弹框去掉旧的条件卡片区，改为标准两列表单字段；要素只读，Target Skill Queue 和 Status 可按模式编辑，Updated Date / Updated By 只读。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/skill-routing-rules`：确认列表拆列、元素多选下拉无 All/Empty、Edit 弹框标准字段布局。
+
+回滚说明：
+
+- 如需回滚，恢复单个 `Elements` 合并列、要素筛选的 `All / Empty` 单选下拉，以及旧的 `routing-config-rule-modal__conditions` 条件卡片展示。
+
+当前风险点：
+
+- 当前 5 个启用要素下列表可读；如未来启用更多路由要素，需要考虑横向滚动、列显隐或详情抽屉。
+
+### 2026-06-03 13:21 +08:00 - Skill Routing Rules 查询、列表与拆分预览
+
+修改页面或文件：
+
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `src/types/routingConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1321.md`
+- `.codex-backup/current-todo-2026-06-03-1321.md`
+- `.codex-backup/page-state-2026-06-03-1321.md`
+
+修改原因：
+
+- 用户确认技能路由规则新增后会按要素组合拆分为多条规则，查询、列表和 Batch Add 下方表格都应围绕拆分后的规则行设计。
+- 用户要求查询条件删除 ID/Keyword，改为当前启用路由要素、目标技能队列和启用/禁用状态。
+- 用户要求列表展示 Rule ID、元素、目标技能队列、更新日期、更新人、状态；详情/编辑只针对单条规则，编辑只能改目标技能和状态。
+
+修改结果：
+
+- 主查询区改为 Access Site、Channel、Media Type、Language Type、Business Type、Target Skill Queue、Status。
+- Status 筛选只保留 All / Enabled / Disabled；空路由要素可通过 Empty 筛选，页面仍不展示 `ANY`。
+- 主列表调整为 Rule ID、Elements、Target Skill Queue、Updated Date、Updated By、Status、Actions，移除 Priority 和 Effective From 主列。
+- `RoutingRule` 类型和 mock 增加 `updatedAt`、`updatedBy`。
+- Batch Add 下方表改为 Generated Routing Rules Preview，展示新建/重复拆分行；重复行默认勾选覆盖，取消勾选保留原配置，新行默认创建。
+- Batch Add 预览表新增 Status 列并压缩列宽，降低表格超出弹框风险。
+- Edit 弹框只保留 Target Skill Queue 与 Status 可编辑；Priority 不再展示或可编辑。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/skill-routing-rules`：确认查询区、主列表列、Batch Add 预览表和 Edit 弹框符合本轮口径。
+
+回滚说明：
+
+- 如需回滚，恢复 Skill Routing Rules 的 Keyword 查询、Priority / Effective From 列、重复项专用表格和 Priority 编辑字段，并移除 `RoutingRule.updatedAt/updatedBy`。
+
+当前风险点：
+
+- `updatedBy` 当前为前端 demo 固定 `Admin`；接真实后端时应改为登录用户或审计字段。
+- 空路由要素仍用空字符串表示；接真实后端时需要确认 API 是否接受空字符串或需要映射为 null。
+
+### 2026-06-03 13:03 +08:00 - Skill Routing Rules 空元素与重复提示文案
+
+修改页面或文件：
+
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `src/mock/routingConfiguration.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1303.md`
+- `.codex-backup/current-todo-2026-06-03-1303.md`
+- `.codex-backup/page-state-2026-06-03-1303.md`
+
+修改原因：
+
+- 用户要求 Batch Add 中路由要素可以为空，而不是选择 `ANY`。
+- 用户要求重复组合区域补充英文提示，说明勾选代表覆盖为当前目标技能，不勾选代表保留原有配置。
+
+修改结果：
+
+- Batch Add 下拉移除 `ANY` 选项，清空要素后保持空值。
+- 组合生成、重复判断、规则 key 和保存逻辑使用空字符串表示未限定要素。
+- 默认 mock 中 `factorValueCode: 'ANY'` 改为空字符串。
+- 规则列表、View/Edit 条件区和重复表格空值不显示 `ANY`。
+- 重复组合表格上方新增轻量英文提示文案。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser Batch Add：确认无 `ANY` 文案，重复提示文案出现，清空要素后字段可保持空白。
+
+回滚说明：
+
+- 如需回滚，恢复 Batch Add 的 `ANY` 选项、空选择自动转 `ANY`、mock 中 `factorValueCode: 'ANY'`，并移除重复组合提示文案。
+
+当前风险点：
+
+- 空字符串现在承载“不限定要素”的语义；如后续接真实后端，需要确认后端是否接受空字符串，或在 API 层映射为空/null。
+
+### 2026-06-03 12:54 +08:00 - Skill Routing Rules Batch Add 弹框细化
+
+修改页面或文件：
+
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `src/mock/routingConfiguration.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1254.md`
+- `.codex-backup/current-todo-2026-06-03-1254.md`
+- `.codex-backup/page-state-2026-06-03-1254.md`
+
+修改原因：
+
+- 用户指出 Batch Add 弹框字段标签与输入框距离过远，重复表格元素会超出弹框。
+- 用户要求选择元素时只显示元素名称，不显示括号中的元素 ID。
+- 用户要求重复示例多几条，重复表格表头提供全选。
+- 用户要求技能名称只显示名称，弹框中仅分块标题加粗。
+
+修改结果：
+
+- Batch Add 默认选择 3 个站点，并在 mock routingRules 中补充 Surabaya / Singapore DR 两条默认重复规则。
+- 路由要素下拉和技能队列下拉都只显示名称，不再显示 `Name (ID)`。
+- 重复表格表头增加全选 checkbox。
+- 重复组合表格列宽压缩并取消横向 scroll，避免内容超出弹框。
+- Batch Add 弹框字段标签列收紧，普通字段标签改为正常字重，仅分块标题保持加粗。
+- 技能队列展示移除编码，仅显示技能队列名称。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser Batch Add：确认表头全选、三条重复站点示例、下拉无括号编码、技能名称无括号编码。
+- Browser 截图复查命令超时；未影响 DOM 验证结果。
+
+回滚说明：
+
+- 如需回滚，恢复 `initialBatchSelections` 为单站点，删除新增的两条 mock routingRules，恢复下拉 label 中的编码、重复表格无表头全选、原列宽和横向 scroll。
+
+当前风险点：
+
+- 重复表格当前按 5 个启用要素压缩适配；若未来启用更多路由要素，仍可能需要改成详情抽屉或可横向滚动表格。
+
+### 2026-06-03 12:26 +08:00 - Skill Routing Rules 页面与 Batch Add 弹框调整
+
+修改页面或文件：
+
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1226.md`
+- `.codex-backup/current-todo-2026-06-03-1226.md`
+- `.codex-backup/page-state-2026-06-03-1226.md`
+
+修改原因：
+
+- 用户指出 `技能路由规则配置` 页面样式与其它管理菜单不一致：查询区上方重复显示菜单名称，底部还有 `Published Routing Rule Index`。
+- 用户要求 Batch Add 中 5 个路由要素改成一行一个多选下拉，目标技能队列与要素分区展示，并暂时去掉新增时的 Priority。
+- 用户要求重复组合提示改为下方表格，默认全选，可取消某行，表格展示 5 个要素值、原技能队列和目标技能队列。
+
+修改结果：
+
+- 主页面删除表格卡片重复标题，页面标题只保留 `PageContainer` 的 `技能路由规则配置`。
+- 删除 `Published Routing Rule Index` 页面展示区及相关展开状态和索引表 UI。
+- Batch Add 弹框改为 `Route Elements` / `Target Routing` 分区。
+- 启用路由要素在弹框中逐行展示，多选下拉撑满可用宽度。
+- Batch Add 去掉 Priority、Overwrite checkbox、组合摘要和重复摘要；新增/覆盖仍使用内部默认 priority `70`。
+- 重复组合改为表格，默认勾选所有重复行；取消勾选的重复规则不会被覆盖。
+- 若本次没有新规则且所有重复行都取消勾选，保存提示 `No routing rule changes selected.`，不提交变更。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/skill-routing-rules`：确认页面标题只出现一次，`Published Routing Rule Index` 不再出现。
+- Browser Batch Add：确认 Route Elements / Target Routing 分区、5 个启用要素逐行展示、Overwrite 和摘要不存在。
+- Browser Batch Add 重复表格：确认重复行默认勾选，取消勾选后保存出现 `No routing rule changes selected.`。
+
+回滚说明：
+
+- 如需回滚，恢复 `SkillRoutingRulesPage.tsx` 中 `Published Routing Rule Index` 卡片、Batch Add 网格布局、Priority 输入、Overwrite checkbox、组合摘要和 Alert 风格重复提示；恢复对应 Less 样式。
+
+当前风险点：
+
+- 主列表和 Edit 弹框仍保留 Priority，只有 Batch Add 新增场景隐藏 Priority；如果后续确认规则整体不需要优先级，需要再统一清理列表、编辑弹框、类型和 mock。
+
+### 2026-06-03 12:08 +08:00 - Skill Queues 所属 VDN 字段
+
+修改页面或文件：
+
+- `src/types/routingConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1208.md`
+- `.codex-backup/current-todo-2026-06-03-1208.md`
+- `.codex-backup/page-state-2026-06-03-1208.md`
+
+修改原因：
+
+- 用户要求 `技能队列管理` 增加 `所属VDN` 字段：作为查询条件放在状态前面，作为列表字段放在技能名称后面，维护时为必填下拉单选。
+
+修改结果：
+
+- `SkillQueue` 类型和默认 mock 新增 `vdnCode`。
+- 技能队列查询区调整为 `Keyword + VDN + Status`。
+- 技能队列列表在 `Skill Name` 后展示 `VDN` 列，并用 VDN 名称显示。
+- Add/Edit/View 弹框新增必填 `VDN` 单选下拉，选项来自 VDN 主数据，新增默认选择第一个 VDN。
+- 保存校验加入 `VDN` 必填校验。
+- `VDN配置` 删除保护补充技能队列引用检查，被技能队列使用的 VDN 不能直接删除。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning 和 plugin timing 提示。
+- Browser `/routing-config/skill-queues`：确认查询区、列表和 Add 弹框均已展示 VDN 字段；最终刷新确认 VDN 查询、VDN 列和默认 VDN 名称正常显示。
+
+回滚说明：
+
+- 如需回滚，删除 `SkillQueue.vdnCode` 类型字段、mock 中的 `vdnCode`、Skill Queues 页面里的 VDN 查询条件、列表列、弹框字段、draft/record 映射和必填校验。
+
+当前风险点：
+
+- `VDN` 当前只作为技能队列主数据归属字段，不作为默认路由要素参与 Skill Routing Rules；如后续需要按 VDN 路由，需单独重新启用 VDN 路由要素。
+
+### 2026-06-03 12:02 +08:00 - Route Elements 默认顺序与 Skill Routing Rules 启用要素过滤
+
+修改页面或文件：
+
+- `src/mock/routingConfiguration.ts`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1202.md`
+- `.codex-backup/current-todo-2026-06-03-1202.md`
+- `.codex-backup/page-state-2026-06-03-1202.md`
+
+修改原因：
+
+- 用户要求优先调整 `路由要素配置` 菜单，默认数据顺序为接入站点、渠道、媒体类型、国家（禁用）、语言类型、业务类型、接入账号（禁用）、接入入口（禁用）。
+- 用户要求 `技能路由规则配置` 中不要展示禁用的路由要素。
+
+修改结果：
+
+- 默认 routeFactors 移除 VDN，保留 8 个路由要素并按 `displayOrder` 1-8 排序。
+- `Country`、`Access Account`、`Access Entry` 默认禁用；`Access Site`、`Channel`、`Media Type`、`Language Type`、`Business Type` 默认启用。
+- Route Elements 页面按 `displayOrder` 排序展示。
+- 默认 routingRules 删除 VDN 条件，Batch Add 默认选择也移除 VDN。
+- Skill Routing Rules 继续只读取启用且 Active 的要素，禁用要素不会出现在 Batch Add、Route Conditions、View/Edit 条件区和 Published Routing Rule Index。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/route-elements`：确认顺序、禁用状态和不显示 VDN。
+- Browser `/routing-config/skill-routing-rules`：确认 Route Conditions、Batch Add、Published Routing Rule Index 均不展示 Country / Access Account / Access Entry / VDN。
+
+回滚说明：
+
+- 如需回滚，恢复 `routeFactors` 中 VDN 默认要素、原 displayOrder 和默认 routingRules 中 `factorCode: '10'` 条件，并恢复 Batch Add 初始选择中的 VDN。
+
+当前风险点：
+
+- `VDN` 仍保留主数据和候选映射，当前只是从默认 Route Elements 中移除；若未来重新启用 VDN 路由要素，可继续复用现有 VDN 数据。
+
+### 2026-06-03 11:39 +08:00 - Skill Routing Rules 管理台结构统一
+
+修改页面或文件：
+
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1139.md`
+- `.codex-backup/current-todo-2026-06-03-1139.md`
+- `.codex-backup/page-state-2026-06-03-1139.md`
+
+修改原因：
+
+- 用户认可技能路由规则业务结构应不同于普通主数据 CRUD，但要求页面视觉和操作结构继续向管理台统一。
+- 原页面将 `Batch Add Routing Rules` 常驻铺在顶部，并将每个启用路由要素拆成表格列，页面显得重且横向滚动过多。
+
+修改结果：
+
+- 主页面改为 `Keyword + Target Skill Queue + Status` 查询区、`Search / Reset` 按钮、右侧独立 `Batch Add` 按钮和分页表格。
+- 规则列表改为 `Rule ID`、`Route Conditions`、`Target Skill Queue`、`Priority`、`Effective From`、`Status`、`Actions`。
+- `Route Conditions` 用紧凑 chips 汇总展示启用要素，不再每个要素独立一列。
+- Batch Add 改为专用弹框，保留多要素多选、组合预览、重复检测、覆盖选项和保存逻辑。
+- Edit 弹框仍只允许修改目标技能队列、优先级和状态，Route Conditions 只读。
+- `Published Routing Rule Index` 改为默认折叠的次级卡片，展开后展示运行时索引表。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/skill-routing-rules`：确认查询区、Batch Add 按钮、Route Conditions 列、Status 列、默认折叠的 Published Routing Rule Index。
+- Browser Batch Add：确认弹框包含启用要素多选、覆盖复选框、组合/重复摘要；重复且未覆盖时阻止保存。
+- Browser Edit：确认 Route Conditions 只读，目标队列、优先级、状态可编辑。
+- Browser Published Routing Rule Index：确认默认折叠，点击后可展开并显示索引表。
+
+回滚说明：
+
+- 如需回滚，恢复 `SkillRoutingRulesPage.tsx` 中常驻 Batch Add 卡片、按启用要素拆列表列的表格结构，以及默认展开的 Published Routing Rule Index。
+
+当前风险点：
+
+- `Route Conditions` 汇总列在启用要素非常多时会增加行高；目前用紧凑 chips 和换行控制，后续如启用超过 10 个要素可考虑详情弹出或 hover 展开。
+
+### 2026-06-03 11:00 +08:00 - Access Accounts 列表字段和全渠道示例调整
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/mock/routingConfiguration.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1100.md`
+- `.codex-backup/current-todo-2026-06-03-1100.md`
+- `.codex-backup/page-state-2026-06-03-1100.md`
+
+修改原因：
+
+- 用户指出 Access Accounts 列表缺少可见状态字段，且 `Key Config` 列价值不高。
+- 用户建议列表 mock 数据应覆盖所有非电话渠道，方便评审时看到各渠道账号示例。
+
+修改结果：
+
+- Access Accounts 列表移除 `Key Config` 列，保留 `Status` 列。
+- Mock 接入账号补齐除 `Phone` 外的 12 个渠道示例：Haloapp、webchat、WhatsApp、Email、Instagram、LinkedIn、Facebook、X、Tik Tok、YouTube、AppStore、playstore。
+- 保持 Channel 动态字段和结构化 `extensionConfig` 不变。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/access-accounts`：确认列表有 `Status` 列、没有 `Key Config` 列、12 个非电话渠道示例均可见、无 Phone 账号示例。
+- Browser Add 弹框：确认动态字段仍正常，未回退到 `Channel-specific Config` 文本域。
+
+回滚说明：
+
+- 如需回滚，恢复 Access Accounts 列表的 `Key Config` 列，并将 mock accessAccounts 恢复为本轮前的 3 条示例。
+
+当前风险点：
+
+- 示例账号均为 demo 数据；真实后端落地时需要结合渠道开通状态决定是否默认展示所有渠道示例。
+
+### 2026-06-03 10:45 +08:00 - Access Accounts 账号列表与动态渠道字段调整
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigCrudPage.tsx`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/types/routingConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1045.md`
+- `.codex-backup/current-todo-2026-06-03-1045.md`
+- `.codex-backup/page-state-2026-06-03-1045.md`
+
+修改原因：
+
+- 用户确认 `Access Accounts` 中电话不属于官方账号配置，应先去掉 `Phone`。
+- 用户要求去掉机器人/人工入口 ID、支持媒体类型等非必要字段，并采用账号列表维护方式。
+- 接入账号需要表达不同渠道账号配置差异，但不应继续用一整块自由文本域。
+
+修改结果：
+
+- 通用 `RoutingConfigCrudPage` 支持按当前弹框 draft 动态计算字段，供 Access Accounts 根据 Channel 切换字段。
+- `AccessAccount.extensionConfig` 从字符串调整为结构化对象。
+- `Access Accounts` Channel 下拉过滤掉 `PHONE`，但不影响 Channels 页面中的 Phone。
+- 列表新增 `Key Config` 摘要列，继续展示账号数据列表和所属 Channel。
+- 查询区改为 `Keyword + Channel + Status`。
+- Add/Edit/View 弹框移除 `Channel-specific Config` 文本域，按 Channel 展示 Haloapp、webchat、WhatsApp、Email、社媒和应用商店渠道的结构化配置字段。
+- Mock 账号数据同步改为结构化 `extensionConfig`，仍不保存 token、password、private key 原文。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning 和 plugin timing 提示。
+- Browser `/routing-config/access-accounts`：确认页面可打开，查询区包含 Keyword / Channel / Status，列表包含 `Key Config`。
+- Browser Add 弹框：确认默认 Haloapp 动态字段出现，无 `Channel-specific Config`、支持媒体类型、机器人/人工入口字段。
+- Browser Channel 下拉：确认没有 `Phone` 选项；切换到 `webchat` 后弹框显示 `Widget ID`、`Allowed Domain` 等 Webchat 字段。
+
+回滚说明：
+
+- 如需回滚，恢复 `AccessAccount.extensionConfig` 为字符串，恢复 Access Accounts 的 `Channel-specific Config` textarea 和包含 Phone 的 channel options，并移除 `RoutingConfigCrudPage` 的动态 fields 支持。
+
+当前风险点：
+
+- 当前仍是前端 demo 本地状态；真实后台落地时需要将结构化 `extensionConfig` schema 固化到接口契约或由后端返回渠道字段元数据。
+
+### 2026-06-03 10:12 +08:00 - 管理台页面顶部通用版式优化
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-1012.md`
+- `.codex-backup/current-todo-2026-06-03-1012.md`
+- `.codex-backup/page-state-2026-06-03-1012.md`
+
+修改原因：
+
+- 用户指出页面顶部有大块空白，显得页面上方空旷；页面顶部菜单名称字号接近 Logo 字号，层级过重，需要形成统一管理台标准规范。
+
+修改结果：
+
+- 全局 `.aicc-content` 顶部 padding 从 `12px` 收紧为 `8px`。
+- `PageContainer` header 最小高度从 `50px` 降为 `28px`，标题下方 margin 从 `18px` 降为 `10px`。
+- 页面标题字号从 `20px` 降为 `16px`，行高从 `28px` 降为 `22px`，视觉层级明显低于 `BANK 1` Logo。
+- `PageContainer` body gap 从 `16px` 降为 `12px`。
+- 该调整作为通用管理台规范应用于所有使用 `PageContainer` 的后台/配置页。
+
+验证：
+
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning 和 plugin timing 提示。
+- `npm run lint` 单独重跑通过；首次与 build 并行执行时因资源占用超时。
+- 重新启动 Vite dev server 到 `http://127.0.0.1:5174`。
+- Browser `/routing-config/route-elements`：确认页面标题小于 Logo，顶部留白收紧，标题后直接进入查询卡片。
+
+回滚说明：
+
+- 如需回滚，恢复 `.aicc-content` padding、`.aicc-page-container__header` min-height/margin、`.aicc-page-container__title` 字号/行高和 `.aicc-page-container__body` gap 到本次修改前的值。
+
+当前风险点：
+
+- 这是全局 `PageContainer` 版式调整，会同步影响 Design System、Text Channel Settings 等使用同一容器的页面；如果未来某个页面需要更大的标题区，应新增显式 page variant，而不是回退全局管理台标准。
+
+### 2026-06-03 01:22 +08:00 - Routing Config 二级菜单中文顺序调整
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-0122.md`
+- `.codex-backup/current-todo-2026-06-03-0122.md`
+- `.codex-backup/page-state-2026-06-03-0122.md`
+
+修改原因：
+
+- 用户要求调整 `Routing Config` 二级菜单顺序和名称为中文业务口径。
+
+修改结果：
+
+- `Routing Config` 二级菜单顺序调整为：路由要素配置、VDN配置、接入站点配置、渠道配置、业务类型配置、技能队列配置、接入账号配置、站点接入量配置、技能路由规则配置、工作时间方案配置。
+- 路由 path 不变，旧链接不失效。
+- 对应页面左上角标题同步改为同名中文。
+- `SkillRoutingRulesPage` 的页面标题和列表卡片标题同步为 `技能路由规则配置`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/route-elements`：展开左侧导航后确认 10 个二级菜单按指定中文顺序展示。
+
+回滚说明：
+
+- 如需回滚，恢复 `BasicLayout` 中 Routing Config 二级菜单英文 label 和原顺序，并恢复各 Routing Config 页面标题为英文。
+
+当前风险点：
+
+- 页面内表格列名、查询条件、弹框字段仍按此前英文管理台风格保留；本轮仅调整二级菜单和页面标题中文名称。
+
+### 2026-06-03 01:05 +08:00 - Skill Queues 查询、表格和弹框细节修正
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-0105.md`
+- `.codex-backup/current-todo-2026-06-03-0105.md`
+- `.codex-backup/page-state-2026-06-03-0105.md`
+
+修改原因：
+
+- 用户要求 Keyword 查询条件去掉状态匹配。
+- 用户指出 Skill Queues 表格字段间隔过宽，并且不应在空间充足时出现横向滚动条。
+- 用户指出弹框内下拉框和输入框高度不一致，并要求移除 `Queue Prompts` 字段。
+
+修改结果：
+
+- Keyword 仅匹配 `Skill ID`、`Platform Skill ID`、`Skill Name`；`Status` 保留为独立下拉筛选。
+- Keyword placeholder 改为 `Skill ID / Platform Skill ID / Skill Name`。
+- Skill Queues 表格列宽收窄，并去掉该页强制 `tableScrollX`。
+- Add/Edit/View 弹框移除 `Queue Prompts` 字段；底层保存仍保留已有 prompt 或新增默认 prompt。
+- CRUD 弹框内普通输入框、下拉框和带单位数字输入框高度统一。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/skill-queues`：确认 Keyword placeholder 不含 Status，Add 弹框无 `Queue Prompts` 和 `Routing Method`。
+
+回滚说明：
+
+- 如需回滚，恢复 Keyword 状态匹配和 placeholder，恢复 Skill Queues 的 `tableScrollX`，重新加入 `Queue Prompts` 字段，并移除 CRUD 弹框高度统一样式。
+
+当前风险点：
+
+- `Queue Prompts` 从 UI 移除后，新增记录使用默认 prompt，编辑记录保留原 prompt；若后续需要维护提示语，应拆成独立提示语配置页面或结构化子表。
+
+### 2026-06-03 00:54 +08:00 - Skill Queues 字段与弹框调整
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/pages/routing-config/RoutingConfigCrudPage.tsx`
+- `src/types/routingConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-0054.md`
+- `.codex-backup/current-todo-2026-06-03-0054.md`
+- `.codex-backup/page-state-2026-06-03-0054.md`
+
+修改原因：
+
+- 用户要求调整 `Skill Queues` 查询条件、列表字段、工作时间方案展示、最大排队和超时字段的默认值/范围/单位、视频支持字段，以及弹框内坐席数量和 routing method 的展示方式。
+
+修改结果：
+
+- 查询区改为 `Keyword + Status`；Keyword 匹配 `Skill ID`、`Platform Skill ID`、`Skill Name` 和状态文案。
+- 列表 `Work Time` 改为 `Work Time Plan`，并展示工作时间方案名称。
+- 列表新增 `Supports Video`，展示 `Yes / No`。
+- `Max Queue Size` 和 `Queue Timeout` 在列表和弹框中带单位，分别为 `items` 和 `sec`。
+- 新增默认值改为 `Max Queue Size = 60`、`Queue Timeout = 100`、`Supports Video = No`。
+- 保存校验增加必填校验和范围校验：`Max Queue Size 1-60000`、`Queue Timeout 0-10000`。
+- 弹框去掉 `Routing Method` 字段；`routingMethod` 从 `SkillQueue` 类型和 mock 数据移除。
+- 弹框保留 `Assigned Agents` 但设为禁用只读，不允许输入。
+- 通用 `RoutingConfigCrudPage` 支持数字字段 `min/max/addonAfter` 和全程只读字段。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/skill-queues`：确认列表字段、单位、工作时间方案名称和视频支持字段展示正确。
+- Browser `/routing-config/skill-queues`：确认 Add 弹框默认值、单位、必填标识、禁用 `Assigned Agents` 和无 `Routing Method`。
+
+回滚说明：
+
+- 如需回滚，恢复 `SkillQueue.routingMethod` 类型和 mock 字段，恢复 Skill Queues 字段配置中的 `Routing Method`，删除 `supportsVideo` 字段，并还原数字字段默认值和通用 CRUD 数字单位能力。
+
+当前风险点：
+
+- 用户括号中的单位写法疑似将 `秒` 和 `个` 写反；当前实现按字段语义使用 `Max Queue Size = items`、`Queue Timeout = sec`。
+
+### 2026-06-03 00:34 +08:00 - Site Access Volume 展示细节修正
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-0034.md`
+- `.codex-backup/current-todo-2026-06-03-0034.md`
+- `.codex-backup/page-state-2026-06-03-0034.md`
+
+修改原因：
+
+- 用户认为 `Site Configuration` 使用分号分隔不够清晰，建议改为 `|`。
+- 用户指出弹框内站点名称与比例输入距离过远。
+- 用户要求已经配置过接入量的渠道在 Add 弹框中置灰不可选择。
+
+修改结果：
+
+- 列表 `Site Configuration` 改为使用 ` | ` 分隔站点比例，例如 `Jakarta Site 34% | Surabaya Site 33% | Singapore DR Site 33%`。
+- 弹框站点比例行改为固定紧凑两列，站点名称和比例输入框距离缩短。
+- Add 弹框中已存在接入量配置的渠道置灰禁选。
+- Add 弹框默认选择第一个未配置渠道；已有渠道的比例维护走 Edit。
+- 如果全部渠道都已配置，Add 弹框只提示没有可新增渠道，不再叠加无媒体类型提示。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/site-access-volume`：确认列表已使用 `|` 展示站点比例。
+- Browser `/routing-config/site-access-volume`：确认 Add 弹框默认选择未配置渠道 `webchat`。
+- Add 渠道禁选逻辑通过代码实现；AntD 浮层在 Browser DOM 中未稳定展开，最终以代码逻辑和默认值行为验证为准。
+
+回滚说明：
+
+- 如需回滚，恢复 `getSiteConfigText` 为分号拼接，恢复站点比例行 `1fr + 128px` 布局，并删除 Add 渠道禁选逻辑。
+
+当前风险点：
+
+- 错误比例保存阻止仍需人工复查一次，因为当前 Browser 插件无法稳定重输 `InputNumber` 数字。
+
+### 2026-06-03 00:23 +08:00 - Site Access Volume 合并单元格列表
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-0023.md`
+- `.codex-backup/current-todo-2026-06-03-0023.md`
+- `.codex-backup/page-state-2026-06-03-0023.md`
+
+修改原因：
+
+- 用户认为渠道一行摘要仍不够直观，要求改为合并单元格形式：同一渠道下每个媒体一行，渠道单元格合并；站点配置列直接拼接站点比例。
+
+修改结果：
+
+- Site Access Volume 列表改为媒体逐行展示。
+- 同一渠道的 `Channel ID`、`Channel Name`、`Status`、`Actions` 使用 `rowSpan` 合并单元格。
+- `Media Type` 每行显示一个媒体，例如 Haloapp 展示 Voice、Video、Text 三行。
+- `Site Configuration` 每行拼接该媒体下所有站点比例，例如 `Jakarta Site 34%; Surabaya Site 33%; Singapore DR Site 33%`。
+- View/Edit/Delete 仍按 channel-level 操作，弹框仍展示所选渠道的所有媒体站点比例。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/site-access-volume`：确认表头为 `Channel ID`、`Channel Name`、`Media Type`、`Site Configuration`、`Status`、`Actions`，无 `Total`。
+- Browser `/routing-config/site-access-volume`：确认 Haloapp 展示为三行媒体，渠道、状态和操作列合并显示。
+- Browser `/routing-config/site-access-volume`：确认站点配置列按 `站点名 比例%` 使用分号拼接。
+
+回滚说明：
+
+- 如需回滚，恢复列表数据源为 channel-level summary rows，恢复 `Site Allocation` 摘要列和媒体数量摘要样式。
+
+当前风险点：
+
+- 新增同一渠道时仍会按现有 `Channel + Media Type` 更新已有比例组；当前 demo 没有单独覆盖确认步骤。
+- 错误比例保存阻止仍需人工复查一次，因为当前 Browser 插件无法稳定重输 `InputNumber` 数字。
+
+### 2026-06-03 00:13 +08:00 - Site Access Volume 列表渠道级汇总
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/mock/routingConfiguration.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-03-0013.md`
+- `.codex-backup/current-todo-2026-06-03-0013.md`
+- `.codex-backup/page-state-2026-06-03-0013.md`
+
+修改原因：
+
+- 用户指出列表不应显示 `Total`，因为比例合计不等于 100% 时本来就不允许提交；同时指出 `Site Ratios` 横向堆站点比例没有考虑 Haloapp 三媒体，也无法承载 5 个或 10 个站点。
+
+修改结果：
+
+- Site Access Volume 列表从单条 `Channel + Media Type` 比例组展示改为按 `Channel` 聚合展示。
+- 列表列调整为 `Channel ID`、`Channel Name`、`Media Type`、`Site Allocation`、`Status`、`Actions`。
+- 列表移除 `Ratio Group ID`、`Site Ratios` 和 `Total`。
+- `Site Allocation` 改为媒体级摘要，例如 `Voice 3 sites configured`，不再横向展开所有站点比例。
+- View/Edit/Delete 改为 channel-level 操作；Delete 会删除该渠道下全部媒体比例组，并在确认文案中说明。
+- mock 补齐 Haloapp Voice / Video 默认比例组，使默认列表中的 Haloapp 一行能展示 Voice / Video / Text 三种媒体。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/site-access-volume`：确认列表表头不再有 `Total`、`Site Ratios`、`Ratio Group ID`。
+- Browser `/routing-config/site-access-volume`：确认 Haloapp 只占一行，媒体列为 `Voice / Video / Text`，`Site Allocation` 为三条媒体级摘要。
+- Browser `/routing-config/site-access-volume`：确认 Haloapp View 弹框仍展示 Voice、Video、Text 三组及各站点比例。
+
+回滚说明：
+
+- 如需回滚，恢复 Site Access Volume 表格数据源为 `siteAccessRatioGroups`，恢复 `Ratio Group ID`、`Media Type`、`Site Ratios`、`Total` 列，恢复 View/Edit/Delete 针对单条比例组。
+
+当前风险点：
+
+- 新增同一渠道时仍会按现有 `Channel + Media Type` 更新已有比例组；当前 demo 没有单独覆盖确认步骤。
+- 错误比例保存阻止仍需人工复查一次，因为当前 Browser 插件无法稳定重输 `InputNumber` 数字。
+
+### 2026-06-02 23:49 +08:00 - Site Access Volume 弹框布局细化
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-02-2349.md`
+- `.codex-backup/current-todo-2026-06-02-2349.md`
+- `.codex-backup/page-state-2026-06-02-2349.md`
+
+修改原因：
+
+- 用户指出 `Site Access Volume` 新增弹框的 Channel 下拉框过长、媒体标题重复渠道、站点展示重复、比例输入缺少百分号，并要求思考站点比例是否应纵向展示。
+
+修改结果：
+
+- Add/Edit/View 弹框顶部 `Channel` / `Status` 控件改为固定宽度，不再撑满弹框。
+- 媒体分组标题只显示 `Voice`、`Video`、`Text`，不再显示 `Haloapp / Voice` 这类重复渠道前缀。
+- 站点比例录入从横向三列卡片改为纵向行：左侧站点名称，右侧比例输入框。
+- 站点行只显示站点名称，不再重复显示站点编码。
+- 比例输入框增加 `%` 后缀，内部值仍保持数字。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/site-access-volume`：Add 弹框默认 Phone / Voice 布局正常，Channel 下拉框宽度收敛到普通弹框控件尺寸，站点纵向展示且比例输入带 `%`。
+- Browser `/routing-config/site-access-volume`：通过可见坐标切换 Haloapp，确认 Voice、Video、Text 三个媒体分组均展示，媒体标题不重复渠道，站点只显示名称。
+- Browser 插件对 `InputNumber` 填值/重输存在虚拟剪贴板限制，错误比例保存阻止未完成自动化复测；该校验逻辑本轮未改动，建议人工复查一次。
+
+回滚说明：
+
+- 如需回滚，恢复 `RoutingConfigDataPages.tsx` 中媒体标题为 `Channel / Media`，恢复站点比例容器为 `routing-config-site-volume-modal__site-grid`，并恢复 `index.less` 中三列站点 grid 样式。
+
+当前风险点：
+
+- 新增同一渠道时仍会按现有 `Channel + Media Type` 更新已有比例组；当前 demo 没有单独覆盖确认步骤。
+- 错误比例保存阻止需要人工复查一次，因为当前 Browser 插件无法稳定重输 `InputNumber` 数字。
+
+### 2026-06-02 23:04 +08:00 - Site Access Volume 渠道媒体站点比例矩阵
+
+修改页面或文件：
+
+- `src/types/routingConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-02-2304.md`
+- `.codex-backup/current-todo-2026-06-02-2304.md`
+- `.codex-backup/page-state-2026-06-02-2304.md`
+
+修改原因：
+
+- 用户要求站点接入量管理新增时先选渠道，再列出该渠道在 Channels 配置里关联的所有媒体，并分别为每个媒体列出所有站点比例输入框；同一渠道 + 媒体下所有站点合计必须为 100%。同时要求去除 `Business Override` 和 `Language Override` 字段。
+
+修改结果：
+
+- Site Access Volume 从通用 `RoutingConfigCrudPage` 改为自定义管理页，保留统一管理台 toolbar、表格、分页、弹框和按钮风格。
+- 新增弹框按 `channel.mediaTypes` 自动生成媒体分组；每个媒体分组按 Sites 列出所有站点输入框。
+- 新增保存会为所选渠道的每个媒体生成或覆盖一条 `Channel + Media Type` 比例组。
+- 编辑/查看/删除仍针对单条比例组。
+- 保存校验按每个媒体分组分别检查站点比例总和必须为 100%。
+- `SiteAccessRatioGroup` 类型移除 `businessTypeCode`、`languageCode`，mock 中 PHONE voice 组改为默认组并补齐 Singapore 站点 0%。
+- 页面不再显示 `Business Override`、`Language Override`，也不再使用 textarea 输入站点比例。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite chunk size warning。
+- Browser `/routing-config/site-access-volume` 验证通过：列表不显示 Business/Language override，保留 Site Ratios，PHONE voice 默认组显示所有站点。
+- Browser Add 弹框验证通过：默认渠道显示 Phone / Voice，列出 Jakarta、Surabaya、Singapore 三个站点输入区域，新增打开时无提前校验错误。
+- Browser Ant Select 切换 Haloapp 在当前工具中不稳定，未完成实际点击切换验证；代码实现按 `channel.mediaTypes` 驱动，Haloapp 会展开 Voice / Video / Text 三个媒体分组。
+
+回滚说明：
+
+- 如需回滚，恢复 `SiteAccessRatioGroup` 的 `businessTypeCode` / `languageCode` 字段，恢复 `SiteAccessVolumePage` 使用通用 `RoutingConfigCrudPage` 和 textarea 比例输入，恢复 mock 中 `RATIO_PHONE_VOICE_CARD` 的业务覆盖字段。
+
+当前风险点：
+
+- 新增同一渠道时会按现有 `Channel + Media Type` 更新已有比例组；当前 demo 没有单独覆盖确认步骤。
+- Ant Select 在 in-app browser 自动化中切换不稳定，需要人工复查 Haloapp 三媒体展开效果。
+
+### 2026-06-02 22:46 +08:00 - Business Types 查询条件与 Project 字段调整
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-02-2246.md`
+- `.codex-backup/current-todo-2026-06-02-2246.md`
+- `.codex-backup/page-state-2026-06-02-2246.md`
+
+修改原因：
+
+- 用户要求业务类型查询条件与其它管理台菜单一致，将 ID 和名称合并搜索，并增加状态筛选；列表中去掉 `Project` 字段。
+
+修改结果：
+
+- Business Types 查询区改为 `Keyword + Status`。
+- `Keyword` 匹配 `Business Type ID` 与 `Business Name`，placeholder 为 `Business Type ID / Name`。
+- Business Types 列表去掉 `Project` 列。
+- 新增/编辑弹框同步隐藏 `Project Code`；`projectCode` 仍作为内部默认 `BANK1` 保留，避免影响项目范围唯一性。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite chunk size warning。
+- Browser `/routing-config/business-types` 验证通过：查询区有 `Business Type ID / Name` 和 `Status`，列表不显示 `Project`。
+- Browser Add 弹框验证通过：显示 Business Type ID、Business Name、Status，不显示 `Project Code`，首次打开不提前展示校验错误。
+
+回滚说明：
+
+- 如需回滚，恢复 Business Types 的 `Project` 列、`Project Code` 表单字段，并移除 `filters` 配置使其回到普通 Keyword 搜索。
+
+当前风险点：
+
+- `projectCode` 仍作为内部字段存在但不再可见；如果后续真实后台需要跨项目维护业务类型，需要重新暴露项目选择或在项目上下文中固定。
+
+### 2026-06-02 22:37 +08:00 - Routing Config 菜单精简
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/routes.tsx`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-02-2237.md`
+- `.codex-backup/current-todo-2026-06-02-2237.md`
+- `.codex-backup/page-state-2026-06-02-2237.md`
+
+修改原因：
+
+- 用户要求去掉没用过或重复的 Routing Config 菜单：`Channel Media` 与 `Channels` 重复，`Media Types` / `Languages` 属于数据字典类，`Access Entries` 与 Access Accounts 容易混淆；确认 Access Accounts 应保留，用于配置同一渠道多个账号及不同渠道差异字段。
+
+修改结果：
+
+- 从 `Routing Config` 二级菜单删除 `Channel Media`、`Media Types`、`Languages`、`Access Entries`。
+- 删除对应路由和页面组件导出，旧 URL 走现有 fallback，不再保留隐藏直达页。
+- 底层 `mediaTypes`、`languageTypes`、`channelMediaSettings`、`accessEntries` mock/store 数据仍保留，避免影响 Channels、Site Access Volume、Skill Routing Rules 和内部 mock 关系。
+- Access Accounts 页面保留，并将渠道差异字段标签改为 `Channel-specific Config`。
+- Channels 删除保护不再因隐藏的 Channel Media 数据阻止删除。
+- Access Accounts 删除保护不再因隐藏的 Access Entries 数据阻止删除。
+- VDN 删除保护同步去掉隐藏 Access Entries 依赖，避免不可见数据卡住 VDN 删除操作。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite chunk size warning。
+- Browser `/routing-config/channels` 验证通过：页面仍可用，旧菜单文字不再出现在页面快照中。
+- Browser `/routing-config/access-accounts` 验证通过：页面可打开。
+- Browser `/routing-config/route-elements`、`/routing-config/skill-routing-rules` 验证通过：保留页面仍可打开并显示关键内容。
+- Browser 旧 URL 验证通过：`/routing-config/channel-media`、`/routing-config/media-types`、`/routing-config/languages`、`/routing-config/access-entries` 均回到 `/`，不再进入旧页面。
+
+回滚说明：
+
+- 如需回滚，恢复 `BasicLayout` 菜单项、`routes.tsx` 对应路由和 `RoutingConfigDataPages.tsx` 中四个页面组件；同时恢复 Channels / Access Accounts / VDN 的隐藏依赖删除保护文案。
+
+当前风险点：
+
+- `Access Entries` 底层 mock 数据仍存在，但不再提供维护页；如后续真实后台需要入口层配置，需要重新引入入口页或合并到 Access Accounts。
+- `Channel Media` 底层 mock 数据仍存在，但 UI 维护入口已移除；如后续要维护 scan mode 等细字段，需要在 Channels 页补充或重新拆出高级配置。
+
+### 2026-06-02 22:04 +08:00 - Channels 管理页字段与查询条件调整
+
+修改页面或文件：
+
+- `src/types/routingConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `src/store/routingConfigStore.ts`
+- `src/pages/routing-config/RoutingConfigCrudPage.tsx`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-02-2204.md`
+- `.codex-backup/current-todo-2026-06-02-2204.md`
+- `.codex-backup/page-state-2026-06-02-2204.md`
+
+修改原因：
+
+- 用户要求渠道管理列表字段改为数字渠道 ID、渠道名称、媒体类型多选、并发呼叫数、最小扫描间隔和状态，并要求查询条件与 VDN 等菜单一致，使用 ID/名称合并输入框、媒体类型多选和状态筛选。
+
+修改结果：
+
+- `Channel` 类型新增页面可见 `channelId`、`mediaTypes`、`maxConcurrency`、`minScanIntervalSeconds`，`channelId` 采用非序列数字编码。
+- Channels 列表显示 `Channel ID`、`Channel Name`、`Media Type`、`Max Concurrent Calls`、`Min Scan Interval (s)`、`Status`。
+- Channels 新增/编辑弹框提供 `Media Type` 多选、默认 `Max Concurrent Calls=50`、默认 `Min Scan Interval Seconds=30`。
+- Channels 查询区改为 `Keyword + Media Type + Status`；Keyword 匹配 `Channel ID` 和 `Channel Name`，Media Type 支持多选。
+- mock 渠道补齐 13 个渠道，Phone 仅 Voice，Haloapp/webchat 为 Voice/Video/Text，其它渠道为 Text。
+- 内部 `channelCode` 仍保留为路由规则、账号、入口等引用键，避免将现有引用关系强行迁移为数字 ID。
+- `RoutingConfigCrudPage` 新增 `multiSelect` 字段和筛选能力，后续普通管理台页面可复用。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite chunk size warning。
+- Browser `/routing-config/channels` 验证通过：页面包含 Channel ID / Name 查询、Media Type 查询、目标列表字段、13 个渠道和底部分页。
+- Browser `/routing-config/channels` Add 弹框验证通过：字段和默认值 50/30 正常，首次打开无提前校验错误。
+- Browser 文本输入过滤验证受 in-app browser 虚拟剪贴板限制影响，未完成实际键入过滤；代码层过滤逻辑和页面渲染已通过。
+
+回滚说明：
+
+- 如需回滚，恢复 `Channel` 类型和 mock 为仅包含 `channelCode`、`channelName`、`channelCategory`、`status`，移除 `RoutingConfigCrudPage` 的 `multiSelect` 支持，并恢复 `ChannelsPage` 原来的 Category 列和普通搜索。
+
+当前风险点：
+
+- `channelId` 是页面维护字段，`channelCode` 仍是内部引用键；如果后续真实接口要求所有引用也使用数字渠道 ID，需要统一迁移路由规则、渠道媒体、接入账号和接入入口的引用字段。
+- `Channel Media` 独立页面仍保留原来的渠道媒体明细 mock；本轮只调整 Channels 主数据页，未展开维护所有渠道的全部媒体明细组合。
+
+### 2026-06-02 21:52 +08:00 - Route Elements 查询条件合并
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-02-2152.md`
+- `.codex-backup/current-todo-2026-06-02-2152.md`
+- `.codex-backup/page-state-2026-06-02-2152.md`
+
+修改原因：
+
+- 用户要求路由元素配置的查询条件也把 ID 和名称合并，保持和 VDN / Sites 的查询方式一致。
+
+修改结果：
+
+- Route Elements 查询区从 `Element ID`、`Element Name`、`Status` 改为 `Keyword + Status`。
+- `Keyword` 对 `Element ID` 和 `Element Name` 做多字段模糊搜索，placeholder 为 `Element ID / Name`。
+- `Status` 继续使用 `All / Enabled / Disabled`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite chunk size warning。
+- Browser `/routing-config/route-elements` 验证通过：查询区仅显示 `Keyword`、`Status`，不再显示单独的 `Element ID` / `Element Name` 查询框。
+
+回滚说明：
+
+- 如需回滚，恢复 Route Elements 的 `filters` 配置为独立 `factorCode`、`factorName`、`status` 三个条件。
+
+当前风险点：
+
+- 本轮仅调整 Route Elements 查询条件；其它页面仍按各自当前过滤配置执行，后续如要全量统一需要逐页处理。
+
+### 2026-06-02 21:47 +08:00 - Sites 管理页字段与 VDN/Sites 查询条件调整
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-02-2147.md`
+- `.codex-backup/current-todo-2026-06-02-2147.md`
+- `.codex-backup/page-state-2026-06-02-2147.md`
+
+修改原因：
+
+- 用户要求接入站点管理去掉顶部提示和国家 ID 字段，并确认 VDN / 接入站点查询条件应为一个支持多字段模糊搜索的 `Keyword` 加一个 `Status` 下拉。
+
+修改结果：
+
+- Sites 页移除顶部 timezone 提示条。
+- Sites 页从列表、弹框、校验和搜索字段中移除 `Country` / `Country Code`；内部 `countryCode` 仍保留默认值，避免影响类型和 mock 结构。
+- Sites 弹框实体名改为单数 `Site`，新增弹框标题为 `Add Site`。
+- VDN 查询条件改为 `Keyword + Status`，Keyword 匹配 `VDN ID`、`VDN Name`、`Platform VDN ID`。
+- Sites 查询条件改为 `Keyword + Status`，Keyword 匹配 `Site ID`、`Site Name`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite chunk size warning。
+- Browser `/routing-config/vdn` 验证通过：查询区有 `Keyword`、`Status`，Keyword placeholder 为 `VDN ID / Name / Platform ID`。
+- Browser `/routing-config/sites` 验证通过：无顶部提示、无 Country 字段，列表和 Add 弹框均符合调整，弹框标题为 `Add Site`。
+
+回滚说明：
+
+- 如需回滚，恢复 Sites 的 `Country` 列、`Country Code` 字段、顶部 `extraContent` 提示和 `countryCode` 校验；移除 VDN/Sites 的 `filters` 配置，使其回到普通 `Keyword` 搜索。
+
+当前风险点：
+
+- Sites UI 不再展示国家字段，但内部类型和 mock 仍保留 `countryCode`；如后续真实接口完全删除国家维度，需要再同步类型和 mock 数据结构。
+
+### 2026-06-02 21:23 +08:00 - VDN 管理字段顺序与必填校验调整
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigCrudPage.tsx`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-02-2123.md`
+- `.codex-backup/current-todo-2026-06-02-2123.md`
+- `.codex-backup/page-state-2026-06-02-2123.md`
+
+修改原因：
+
+- 用户要求 VDN 管理中 `Platform VDN ID` 也必须填写；同时因弹框高度和 textarea 位置导致状态与备注布局不合理，需要交换位置，并让备注输入框更宽。
+
+修改结果：
+
+- VDN 字段配置中 `Platform VDN ID` 设置为必填，并加入 `fieldRequired` 校验。
+- VDN 弹框字段顺序调整为 `VDN ID`、`VDN Name`、`Platform VDN ID`、`Status`、`Description`。
+- `RoutingConfigCrudPage` 字段配置新增 `fullWidth` 能力；VDN `Description` 独占整行展示。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite chunk size warning 和 plugin timing 提示。
+- Browser `/routing-config/vdn` 验证通过：Add 弹框打开后 `Platform VDN ID*` 显示必填，空保存提示 `Platform VDN ID is required.`，字段顺序符合调整。
+
+回滚说明：
+
+- 如需回滚，移除 `RoutingConfigCrudPage` 的 `fullWidth` 字段支持和 `.routing-config-crud-modal__field--full` 样式；恢复 VDN `fields` 中 `Description` 与 `Status` 的原顺序，并移除 `platformVdnId` 的 required 和 `fieldRequired` 校验。
+
+当前风险点：
+
+- `fullWidth` 是共享 CRUD 字段能力，目前只用于 VDN `Description`；后续其它页面如要使用，需要逐页确认不会破坏移动端单列布局。
+
+### 2026-06-02 20:04 +08:00 - Routing Config 弹框按钮尺寸统一
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-02-2004.md`
+- `.codex-backup/current-todo-2026-06-02-2004.md`
+- `.codex-backup/page-state-2026-06-02-2004.md`
+
+修改原因：
+
+- 用户指出弹框里的按钮可能与外部 Search / Reset 按钮高度和宽度不统一，需要按管理台统一规范收敛。
+
+修改结果：
+
+- `RoutingConfigCrudPage` 共享弹框 footer 按钮纳入管理台按钮规则。
+- 弹框 `Cancel` / `Save` / `Delete` 与外部查询区 `Search` / `Reset` 统一为 82px 宽、32px 高，并使用同一字号、圆角和内边距。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite chunk size warning。
+- Browser `/routing-config/route-elements` 验证通过：Add 弹框可打开，`Cancel` / `Save` 正常显示。
+
+回滚说明：
+
+- 如需回滚本次按钮尺寸统一，移除 `src/styles/index.less` 中 `.routing-config-crud-modal__footer .aicc-button.ant-btn` 对 `--routing-config-control-height`、height/min-height 和按钮视觉规则的继承。
+
+当前风险点：
+
+- 本次只统一普通 Routing Config CRUD 弹框；若后续 Skill Routing Rules 或其它独立弹框使用非共享 footer，需要单独纳入同一按钮规范。
+
+### 2026-06-02 20:01 +08:00 - Routing Config 顶部只显示菜单名称
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigCrudPage.tsx`
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-02-2001.md`
+- `.codex-backup/current-todo-2026-06-02-2001.md`
+- `.codex-backup/page-state-2026-06-02-2001.md`
+
+修改原因：
+
+- 用户再次强调左上角只要菜单名称，这也必须作为所有管理台配置页的统一标准；此前 VDN 等普通配置页仍显示说明文案，Skill Routing Rules 仍显示 eyebrow 和 description。
+
+修改结果：
+
+- `RoutingConfigCrudPage` 只向 `PageContainer` 传 `title`，不再传 `description` 和 `eyebrow`。
+- `SkillRoutingRulesPage` 移除 `Routing Config` eyebrow 和说明文案，只保留 `Skill Routing Rules` 标题。
+- Add 已统一在表格工具栏右侧，不再出现在页面标题区。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite chunk size warning。
+- Browser `/routing-config/route-elements`、`/routing-config/vdn`、`/routing-config/skill-routing-rules` 验证通过：顶部只有页面标题，无 eyebrow、无说明文案。
+
+回滚说明：
+
+- 如需回滚本次顶部标准化，恢复 `RoutingConfigCrudPage.tsx` 对 `PageContainer` 的 `description` / `eyebrow` 传参，并恢复 `SkillRoutingRulesPage.tsx` 的 description 和 eyebrow。
+
+当前风险点：
+
+- 本次统一会隐藏普通配置页原本的说明文案；这是用户明确要求的管理台标准，后续如需要说明，应放到帮助提示或独立文档，不放在左上角标题区。
+
+### 2026-06-02 19:54 +08:00 - Routing Config 管理台工具栏标准化
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigCrudPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-02-1954.md`
+- `.codex-backup/current-todo-2026-06-02-1954.md`
+- `.codex-backup/page-state-2026-06-02-1954.md`
+
+修改原因：
+
+- 用户反馈管理台查询区按钮高度看起来比输入框高，需要改成一致；用户确认第一个菜单样式已可作为管理台统一标准，其它配置菜单应引用该样式。
+
+修改结果：
+
+- `RoutingConfigCrudPage` 普通页面也统一使用表格上方工具栏：`Keyword` 搜索框 + `Search` / `Reset`，右侧 `Add`。
+- `Add` 不再放在无 filters 页面标题右侧，VDN 等普通页继承同一工具栏结构。
+- 新增 `searchDraft`，Keyword 搜索点击 `Search` 后应用，`Reset` 清空并恢复全部数据。
+- 在 `routing-config-page` 中统一控件高度为 32px，输入框、SearchInput、下拉框、Search/Reset/Add 按钮高度一致。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite chunk size warning。
+- Browser `/routing-config/route-elements` 验证通过：多条件筛选工具栏、Search/Reset/Add 和表格正常展示。
+- Browser `/routing-config/vdn` 验证通过：普通页面已使用 `Keyword`、Search、Reset、右侧 Add 的统一工具栏；表格正常展示。
+- Browser 输入框写入因当前插件虚拟剪贴板限制未完成；相关 Search/Reset 绑定已通过 lint/build。
+
+回滚说明：
+
+- 如需回滚本次工具栏标准化，恢复 `RoutingConfigCrudPage.tsx` 中无 filters 页面原先的 PageContainer `extra` Add 和 `routing-config-page__toolbar` 搜索结构，并移除 `styles/index.less` 中本轮新增的 32px 工具栏控件高度规则。
+
+当前风险点：
+
+- 本轮将普通 Routing Config CRUD 页统一切换到管理台工具栏，范围覆盖 VDN 等全部普通配置页；仍建议逐页人工复查工具栏换行、按钮位置和搜索行为。
+
+### 2026-06-02 19:50 +08:00 - Routing Config 状态展示统一
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigStatusBadge.tsx`
+- `src/pages/routing-config/RoutingConfigCrudPage.tsx`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-02-1950.md`
+- `.codex-backup/current-todo-2026-06-02-1950.md`
+- `.codex-backup/page-state-2026-06-02-1950.md`
+
+修改原因：
+
+- 用户要求评估并落实 `Routing Config` 状态展示统一：当前 Route Elements、VDN、列表、详情、新增/编辑之间存在 `Enabled/Disabled`、`Active/Disabled`、AntD Tag、StatusBadge、select、switch 和纯文本混用。
+
+修改结果：
+
+- `RoutingConfigStatusBadge` 统一将内部 `Active` 展示为 `Enabled`，`Disabled` 展示为 `Disabled`，并改为小尺寸 dot badge。
+- `RoutingConfigCrudPage` 的 `statusSwitch` 在新增/编辑中展示短胶囊 switch + `Enabled/Disabled` 文本；详情态展示同一套状态 badge。
+- `Route Elements` 列表从 AntD `Tag` 改为统一 `RoutingConfigStatusBadge`。
+- 普通 Routing Config CRUD 页的 `Status` 字段从 `select Active/Disabled` 改为 `statusSwitch`，包括 VDN、Sites、Channels、Media Types、Languages、Business Types、Site Access Volume、Access Accounts、Access Entries、Working Time Plans、Skill Queues、Channel Media。
+- 内部数据值仍保留 `Active/Disabled`，未修改 mock、store 或类型结构。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite chunk size warning。
+- Browser `/routing-config/route-elements` 验证通过：列表、详情、新增弹框状态均为 `Enabled/Disabled` 语义，新增状态为短 switch + 文本。
+- Browser `/routing-config/vdn` 验证通过：列表、详情、新增弹框状态均为 `Enabled/Disabled` 语义，不再出现 `Active`。
+
+回滚说明：
+
+- 如需回滚本次统一，恢复 `RoutingConfigStatusBadge.tsx` 的原始 label/icon 行为，恢复 `RoutingConfigCrudPage.tsx` 中 `statusSwitch` 的详情纯文本和无状态文本 switch，恢复 `RoutingConfigDataPages.tsx` 中普通页 `Status` 字段为 select，并恢复 Route Elements 的 AntD Tag 渲染。
+
+当前风险点：
+
+- 本次统一作用于所有普通 Routing Config CRUD 页，范围比 Route Elements/VDN 更大；lint/build 已通过，仍建议逐页人工复查弹框布局是否因状态文本增加而需要微调。
+
+### 2026-06-02 19:40 +08:00 - Route Elements 搜索按钮主按钮化
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigCrudPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-02-1940.md`
+- `.codex-backup/current-todo-2026-06-02-1940.md`
+- `.codex-backup/page-state-2026-06-02-1940.md`
+
+修改原因：
+
+- 用户反馈搜索按钮也可以像新增按钮一样有背景色，以强化查询区主操作。
+
+修改结果：
+
+- 将通用 CRUD 查询区 `Search` 按钮从 `secondary` 改为 `primary`。
+- `Reset` 保持 `secondary`，继续作为次操作。
+- `Add` 独立靠右、按钮固定宽度、短胶囊状态开关和弹框顶部标题栏背景修正不变。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite chunk size warning。
+- Browser `/routing-config/route-elements` 验证通过：查询条件、Search、Reset、Add、表格和分页仍正常展示。
+
+回滚说明：
+
+- 如需回滚本次调整，将 `RoutingConfigCrudPage.tsx` 中 Search 的 `variant=\"primary\"` 改回 `variant=\"secondary\"`。
+
+当前风险点：
+
+- 该调整作用于通用 CRUD 容器，其它 Routing Config 普通配置页的 Search 按钮也会同步变为 primary；这符合管理台主查询操作样式，但仍建议逐页人工复查。
+
+### 2026-06-02 19:36 +08:00 - Route Elements 弹框标题栏背景修正
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-02-1936.md`
+- `.codex-backup/current-todo-2026-06-02-1936.md`
+- `.codex-backup/page-state-2026-06-02-1936.md`
+
+修改原因：
+
+- 用户澄清上一条“不要把背景色去掉，改回来”指的是弹框顶部标题所在区域，不是底部 footer；上一轮按 footer 理解并恢复底部背景是错误方向。
+
+修改结果：
+
+- 移除 19:18 加到 `routing-config-crud-modal__footer` 的浅色背景、上边线、负 margin 和额外 padding。
+- 恢复 `routing-config-crud-modal` 顶部 `.ant-modal-header` 的浅蓝渐变标题栏背景。
+- 保留弹框标题黑色、按钮固定宽度、Add 独立靠右和短胶囊状态开关。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite chunk size warning。
+- Browser `/routing-config/route-elements` 验证通过：Add 弹框可正常打开，字段、状态开关、Cancel/Save 和分页仍正常。
+
+回滚说明：
+
+- 如需回滚本次纠正，恢复 `src/styles/index.less` 中 `routing-config-crud-modal__footer` 的 footer 背景样式，并将 `routing-config-crud-modal.aicc-modal .ant-modal-header` 改回 transparent。
+
+当前风险点：
+
+- 本轮是针对用户澄清的定向修正；顶部标题栏背景恢复为项目统一 modal header 风格，后续仍需在目标演示分辨率下目视确认。
+
+### 2026-06-02 19:18 +08:00 - Route Elements 工具栏、弹框 footer 和短开关调整
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigCrudPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-02-1918.md`
+- `.codex-backup/current-todo-2026-06-02-1918.md`
+- `.codex-backup/page-state-2026-06-02-1918.md`
+
+修改原因：
+
+- 用户继续反馈 `Route Elements` 管理台样式：新增按钮应独立靠右；弹框底部背景不应被去掉；Search/Reset 和 Cancel/Save 等操作按钮应宽度一致；状态开关仍过宽，应改成类似常见短胶囊开关。
+
+修改结果：
+
+- CRUD 查询工具栏拆成左侧 query group 和右侧 add action；`Add` 独立靠右，`Search` / `Reset` 紧跟查询条件。
+- `Search` / `Reset` 与 CRUD 弹框 footer 按钮统一为 82px 固定宽度。
+- CRUD 弹框 footer 恢复浅色背景和上边线，保留标题黑色与主体简洁背景。
+- 路由配置状态开关改为固定 34px x 18px 短胶囊样式，checked 使用 `--aicc-primary`。
+- 窄屏规则同步处理 query group 和 add action，避免 Add 与查询条件挤压。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite chunk size warning。
+- Browser `/routing-config/route-elements` 验证通过：英文标题、查询条件、右侧 Add、精简表头、底部分页、Add 弹框初始无错误、Save 后小型校验提示。
+
+回滚说明：
+
+- 如需回滚本次调整，恢复 `RoutingConfigCrudPage.tsx` 中工具栏分组，以及 `styles/index.less` 中 `routing-config-page__query-group`、`routing-config-page__add-action`、footer、按钮宽度和状态开关样式。
+
+当前风险点：
+
+- 本轮样式继续作用于通用 CRUD 容器，后续其它 Routing Config 普通配置页也会继承 Add 靠右、footer 背景和短状态开关；符合统一管理台规范，但仍建议逐页人工复查。
+
+### 2026-06-02 19:11 +08:00 - Route Elements 英文化、分页和密度调整
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigCrudPage.tsx`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-02-1911.md`
+- `.codex-backup/current-todo-2026-06-02-1911.md`
+- `.codex-backup/page-state-2026-06-02-1911.md`
+
+修改原因：
+
+- 用户继续反馈首个菜单需要使用英文；搜索/重置按钮应贴近查询条件；状态下拉宽度应与输入框一致；列表底部应支持分页和每页条数；表格字号/间距偏大；弹框标题不应是蓝色，背景和状态开关仍需收敛。
+
+修改结果：
+
+- `Route Elements` 文案改回英文：`Route Element Configuration`、`Element ID`、`Element Name`、`Status`。
+- 查询条件与 `Search` / `Reset` / `Add` 连续排列，状态下拉宽度与输入框统一为 200px。
+- 通用 CRUD 表格启用分页：默认 20 条，支持 10 / 20 / 50 / 100，数据总数移动到底部分页区展示。
+- 收紧 `Routing Config` CRUD 表格字号、单元格 padding、分页字号和行操作按钮尺寸。
+- CRUD 弹框标题覆盖为黑色；移除额外白底/只读输入框背景；状态开关缩短。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite chunk size warning。
+- Browser `/routing-config/route-elements` 验证通过：英文标题、英文查询条件、搜索/重置/新增、精简表头、分页总数、Add 弹框初始无错误、Save 后英文校验提示。
+
+回滚说明：
+
+- 如需回滚本次调整，恢复 `RoutingConfigCrudPage.tsx`、`RoutingConfigDataPages.tsx`、`styles/index.less` 中 19:11 的英文化、分页、表格密度和弹框覆盖样式。
+
+当前风险点：
+
+- 分页现在应用于通用 CRUD 容器，因此其它 Routing Config 普通配置页也会显示底部分页；这是管理台列表维护的合理统一，但后续如某页需要无分页需加独立参数。
+
+### 2026-06-02 19:03 +08:00 - 路由要素配置页与管理台 CRUD 样式调整
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigCrudPage.tsx`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-02-1903.md`
+- `.codex-backup/current-todo-2026-06-02-1903.md`
+- `.codex-backup/page-state-2026-06-02-1903.md`
+
+修改原因：
+
+- 用户反馈第一个菜单 `Route Elements` 页面不符合管理台数据维护习惯：标题信息太多、查询框过长、字段过多且技术化、弹框灰蓝背景和初始错误提示不合理、状态开关过长。
+- 用户确认路由要素管理字段应为 `要素ID、要素名称、状态（启用/禁用）`。
+
+修改结果：
+
+- `Route Elements` 页面改为 `路由要素配置`，移除页面 eyebrow 和冗长说明。
+- 查询区改为短字段横向表单：`要素ID`、`要素名称`、`状态`，并将 `搜索`、`重置`、`新增` 放在同一行。
+- 列表字段精简为 `要素ID`、`要素名称`、`状态`、`操作`。
+- 新增/编辑/查看弹框只展示 `要素ID`、`要素名称`、`状态`；状态字段改为短开关；查看态字段改为白底。
+- 通用 CRUD 容器新增 `filters`、`submitAttempted`、`statusSwitch`、轻量校验提示和可配置中文动作文案；本轮先应用到路由要素配置页。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite chunk size warning。
+- Browser `/routing-config/route-elements`：确认页面标题、查询栏、精简列表字段、隐藏技术列、新增弹框初始无错误提示。
+
+回滚说明：
+
+- 如需回滚本次首个菜单调整，恢复 `RoutingConfigCrudPage.tsx`、`RoutingConfigDataPages.tsx` 和 `styles/index.less` 中本轮 CRUD/filter/modal 样式改动，并恢复本次文档和备份。
+
+当前风险点：
+
+- 本轮只将管理台 CRUD 新规范应用到 `Route Elements`；VDN、Sites、Channels 等其它页面仍保持上一轮 CRUD 结构，后续可逐步统一。
+
+### 2026-06-02 18:37 +08:00 - Routing Config 拆分独立配置页并补齐 CRUD
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigCrudPage.tsx`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `src/pages/routing-config/RoutingConfigStatusBadge.tsx`
+- `src/pages/routing-config/index.ts`
+- `src/pages/call-management/RoutingConfigurationPage.tsx`
+- `src/pages/index.ts`
+- `src/routes.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/store/routingConfigStore.ts`
+- `src/store/index.ts`
+- `src/mock/routingConfiguration.ts`
+- `src/types/routingConfiguration.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-02-1837.md`
+- `.codex-backup/current-todo-2026-06-02-1837.md`
+- `.codex-backup/page-state-2026-06-02-1837.md`
+
+修改原因：
+
+- 用户反馈旧的 `Routing Configuration` tabs 页面太拥挤，不符合配置管理诉求；要求新增一级菜单 `Routing Config`，二级菜单进入各独立配置页，并补齐增删改查。
+- 用户要求解释并调整站点 `timezone`：海外 AICC 的时区应服务于工作时间、节假日和报表，但会议字段没有站点时区，因此本轮从 Sites 移除，只保留在 Working Time Plans。
+
+修改结果：
+
+- 新增一级菜单 `Routing Config`，二级页面包括 Route Elements、VDN、Sites、Channels、Channel Media、Media Types、Languages、Business Types、Site Access Volume、Access Accounts、Access Entries、Working Time Plans、Skill Queues、Skill Routing Rules。
+- `Call Management` 下只保留 `Text Channel Settings`；旧 `/call-management/routing-configuration` 改为重定向到 `/routing-config/route-elements`。
+- 新增 `routingConfigStore` 和通用 `RoutingConfigCrudPage`，普通配置页支持 Search / Add / View / Edit / Delete，本地状态刷新后恢复 mock。
+- Sites 类型、mock 和页面均移除 `timezone`；Working Time Plans 保留 `timezone` 并显示 `Default 24x7`。
+- 删除操作增加引用保护：被站点接入比例、路由规则、接入入口、技能队列等引用的记录不能直接删除。
+- Skill Routing Rules 独立页面支持批量新增、组合预览、重复组合展示、覆盖更新目标队列/优先级、未覆盖阻止保存、规则查看/编辑/删除和发布索引展示。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有 Vite chunk size warning。
+- Browser smoke check 通过：`/`、`/design-system`、`/routing-config/route-elements`、`/routing-config/sites`、`/routing-config/channels`、`/routing-config/skill-routing-rules`、`/call-management/text-channel-settings`。
+- Browser 确认 `/call-management/routing-configuration` 重定向到 `/routing-config/route-elements`。
+- Browser 交互检查通过：Sites 搜索、Add 弹窗、被引用删除保护；Skill Routing Rules 重复组合预览和未勾选覆盖时阻止保存。
+
+回滚说明：
+
+- 如需回滚本次拆分，删除 `src/pages/routing-config/*`、恢复旧 `RoutingConfigurationPage` tabs 页面，恢复 `routes.tsx`、`BasicLayout.tsx`、`styles/index.less`、`PROJECT_CONTEXT.md`、`DEV_LOG.md` 和本次 `.codex-backup` 文件。
+
+当前风险点：
+
+- Routing Config 仍为前端 demo，不接真实后台配置服务；本地 CRUD 和规则覆盖只保存在前端 store，刷新后恢复 mock。
+- 本轮自动验证覆盖关键路由和部分交互，仍建议在目标演示分辨率下人工复查所有二级菜单的弹窗布局、收起态 flyout 和表格横向滚动。
+
+### 2026-06-02 17:58 +08:00 - Call Management 路由配置架构页
+
+修改页面或文件：
+
+- `src/pages/call-management/RoutingConfigurationPage.tsx`
+- `src/pages/call-management/index.ts`
+- `src/routes.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/mock/routingConfiguration.ts`
+- `src/types/routingConfiguration.ts`
+- `src/types/index.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-02-1758.md`
+- `.codex-backup/current-todo-2026-06-02-1758.md`
+- `.codex-backup/page-state-2026-06-02-1758.md`
+
+修改原因：
+
+- 用户要求将会议重新定义的 AICC 路由配置架构落地实现，新增 `Call Management > Routing Configuration`，用于演示路由要素、VDN、站点、渠道媒体、接入账号、接入入口、业务类型、站点接入比例、工作时间、技能队列和技能路由规则。
+
+修改结果：
+
+- 新增 `/call-management/routing-configuration` 路由与左侧菜单入口。
+- 新增路由配置专用类型和 mock，所有业务 ID 使用显式编码；补充 `10=VDN` 路由要素，会议中的 `11-18` 要素编码保持不变。
+- 新增 `RoutingConfigurationPage`，包含 11 个配置页签：Route Elements、VDN、Sites、Channels & Media、Access Accounts、Access Entries、Business Types、Site Access Volume、Working Time Plans、Skill Queues、Skill Routing Rules。
+- Skill Routing Rules 支持按启用要素批量选择、生成组合、检测重复组合、覆盖重复组合并展示物化 `routing_rule_index`。
+- 页面预发布校验覆盖站点比例 100%、业务类型两位编码、自编码格式、目标技能队列、工作时间方案和坐席覆盖风险。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning 和插件耗时提示。
+- 本地 Vite 服务运行在 `http://127.0.0.1:5174/`；5173 已被旧服务占用。
+- Chrome headless smoke check 通过：`/`、`/design-system`、`/call-management/routing-configuration` 均能渲染 BANK 1 shell；新增页可见 `Route Elements` 和 `Skill Routing Rules`；`/call-management/text-channel-settings` 仍可见 `Text Channel Settings`、`Service Rules`、`Channel Queue Alerts`。
+
+回滚说明：
+
+- 如需回滚本次路由配置页，删除 `RoutingConfigurationPage`、`routingConfiguration` mock/type，恢复 `routes.tsx`、`BasicLayout.tsx`、`styles/index.less`、`PROJECT_CONTEXT.md`、`DEV_LOG.md` 和本次 `.codex-backup` 文件即可。
+
+当前风险点：
+
+- `Routing Configuration` 仍为前端 demo，不接真实配置接口；批量新增/覆盖路由规则只在页面内存中生效，刷新后恢复 mock 默认值。
+- 本轮未做人工视觉复查，仍建议在目标演示分辨率下检查 11 个页签、批量规则表单、重复提示和收起/展开侧栏 flyout。
+
+### 2026-06-01 13:00 +08:00 - 数据呼叫管理文字渠道配置页
+
+修改页面或文件：
+
+- `src/pages/call-management/TextChannelSettingsPage.tsx`
+- `src/pages/call-management/index.ts`
+- `src/pages/index.ts`
+- `src/routes.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/mock/textChannelSettings.ts`
+- `src/types/textChannelSettings.ts`
+- `src/types/index.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-01-1300.md`
+- `.codex-backup/current-todo-2026-06-01-1300.md`
+- `.codex-backup/page-state-2026-06-01-1300.md`
+
+修改原因：
+
+- 用户要求在数据呼叫管理菜单下新增系统配置管理页面，用于集中配置文字渠道默认服务人数、坐席未回复自动回复、渠道排队阈值提醒、Webchat 撤回时限、客户未回复超时关闭话术、欢迎语、结束语和坐席未回复服务级别提醒。
+
+修改结果：
+
+- 新增 `/call-management/text-channel-settings` 路由与 `Call Management > Text Channel Settings` 菜单。
+- 新增 `TextChannelSettingsPage`，包含 `Service Rules`、`Customer Timeout & Messages`、`Channel Queue Alerts` 三个页签。
+- 新增文字渠道配置 mock 和类型；配置专用渠道 code 为 `haloapp | webchat | whatsapp`，避免耦合现有 `AccessChannel`。
+- 页面支持本地输入、开关、变量 chip 插入、基本校验、`Save Draft` 和 `Publish` 本地状态提示。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser smoke check 通过：`/`、`/design-system`、`/call-management/text-channel-settings` 均可加载；新配置页三页签、`Save Draft`、`Publish` 均可操作并显示本地提示。
+
+回滚说明：
+
+- 如需回滚该配置页，删除新增 `call-management` 页面、`textChannelSettings` mock/type，并恢复 `routes.tsx`、`BasicLayout.tsx`、`styles/index.less`、`PROJECT_CONTEXT.md`、`DEV_LOG.md` 和本次 `.codex-backup` 文件即可。
+
+当前风险点：
+
+- 当前配置页为前端 demo，不接真实配置接口；刷新后恢复 mock 默认值。
+- 菜单新增了 `Call Management` 子项，需要在目标演示分辨率下人工确认展开态/收起态 flyout 视觉。
 
 ### 2026-05-29 19:23 +08:00 - Live Chat formatDuration runtime error 热修
 

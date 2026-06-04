@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-05-25 03:58 +08:00
+最后更新：2026-06-04 12:10 +08:00
 
 ## 项目方向
 
@@ -39,6 +39,36 @@
 
 - 正式建立统一 UI Design System 与公共组件体系。
 - 后续 Online Chat、Video Call、Dashboard、Admin、Supervisor 等页面必须复用 Design System。
+
+## 2026-06-03 Skill Routing Rules 拆分规则维护
+
+- 技能路由规则新增不是单条录入，而是按启用路由要素组合拆分生成多条规则。
+- Skill Routing Rules 查询条件使用当前启用路由要素多选、Target Skill Queue、Status，不使用 Keyword / Rule ID 作为查询框；启用路由要素下拉不提供 All / Empty，空选择即不限制。
+- Skill Routing Rules 列表展示 Rule ID、当前启用路由要素独立列、Target Skill Queue、Updated Date、Updated By、Status、Actions。
+- Batch Add 下方表应展示 `Duplicate Routing Rules`，只展示当前选择组合中已存在的重复规则；新组合仍正常创建，但不在重复规则表中展示。
+- 普通规则状态只展示 Enabled / Disabled；空路由要素展示为空，不显示 `ANY`。
+- 单行 Edit 只能修改 Target Skill Queue 和 Status；Status 使用短胶囊 switch + Enabled/Disabled 文案，不使用下拉框；Priority 仅保留为内部默认值，不在页面展示。
+- 多字段规则表格如启用横向滚动，Actions / 操作列必须固定在右侧，横向滚动只作用于非操作列。
+
+## 2026-06-03 Working Time Plans 印尼排班口径
+
+- 本项目暂按印尼单国家场景处理，`Working Time Plans` 不展示或维护 `timezone`；后续如扩展多国家/多时区，再把时区加回工作时间方案层。
+- `Working Time Plans` 只维护自定义方案，不维护真实 `Default 24x7` 记录。
+- `Skill Queues` 的 `Work Time Plan` 非必填；空值必须在列表、详情和弹框中明确显示为 `Default 24x7`，不能让用户误以为空白漏配。
+- 弹框必须分为 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan。
+- 列表字段当前为 Plan ID、Plan Name、Description、Updated Date、Updated By、Status、Actions；Work Schedule 和 Ramadan Period 不在列表展示。
+- 弹框分区仍保留普通卡片容器；排班行本身不要每行外边框、卡片背景或横向分隔线。
+- Work/Ramadan/Holiday/Special 的 Add 按钮放在分区标题右上角；按钮文案使用 `Add`，不使用 `Add Row`；Ramadan 未启用时不显示 Add。
+- 多行排班只第一行显示字段名，后续行不重复显示字段名。
+- Holiday Schedule 不展示 `Closed` / `Closed All Day` 开关；字段为 Start Date、End Date、Holiday Name、Start、End。Holiday 表示非工作覆盖，全天非工作可用 `00:00-23:59` 表达。
+- Working Time Plans 弹框底部只展示优先级：`Priority: Special Working Plan > Holiday Schedule > Ramadan Work Schedule > Work Schedule.`；不要在该页解释 Skill Queue 未选择方案时的 `Default 24x7`。
+- Holiday / Special 排班行列宽使用 `150px 150px minmax(360px, 1fr) 120px 120px 30px`，让 Holiday Name / Reason 吃掉剩余空间，使 Start/End 时间列与 Work/Ramadan 排班行对齐。
+- Ramadan、Holiday、Special 的日期字段使用 AntD DatePicker，避免浏览器原生日期控件跟随系统语言显示中文。
+- Ramadan Work Schedule 放在 Work Schedule 后面；一个方案配置一个 Ramadan date range，日期段下配置工作日多选和时间范围，支持 Copy from Work Schedule。
+- 运行时优先级口径：未选择工作时间方案时直接 Default 24x7；选择自定义方案后按 Special Working Plan > Holiday Schedule > Ramadan Work Schedule > Work Schedule 判断；已选择方案但不命中工作规则时为非工作时间。
+- Holiday Schedule 表示非工作覆盖；Special Working Plan 表示临时开工、加班或节假日营业等最高优先级覆盖。
+- 自定义方案至少需要一条 Work Schedule；Ramadan 启用后必须配置日期段和 Ramadan 工作时间；日期、时间范围必须合法。
+- 被 Skill Queue 引用的 Working Time Plan 不能直接删除，只能先解除引用或禁用。
 
 ## 本地化与截图
 
@@ -420,3 +450,229 @@
 
 
 
+## 2026-06-02 Call Management 路由配置架构
+
+- 用户要求按领导会议重新定义的架构实现 `Call Management > Routing Configuration`。
+- 路由要素需要抽象管理，不把规则底层直接固化为 `要素1...要素10`；页面和发布索引可以物化展示。
+- 本项目启用 VDN、接入站点、渠道、媒体类型、业务类型、语言；国家、接入账号、接入入口保留为可扩展要素但默认禁用。
+- 会议示例从 `11=Channel` 开始但项目需要 VDN；本轮采用确定性编码 `10=VDN`，保留 `11-18` 原编码。
+- 渠道与媒体不能只存在渠道表多选字段，必须拆出 `channel_media`；渠道媒体上配置并发、扫描模式、最小扫描间隔和渠道媒体扩展字段。
+- 技能队列不强绑定 VDN；VDN 应作为路由规则条件匹配，以便技能队列复用。
+- 技能路由规则保存启用要素组合和目标技能队列；目标技能队列不是唯一主键的一部分，唯一性由启用要素组合决定。
+- 批量新增规则需要支持多要素多选、重复组合检测、是否覆盖重复规则、覆盖前展示原目标队列与现目标队列。
+- 站点接入量管理按同一渠道 + 媒体下所有站点比例合计 100%；后续可扩展业务/语言覆盖维度。
+- 所有业务 ID/code 必须显式编码或确定性生成，不能依赖数据库自增序列号；业务类型编码固定两位数字。
+
+## 2026-06-02 Routing Config 拆分与 CRUD
+
+- 用户明确否定旧的单页 tabs 方案，要求新增一级菜单 `Routing Config`，二级菜单进入具体配置页，避免把所有配置塞在一个页面里。
+- `Call Management > Text Channel Settings` 保持不动；`Call Management` 不再承载 Routing Configuration 主页面。
+- 旧 `/call-management/routing-configuration` 必须兼容，不失效，重定向到 `/routing-config/route-elements`。
+- 每个配置页面都要是独立 `PageContainer + Table + Toolbar` 页面，并提供 Search / Add / View / Edit / Delete，而不是只有列表展示。
+- CRUD 是前端 demo 本地状态，不接真实 API；刷新后恢复 mock。
+- 站点页不再包含 `timezone`。本项目当前按印尼单国家场景处理，`Working Time Plans` 也暂不展示或维护 `timezone`；后续多国家/多时区再加回工作时间方案层。
+- `Skill Routing Rules` 仍需支持批量新增：启用要素多选生成组合预览，重复组合展示原目标队列和现目标队列；勾选覆盖时更新目标技能队列/优先级，未勾选覆盖时阻止保存。
+- 规则编辑只能修改目标技能队列、优先级和状态；要素条件不能直接改。
+
+## 2026-06-02 路由要素配置页管理台样式
+
+- 用户确认第一个菜单是路由要素管理，不是 VDN 管理。
+- 路由要素管理字段固定为：`要素ID`、`要素名称`、`状态（启用/禁用）`。
+- 用户后续要求 UI 使用英文；`Route Elements` 页面最终显示为 `Route Element Configuration`，字段为 `Element ID`、`Element Name`、`Status`。
+- 查询区应按管理台数据列表维护习惯展示短字段：Keyword、Status；Search、Reset 贴近查询条件，Add 按钮独立靠右。
+- Route Elements 的 `Keyword` 支持对 `Element ID` 和 `Element Name` 做多字段模糊搜索。
+- Search 是查询区主操作，应使用有背景色的 primary 按钮；Reset 保持 secondary。
+- 状态下拉框宽度应与搜索输入框一致。
+- 列表底部应支持分页和每页条数，默认 20，支持 10 / 20 / 50 / 100；数据总数移动到底部分页区展示。
+- Routing Config 数据列表字号和间距应贴近来电弹屏工作台密度，不能明显偏大。
+- 新增弹框首次打开不能提前展示错误；只有点击保存后才显示实际校验错误。
+- 弹框标题使用黑色，不使用蓝色；顶部标题栏应保留浅蓝渐变背景；查看态字段不使用额外输入框式背景；底部 footer 不应额外加背景色。
+- Search / Reset 与弹框 Cancel / Save 等主操作按钮宽度需要统一。
+- 状态字段优先使用短胶囊开关或 Enabled/Disabled badge，不使用过长 On/Off 样式。
+- Source Entity、Display Order、Required、Allow ANY 等技术字段不应出现在首个路由要素配置列表和弹框中。
+
+## 2026-06-02 Routing Config 状态展示统一
+
+- 普通 Routing Config CRUD 页的状态展示统一使用业务语义 `Enabled / Disabled`，不在页面上混用 `Active / Disabled`。
+- 内部数据值仍保留 `Active / Disabled`，避免扩大 mock、type、store 改动；页面层映射为 `Active -> Enabled`。
+- 列表状态和详情状态使用同一套小尺寸 dot `RoutingConfigStatusBadge`。
+- 新增/编辑状态使用短胶囊 `statusSwitch`，旁边显示当前状态文本 `Enabled` 或 `Disabled`。
+- 搜索下拉状态使用 `All / Enabled / Disabled`，value 仍可为 `Active / Disabled`。
+- `Draft`、`Replaced` 等生命周期状态仅用于 Skill Routing Rules 等规则页面，不应出现在普通主数据启停状态中。
+
+## 2026-06-02 Routing Config 管理台工具栏标准
+
+- Route Elements 的管理台样式已确认可作为普通配置菜单标准。
+- 普通 Routing Config CRUD 页应统一使用表格上方工具栏，而不是把 Add 放在页面标题右侧。
+- 工具栏结构：左侧查询条件，紧跟 `Search` / `Reset`；右侧独立 `Add`。
+- 无专门查询条件的普通页面使用 `Keyword` 搜索框 + `Search` / `Reset` + 右侧 `Add`。
+- `Keyword` 表示多字段模糊搜索，不是单一字段；Route Elements 当前匹配 `Element ID`、`Element Name`；VDN 当前匹配 `VDN ID`、`VDN Name`、`Platform VDN ID`；Sites 当前匹配 `Site ID`、`Site Name`。
+- Route Elements、VDN 与 Sites 这类主数据页查询条件优先使用 `Keyword + Status`，Status 下拉为 `All / Enabled / Disabled`。
+- Search 是 primary，Reset 是 secondary，Add 是 primary。
+- 工具栏输入框、下拉框、Search/Reset/Add 按钮高度必须一致，当前标准为 32px。
+- 普通 Routing Config CRUD 弹框 footer 的 Cancel / Save / Delete 按钮与外部 Search / Reset 按钮同宽同高，当前标准为 82px x 32px。
+- 列表总数和每页条数放到底部分页区，不放在查询行。
+- Routing Config 二级配置页左上角只显示当前菜单名称，不显示 `Routing Config` eyebrow、说明文案或标题右侧操作。
+- 页面说明如后续确实需要，应放在帮助提示或文档中，不放在页面标题区。
+
+## 2026-06-02 VDN 管理字段规范
+
+- `VDN` 管理字段包括 `VDN ID`、`VDN Name`、`Platform VDN ID`、`Description`、`Status`。
+- `VDN ID`、`VDN Name`、`Platform VDN ID` 都是必填字段。
+- VDN 新增/编辑弹框中 `Platform VDN ID` 与 `Status` 同行展示，避免 textarea 造成行高错位。
+- VDN `Description` 使用共享 CRUD 字段的 `fullWidth` 能力，独占整行展示，输入框宽度应比普通单列字段更宽。
+
+## 2026-06-02 Sites 管理字段规范
+
+- `Sites` 管理页不显示顶部 timezone 提示。
+- `Sites` 管理页不展示 `Country` / `Country Code` 字段；内部可以暂时保留默认 `countryCode` 以兼容现有 mock/type。
+- `Sites` 列表字段包括 `Site ID`、`Site Name`、`Owner`、`Owner Phone`、`Address`、`Status`。
+- `Sites` 新增/编辑弹框字段包括 `Site ID`、`Site Name`、`Address`、`Owner Name`、`Owner Phone`、`Status`。
+
+## 2026-06-02 Channels 管理字段规范
+
+- `Channels` 列表字段包括 `Channel ID`、`Channel Name`、`Media Type`、`Max Concurrent Calls`、`Min Scan Interval (s)`、`Status`。
+- 页面展示和维护的 `Channel ID` 使用非序列数字编码；当前实现保留内部 `channelCode` 作为路由规则、接入账号、接入入口等引用键，避免扩大引用迁移风险。
+- 渠道名称按本轮口径覆盖 13 个：Phone、Haloapp、webchat、WhatsApp、Email、Instagram、LinkedIn、Facebook、X、Tik Tok、YouTube、AppStore、playstore。
+- 媒体类型为多选：Phone 仅 Voice；Haloapp 和 webchat 包含 Voice / Video / Text；其它渠道仅 Text。
+- 默认 `Max Concurrent Calls` 为 50，默认 `Min Scan Interval Seconds` 为 30。
+- Channels 查询区使用 `Keyword + Media Type + Status`：Keyword 同时匹配 `Channel ID` 和 `Channel Name`，Media Type 为多选下拉，Status 为 `All / Enabled / Disabled`。
+
+## 2026-06-02 Routing Config 菜单精简
+
+- `Routing Config` 二级菜单删除 `Channel Media`、`Media Types`、`Languages`、`Access Entries`，对应页面和路由也删除，不保留隐藏直达页。
+- 底层 `mediaTypes`、`languageTypes`、`channelMediaSettings`、`accessEntries` mock/store 数据暂时保留，供下拉、路由规则候选值和内部 mock 关系继续使用。
+- `Access Accounts` 保留，因为会议中的账号配置含义是：同一渠道可配置多个账号，并且不同渠道账号字段不同；例如邮箱账号需要服务器地址等字段，Instagram/WhatsApp 账号需要外部账号和回调等字段。
+- `Access Accounts` 的渠道差异字段不再用 `Channel-specific Config` 文本域展示，改为按 Channel 动态展示结构化字段。
+- `Access Entries` 当前不作为独立菜单展示；如后续需要维护 DNIS、邮箱地址、App 入口等接入入口，可重新引入或并入 Access Accounts。
+
+## 2026-06-03 Routing Config 二级菜单英文名称与顺序
+
+- `Routing Config` 路由 path 保持英文和现状，不因菜单改名而变更，避免旧链接失效。
+- 左侧二级菜单顺序和页面左上角标题统一为：
+  1. `Route Elements`
+  2. `VDN`
+  3. `Access Sites`
+  4. `Channels`
+  5. `Media Service Rule Plans`
+  6. `Business Types`
+  7. `Skill Queues`
+  8. `Access Accounts`
+  9. `Site Access Volume`
+  10. `Skill Routing Rules`
+  11. `Working Time Plans`
+- 页面标题、弹框标题和管理台字段名统一使用英文；页面标题与左侧二级菜单名称保持一致。
+
+## 2026-06-02 Business Types 管理字段规范
+
+- `Business Types` 查询区使用 `Keyword + Status`。
+- `Keyword` 同时匹配 `Business Type ID` 和 `Business Name`，placeholder 为 `Business Type ID / Name`。
+- `Business Types` 列表只展示 `Business Type ID`、`Business Name`、`Status` 和操作列，不展示 `Project`。
+- 新增/编辑弹框不展示 `Project Code`；内部 `projectCode` 暂时固定默认 `BANK1`，用于保持项目范围唯一性。
+
+## 2026-06-02 Site Access Volume 管理字段规范
+
+- `Site Access Volume` 新增时先选择 `Channel`。
+- 系统根据 `Channels` 菜单中该渠道配置的 `mediaTypes` 自动展开媒体分组；例如 Haloapp 展开 Voice / Video / Text。
+- 每个媒体分组都列出 Sites 菜单里的所有站点，并用输入框设置接入话务量比例。
+- `Site Access Volume` 新增弹框顶部 `Channel` 下拉框不能撑满弹框，应与其它管理台弹框控件宽度一致。
+- `Site Access Volume` Add 弹框里，已经存在接入量配置的渠道必须置灰禁选；新增默认选择第一个未配置渠道，已有渠道调整走 Edit。
+- 媒体分组标题只显示媒体名，例如 `Voice`、`Video`、`Text`，不要重复显示上方已选渠道。
+- 站点比例录入采用纵向紧凑行布局，左侧只显示站点名称，右侧紧邻输入比例；不要重复显示站点 ID，也不要让站点名和输入框距离过远。
+- 比例输入框需要显示 `%` 后缀，内部仍保存数值。
+- 同一 `Channel + Media Type` 下所有站点比例合计必须为 100%。
+- `Site Access Volume` 列表按媒体逐行展示，同一渠道的渠道相关列使用合并单元格。
+- `Site Access Volume` 查询区使用 `Keyword + Media Type + Status`；Keyword 只匹配 Channel ID / Channel Code / Channel Name，Media Type 必须作为独立下拉筛选。
+- 列表字段使用 `Channel ID`、`Channel Name`、`Media Type`、`Site Configuration`、`Status`、`Actions`。
+- 列表不展示 `Total`，因为保存时不满 100% 不允许提交；`Total` 只作为新增/编辑弹框内的录入辅助。
+- 列表不展示 `Ratio Group ID`，避免把内部生成编码暴露给业务用户。
+- 列表中每个媒体一行展示该媒体的站点比例拼接文本，使用 ` | ` 分隔，例如 `Jakarta Site 34% | Surabaya Site 33% | Singapore DR Site 33%`。
+- Haloapp 默认应在列表展示为 Voice / Video / Text 三行，渠道、状态和操作单元格合并显示；View/Edit 弹框内仍展示三组媒体下的站点比例。
+- 新增和编辑保存都会为所选渠道的每个媒体生成或更新一条比例组；查看、编辑、删除在列表上按渠道维度操作。
+- `Business Override` 和 `Language Override` 不再展示，也从 `SiteAccessRatioGroup` 类型中移除。
+
+## 2026-06-03 Skill Queues 管理字段规范
+
+- `Skill Queues` 查询区使用 `Keyword + VDN + Status`，其中 `VDN` 放在 `Status` 前。
+- `Keyword` 同时匹配 `Skill ID`、`Platform Skill ID`、`Skill Name`；不要匹配状态，状态用独立 `Status` 下拉筛选。
+- 列表字段包含 `Skill ID`、`Platform Skill ID`、`Skill Name`、`VDN`、`Work Time Plan`、`Max Queue Size`、`Queue Timeout`、`Supports Video`、`Agents`、`Status`、`Actions`。
+- `VDN` 是技能队列维护字段，选项来自 `VDN配置` 主数据；新增/编辑时为必填单选下拉，列表展示 VDN 名称。
+- 被技能队列引用的 VDN 不能直接删除；`VDN配置` 删除保护需要检查技能队列引用。
+- Skill Queues 表格不要强制横向滚动；列宽应保持管理台紧凑密度。
+- `Work Time Plan` 列表和弹框下拉展示工作时间方案名称，不直接展示方案编码；未选择方案时展示 `Default 24x7`。
+- `Supports Video` 使用 `No / Yes`，默认 `No`。
+- `Max Queue Size` 默认 `60`，范围 `1-60000`，单位按字段语义展示为 `items`。
+- `Queue Timeout` 默认 `100`，范围 `0-10000`，单位按字段语义展示为 `sec`。
+- 弹框中除 `Work Time Plan` 外的可维护字段保持必填；`Platform Skill ID` 需要保存校验，`Work Time Plan` 空值表示 `Default 24x7`。
+- `Assigned Agents` 不是输入字段；弹框中只读禁用展示。
+- 弹框不展示 `Queue Prompts`；新增记录使用默认 prompt，编辑记录保留原 prompt。
+- `Routing Method` 不在列表和弹框展示；`SkillQueue` 类型和 mock 数据不再保留 `routingMethod` 字段。
+- CRUD 弹框内普通输入框、下拉框和带单位数字输入框高度必须一致。
+
+## 2026-06-03 管理台页面顶部版式标准
+
+- 使用 `PageContainer` 的管理台/配置页顶部必须紧凑，不要保留大块空白标题区。
+- 页面标题字号应明显小于 `BANK 1` Logo；当前标准为 16px / 22px / 700。
+- `PageContainer` header 当前标准：min-height 28px，title 下方间距 10px。
+- 页面内容顶部 padding 当前标准：顶部 8px，左右和底部 12px。
+- `PageContainer` body gap 当前标准：12px。
+- 如果未来某个页面确实需要更大的标题区，应新增显式 variant，而不是回退全局管理台标准。
+
+## 2026-06-03 Access Accounts 动态渠道字段
+
+- `Access Accounts` 采用账号列表维护，不采用按渠道卡片分组。
+- `Phone` 不属于官方账号配置，不出现在 Access Accounts 的 Channel 下拉；Phone 仍保留在 Channels 中。
+- 账号页不维护机器人/人工入口 ID、支持媒体类型等非账号属性。
+- 列表展示 `Account ID`、`Account Name`、`Channel`、`External Account ID`、`Secret Ref`、`Status`、`Actions`；不展示 `Key Config`。
+- 查询区为 `Keyword + Channel + Status`。
+- 新增/编辑弹框按 Channel 动态展示结构化字段，去掉 `Channel-specific Config` 自由文本域。
+- `AccessAccount.extensionConfig` 为结构化对象；密钥、token、private key、password 只保存 secret reference，不保存原文。
+- Access Accounts mock 应覆盖除 `Phone` 外的所有渠道示例：Haloapp、webchat、WhatsApp、Email、Instagram、LinkedIn、Facebook、X、Tik Tok、YouTube、AppStore、playstore。
+
+## 2026-06-03 Skill Routing Rules 管理台统一
+
+- `Skill Routing Rules` 业务结构不同于普通主数据 CRUD，因为它包含动态启用要素、多选组合展开、重复组合检测、覆盖保存和运行时索引。
+- 页面视觉仍必须遵循管理台标准：顶部只显示页面名称，主区域使用紧凑查询栏、右侧主操作按钮、分页表格、统一状态 badge 和统一弹框样式。
+- 主页面查询为启用路由要素多选 + `Target Skill Queue + Status`，不使用 `Keyword / Rule ID` 查询框；路由要素下拉不展示 All / Empty，右侧按钮为 `Batch Add`。
+- 规则列表必须把每个启用要素拆成独立列展示，并展示 Updated Date / Updated By。
+- 页面表格卡片不重复显示菜单名称，底部不展示 `Published Routing Rule Index`。
+- `Batch Add Routing Rules` 不再常驻页面顶部，改为 `Batch Add` 弹框；弹框内启用要素一行一个多选下拉，并与目标技能队列分区展示。
+- Batch Add 不展示 Priority、Overwrite checkbox、组合数量摘要或重复数量摘要；新增和覆盖仍使用内部默认 priority `70`。
+- Batch Add 下方表格为 `Duplicate Routing Rules`，只展示重复拆分行：勾选框、启用要素值、Original Skill Queue、Target Skill Queue、Status；重复行默认全选，取消勾选的重复行保存时不覆盖，新行仍在保存时正常创建但不展示在该表。
+- Batch Add 重复组合表头必须有全选 checkbox；默认示例应有多条重复组合，当前用 Jakarta / Surabaya / Singapore DR 三个站点展示。
+- Batch Add 路由要素下拉只显示元素名称，不显示括号内元素 ID；技能队列也只显示技能名称，不显示技能 ID。
+- Batch Add 弹框字段标签与输入框距离要紧凑，普通字段标签不加粗，仅分块标题加粗。
+- Batch Add 重复表格不能超出弹框；当前按 5 个启用要素压缩列宽并取消横向 scroll。
+- Batch Add 路由要素允许为空，不再提供或显示 `ANY`；空字符串表示“不限定该路由要素”。
+- Batch Add 重复组合提示文案使用：`The following route combinations already exist. Selected rows will update the existing skill queue to the current target queue; unselected rows will remain unchanged.`
+- View/Edit/Delete 中启用路由要素只读，Edit 只能修改 Target Skill Queue、Status；弹框使用普通管理台两列表单字段，不使用单独条件卡片区。
+- Skill Routing Rules 查询工具栏应遵循普通管理台工具栏结构：左侧 `query-group` 包含启用路由要素、Target Skill Queue、Status、Search、Reset；`Batch Add` 作为右侧独立主操作按钮，不紧挨 Reset。
+- `Published Routing Rule Index` 不在页面上展示；如后续需要说明运行时索引，应另行设计辅助入口。
+
+## 2026-06-03 Route Elements 默认要素顺序
+
+- `Route Elements` 默认只展示 8 个要素：Access Site、Channel、Media Type、Country、Language Type、Business Type、Access Account、Access Entry。
+- 默认顺序按 `displayOrder` 固定为：Access Site = 1、Channel = 2、Media Type = 3、Country = 4、Language Type = 5、Business Type = 6、Access Account = 7、Access Entry = 8。
+- Country、Access Account、Access Entry 默认 Disabled；其它默认 Enabled。
+- VDN 不再作为默认 Route Element 展示，但 `VDN配置` 菜单和 VDN 主数据保留。
+- `Skill Routing Rules` 只展示 `enabled === true && status === 'Active'` 的要素；禁用要素和 VDN 不出现在 Batch Add、Route Conditions、View/Edit 条件区或 Published Routing Rule Index。
+- 默认 routingRules 不再包含 `factorCode: '10'` 的 VDN 条件。
+
+## 2026-06-03 渠道媒体服务规则方案
+
+- 不再把文字媒体业务规则直接塞进 `Channels` 页面；`Channels` 只维护渠道主数据和每个媒体引用的服务规则方案。
+- 新增 `Media Service Rule Plans / 媒体服务规则配置`，当前先完整支持 `Text` 媒体；Voice / Video 只预留规则方案引用能力，页面显示 `Reserved / Not configured`。
+- 新增 `ChannelMediaRuleBinding` 概念：每个 `Channel + Media Type` 最多绑定一个服务规则方案；Active 的 `Channel + Text` 必须绑定 Enabled Text rule plan。
+- Text Media Rule Plan 分区：Basic Info、Capacity & Agent No Reply、Customer Timeout、Lifecycle Messages、Channel-specific Rules。
+- Text 默认业务值：每坐席最多 3 个客户、坐席 2 分钟未回复自动回复、坐席未回复 1 分钟黄色提醒/2 分钟红色提醒、客户 5 分钟未回复自动关闭、关闭前 1 分钟提醒。
+- Lifecycle Messages 支持欢迎语、非工作时间提示语、排队提示语、分配坐席成功问候语、坐席主动结束语；支持变量 `{customerName}`、`{channelName}`、`{agentName}`、`{timeoutMinutes}`、`{reminderMinutes}`、`{estimatedWaitMinutes}`、`{workTime}`。
+- Channel-specific Rules 当前支持 Haloapp / webchat / WhatsApp 排队阈值与通知对象；Webchat Recall Limit 仅针对 webchat 生效。
+- 后续会废弃现有 `Call Management > Text Channel Settings`；本方案不复用旧页面、旧类型或旧交互。
+
+## 2026-06-04 客户预览发布屏蔽范围
+
+- 本次客户预览发布保留主工作台、Channel Simulation、PSTN、BankApp、WhatsApp、Voice / Video handoff、正式 Live Chat 和 Design System。
+- `Call Management` 和 `Routing Config` 两个一级菜单暂不对客户展示，因为相关管理功能尚未完成。
+- 屏蔽必须同时覆盖左侧菜单入口和 URL 直达；`/call-management`、`/call-management/*`、`/routing-config`、`/routing-config/*` 都应回到 `/`。
+- 未完成管理功能源码、mock、store 和类型文件不删除，后续继续开发时可恢复菜单和路由。
+- 本次发布目标为 Vercel Preview URL，不直接发布 Production。
