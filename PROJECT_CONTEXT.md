@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-04 12:19 +08:00
+最后更新：2026-06-04 12:29 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：准备客户 Vercel Preview 发布；本轮从客户可见入口屏蔽未完成的 `Call Management` 与 `Routing Config`。
+当前目标：发布客户可访问 Production 版本；`main` 已合入隐藏未完成管理菜单的客户发布版本，等待推送触发 Vercel Production。
 
 ## 0. 使用规则
 
@@ -40,9 +40,9 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`codex/customer-preview-hide-admin-menus`
-当前 HEAD：以 `git rev-parse HEAD` 为准；本分支基于本地整合分支 `codex/text-channel-config-settings` 当前工作区创建，用于客户 Vercel Preview。该预览版保留主工作台、Channel Simulation、BankApp、WhatsApp、PSTN、Voice/Video handoff、正式 Live Chat 和 Design System；暂时屏蔽未完成的 `Call Management` 与 `Routing Config` 菜单及其直达 URL。
-部署目标：Vercel 静态部署，产物目录 `dist`  
+当前分支：`main`
+当前 HEAD：以 `git rev-parse HEAD` 为准；`main` 已快进合入 `codex/customer-preview-hide-admin-menus`，用于客户 Production 发布。该版本保留主工作台、Channel Simulation、BankApp、WhatsApp、PSTN、Voice/Video handoff、正式 Live Chat 和 Design System；暂时屏蔽未完成的 `Call Management` 与 `Routing Config` 菜单及其直达 URL。发布完成后，本地继续开发应切回 `codex/text-channel-config-settings`，该分支保留管理菜单入口。
+部署目标：Vercel Production 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
 当前项目不是从零开始的模板工程，而是已经迭代过多轮的企业级 AICC demo。主要演示对象是银行客服坐席工作台，核心页面是 Inbound 电话来电弹屏工作台。
@@ -534,6 +534,15 @@ Live Chat 当前 mock：
 - GitHub branch 已推送到 `origin/codex/customer-preview-hide-admin-menus`，commit `421aa72`。
 - Vercel Preview deployment 已成功生成；每次 push 会生成新的 per-commit Preview URL，应以 GitHub deployment status / Vercel 最新部署记录为准。
 - 远端 Preview 在未登录浏览器中会跳转到 Vercel login，说明当前 Preview 受 Vercel Deployment Protection 或访问控制影响；发给客户前需要在 Vercel 中关闭/配置 Preview 访问保护或提供可访问的分享方式。
+
+截至 2026-06-04 12:29 +08:00，本轮将客户发布版本合入 `main`，准备 Production 发布：
+
+- `main` 已通过 fast-forward 合入 `codex/customer-preview-hide-admin-menus`。
+- Production 客户版本继续隐藏 `Call Management` 与 `Routing Config`，并保留 `/call-management/*`、`/routing-config/*` 直达重定向到 `/`。
+- 未完成管理功能源码、mock、store 和类型仍保留在仓库中；本地继续开发应切回 `codex/text-channel-config-settings`。
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite chunk size warning。
+- 下一步推送 `main` 触发 Vercel Production。
 
 截至 2026-06-04 11:16 +08:00，本轮继续修正 `Routing Config > Working Time Plans` Holiday / Special 排班行对齐：
 

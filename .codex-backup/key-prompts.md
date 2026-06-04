@@ -676,3 +676,10 @@
 - 屏蔽必须同时覆盖左侧菜单入口和 URL 直达；`/call-management`、`/call-management/*`、`/routing-config`、`/routing-config/*` 都应回到 `/`。
 - 未完成管理功能源码、mock、store 和类型文件不删除，后续继续开发时可恢复菜单和路由。
 - 本次发布目标为 Vercel Preview URL，不直接发布 Production。
+
+## 2026-06-04 客户 Production 发布口径
+
+- 用户确认本地客户发布版本没问题后，将隐藏管理菜单的发布分支合入 `main`，由 Vercel Production 给客户访问。
+- Production 客户版本继续隐藏 `Call Management` 与 `Routing Config`，同时 `/call-management/*` 和 `/routing-config/*` 回到 `/`。
+- 发布后本地继续开发分支为 `codex/text-channel-config-settings`；该分支保留管理菜单入口，用于继续完成未完成的管理配置功能。
+- 不删除未完成管理功能源码、mock、store 或类型，只通过发布分支/生产分支的菜单和路由屏蔽客户可见入口。

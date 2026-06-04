@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-04 12:19 +08:00
+最后更新：2026-06-04 12:29 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,41 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-04 12:29 +08:00 - 客户 Production 发布合入 main
+
+修改页面或文件：
+
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-04-1229.md`
+- `.codex-backup/current-todo-2026-06-04-1229.md`
+- `.codex-backup/page-state-2026-06-04-1229.md`
+
+修改原因：
+
+- 用户确认本地客户发布版本效果没问题，需要发布到客户可访问的正式版本，同时发布后本地切回开发分支继续做未完成管理菜单。
+
+修改结果：
+
+- `main` 已 fast-forward 合入 `codex/customer-preview-hide-admin-menus`。
+- Production 版本保留主工作台和主演示路径，隐藏 `Call Management` 与 `Routing Config`，并禁用对应直达 URL。
+- 未完成管理功能代码不删除，后续本地开发切回 `codex/text-channel-config-settings` 继续。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite chunk size warning。
+- 待推送 `main` 后确认 Vercel Production deployment 状态。
+
+回滚说明：
+
+- 如需回滚 Production，可将 `main` 回退到发布前 commit `7e651bc` 或重新部署上一版；回滚前应确认客户是否已经拿到新链接。
+
+当前风险点：
+
+- Production 部署是否客户可直接访问取决于 Vercel Production 设置；需要部署完成后检查 Production URL。
 
 ### 2026-06-04 12:10 +08:00 - 客户预览发布屏蔽未完成管理菜单
 
