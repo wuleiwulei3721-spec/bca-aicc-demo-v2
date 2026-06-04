@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-04 12:10 +08:00
+最后更新：2026-06-04 12:19 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -50,6 +50,9 @@
 - Browser `/design-system`：确认正常加载。
 - Browser `/call-management/text-channel-settings` 与 `/routing-config/route-elements`：均重定向回 `/`，且未出现对应管理页内容。
 - Browser smoke check：BankApp Demo、WhatsApp Demo、Sign In 后 Live Chat tab、Ready 状态下 PSTN 弹屏均可用。
+- Git commit `421aa72 Prepare customer preview without admin menus` 已创建并推送到 `origin/codex/customer-preview-hide-admin-menus`。
+- GitHub / Vercel status 显示 Preview deployment 成功，Preview URL 为 `https://netinfo-aicc-demo-v2-jt8slfm99-wl-demo-s-projects.vercel.app`。
+- 远端 Preview URL 在未登录浏览器中跳转到 Vercel login，未能完成远端页面内容 smoke check。
 
 回滚说明：
 
@@ -58,7 +61,7 @@
 当前风险点：
 
 - 当前分支包含此前本地整合分支的大量未提交功能与备份文件；本轮不回滚这些历史改动，客户预览依赖当前工作区整体状态。
-- 推送后需要等待 Vercel 生成 Preview URL，并在远端预览环境再次 smoke check。
+- Preview deployment 已生成，但当前受 Vercel 登录/Deployment Protection 限制；客户直接访问前需要调整 Vercel 访问保护或获取可公开访问的分享链接。
 
 ### 2026-06-04 11:16 +08:00 - Working Time Plans Holiday/Special Start 列对齐
 

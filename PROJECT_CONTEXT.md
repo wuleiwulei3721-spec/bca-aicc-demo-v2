@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-04 12:10 +08:00
+最后更新：2026-06-04 12:19 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
 当前目标：准备客户 Vercel Preview 发布；本轮从客户可见入口屏蔽未完成的 `Call Management` 与 `Routing Config`。
 
@@ -531,6 +531,9 @@ Live Chat 当前 mock：
 - Browser `/design-system`：确认正常加载。
 - Browser `/call-management/text-channel-settings` 与 `/routing-config/route-elements`：均重定向回 `/`，且未出现对应管理页内容。
 - Browser smoke check：BankApp Demo、WhatsApp Demo、Sign In 后 Live Chat tab、Ready 状态下 PSTN 弹屏均可用。
+- GitHub branch 已推送到 `origin/codex/customer-preview-hide-admin-menus`，commit `421aa72`。
+- Vercel Preview deployment 已成功生成：`https://netinfo-aicc-demo-v2-jt8slfm99-wl-demo-s-projects.vercel.app`。
+- 远端 Preview 在未登录浏览器中会跳转到 Vercel login，说明当前 Preview 受 Vercel Deployment Protection 或访问控制影响；发给客户前需要在 Vercel 中关闭/配置 Preview 访问保护或提供可访问的分享方式。
 
 截至 2026-06-04 11:16 +08:00，本轮继续修正 `Routing Config > Working Time Plans` Holiday / Special 排班行对齐：
 

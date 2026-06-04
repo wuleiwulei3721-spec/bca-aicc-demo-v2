@@ -33,7 +33,11 @@
 - Browser `/call-management/text-channel-settings`: redirected to `/`.
 - Browser `/routing-config/route-elements`: redirected to `/`.
 - Browser smoke check passed for BankApp Demo, WhatsApp Demo, Live Chat after Sign In, and PSTN popup from Ready state.
+- GitHub branch pushed: `origin/codex/customer-preview-hide-admin-menus`, commit `421aa72`.
+- Vercel Preview deployment succeeded: `https://netinfo-aicc-demo-v2-jt8slfm99-wl-demo-s-projects.vercel.app`.
+- Remote Preview content smoke check is blocked in an unauthenticated browser because the URL redirects to Vercel login.
 
 ## Risk
 
 - This release branch includes the current local integrated worktree. The management code remains in the bundle but is not reachable through menus or direct routes.
+- Before sharing with the customer, Vercel Preview access protection needs to be disabled/configured or a customer-accessible preview sharing method must be used.
