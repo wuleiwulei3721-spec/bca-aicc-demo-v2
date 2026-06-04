@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-04 15:32 +08:00
+最后更新：2026-06-04 16:12 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,55 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-04 16:12 +08:00 - Media Service Rule Plans 变量插入与单位样式优化
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-04-1612.md`
+- `.codex-backup/current-todo-2026-06-04-1612.md`
+- `.codex-backup/page-state-2026-06-04-1612.md`
+
+修改原因：
+
+- 用户希望 `Media Service Rule Plans` 弹框内的可用变量做成可点击插入效果，并且每个话术字段只展示适合自己的变量。
+- 用户反馈数字单位字号过大、与整体不搭；希望本弹框内单位更轻。
+- 用户询问现有文字媒体参数中哪些适合未来给语音、视频渠道复用，需要先做配置口径判断。
+
+修改结果：
+
+- 仅优化 `Routing Config > Media Service Rule Plans` 弹框；不改 `Channels`，不扩展 Voice / Video 字段、类型或页面。
+- 移除顶部全局 `可用变量` 条，改为在 Add/Edit 的话术字段标题右侧显示 `插入变量` 下拉；View/Delete 不显示变量入口。
+- 按字段限制变量范围：接入成功欢迎语、非人工服务时间提示语、排队提示语、分配坐席成功问候语、坐席挂断提醒、未回复超时前提醒、未回复超时客户提醒、未回复超时坐席提醒各自只显示适用变量；排队超时提示语和自动回复内容不显示变量入口。
+- 变量插入使用 textarea 最近光标/选区记录，覆盖 focus/click/select/key/mouse/blur；无光标记录时追加到文本末尾。
+- 本弹框数字字段从 `InputNumber addonAfter` 改为 `InputNumber + 11px 轻量单位文本` 的 scoped 布局，不影响其它页面。
+- 记录 Voice / Video 参数适配判断：接入、排队和非服务时间类参数可复用；坐席未回复 SLA 需改名后复用；Webchat 撤回、文字客户未回复自动关闭、文字坐席未回复自动回复不适合直接复用；Voice / Video 后续各自需要补 IVR/等待音/振铃/回流/回拨和等待室/设备/接入超时/重连/兜底等专属规则。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/media-service-rule-plans` Add 弹框：中文标题、8 个字段级变量下拉、10 个轻量单位控件正常；顶部 `可用变量` 条不再出现，弹框内 `.ant-input-number-group-addon` 为 0。
+- Browser Add/Edit：无光标记录时变量可插入到话术末尾；自动化环境无法可靠移动 textarea 光标键或点击到文本中部，因此任意光标位置插入需用真实浏览器人工复查。
+- Browser View 弹框：中文只读展示正常，未显示 `插入变量`。
+- Browser Edit 弹框：保存后列表 `Updated Date` 更新为 `2026-06-04`，`Updated By` 仍按现有逻辑显示 `Admin`。
+- Browser Delete 弹框：被 Channels 绑定引用的方案继续显示中文不可删除提示。
+- Browser `/routing-config/channels`：Rule Plan 绑定列正常显示 `MSRP_TEXT_STANDARD` / `MSRP_TEXT_PRIORITY`，无渲染错误。
+
+回滚说明：
+
+- 如需回滚本轮变量插入和单位样式，恢复顶部全局变量条、删除 `mediaServiceVariablesByMessageField`、textarea 光标记录和 `routing-config-media-rule-modal__variable-select / __number-control` 样式，并把数字字段恢复为 `InputNumber addonAfter`。
+
+当前风险点：
+
+- 弹框仍是临时中文确认版，后续对外展示管理页前需要统一转回英文。
+- Browser 自动化无法可靠模拟 textarea 中间光标，已补人工复查 TODO；真实浏览器中仍需用户手动点选确认一次。
+- 项目其它通用 CRUD 数字字段仍使用 `addonAfter`，控制台可能继续出现 AntD `InputNumber addonAfter` deprecation，这不属于本轮弹框范围。
 
 ### 2026-06-04 15:32 +08:00 - Media Service Rule Plans 弹框临时中文化与块状布局
 

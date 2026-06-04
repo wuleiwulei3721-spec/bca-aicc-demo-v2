@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-04 15:32 +08:00
+最后更新：2026-06-04 16:12 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：客户可访问 Production 版本已发布；当前本地分支 `codex/text-channel-config-settings` 已恢复 `Call Management` / `Routing Config` 菜单与路由，用于继续开发未完成管理功能。本轮已将 `Routing Config > Media Service Rule Plans` 的 Text 规则方案弹框临时中文化并改成块状布局，方便用户先确认配置逻辑；`Channels` 暂只继续绑定并引用规则方案。
+当前目标：客户可访问 Production 版本已发布；当前本地分支 `codex/text-channel-config-settings` 已恢复 `Call Management` / `Routing Config` 菜单与路由，用于继续开发未完成管理功能。本轮继续优化 `Routing Config > Media Service Rule Plans` 的 Text 规则方案弹框：保留临时中文确认版，新增字段级变量插入入口并将数字单位改成本弹框内轻量文本；`Channels` 暂只继续绑定并引用规则方案，Voice / Video 本轮只记录参数适配判断。
 
 ## 0. 使用规则
 
@@ -119,7 +119,7 @@ codex-recovered-context.md
 - `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`：正式 `Live Chat` Conversation tab 内容，包含消息记录、快捷回复、引用、撤回、Transfer、End/Close 和发送消息演示。
 - `src/pages/call-management/RoutingConfigurationPage.tsx`：旧路由配置入口兼容组件，重定向到 `/routing-config/route-elements`。
 - `src/pages/routing-config/RoutingConfigCrudPage.tsx`：Routing Config 普通主数据页复用的本地 CRUD 容器，提供 Search / Add / View / Edit / Delete 弹窗表单。
-- `src/pages/routing-config/RoutingConfigDataPages.tsx`：Routing Config 主数据独立配置页，覆盖 Route Elements、VDN、Sites、Channels、Media Service Rule Plans、Business Types、Site Access Volume、Access Accounts、Working Time Plans、Skill Queues；Channels 已支持按媒体引用服务规则方案，Media Service Rule Plans 当前完整维护 Text 媒体服务规则，弹框按 Basic Info、Customer Service Configuration、Agent Service Configuration 维护字段且不再展示 Queue Alert / Recipients 区块；2026-06-04 15:32 后该弹框临时用中文展示并采用类似 Working Time Plans 的块状布局，待中文确认后再转回英文；Working Time Plans 已改为印尼单国家自定义排班编辑器，包含 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan，Skill Queues 未选择方案时展示 `Default 24x7`。
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`：Routing Config 主数据独立配置页，覆盖 Route Elements、VDN、Sites、Channels、Media Service Rule Plans、Business Types、Site Access Volume、Access Accounts、Working Time Plans、Skill Queues；Channels 已支持按媒体引用服务规则方案，Media Service Rule Plans 当前完整维护 Text 媒体服务规则，弹框按 Basic Info、Customer Service Configuration、Agent Service Configuration 维护字段且不再展示 Queue Alert / Recipients 区块；2026-06-04 15:32 后该弹框临时用中文展示并采用类似 Working Time Plans 的块状布局，2026-06-04 16:12 后话术字段右上角按字段显示 `插入变量` 下拉并插入到最近光标/选区，数字单位改成本弹框内轻量文本，待中文确认后再转回英文；Working Time Plans 已改为印尼单国家自定义排班编辑器，包含 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan，Skill Queues 未选择方案时展示 `Default 24x7`。
 - `src/pages/routing-config/SkillRoutingRulesPage.tsx`：独立技能路由规则页，支持按启用路由要素多选查询、规则列表要素拆列、批量新增拆分预览、重复组合勾选覆盖、规则查看/编辑/删除。
 - `src/pages/routing-config/RoutingConfigStatusBadge.tsx`：Routing Config 状态 badge 组件，避免页面组件导出非组件函数触发 Fast Refresh lint。
 - `src/pages/call-management/TextChannelSettingsPage.tsx`：数据呼叫管理下的文字渠道配置页，包含 Service Rules、Customer Timeout & Messages、Channel Queue Alerts 三组配置。
@@ -512,6 +512,28 @@ Live Chat 当前 mock：
 - GitHub remote 与基础提交。
 
 ## 10. 当前开发状态
+
+截至 2026-06-04 16:12 +08:00，本轮继续优化 `Routing Config > Media Service Rule Plans` 弹框的变量插入、单位样式和 Voice / Video 参数适配口径：
+
+- 仅修改 `Media Service Rule Plans` Add/Edit/View 弹框交互和本弹框 scoped 样式；不改 `Channels`、不扩展 Voice / Video rule plan 类型或页面。
+- Add/Edit 的话术字段标题右侧按字段显示 `插入变量` 下拉；View/Delete 不显示变量入口。
+- 字段变量范围已收窄：接入成功欢迎语支持 `{customerName}`、`{channelName}`；非人工服务时间提示语支持 `{workTime}`；排队提示语支持 `{estimatedWaitMinutes}`；分配坐席成功问候语支持 `{customerName}`、`{agentName}`、`{timeoutMinutes}`；坐席挂断提醒支持 `{customerName}`、`{agentName}`；未回复超时前提醒支持 `{reminderMinutes}`；未回复超时客户提醒支持 `{customerName}`；未回复超时坐席提醒支持 `{customerName}`、`{timeoutMinutes}`；排队超时提示语和自动回复内容不显示变量入口。
+- 变量插入使用 textarea 最近光标/选区记录，包含 focus/click/select/key/mouse/blur 兜底；没有光标记录时追加到文本末尾。
+- 移除顶部全局 `可用变量` 条，避免误解为所有变量可用于所有话术。
+- Media Service Rule Plans 弹框内数字字段不再使用 `InputNumber addonAfter`，改为 `InputNumber + 11px 轻量单位文本` 的本地布局；项目其它通用 CRUD 数字字段仍可能保留 `addonAfter`，不在本轮范围。
+- Voice / Video 适配判断已记录：可共用接入并发、最小扫描间隔、非服务时间提示、最大排队人数、排队提示、排队超时、排队超时提示、接入/欢迎提示；坐席未回复 warning/breach 可改名为坐席接听/响应 SLA；Webchat 撤回、文字客户未回复自动关闭、文字坐席未回复自动回复不适合直接共用；Voice 后续应单独考虑 IVR/等待音、振铃超时、无人接听回流、放弃呼叫提示、回拨配置；Video 后续应单独考虑等待室提示、摄像头/麦克风提示、视频接入超时、重连超时、转文字/语音兜底。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `http://127.0.0.1:5181/routing-config/media-service-rule-plans`：Add 弹框显示中文标题、8 个字段级变量下拉、10 个轻量单位控件；旧顶部 `可用变量` 条不再出现，弹框内 `.ant-input-number-group-addon` 数量为 0。
+- Browser Add/Edit：无光标记录时变量可插入到话术末尾；自动化环境无法可靠移动 textarea 光标键或点击到文本中部，因此任意光标位置插入仍需人工用真实浏览器复查。
+- Browser View：只读中文展示正常，快照中不显示 `插入变量`。
+- Browser Edit：保存后列表 `Updated Date` 刷新为 `2026-06-04`，`Updated By` 按现有逻辑显示 `Admin`。
+- Browser Delete：被 Channel Media Rule Binding 引用的方案显示中文不可删除提示。
+- Browser `/routing-config/channels`：页面正常加载，Rule Plan 列仍显示 `MSRP_TEXT_STANDARD` / `MSRP_TEXT_PRIORITY`，未发现页面渲染错误。
+- Browser 控制台仍有既有 AntD deprecation 日志；本轮弹框自己的数字单位不再使用 `InputNumber addonAfter`。
 
 截至 2026-06-04 15:32 +08:00，本轮优化 `Routing Config > Media Service Rule Plans` 弹框样式并临时中文化：
 
@@ -2500,6 +2522,7 @@ M src/types/inbound.ts
 
 P0：
 
+- 人工复查 `Routing Config > Media Service Rule Plans` Add/Edit：真实浏览器中点击话术框任意位置后选择 `插入变量`，变量应插入到当前光标或选区位置；当前 Browser 自动化环境无法可靠移动 textarea 光标，只验证到无光标记录时追加和字段级入口展示。
 - 人工复查 `Routing Config > Route Elements`：英文标题、查询栏、独立靠右 Add、列表字段、短胶囊状态开关、弹框顶部标题栏背景、无额外 footer 背景、统一按钮宽度/高度和保存后校验提示符合管理台数据维护规范。
 - 人工复查 `Routing Config` 普通 CRUD 页状态展示：列表和详情统一为 `Enabled/Disabled` badge，新增/编辑统一为短 switch + 状态文本，不再混用 `Active`。
 - 人工复查 `Routing Config` 普通 CRUD 页工具栏：输入框、下拉框、Search/Reset/Add 按钮高度一致，普通页面统一使用 Keyword + Search/Reset + 右侧 Add。

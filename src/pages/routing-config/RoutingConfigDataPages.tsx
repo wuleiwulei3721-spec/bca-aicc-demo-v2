@@ -2,7 +2,7 @@
 import { Alert, DatePicker, Input, InputNumber, Select, Switch, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import {
   BaseButton,
   BaseCard,
@@ -1522,15 +1522,22 @@ export function ChannelsPage() {
   )
 }
 
-const mediaServiceTemplateVariables = [
-  '{customerName}',
-  '{channelName}',
-  '{agentName}',
-  '{timeoutMinutes}',
-  '{reminderMinutes}',
-  '{estimatedWaitMinutes}',
-  '{workTime}',
-]
+const mediaServiceVariablesByMessageField: Partial<
+  Record<keyof MediaServiceRulePlan, string[]>
+> = {
+  accessSuccessWelcomeMessage: ['{customerName}', '{channelName}'],
+  agentEndReminder: ['{customerName}', '{agentName}'],
+  agentTimeoutNotice: ['{customerName}', '{timeoutMinutes}'],
+  assignedAgentGreeting: [
+    '{customerName}',
+    '{agentName}',
+    '{timeoutMinutes}',
+  ],
+  customerTimeoutNotice: ['{customerName}'],
+  nonWorkingTimeMessage: ['{workTime}'],
+  preTimeoutReminderMessage: ['{reminderMinutes}'],
+  queueWaitingMessage: ['{estimatedWaitMinutes}'],
+}
 
 const mediaServiceModalTitleByMode = {
   add: '新增媒体服务规则方案',
@@ -1612,6 +1619,12 @@ export function MediaServiceRulePlansPage() {
   const [notice, setNotice] = useState<string | null>(null)
   const [selectedPlan, setSelectedPlan] =
     useState<MediaServiceRulePlan | null>(null)
+  const messageSelectionsRef = useRef<
+    Record<string, { end: number; start: number }>
+  >({})
+  const messageTextAreaRefs = useRef<Record<string, HTMLTextAreaElement | null>>(
+    {},
+  )
   const [submitAttempted, setSubmitAttempted] = useState(false)
   const mediaLabelByValue = useMemo(
     () => new Map(mediaOptions.map((option) => [option.value, option.label])),
@@ -1645,6 +1658,67 @@ export function MediaServiceRulePlansPage() {
       ...currentDraft,
       [key]: value,
     }))
+  }
+  const rememberMessageSelection = (
+    field: keyof MediaServiceRulePlan,
+    element: HTMLTextAreaElement,
+  ) => {
+    const fieldKey = String(field)
+    messageTextAreaRefs.current[fieldKey] = element
+    messageSelectionsRef.current[fieldKey] = {
+      end: element.selectionEnd,
+      start: element.selectionStart,
+    }
+  }
+  const queueMessageSelectionRemember = (
+    field: keyof MediaServiceRulePlan,
+    element: HTMLTextAreaElement,
+  ) => {
+    window.requestAnimationFrame(() => {
+      rememberMessageSelection(field, element)
+    })
+  }
+  const insertMessageVariable = (
+    field: keyof MediaServiceRulePlan,
+    variable: string,
+  ) => {
+    const currentValue = String(draft[field] ?? '')
+    const fieldKey = String(field)
+    const messageTextArea = messageTextAreaRefs.current[fieldKey]
+    const storedSelection = messageSelectionsRef.current[fieldKey]
+    const shouldReadLiveSelection =
+      messageTextArea && document.activeElement === messageTextArea
+    const activeSelection =
+      shouldReadLiveSelection &&
+      Number.isFinite(messageTextArea.selectionStart) &&
+      Number.isFinite(messageTextArea.selectionEnd)
+        ? {
+            end: messageTextArea.selectionEnd,
+            start: messageTextArea.selectionStart,
+          }
+        : storedSelection
+    const start = activeSelection
+      ? Math.min(activeSelection.start, currentValue.length)
+      : currentValue.length
+    const end = activeSelection
+      ? Math.min(activeSelection.end, currentValue.length)
+      : currentValue.length
+    const nextValue = `${currentValue.slice(0, start)}${variable}${currentValue.slice(end)}`
+    const nextCursorPosition = start + variable.length
+
+    updateDraft(field, nextValue as never)
+    messageSelectionsRef.current[fieldKey] = {
+      end: nextCursorPosition,
+      start: nextCursorPosition,
+    }
+    window.requestAnimationFrame(() => {
+      const currentMessageTextArea = messageTextAreaRefs.current[fieldKey]
+      currentMessageTextArea?.focus()
+      currentMessageTextArea?.setSelectionRange(
+        nextCursorPosition,
+        nextCursorPosition,
+      )
+    })
   }
   const validationErrors = useMemo(() => {
     if (!modalMode || modalMode === 'delete' || modalMode === 'view') {
@@ -1817,42 +1891,90 @@ export function MediaServiceRulePlansPage() {
     label: string,
     rows = 2,
     full = false,
-  ) => (
-    <label
-      className={`routing-config-crud-modal__field routing-config-media-rule-modal__message-field${
-        full ? ' routing-config-media-rule-modal__message-field--full' : ''
-      }`}
-    >
-      <span>
-        {label} <strong>*</strong>
-      </span>
-      <Input.TextArea
-        disabled={isReadOnly}
-        rows={rows}
-        value={String(draft[field] ?? '')}
-        onChange={(event) =>
-          updateDraft(field, event.target.value as never)
-        }
-      />
-    </label>
-  )
+  ) => {
+    const variableOptions = mediaServiceVariablesByMessageField[field] ?? []
+
+    return (
+      <label
+        className={`routing-config-crud-modal__field routing-config-media-rule-modal__message-field${
+          full ? ' routing-config-media-rule-modal__message-field--full' : ''
+        }`}
+      >
+        <span className="routing-config-media-rule-modal__field-heading">
+          <span>
+            {label} <strong>*</strong>
+          </span>
+          {!isReadOnly && variableOptions.length > 0 && (
+            <select
+              aria-label={`${label}插入变量`}
+              className="routing-config-media-rule-modal__variable-select"
+              value=""
+              onChange={(event) => {
+                if (event.target.value) {
+                  insertMessageVariable(field, event.target.value)
+                }
+              }}
+            >
+              <option value="">插入变量</option>
+              {variableOptions.map((variable) => (
+                <option key={variable} value={variable}>
+                  {variable}
+                </option>
+              ))}
+            </select>
+          )}
+        </span>
+        <Input.TextArea
+          disabled={isReadOnly}
+          rows={rows}
+          value={String(draft[field] ?? '')}
+          onChange={(event) =>
+            updateDraft(field, event.target.value as never)
+          }
+          onBlur={(event) =>
+            rememberMessageSelection(field, event.currentTarget)
+          }
+          onClick={(event) =>
+            rememberMessageSelection(field, event.currentTarget)
+          }
+          onFocus={(event) =>
+            rememberMessageSelection(field, event.currentTarget)
+          }
+          onKeyDown={(event) =>
+            queueMessageSelectionRemember(field, event.currentTarget)
+          }
+          onKeyUp={(event) =>
+            rememberMessageSelection(field, event.currentTarget)
+          }
+          onMouseUp={(event) =>
+            queueMessageSelectionRemember(field, event.currentTarget)
+          }
+          onSelect={(event) =>
+            rememberMessageSelection(field, event.currentTarget)
+          }
+        />
+      </label>
+    )
+  }
   const renderNumberField = (
     field: keyof MediaServiceRulePlan,
     label: string,
-    addonAfter: string,
+    unit: string,
     min = 1,
   ) => (
     <label className="routing-config-crud-modal__field routing-config-media-rule-modal__number-field">
       <span>{label}</span>
-      <InputNumber
-        addonAfter={addonAfter}
-        disabled={isReadOnly}
-        min={min}
-        value={Number(draft[field] ?? 0)}
-        onChange={(value) =>
-          updateDraft(field, (Number(value) || 0) as never)
-        }
-      />
+      <span className="routing-config-media-rule-modal__number-control">
+        <InputNumber
+          disabled={isReadOnly}
+          min={min}
+          value={Number(draft[field] ?? 0)}
+          onChange={(value) =>
+            updateDraft(field, (Number(value) || 0) as never)
+          }
+        />
+        <em>{unit}</em>
+      </span>
     </label>
   )
   const renderModalStatus = () =>
@@ -2153,12 +2275,6 @@ export function MediaServiceRulePlansPage() {
                 <header>
                   <strong>客户服务配置</strong>
                 </header>
-                <div className="routing-config-media-rule-modal__variables">
-                  <span>可用变量</span>
-                  {mediaServiceTemplateVariables.map((variable) => (
-                    <Tag key={variable}>{variable}</Tag>
-                  ))}
-                </div>
                 <div className="routing-config-media-rule-modal__subsections">
                   <div className="routing-config-media-rule-modal__subsection">
                     <h4>接入量配置</h4>
