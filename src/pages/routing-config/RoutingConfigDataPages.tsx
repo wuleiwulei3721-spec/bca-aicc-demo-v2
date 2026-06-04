@@ -1546,16 +1546,31 @@ const mediaServiceModalTitleByMode = {
   view: '查看媒体服务规则方案',
 }
 
-const textMediaModalOptions = [{ label: '文字媒体', value: 'TEXT' }]
+const mediaServiceModalMediaOptions: Array<{
+  label: string
+  value: MediaTypeCode
+}> = [
+  { label: '文字媒体', value: 'TEXT' },
+  { label: '语音媒体', value: 'VOICE' },
+  { label: '视频媒体', value: 'VIDEO' },
+]
+
+const mediaServiceAccessWelcomeMessageByMedia: Record<MediaTypeCode, string> = {
+  TEXT: '您好，智能小助手为您提供服务。',
+  VIDEO: '您好，视频智能小助手为您提供服务。',
+  VOICE: '您好，语音智能小助手为您提供服务。',
+}
 
 function createDefaultMediaServiceRulePlan(
   existingPlans: MediaServiceRulePlan[],
+  mediaCode: MediaTypeCode = 'TEXT',
 ): MediaServiceRulePlan {
-  const nextIndex = existingPlans.length + 1
+  const nextIndex =
+    existingPlans.filter((plan) => plan.mediaCode === mediaCode).length + 1
 
   return {
     accessSuccessWelcomeMessage:
-      '您好，智能小助手为您提供服务。',
+      mediaServiceAccessWelcomeMessageByMedia[mediaCode],
     agentNoReplyAutoResponseMessage: '请稍候，我们正在处理。',
     agentNoReplyBreachSeconds: 120,
     agentNoReplyTimeoutSeconds: 120,
@@ -1570,11 +1585,11 @@ function createDefaultMediaServiceRulePlan(
     description: '',
     maxConcurrentAccess: 50,
     maxQueueCustomers: 20,
-    mediaCode: 'TEXT',
+    mediaCode,
     minScanIntervalSeconds: 30,
     nonWorkingTimeMessage:
       '抱歉，工作时间为{workTime}，请在此时间联系我们。',
-    planCode: `MSRP_TEXT_${String(nextIndex).padStart(2, '0')}`,
+    planCode: `MSRP_${mediaCode}_${String(nextIndex).padStart(2, '0')}`,
     planName: '',
     preTimeoutReminderMessage:
       '系统未收到回复，将在{reminderMinutes}分钟后结束会话。',
@@ -1630,7 +1645,6 @@ export function MediaServiceRulePlansPage() {
     () => new Map(mediaOptions.map((option) => [option.value, option.label])),
     [mediaOptions],
   )
-  const textMediaOptions = mediaOptions.filter((option) => option.value === 'TEXT')
   const openModal = (
     mode: 'add' | 'delete' | 'edit' | 'view',
     record?: MediaServiceRulePlan,
@@ -1658,6 +1672,40 @@ export function MediaServiceRulePlansPage() {
       ...currentDraft,
       [key]: value,
     }))
+  }
+  const updateDraftMediaCode = (mediaCode: MediaTypeCode) => {
+    if (modalMode !== 'add') {
+      return
+    }
+
+    const nextDefaults = createDefaultMediaServiceRulePlan(
+      mediaServiceRulePlans,
+      mediaCode,
+    )
+
+    messageSelectionsRef.current = {}
+    messageTextAreaRefs.current = {}
+    setDraft((currentDraft) => {
+      const shouldReplaceGeneratedPlanCode =
+        !currentDraft.planCode.trim() ||
+        /^MSRP_(TEXT|VOICE|VIDEO)_\d+$/.test(currentDraft.planCode)
+      const previousDefaultWelcome =
+        mediaServiceAccessWelcomeMessageByMedia[currentDraft.mediaCode]
+      const shouldReplaceWelcome =
+        !currentDraft.accessSuccessWelcomeMessage.trim() ||
+        currentDraft.accessSuccessWelcomeMessage === previousDefaultWelcome
+
+      return {
+        ...currentDraft,
+        accessSuccessWelcomeMessage: shouldReplaceWelcome
+          ? nextDefaults.accessSuccessWelcomeMessage
+          : currentDraft.accessSuccessWelcomeMessage,
+        mediaCode,
+        planCode: shouldReplaceGeneratedPlanCode
+          ? nextDefaults.planCode
+          : currentDraft.planCode,
+      }
+    })
   }
   const rememberMessageSelection = (
     field: keyof MediaServiceRulePlan,
@@ -1749,22 +1797,26 @@ export function MediaServiceRulePlansPage() {
       errors.push('方案名称为必填项。')
     }
 
-    if (draft.mediaCode !== 'TEXT') {
-      errors.push('当前仅支持文字媒体规则方案。')
-    }
-
     const positiveNumberFields: Array<[keyof MediaServiceRulePlan, string]> = [
-      ['maxConcurrentAccess', '接入并发呼叫数'],
+      [
+        'maxConcurrentAccess',
+        draft.mediaCode === 'VIDEO' ? '接入并发视频数' : '接入并发呼叫数',
+      ],
       ['minScanIntervalSeconds', '接入最小扫描间隔'],
-      ['maxQueueCustomers', '最大排队人数'],
-      ['queueTimeoutMinutes', '排队超时时长'],
-      ['preTimeoutReminderMinutes', '未回复超时前提醒时间'],
-      ['customerNoReplyTimeoutMinutes', '客户未回复超时时长'],
-      ['agentNoReplyTimeoutSeconds', '坐席未回复超时时长'],
-      ['webchatRecallLimitSeconds', 'Webchat消息撤回时限'],
-      ['agentNoReplyWarningSeconds', '坐席未回复黄色提醒'],
-      ['agentNoReplyBreachSeconds', '坐席未回复红色警示'],
     ]
+
+    if (draft.mediaCode === 'TEXT') {
+      positiveNumberFields.push(
+        ['maxQueueCustomers', '最大排队人数'],
+        ['queueTimeoutMinutes', '排队超时时长'],
+        ['preTimeoutReminderMinutes', '未回复超时前提醒时间'],
+        ['customerNoReplyTimeoutMinutes', '客户未回复超时时长'],
+        ['agentNoReplyTimeoutSeconds', '坐席未回复超时时长'],
+        ['webchatRecallLimitSeconds', 'Webchat消息撤回时限'],
+        ['agentNoReplyWarningSeconds', '坐席未回复黄色提醒'],
+        ['agentNoReplyBreachSeconds', '坐席未回复红色警示'],
+      )
+    }
 
     positiveNumberFields.forEach(([field, label]) => {
       const value = draft[field]
@@ -1774,32 +1826,37 @@ export function MediaServiceRulePlansPage() {
       }
     })
 
-    if (
-      draft.preTimeoutReminderMinutes >= draft.customerNoReplyTimeoutMinutes
-    ) {
-      errors.push('未回复超时前提醒时间必须小于客户未回复超时时长。')
-    }
-
-    if (draft.agentNoReplyWarningSeconds > draft.agentNoReplyBreachSeconds) {
-      errors.push('坐席未回复黄色提醒时间必须小于或等于红色警示时间。')
-    }
-
-    if (draft.agentNoReplyBreachSeconds > draft.agentNoReplyTimeoutSeconds) {
-      errors.push('坐席未回复红色警示时间必须小于或等于坐席未回复超时时长。')
-    }
-
     const requiredMessageFields: Array<[keyof MediaServiceRulePlan, string]> = [
-      ['agentNoReplyAutoResponseMessage', '自动回复内容'],
       ['accessSuccessWelcomeMessage', '接入成功欢迎语'],
-      ['preTimeoutReminderMessage', '未回复超时前提醒'],
-      ['customerTimeoutNotice', '未回复超时客户提醒'],
-      ['agentTimeoutNotice', '未回复超时坐席提醒'],
-      ['nonWorkingTimeMessage', '非人工服务时间提示语'],
-      ['queueWaitingMessage', '排队提示语'],
-      ['queueTimeoutMessage', '排队超时提示语'],
-      ['assignedAgentGreeting', '分配坐席成功问候语'],
-      ['agentEndReminder', '坐席挂断提醒'],
     ]
+
+    if (draft.mediaCode === 'TEXT') {
+      if (
+        draft.preTimeoutReminderMinutes >= draft.customerNoReplyTimeoutMinutes
+      ) {
+        errors.push('未回复超时前提醒时间必须小于客户未回复超时时长。')
+      }
+
+      if (draft.agentNoReplyWarningSeconds > draft.agentNoReplyBreachSeconds) {
+        errors.push('坐席未回复黄色提醒时间必须小于或等于红色警示时间。')
+      }
+
+      if (draft.agentNoReplyBreachSeconds > draft.agentNoReplyTimeoutSeconds) {
+        errors.push('坐席未回复红色警示时间必须小于或等于坐席未回复超时时长。')
+      }
+
+      requiredMessageFields.push(
+        ['agentNoReplyAutoResponseMessage', '自动回复内容'],
+        ['preTimeoutReminderMessage', '未回复超时前提醒'],
+        ['customerTimeoutNotice', '未回复超时客户提醒'],
+        ['agentTimeoutNotice', '未回复超时坐席提醒'],
+        ['nonWorkingTimeMessage', '非人工服务时间提示语'],
+        ['queueWaitingMessage', '排队提示语'],
+        ['queueTimeoutMessage', '排队超时提示语'],
+        ['assignedAgentGreeting', '分配坐席成功问候语'],
+        ['agentEndReminder', '坐席挂断提醒'],
+      )
+    }
 
     requiredMessageFields.forEach(([field, label]) => {
       const value = draft[field]
@@ -2083,7 +2140,7 @@ export function MediaServiceRulePlansPage() {
                   <Select
                     options={[
                       { label: 'All', value: '' },
-                      ...textMediaOptions,
+                      ...mediaOptions,
                     ]}
                     value={filterDraft.mediaCode}
                     onChange={(value) =>
@@ -2248,9 +2305,12 @@ export function MediaServiceRulePlansPage() {
                   <label className="routing-config-crud-modal__field">
                     <span>媒体类型</span>
                     <Select
-                      disabled
-                      options={textMediaModalOptions}
+                      disabled={isReadOnly || modalMode === 'edit'}
+                      options={mediaServiceModalMediaOptions}
                       value={draft.mediaCode}
+                      onChange={(value) =>
+                        updateDraftMediaCode(value as MediaTypeCode)
+                      }
                     />
                   </label>
                   <label className="routing-config-crud-modal__field routing-config-crud-modal__field--status">
@@ -2277,11 +2337,15 @@ export function MediaServiceRulePlansPage() {
                 </header>
                 <div className="routing-config-media-rule-modal__subsections">
                   <div className="routing-config-media-rule-modal__subsection">
-                    <h4>接入量配置</h4>
+                    <h4>
+                      {draft.mediaCode === 'TEXT' ? '接入量配置' : '接入配置'}
+                    </h4>
                     <div className="routing-config-media-rule-modal__compact-row">
                       {renderNumberField(
                         'maxConcurrentAccess',
-                        '接入并发呼叫数',
+                        draft.mediaCode === 'VIDEO'
+                          ? '接入并发视频数'
+                          : '接入并发呼叫数',
                         '个',
                       )}
                       {renderNumberField(
@@ -2300,144 +2364,150 @@ export function MediaServiceRulePlansPage() {
                     </div>
                   </div>
 
-                  <div className="routing-config-media-rule-modal__subsection">
-                    <h4>排队配置</h4>
-                    <div className="routing-config-media-rule-modal__full-row">
-                      {renderMessageField(
-                        'nonWorkingTimeMessage',
-                        '非人工服务时间提示语',
-                        2,
-                        true,
-                      )}
-                    </div>
-                    <div className="routing-config-media-rule-modal__paired-row">
-                      {renderNumberField(
-                        'maxQueueCustomers',
-                        '最大排队人数',
-                        '人',
-                      )}
-                      {renderMessageField(
-                        'queueWaitingMessage',
-                        '排队提示语',
-                      )}
-                    </div>
-                    <div className="routing-config-media-rule-modal__paired-row">
-                      {renderNumberField(
-                        'queueTimeoutMinutes',
-                        '排队超时时长',
-                        '分',
-                      )}
-                      {renderMessageField(
-                        'queueTimeoutMessage',
-                        '排队超时提示语',
-                      )}
-                    </div>
-                  </div>
+                  {draft.mediaCode === 'TEXT' && (
+                    <>
+                      <div className="routing-config-media-rule-modal__subsection">
+                        <h4>排队配置</h4>
+                        <div className="routing-config-media-rule-modal__full-row">
+                          {renderMessageField(
+                            'nonWorkingTimeMessage',
+                            '非人工服务时间提示语',
+                            2,
+                            true,
+                          )}
+                        </div>
+                        <div className="routing-config-media-rule-modal__paired-row">
+                          {renderNumberField(
+                            'maxQueueCustomers',
+                            '最大排队人数',
+                            '人',
+                          )}
+                          {renderMessageField(
+                            'queueWaitingMessage',
+                            '排队提示语',
+                          )}
+                        </div>
+                        <div className="routing-config-media-rule-modal__paired-row">
+                          {renderNumberField(
+                            'queueTimeoutMinutes',
+                            '排队超时时长',
+                            '分',
+                          )}
+                          {renderMessageField(
+                            'queueTimeoutMessage',
+                            '排队超时提示语',
+                          )}
+                        </div>
+                      </div>
 
-                  <div className="routing-config-media-rule-modal__subsection">
-                    <h4>人工开场/结束配置</h4>
-                    <div className="routing-config-media-rule-modal__full-row">
-                      {renderMessageField(
-                        'assignedAgentGreeting',
-                        '分配坐席成功问候语',
-                        2,
-                        true,
-                      )}
-                    </div>
-                    <div className="routing-config-media-rule-modal__full-row">
-                      {renderMessageField(
-                        'agentEndReminder',
-                        '坐席挂断提醒',
-                        2,
-                        true,
-                      )}
-                    </div>
-                  </div>
+                      <div className="routing-config-media-rule-modal__subsection">
+                        <h4>人工开场/结束配置</h4>
+                        <div className="routing-config-media-rule-modal__full-row">
+                          {renderMessageField(
+                            'assignedAgentGreeting',
+                            '分配坐席成功问候语',
+                            2,
+                            true,
+                          )}
+                        </div>
+                        <div className="routing-config-media-rule-modal__full-row">
+                          {renderMessageField(
+                            'agentEndReminder',
+                            '坐席挂断提醒',
+                            2,
+                            true,
+                          )}
+                        </div>
+                      </div>
 
-                  <div className="routing-config-media-rule-modal__subsection">
-                    <h4>客户未回复配置</h4>
-                    <div className="routing-config-media-rule-modal__paired-row">
-                      {renderNumberField(
-                        'preTimeoutReminderMinutes',
-                        '未回复超时前提醒时间',
-                        '分',
-                      )}
-                      {renderMessageField(
-                        'preTimeoutReminderMessage',
-                        '未回复超时前提醒',
-                      )}
-                    </div>
-                    <div className="routing-config-media-rule-modal__paired-row">
-                      {renderNumberField(
-                        'customerNoReplyTimeoutMinutes',
-                        '客户未回复超时时长',
-                        '分',
-                      )}
-                      {renderMessageField(
-                        'customerTimeoutNotice',
-                        '未回复超时客户提醒',
-                      )}
-                    </div>
-                    <div className="routing-config-media-rule-modal__full-row">
-                      {renderMessageField(
-                        'agentTimeoutNotice',
-                        '未回复超时坐席提醒',
-                        2,
-                        true,
-                      )}
-                    </div>
-                  </div>
+                      <div className="routing-config-media-rule-modal__subsection">
+                        <h4>客户未回复配置</h4>
+                        <div className="routing-config-media-rule-modal__paired-row">
+                          {renderNumberField(
+                            'preTimeoutReminderMinutes',
+                            '未回复超时前提醒时间',
+                            '分',
+                          )}
+                          {renderMessageField(
+                            'preTimeoutReminderMessage',
+                            '未回复超时前提醒',
+                          )}
+                        </div>
+                        <div className="routing-config-media-rule-modal__paired-row">
+                          {renderNumberField(
+                            'customerNoReplyTimeoutMinutes',
+                            '客户未回复超时时长',
+                            '分',
+                          )}
+                          {renderMessageField(
+                            'customerTimeoutNotice',
+                            '未回复超时客户提醒',
+                          )}
+                        </div>
+                        <div className="routing-config-media-rule-modal__full-row">
+                          {renderMessageField(
+                            'agentTimeoutNotice',
+                            '未回复超时坐席提醒',
+                            2,
+                            true,
+                          )}
+                        </div>
+                      </div>
 
-                  <div className="routing-config-media-rule-modal__subsection">
-                    <h4>坐席未回复配置</h4>
-                    <div className="routing-config-media-rule-modal__paired-row">
-                      {renderNumberField(
-                        'agentNoReplyTimeoutSeconds',
-                        '坐席未回复超时时长',
-                        '秒',
-                      )}
-                      {renderMessageField(
-                        'agentNoReplyAutoResponseMessage',
-                        '自动回复内容',
-                      )}
-                    </div>
-                  </div>
+                      <div className="routing-config-media-rule-modal__subsection">
+                        <h4>坐席未回复配置</h4>
+                        <div className="routing-config-media-rule-modal__paired-row">
+                          {renderNumberField(
+                            'agentNoReplyTimeoutSeconds',
+                            '坐席未回复超时时长',
+                            '秒',
+                          )}
+                          {renderMessageField(
+                            'agentNoReplyAutoResponseMessage',
+                            '自动回复内容',
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </section>
 
-              <section className="routing-config-media-rule-modal__section">
-                <header>
-                  <strong>坐席服务配置</strong>
-                </header>
-                <div className="routing-config-media-rule-modal__subsections">
-                  <div className="routing-config-media-rule-modal__subsection">
-                    <h4>Webchat 消息撤回</h4>
-                    <div className="routing-config-media-rule-modal__compact-row">
-                      {renderNumberField(
-                        'webchatRecallLimitSeconds',
-                        'Webchat消息撤回时限',
-                        '秒',
-                      )}
+              {draft.mediaCode === 'TEXT' && (
+                <section className="routing-config-media-rule-modal__section">
+                  <header>
+                    <strong>坐席服务配置</strong>
+                  </header>
+                  <div className="routing-config-media-rule-modal__subsections">
+                    <div className="routing-config-media-rule-modal__subsection">
+                      <h4>Webchat 消息撤回</h4>
+                      <div className="routing-config-media-rule-modal__compact-row">
+                        {renderNumberField(
+                          'webchatRecallLimitSeconds',
+                          'Webchat消息撤回时限',
+                          '秒',
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="routing-config-media-rule-modal__subsection">
-                    <h4>坐席未回复服务级别</h4>
-                    <div className="routing-config-media-rule-modal__compact-row">
-                      {renderNumberField(
-                        'agentNoReplyWarningSeconds',
-                        '黄色提醒',
-                        '秒',
-                      )}
-                      {renderNumberField(
-                        'agentNoReplyBreachSeconds',
-                        '红色警示',
-                        '秒',
-                      )}
+                    <div className="routing-config-media-rule-modal__subsection">
+                      <h4>坐席未回复服务级别</h4>
+                      <div className="routing-config-media-rule-modal__compact-row">
+                        {renderNumberField(
+                          'agentNoReplyWarningSeconds',
+                          '黄色提醒',
+                          '秒',
+                        )}
+                        {renderNumberField(
+                          'agentNoReplyBreachSeconds',
+                          '红色警示',
+                          '秒',
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </section>
+                </section>
+              )}
             </>
           )}
         </div>

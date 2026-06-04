@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-04 16:12 +08:00
+最后更新：2026-06-04 16:48 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：客户可访问 Production 版本已发布；当前本地分支 `codex/text-channel-config-settings` 已恢复 `Call Management` / `Routing Config` 菜单与路由，用于继续开发未完成管理功能。本轮继续优化 `Routing Config > Media Service Rule Plans` 的 Text 规则方案弹框：保留临时中文确认版，新增字段级变量插入入口并将数字单位改成本弹框内轻量文本；`Channels` 暂只继续绑定并引用规则方案，Voice / Video 本轮只记录参数适配判断。
+当前目标：客户可访问 Production 版本已发布；当前本地分支 `codex/text-channel-config-settings` 已恢复 `Call Management` / `Routing Config` 菜单与路由，用于继续开发未完成管理功能。本轮已让 `Routing Config > Media Service Rule Plans` 新增/编辑页根据 Media Type 联动：Text 保持完整配置，Voice / Video 第一版只展示基础信息和客户服务接入配置；`Channels` 暂只继续绑定并引用规则方案。
 
 ## 0. 使用规则
 
@@ -119,7 +119,7 @@ codex-recovered-context.md
 - `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`：正式 `Live Chat` Conversation tab 内容，包含消息记录、快捷回复、引用、撤回、Transfer、End/Close 和发送消息演示。
 - `src/pages/call-management/RoutingConfigurationPage.tsx`：旧路由配置入口兼容组件，重定向到 `/routing-config/route-elements`。
 - `src/pages/routing-config/RoutingConfigCrudPage.tsx`：Routing Config 普通主数据页复用的本地 CRUD 容器，提供 Search / Add / View / Edit / Delete 弹窗表单。
-- `src/pages/routing-config/RoutingConfigDataPages.tsx`：Routing Config 主数据独立配置页，覆盖 Route Elements、VDN、Sites、Channels、Media Service Rule Plans、Business Types、Site Access Volume、Access Accounts、Working Time Plans、Skill Queues；Channels 已支持按媒体引用服务规则方案，Media Service Rule Plans 当前完整维护 Text 媒体服务规则，弹框按 Basic Info、Customer Service Configuration、Agent Service Configuration 维护字段且不再展示 Queue Alert / Recipients 区块；2026-06-04 15:32 后该弹框临时用中文展示并采用类似 Working Time Plans 的块状布局，2026-06-04 16:12 后话术字段右上角按字段显示 `插入变量` 下拉并插入到最近光标/选区，数字单位改成本弹框内轻量文本，待中文确认后再转回英文；Working Time Plans 已改为印尼单国家自定义排班编辑器，包含 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan，Skill Queues 未选择方案时展示 `Default 24x7`。
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`：Routing Config 主数据独立配置页，覆盖 Route Elements、VDN、Sites、Channels、Media Service Rule Plans、Business Types、Site Access Volume、Access Accounts、Working Time Plans、Skill Queues；Channels 已支持按媒体引用服务规则方案，Media Service Rule Plans 当前完整维护 Text 媒体服务规则，弹框按 Basic Info、Customer Service Configuration、Agent Service Configuration 维护字段且不再展示 Queue Alert / Recipients 区块；2026-06-04 15:32 后该弹框临时用中文展示并采用类似 Working Time Plans 的块状布局，2026-06-04 16:12 后话术字段右上角按字段显示 `插入变量` 下拉并插入到最近光标/选区，数字单位改成本弹框内轻量文本，2026-06-04 16:48 后 Add 支持选择文字/语音/视频媒体并联动配置，Voice / Video 只展示基础信息和客户服务接入配置，待中文确认后再转回英文；Working Time Plans 已改为印尼单国家自定义排班编辑器，包含 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan，Skill Queues 未选择方案时展示 `Default 24x7`。
 - `src/pages/routing-config/SkillRoutingRulesPage.tsx`：独立技能路由规则页，支持按启用路由要素多选查询、规则列表要素拆列、批量新增拆分预览、重复组合勾选覆盖、规则查看/编辑/删除。
 - `src/pages/routing-config/RoutingConfigStatusBadge.tsx`：Routing Config 状态 badge 组件，避免页面组件导出非组件函数触发 Fast Refresh lint。
 - `src/pages/call-management/TextChannelSettingsPage.tsx`：数据呼叫管理下的文字渠道配置页，包含 Service Rules、Customer Timeout & Messages、Channel Queue Alerts 三组配置。
@@ -512,6 +512,27 @@ Live Chat 当前 mock：
 - GitHub remote 与基础提交。
 
 ## 10. 当前开发状态
+
+截至 2026-06-04 16:48 +08:00，本轮实现 `Routing Config > Media Service Rule Plans` 的 Voice / Video 简化配置联动：
+
+- Add 弹框的 Media Type 现在可选择 `文字媒体 / 语音媒体 / 视频媒体`；Edit/View 中 Media Type 锁定不可改。
+- Text 保持当前完整中文配置不变，包括接入、排队、人工开场/结束、客户未回复、坐席未回复、Webchat 消息撤回和坐席未回复服务级别。
+- Voice / Video 第一版只展示 `基础信息` 和 `客户服务配置 > 接入配置`；不展示排队、等待室、重连、回拨、客户未回复、坐席未回复、坐席服务配置、SLA、Webchat 撤回。
+- Voice 接入配置展示接入并发呼叫数、接入最小扫描间隔、接入成功欢迎语；Video 接入配置展示接入并发视频数、接入最小扫描间隔、接入成功欢迎语。
+- Voice / Video 复用现有 `MediaServiceRulePlan` 接入字段，隐藏的 Text 专属字段保留默认值但不参与校验；本轮未新增复杂 Voice / Video 类型字段。
+- `src/mock/routingConfiguration.ts` 新增 `MSRP_VOICE_STANDARD` 和 `MSRP_VIDEO_STANDARD` 样例，方便直接 View/Edit 验证不同媒体。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `http://127.0.0.1:5182/routing-config/media-service-rule-plans`：Add 默认 Text 显示完整配置，切换 Voice 后只显示接入配置，变量入口 1 个、数字字段 2 个，Text 专属分区均不显示。
+- Browser Add 切换 Video：只显示接入配置，字段标签为 `接入并发视频数`，变量入口 1 个、数字字段 2 个，Text 专属分区均不显示。
+- Browser Video 保存空方案名称时只提示 `方案名称为必填项。`，未出现 Text 专属必填校验。
+- Browser View Voice / View Video：只读展示对应媒体和接入配置，不显示变量入口和 Text 专属分区。
+- Browser Edit Voice：媒体类型锁定，仍只显示接入配置；Add/Edit 的接入欢迎语保留 `插入变量`。
+- Browser `/routing-config/channels`：Rule Plan 绑定列仍正常显示 `MSRP_TEXT_STANDARD` / `MSRP_TEXT_PRIORITY`，未发现页面渲染错误。
+- Browser 控制台仍有既有 AntD deprecation 日志，主要来自通用 Modal 和其它页面/控件，不是本轮新增阻塞。
 
 截至 2026-06-04 16:12 +08:00，本轮继续优化 `Routing Config > Media Service Rule Plans` 弹框的变量插入、单位样式和 Voice / Video 参数适配口径：
 

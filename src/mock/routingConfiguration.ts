@@ -470,6 +470,74 @@ export const mediaServiceRulePlans: MediaServiceRulePlan[] = [
     updatedBy: 'Admin',
     webchatRecallLimitSeconds: 120,
   },
+  {
+    accessSuccessWelcomeMessage: '您好，语音智能小助手为您提供服务。',
+    agentNoReplyAutoResponseMessage: '请稍候，我们正在处理。',
+    agentNoReplyBreachSeconds: 120,
+    agentNoReplyTimeoutSeconds: 120,
+    agentNoReplyWarningSeconds: 60,
+    agentEndReminder: '很高兴为您服务，祝您生活愉快！',
+    assignedAgentGreeting:
+      '尊敬的{customerName}您好，{agentName}将为您服务。',
+    agentTimeoutNotice: '客户超时未回复，会话自动关闭。',
+    customerNoReplyTimeoutMinutes: 5,
+    customerTimeoutNotice:
+      '未收到您的回复，已自动关闭服务，若有需要可再次联系客服。',
+    description: 'Standard voice service access rule plan.',
+    maxConcurrentAccess: 50,
+    maxQueueCustomers: 20,
+    mediaCode: 'VOICE',
+    minScanIntervalSeconds: 30,
+    nonWorkingTimeMessage:
+      '抱歉，工作时间为{workTime}，请在此时间联系我们。',
+    planCode: 'MSRP_VOICE_STANDARD',
+    planName: 'Standard Voice Service',
+    preTimeoutReminderMessage:
+      '系统未收到回复，将在{reminderMinutes}分钟后结束会话。',
+    preTimeoutReminderMinutes: 1,
+    queueTimeoutMessage: '当前人工服务繁忙，请稍后再试。',
+    queueTimeoutMinutes: 10,
+    queueWaitingMessage:
+      '当前人工服务繁忙，预计等待{estimatedWaitMinutes}分钟。',
+    status: 'Active',
+    updatedAt: '2026-06-04',
+    updatedBy: 'Admin',
+    webchatRecallLimitSeconds: 120,
+  },
+  {
+    accessSuccessWelcomeMessage: '您好，视频智能小助手为您提供服务。',
+    agentNoReplyAutoResponseMessage: '请稍候，我们正在处理。',
+    agentNoReplyBreachSeconds: 120,
+    agentNoReplyTimeoutSeconds: 120,
+    agentNoReplyWarningSeconds: 60,
+    agentEndReminder: '很高兴为您服务，祝您生活愉快！',
+    assignedAgentGreeting:
+      '尊敬的{customerName}您好，{agentName}将为您服务。',
+    agentTimeoutNotice: '客户超时未回复，会话自动关闭。',
+    customerNoReplyTimeoutMinutes: 5,
+    customerTimeoutNotice:
+      '未收到您的回复，已自动关闭服务，若有需要可再次联系客服。',
+    description: 'Standard video service access rule plan.',
+    maxConcurrentAccess: 50,
+    maxQueueCustomers: 20,
+    mediaCode: 'VIDEO',
+    minScanIntervalSeconds: 30,
+    nonWorkingTimeMessage:
+      '抱歉，工作时间为{workTime}，请在此时间联系我们。',
+    planCode: 'MSRP_VIDEO_STANDARD',
+    planName: 'Standard Video Service',
+    preTimeoutReminderMessage:
+      '系统未收到回复，将在{reminderMinutes}分钟后结束会话。',
+    preTimeoutReminderMinutes: 1,
+    queueTimeoutMessage: '当前人工服务繁忙，请稍后再试。',
+    queueTimeoutMinutes: 10,
+    queueWaitingMessage:
+      '当前人工服务繁忙，预计等待{estimatedWaitMinutes}分钟。',
+    status: 'Active',
+    updatedAt: '2026-06-04',
+    updatedBy: 'Admin',
+    webchatRecallLimitSeconds: 120,
+  },
 ]
 
 export const channelMediaRuleBindings: ChannelMediaRuleBinding[] = channels

@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-04 16:12 +08:00
+最后更新：2026-06-04 16:48 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,56 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-04 16:48 +08:00 - Media Service Rule Plans 支持语音视频简化接入配置
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/mock/routingConfiguration.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-04-1648.md`
+- `.codex-backup/current-todo-2026-06-04-1648.md`
+- `.codex-backup/page-state-2026-06-04-1648.md`
+
+修改原因：
+
+- 用户确认语音和视频媒体第一版不需要复杂配置，只在 `Media Service Rule Plans` 中按媒体类型联动展示接入配置。
+- 需要保留 Text 当前完整配置，同时让 Add 支持选择 `文字媒体 / 语音媒体 / 视频媒体`。
+
+修改结果：
+
+- Add 弹框 Media Type 改为可选 `文字媒体 / 语音媒体 / 视频媒体`；Edit/View 中 Media Type 锁定不可改。
+- Text 分支继续展示当前完整配置和校验。
+- Voice / Video 分支只展示 `基础信息` 和 `客户服务配置 > 接入配置`，其中 Voice 使用 `接入并发呼叫数`，Video 使用 `接入并发视频数`。
+- Voice / Video 不展示排队、等待室、重连、回拨、客户未回复、坐席未回复、坐席服务配置、SLA、Webchat 撤回。
+- Voice / Video 只校验方案ID、方案名称、接入并发数、接入最小扫描间隔、接入成功欢迎语；不校验 Text 专属字段。
+- 新增 `MSRP_VOICE_STANDARD` 和 `MSRP_VIDEO_STANDARD` mock 规则方案，方便直接查看和编辑对应媒体。
+- `Channels` 绑定数据未修改，仍只按现有 Text 规则方案绑定显示。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser `/routing-config/media-service-rule-plans` Add 默认 Text：完整 Text 配置仍显示。
+- Browser Add 切换 Voice：只显示接入配置，变量入口 1 个、数字字段 2 个；Text 专属分区不显示。
+- Browser Add 切换 Video：只显示接入配置，字段为 `接入并发视频数`，变量入口 1 个、数字字段 2 个；Text 专属分区不显示。
+- Browser Video 空方案名称保存：只提示 `方案名称为必填项。`，未出现 Text 专属校验。
+- Browser View Voice / View Video：只读展示媒体类型和接入配置，不显示变量入口和 Text 专属分区。
+- Browser Edit Voice：媒体类型锁定，仍只显示接入配置；Add/Edit 接入欢迎语仍显示 `插入变量`。
+- Browser `/routing-config/channels`：Rule Plan 绑定列正常显示，未发现渲染错误。
+
+回滚说明：
+
+- 如需回滚本轮 Voice / Video 支持，恢复 Add 弹框 Media Type 固定 Text、恢复非 Text 校验拦截、删除 Voice / Video mock 规则方案，并移除 Voice / Video 分支渲染逻辑。
+
+当前风险点：
+
+- Voice / Video 目前只做接入配置，不包含排队、等待室、重连、回拨、接听 SLA 或音视频技术参数；后续需要时应单独扩展。
+- 由于仍复用当前扁平 `MediaServiceRulePlan` 类型，Voice / Video 隐藏的 Text 字段会保留默认值但不参与页面展示和校验。
+- Browser 插件本轮仍无法稳定输入文本，只能通过空方案名称保存验证校验分支；真实浏览器建议再人工保存一个 Voice / Video 方案确认手感。
 
 ### 2026-06-04 16:12 +08:00 - Media Service Rule Plans 变量插入与单位样式优化
 
