@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-06-04 12:10 +08:00
+最后更新：2026-06-05 15:56 +08:00
 
 ## 项目方向
 
@@ -25,6 +25,18 @@
 - Toolbar 负责 Answer、Hold、Mute、Transfer、Hang Up、More。
 - 坐席状态菜单负责 Ready、Not Ready、AUX、Sign Out。
 - 增加 Agent Toolbar 与 Inbound 页面之间的联动逻辑。
+
+## 2026-06-05 客户 AUX 示忙原因选择弹框
+
+- AUX 改造是客户可见功能，必须从 `main` 或隐藏管理菜单的客户安全基线开发，不能把本地 `Call Management` / `Routing Config` 管理菜单带出去。
+- 右上角头像状态菜单在 signed-in 状态只显示一个 `AUX` 入口和 `Sign Out`，不直接列出多条 `AUX - reason`。
+- 点击 `AUX` 打开 `Select AUX Reason` 弹框，数据来自最小 Busy Reason mock/store。
+- 弹框只显示 `status === 'Active'` 的示忙原因。
+- 默认选中 `isDefault === true` 的启用原因；如果没有启用默认项，则选中启用列表第一条。
+- 点击 `Confirm` 后切换状态为 `AUX - {reasonName}`，复用现有 `BasicLayout.updateAgentStatus` 的 AUX 副作用。
+- 点击 `Cancel` 不改变状态。
+- 当前客户分支 mock：`Ibadah` 默认启用、`Makan` 启用、`Training` 禁用、`Extension 1-7` 禁用。
+- 客户分支继续隐藏 `Call Management` 与 `Routing Config` 菜单和 `/call-management/*`、`/routing-config/*` 直达 URL。
 
 ## 功能弹窗
 

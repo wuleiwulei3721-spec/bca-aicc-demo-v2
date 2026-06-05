@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-04 12:29 +08:00
+最后更新：2026-06-05 15:56 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,62 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-05 15:56 +08:00 - 客户分支新增 AUX 示忙原因选择弹框
+
+修改页面或文件：
+
+- `src/layouts/components/AgentProfileArea.tsx`
+- `src/types/agent.ts`
+- `src/types/busyReason.ts`
+- `src/types/index.ts`
+- `src/mock/busyReasons.ts`
+- `src/store/callManagementStore.ts`
+- `src/store/index.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-05-1556.md`
+- `.codex-backup/current-todo-2026-06-05-1556.md`
+- `.codex-backup/page-state-2026-06-05-1556.md`
+
+修改原因：
+
+- 用户要求先清理无用本地分支，并在客户可发布基线上实现 AUX 改造。
+- AUX 改造要求根据示忙原因配置，点击 AUX 后弹框列出启用状态的示忙原因，默认选中默认原因，确认后再切换坐席状态。
+- 该功能后续要发布给客户，因此必须基于 `main` 的隐藏管理菜单版本开发，避免把本地 Call/Routing 管理菜单带出去。
+
+修改结果：
+
+- 删除了 5 个本地已合并旧分支：`codex/customer-preview-hide-admin-menus`、`codex/fix-toolbar-chat-modals`、`codex/livechat2-popup`、`codex/local-livechat2-integrated`、`codex/modal-review-fixes`；未删除远端分支。
+- 从 `main` 创建客户安全分支 `codex/customer-aux-busy-reason-modal`。
+- 新增客户分支最小 Busy Reason 类型、mock 和 store；mock 包含 `Ibadah` 默认启用、`Makan` 启用、`Training` 禁用、`Extension 1-7` 禁用。
+- `AgentStatus` 改为支持动态 `AUX - ${string}`。
+- 右上角头像菜单签入后显示单个 `AUX` 入口，不再直接显示 `AUX - Ibadah` / `AUX - Makan`。
+- 点击 `AUX` 打开 `Select AUX Reason` 弹框，只展示启用原因；点击 `Confirm` 后调用现有 `onStatusChange` 切换为 `AUX - {reasonName}`。
+- `Call Management` 与 `Routing Config` 菜单和直达路由保持隐藏。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite chunk size warning。
+- Browser 打开 `/`，验证首页加载，左侧没有 `Call Management` 和 `Routing Config`。
+- Browser 验证签出菜单只显示 `Sign In`；签入后菜单显示 `AUX` 和 `Sign Out`，不显示直接的 `AUX - Ibadah` / `AUX - Makan`。
+- Browser 点击 `AUX`，验证弹框显示 `Select AUX Reason`，只列出 `Ibadah` 和 `Makan`，不显示 `Training` 或 `Extension 1-7`，原因项不显示额外说明文字。
+- Browser 点击 `Confirm`，验证状态计时区显示 `AUX - Ibadah`，弹框关闭。
+- Browser 打开 `/call-management/busy-reasons`，验证仍重定向回 `/`，没有暴露管理页面。
+- `/design-system` HTTP 检查返回 200。
+
+回滚说明：
+
+- 如需回滚本轮 AUX 改造，可恢复 `AgentProfileArea.tsx` 中静态 `AUX - Ibadah` / `AUX - Makan` 菜单项，删除最小 Busy Reason 类型/mock/store 和相关导出，并移除本轮新增样式。
+- 如需恢复旧本地分支，可从对应 commit 重新创建；本轮没有删除任何远端分支。
+
+当前风险点：
+
+- Busy Reason 数据在客户分支仍是前端 mock，不接后端或管理页面；后续如果要动态维护，需要单独接入后端或客户安全的配置来源。
+- 当前 AUX 默认原因由 mock 中的 `isDefault` 决定；如果所有启用原因都没有默认值，则会选中启用列表第一条。
 
 ### 2026-06-04 12:29 +08:00 - 客户 Production 发布合入 main
 

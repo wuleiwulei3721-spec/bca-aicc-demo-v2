@@ -947,6 +947,60 @@ a {
   color: #ffffff;
 }
 
+.aicc-aux-reason-modal .aicc-modal__body {
+  gap: 12px;
+}
+
+.aicc-aux-reason-list {
+  display: grid;
+  width: 100%;
+  gap: 8px;
+}
+
+.aicc-aux-reason-list__item {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #dce7f5;
+  border-radius: var(--aicc-radius);
+  background: #ffffff;
+  cursor: pointer;
+  gap: 10px;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.aicc-aux-reason-list__item:hover {
+  border-color: rgba(23, 105, 224, 0.36);
+  background: #f8fbff;
+}
+
+.aicc-aux-reason-list__item--selected {
+  border-color: rgba(23, 105, 224, 0.5);
+  background: #eef6ff;
+  box-shadow: inset 0 0 0 1px rgba(23, 105, 224, 0.08);
+}
+
+.aicc-aux-reason-list__content {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.aicc-aux-reason-list__content strong {
+  overflow: hidden;
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .aicc-internal-chat-modal .ant-modal-content {
   border-radius: var(--aicc-radius);
 }

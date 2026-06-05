@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-04 12:29 +08:00
+最后更新：2026-06-05 15:56 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：发布客户可访问 Production 版本；`main` 已合入隐藏未完成管理菜单的客户发布版本，等待推送触发 Vercel Production。
+当前目标：在客户安全分支 `codex/customer-aux-busy-reason-modal` 上实现 AUX 示忙原因选择弹框；该分支基于 `main`，继续隐藏 `Call Management` 与 `Routing Config` 管理菜单及直达 URL，仅新增客户可见的右上角 AUX 选择能力。
 
 ## 0. 使用规则
 
@@ -40,8 +40,8 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`main`
-当前 HEAD：以 `git rev-parse HEAD` 为准；`main` 已快进合入 `codex/customer-preview-hide-admin-menus`，用于客户 Production 发布。该版本保留主工作台、Channel Simulation、BankApp、WhatsApp、PSTN、Voice/Video handoff、正式 Live Chat 和 Design System；暂时屏蔽未完成的 `Call Management` 与 `Routing Config` 菜单及其直达 URL。发布完成后，本地继续开发应切回 `codex/text-channel-config-settings`，该分支保留管理菜单入口。
+当前分支：`codex/customer-aux-busy-reason-modal`
+当前 HEAD：以 `git rev-parse HEAD` 为准；本分支从 `main` 创建，保留客户 Production 口径：主工作台、Channel Simulation、BankApp、WhatsApp、PSTN、Voice/Video handoff、正式 Live Chat 和 Design System 可用，`Call Management` 与 `Routing Config` 菜单及其直达 URL 继续屏蔽。本分支只新增客户可见的 AUX 示忙原因选择弹框。
 部署目标：Vercel Production 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -126,13 +126,16 @@ codex-recovered-context.md
 - `src/pages/inbound/components/ChannelTag.tsx`：统一渠道标签，Customer Information 中可合并展示静态渠道接入耗时，例如 `PSTN · 05:23`、`BankApp · 02:11`。
 - `src/pages/DesignSystem.tsx`：设计系统展示页。
 - `src/store/appStore.ts`：workspace tab、BankApp demo tab、WhatsApp demo tab、Live Chat 聚焦/已读状态、多 `CallInteraction` 通话实例、voice/video handoff readiness、interaction timing 和 demo-only screen share 全局状态。
+- `src/store/callManagementStore.ts`：客户分支最小 Call Management 前端 store，目前只提供示忙原因列表给右上角 AUX 选择弹框使用，不暴露管理页面或维护能力。
 - `src/hooks/useNow.ts`：前端运行时每秒 tick hook，用于 workspace tab 和 Live Chat 列表计时刷新。
 - `src/mock/bankapp.ts`：BankApp 联系方式、业务类型、客户身份/语言驱动的技能路由和截图素材路径配置。
 - `src/mock/inbound.ts`：Inbound 演示数据。
 - `src/mock/routingConfiguration.ts`：路由配置页默认 mock，包含 route factor、自编码 VDN/站点/渠道/渠道媒体/业务类型/接入账号/接入入口/结构化工作时间方案/技能队列/路由规则。
+- `src/mock/busyReasons.ts`：客户分支最小示忙原因 mock，包含 Ibadah 默认启用、Makan 启用、Training 禁用、Extension 1-7 禁用；AUX 弹框只展示启用原因。
 - `src/mock/textChannelSettings.ts`：文字渠道配置页默认 mock，包含并发人数、自动回复、Webchat 撤回、客户超时话术、渠道排队阈值和通知对象。
 - `src/types/bankapp.ts`：BankApp demo 联系方式、业务类型和步骤类型。
 - `src/types/inbound.ts`：Inbound 业务类型。
+- `src/types/busyReason.ts`：客户分支最小示忙原因类型，供 AUX 选择弹框和 store 使用。
 - `src/types/routingConfiguration.ts`：路由配置页专用类型，覆盖 route factor、channel_media、site_access_ratio、working_time_plan、skill_queue、routing_rule 和 routing_rule_index 等结构。
 - `src/store/routingConfigStore.ts`：Routing Config 前端 demo 本地状态 store，刷新后恢复 mock；普通 CRUD、渠道媒体规则方案、Channel + Media 规则绑定和技能路由规则共用。
 - `src/types/textChannelSettings.ts`：文字渠道配置页专用类型，渠道 code 为 `haloapp | webchat | whatsapp`，避免与现有 `AccessChannel` 耦合。
@@ -186,7 +189,7 @@ codex-recovered-context.md
 - 左侧菜单支持 2 层级：展开态顶部显示折叠按钮与菜单搜索框，点击一级菜单在下方展开二级菜单；收起态仅显示一级图标，鼠标悬浮在一级图标时在右侧显示二级菜单浮层，鼠标移出浮层或点击菜单后浮层关闭。
 - 当前侧栏菜单使用英文企业呼叫中心文案：Channel Simulation（PSTN、BankApp、WhatsApp）、Agent Center（Agent Profile、Service History）、Operations（Alert KPI Management、Floor Management）、Reports。客户预览发布版暂不展示 `Call Management` 和 `Routing Config`。
 - Agent Toolbar：Answer、Hold、Mute、Transfer、Hang Up、More；电话/视频呼入时可在动作按钮最左侧展示 incoming identification；More 菜单点击打开，包含 Outbound Call 与 Settings。
-- Agent Profile Area：仍显示 Ready、Not Ready、AUX - Ibadah、AUX - Makan、Unsigned 等业务状态菜单；头像右下状态点使用 `effectiveAgentPresence`，由坐席状态和活跃客户互动共同决定。
+- Agent Profile Area：Signed out 时菜单只显示 `Sign In`；Signed in 后菜单显示单个 `AUX` 入口与 `Sign Out`。点击 `AUX` 会打开 `Select AUX Reason` 弹框，仅列出启用示忙原因，默认选中配置默认项，点击 `Confirm` 后切换为 `AUX - {reasonName}`。头像右下状态点使用 `effectiveAgentPresence`，由坐席状态和活跃客户互动共同决定。
 - Notifications 和 Internal Chat 入口。
 - Internal Chat Modal。
 
@@ -197,8 +200,7 @@ type AgentStatus =
   | 'Unsigned'
   | 'Ready'
   | 'Not Ready'
-  | 'AUX - Ibadah'
-  | 'AUX - Makan'
+  | `AUX - ${string}`
 ```
 
 话务状态类型：
@@ -500,6 +502,17 @@ Live Chat 当前 mock：
 - GitHub remote 与基础提交。
 
 ## 10. 当前开发状态
+
+截至 2026-06-05 15:56 +08:00，本轮在客户安全分支实现 AUX 示忙原因选择弹框：
+
+- 已从 `main` 创建 `codex/customer-aux-busy-reason-modal`，继续隐藏 `Call Management` 与 `Routing Config` 菜单和直达 URL。
+- 已清理本地旧分支：`codex/customer-preview-hide-admin-menus`、`codex/fix-toolbar-chat-modals`、`codex/livechat2-popup`、`codex/local-livechat2-integrated`、`codex/modal-review-fixes`；未删除远端分支。
+- 新增客户分支最小 Busy Reason 类型、mock 和 store，仅供右上角 AUX 弹框读取，不提供管理页面。
+- 右上角头像状态菜单从多条 `AUX - Ibadah` / `AUX - Makan` 改为单个 `AUX` 入口；点击后打开 `Select AUX Reason` 弹框。
+- AUX 弹框只显示启用原因：`Ibadah`、`Makan`；`Ibadah` 默认选中；`Training` 和 `Extension 1-7` 为禁用备用原因，不显示。
+- 点击 `Confirm` 后通过现有状态机切换到 `AUX - {reasonName}`；`Cancel` 不改变状态；现有 AUX 清理通话和 Live Chat active sessions 的副作用不变。
+- 验证：`npm run lint` 通过；`npm run build` 通过，仅保留既有 Vite chunk size warning。
+- 浏览器验证：`/` 正常加载，左侧无 `Call Management` / `Routing Config`；签出菜单只显示 `Sign In`；签入菜单显示 `AUX` / `Sign Out`；AUX 弹框只显示启用原因；确认后状态变为 `AUX - Ibadah`；`/call-management/busy-reasons` 仍重定向回 `/`。
 
 截至 2026-06-03 10:12 +08:00，本轮调整管理台通用页面顶部规范：
 
@@ -2424,6 +2437,8 @@ M src/types/inbound.ts
 
 P0：
 
+- 人工复查客户 AUX 弹框：签出状态头像菜单只显示 `Sign In`；签入后显示 `AUX` 和 `Sign Out`；点击 `AUX` 打开 `Select AUX Reason`；只显示启用原因 `Ibadah`、`Makan`；默认选中 `Ibadah`；`Cancel` 不改变状态；`Confirm` 后状态计时区显示 `AUX - Ibadah` 或所选原因。
+- 人工复查客户安全分支仍隐藏管理菜单：左侧菜单不显示 `Call Management` 和 `Routing Config`；`/call-management/*`、`/routing-config/*` 仍回到 `/`。
 - 人工复查 `Routing Config > Route Elements`：英文标题、查询栏、独立靠右 Add、列表字段、短胶囊状态开关、弹框顶部标题栏背景、无额外 footer 背景、统一按钮宽度/高度和保存后校验提示符合管理台数据维护规范。
 - 人工复查 `Routing Config` 普通 CRUD 页状态展示：列表和详情统一为 `Enabled/Disabled` badge，新增/编辑统一为短 switch + 状态文本，不再混用 `Active`。
 - 人工复查 `Routing Config` 普通 CRUD 页工具栏：输入框、下拉框、Search/Reset/Add 按钮高度一致，普通页面统一使用 Keyword + Search/Reset + 右侧 Add。
