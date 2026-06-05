@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-05 19:34 +08:00
+最后更新：2026-06-05 20:07 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：在客户可发布隔离分支 `codex/customer-identity-refresh` 上实现来电弹屏客户身份刷新；PSTN 初始为未识别客户，坐席可在 Customer Information 右上角点击身份刷新图标，使用演示 `Paste` 填入客户 ID `00000078987` 后刷新客户信息、Customer Journey 与 Ticketing History。已修复右上角双图标裁剪、Customer ID 浮层偏左、header action hover 背景内图标不居中、正式 Live Chat 客户卡片接入时长错误持续计时，并在语音/IVR 类客户卡片底部新增可见标签为 `Menu` 的最后菜单提示。
+当前目标：在 `codex/livechat-current-empty-state` 上修复正式 Live Chat 文字弹屏 Current 客户清空后的右侧空态；Sign In 后 Live Chat 默认预设两个 Current 客户，其中 `livechat2-005` 为客户主动挂机待坐席关闭；Current 为空时右侧显示当前无客户接入空态，不再自动 fallback 到 History 客户详情。此前客户身份刷新、接入时长冻结和客户卡片 `Menu` 最后菜单提示已发布到 `main`。
 
 ## 0. 使用规则
 
@@ -40,7 +40,7 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`codex/customer-identity-refresh`
+当前分支：`codex/livechat-current-empty-state`
 当前 HEAD：以 `git rev-parse HEAD` 为准；本分支从 `main` 创建，保留客户 Production 口径：主工作台、Channel Simulation、BankApp、WhatsApp、PSTN、Voice/Video handoff、正式 Live Chat 和 Design System 可用，`Call Management` 与 `Routing Config` 菜单及其直达 URL 继续屏蔽。本分支新增客户可见的来电弹屏客户身份刷新能力。
 部署目标：Vercel Production 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
@@ -113,8 +113,8 @@ codex-recovered-context.md
 - `src/pages/inbound/InboundPage.tsx`：PSTN / Voice Call 电话弹屏 wrapper；PSTN 初始使用未识别客户和空 Journey / Ticketing，BankApp Voice 保持已识别客户。
 - `src/pages/inbound/VideoCallPage.tsx`：Video Call 弹屏 wrapper，复用三栏工作台并叠加 OpenEye 浮窗。
 - `src/pages/inbound/LiveChatPage.tsx`：旧版 Live Chat 页面源码，当前不再作为正式 tab 渲染，保留作回滚参考。
-- `src/pages/inbound/LiveChat2Page.tsx`：正式 `Live Chat` 弹屏页面，继续使用 `liveChat2*` store、mock 和组件实现客户列表、Conversation、Message Record 与 Quick Replies；Customer Information 使用 `activeSession.customer.accessDuration` 的静态接入耗时，不再用服务中 `elapsedSeconds` 覆盖。
-- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`：正式 `Live Chat` 客户列表，包含收起/展开、渠道筛选、排序、Current/History 文字 tab、未读、未回复计时、星标和关闭结束会话；客户行使用两行 grid 对齐且不再展示转接图标，收起态保留 SLA 左侧色条并在渠道头像内展示只读星标。
+- `src/pages/inbound/LiveChat2Page.tsx`：正式 `Live Chat` 弹屏页面，继续使用 `liveChat2*` store、mock 和组件实现客户列表、Conversation、Message Record 与 Quick Replies；Customer Information 使用 `activeSession.customer.accessDuration` 的静态接入耗时，不再用服务中 `elapsedSeconds` 覆盖；Current 与 History 视图各自选择客户，Current 清空时显示当前无客户空态，不再自动展示 History 客户。
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`：正式 `Live Chat` 客户列表，包含收起/展开、渠道筛选、排序、Current/History 文字 tab、未读、未回复计时、星标和关闭结束会话；客户行使用两行 grid 对齐且不再展示转接图标，收起态保留 SLA 左侧色条并在渠道头像内展示只读星标；Current / History 列表为空时在展开态显示轻量空态提示。
 - `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`：正式 `Live Chat` Conversation tab 内容，包含消息记录、快捷回复、引用、撤回、Transfer、End/Close 和发送消息演示。
 - `src/pages/call-management/RoutingConfigurationPage.tsx`：旧路由配置入口兼容组件，重定向到 `/routing-config/route-elements`。
 - `src/pages/routing-config/RoutingConfigCrudPage.tsx`：Routing Config 普通主数据页复用的本地 CRUD 容器，提供 Search / Add / View / Edit / Delete 弹窗表单。
@@ -126,7 +126,7 @@ codex-recovered-context.md
 - `src/pages/inbound/components/CustomerInformationCard.tsx`：Inbound 左栏客户信息卡容器，包含客户验证、联系信息维护、呼出申请、Call Flow、Send Email，以及右上角客户身份刷新浮层；身份刷新图标和原编辑联系方式图标必须同时显示在卡片右上角，Customer ID 浮层使用 `bottom` placement，hover 背景内图标必须居中；语音/IVR 类渠道在底部第二行以 `Menu` 短标签展示最后一级菜单，从现有 `callFlowDetail.ivrJourney` 取最后一级菜单，并在 title / aria 中保留 `Last IVR menu` 完整语义。
 - `src/pages/inbound/components/ChannelTag.tsx`：统一渠道标签，Customer Information 中可合并展示静态渠道接入耗时，例如 `PSTN · 05:23`、`BankApp · 02:11`。
 - `src/pages/DesignSystem.tsx`：设计系统展示页。
-- `src/store/appStore.ts`：workspace tab、BankApp demo tab、WhatsApp demo tab、Live Chat 聚焦/已读状态、多 `CallInteraction` 通话实例、voice/video handoff readiness、interaction timing 和 demo-only screen share 全局状态；`createLiveChat2HandoffSession()` 会保留来源 session 的 `customer.accessDuration`，不把客户卡片接入时长重置或改成服务时长。
+- `src/store/appStore.ts`：workspace tab、BankApp demo tab、WhatsApp demo tab、Live Chat 聚焦/已读状态、多 `CallInteraction` 通话实例、voice/video handoff readiness、interaction timing 和 demo-only screen share 全局状态；`createLiveChat2HandoffSession()` 会保留来源 session 的 `customer.accessDuration`，不把客户卡片接入时长重置或改成服务时长；`setLiveChatTabOpen(true)` 在干净签入周期内预设 `livechat2-001` 和客户主动挂机的 `livechat2-005` 作为 Current 演示客户。
 - `src/store/callManagementStore.ts`：客户分支最小 Call Management 前端 store，目前只提供示忙原因列表给右上角 AUX 选择弹框使用，不暴露管理页面或维护能力。
 - `src/hooks/useNow.ts`：前端运行时每秒 tick hook，用于 workspace tab 和 Live Chat 列表计时刷新。
 - `src/mock/bankapp.ts`：BankApp 联系方式、业务类型、客户身份/语言驱动的技能路由和截图素材路径配置。
@@ -2405,6 +2405,7 @@ M src/types/inbound.ts
 
 ## 11. 已知问题与风险
 
+- 正式 Live Chat 本轮新增默认 Current 演示客户：`livechat2-001` 为服务中客户，`livechat2-005` 为客户主动挂机待坐席关闭；这是前端 demo seed，不接真实文字渠道队列。坐席在同一签入周期内关闭所有 Current 客户后不会自动回补默认客户，需新路由接入或重新签入后才会再次出现默认场景。
 - 本轮已将 Modal 从全白贴边状态回调为浅蓝标题栏、灰蓝 body 和白色内容面；已通过 Browser 检查 Transfer / Outbound / Internal Chat，但仍建议用户在当前本地页面做最终视觉确认。
 - Browser 截图输出在 Codex app 中偶发出现重复画面拼接，但 DOM 与交互检查正常，实际页面可直接在 in-app browser 中查看。
 - 本轮话务条 Transfer / Outbound 和 Internal Chat 弹框回归已通过本地 lint/build 与 Browser smoke check；仍建议在客户目标演示分辨率下人工复查 Internal Chat 视觉是否符合客户截图口径。
@@ -2440,6 +2441,8 @@ M src/types/inbound.ts
 
 P0：
 
+- 人工复查正式 Live Chat 当前客户清空空态：Sign In 后打开 Live Chat，Current 默认显示两个客户，其中 `livechat2-005` 为客户主动挂机并显示 `Close`；关闭已挂机客户、再 End Service / Close 剩余服务中客户后，Current 计数为 0，右侧显示 `No current Live Chat customers`，不再渲染旧 Customer Information / Conversation / Assistant 客户上下文；切换 History 后仍可查看已关闭客户。
+- 人工复查正式 Live Chat Current 清空后的新 route 恢复：从 WhatsApp 或 BankApp Demo route 新文字客户后，Current 应恢复显示新客户并渲染工作台。
 - 人工复查客户身份刷新：PSTN 初始显示 `Unidentified Customer`；Customer Journey / Ticketing History 显示未加载空态；Customer Information 右上角同时显示身份刷新图标和原编辑联系方式图标；两个图标在 hover 背景中居中；Customer ID 浮层不进入左侧菜单范围；点击 `Paste` 自动填入 `00000078987`；错误 ID 不关闭浮层并提示；正确 ID `Confirm` 后刷新 Customer Information、Customer Journey 和 Ticketing History。
 - 人工复查客户卡片 `Menu` 最后菜单提示：PSTN / BankApp Voice 等语音/IVR 类渠道在 Customer Information 底部第二行显示短标签 `Menu` 和最后一级 IVR 菜单，第一行渠道/接入时长/验证/Verify 不被挤压；点击渠道图标仍打开完整 Call Flow Detail；Live Chat 和 Video 不显示该提示。
 - 人工复查客户 AUX 弹框：签出状态头像菜单只显示 `Sign In`；签入后显示 `AUX` 和 `Sign Out`；点击 `AUX` 打开 `Select AUX Reason`；只显示启用原因 `Ibadah`、`Makan`；默认选中 `Ibadah`；`Cancel` 不改变状态；`Confirm` 后状态计时区显示 `AUX - Ibadah` 或所选原因。

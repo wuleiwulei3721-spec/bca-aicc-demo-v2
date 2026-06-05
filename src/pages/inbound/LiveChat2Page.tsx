@@ -306,11 +306,12 @@ export function LiveChat2Page() {
     createSessionView,
   ])
 
+  const visibleWorkspaceSessions =
+    customerPanelView === 'history' ? historySessions : serviceSessions
   const activeSession =
-    serviceSessions.find((session) => session.id === liveChat2FocusSessionId) ??
-    historySessions.find((session) => session.id === liveChat2FocusSessionId) ??
-    serviceSessions[0] ??
-    historySessions[0]
+    visibleWorkspaceSessions.find(
+      (session) => session.id === liveChat2FocusSessionId,
+    ) ?? visibleWorkspaceSessions[0]
   const messages = activeSession
     ? liveChat2MessagesBySessionId[activeSession.id] ?? activeSession.messages
     : []
@@ -429,6 +430,15 @@ export function LiveChat2Page() {
   )
 
   if (!activeSession) {
+    const emptyWorkspaceTitle =
+      customerPanelView === 'history'
+        ? 'No history conversations'
+        : 'No current Live Chat customers'
+    const emptyWorkspaceDescription =
+      customerPanelView === 'history'
+        ? 'Closed conversations will appear here after the agent closes a session.'
+        : 'New WhatsApp or BankApp conversations will appear here.'
+
     return (
       <section
         aria-label="Live Chat workspace"
@@ -444,8 +454,8 @@ export function LiveChat2Page() {
       >
         {leadPanel}
         <div className="livechat2-empty-workspace">
-          <strong>No Live Chat customers</strong>
-          <span>Use WhatsApp or BankApp Demo to route a live chat customer.</span>
+          <strong>{emptyWorkspaceTitle}</strong>
+          <span>{emptyWorkspaceDescription}</span>
         </div>
       </section>
     )

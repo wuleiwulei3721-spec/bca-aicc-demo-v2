@@ -396,6 +396,14 @@ export function LiveChat2CustomerPanel({
   )
   const visibleSessions =
     view === 'current' ? visibleServiceSessions : visibleHistorySessions
+  const emptyListTitle =
+    view === 'current' ? 'No current conversations' : 'No history conversations'
+  const emptyListDescription =
+    selectedChannels.length === 0
+      ? 'Select a channel filter to show conversations.'
+      : view === 'current'
+        ? 'New conversations will appear here.'
+        : 'Closed conversations will appear here.'
 
   return (
     <aside
@@ -539,15 +547,26 @@ export function LiveChat2CustomerPanel({
 
       <section className="livechat2-customer-panel__section">
         <div className="livechat2-customer-panel__list" role="list">
-          {visibleSessions.slice(0, view === 'history' ? 30 : undefined).map((session) =>
-            renderSessionCard({
-              activeSessionId,
-              session,
-              onCloseSession,
-              onSelectSession,
-              onStarColorChange,
-            }),
+          {!collapsed && visibleSessions.length === 0 && (
+            <div
+              className="livechat2-customer-panel__empty"
+              role="status"
+            >
+              <strong>{emptyListTitle}</strong>
+              <span>{emptyListDescription}</span>
+            </div>
           )}
+          {visibleSessions
+            .slice(0, view === 'history' ? 30 : undefined)
+            .map((session) =>
+              renderSessionCard({
+                activeSessionId,
+                session,
+                onCloseSession,
+                onSelectSession,
+                onStarColorChange,
+              }),
+            )}
         </div>
       </section>
     </aside>

@@ -9,6 +9,7 @@ import type {
   LiveChat2StarColor,
 } from '../types'
 import { liveChat2Sessions } from '../mock/inbound'
+import { parseDurationSeconds } from '../utils/duration'
 
 export type InboundPopupSource = 'pstn' | 'bankapp-voice'
 export type VideoCallPopupSource = 'standard' | 'bankapp-video'
@@ -54,6 +55,10 @@ export interface CallInteraction {
 const INTERACTION_FLASH_MS = 5000
 const LIVE_CHAT_TAB_KEY = 'live-chat'
 const LEGACY_LIVECHAT2_TAB_KEY = 'livechat2'
+const DEFAULT_LIVECHAT2_CURRENT_SESSION_IDS = [
+  'livechat2-001',
+  'livechat2-005',
+]
 const LIVE_CHAT_TO_LIVECHAT2_SESSION_ID: Record<string, string> = {
   'live-chat-001': 'livechat2-001',
   'live-chat-002': 'livechat2-002',
@@ -81,6 +86,48 @@ function createLiveChat2Status(
     endedAt: status === 'ended' ? Date.now() : null,
     endReason,
     status,
+  }
+}
+
+function createDefaultLiveChat2CurrentState(now: number) {
+  const activeSessionIds = DEFAULT_LIVECHAT2_CURRENT_SESSION_IDS.filter(
+    (sessionId) => Boolean(liveChat2SessionById[sessionId]),
+  )
+  const sessionStatuses: Record<string, LiveChat2SessionStatusState> = {}
+  const sessionTimings: Record<string, InteractionTiming> = {}
+  const starColors: Record<string, LiveChat2StarColor> = {}
+  const unansweredSinceBySessionId: Record<string, number> = {}
+
+  activeSessionIds.forEach((sessionId) => {
+    const session = liveChat2SessionById[sessionId]
+    const initialElapsedSeconds = parseDurationSeconds(
+      session.customer.accessDuration,
+    )
+
+    sessionTimings[sessionId] = {
+      flashUntil: now + INTERACTION_FLASH_MS,
+      startedAt: now - initialElapsedSeconds * 1000,
+    }
+    sessionStatuses[sessionId] = createLiveChat2Status(
+      session.status,
+      session.endReason ?? (session.status === 'ended' ? 'customer' : null),
+    )
+    starColors[sessionId] = session.initialStarColor
+
+    if (typeof session.initialUnansweredSeconds === 'number') {
+      unansweredSinceBySessionId[sessionId] =
+        now -
+        Math.min(session.initialUnansweredSeconds, initialElapsedSeconds) *
+          1000
+    }
+  })
+
+  return {
+    activeSessionIds,
+    sessionStatuses,
+    sessionTimings,
+    starColors,
+    unansweredSinceBySessionId,
   }
 }
 
@@ -816,40 +863,82 @@ export const useAppStore = create<AppState>((set) => ({
       },
     })),
   setLiveChatTabOpen: (open) =>
-    set((state) => ({
-      activeLiveChat2SessionIds: open ? state.activeLiveChat2SessionIds : [],
-      activeLiveChatSessionIds: open ? state.activeLiveChatSessionIds : [],
-      activeWorkspaceTabKey:
-        !open && state.activeWorkspaceTabKey === LIVE_CHAT_TAB_KEY
-          ? 'home'
-          : state.activeWorkspaceTabKey,
-      isLiveChat2TabOpen: false,
-      isLiveChatTabOpen: open,
-      liveChat2ClosedSessionIds: open ? state.liveChat2ClosedSessionIds : [],
-      liveChat2DraftMessages: open ? state.liveChat2DraftMessages : {},
-      liveChat2FocusSessionId: open ? state.liveChat2FocusSessionId : null,
-      liveChat2LastMessageOverrides: open
-        ? state.liveChat2LastMessageOverrides
-        : {},
-      liveChat2MessagesBySessionId: open
-        ? state.liveChat2MessagesBySessionId
-        : {},
-      liveChat2ReadSessionIds: open ? state.liveChat2ReadSessionIds : [],
-      liveChat2RecalledMessageIds: open
-        ? state.liveChat2RecalledMessageIds
-        : [],
-      liveChat2SessionInstances: open ? state.liveChat2SessionInstances : {},
-      liveChat2SessionStatuses: open ? state.liveChat2SessionStatuses : {},
-      liveChat2SessionTimings: open ? state.liveChat2SessionTimings : {},
-      liveChat2StarColors: open ? state.liveChat2StarColors : {},
-      liveChat2UnansweredSinceBySessionId: open
-        ? state.liveChat2UnansweredSinceBySessionId
-        : {},
-      liveChat2HandoffSeq: open ? state.liveChat2HandoffSeq : 0,
-      liveChatFocusSessionId: open ? state.liveChatFocusSessionId : null,
-      liveChatSessionTimings: open ? state.liveChatSessionTimings : {},
-      readLiveChatSessionIds: open ? state.readLiveChatSessionIds : [],
-    })),
+    set((state) => {
+      if (!open) {
+        return {
+          activeLiveChat2SessionIds: [],
+          activeLiveChatSessionIds: [],
+          activeWorkspaceTabKey:
+            state.activeWorkspaceTabKey === LIVE_CHAT_TAB_KEY
+              ? 'home'
+              : state.activeWorkspaceTabKey,
+          isLiveChat2TabOpen: false,
+          isLiveChatTabOpen: false,
+          liveChat2ClosedSessionIds: [],
+          liveChat2DraftMessages: {},
+          liveChat2FocusSessionId: null,
+          liveChat2LastMessageOverrides: {},
+          liveChat2MessagesBySessionId: {},
+          liveChat2ReadSessionIds: [],
+          liveChat2RecalledMessageIds: [],
+          liveChat2SessionInstances: {},
+          liveChat2SessionStatuses: {},
+          liveChat2SessionTimings: {},
+          liveChat2StarColors: {},
+          liveChat2UnansweredSinceBySessionId: {},
+          liveChat2HandoffSeq: 0,
+          liveChatFocusSessionId: null,
+          liveChatSessionTimings: {},
+          readLiveChatSessionIds: [],
+        }
+      }
+
+      const shouldSeedDefaultCurrentSessions =
+        state.activeLiveChat2SessionIds.length === 0 &&
+        state.liveChat2ClosedSessionIds.length === 0 &&
+        Object.keys(state.liveChat2SessionInstances).length === 0 &&
+        Object.keys(state.liveChat2SessionStatuses).length === 0
+      const defaultCurrentState = shouldSeedDefaultCurrentSessions
+        ? createDefaultLiveChat2CurrentState(Date.now())
+        : null
+
+      return {
+        activeLiveChat2SessionIds:
+          defaultCurrentState?.activeSessionIds ??
+          state.activeLiveChat2SessionIds,
+        activeLiveChatSessionIds: state.activeLiveChatSessionIds,
+        activeWorkspaceTabKey: state.activeWorkspaceTabKey,
+        isLiveChat2TabOpen: false,
+        isLiveChatTabOpen: true,
+        liveChat2ClosedSessionIds: state.liveChat2ClosedSessionIds,
+        liveChat2DraftMessages: state.liveChat2DraftMessages,
+        liveChat2FocusRequestId: defaultCurrentState
+          ? state.liveChat2FocusRequestId + 1
+          : state.liveChat2FocusRequestId,
+        liveChat2FocusSessionId:
+          defaultCurrentState?.activeSessionIds[0] ??
+          state.liveChat2FocusSessionId,
+        liveChat2LastMessageOverrides: state.liveChat2LastMessageOverrides,
+        liveChat2MessagesBySessionId: state.liveChat2MessagesBySessionId,
+        liveChat2ReadSessionIds: state.liveChat2ReadSessionIds,
+        liveChat2RecalledMessageIds: state.liveChat2RecalledMessageIds,
+        liveChat2SessionInstances: state.liveChat2SessionInstances,
+        liveChat2SessionStatuses:
+          defaultCurrentState?.sessionStatuses ??
+          state.liveChat2SessionStatuses,
+        liveChat2SessionTimings:
+          defaultCurrentState?.sessionTimings ?? state.liveChat2SessionTimings,
+        liveChat2StarColors:
+          defaultCurrentState?.starColors ?? state.liveChat2StarColors,
+        liveChat2UnansweredSinceBySessionId:
+          defaultCurrentState?.unansweredSinceBySessionId ??
+          state.liveChat2UnansweredSinceBySessionId,
+        liveChat2HandoffSeq: state.liveChat2HandoffSeq,
+        liveChatFocusSessionId: state.liveChatFocusSessionId,
+        liveChatSessionTimings: state.liveChatSessionTimings,
+        readLiveChatSessionIds: state.readLiveChatSessionIds,
+      }
+    }),
   setOpenEyeVideoWindowVisible: (visible) =>
     set({
       isOpenEyeVideoWindowVisible: visible,

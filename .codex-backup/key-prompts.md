@@ -722,3 +722,11 @@
 - 可见标签使用短文案 `Menu`，`title` / `aria-label` 中保留 `Last IVR menu: ...` 完整语义。
 - `Menu` 提示只覆盖 PSTN、Voice、BankApp Voice 等语音/IVR 类渠道；Live Chat 和 Video 不展示。
 - 当前数据复用静态 `callFlowDetail.ivrJourney` 最后一项；未来如需实例级 IVR path，再把数据挂到具体 interaction/customer。
+
+## 2026-06-05 Live Chat Current 清空空态
+
+- 正式 Live Chat 默认预设两个 Current 演示客户：`livechat2-001` 为服务中客户，`livechat2-005` 为客户主动挂机待坐席关闭。
+- `livechat2-005` 继续放在 Current 列表里，状态为 `ended/customer`，坐席点击 `Close` 后才进入 History。
+- Current 视图只从当前服务列表选客户；History 视图只从历史列表选客户。
+- Current 清空后右侧必须显示 `No current Live Chat customers` 空态，不自动 fallback 到 History 客户，也不继续渲染旧 Customer Information / Conversation / Assistant 客户上下文。
+- History 需要坐席手动切换查看；切到 History 后仍可选择并查看已关闭客户。

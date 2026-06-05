@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-05 19:34 +08:00
+最后更新：2026-06-05 20:07 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,52 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-05 20:07 +08:00 - 修复 Live Chat Current 清空后的右侧空态
+
+修改页面或文件：
+
+- `src/store/appStore.ts`
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-05-2007.md`
+- `.codex-backup/current-todo-2026-06-05-2007.md`
+- `.codex-backup/page-state-2026-06-05-2007.md`
+
+修改原因：
+
+- 用户反馈正式文字弹屏在坐席关闭所有 Current 客户后，右侧应无客户关联内容，并应恢复“当前暂无客户接入”类提示。
+- 根因是 `LiveChat2Page` 在 Current 没有客户时仍会 fallback 到 `historySessions[0]`，导致右侧继续显示历史客户详情。
+
+修改结果：
+
+- `setLiveChatTabOpen(true)` 在干净签入周期内默认预设两个 Current 客户：`livechat2-001` 服务中，`livechat2-005` 客户主动挂机待坐席关闭。
+- `LiveChat2Page` 的当前客户选择改为按 Current / History 视图隔离：Current 只选当前服务列表，History 只选历史列表。
+- Current 清空后右侧显示 `No current Live Chat customers` 与新接入提示，不再渲染旧 Customer Information / Conversation / Assistant 客户上下文。
+- `LiveChat2CustomerPanel` 在展开态下为 Current / History 空列表增加轻量空态提示。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite chunk size warning。
+- Browser smoke check `/`：Sign In 后打开 Live Chat，Current 默认显示 2 个客户，`livechat2-005` 显示客户主动挂机状态和 `Close`。
+- Browser smoke check `/`：关闭 `livechat2-005` 后 Current 变为 1、History 变为 2，右侧自动回到剩余服务中客户。
+- Browser smoke check `/`：对剩余服务中客户执行 End Service 并 Confirm 后，Current 变为 0、History 变为 3，左侧显示 `No current conversations`，右侧显示 `No current Live Chat customers`，不再显示客户详情工作台。
+- Browser smoke check `/`：切换到 History 后可看到 3 条历史记录，并可展示历史客户详情。
+- Browser smoke check `/design-system`：页面正常加载。
+- Browser smoke check 新 WhatsApp route：已打开 WhatsApp Demo 并确认入口存在，但自动化未完整推进到 Agent Workspace；此路径保留为人工复查 TODO。
+
+回滚说明：
+
+- 如需回滚，可恢复 `setLiveChatTabOpen(true)` 不预设默认 session，并恢复 `LiveChat2Page` 旧的 `serviceSessions -> historySessions` fallback 选择逻辑；同时移除客户列表空态 DOM 与 `.livechat2-customer-panel__empty` 样式。
+
+当前风险点：
+
+- 默认双客户是前端 demo seed，不接真实文字渠道队列；同一签入周期内坐席关闭所有 Current 客户后不会自动回补默认客户，需新路由接入或重新签入后重新出现默认场景。
 
 ### 2026-06-05 19:34 +08:00 - 优化客户卡片最后菜单提示文案与底部布局
 
