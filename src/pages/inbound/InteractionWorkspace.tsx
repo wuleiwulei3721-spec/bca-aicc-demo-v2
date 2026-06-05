@@ -1,12 +1,19 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
+  CUSTOMER_IDENTITY_REFRESH_DEMO_ID,
   customerJourney,
+  lookupCustomerIdentityRefresh,
   nextBestActions,
   quickActions,
   ticketingHistory,
 } from '../../mock/inbound'
-import type { CrmWorkspaceTab, CustomerInformation } from '../../types'
+import type {
+  CrmWorkspaceTab,
+  CustomerInformation,
+  CustomerJourneyItem,
+  TicketHistoryItem,
+} from '../../types'
 import { AssistantPanel } from './components/AssistantPanel'
 import type { AssistantPanelExtraTab } from './components/AssistantPanel'
 import { CONVERSATION_TAB_KEY, CrmPanel } from './components/CrmPanel'
@@ -24,10 +31,13 @@ interface InteractionWorkspaceProps {
   conversationContent?: ReactNode
   conversationKey?: string
   customer: CustomerInformation
+  initialJourney?: CustomerJourneyItem[]
+  initialTickets?: TicketHistoryItem[]
   leadPanel?: ReactNode
   onAssistantActiveKeyChange?: (activeKey: string) => void
   onAssistantCloseExtraTab?: (targetKey: string) => void
   overlay?: ReactNode
+  showIvrJourney?: boolean
 }
 
 export function InteractionWorkspace({
@@ -39,10 +49,13 @@ export function InteractionWorkspace({
   conversationContent,
   conversationKey,
   customer,
+  initialJourney,
+  initialTickets,
   leadPanel,
   onAssistantActiveKeyChange,
   onAssistantCloseExtraTab,
   overlay,
+  showIvrJourney,
 }: InteractionWorkspaceProps) {
   const [crmWorkspace, setCrmWorkspace] = useState<{
     activeKey: string
@@ -52,6 +65,75 @@ export function InteractionWorkspace({
       conversation || conversationContent ? CONVERSATION_TAB_KEY : CRM_TAB_KEY,
     tabs: [],
   })
+  const initialJourneyItems = initialJourney ?? customerJourney
+  const initialTicketItems = initialTickets ?? ticketingHistory
+  const sourceCustomerKey = [
+    customer.accessChannel,
+    customer.profile.cisNumber,
+    customer.profile.phoneNumber,
+    customer.profile.email,
+    customer.profile.name,
+  ].join(':')
+  const sourceCustomer = useMemo<CustomerInformation>(
+    () => ({
+      accessChannel: customer.accessChannel,
+      accessDuration: '',
+      profile: {
+        avatarInitials: customer.profile.avatarInitials,
+        avatarUrl: customer.profile.avatarUrl,
+        cisNumber: customer.profile.cisNumber,
+        customerType: customer.profile.customerType,
+        email: customer.profile.email,
+        name: customer.profile.name,
+        phoneNumber: customer.profile.phoneNumber,
+      },
+      verificationStatus: customer.verificationStatus,
+    }),
+    [
+      customer.accessChannel,
+      customer.profile.avatarInitials,
+      customer.profile.avatarUrl,
+      customer.profile.cisNumber,
+      customer.profile.customerType,
+      customer.profile.email,
+      customer.profile.name,
+      customer.profile.phoneNumber,
+      customer.verificationStatus,
+    ],
+  )
+  const sourceIdentityData = useMemo<{
+    customer: CustomerInformation
+    journey: CustomerJourneyItem[]
+    tickets: TicketHistoryItem[]
+  }>(
+    () => ({
+      customer: sourceCustomer,
+      journey: initialJourneyItems,
+      tickets: initialTicketItems,
+    }),
+    [initialJourneyItems, initialTicketItems, sourceCustomer],
+  )
+  const [identityOverride, setIdentityOverride] = useState<{
+    data: {
+      customer: CustomerInformation
+      journey: CustomerJourneyItem[]
+      tickets: TicketHistoryItem[]
+    }
+    sourceKey: string
+  } | null>(null)
+  const identityData =
+    identityOverride?.sourceKey === sourceCustomerKey
+      ? identityOverride.data
+      : sourceIdentityData
+
+  const displayCustomer = useMemo(
+    () => ({
+      ...identityData.customer,
+      accessChannel: customer.accessChannel,
+      accessDuration: customer.accessDuration,
+    }),
+    [customer.accessChannel, customer.accessDuration, identityData.customer],
+  )
 
   const openCrmWorkspaceTab = useCallback((tab: CrmWorkspaceTab) => {
     setCrmWorkspace((current) => ({
@@ -81,6 +163,32 @@ export function InteractionWorkspace({
     })
   }, [])
 
+  const refreshCustomerIdentity = useCallback(
+    (customerId: string) => {
+      const refreshResult = lookupCustomerIdentityRefresh(customerId)
+
+      if (!refreshResult) {
+        return false
+      }
+
+      setIdentityOverride({
+        data: {
+          customer: {
+            ...refreshResult.customer,
+            accessChannel: customer.accessChannel,
+            accessDuration: customer.accessDuration,
+          },
+          journey: refreshResult.journey,
+          tickets: refreshResult.tickets,
+        },
+        sourceKey: sourceCustomerKey,
+      })
+
+      return true
+    },
+    [customer.accessChannel, customer.accessDuration, sourceCustomerKey],
+  )
+
   return (
     <>
       <section
@@ -89,11 +197,14 @@ export function InteractionWorkspace({
       >
         {leadPanel}
         <LeftColumn
-          customer={customer}
-          journey={customerJourney}
+          customer={displayCustomer}
+          identityRefreshPasteValue={CUSTOMER_IDENTITY_REFRESH_DEMO_ID}
+          journey={identityData.journey}
           nextBestActions={nextBestActions}
           quickActions={quickActions}
-          tickets={ticketingHistory}
+          tickets={identityData.tickets}
+          showIvrJourney={showIvrJourney}
+          onCustomerIdentityRefresh={refreshCustomerIdentity}
           onOpenCrm={openCrmWorkspaceTab}
         />
         <CrmPanel

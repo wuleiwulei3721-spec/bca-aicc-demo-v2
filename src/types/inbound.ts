@@ -40,6 +40,12 @@ export interface CustomerInformation {
   verificationStatus: VerificationStatus
 }
 
+export interface CustomerIdentityRefreshResult {
+  customer: CustomerInformation
+  journey: CustomerJourneyItem[]
+  tickets: TicketHistoryItem[]
+}
+
 export interface LiveChatConversationMessage {
   id: string
   sender: 'customer' | 'agent'

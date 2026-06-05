@@ -19,6 +19,7 @@ export type CustomerOutboundRequestStatus =
 
 export interface CustomerInformationPanelProps {
   accessChannelNode?: ReactNode
+  accessRouteHintNode?: ReactNode
   className?: string
   customer: CustomerInformation
   headerExtra?: ReactNode
@@ -57,6 +58,7 @@ function customerLevelLabel(customerType: string) {
 
 export function CustomerInformationPanel({
   accessChannelNode,
+  accessRouteHintNode,
   className,
   customer,
   headerExtra,
@@ -196,6 +198,11 @@ export function CustomerInformationPanel({
             Verify
           </BaseButton>
         </div>
+        {accessRouteHintNode && (
+          <div className="aicc-customer-info__route-hint">
+            {accessRouteHintNode}
+          </div>
+        )}
       </div>
     </BaseCard>
   )

@@ -52,35 +52,41 @@ export function TicketingHistoryCard({
       onHeaderClick={() => setExpanded((current) => !current)}
     >
       <div className="inbound-ticket-list">
-        {visibleItems.map((item) => (
-          <button
-            className="inbound-compact-row inbound-ticket-row inbound-ticket-row--clickable"
-            key={item.id}
-            type="button"
-            onClick={() =>
-              onOpenCrm({
-                key: `ticket-${item.ticketNumber}`,
-                title: item.ticketType,
-                kind: 'ticket',
-                crmLink: `/crm/tickets/${item.ticketNumber}`,
-                reference: item.ticketNumber,
-                description:
-                  'Detail tiket layanan nasabah yang dibuka dari riwayat ticketing.',
-              })
-            }
-          >
-            <span className="inbound-ticket-type">{item.ticketType}</span>
-            <span className="inbound-ticket-row__meta">
-              <Tag className="inbound-neutral-tag inbound-ticket-row__number">
-                {item.ticketNumber}
-              </Tag>
-              <span className="inbound-compact-row__date">
-                {item.createdDate}
+        {visibleItems.length > 0 ? (
+          visibleItems.map((item) => (
+            <button
+              className="inbound-compact-row inbound-ticket-row inbound-ticket-row--clickable"
+              key={item.id}
+              type="button"
+              onClick={() =>
+                onOpenCrm({
+                  key: `ticket-${item.ticketNumber}`,
+                  title: item.ticketType,
+                  kind: 'ticket',
+                  crmLink: `/crm/tickets/${item.ticketNumber}`,
+                  reference: item.ticketNumber,
+                  description:
+                    'Detail tiket layanan nasabah yang dibuka dari riwayat ticketing.',
+                })
+              }
+            >
+              <span className="inbound-ticket-type">{item.ticketType}</span>
+              <span className="inbound-ticket-row__meta">
+                <Tag className="inbound-neutral-tag inbound-ticket-row__number">
+                  {item.ticketNumber}
+                </Tag>
+                <span className="inbound-compact-row__date">
+                  {item.createdDate}
+                </span>
               </span>
-            </span>
-            <ArrowRightOutlined className="inbound-ticket-row__hint" />
-          </button>
-        ))}
+              <ArrowRightOutlined className="inbound-ticket-row__hint" />
+            </button>
+          ))
+        ) : (
+          <div className="inbound-empty-state">
+            Ticketing history is not loaded.
+          </div>
+        )}
       </div>
     </SectionCard>
   )

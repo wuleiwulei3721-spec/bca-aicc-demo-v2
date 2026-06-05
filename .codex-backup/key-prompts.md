@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-06-05 15:56 +08:00
+最后更新：2026-06-05 19:34 +08:00
 
 ## 项目方向
 
@@ -695,3 +695,30 @@
 - Production 客户版本继续隐藏 `Call Management` 与 `Routing Config`，同时 `/call-management/*` 和 `/routing-config/*` 回到 `/`。
 - 发布后本地继续开发分支为 `codex/text-channel-config-settings`；该分支保留管理菜单入口，用于继续完成未完成的管理配置功能。
 - 不删除未完成管理功能源码、mock、store 或类型，只通过发布分支/生产分支的菜单和路由屏蔽客户可见入口。
+
+## 2026-06-05 客户身份刷新演示口径
+
+- PSTN 可演示朋友电话打入导致客户身份未加载：来电弹屏初始显示 `Unidentified Customer`、空 Customer Journey 和空 Ticketing History。
+- Customer Information 右上角编辑图标旁新增身份刷新图标；两个图标都必须在右上角显示，不能替换、隐藏或被 header 容器裁剪。
+- Customer Information 右上角两个图标必须在 hover 背景内视觉居中；按钮默认 padding 和图标 line-height 不应造成偏移。
+- Customer ID 浮层不能进入左侧菜单范围；当前使用 `bottom` placement 和 224px 内容宽度，避免 `bottomRight` 造成向左展开。
+- `Paste` 按钮是演示能力，不读取真实剪贴板，直接填入固定演示 ID `00000078987`，模拟坐席已从 CRM 复制客户 ID。
+- `Confirm` 后假装 CRM 查询成功，刷新当前工作台实例的客户信息、客户旅程和历史工单；错误 ID 在浮层内提示且不关闭。
+- 身份刷新不写入全局 store，不影响其它已打开通话 tab，也不自动更新已打开的 CRM 动态 tab。
+
+## 2026-06-05 客户卡接入时长语义
+
+- Customer Information 渠道标签中的 `accessDuration` 表示客户从渠道接入、排队到转人工成功前的耗时。
+- 客户接入坐席后，Customer Information 的接入时长必须保持固定，不应继续计时。
+- 正式 `LiveChat2Page` 不允许用 `activeSession.elapsedSeconds` 覆盖 `customer.accessDuration`。
+- `createLiveChat2HandoffSession()` 必须保留来源 session 的 `customer.accessDuration`，不能把 handoff 客户卡片时长重置为 `00:00`。
+- 服务中持续计时只应出现在 workspace tab、Live Chat 客户列表、Conversation header、SLA / 未回复计时等服务时长 UI。
+
+## 2026-06-05 客户卡最后菜单提示
+
+- Customer Information 底部第一行继续展示渠道、接入时长、验证状态和 `Verify`，不能被长菜单文案挤压。
+- 语音/IVR 类渠道在 Customer Information 底部第二行展示轻量摘要：`Menu` + 最后一级菜单名。
+- 本轮只展示最后一级菜单，不在卡片内展示完整 IVR path；完整路径仍通过点击渠道图标打开 `Call Flow Detail` 查看。
+- 可见标签使用短文案 `Menu`，`title` / `aria-label` 中保留 `Last IVR menu: ...` 完整语义。
+- `Menu` 提示只覆盖 PSTN、Voice、BankApp Voice 等语音/IVR 类渠道；Live Chat 和 Video 不展示。
+- 当前数据复用静态 `callFlowDetail.ivrJourney` 最后一项；未来如需实例级 IVR path，再把数据挂到具体 interaction/customer。

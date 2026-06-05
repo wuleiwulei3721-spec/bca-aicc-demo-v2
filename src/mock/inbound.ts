@@ -1,5 +1,6 @@
 import type {
   CallFlowDetail,
+  CustomerIdentityRefreshResult,
   CustomerInformation,
   CustomerJourneyItem,
   LiveChat2Session,
@@ -25,6 +26,28 @@ export const inboundCustomer: CustomerInformation = {
   },
   verificationStatus: 'Unverified',
 }
+
+export const CUSTOMER_IDENTITY_REFRESH_DEMO_ID =
+  inboundCustomer.profile.cisNumber
+
+export const unidentifiedInboundCustomer: CustomerInformation = {
+  accessChannel: 'Phone',
+  accessDuration: '05:23',
+  profile: {
+    avatarInitials: '?',
+    avatarUrl: '',
+    name: 'Unidentified Customer',
+    phoneNumber: 'Caller ID unavailable',
+    email: 'Customer identity not loaded',
+    cisNumber: 'Customer ID not loaded',
+    customerType: '',
+  },
+  verificationStatus: 'Unverified',
+}
+
+export const unidentifiedCustomerJourney: CustomerJourneyItem[] = []
+
+export const unidentifiedTicketingHistory: TicketHistoryItem[] = []
 
 export const bankAppVoiceCustomer: CustomerInformation = {
   accessChannel: 'BankApp',
@@ -1191,6 +1214,20 @@ export const ticketingHistory: TicketHistoryItem[] = [
     createdDate: '22 Dec',
   },
 ]
+
+export function lookupCustomerIdentityRefresh(
+  customerId: string,
+): CustomerIdentityRefreshResult | null {
+  if (customerId.trim() !== CUSTOMER_IDENTITY_REFRESH_DEMO_ID) {
+    return null
+  }
+
+  return {
+    customer: inboundCustomer,
+    journey: customerJourney,
+    tickets: ticketingHistory,
+  }
+}
 
 export const nextBestActions: NextBestActionItem[] = [
   {

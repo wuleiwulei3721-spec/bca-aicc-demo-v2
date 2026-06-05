@@ -9,7 +9,6 @@ import type {
   LiveChat2StarColor,
 } from '../../types'
 import {
-  formatDuration,
   getElapsedSeconds,
   getLiveChatSlaState,
   parseDurationSeconds,
@@ -519,10 +518,7 @@ export function LiveChat2Page() {
         />
       }
       conversationKey={activeSession.id}
-      customer={{
-        ...activeSession.customer,
-        accessDuration: formatDuration(activeSession.elapsedSeconds),
-      }}
+      customer={activeSession.customer}
       leadPanel={leadPanel}
       onAssistantActiveKeyChange={setRightPanelActiveKey}
       onAssistantCloseExtraTab={handleCloseRightPanelTab}

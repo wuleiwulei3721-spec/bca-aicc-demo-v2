@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-05 15:56 +08:00
+最后更新：2026-06-05 19:34 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,270 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-05 19:34 +08:00 - 优化客户卡片最后菜单提示文案与底部布局
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-05-1934.md`
+- `.codex-backup/current-todo-2026-06-05-1934.md`
+- `.codex-backup/page-state-2026-06-05-1934.md`
+
+修改原因：
+
+- 用户反馈 `Last IVR Menu` 作为客户卡片内可见标签偏长，并希望优化底部接入标签、最后菜单、验证状态和验证按钮四个元素的摆放。
+
+修改结果：
+
+- 可见标签从 `Last IVR Menu` 缩短为 `Menu`，减少对最后菜单值的横向挤压。
+- 最后菜单值继续展示最后一级 IVR 菜单，长文案单行省略。
+- `title` 和 `aria-label` 保留完整语义：`Last IVR menu: ...`。
+- 第二行 route hint 显式撑满宽度，使用固定短标签列和剩余菜单值列；不改变点击渠道图标打开完整 Call Flow Detail 的交互。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite chunk size warning。
+- Browser smoke check `/`：PSTN Customer Information 第二行显示短标签 `Menu` 和最后一级菜单名，DOM 中不再出现可见 `Last IVR Menu`。
+- Browser smoke check `/`：PSTN 菜单值的 `title` / `aria-label` 保留 `Last IVR menu: ...` 完整语义。
+- Browser smoke check `/`：点击 PSTN 渠道标签仍打开完整 `Call Flow Detail`；身份刷新 `Paste` / `Confirm` 仍正常。
+- Browser smoke check `/`：BankApp Voice 显示 `Menu`；Live Chat 和 BankApp Video / Video Call 不显示菜单行。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚，可将 `CustomerInformationCard` 中的可见标签恢复为 `Last IVR Menu`，并恢复 `.aicc-customer-info__route-hint` 的 grid 列宽；不会影响身份刷新、IVR 显示开关或 Call Flow Detail。
+
+当前风险点：
+
+- 本轮只优化文案与布局，不改变静态 `callFlowDetail.ivrJourney` 数据来源。
+
+### 2026-06-05 19:21 +08:00 - 客户卡片新增最后 IVR 菜单提示
+
+修改页面或文件：
+
+- `src/components/CustomerInformationPanel.tsx`
+- `src/pages/inbound/InboundPage.tsx`
+- `src/pages/inbound/InteractionWorkspace.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/pages/inbound/components/LeftColumn.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-05-1921.md`
+- `.codex-backup/current-todo-2026-06-05-1921.md`
+- `.codex-backup/page-state-2026-06-05-1921.md`
+
+修改原因：
+
+- 用户希望坐席在 Customer Information 卡片中一眼看到客户最后进入的 IVR 菜单，不需要先点击渠道图标打开完整 Call Flow Detail。
+- 当前客户卡片底部第一行已有渠道/接入时长、验证状态和 Verify，直接塞入长菜单会挤压现有操作。
+
+修改结果：
+
+- `CustomerInformationPanel` 新增可选 `accessRouteHintNode` 插槽，在现有 access strip 下方渲染第二行轻量提示。
+- `CustomerInformationCard` 仅对 `Phone` 或包含 `Voice` 的语音/IVR 渠道展示该提示；Live Chat / Video 不展示。
+- 提示内容从现有 `callFlowDetail.ivrJourney` 最后一项 `nodeName` 读取，显示为 `Last IVR Menu` + 最后一级菜单名。
+- 长菜单名单行省略，`title` 保留完整文案；点击现有渠道图标仍打开完整 `Call Flow Detail`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite chunk size warning。
+- Browser smoke check `/`：PSTN Customer Information 第一行仍显示 `PSTN 05:23`、验证状态和 `Verify`，第二行显示 `Last IVR Menu` 与最后一级菜单。
+- Browser smoke check `/`：点击 PSTN 渠道图标仍打开完整 `Call Flow Detail`，包含 IVR Journey 三个节点和 Transfer History。
+- Browser smoke check `/`：PSTN 身份刷新 `Paste` 仍填入 `00000078987`，`Confirm` 后客户信息、Customer Journey 和 Ticketing History 刷新。
+- Browser smoke check `/`：BankApp Voice Customer Information 显示 `BankApp 00:12` 和 `Last IVR Menu`。
+- Browser smoke check `/`：Live Chat 不显示 `Last IVR Menu`；BankApp Video / Video Call 不显示 `Last IVR Menu`。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚，可移除 `accessRouteHintNode` prop、`CustomerInformationCard` 中的 route hint 生成逻辑，以及 `.aicc-customer-info__route-*` 样式；不会影响身份刷新、接入时长修复或 Call Flow Detail 弹框。
+
+当前风险点：
+
+- 本轮先复用静态 `callFlowDetail.ivrJourney`，不同通话实例不会展示不同 IVR path；后续接后端或多实例 IVR mock 时应把路径数据下沉到具体 interaction/customer 级别。
+
+### 2026-06-05 19:04 +08:00 - 修复正式 Live Chat 客户卡接入时长持续计时
+
+修改页面或文件：
+
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/store/appStore.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-05-1904.md`
+- `.codex-backup/current-todo-2026-06-05-1904.md`
+- `.codex-backup/page-state-2026-06-05-1904.md`
+
+修改原因：
+
+- 用户反馈 Customer Information 客户卡片里的接入时长在持续计时；该字段业务含义应为客户转人工成功前耗时，接入坐席后应冻结。
+- 根因是正式 `LiveChat2Page` 将 `activeSession.elapsedSeconds` 格式化后覆盖到 `customer.accessDuration`，把服务时长误显示到客户卡片渠道标签中；`createLiveChat2HandoffSession()` 还会把 handoff 客户的接入时长重置为 `00:00`。
+
+修改结果：
+
+- `LiveChat2Page` 不再向 `InteractionWorkspace` 传入 `accessDuration: formatDuration(activeSession.elapsedSeconds)`，Customer Information 直接使用 `activeSession.customer.accessDuration`。
+- `appStore.createLiveChat2HandoffSession()` 保留来源 session 的 `customer.accessDuration`，新接入实例不再重置为 `00:00`。
+- Workspace tab、Live Chat 客户列表、Conversation header、SLA / 未回复计时继续使用 `elapsedSeconds` 服务计时，不影响服务中时长展示。
+- PSTN / Voice / Video 未修改，继续使用各自静态 `accessDuration`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite chunk size warning。
+- Browser smoke check `/`：签入后打开 Live Chat，Customer Information 渠道接入时长来自客户 mock 静态字段，服务时长仍在 Live Chat tab / Conversation 中继续展示。
+- Browser smoke check `/design-system`：页面可正常加载。
+
+回滚说明：
+
+- 如需回滚，可在 `LiveChat2Page.tsx` 恢复对 `activeSession.elapsedSeconds` 的 `accessDuration` 覆盖，并在 `createLiveChat2HandoffSession()` 中恢复 `accessDuration: '00:00'`；但会重新出现客户卡片接入时长随服务计时增长的问题。
+
+当前风险点：
+
+- 本轮修复只区分前端 mock 数据中的接入耗时和服务耗时；后续接真实后端时仍需保证接口字段语义一致。
+
+### 2026-06-05 18:52 +08:00 - 修复客户信息右上角图标 hover 背景内不居中
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-05-1852.md`
+- `.codex-backup/current-todo-2026-06-05-1852.md`
+- `.codex-backup/page-state-2026-06-05-1852.md`
+
+修改原因：
+
+- 用户反馈 Customer Information 右上角图标不在 hover 背景正中。
+
+修改结果：
+
+- 统一 Customer Information header action 的布局盒：
+  - `.aicc-base-card__header-extra` 使用 `min-height: 22px`，匹配 22px action button。
+  - `.aicc-customer-info__header-actions` 增加 `line-height: 0`。
+  - `.aicc-customer-info__edit-button` 清除默认 `padding`。
+  - `.aicc-customer-info__edit-button .anticon` 使用 inline-flex 居中。
+- 保留身份刷新和编辑联系方式两个图标，以及现有 Customer ID 浮层位置修复。
+
+验证：
+
+- Browser 打开 `/`，签入后触发 PSTN，验证 `Refresh customer identity` 与 `Edit contact` 两个按钮均存在。
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite chunk size warning。
+
+回滚说明：
+
+- 如需回滚本轮居中修复，可恢复 `.aicc-base-card__header-extra` 高度、移除 header actions line-height / button padding / icon inline-flex 调整；但会重新出现 hover 背景内图标视觉不居中的风险。
+
+当前风险点：
+
+- 本轮仅修 header action 视觉对齐，不修改身份刷新业务逻辑。
+
+### 2026-06-05 18:45 +08:00 - 修复客户 ID 浮层偏左进入菜单范围
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-05-1845.md`
+- `.codex-backup/current-todo-2026-06-05-1845.md`
+- `.codex-backup/page-state-2026-06-05-1845.md`
+
+修改原因：
+
+- 用户反馈 Customer ID 身份刷新浮层偏左，整体进入左侧菜单范围。
+
+修改结果：
+
+- 将身份刷新 Popover 从 `bottomRight` 调整为 `bottom`，避免浮层以图标右边对齐后大幅向左展开。
+- 将 `.aicc-identity-refresh-popover` 宽度从 `250px` 收窄为 `224px`。
+- 保留 Customer Information 右上角两个图标：`Refresh customer identity` 与 `Edit contact`。
+- 未修改身份刷新 mock、Paste/Confirm 逻辑或客户数据刷新流程。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite chunk size warning。
+- Browser 打开 `/`，签入后触发 PSTN，验证 `Refresh customer identity` 与 `Edit contact` 两个按钮均存在。
+- Browser 打开身份刷新浮层，读取 AntD Popover 定位为 `left: 489.322px`，左侧菜单宽度为 `220px`，确认浮层不在左侧菜单范围内。
+- Browser 验证 `Paste` 仍自动填入 `00000078987`，`Confirm` 后客户信息、Customer Journey 与 Ticketing History 仍正常刷新；Confirm 后 Popover 不可见。
+
+回滚说明：
+
+- 如需回滚位置修复，可将 Popover placement 恢复为 `bottomRight`，并将 `.aicc-identity-refresh-popover` 宽度恢复为 `250px`；但会重新出现浮层偏左风险。
+
+当前风险点：
+
+- 本轮只修浮层位置，不修改真实剪贴板或后端 CRM 查询能力。
+
+### 2026-06-05 18:36 +08:00 - 来电弹屏新增客户身份刷新并修复右上角双图标裁剪
+
+修改页面或文件：
+
+- `src/types/inbound.ts`
+- `src/mock/inbound.ts`
+- `src/pages/inbound/InboundPage.tsx`
+- `src/pages/inbound/InteractionWorkspace.tsx`
+- `src/pages/inbound/components/LeftColumn.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/pages/inbound/components/CustomerJourneyCard.tsx`
+- `src/pages/inbound/components/TicketingHistoryCard.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-05-1836.md`
+- `.codex-backup/current-todo-2026-06-05-1836.md`
+- `.codex-backup/page-state-2026-06-05-1836.md`
+
+修改原因：
+
+- 用户要求在客户可见发布分支上新增客户身份更新能力，用于朋友电话呼入导致客户身份未加载时，坐席从 CRM 查询并复制客户 ID 后手动刷新来电弹屏客户身份。
+- 用户进一步指出编辑客户联系方式图标不能被身份刷新图标替换或隐藏，两个图标都必须放在 Customer Information 右上角。
+
+修改结果：
+
+- 从 `main` 创建发布隔离分支 `codex/customer-identity-refresh`。
+- PSTN 初始客户改为 `Unidentified Customer`，Customer Journey 与 Ticketing History 初始显示未加载空态。
+- 新增身份刷新演示 ID `00000078987` 与 `lookupCustomerIdentityRefresh()` mock 查询 helper；正确 ID 返回现有 Dimas 客户资料、旅程和工单。
+- Customer Information 右上角新增身份刷新按钮；浮层包含 Customer ID 输入框、`Paste` 和 `Confirm`。
+- `Paste` 不读取真实剪贴板，直接填入 `00000078987`，模拟坐席已复制客户 ID。
+- 错误 ID 或空 ID 会在浮层内提示并保持浮层打开；正确 ID 确认后关闭浮层，并刷新当前工作台实例的 Customer Information、Customer Journey、Ticketing History。
+- 修复 `.aicc-base-card__header-extra` 固定 `20px` 宽导致两个 header action 被裁剪的问题；身份刷新图标和原编辑联系方式图标现在同时显示在卡片右上角。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite chunk size warning。
+- Browser 打开 `/`，签入后触发 PSTN，验证初始显示 `Unidentified Customer`、`Caller ID unavailable`、`Customer ID not loaded`，Journey / Ticketing 显示未加载空态。
+- Browser 验证 Customer Information 右上角 `Refresh customer identity` 与 `Edit contact` 两个按钮均存在，各 1 个。
+- Browser 输入错误 ID，验证显示 `No customer found for this ID.` 且浮层保持打开。
+- Browser 点击 `Paste`，验证输入框自动填入 `00000078987`；点击 `Confirm` 后客户信息刷新为 Dimas，空态消失，Journey 与 Ticketing 数据出现。
+
+回滚说明：
+
+- 如需回滚本轮身份刷新功能，可恢复 `InboundPage.tsx` 使用 `inboundCustomer` 初始客户，移除 `InteractionWorkspace` 中 identity override 状态和 `CustomerInformationCard` 身份刷新浮层，删除新增 mock helper、类型和空态样式。
+- 如只回滚双图标裁剪修复，恢复 `.aicc-base-card__header-extra` 的固定宽度即可，但会重新导致 Customer Information 右上角两个 action 被裁剪，不建议。
+
+当前风险点：
+
+- 身份查询是前端 mock，只支持固定 ID `00000078987`。
+- `Paste` 是演示按钮，不读取真实剪贴板；这符合当前演示口径，但不是生产剪贴板集成。
+- 刷新只更新左侧三张卡片，不自动更新已打开的 CRM 动态 tab。
 
 ### 2026-06-05 15:56 +08:00 - 客户分支新增 AUX 示忙原因选择弹框
 

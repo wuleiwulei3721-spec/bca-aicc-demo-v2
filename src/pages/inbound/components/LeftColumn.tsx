@@ -14,25 +14,36 @@ import { TicketingHistoryCard } from './TicketingHistoryCard'
 
 interface LeftColumnProps {
   customer: CustomerInformation
+  identityRefreshPasteValue: string
   journey: CustomerJourneyItem[]
   tickets: TicketHistoryItem[]
   nextBestActions: NextBestActionItem[]
   quickActions: QuickActionItem[]
+  onCustomerIdentityRefresh: (customerId: string) => boolean
   onOpenCrm: (tab: CrmWorkspaceTab) => void
+  showIvrJourney?: boolean
 }
 
 export function LeftColumn({
   customer,
+  identityRefreshPasteValue,
   journey,
   tickets,
   nextBestActions,
   quickActions,
+  onCustomerIdentityRefresh,
   onOpenCrm,
+  showIvrJourney,
 }: LeftColumnProps) {
   return (
     <div className="inbound-left-column">
       <div className="inbound-left-column__fixed">
-        <CustomerInformationCard customer={customer} />
+        <CustomerInformationCard
+          customer={customer}
+          identityRefreshPasteValue={identityRefreshPasteValue}
+          showIvrJourney={showIvrJourney}
+          onCustomerIdentityRefresh={onCustomerIdentityRefresh}
+        />
       </div>
       <div className="inbound-left-column__scroll">
         <CustomerJourneyCard items={journey} />

@@ -3544,11 +3544,13 @@ a {
 }
 
 .aicc-base-card__header-extra {
-  display: inline-grid;
-  width: 20px;
-  height: 20px;
-  flex: 0 0 20px;
-  place-items: center;
+  display: inline-flex;
+  width: auto;
+  min-width: 20px;
+  min-height: 22px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
   color: var(--aicc-text-tertiary);
   font-size: 11px;
   transition:
@@ -4382,10 +4384,18 @@ a {
   text-underline-offset: 2px;
 }
 
+.aicc-customer-info__header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  line-height: 0;
+}
+
 .aicc-customer-info__edit-button {
   display: inline-grid;
   width: 22px;
   height: 22px;
+  padding: 0;
   place-items: center;
   border: 0;
   border-radius: var(--aicc-radius-sm);
@@ -4407,6 +4417,39 @@ a {
 .aicc-customer-info__edit-button:focus-visible {
   outline: 2px solid rgba(30, 111, 214, 0.22);
   outline-offset: 1px;
+}
+
+.aicc-customer-info__edit-button .anticon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.aicc-identity-refresh-popover {
+  display: flex;
+  width: 224px;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aicc-identity-refresh-popover__label {
+  color: var(--aicc-text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.aicc-identity-refresh-popover__error {
+  color: var(--aicc-danger);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.aicc-identity-refresh-popover__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
 }
 
 .aicc-customer-info__access-strip {
@@ -4477,6 +4520,47 @@ a {
   min-width: 62px;
   justify-content: center;
   margin-left: auto;
+}
+
+.aicc-customer-info__route-hint {
+  display: grid;
+  align-items: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 22px;
+  padding: 0 7px;
+  grid-template-columns: 13px 32px minmax(0, 1fr);
+  border: 1px solid #dce8f6;
+  border-radius: var(--aicc-radius-sm);
+  background: #f7fbff;
+  color: var(--aicc-text-secondary);
+  gap: 5px;
+}
+
+.aicc-customer-info__route-hint .anticon {
+  color: var(--aicc-primary);
+  font-size: 12px;
+}
+
+.aicc-customer-info__route-label {
+  color: var(--aicc-primary-strong);
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 14px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.aicc-customer-info__route-value {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--aicc-text);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .agent-workspace-tabs {
@@ -5338,6 +5422,19 @@ a {
 
 .inbound-left-column__scroll .inbound-section-card {
   flex: 0 0 auto;
+}
+
+.inbound-empty-state {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #d9e4f2;
+  border-radius: var(--aicc-radius-sm);
+  background: #f8fbff;
+  color: var(--aicc-text-tertiary);
+  font-size: 11px;
+  line-height: 16px;
 }
 
 .inbound-section-card__header-button {

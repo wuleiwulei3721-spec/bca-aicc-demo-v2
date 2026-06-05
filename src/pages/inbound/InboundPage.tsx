@@ -1,4 +1,9 @@
-import { bankAppVoiceCustomer, inboundCustomer } from '../../mock/inbound'
+import {
+  bankAppVoiceCustomer,
+  unidentifiedCustomerJourney,
+  unidentifiedInboundCustomer,
+  unidentifiedTicketingHistory,
+} from '../../mock/inbound'
 import type { CallInteraction } from '../../store'
 import { InteractionWorkspace } from './InteractionWorkspace'
 
@@ -7,15 +12,18 @@ interface InboundPageProps {
 }
 
 export function InboundPage({ interaction }: InboundPageProps) {
-  const customer =
-    interaction.source === 'bankapp-voice'
-      ? bankAppVoiceCustomer
-      : inboundCustomer
+  const isBankAppVoice = interaction.source === 'bankapp-voice'
+  const customer = isBankAppVoice
+    ? bankAppVoiceCustomer
+    : unidentifiedInboundCustomer
 
   return (
     <InteractionWorkspace
       ariaLabel="Inbound call workspace"
       customer={customer}
+      initialJourney={isBankAppVoice ? undefined : unidentifiedCustomerJourney}
+      initialTickets={isBankAppVoice ? undefined : unidentifiedTicketingHistory}
+      showIvrJourney
     />
   )
 }

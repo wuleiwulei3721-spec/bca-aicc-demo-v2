@@ -103,19 +103,27 @@ export function CustomerJourneyCard({ items }: CustomerJourneyCardProps) {
         onHeaderClick={() => setExpanded((current) => !current)}
       >
         <div className="inbound-journey-list">
-          {visibleItems.map((item) => (
-            <button
-              className="inbound-compact-row inbound-compact-row--button inbound-journey-row"
-              key={item.id}
-              type="button"
-              onClick={() => setActiveItem(item)}
-            >
-              {renderChannelIcon(item.channel)}
-              <span className="inbound-compact-row__main">{item.summary}</span>
-              {renderResultIcon(item.result)}
-              <span className="inbound-compact-row__date">{item.date}</span>
-            </button>
-          ))}
+          {visibleItems.length > 0 ? (
+            visibleItems.map((item) => (
+              <button
+                className="inbound-compact-row inbound-compact-row--button inbound-journey-row"
+                key={item.id}
+                type="button"
+                onClick={() => setActiveItem(item)}
+              >
+                {renderChannelIcon(item.channel)}
+                <span className="inbound-compact-row__main">
+                  {item.summary}
+                </span>
+                {renderResultIcon(item.result)}
+                <span className="inbound-compact-row__date">{item.date}</span>
+              </button>
+            ))
+          ) : (
+            <div className="inbound-empty-state">
+              Customer journey is not loaded.
+            </div>
+          )}
         </div>
       </SectionCard>
 

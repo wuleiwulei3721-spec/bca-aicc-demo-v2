@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-05 15:56 +08:00
+最后更新：2026-06-05 19:34 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：在客户安全分支 `codex/customer-aux-busy-reason-modal` 上实现 AUX 示忙原因选择弹框；该分支基于 `main`，继续隐藏 `Call Management` 与 `Routing Config` 管理菜单及直达 URL，仅新增客户可见的右上角 AUX 选择能力。
+当前目标：在客户可发布隔离分支 `codex/customer-identity-refresh` 上实现来电弹屏客户身份刷新；PSTN 初始为未识别客户，坐席可在 Customer Information 右上角点击身份刷新图标，使用演示 `Paste` 填入客户 ID `00000078987` 后刷新客户信息、Customer Journey 与 Ticketing History。已修复右上角双图标裁剪、Customer ID 浮层偏左、header action hover 背景内图标不居中、正式 Live Chat 客户卡片接入时长错误持续计时，并在语音/IVR 类客户卡片底部新增可见标签为 `Menu` 的最后菜单提示。
 
 ## 0. 使用规则
 
@@ -40,8 +40,8 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`codex/customer-aux-busy-reason-modal`
-当前 HEAD：以 `git rev-parse HEAD` 为准；本分支从 `main` 创建，保留客户 Production 口径：主工作台、Channel Simulation、BankApp、WhatsApp、PSTN、Voice/Video handoff、正式 Live Chat 和 Design System 可用，`Call Management` 与 `Routing Config` 菜单及其直达 URL 继续屏蔽。本分支只新增客户可见的 AUX 示忙原因选择弹框。
+当前分支：`codex/customer-identity-refresh`
+当前 HEAD：以 `git rev-parse HEAD` 为准；本分支从 `main` 创建，保留客户 Production 口径：主工作台、Channel Simulation、BankApp、WhatsApp、PSTN、Voice/Video handoff、正式 Live Chat 和 Design System 可用，`Call Management` 与 `Routing Config` 菜单及其直达 URL 继续屏蔽。本分支新增客户可见的来电弹屏客户身份刷新能力。
 部署目标：Vercel Production 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -109,11 +109,11 @@ codex-recovered-context.md
 - `src/layouts/BasicLayout.tsx`：全局 Header、可展开/收起左侧菜单、坐席工具条、通话接入阻塞顶部提示、内部聊天入口和主内容出口。
 - `src/pages/AgentWorkspace.tsx`：Home tab 与工作区交互 tab 容器，负责 Demo tabs、正式 `Live Chat` 固定 tab、多个 PSTN / Voice Call / Video Call 通话实例 tab 的页签名称、最长服务计时、短闪提示和 Live Chat 总未读 badge。
 - `src/pages/bankapp/BankAppDemoPage.tsx`：BankApp 客户侧模拟器，采用真实手机比例的客户端舞台和轻量 AICC Process rail；Voice / Video handoff 会在已有未挂断通话时显示 inline warning，坐席侧结果通过真实 workspace tab 跳转体现。
-- `src/pages/inbound/InteractionWorkspace.tsx`：电话与视频弹屏共用的三栏工作台。
-- `src/pages/inbound/InboundPage.tsx`：PSTN / Voice Call 电话弹屏 wrapper。
+- `src/pages/inbound/InteractionWorkspace.tsx`：电话、视频与 Live Chat 弹屏共用的三栏工作台；维护当前工作台实例内的客户身份刷新展示数据，刷新成功后只更新当前实例的 Customer Information、Customer Journey 与 Ticketing History，不写入全局 store；支持由弹屏 wrapper 显式传入 `showIvrJourney`，控制客户卡片 `Menu` 最后菜单提示与 Call Flow Detail 的 IVR Journey 展示。
+- `src/pages/inbound/InboundPage.tsx`：PSTN / Voice Call 电话弹屏 wrapper；PSTN 初始使用未识别客户和空 Journey / Ticketing，BankApp Voice 保持已识别客户。
 - `src/pages/inbound/VideoCallPage.tsx`：Video Call 弹屏 wrapper，复用三栏工作台并叠加 OpenEye 浮窗。
 - `src/pages/inbound/LiveChatPage.tsx`：旧版 Live Chat 页面源码，当前不再作为正式 tab 渲染，保留作回滚参考。
-- `src/pages/inbound/LiveChat2Page.tsx`：正式 `Live Chat` 弹屏页面，继续使用 `liveChat2*` store、mock 和组件实现客户列表、Conversation、Message Record 与 Quick Replies。
+- `src/pages/inbound/LiveChat2Page.tsx`：正式 `Live Chat` 弹屏页面，继续使用 `liveChat2*` store、mock 和组件实现客户列表、Conversation、Message Record 与 Quick Replies；Customer Information 使用 `activeSession.customer.accessDuration` 的静态接入耗时，不再用服务中 `elapsedSeconds` 覆盖。
 - `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`：正式 `Live Chat` 客户列表，包含收起/展开、渠道筛选、排序、Current/History 文字 tab、未读、未回复计时、星标和关闭结束会话；客户行使用两行 grid 对齐且不再展示转接图标，收起态保留 SLA 左侧色条并在渠道头像内展示只读星标。
 - `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`：正式 `Live Chat` Conversation tab 内容，包含消息记录、快捷回复、引用、撤回、Transfer、End/Close 和发送消息演示。
 - `src/pages/call-management/RoutingConfigurationPage.tsx`：旧路由配置入口兼容组件，重定向到 `/routing-config/route-elements`。
@@ -123,18 +123,19 @@ codex-recovered-context.md
 - `src/pages/routing-config/RoutingConfigStatusBadge.tsx`：Routing Config 状态 badge 组件，避免页面组件导出非组件函数触发 Fast Refresh lint。
 - `src/pages/call-management/TextChannelSettingsPage.tsx`：数据呼叫管理下的文字渠道配置页，包含 Service Rules、Customer Timeout & Messages、Channel Queue Alerts 三组配置。
 - `src/pages/inbound/components/LiveChatCustomerList.tsx`：WhatsApp / BankApp 客户聊天列表，默认收起，支持 ALL 与渠道图标筛选、会话运行持续时间、SLA 状态、短闪提示，可收起展开；Webchat mock 暂时隐藏。
+- `src/pages/inbound/components/CustomerInformationCard.tsx`：Inbound 左栏客户信息卡容器，包含客户验证、联系信息维护、呼出申请、Call Flow、Send Email，以及右上角客户身份刷新浮层；身份刷新图标和原编辑联系方式图标必须同时显示在卡片右上角，Customer ID 浮层使用 `bottom` placement，hover 背景内图标必须居中；语音/IVR 类渠道在底部第二行以 `Menu` 短标签展示最后一级菜单，从现有 `callFlowDetail.ivrJourney` 取最后一级菜单，并在 title / aria 中保留 `Last IVR menu` 完整语义。
 - `src/pages/inbound/components/ChannelTag.tsx`：统一渠道标签，Customer Information 中可合并展示静态渠道接入耗时，例如 `PSTN · 05:23`、`BankApp · 02:11`。
 - `src/pages/DesignSystem.tsx`：设计系统展示页。
-- `src/store/appStore.ts`：workspace tab、BankApp demo tab、WhatsApp demo tab、Live Chat 聚焦/已读状态、多 `CallInteraction` 通话实例、voice/video handoff readiness、interaction timing 和 demo-only screen share 全局状态。
+- `src/store/appStore.ts`：workspace tab、BankApp demo tab、WhatsApp demo tab、Live Chat 聚焦/已读状态、多 `CallInteraction` 通话实例、voice/video handoff readiness、interaction timing 和 demo-only screen share 全局状态；`createLiveChat2HandoffSession()` 会保留来源 session 的 `customer.accessDuration`，不把客户卡片接入时长重置或改成服务时长。
 - `src/store/callManagementStore.ts`：客户分支最小 Call Management 前端 store，目前只提供示忙原因列表给右上角 AUX 选择弹框使用，不暴露管理页面或维护能力。
 - `src/hooks/useNow.ts`：前端运行时每秒 tick hook，用于 workspace tab 和 Live Chat 列表计时刷新。
 - `src/mock/bankapp.ts`：BankApp 联系方式、业务类型、客户身份/语言驱动的技能路由和截图素材路径配置。
-- `src/mock/inbound.ts`：Inbound 演示数据。
+- `src/mock/inbound.ts`：Inbound 演示数据；包含未识别 PSTN 初始客户、身份刷新演示 ID `00000078987` 和 `lookupCustomerIdentityRefresh()` mock 查询 helper。
 - `src/mock/routingConfiguration.ts`：路由配置页默认 mock，包含 route factor、自编码 VDN/站点/渠道/渠道媒体/业务类型/接入账号/接入入口/结构化工作时间方案/技能队列/路由规则。
 - `src/mock/busyReasons.ts`：客户分支最小示忙原因 mock，包含 Ibadah 默认启用、Makan 启用、Training 禁用、Extension 1-7 禁用；AUX 弹框只展示启用原因。
 - `src/mock/textChannelSettings.ts`：文字渠道配置页默认 mock，包含并发人数、自动回复、Webchat 撤回、客户超时话术、渠道排队阈值和通知对象。
 - `src/types/bankapp.ts`：BankApp demo 联系方式、业务类型和步骤类型。
-- `src/types/inbound.ts`：Inbound 业务类型。
+- `src/types/inbound.ts`：Inbound 业务类型，包含客户身份刷新结果类型 `CustomerIdentityRefreshResult`。
 - `src/types/busyReason.ts`：客户分支最小示忙原因类型，供 AUX 选择弹框和 store 使用。
 - `src/types/routingConfiguration.ts`：路由配置页专用类型，覆盖 route factor、channel_media、site_access_ratio、working_time_plan、skill_queue、routing_rule 和 routing_rule_index 等结构。
 - `src/store/routingConfigStore.ts`：Routing Config 前端 demo 本地状态 store，刷新后恢复 mock；普通 CRUD、渠道媒体规则方案、Channel + Media 规则绑定和技能路由规则共用。
@@ -169,10 +170,12 @@ codex-recovered-context.md
 - `Video Call` 与 `Live Chat` 已从左侧可见菜单移除；底层 workspace、store 和页面能力保留，供 BankApp Video、WhatsApp/BankApp chat 和后续调试复用。
 - `createCallInteraction(kind, source?, activate?)` 会创建独立通话实例 tab；tab key 使用稳定递增格式 `call-1`、`call-2`、`call-3`，不会覆盖旧通话弹屏。
 - PSTN 创建 `voice/pstn` 实例，tab 显示 `PSTN (mm:ss)`；BankApp Voice 创建 `voice/bankapp-voice` 实例，tab 显示 `Voice Call (mm:ss)`；BankApp Video 创建 `video/bankapp-video` 实例，tab 显示 `Video Call (mm:ss)`。
+- PSTN 电话弹屏初始显示 `Unidentified Customer`、空 Customer Journey 和空 Ticketing History；坐席点击 Customer Information 右上角身份刷新图标，点击 `Paste` 自动填入演示 ID `00000078987`，点击 `Confirm` 后假装 CRM 查询成功并刷新当前工作台左栏三张卡片。身份刷新图标与原编辑联系方式图标都在 Customer Information 右上角展示，不能相互覆盖或被裁剪；图标必须位于 hover 背景正中；Customer ID 浮层不能进入左侧菜单范围。语音/IVR 类 Customer Information 底部第一行仍展示渠道、接入时长、验证状态和 Verify；第二行展示 `Menu` 与最后一级 IVR 菜单，点击渠道图标仍打开完整 Call Flow Detail。
 - `requestBankAppVoiceCall(activate?)` / `requestBankAppVideoCall(activate?)` 会通过 request id 触发 `BasicLayout` 话务状态机，并携带是否激活坐席工作台的语义；BankApp Demo 在 Voice / Video 的 `Connected -> Agent Workspace` handoff 前会读取 store 中的 `voiceVideoHandoffReadiness`，如有未挂断通话则阻止跳转并显示 `Please hang up the current call and wait until the agent is Ready before routing this interaction to Agent Workspace.`，如坐席不是 Ready 则显示 `Agent must be Ready before routing this interaction to Agent Workspace.`。
 - `bankAppVideoShareState` / `isScreenShareActive` 表示 demo-only 桌面共享状态；BankApp Video 的桌面共享入口已移到坐席侧 OpenEye 浮窗，点击 `桌面共享` 后显示选择共享程序截图，点击 `确定` 后切回 BankApp Demo 展示客户侧共享画面；Hang Up、关闭 Video Call tab、新普通视频呼叫、Reset BankApp Demo 会清理该状态。
 - `requestLiveChatWorkspace(sessionId?, activate?)` 会打开固定 Live Chat tab；旧会话 id 会映射到新版 `liveChat2*` 状态并聚焦对应客户：`live-chat-001 -> livechat2-001`、`live-chat-002 -> livechat2-002`、`live-chat-003 -> livechat2-003`，未知 id fallback 到首个非历史 livechat2 会话。`activate` 默认为 `true`，BankApp 演示可传 `false` 在后台准备文字坐席页。
 - 2026-05-29 17:42 后，`requestLiveChatWorkspace` 每次从 WhatsApp / BankApp Demo handoff 都会基于对应 livechat2 mock 模板创建新的会话实例，例如 `livechat2-001-handoff-1`；这样重复从 demo 跳入会表现为新客户接入，而不是回到旧客户行。
+- 正式 Live Chat 的 Customer Information 渠道标签中的 `accessDuration` 只表示客户从渠道接入到转人工成功前的耗时；接入坐席后必须保持固定。服务中持续计时只出现在 workspace tab、Live Chat 客户列表、Conversation header、SLA / 未回复计时等服务时长 UI。
 - `requestLiveChat2Workspace(sessionIds, options?)` 作为兼容入口仍存在，但也会打开正式 `Live Chat` tab，不再创建单独 `livechat2` tab；`liveChat2*` 状态独立保存排序、星标、草稿、已读、未回复计时、结束态、历史列表和消息覆盖，Sign Out / AUX 会通过 `clearLiveChat2Sessions()` 清理。
 - Workspace 交互页签现在统一使用同一套 label 结构和样式，图标与文字间距保持普通 tab 的 4px；PSTN 电话呼入为 `PSTN (mm:ss)`，BankApp Voice 为 `Voice Call (mm:ss)`，BankApp Video 为 `Video Call (mm:ss)`，Live Chat 有 active session 时显示最长会话运行时长 `Live Chat (mm:ss)`，右上角显示当前未读总数且大于 99 显示 `99+`。
 - 新通话交互进入且当前不在该 tab 时，workspace tab 会轻微短闪约 5 秒；Live Chat tab key 仍保持 `live-chat`，只要有新 active session 进入就会短闪，即使当前已停留在 Live Chat tab；Live Chat 的短闪作用在整个 tab item 背景范围，不只包住 label 文本；通话 tab key 改为动态 `call-n`。
@@ -2437,6 +2440,8 @@ M src/types/inbound.ts
 
 P0：
 
+- 人工复查客户身份刷新：PSTN 初始显示 `Unidentified Customer`；Customer Journey / Ticketing History 显示未加载空态；Customer Information 右上角同时显示身份刷新图标和原编辑联系方式图标；两个图标在 hover 背景中居中；Customer ID 浮层不进入左侧菜单范围；点击 `Paste` 自动填入 `00000078987`；错误 ID 不关闭浮层并提示；正确 ID `Confirm` 后刷新 Customer Information、Customer Journey 和 Ticketing History。
+- 人工复查客户卡片 `Menu` 最后菜单提示：PSTN / BankApp Voice 等语音/IVR 类渠道在 Customer Information 底部第二行显示短标签 `Menu` 和最后一级 IVR 菜单，第一行渠道/接入时长/验证/Verify 不被挤压；点击渠道图标仍打开完整 Call Flow Detail；Live Chat 和 Video 不显示该提示。
 - 人工复查客户 AUX 弹框：签出状态头像菜单只显示 `Sign In`；签入后显示 `AUX` 和 `Sign Out`；点击 `AUX` 打开 `Select AUX Reason`；只显示启用原因 `Ibadah`、`Makan`；默认选中 `Ibadah`；`Cancel` 不改变状态；`Confirm` 后状态计时区显示 `AUX - Ibadah` 或所选原因。
 - 人工复查客户安全分支仍隐藏管理菜单：左侧菜单不显示 `Call Management` 和 `Routing Config`；`/call-management/*`、`/routing-config/*` 仍回到 `/`。
 - 人工复查 `Routing Config > Route Elements`：英文标题、查询栏、独立靠右 Add、列表字段、短胶囊状态开关、弹框顶部标题栏背景、无额外 footer 背景、统一按钮宽度/高度和保存后校验提示符合管理台数据维护规范。
@@ -2489,6 +2494,7 @@ P0：
 - 人工复查正式 `Live Chat` workspace tab：当前有服务客户时显示最长服务时长且不变色；当前没有服务客户时不显示时长；新客户接入时仍短闪。
 - 人工复查 `livechat2` 客户列表收起态：历史会话头像内不显示星标，当前服务会话的星标仍按颜色展示。
 - 人工复查正式 `Live Chat` workspace tab：打开多个客户后 tab 应显示最长服务时长，例如 `Live Chat (00:xx)`；新客户接入时 tab 应短闪。
+- 人工复查正式 `Live Chat` Customer Information 渠道接入时长：从 WhatsApp 或 BankApp Demo route 新客户后，客户卡片里的渠道接入时长应保持 mock 中的静态值，不随服务秒数增长；workspace tab、客户列表、Conversation header 和 SLA / 未回复计时仍继续按服务时长运行。
 - 在目标演示分辨率下人工复查本轮 `livechat2` 客户列表：Current / History 应恢复为居中文字 tab，客户行不再显示转接图标，顶部 ALL 渠道标识应使用系统主题深蓝色。
 - 在目标演示分辨率下人工复查本轮 `livechat2` 客户列表：行 hover 才显示排序按钮、客户名与计时对齐、最新消息与星标对齐、灰色星标默认隐藏、收起态星标无白色圆底。
 - 在目标演示分辨率下人工复查本轮 `livechat2` 客户列表：Assistant 风格 Current / History tab、右侧无边框排序图标、无最新消息时间、无时钟图标、展开/收起态 SLA 左侧色条、头像内只读星标和无横向滚动条。

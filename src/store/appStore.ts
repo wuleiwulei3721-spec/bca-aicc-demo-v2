@@ -124,7 +124,6 @@ function createLiveChat2HandoffSession(
     accessSequence,
     customer: {
       ...sourceSession.customer,
-      accessDuration: '00:00',
       profile: {
         ...sourceSession.customer.profile,
       },
