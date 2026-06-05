@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-06-04 16:48 +08:00
+最后更新：2026-06-05 11:53 +08:00
 
 ## 项目方向
 
@@ -49,6 +49,17 @@
 - 普通规则状态只展示 Enabled / Disabled；空路由要素展示为空，不显示 `ANY`。
 - 单行 Edit 只能修改 Target Skill Queue 和 Status；Status 使用短胶囊 switch + Enabled/Disabled 文案，不使用下拉框；Priority 仅保留为内部默认值，不在页面展示。
 - 多字段规则表格如启用横向滚动，Actions / 操作列必须固定在右侧，横向滚动只作用于非操作列。
+
+## 2026-06-04 Channel Type And Channel Management Refactor
+
+- UI pages, menus, modal titles, field labels, buttons, validation messages, and mock display text must use English.
+- `Channel Type` is an engineering-defined and license-controlled dictionary / field template, not a business-maintained runtime form builder.
+- `Channel` is the concrete access configuration. If Email server, port, protocol, or security differs, create separate Email channels under the Email channel type.
+- `Channel Account` is one or more official service accounts under a Channel. If Instagram shares one access configuration but has multiple official accounts, keep one Instagram Channel and add multiple accounts.
+- `Channels` must not allow business users to add or delete channels. It may edit Media Type, Status, concrete technical access parameters, Business Config, and Account Management.
+- `Access Accounts` standalone menu is removed; accounts are managed inside `Channels > Account Management`.
+- `Media Service Rule Plans` menu is removed; business service configuration is managed inside `Channels > Business Config`.
+- Queue configuration belongs to `Skill Queues`, not Media Service Rule Plans.
 
 ## 2026-06-03 Working Time Plans 印尼排班口径
 
@@ -741,3 +752,64 @@
 - 当前本地继续开发分支为 `codex/text-channel-config-settings`，该分支需要显示 `Call Management` 和 `Routing Config`。
 - 本地开发分支恢复 `/call-management/text-channel-settings`、`/call-management/routing-configuration` 和 `/routing-config/*` 直达路由，方便继续完成管理配置功能。
 - 后续再发布给客户前，必须重新确认是否需要隐藏这两个管理菜单；不要直接把本地开发开放状态误发到 Production。
+
+## 2026-06-05 Call Management 全局控制配置口径
+
+- `Call Management` 使用英文子菜单 `Global Control Configuration`，位于 `Text Channel Settings` 上方；直达路由为 `/call-management/global-control-configuration`。
+- 页面 UI 文案使用英文，不使用中文字段标签或中文按钮。
+- 页面用于前端 demo 配置全局坐席/媒体控制项，不接真实话务状态机、后端接口或 Production 客户隐藏版。
+- 默认配置：应答方式为自动应答，应答时长 3 秒；签入后状态为就绪；自动取消话后整理态时长 5 秒；久不操作界面自动签出 30 分钟，提前预警 10 分钟；文字媒体最大服务数 3 个。
+- 展示分组：应答配置放应答方式和应答时长；签入与话后整理放签入后状态和 ACW 自动取消；久不操作控制放自动签出和提前预警；文字媒体容量单独一行。
+- 交互规则：应答方式为手动应答时隐藏应答时长；所有数字必须大于 0；久不操作提前预警时长必须小于自动签出时长。
+- 当前本地开发分支显示该菜单；客户 Production `main` 仍隐藏 `Call Management` 和 `Routing Config`。
+
+## 2026-06-05 Call Management 示忙原因维护口径
+
+- `Call Management` 使用英文子菜单 `Busy Reason Management`，直达路由为 `/call-management/busy-reasons`。
+- 页面 UI 文案使用英文；列表字段为 ID、Busy Reason、Default、Status、Remark、Updated Date、Updated By、Actions。
+- 查询条件：Keyword（匹配 ID / Busy Reason / Remark）、Default、Status。
+- 当前页面仅支持编辑已有记录，不提供 Add、View、Delete 入口；Actions 只保留 Edit。
+- `Default` 表示系统默认示忙原因，只能唯一；保存某条为默认时，其它示忙原因必须自动取消默认。
+- `Status` 只有 Enabled / Disabled；只有 Enabled 状态的示忙原因才显示在右上角坐席状态菜单的 AUX 选项中。
+- `AgentStatus` 支持动态 `AUX - ${reasonName}`，不再只允许写死的 `AUX - Ibadah` / `AUX - Makan`。
+- 当前为前端 demo store，刷新后恢复 mock；默认 mock 为 Ibadah 默认启用、Makan 启用、Training 禁用，以及 Extension 1 至 Extension 7 七条禁用备用原因。
+
+## 2026-06-05 Skill Queues 排队配置弹框口径
+
+- `Routing Config > Skill Queues` 的排队配置是从媒体服务规则中迁移后的主要维护入口。
+- Add/Edit/View 弹框应分为 `Basic Information` 和 `Queue Configuration` 两块；排队相关配置单独放在下方 `Queue Configuration`。
+- `Queue Configuration` 展示顺序：
+  - `Non-working Time Message` 单独一行。
+  - `Max Queue Customers` 与 `Queue Waiting Message` 同行。
+  - `Queue Timeout` 与 `Queue Timeout Message` 同行。
+- 提示语字段使用和 `Channels > Business Config` 一致的字段级 `Insert Variable` 下拉；Add/Edit 显示，View 不显示。
+- 当前变量口径：
+  - `Non-working Time Message`：`{workTime}`。
+  - `Queue Waiting Message`：`{estimatedWaitMinutes}`。
+  - `Queue Timeout Message`：`{customerName}`。
+- 变量插入应写入当前 textarea 光标或选区位置；没有光标记录时追加到文本末尾。
+
+## 2026-06-05 Phone Business Config 异常工作时间方案口径
+
+- `Routing Config > Channels > Business Config` 中，只有 Phone 渠道的 Voice 配置显示 `Exception Working Time Plan`。
+- 该字段对应中文需求“异常情况工作时间方案”，保存为 `ChannelMediaBusinessConfig.exceptionWorkTimePlanCode`。
+- 下拉选项复用 `Working Time Plans`，并包含 `Default 24x7` 空值选项。
+- Phone mock 默认使用 `WTP_BANK_HOURS`，页面显示 `Bank Working Hours`。
+- Haloapp、Webchat、WhatsApp、Email、Instagram 等非 Phone 渠道不显示该字段。
+- 当前只是前端 demo 配置字段，不接真实异常场景判定；后续需要定义何种异常情况使用该工作时间方案。
+
+## 2026-06-05 Skill Queues Work Time Plan 预览口径
+
+- `useRoutingLookups().workTimeOptions` 已经包含 `Default 24x7` 空值选项；`SkillQueuesPage` 不要再额外 prepend `Default 24x7`。
+- `Default 24x7` 表示 `workTimePlanCode: ''`，没有真实 Working Time Plan 记录，因此不显示 `Preview`。
+- 非空 `workTimePlanCode` 必须能在 `workingTimePlans` 中找到对应方案，才显示 `Preview` 按钮。
+- `Preview` 打开只读 `View Working Time Plan` 弹框，展示 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan 和优先级提示。
+- `Preview` 不负责编辑、保存或删除 Working Time Plan；关闭后应回到原 Skill Queue 弹框上下文。
+
+## 2026-06-05 Phone Exception Work Time Plan 预览口径
+
+- Working Time Plan 新增 `WTP_3_WRONG_INPUT_ZH / 连续3次输入有误-中文`，用于 Phone 异常场景“连续 3 次输入有误”的中文服务窗口 demo。
+- Phone 渠道 VOICE Business Config 默认选中 `WTP_3_WRONG_INPUT_ZH`，字段为 `exceptionWorkTimePlanCode`。
+- `Channels > Business Config > Exception Working Time Plan` 也必须直接使用 `useRoutingLookups().workTimeOptions`，不要额外 prepend `Default 24x7`。
+- `Default 24x7` 空值不显示 `Preview`；`Bank Working Hours`、`连续3次输入有误-中文` 等真实方案显示 `Preview`。
+- `Preview` 复用只读 `View Working Time Plan` 弹框，不在 Channel Business Config 内直接编辑 Working Time Plan。

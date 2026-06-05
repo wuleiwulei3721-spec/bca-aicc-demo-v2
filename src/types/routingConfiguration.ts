@@ -40,6 +40,47 @@ export type ChannelScanMode = 'webhook' | 'polling' | 'manual'
 
 export type RoutingRiskLevel = 'success' | 'warning' | 'error'
 
+export interface ChannelAccessParameterField {
+  key: string
+  label: string
+  required: boolean
+}
+
+export interface ChannelType {
+  accessParameterFields: ChannelAccessParameterField[]
+  category: ChannelCategory
+  channelTypeCode: string
+  channelTypeName: string
+  licenseStatus: 'Licensed' | 'Unlicensed'
+  status: RoutingConfigStatus
+  supportedMediaTypes: MediaTypeCode[]
+}
+
+export type ChannelAccessConfig = Record<string, string>
+
+export interface ChannelMediaBusinessConfig {
+  accessSuccessWelcomeMessage: string
+  agentEndReminder: string
+  agentNoReplyAutoResponseMessage: string
+  agentNoReplyBreachSeconds: number
+  agentNoReplyTimeoutSeconds: number
+  agentNoReplyWarningSeconds: number
+  agentTimeoutNotice: string
+  assignedAgentGreeting: string
+  customerNoReplyTimeoutMinutes: number
+  customerTimeoutNotice: string
+  exceptionWorkTimePlanCode: string
+  maxConcurrentAccess: number
+  minScanIntervalSeconds: number
+  preTimeoutReminderMessage: string
+  preTimeoutReminderMinutes: number
+  webchatRecallLimitSeconds: number
+}
+
+export type ChannelBusinessConfig = Partial<
+  Record<MediaTypeCode, ChannelMediaBusinessConfig>
+>
+
 export interface RouteFactor {
   allowAny: boolean
   displayOrder: number
@@ -70,14 +111,14 @@ export interface AccessSite {
 }
 
 export interface Channel {
-  channelCategory: ChannelCategory
+  accessConfig: ChannelAccessConfig
+  businessConfig: ChannelBusinessConfig
   channelCode: string
   channelId: string
   channelName: string
-  maxConcurrency: number
   mediaTypes: MediaTypeCode[]
-  minScanIntervalSeconds: number
   status: RoutingConfigStatus
+  channelTypeCode: string
 }
 
 export interface MediaType {
@@ -162,15 +203,13 @@ export interface SiteAccessRatioGroup {
   status: RoutingConfigStatus
 }
 
-export type AccessAccountExtensionConfig = Record<string, string>
-
-export interface AccessAccount {
+export interface ChannelAccount {
+  account: string
   accountCode: string
   accountName: string
   channelCode: string
-  externalAccountId: string
-  extensionConfig: AccessAccountExtensionConfig
-  secretRef: string
+  credentialRef: string
+  purpose: string
   status: RoutingConfigStatus
 }
 
@@ -239,10 +278,13 @@ export interface SkillQueuePrompt {
 
 export interface SkillQueue {
   assignedAgentCount: number
-  maxQueueSize: number
+  maxQueueCustomers: number
+  nonWorkingTimeMessage: string
   platformSkillId: string
   prompts: SkillQueuePrompt[]
-  queueTimeoutSeconds: number
+  queueTimeoutMessage: string
+  queueTimeoutMinutes: number
+  queueWaitingMessage: string
   skillQueueCode: string
   skillQueueName: string
   status: RoutingConfigStatus

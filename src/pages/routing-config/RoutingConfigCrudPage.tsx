@@ -65,6 +65,14 @@ interface RoutingConfigFieldContext<RecordType extends object> {
   mode: ModalMode | null
 }
 
+interface RoutingConfigFormContentContext<RecordType extends object> {
+  currentRecord: RecordType | null
+  draft: RoutingConfigDraft
+  isReadOnly: boolean
+  mode: Exclude<ModalMode, 'delete'> | null
+  setDraftValue: (key: string, value: RoutingConfigFieldValue) => void
+}
+
 interface RoutingConfigTextFilter<RecordType extends object> {
   key: string
   label: string
@@ -126,7 +134,11 @@ interface RoutingConfigCrudPageProps<RecordType extends object> {
     save?: string
     view?: string
   }
+  modalWidth?: number
   recordToDraft: (record: RecordType) => RoutingConfigDraft
+  renderFormContent?: (
+    context: RoutingConfigFormContentContext<RecordType>,
+  ) => ReactNode
   resetButtonText?: string
   searchFields: Array<keyof RecordType>
   searchButtonText?: string
@@ -328,7 +340,9 @@ export function RoutingConfigCrudPage<RecordType extends object>({
   getDeleteBlockReason,
   idField,
   modalLabels,
+  modalWidth = 720,
   recordToDraft,
+  renderFormContent,
   resetButtonText = 'Reset',
   searchFields,
   searchButtonText = 'Search',
@@ -436,6 +450,12 @@ export function RoutingConfigCrudPage<RecordType extends object>({
       ? getDeleteBlockReason(selectedRecord)
       : null
   const isReadOnly = modalMode === 'view' || modalMode === 'delete'
+  const setDraftValue = (key: string, value: RoutingConfigFieldValue) => {
+    setDraft((currentDraft) => ({
+      ...currentDraft,
+      [key]: value,
+    }))
+  }
   const resolvedFields = useMemo(
     () =>
       typeof fields === 'function'
@@ -684,7 +704,7 @@ export function RoutingConfigCrudPage<RecordType extends object>({
         kind="detail"
         open={Boolean(modalMode)}
         title={modalTitle}
-        width={720}
+        width={modalWidth}
         onCancel={closeModal}
       >
         {modalMode === 'delete' ? (
@@ -708,9 +728,11 @@ export function RoutingConfigCrudPage<RecordType extends object>({
         ) : (
           <div
             className={`routing-config-crud-modal__form ${
-              resolvedFields.length <= 3
-                ? 'routing-config-crud-modal__form--compact'
-                : ''
+              renderFormContent
+                ? 'routing-config-crud-modal__form--custom'
+                : resolvedFields.length <= 3
+                  ? 'routing-config-crud-modal__form--compact'
+                  : ''
             }`}
           >
             {visibleValidationErrors.length > 0 && (
@@ -728,36 +750,53 @@ export function RoutingConfigCrudPage<RecordType extends object>({
                 }
               />
             )}
-            {resolvedFields.map((field) => {
-              const disabled =
-                isReadOnly ||
-                Boolean(field.readOnly) ||
-                (modalMode === 'edit' && Boolean(field.readOnlyOnEdit))
-              const value = draft[field.key]
-              const fieldClassName = `routing-config-crud-modal__field${
-                field.fullWidth ? ' routing-config-crud-modal__field--full' : ''
-              }`
+            {renderFormContent ? (
+              renderFormContent({
+                currentRecord: selectedRecord,
+                draft,
+                isReadOnly,
+                mode:
+                  modalMode === 'add' ||
+                  modalMode === 'edit' ||
+                  modalMode === 'view'
+                    ? modalMode
+                    : null,
+                setDraftValue,
+              })
+            ) : (
+              resolvedFields.map((field) => {
+                const disabled =
+                  isReadOnly ||
+                  Boolean(field.readOnly) ||
+                  (modalMode === 'edit' && Boolean(field.readOnlyOnEdit))
+                const value = draft[field.key]
+                const fieldClassName = `routing-config-crud-modal__field${
+                  field.fullWidth
+                    ? ' routing-config-crud-modal__field--full'
+                    : ''
+                }`
 
-              return (
-                <label key={field.key} className={fieldClassName}>
-                  <span>
-                    {field.label}
-                    {field.required && <strong>*</strong>}
-                  </span>
-                  {isReadOnly ? (
-                    <em>{formatViewValue(field, value)}</em>
-                  ) : (
-                    renderFieldInput(field, value, disabled, (nextValue) =>
-                      setDraft((currentDraft) => ({
-                        ...currentDraft,
-                        [field.key]: nextValue,
-                      })),
-                    )
-                  )}
-                  {field.helper && <small>{field.helper}</small>}
-                </label>
-              )
-            })}
+                return (
+                  <label key={field.key} className={fieldClassName}>
+                    <span>
+                      {field.label}
+                      {field.required && <strong>*</strong>}
+                    </span>
+                    {isReadOnly ? (
+                      <em>{formatViewValue(field, value)}</em>
+                    ) : (
+                      renderFieldInput(field, value, disabled, (nextValue) =>
+                        setDraft((currentDraft) => ({
+                          ...currentDraft,
+                          [field.key]: nextValue,
+                        })),
+                      )
+                    )}
+                    {field.helper && <small>{field.helper}</small>}
+                  </label>
+                )
+              })
+            )}
           </div>
         )}
         <div className="routing-config-crud-modal__footer">

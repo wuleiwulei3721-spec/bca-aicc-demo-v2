@@ -2,8 +2,7 @@ export type AgentStatus =
   | 'Unsigned'
   | 'Ready'
   | 'Not Ready'
-  | 'AUX - Ibadah'
-  | 'AUX - Makan'
+  | `AUX - ${string}`
 
 export type CallStatus =
   | 'Idle'

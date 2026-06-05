@@ -1,5 +1,5 @@
 ﻿import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons'
-import { Alert, DatePicker, Input, InputNumber, Select, Switch, Tag } from 'antd'
+import { Alert, DatePicker, Input, InputNumber, Select, Switch, Tabs, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useCallback, useMemo, useRef, useState } from 'react'
@@ -12,12 +12,14 @@ import {
 } from '../../components'
 import { useRoutingConfigStore } from '../../store'
 import type {
-  AccessAccount,
-  AccessAccountExtensionConfig,
   AccessSite,
   BusinessType,
   Channel,
-  ChannelMediaRuleBinding,
+  ChannelAccessConfig,
+  ChannelAccount,
+  ChannelBusinessConfig,
+  ChannelMediaBusinessConfig,
+  ChannelType,
   MediaServiceRulePlan,
   MediaTypeCode,
   RouteFactor,
@@ -37,7 +39,6 @@ import type {
 import {
   RoutingConfigCrudPage,
   type RoutingConfigDraft,
-  type RoutingConfigField,
   type RoutingConfigSelectOption,
 } from './RoutingConfigCrudPage'
 import { RoutingConfigStatusBadge } from './RoutingConfigStatusBadge'
@@ -57,112 +58,160 @@ const videoSupportOptions: RoutingConfigSelectOption[] = [
   { label: 'Yes', value: 'true' },
 ]
 
-interface AccessAccountConfigField {
+interface ChannelAccessParameterSchemaField {
   key: string
   label: string
+  required?: boolean
 }
 
-interface AccessAccountChannelSchema {
-  fields: AccessAccountConfigField[]
+interface ChannelTypeParameterSchema {
+  fields: ChannelAccessParameterSchemaField[]
 }
 
-const accessAccountChannelSchemas: Record<string, AccessAccountChannelSchema> = {
+const channelTypeParameterSchemas: Record<string, ChannelTypeParameterSchema> = {
+  PHONE: {
+    fields: [],
+  },
   HALOAPP: {
     fields: [
-      { key: 'tenantId', label: 'Tenant ID' },
-      { key: 'appId', label: 'App ID' },
-      { key: 'webhookUrl', label: 'Webhook URL' },
-      { key: 'signatureSecretRef', label: 'Signature Secret Ref' },
+      { key: 'tenantId', label: 'Tenant ID', required: true },
+      { key: 'appId', label: 'App ID', required: true },
+      { key: 'webhookUrl', label: 'Webhook URL', required: true },
+      {
+        key: 'signatureSecretRef',
+        label: 'Signature Secret Ref',
+        required: true,
+      },
     ],
   },
   WEBCHAT: {
     fields: [
-      { key: 'widgetId', label: 'Widget ID' },
-      { key: 'allowedDomain', label: 'Allowed Domain' },
-      { key: 'webhookUrl', label: 'Webhook URL' },
-      { key: 'signatureSecretRef', label: 'Signature Secret Ref' },
+      { key: 'widgetId', label: 'Widget ID', required: true },
+      { key: 'allowedDomain', label: 'Allowed Domain', required: true },
+      { key: 'webhookUrl', label: 'Webhook URL', required: true },
+      {
+        key: 'signatureSecretRef',
+        label: 'Signature Secret Ref',
+        required: true,
+      },
     ],
   },
   WHATSAPP: {
     fields: [
-      { key: 'wabaId', label: 'WABA ID' },
-      { key: 'phoneNumberId', label: 'Phone Number ID' },
-      { key: 'metaAppId', label: 'Meta App ID' },
-      { key: 'webhookVerifyTokenRef', label: 'Webhook Verify Token Ref' },
+      { key: 'wabaId', label: 'WABA ID', required: true },
+      { key: 'metaAppId', label: 'Meta App ID', required: true },
+      {
+        key: 'webhookVerifyTokenRef',
+        label: 'Webhook Verify Token Ref',
+        required: true,
+      },
+      { key: 'accessTokenRef', label: 'Access Token Ref', required: true },
     ],
   },
   EMAIL: {
     fields: [
-      { key: 'mailboxAddress', label: 'Mailbox Address' },
-      { key: 'imapHost', label: 'IMAP Host' },
-      { key: 'imapPort', label: 'IMAP Port' },
-      { key: 'smtpHost', label: 'SMTP Host' },
-      { key: 'smtpPort', label: 'SMTP Port' },
-      { key: 'authSecretRef', label: 'Auth Secret Ref' },
+      { key: 'protocol', label: 'Protocol', required: true },
+      { key: 'imapHost', label: 'IMAP Host', required: true },
+      { key: 'imapPort', label: 'IMAP Port', required: true },
+      { key: 'imapSecurity', label: 'IMAP Security', required: true },
+      { key: 'smtpHost', label: 'SMTP Host', required: true },
+      { key: 'smtpPort', label: 'SMTP Port', required: true },
+      { key: 'smtpSecurity', label: 'SMTP Security', required: true },
+      {
+        key: 'pollingIntervalSeconds',
+        label: 'Polling Interval',
+        required: true,
+      },
+      { key: 'authSecretRef', label: 'Auth Secret Ref', required: true },
     ],
   },
   INSTAGRAM: {
     fields: [
-      { key: 'instagramAccountId', label: 'Instagram Account ID' },
-      { key: 'username', label: 'Username' },
-      { key: 'linkedPageId', label: 'Linked Page ID' },
-      { key: 'webhookVerifyTokenRef', label: 'Webhook Verify Token Ref' },
+      { key: 'metaAppId', label: 'Meta App ID', required: true },
+      {
+        key: 'webhookVerifyTokenRef',
+        label: 'Webhook Verify Token Ref',
+        required: true,
+      },
+      { key: 'accessTokenRef', label: 'Access Token Ref', required: true },
     ],
   },
   LINKEDIN: {
     fields: [
-      { key: 'organizationId', label: 'Organization ID' },
-      { key: 'developerAppId', label: 'Developer App ID' },
-      { key: 'oauthClientId', label: 'OAuth Client ID' },
-      { key: 'oauthSecretRef', label: 'OAuth Secret Ref' },
+      { key: 'organizationId', label: 'Organization ID', required: true },
+      { key: 'developerAppId', label: 'Developer App ID', required: true },
+      { key: 'oauthClientId', label: 'OAuth Client ID', required: true },
+      { key: 'oauthSecretRef', label: 'OAuth Secret Ref', required: true },
     ],
   },
   FACEBOOK: {
     fields: [
-      { key: 'pageId', label: 'Page ID' },
-      { key: 'pageName', label: 'Page Name' },
-      { key: 'metaAppId', label: 'Meta App ID' },
-      { key: 'webhookVerifyTokenRef', label: 'Webhook Verify Token Ref' },
+      { key: 'metaAppId', label: 'Meta App ID', required: true },
+      {
+        key: 'webhookVerifyTokenRef',
+        label: 'Webhook Verify Token Ref',
+        required: true,
+      },
+      {
+        key: 'pageAccessTokenRef',
+        label: 'Page Access Token Ref',
+        required: true,
+      },
     ],
   },
   X: {
     fields: [
-      { key: 'appId', label: 'App ID' },
-      { key: 'accountHandle', label: 'Account Handle' },
-      { key: 'webhookEnvironment', label: 'Webhook Environment' },
-      { key: 'oauthSecretRef', label: 'OAuth Secret Ref' },
+      { key: 'appId', label: 'App ID', required: true },
+      {
+        key: 'webhookEnvironment',
+        label: 'Webhook Environment',
+        required: true,
+      },
+      { key: 'oauthClientId', label: 'OAuth Client ID', required: true },
+      { key: 'oauthSecretRef', label: 'OAuth Secret Ref', required: true },
     ],
   },
   TIKTOK: {
     fields: [
-      { key: 'appId', label: 'App ID' },
-      { key: 'clientKey', label: 'Client Key' },
-      { key: 'webhookUrl', label: 'Webhook URL' },
-      { key: 'oauthSecretRef', label: 'OAuth Secret Ref' },
+      { key: 'appId', label: 'App ID', required: true },
+      { key: 'clientKey', label: 'Client Key', required: true },
+      { key: 'webhookUrl', label: 'Webhook URL', required: true },
+      { key: 'oauthSecretRef', label: 'OAuth Secret Ref', required: true },
     ],
   },
   YOUTUBE: {
     fields: [
-      { key: 'channelId', label: 'Channel ID' },
-      { key: 'googleProjectId', label: 'Google Project ID' },
-      { key: 'oauthClientId', label: 'OAuth Client ID' },
-      { key: 'oauthSecretRef', label: 'OAuth Secret Ref' },
+      { key: 'googleProjectId', label: 'Google Project ID', required: true },
+      { key: 'oauthClientId', label: 'OAuth Client ID', required: true },
+      { key: 'oauthSecretRef', label: 'OAuth Secret Ref', required: true },
     ],
   },
   APPSTORE: {
     fields: [
-      { key: 'issuerId', label: 'Issuer ID' },
-      { key: 'keyId', label: 'Key ID' },
-      { key: 'appId', label: 'App ID' },
-      { key: 'privateKeySecretRef', label: 'Private Key Secret Ref' },
+      { key: 'issuerId', label: 'Issuer ID', required: true },
+      { key: 'keyId', label: 'Key ID', required: true },
+      { key: 'appId', label: 'App ID', required: true },
+      {
+        key: 'privateKeySecretRef',
+        label: 'Private Key Secret Ref',
+        required: true,
+      },
     ],
   },
   PLAYSTORE: {
     fields: [
-      { key: 'packageName', label: 'Package Name' },
-      { key: 'googleProjectId', label: 'Google Project ID' },
-      { key: 'serviceAccountEmail', label: 'Service Account Email' },
-      { key: 'serviceAccountSecretRef', label: 'Service Account Secret Ref' },
+      { key: 'packageName', label: 'Package Name', required: true },
+      { key: 'googleProjectId', label: 'Google Project ID', required: true },
+      {
+        key: 'serviceAccountEmail',
+        label: 'Service Account Email',
+        required: true,
+      },
+      {
+        key: 'serviceAccountSecretRef',
+        label: 'Service Account Secret Ref',
+        required: true,
+      },
     ],
   },
 }
@@ -187,54 +236,25 @@ function fieldRequired(draft: RoutingConfigDraft, field: string, label: string) 
   return stringValue(draft[field]).trim() ? [] : [`${label} is required.`]
 }
 
-function getAccessAccountSchema(channelCode: string) {
+function getChannelTypeParameterSchema(channelTypeCode: string) {
   return (
-    accessAccountChannelSchemas[channelCode] ?? {
+    channelTypeParameterSchemas[channelTypeCode] ?? {
       fields: [],
     }
   )
 }
 
-function buildAccessAccountExtensionConfig(
-  draft: RoutingConfigDraft,
-  channelCode: string,
-): AccessAccountExtensionConfig {
-  return getAccessAccountSchema(channelCode).fields.reduce<AccessAccountExtensionConfig>(
+function buildChannelAccessConfig(
+  draft: ChannelAccessConfig,
+  channelTypeCode: string,
+): ChannelAccessConfig {
+  return getChannelTypeParameterSchema(channelTypeCode).fields.reduce<ChannelAccessConfig>(
     (config, field) => ({
       ...config,
-      [field.key]: stringValue(draft[field.key]),
+      [field.key]: stringValue(draft[field.key]).trim(),
     }),
     {},
   )
-}
-
-function buildAccessAccountDraft(record: AccessAccount): RoutingConfigDraft {
-  const configDraft = getAccessAccountSchema(record.channelCode).fields.reduce<RoutingConfigDraft>(
-    (draft, field) => ({
-      ...draft,
-      [field.key]: record.extensionConfig[field.key] ?? '',
-    }),
-    {},
-  )
-
-  return {
-    accountCode: record.accountCode,
-    accountName: record.accountName,
-    channelCode: record.channelCode,
-    externalAccountId: record.externalAccountId,
-    secretRef: record.secretRef,
-    status: record.status,
-    ...configDraft,
-  }
-}
-
-function buildAccessAccountConfigFields(channelCode: string): RoutingConfigField[] {
-  return getAccessAccountSchema(channelCode).fields.map((field) => ({
-    key: field.key,
-    label: field.label,
-    required: true,
-    type: 'text',
-  }))
 }
 
 function validateNumberRange(
@@ -312,11 +332,13 @@ function renderRoutingStatus(status: RoutingConfigStatus) {
 }
 
 function useRoutingLookups() {
-  const accessAccounts = useRoutingConfigStore((state) => state.accessAccounts)
+  const accessEntries = useRoutingConfigStore((state) => state.accessEntries)
+  const channelAccounts = useRoutingConfigStore((state) => state.channelAccounts)
   const channelMediaRuleBindings = useRoutingConfigStore(
     (state) => state.channelMediaRuleBindings,
   )
   const channels = useRoutingConfigStore((state) => state.channels)
+  const channelTypes = useRoutingConfigStore((state) => state.channelTypes)
   const mediaServiceRulePlans = useRoutingConfigStore(
     (state) => state.mediaServiceRulePlans,
   )
@@ -366,10 +388,12 @@ function useRoutingLookups() {
     }))
 
     return {
-      accessAccounts,
+      accessEntries,
+      channelAccounts,
       channelMediaRuleBindings,
       channelOptions,
       channels,
+      channelTypes,
       mediaServiceRulePlanOptions,
       mediaServiceRulePlans,
       mediaOptions,
@@ -385,9 +409,11 @@ function useRoutingLookups() {
       workTimeOptions,
     }
   }, [
-    accessAccounts,
+    accessEntries,
+    channelAccounts,
     channelMediaRuleBindings,
     channels,
+    channelTypes,
     mediaServiceRulePlans,
     mediaTypes,
     routeFactors,
@@ -815,148 +841,398 @@ export function SitesPage() {
   )
 }
 
+const defaultChannelBusinessConfigByMedia: Record<
+  MediaTypeCode,
+  ChannelMediaBusinessConfig
+> = {
+  TEXT: {
+    accessSuccessWelcomeMessage:
+      'Hello, BANK 1 digital assistant is ready to help you.',
+    agentEndReminder:
+      'Thank you for contacting BANK 1. We are glad to assist you.',
+    agentNoReplyAutoResponseMessage:
+      'Please hold on. We are still processing your request.',
+    agentNoReplyBreachSeconds: 120,
+    agentNoReplyTimeoutSeconds: 120,
+    agentNoReplyWarningSeconds: 60,
+    agentTimeoutNotice:
+      'The customer did not reply within the configured timeout. The conversation has been closed automatically.',
+    assignedAgentGreeting:
+      'Hello {customerName}, {agentName} will assist you. If you do not reply within {timeoutMinutes} minutes, the conversation will be closed automatically.',
+    customerNoReplyTimeoutMinutes: 5,
+    customerTimeoutNotice:
+      'We did not receive your reply. The service has been closed automatically. Please contact us again if you need help.',
+    maxConcurrentAccess: 50,
+    minScanIntervalSeconds: 30,
+    preTimeoutReminderMessage:
+      'We have not received your reply. This conversation will close in {reminderMinutes} minute(s).',
+    preTimeoutReminderMinutes: 1,
+    webchatRecallLimitSeconds: 120,
+  },
+  VIDEO: {
+    accessSuccessWelcomeMessage:
+      'Hello, BANK 1 video assistant is ready to help you.',
+    agentEndReminder:
+      'Thank you for contacting BANK 1. We are glad to assist you.',
+    agentNoReplyAutoResponseMessage:
+      'Please hold on. We are still processing your request.',
+    agentNoReplyBreachSeconds: 120,
+    agentNoReplyTimeoutSeconds: 120,
+    agentNoReplyWarningSeconds: 60,
+    agentTimeoutNotice:
+      'The customer did not reply within the configured timeout. The conversation has been closed automatically.',
+    assignedAgentGreeting:
+      'Hello {customerName}, {agentName} will assist you. If you do not reply within {timeoutMinutes} minutes, the conversation will be closed automatically.',
+    customerNoReplyTimeoutMinutes: 5,
+    customerTimeoutNotice:
+      'We did not receive your reply. The service has been closed automatically. Please contact us again if you need help.',
+    maxConcurrentAccess: 50,
+    minScanIntervalSeconds: 30,
+    preTimeoutReminderMessage:
+      'We have not received your reply. This conversation will close in {reminderMinutes} minute(s).',
+    preTimeoutReminderMinutes: 1,
+    webchatRecallLimitSeconds: 120,
+  },
+  VOICE: {
+    accessSuccessWelcomeMessage:
+      'Hello, BANK 1 voice assistant is ready to help you.',
+    agentEndReminder:
+      'Thank you for contacting BANK 1. We are glad to assist you.',
+    agentNoReplyAutoResponseMessage:
+      'Please hold on. We are still processing your request.',
+    agentNoReplyBreachSeconds: 120,
+    agentNoReplyTimeoutSeconds: 120,
+    agentNoReplyWarningSeconds: 60,
+    agentTimeoutNotice:
+      'The customer did not reply within the configured timeout. The conversation has been closed automatically.',
+    assignedAgentGreeting:
+      'Hello {customerName}, {agentName} will assist you. If you do not reply within {timeoutMinutes} minutes, the conversation will be closed automatically.',
+    customerNoReplyTimeoutMinutes: 5,
+    customerTimeoutNotice:
+      'We did not receive your reply. The service has been closed automatically. Please contact us again if you need help.',
+    maxConcurrentAccess: 50,
+    minScanIntervalSeconds: 30,
+    preTimeoutReminderMessage:
+      'We have not received your reply. This conversation will close in {reminderMinutes} minute(s).',
+    preTimeoutReminderMinutes: 1,
+    webchatRecallLimitSeconds: 120,
+  },
+}
+
+function createDefaultChannelBusinessConfig(mediaCode: MediaTypeCode) {
+  return { ...defaultChannelBusinessConfigByMedia[mediaCode] }
+}
+
+function normalizeChannelBusinessConfig(
+  mediaTypes: MediaTypeCode[],
+  businessConfig: ChannelBusinessConfig,
+): ChannelBusinessConfig {
+  return mediaTypes.reduce<ChannelBusinessConfig>((config, mediaCode) => {
+    config[mediaCode] = {
+      ...createDefaultChannelBusinessConfig(mediaCode),
+      ...(businessConfig[mediaCode] ?? {}),
+    }
+
+    return config
+  }, {})
+}
+
+function normalizeChannelDraft(channel: Channel): Channel {
+  return {
+    ...channel,
+    accessConfig: { ...channel.accessConfig },
+    businessConfig: normalizeChannelBusinessConfig(
+      channel.mediaTypes,
+      channel.businessConfig,
+    ),
+    mediaTypes: [...channel.mediaTypes],
+  }
+}
+
+const channelBusinessVariablesByField: Partial<
+  Record<keyof ChannelMediaBusinessConfig, string[]>
+> = {
+  accessSuccessWelcomeMessage: ['{customerName}', '{channelName}'],
+  agentEndReminder: ['{customerName}', '{agentName}'],
+  agentTimeoutNotice: ['{customerName}', '{timeoutMinutes}'],
+  assignedAgentGreeting: [
+    '{customerName}',
+    '{agentName}',
+    '{timeoutMinutes}',
+  ],
+  customerTimeoutNotice: ['{customerName}'],
+  preTimeoutReminderMessage: ['{reminderMinutes}'],
+}
+
+export function ChannelTypesPage() {
+  const channelTypes = useRoutingConfigStore((state) => state.channelTypes)
+  const { mediaOptions } = useRoutingLookups()
+  const [appliedFilters, setAppliedFilters] = useState({
+    keyword: '',
+    status: '',
+  })
+  const [filterDraft, setFilterDraft] = useState({
+    keyword: '',
+    status: '',
+  })
+  const mediaLabelByValue = useMemo(
+    () => new Map(mediaOptions.map((option) => [option.value, option.label])),
+    [mediaOptions],
+  )
+  const filteredChannelTypes = useMemo(
+    () =>
+      channelTypes.filter((channelType) => {
+        const keyword = appliedFilters.keyword.trim().toLowerCase()
+        const keywordMatched = keyword
+          ? [
+              channelType.channelTypeCode,
+              channelType.channelTypeName,
+              channelType.category,
+            ].some((value) => value.toLowerCase().includes(keyword))
+          : true
+        const statusMatched = appliedFilters.status
+          ? channelType.status === appliedFilters.status
+          : true
+
+        return keywordMatched && statusMatched
+      }),
+    [appliedFilters, channelTypes],
+  )
+  const columns: ColumnsType<ChannelType> = [
+    {
+      dataIndex: 'channelTypeCode',
+      fixed: 'left',
+      title: 'Type Code',
+      width: 140,
+      render: (value: string) => <strong>{value}</strong>,
+    },
+    { dataIndex: 'channelTypeName', title: 'Channel Type', width: 180 },
+    {
+      dataIndex: 'supportedMediaTypes',
+      title: 'Supported Media',
+      width: 220,
+      render: (value: MediaTypeCode[]) => (
+        <div className="routing-config-tag-list">
+          {value.map((mediaType) => (
+            <Tag key={mediaType}>
+              {mediaLabelByValue.get(mediaType) ?? mediaType}
+            </Tag>
+          ))}
+        </div>
+      ),
+    },
+    {
+      dataIndex: 'accessParameterFields',
+      title: 'Access Parameter Template',
+      width: 520,
+      render: (fields: ChannelType['accessParameterFields']) =>
+        fields.length > 0 ? (
+          <div className="routing-config-field-template-list">
+            {fields.map((field) => (
+              <Tag key={field.key}>{field.label}</Tag>
+            ))}
+          </div>
+        ) : (
+          <em className="routing-config-muted-text">No access parameters</em>
+        ),
+    },
+    { dataIndex: 'category', title: 'Category', width: 140 },
+    { dataIndex: 'licenseStatus', title: 'License', width: 120 },
+    {
+      dataIndex: 'status',
+      title: 'Status',
+      width: 110,
+      render: renderRoutingStatus,
+    },
+  ]
+
+  return (
+    <PageContainer title="Channel Types">
+      <section className="routing-config-page">
+        <BaseCard compact>
+          <div className="routing-config-page__admin-toolbar">
+            <div className="routing-config-page__query-group">
+              <div className="routing-config-page__filters">
+                <label
+                  className="routing-config-page__filter"
+                  style={{ width: 280 }}
+                >
+                  <span>Keyword</span>
+                  <Input
+                    placeholder="Type code / name / category"
+                    value={filterDraft.keyword}
+                    onChange={(event) =>
+                      setFilterDraft((currentDraft) => ({
+                        ...currentDraft,
+                        keyword: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label
+                  className="routing-config-page__filter"
+                  style={{ width: 200 }}
+                >
+                  <span>Status</span>
+                  <Select
+                    options={[
+                      { label: 'All', value: '' },
+                      ...statusFilterOptions,
+                    ]}
+                    value={filterDraft.status}
+                    onChange={(value) =>
+                      setFilterDraft((currentDraft) => ({
+                        ...currentDraft,
+                        status: value,
+                      }))
+                    }
+                  />
+                </label>
+              </div>
+              <div className="routing-config-page__admin-actions">
+                <BaseButton
+                  variant="primary"
+                  onClick={() => setAppliedFilters({ ...filterDraft })}
+                >
+                  Search
+                </BaseButton>
+                <BaseButton
+                  variant="secondary"
+                  onClick={() => {
+                    const nextFilters = { keyword: '', status: '' }
+
+                    setFilterDraft(nextFilters)
+                    setAppliedFilters(nextFilters)
+                  }}
+                >
+                  Reset
+                </BaseButton>
+              </div>
+            </div>
+          </div>
+          <BaseTable
+            columns={columns}
+            dataSource={filteredChannelTypes}
+            pagination={{
+              defaultPageSize: 20,
+              pageSizeOptions: [10, 20, 50, 100],
+              showTotal: (total, range) =>
+                `${range[0]}-${range[1]} of ${total} records`,
+            }}
+            rowKey="channelTypeCode"
+            scroll={{ x: 1450 }}
+            size="small"
+          />
+        </BaseCard>
+      </section>
+    </PageContainer>
+  )
+}
+
 export function ChannelsPage() {
   const channels = useRoutingConfigStore((state) => state.channels)
-  const channelMediaRuleBindings = useRoutingConfigStore(
-    (state) => state.channelMediaRuleBindings,
-  )
-  const mediaServiceRulePlans = useRoutingConfigStore(
-    (state) => state.mediaServiceRulePlans,
-  )
   const upsertEntity = useRoutingConfigStore((state) => state.upsertEntity)
   const deleteEntity = useRoutingConfigStore((state) => state.deleteEntity)
-  const { accessAccounts, mediaOptions, routingRules } = useRoutingLookups()
+  const {
+    accessEntries,
+    channelAccounts,
+    channelTypes,
+    mediaOptions,
+    routingRules,
+    workingTimePlans,
+    workTimeOptions,
+  } = useRoutingLookups()
   const [appliedFilters, setAppliedFilters] = useState({
+    channelTypeCode: '',
     keyword: '',
     mediaTypes: [] as MediaTypeCode[],
     status: '',
   })
   const [filterDraft, setFilterDraft] = useState({
+    channelTypeCode: '',
     keyword: '',
     mediaTypes: [] as MediaTypeCode[],
     status: '',
   })
-  const [bindingDrafts, setBindingDrafts] = useState<Record<string, string>>({})
   const [draft, setDraft] = useState<Channel>(() => ({
-    channelCategory: 'messaging',
-    channelCode: 'CHANNEL_701',
-    channelId: '701',
-    channelName: '',
-    maxConcurrency: 50,
+    accessConfig: {},
+    businessConfig: normalizeChannelBusinessConfig(['TEXT'], {}),
+    channelCode: 'WHATSAPP',
+    channelId: '301',
+    channelName: 'WhatsApp',
+    channelTypeCode: 'WHATSAPP',
     mediaTypes: ['TEXT'],
-    minScanIntervalSeconds: 30,
     status: 'Active',
   }))
   const [modalMode, setModalMode] = useState<
-    'add' | 'delete' | 'edit' | 'view' | null
+    'accounts' | 'business' | 'edit' | null
   >(null)
+  const [accountModalMode, setAccountModalMode] = useState<
+    'add' | 'delete' | 'edit' | null
+  >(null)
+  const [accountDraft, setAccountDraft] = useState<ChannelAccount>({
+    account: '',
+    accountCode: '',
+    accountName: '',
+    channelCode: '',
+    credentialRef: 'secret://aicc/new',
+    purpose: '',
+    status: 'Active',
+  })
+  const [businessMediaCode, setBusinessMediaCode] =
+    useState<MediaTypeCode>('TEXT')
   const [notice, setNotice] = useState<string | null>(null)
+  const [previewWorkingTimePlan, setPreviewWorkingTimePlan] =
+    useState<WorkingTimePlan | null>(null)
+  const [selectedAccount, setSelectedAccount] =
+    useState<ChannelAccount | null>(null)
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null)
   const [submitAttempted, setSubmitAttempted] = useState(false)
+  const [accountSubmitAttempted, setAccountSubmitAttempted] = useState(false)
+  const businessMessageSelectionsRef = useRef<
+    Record<string, { end: number; start: number }>
+  >({})
+  const businessMessageTextAreaRefs = useRef<
+    Record<string, HTMLTextAreaElement | null>
+  >({})
   const mediaLabelByValue = useMemo(
     () => new Map(mediaOptions.map((option) => [option.value, option.label])),
     [mediaOptions],
   )
-  const textRulePlanOptions = useMemo(
-    () =>
-      mediaServiceRulePlans
-        .filter((plan) => plan.mediaCode === 'TEXT' && plan.status === 'Active')
-        .map((plan) => ({
-          label: plan.planName,
-          value: plan.planCode,
-        })),
-    [mediaServiceRulePlans],
+  const workingTimePlanByCode = useMemo(
+    () => new Map(workingTimePlans.map((plan) => [plan.planCode, plan])),
+    [workingTimePlans],
   )
-  const rulePlanLabelByCode = useMemo(
+  const channelTypeByCode = useMemo(
     () =>
       new Map(
-        mediaServiceRulePlans.map((plan) => [plan.planCode, plan.planName]),
-      ),
-    [mediaServiceRulePlans],
-  )
-  const bindingByChannelMedia = useMemo(
-    () =>
-      new Map(
-        channelMediaRuleBindings.map((binding) => [
-          `${binding.channelCode}_${binding.mediaCode}`,
-          binding,
+        channelTypes.map((channelType) => [
+          channelType.channelTypeCode,
+          channelType,
         ]),
       ),
-    [channelMediaRuleBindings],
+    [channelTypes],
+  )
+  const channelTypeOptions = useMemo(
+    () =>
+      channelTypes.map((channelType) => ({
+        label: channelType.channelTypeName,
+        value: channelType.channelTypeCode,
+      })),
+    [channelTypes],
   )
   const formatMediaTypes = (mediaTypes: MediaTypeCode[]) =>
     mediaTypes
       .map((mediaType) => mediaLabelByValue.get(mediaType) ?? mediaType)
       .join(', ')
-  const getRulePlanText = (channelCode: string, mediaCode: MediaTypeCode) => {
-    const mediaLabel = mediaLabelByValue.get(mediaCode) ?? mediaCode
-
-    if (mediaCode !== 'TEXT') {
-      return `${mediaLabel} · Reserved / Not configured`
-    }
-
-    const binding = bindingByChannelMedia.get(`${channelCode}_${mediaCode}`)
-    const planName = binding
-      ? rulePlanLabelByCode.get(binding.rulePlanCode)
-      : null
-
-    return `${mediaLabel} · ${planName ?? 'Not configured'}`
-  }
-  const createDefaultChannel = () => {
-    const nextChannelId = String(
-      Math.max(700, ...channels.map((channel) => Number(channel.channelId) || 0)) +
-        1,
-    )
-
-    return {
-      channelCategory: 'messaging' as const,
-      channelCode: `CHANNEL_${nextChannelId}`,
-      channelId: nextChannelId,
-      channelName: '',
-      maxConcurrency: 50,
-      mediaTypes: ['TEXT'] as MediaTypeCode[],
-      minScanIntervalSeconds: 30,
-      status: 'Active' as RoutingConfigStatus,
-    }
-  }
-  const buildBindingDrafts = (record: Channel) => {
-    if (!record.mediaTypes.includes('TEXT')) {
-      return {}
-    }
-
-    return {
-      TEXT:
-        bindingByChannelMedia.get(`${record.channelCode}_TEXT`)?.rulePlanCode ??
-        textRulePlanOptions[0]?.value ??
-        '',
-    }
-  }
-  const getDeleteBlockReason = (record: Channel) =>
-    accessAccounts.some((account) => account.channelCode === record.channelCode) ||
-    routingRules.some((rule) =>
-      rule.conditions.some(
-        (condition) =>
-          condition.factorCode === '11' &&
-          condition.factorValueCode === record.channelCode,
-      ),
-    )
-      ? 'This channel is referenced by access accounts or routing rules.'
-      : null
-  const openModal = (
-    mode: 'add' | 'delete' | 'edit' | 'view',
-    record?: Channel,
-  ) => {
-    const nextDraft = record
-      ? {
-          ...record,
-          mediaTypes: [...record.mediaTypes],
-        }
-      : createDefaultChannel()
+  const openModal = (mode: 'accounts' | 'business' | 'edit', record: Channel) => {
+    const nextDraft = normalizeChannelDraft(record)
+    const firstMedia = nextDraft.mediaTypes[0] ?? 'TEXT'
 
     setModalMode(mode)
-    setSelectedChannel(record ?? null)
+    setSelectedChannel(record)
     setDraft(nextDraft)
-    setBindingDrafts(buildBindingDrafts(nextDraft))
+    setBusinessMediaCode(firstMedia)
     setSubmitAttempted(false)
     setNotice(null)
   }
@@ -964,6 +1240,8 @@ export function ChannelsPage() {
     setModalMode(null)
     setSelectedChannel(null)
     setNotice(null)
+    setPreviewWorkingTimePlan(null)
+    setSubmitAttempted(false)
   }
   const updateDraft = <Key extends keyof Channel>(
     key: Key,
@@ -977,92 +1255,193 @@ export function ChannelsPage() {
   const updateMediaTypes = (mediaTypes: MediaTypeCode[]) => {
     setDraft((currentDraft) => ({
       ...currentDraft,
+      businessConfig: normalizeChannelBusinessConfig(
+        mediaTypes,
+        currentDraft.businessConfig,
+      ),
       mediaTypes,
     }))
-    setBindingDrafts((currentDraft) => {
-      if (!mediaTypes.includes('TEXT')) {
-        return {}
-      }
+
+    if (!mediaTypes.includes(businessMediaCode)) {
+      setBusinessMediaCode(mediaTypes[0] ?? 'TEXT')
+    }
+  }
+  const updateAccessConfig = (key: string, value: string) => {
+    setDraft((currentDraft) => ({
+      ...currentDraft,
+      accessConfig: {
+        ...currentDraft.accessConfig,
+        [key]: value,
+      },
+    }))
+  }
+  const updateBusinessConfig = <Key extends keyof ChannelMediaBusinessConfig>(
+    mediaCode: MediaTypeCode,
+    key: Key,
+    value: ChannelMediaBusinessConfig[Key],
+  ) => {
+    setDraft((currentDraft) => {
+      const currentConfig =
+        currentDraft.businessConfig[mediaCode] ??
+        createDefaultChannelBusinessConfig(mediaCode)
 
       return {
-        TEXT:
-          currentDraft.TEXT ??
-          textRulePlanOptions[0]?.value ??
-          '',
+        ...currentDraft,
+        businessConfig: {
+          ...currentDraft.businessConfig,
+          [mediaCode]: {
+            ...currentConfig,
+            [key]: value,
+          },
+        },
       }
     })
   }
   const validationErrors = useMemo(() => {
-    if (!modalMode || modalMode === 'delete' || modalMode === 'view') {
+    if (!modalMode || modalMode === 'accounts') {
       return []
     }
 
     const errors: string[] = []
-    const channelId = draft.channelId.trim()
-
-    if (!channelId) {
-      errors.push('Channel ID is required.')
-    } else if (!/^\d+$/.test(channelId)) {
-      errors.push('Channel ID must use numbers.')
-    }
-
-    errors.push(
-      ...validateUnique(
-        channels,
-        selectedChannel,
-        'channelId',
-        channelId,
-        'Channel ID',
-      ),
-    )
-
-    if (!draft.channelName.trim()) {
-      errors.push('Channel Name is required.')
-    }
 
     if (draft.mediaTypes.length === 0) {
       errors.push('Media Type is required.')
     }
 
-    if (draft.maxConcurrency <= 0) {
-      errors.push('Max Concurrent Calls must be greater than 0.')
-    }
-
-    if (draft.minScanIntervalSeconds <= 0) {
-      errors.push('Min Scan Interval Seconds must be greater than 0.')
-    }
-
-    if (draft.status === 'Active' && draft.mediaTypes.includes('TEXT')) {
-      const rulePlanCode = bindingDrafts.TEXT
-      const activeTextPlan = mediaServiceRulePlans.find(
-        (plan) =>
-          plan.planCode === rulePlanCode &&
-          plan.mediaCode === 'TEXT' &&
-          plan.status === 'Active',
+    if (modalMode === 'edit') {
+      const channelType = channelTypeByCode.get(draft.channelTypeCode)
+      const unsupportedMediaTypes = draft.mediaTypes.filter(
+        (mediaType) => !channelType?.supportedMediaTypes.includes(mediaType),
       )
 
-      if (!activeTextPlan) {
-        errors.push('Active Text media must bind an enabled Text rule plan.')
+      if (unsupportedMediaTypes.length > 0) {
+        errors.push('Media Type must be supported by the Channel Type.')
       }
+
+      getChannelTypeParameterSchema(draft.channelTypeCode).fields.forEach(
+        (field) => {
+          if (field.required && !draft.accessConfig[field.key]?.trim()) {
+            errors.push(`${field.label} is required.`)
+          }
+        },
+      )
+    }
+
+    if (modalMode === 'business') {
+      draft.mediaTypes.forEach((mediaCode) => {
+        const config =
+          draft.businessConfig[mediaCode] ??
+          createDefaultChannelBusinessConfig(mediaCode)
+        const mediaLabel = mediaLabelByValue.get(mediaCode) ?? mediaCode
+
+        if (config.maxConcurrentAccess <= 0) {
+          errors.push(`${mediaLabel} Max Concurrent Access must be greater than 0.`)
+        }
+
+        if (config.minScanIntervalSeconds <= 0) {
+          errors.push(
+            `${mediaLabel} Min Scan Interval Seconds must be greater than 0.`,
+          )
+        }
+
+        if (mediaCode === 'TEXT') {
+          if (!config.accessSuccessWelcomeMessage.trim()) {
+            errors.push(`${mediaLabel} Access Success Welcome Message is required.`)
+          }
+
+          if (
+            config.preTimeoutReminderMinutes >=
+            config.customerNoReplyTimeoutMinutes
+          ) {
+            errors.push(
+              'Text Pre-timeout Reminder Time must be less than Customer No Reply Timeout.',
+            )
+          }
+
+          if (config.agentNoReplyWarningSeconds > config.agentNoReplyBreachSeconds) {
+            errors.push(
+              'Text Agent No Reply Warning must be less than or equal to Breach.',
+            )
+          }
+
+          if (
+            config.agentNoReplyBreachSeconds >
+            config.agentNoReplyTimeoutSeconds
+          ) {
+            errors.push(
+              'Text Agent No Reply Breach must be less than or equal to Agent No Reply Timeout.',
+            )
+          }
+
+          ;[
+            ['Assigned Agent Greeting', config.assignedAgentGreeting],
+            ['Agent End Reminder', config.agentEndReminder],
+            ['Pre-timeout Reminder Message', config.preTimeoutReminderMessage],
+            ['Customer Timeout Notice', config.customerTimeoutNotice],
+            ['Agent Timeout Notice', config.agentTimeoutNotice],
+            [
+              'Agent No Reply Auto Response',
+              config.agentNoReplyAutoResponseMessage,
+            ],
+          ].forEach(([label, value]) => {
+            if (!String(value).trim()) {
+              errors.push(`Text ${label} is required.`)
+            }
+          })
+        }
+      })
     }
 
     return errors
   }, [
-    bindingDrafts.TEXT,
-    channels,
+    channelTypeByCode,
     draft,
-    mediaServiceRulePlans,
+    mediaLabelByValue,
     modalMode,
-    selectedChannel,
   ])
+  const accountValidationErrors = useMemo(() => {
+    if (!accountModalMode || accountModalMode === 'delete') {
+      return []
+    }
+
+    const errors: string[] = []
+
+    if (!accountDraft.account.trim()) {
+      errors.push('Account is required.')
+    }
+
+    if (!accountDraft.accountName.trim()) {
+      errors.push('Account Name is required.')
+    }
+
+    if (!accountDraft.credentialRef.trim()) {
+      errors.push('Credential / Secret Ref is required.')
+    }
+
+    const duplicatedAccount = channelAccounts.some(
+      (account) =>
+        account.channelCode === accountDraft.channelCode &&
+        account.account === accountDraft.account.trim() &&
+        account.accountCode !== selectedAccount?.accountCode,
+    )
+
+    if (duplicatedAccount) {
+      errors.push('Account already exists under this channel.')
+    }
+
+    return errors
+  }, [accountDraft, accountModalMode, channelAccounts, selectedAccount])
   const filteredChannels = useMemo(
     () =>
       channels.filter((channel) => {
         const keyword = appliedFilters.keyword.trim().toLowerCase()
         const keywordMatched = keyword
-          ? [channel.channelId, channel.channelName].some((value) =>
+          ? [channel.channelId, channel.channelName, channel.channelCode].some((value) =>
               value.toLowerCase().includes(keyword),
             )
+          : true
+        const channelTypeMatched = appliedFilters.channelTypeCode
+          ? channel.channelTypeCode === appliedFilters.channelTypeCode
           : true
         const mediaMatched =
           appliedFilters.mediaTypes.length === 0 ||
@@ -1073,7 +1452,7 @@ export function ChannelsPage() {
           ? channel.status === appliedFilters.status
           : true
 
-        return keywordMatched && mediaMatched && statusMatched
+        return keywordMatched && channelTypeMatched && mediaMatched && statusMatched
       }),
     [appliedFilters, channels],
   )
@@ -1090,62 +1469,539 @@ export function ChannelsPage() {
       return
     }
 
-    const channelCode =
-      selectedChannel?.channelCode ?? `CHANNEL_${draft.channelId.trim()}`
     const nextChannel: Channel = {
       ...draft,
-      channelCode,
       channelId: draft.channelId.trim(),
       channelName: draft.channelName.trim(),
-      maxConcurrency: Number(draft.maxConcurrency),
+      accessConfig: buildChannelAccessConfig(
+        draft.accessConfig,
+        draft.channelTypeCode,
+      ),
+      businessConfig: normalizeChannelBusinessConfig(
+        draft.mediaTypes,
+        draft.businessConfig,
+      ),
       mediaTypes: [...draft.mediaTypes],
-      minScanIntervalSeconds: Number(draft.minScanIntervalSeconds),
       status: draft.status,
     }
 
     upsertEntity('channels', 'channelId', nextChannel)
 
-    if (nextChannel.mediaTypes.includes('TEXT') && bindingDrafts.TEXT) {
-      const binding: ChannelMediaRuleBinding = {
-        bindingCode: `${channelCode}_TEXT`,
-        channelCode,
-        mediaCode: 'TEXT',
-        rulePlanCode: bindingDrafts.TEXT,
-        status: nextChannel.status === 'Active' ? 'Active' : 'Disabled',
-      }
-
-      upsertEntity('channelMediaRuleBindings', 'bindingCode', binding)
-    } else {
-      deleteEntity('channelMediaRuleBindings', 'bindingCode', `${channelCode}_TEXT`)
-    }
-
     closeModal()
   }
-  const handleDelete = () => {
+  const openAccountModal = (
+    mode: 'add' | 'delete' | 'edit',
+    account?: ChannelAccount,
+  ) => {
     if (!selectedChannel) {
       return
     }
 
-    const blockReason = getDeleteBlockReason(selectedChannel)
+    const nextAccount =
+      account ??
+      ({
+        account: '',
+        accountCode: `ACC_${selectedChannel.channelCode}_${String(
+          channelAccounts.filter(
+            (item) => item.channelCode === selectedChannel.channelCode,
+          ).length + 1,
+        ).padStart(2, '0')}`,
+        accountName: '',
+        channelCode: selectedChannel.channelCode,
+        credentialRef: 'secret://aicc/new',
+        purpose: '',
+        status: 'Active',
+      } satisfies ChannelAccount)
+
+    setSelectedAccount(account ?? null)
+    setAccountDraft({ ...nextAccount })
+    setAccountModalMode(mode)
+    setAccountSubmitAttempted(false)
+    setNotice(null)
+  }
+  const closeAccountModal = () => {
+    setAccountModalMode(null)
+    setSelectedAccount(null)
+    setAccountSubmitAttempted(false)
+  }
+  const updateAccountDraft = <Key extends keyof ChannelAccount>(
+    key: Key,
+    value: ChannelAccount[Key],
+  ) => {
+    setAccountDraft((currentDraft) => ({
+      ...currentDraft,
+      [key]: value,
+    }))
+  }
+  const getAccountDeleteBlockReason = (record: ChannelAccount) =>
+    routingRules.some((rule) =>
+      rule.conditions.some(
+        (condition) =>
+          condition.factorCode === '17' &&
+          condition.factorValueCode === record.accountCode,
+      ),
+    ) ||
+    accessEntries.some((entry) => entry.accountCode === record.accountCode)
+      ? 'This account is referenced by routing rules or access entries.'
+      : null
+  const handleAccountSave = () => {
+    setAccountSubmitAttempted(true)
+
+    if (accountValidationErrors.length > 0) {
+      return
+    }
+
+    upsertEntity('channelAccounts', 'accountCode', {
+      ...accountDraft,
+      account: accountDraft.account.trim(),
+      accountName: accountDraft.accountName.trim(),
+      credentialRef: accountDraft.credentialRef.trim(),
+      purpose: accountDraft.purpose.trim(),
+    })
+    closeAccountModal()
+  }
+  const handleAccountDelete = () => {
+    if (!selectedAccount) {
+      return
+    }
+
+    const blockReason = getAccountDeleteBlockReason(selectedAccount)
 
     if (blockReason) {
       setNotice(blockReason)
       return
     }
 
-    deleteEntity('channels', 'channelId', selectedChannel.channelId)
     deleteEntity(
-      'channelMediaRuleBindings',
-      'bindingCode',
-      `${selectedChannel.channelCode}_TEXT`,
+      'channelAccounts',
+      'accountCode',
+      selectedAccount.accountCode,
     )
-    closeModal()
+    closeAccountModal()
   }
-  const isReadOnly = modalMode === 'delete' || modalMode === 'view'
-  const deleteBlockReason =
-    modalMode === 'delete' && selectedChannel
-      ? getDeleteBlockReason(selectedChannel)
-      : null
+  const renderBusinessNumberField = (
+    mediaCode: MediaTypeCode,
+    field: keyof ChannelMediaBusinessConfig,
+    label: string,
+    min = 1,
+  ) => {
+    const config =
+      draft.businessConfig[mediaCode] ??
+      createDefaultChannelBusinessConfig(mediaCode)
+
+    return (
+      <label className="routing-config-crud-modal__field">
+        <span>{label}</span>
+        <InputNumber
+          min={min}
+          value={Number(config[field] ?? 0)}
+          onChange={(value) =>
+            updateBusinessConfig(mediaCode, field, Number(value) || 0)
+          }
+        />
+      </label>
+    )
+  }
+  const renderExceptionWorkTimePlanField = (mediaCode: MediaTypeCode) => {
+    const config =
+      draft.businessConfig[mediaCode] ??
+      createDefaultChannelBusinessConfig(mediaCode)
+    const rawValue = String(config.exceptionWorkTimePlanCode ?? '')
+    const previewPlan = workingTimePlanByCode.get(rawValue)
+
+    return (
+      <label className="routing-config-crud-modal__field routing-config-channel-business__work-time-field">
+        <span>Exception Working Time Plan</span>
+        <div className="routing-config-channel-business__work-time-control">
+          <Select
+            options={workTimeOptions}
+            value={rawValue}
+            onChange={(value) =>
+              updateBusinessConfig(
+                mediaCode,
+                'exceptionWorkTimePlanCode',
+                value as never,
+              )
+            }
+          />
+          {previewPlan && (
+            <BaseButton
+              variant="secondary"
+              onClick={() => setPreviewWorkingTimePlan(previewPlan)}
+            >
+              Preview
+            </BaseButton>
+          )}
+        </div>
+      </label>
+    )
+  }
+  const getBusinessMessageFieldKey = (
+    mediaCode: MediaTypeCode,
+    field: keyof ChannelMediaBusinessConfig,
+  ) => `${mediaCode}_${String(field)}`
+  const rememberBusinessMessageSelection = (
+    mediaCode: MediaTypeCode,
+    field: keyof ChannelMediaBusinessConfig,
+    element: HTMLTextAreaElement,
+  ) => {
+    const fieldKey = getBusinessMessageFieldKey(mediaCode, field)
+    businessMessageTextAreaRefs.current[fieldKey] = element
+    businessMessageSelectionsRef.current[fieldKey] = {
+      end: element.selectionEnd,
+      start: element.selectionStart,
+    }
+  }
+  const queueBusinessMessageSelectionRemember = (
+    mediaCode: MediaTypeCode,
+    field: keyof ChannelMediaBusinessConfig,
+    element: HTMLTextAreaElement,
+  ) => {
+    window.requestAnimationFrame(() => {
+      rememberBusinessMessageSelection(mediaCode, field, element)
+    })
+  }
+  const insertBusinessMessageVariable = (
+    mediaCode: MediaTypeCode,
+    field: keyof ChannelMediaBusinessConfig,
+    variable: string,
+  ) => {
+    const config =
+      draft.businessConfig[mediaCode] ??
+      createDefaultChannelBusinessConfig(mediaCode)
+    const currentValue = String(config[field] ?? '')
+    const fieldKey = getBusinessMessageFieldKey(mediaCode, field)
+    const messageTextArea = businessMessageTextAreaRefs.current[fieldKey]
+    const storedSelection = businessMessageSelectionsRef.current[fieldKey]
+    const shouldReadLiveSelection =
+      messageTextArea && document.activeElement === messageTextArea
+    const activeSelection =
+      shouldReadLiveSelection &&
+      Number.isFinite(messageTextArea.selectionStart) &&
+      Number.isFinite(messageTextArea.selectionEnd)
+        ? {
+            end: messageTextArea.selectionEnd,
+            start: messageTextArea.selectionStart,
+          }
+        : storedSelection
+    const start = activeSelection
+      ? Math.min(activeSelection.start, currentValue.length)
+      : currentValue.length
+    const end = activeSelection
+      ? Math.min(activeSelection.end, currentValue.length)
+      : currentValue.length
+    const nextValue = `${currentValue.slice(0, start)}${variable}${currentValue.slice(end)}`
+    const nextCursorPosition = start + variable.length
+
+    updateBusinessConfig(mediaCode, field, nextValue as never)
+    businessMessageSelectionsRef.current[fieldKey] = {
+      end: nextCursorPosition,
+      start: nextCursorPosition,
+    }
+    window.requestAnimationFrame(() => {
+      const currentMessageTextArea =
+        businessMessageTextAreaRefs.current[fieldKey]
+      currentMessageTextArea?.focus()
+      currentMessageTextArea?.setSelectionRange(
+        nextCursorPosition,
+        nextCursorPosition,
+      )
+    })
+  }
+  const renderBusinessMessageField = (
+    mediaCode: MediaTypeCode,
+    field: keyof ChannelMediaBusinessConfig,
+    label: string,
+    rows = 2,
+    full = false,
+  ) => {
+    const config =
+      draft.businessConfig[mediaCode] ??
+      createDefaultChannelBusinessConfig(mediaCode)
+    const variableOptions = channelBusinessVariablesByField[field] ?? []
+
+    return (
+      <label
+        className={`routing-config-crud-modal__field routing-config-media-rule-modal__message-field${
+          full ? ' routing-config-crud-modal__field--full' : ''
+        }`}
+      >
+        <span className="routing-config-media-rule-modal__field-heading">
+          <span>{label}</span>
+          {variableOptions.length > 0 && (
+            <select
+              aria-label={`${label} insert variable`}
+              className="routing-config-media-rule-modal__variable-select"
+              value=""
+              onChange={(event) => {
+                if (event.target.value) {
+                  insertBusinessMessageVariable(
+                    mediaCode,
+                    field,
+                    event.target.value,
+                  )
+                }
+              }}
+            >
+              <option value="">Insert Variable</option>
+              {variableOptions.map((variable) => (
+                <option key={variable} value={variable}>
+                  {variable}
+                </option>
+              ))}
+            </select>
+          )}
+        </span>
+        <Input.TextArea
+          rows={rows}
+          value={String(config[field] ?? '')}
+          onChange={(event) =>
+            updateBusinessConfig(mediaCode, field, event.target.value)
+          }
+          onBlur={(event) =>
+            rememberBusinessMessageSelection(
+              mediaCode,
+              field,
+              event.currentTarget,
+            )
+          }
+          onClick={(event) =>
+            rememberBusinessMessageSelection(
+              mediaCode,
+              field,
+              event.currentTarget,
+            )
+          }
+          onFocus={(event) =>
+            rememberBusinessMessageSelection(
+              mediaCode,
+              field,
+              event.currentTarget,
+            )
+          }
+          onKeyDown={(event) =>
+            queueBusinessMessageSelectionRemember(
+              mediaCode,
+              field,
+              event.currentTarget,
+            )
+          }
+          onKeyUp={(event) =>
+            rememberBusinessMessageSelection(
+              mediaCode,
+              field,
+              event.currentTarget,
+            )
+          }
+          onMouseUp={(event) =>
+            queueBusinessMessageSelectionRemember(
+              mediaCode,
+              field,
+              event.currentTarget,
+            )
+          }
+          onSelect={(event) =>
+            rememberBusinessMessageSelection(
+              mediaCode,
+              field,
+              event.currentTarget,
+            )
+          }
+        />
+      </label>
+    )
+  }
+  const renderBusinessMediaForm = (mediaCode: MediaTypeCode) => {
+    const isText = mediaCode === 'TEXT'
+    const isPhoneVoice =
+      draft.channelTypeCode === 'PHONE' && mediaCode === 'VOICE'
+
+    return (
+      <div className="routing-config-channel-business">
+        <section className="routing-config-media-rule-modal__section">
+          <header>
+            <strong>Access Configuration</strong>
+          </header>
+          <div className="routing-config-crud-modal__section-grid">
+            {renderBusinessNumberField(
+              mediaCode,
+              'maxConcurrentAccess',
+              'Max Concurrent Access',
+            )}
+            {renderBusinessNumberField(
+              mediaCode,
+              'minScanIntervalSeconds',
+              'Min Scan Interval Seconds',
+            )}
+            {isPhoneVoice && renderExceptionWorkTimePlanField(mediaCode)}
+            {isText &&
+              renderBusinessMessageField(
+                mediaCode,
+                'accessSuccessWelcomeMessage',
+                'Access Success Welcome Message',
+                2,
+                true,
+              )}
+          </div>
+        </section>
+        {isText && (
+          <>
+            <section className="routing-config-media-rule-modal__section">
+              <header>
+                <strong>Agent Opening / Ending Configuration</strong>
+              </header>
+              <div className="routing-config-crud-modal__section-grid">
+                {renderBusinessMessageField(
+                  mediaCode,
+                  'assignedAgentGreeting',
+                  'Assigned Agent Greeting',
+                  3,
+                  true,
+                )}
+                {renderBusinessMessageField(
+                  mediaCode,
+                  'agentEndReminder',
+                  'Agent End Reminder',
+                  2,
+                  true,
+                )}
+              </div>
+            </section>
+            <section className="routing-config-media-rule-modal__section">
+              <header>
+                <strong>Customer No Reply Configuration</strong>
+              </header>
+              <div className="routing-config-crud-modal__section-grid">
+                {renderBusinessNumberField(
+                  mediaCode,
+                  'preTimeoutReminderMinutes',
+                  'Pre-timeout Reminder Time (min)',
+                )}
+                {renderBusinessNumberField(
+                  mediaCode,
+                  'customerNoReplyTimeoutMinutes',
+                  'Customer No Reply Timeout (min)',
+                )}
+                {renderBusinessMessageField(
+                  mediaCode,
+                  'preTimeoutReminderMessage',
+                  'Pre-timeout Reminder Message',
+                  2,
+                  true,
+                )}
+                {renderBusinessMessageField(
+                  mediaCode,
+                  'customerTimeoutNotice',
+                  'Customer Timeout Notice',
+                  2,
+                  true,
+                )}
+                {renderBusinessMessageField(
+                  mediaCode,
+                  'agentTimeoutNotice',
+                  'Agent Timeout Notice',
+                  2,
+                  true,
+                )}
+              </div>
+            </section>
+            <section className="routing-config-media-rule-modal__section">
+              <header>
+                <strong>Agent No Reply Configuration</strong>
+              </header>
+              <div className="routing-config-crud-modal__section-grid">
+                {renderBusinessNumberField(
+                  mediaCode,
+                  'agentNoReplyTimeoutSeconds',
+                  'Agent No Reply Timeout (sec)',
+                )}
+                {renderBusinessMessageField(
+                  mediaCode,
+                  'agentNoReplyAutoResponseMessage',
+                  'Auto Response Message',
+                  2,
+                  true,
+                )}
+              </div>
+            </section>
+            <section className="routing-config-media-rule-modal__section">
+              <header>
+                <strong>Agent Service Configuration</strong>
+              </header>
+              <div className="routing-config-crud-modal__section-grid">
+                {renderBusinessNumberField(
+                  mediaCode,
+                  'webchatRecallLimitSeconds',
+                  'Webchat Message Recall Limit (sec)',
+                )}
+                {renderBusinessNumberField(
+                  mediaCode,
+                  'agentNoReplyWarningSeconds',
+                  'Agent No Reply Warning (sec)',
+                )}
+                {renderBusinessNumberField(
+                  mediaCode,
+                  'agentNoReplyBreachSeconds',
+                  'Agent No Reply Breach (sec)',
+                )}
+              </div>
+            </section>
+          </>
+        )}
+      </div>
+    )
+  }
+  const accountColumns: ColumnsType<ChannelAccount> = [
+    {
+      dataIndex: 'account',
+      title: 'Account',
+      width: 140,
+      render: (value: string) => <strong>{value}</strong>,
+    },
+    { dataIndex: 'accountName', title: 'Account Name', width: 160 },
+    {
+      dataIndex: 'credentialRef',
+      ellipsis: true,
+      title: 'Credential / Secret Ref',
+      width: 200,
+    },
+    { dataIndex: 'purpose', ellipsis: true, title: 'Purpose', width: 220 },
+    {
+      dataIndex: 'status',
+      title: 'Status',
+      width: 92,
+      render: renderRoutingStatus,
+    },
+    {
+      title: 'Actions',
+      width: 84,
+      render: (_, record) => (
+        <div className="routing-config-crud__row-actions">
+          <button
+            aria-label={`Edit ${record.account}`}
+            title="Edit"
+            type="button"
+            onClick={() => openAccountModal('edit', record)}
+          >
+            <EditOutlined />
+          </button>
+          <button
+            aria-label={`Delete ${record.account}`}
+            title="Delete"
+            type="button"
+            onClick={() => openAccountModal('delete', record)}
+          >
+            <DeleteOutlined />
+          </button>
+        </div>
+      ),
+    },
+  ]
+  const selectedChannelAccounts = selectedChannel
+    ? channelAccounts.filter(
+        (account) => account.channelCode === selectedChannel.channelCode,
+      )
+    : []
   const columns: ColumnsType<Channel> = [
     {
       dataIndex: 'channelId',
@@ -1154,7 +2010,14 @@ export function ChannelsPage() {
       width: 110,
       render: (value: string) => <strong>{value}</strong>,
     },
-    { dataIndex: 'channelName', title: 'Channel Name', width: 150 },
+    { dataIndex: 'channelName', title: 'Channel Name', width: 170 },
+    {
+      dataIndex: 'channelTypeCode',
+      title: 'Channel Type',
+      width: 160,
+      render: (value: string) =>
+        channelTypeByCode.get(value)?.channelTypeName ?? value,
+    },
     {
       dataIndex: 'mediaTypes',
       title: 'Media Type',
@@ -1162,27 +2025,12 @@ export function ChannelsPage() {
       render: (value: MediaTypeCode[]) => formatMediaTypes(value),
     },
     {
-      title: 'Rule Plan',
-      width: 260,
-      render: (_, record) => (
-        <div className="routing-config-rule-plan-summary">
-          {record.mediaTypes.map((mediaType) => (
-            <span key={mediaType}>
-              {getRulePlanText(record.channelCode, mediaType)}
-            </span>
-          ))}
-        </div>
-      ),
-    },
-    {
-      dataIndex: 'maxConcurrency',
-      title: 'Max Concurrent Calls',
-      width: 160,
-    },
-    {
-      dataIndex: 'minScanIntervalSeconds',
-      title: 'Min Scan Interval (s)',
-      width: 160,
+      title: 'Account Count',
+      width: 120,
+      render: (_, record) =>
+        channelAccounts.filter(
+          (account) => account.channelCode === record.channelCode,
+        ).length,
     },
     {
       dataIndex: 'status',
@@ -1193,32 +2041,29 @@ export function ChannelsPage() {
     {
       fixed: 'right',
       title: 'Actions',
-      width: 156,
+      width: 250,
       render: (_, record) => (
-        <div className="routing-config-crud__row-actions">
-          <button
-            aria-label={`View ${record.channelId}`}
-            title="View"
-            type="button"
-            onClick={() => openModal('view', record)}
-          >
-            <EyeOutlined />
-          </button>
+        <div className="routing-config-channel-actions">
           <button
             aria-label={`Edit ${record.channelId}`}
-            title="Edit"
             type="button"
             onClick={() => openModal('edit', record)}
           >
-            <EditOutlined />
+            Edit
           </button>
           <button
-            aria-label={`Delete ${record.channelId}`}
-            title="Delete"
+            aria-label={`Account management ${record.channelId}`}
             type="button"
-            onClick={() => openModal('delete', record)}
+            onClick={() => openModal('accounts', record)}
           >
-            <DeleteOutlined />
+            Accounts
+          </button>
+          <button
+            aria-label={`Business config ${record.channelId}`}
+            type="button"
+            onClick={() => openModal('business', record)}
+          >
+            Business Config
           </button>
         </div>
       ),
@@ -1244,6 +2089,25 @@ export function ChannelsPage() {
                       setFilterDraft((currentDraft) => ({
                         ...currentDraft,
                         keyword: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label
+                  className="routing-config-page__filter"
+                  style={{ width: 220 }}
+                >
+                  <span>Channel Type</span>
+                  <Select
+                    options={[
+                      { label: 'All', value: '' },
+                      ...channelTypeOptions,
+                    ]}
+                    value={filterDraft.channelTypeCode}
+                    onChange={(value) =>
+                      setFilterDraft((currentDraft) => ({
+                        ...currentDraft,
+                        channelTypeCode: value,
                       }))
                     }
                   />
@@ -1299,6 +2163,7 @@ export function ChannelsPage() {
                   variant="secondary"
                   onClick={() => {
                     const nextFilters = {
+                      channelTypeCode: '',
                       keyword: '',
                       mediaTypes: [] as MediaTypeCode[],
                       status: '',
@@ -1312,22 +2177,13 @@ export function ChannelsPage() {
                 </BaseButton>
               </div>
             </div>
-            <div className="routing-config-page__add-action">
-              <BaseButton
-                icon={<PlusOutlined />}
-                variant="primary"
-                onClick={() => openModal('add')}
-              >
-                Add
-              </BaseButton>
-            </div>
           </div>
           <BaseTable
             columns={columns}
             dataSource={filteredChannels}
             pagination={paginationConfig}
             rowKey="channelId"
-            scroll={{ x: 1370 }}
+            scroll={{ x: 1380 }}
             size="small"
           />
         </BaseCard>
@@ -1338,8 +2194,14 @@ export function ChannelsPage() {
         destroyOnClose
         kind="detail"
         open={Boolean(modalMode)}
-        title={`${modalMode === 'add' ? 'Add' : modalMode === 'edit' ? 'Edit' : modalMode === 'delete' ? 'Delete' : 'View'} Channel`}
-        width={900}
+        title={
+          modalMode === 'business'
+            ? 'Business Config'
+            : modalMode === 'accounts'
+              ? 'Account Management'
+              : 'Edit Channel'
+        }
+        width={modalMode === 'accounts' ? 1120 : modalMode === 'business' ? 980 : 900}
         onCancel={closeModal}
       >
         <div className="routing-config-crud-modal__sections">
@@ -1366,92 +2228,52 @@ export function ChannelsPage() {
               type="warning"
             />
           )}
-          {modalMode === 'delete' ? (
-            <div className="routing-config-crud-modal__delete">
-              {deleteBlockReason ? (
-                <Alert
-                  showIcon
-                  description={deleteBlockReason}
-                  message="This record cannot be deleted."
-                  type="warning"
-                />
-              ) : (
-                <Alert
-                  showIcon
-                  description="This only changes the current demo session."
-                  message={`Delete ${selectedChannel?.channelName ?? ''}?`}
-                  type="warning"
-                />
-              )}
-            </div>
-          ) : (
+          {modalMode === 'edit' && (
             <>
-              <div className="routing-config-crud-modal__section-grid">
-                <label className="routing-config-crud-modal__field">
-                  <span>
-                    Channel ID <strong>*</strong>
-                  </span>
-                  <Input
-                    disabled={isReadOnly || modalMode === 'edit'}
-                    value={draft.channelId}
-                    onChange={(event) =>
-                      updateDraft('channelId', event.target.value)
-                    }
-                  />
-                </label>
-                <label className="routing-config-crud-modal__field">
-                  <span>
-                    Channel Name <strong>*</strong>
-                  </span>
-                  <Input
-                    disabled={isReadOnly}
-                    value={draft.channelName}
-                    onChange={(event) =>
-                      updateDraft('channelName', event.target.value)
-                    }
-                  />
-                </label>
-                <label className="routing-config-crud-modal__field routing-config-crud-modal__field--full">
-                  <span>
-                    Media Type <strong>*</strong>
-                  </span>
-                  <Select
-                    disabled={isReadOnly}
-                    mode="multiple"
-                    options={mediaOptions}
-                    value={draft.mediaTypes}
-                    onChange={(value) =>
-                      updateMediaTypes(value as MediaTypeCode[])
-                    }
-                  />
-                </label>
-                <label className="routing-config-crud-modal__field">
-                  <span>Max Concurrent Calls</span>
-                  <InputNumber
-                    disabled={isReadOnly}
-                    min={1}
-                    value={draft.maxConcurrency}
-                    onChange={(value) =>
-                      updateDraft('maxConcurrency', Number(value) || 0)
-                    }
-                  />
-                </label>
-                <label className="routing-config-crud-modal__field">
-                  <span>Min Scan Interval Seconds</span>
-                  <InputNumber
-                    disabled={isReadOnly}
-                    min={1}
-                    value={draft.minScanIntervalSeconds}
-                    onChange={(value) =>
-                      updateDraft('minScanIntervalSeconds', Number(value) || 0)
-                    }
-                  />
-                </label>
-                <label className="routing-config-crud-modal__field routing-config-crud-modal__field--status">
-                  <span>Status</span>
-                  {isReadOnly ? (
-                    <RoutingConfigStatusBadge status={draft.status} />
-                  ) : (
+              <section className="routing-config-media-rule-modal__section">
+                <header>
+                  <strong>Basic Information</strong>
+                </header>
+                <div className="routing-config-crud-modal__section-grid">
+                  <label className="routing-config-crud-modal__field">
+                    <span>Channel ID</span>
+                    <Input disabled value={draft.channelId} />
+                  </label>
+                  <label className="routing-config-crud-modal__field">
+                    <span>Channel Name</span>
+                    <Input disabled value={draft.channelName} />
+                  </label>
+                  <label className="routing-config-crud-modal__field">
+                    <span>Channel Type</span>
+                    <Input
+                      disabled
+                      value={
+                        channelTypeByCode.get(draft.channelTypeCode)
+                          ?.channelTypeName ?? draft.channelTypeCode
+                      }
+                    />
+                  </label>
+                  <label className="routing-config-crud-modal__field">
+                    <span>
+                      Media Type <strong>*</strong>
+                    </span>
+                    <Select
+                      mode="multiple"
+                      options={(channelTypeByCode
+                        .get(draft.channelTypeCode)
+                        ?.supportedMediaTypes ?? []
+                      ).map((mediaType) => ({
+                        label: mediaLabelByValue.get(mediaType) ?? mediaType,
+                        value: mediaType,
+                      }))}
+                      value={draft.mediaTypes}
+                      onChange={(value) =>
+                        updateMediaTypes(value as MediaTypeCode[])
+                      }
+                    />
+                  </label>
+                  <label className="routing-config-crud-modal__field routing-config-crud-modal__field--status">
+                    <span>Status</span>
                     <span className="routing-config-crud-modal__switch-row">
                       <Switch
                         className="routing-config-status-switch"
@@ -1465,57 +2287,252 @@ export function ChannelsPage() {
                         {draft.status === 'Active' ? 'Enabled' : 'Disabled'}
                       </em>
                     </span>
-                  )}
-                </label>
-              </div>
-              <section className="routing-config-crud-modal__section">
-                <strong className="routing-config-crud-modal__section-title">
-                  Media Rule Plan Binding
-                </strong>
-                <div className="routing-config-media-binding-list">
-                  {draft.mediaTypes.map((mediaType) => (
-                    <div
-                      className="routing-config-media-binding-row"
-                      key={mediaType}
-                    >
-                      <span>{mediaLabelByValue.get(mediaType) ?? mediaType}</span>
-                      {mediaType === 'TEXT' ? (
-                        <Select
-                          disabled={isReadOnly}
-                          options={textRulePlanOptions}
-                          placeholder="Select Text rule plan"
-                          value={bindingDrafts.TEXT || undefined}
-                          onChange={(value) =>
-                            setBindingDrafts((currentDraft) => ({
-                              ...currentDraft,
-                              TEXT: value,
-                            }))
-                          }
-                        />
-                      ) : (
-                        <em>Reserved / Not configured</em>
-                      )}
-                    </div>
-                  ))}
+                  </label>
                 </div>
               </section>
+              <section className="routing-config-media-rule-modal__section">
+                <header>
+                  <strong>Access Parameters</strong>
+                </header>
+                {getChannelTypeParameterSchema(draft.channelTypeCode).fields
+                  .length === 0 ? (
+                  <Alert
+                    showIcon
+                    message="This channel type has no access parameters."
+                    type="info"
+                  />
+                ) : (
+                  <div className="routing-config-crud-modal__section-grid">
+                    {getChannelTypeParameterSchema(
+                      draft.channelTypeCode,
+                    ).fields.map((field) => (
+                      <label
+                        className="routing-config-crud-modal__field"
+                        key={field.key}
+                      >
+                        <span>
+                          {field.label}
+                          {field.required && <strong>*</strong>}
+                        </span>
+                        <Input
+                          value={draft.accessConfig[field.key] ?? ''}
+                          onChange={(event) =>
+                            updateAccessConfig(field.key, event.target.value)
+                          }
+                        />
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </section>
             </>
+          )}
+          {modalMode === 'business' && (
+            <Tabs
+              activeKey={businessMediaCode}
+              items={draft.mediaTypes.map((mediaType) => ({
+                children: renderBusinessMediaForm(mediaType),
+                key: mediaType,
+                label: mediaLabelByValue.get(mediaType) ?? mediaType,
+              }))}
+              onChange={(key) => setBusinessMediaCode(key as MediaTypeCode)}
+            />
+          )}
+          {modalMode === 'accounts' && (
+            <div className="routing-config-channel-accounts">
+              <div className="routing-config-channel-accounts__toolbar">
+                <strong>{selectedChannel?.channelName}</strong>
+                <BaseButton
+                  icon={<PlusOutlined />}
+                  variant="primary"
+                  onClick={() => openAccountModal('add')}
+                >
+                  Add Account
+                </BaseButton>
+              </div>
+              {selectedChannelAccounts.length === 0 ? (
+                <Alert
+                  showIcon
+                  message="No accounts configured."
+                  type="info"
+                />
+              ) : (
+                <div className="routing-config-channel-account-table">
+                  <BaseTable
+                    columns={accountColumns}
+                    dataSource={selectedChannelAccounts}
+                    pagination={false}
+                    rowKey="accountCode"
+                    scroll={{ x: 900 }}
+                    size="small"
+                  />
+                </div>
+              )}
+            </div>
           )}
         </div>
         <div className="routing-config-crud-modal__footer">
           <BaseButton variant="secondary" onClick={closeModal}>
-            {modalMode === 'view' ? 'Close' : 'Cancel'}
+            {modalMode === 'accounts' ? 'Close' : 'Cancel'}
           </BaseButton>
-          {modalMode === 'delete' && !deleteBlockReason && (
-            <BaseButton variant="danger" onClick={handleDelete}>
-              Delete
-            </BaseButton>
-          )}
-          {(modalMode === 'add' || modalMode === 'edit') && (
+          {(modalMode === 'edit' || modalMode === 'business') && (
             <BaseButton variant="primary" onClick={handleSave}>
               Save
             </BaseButton>
           )}
+        </div>
+      </BaseModal>
+      <BaseModal
+        className="routing-config-crud-modal"
+        destroyOnClose
+        kind="detail"
+        open={Boolean(accountModalMode)}
+        title={`${accountModalMode === 'delete' ? 'Delete' : accountModalMode === 'edit' ? 'Edit' : 'Add'} Account`}
+        width={720}
+        onCancel={closeAccountModal}
+      >
+        <div className="routing-config-crud-modal__sections">
+          {accountSubmitAttempted && accountValidationErrors.length > 0 && (
+            <Alert
+              showIcon
+              className="routing-config-crud-modal__validation"
+              message="Please check the form"
+              description={
+                <ul>
+                  {accountValidationErrors.map((error) => (
+                    <li key={error}>{error}</li>
+                  ))}
+                </ul>
+              }
+              type="warning"
+            />
+          )}
+          {accountModalMode === 'delete' ? (
+            <Alert
+              showIcon
+              description={
+                selectedAccount
+                  ? getAccountDeleteBlockReason(selectedAccount) ??
+                    'This only changes the current demo session.'
+                  : ''
+              }
+              message={
+                selectedAccount &&
+                getAccountDeleteBlockReason(selectedAccount)
+                  ? 'This account cannot be deleted.'
+                  : `Delete ${selectedAccount?.accountName ?? ''}?`
+              }
+              type="warning"
+            />
+          ) : (
+            <div className="routing-config-crud-modal__section-grid routing-config-crud-modal__section-grid--account">
+              <label className="routing-config-crud-modal__field">
+                <span>
+                  Account <strong>*</strong>
+                </span>
+                <Input
+                  value={accountDraft.account}
+                  onChange={(event) =>
+                    updateAccountDraft('account', event.target.value)
+                  }
+                />
+              </label>
+              <label className="routing-config-crud-modal__field">
+                <span>
+                  Account Name <strong>*</strong>
+                </span>
+                <Input
+                  value={accountDraft.accountName}
+                  onChange={(event) =>
+                    updateAccountDraft('accountName', event.target.value)
+                  }
+                />
+              </label>
+              <label className="routing-config-crud-modal__field routing-config-crud-modal__field--full">
+                <span>
+                  Credential / Secret Ref <strong>*</strong>
+                </span>
+                <Input.Password
+                  value={accountDraft.credentialRef}
+                  onChange={(event) =>
+                    updateAccountDraft('credentialRef', event.target.value)
+                  }
+                />
+              </label>
+              <label className="routing-config-crud-modal__field routing-config-crud-modal__field--full">
+                <span>Purpose</span>
+                <Input.TextArea
+                  rows={2}
+                  value={accountDraft.purpose}
+                  onChange={(event) =>
+                    updateAccountDraft('purpose', event.target.value)
+                  }
+                />
+              </label>
+              <label className="routing-config-crud-modal__field routing-config-crud-modal__field--status">
+                <span>Status</span>
+                <span className="routing-config-crud-modal__switch-row">
+                  <Switch
+                    className="routing-config-status-switch"
+                    checked={accountDraft.status === 'Active'}
+                    size="small"
+                    onChange={(checked) =>
+                      updateAccountDraft(
+                        'status',
+                        checked ? 'Active' : 'Disabled',
+                      )
+                    }
+                  />
+                  <em>
+                    {accountDraft.status === 'Active' ? 'Enabled' : 'Disabled'}
+                  </em>
+                </span>
+              </label>
+            </div>
+          )}
+        </div>
+        <div className="routing-config-crud-modal__footer">
+          <BaseButton variant="secondary" onClick={closeAccountModal}>
+            Cancel
+          </BaseButton>
+          {accountModalMode === 'delete' && (
+            <BaseButton
+              disabled={
+                selectedAccount
+                  ? Boolean(getAccountDeleteBlockReason(selectedAccount))
+                  : true
+              }
+              variant="danger"
+              onClick={handleAccountDelete}
+            >
+              Delete
+            </BaseButton>
+          )}
+          {(accountModalMode === 'add' || accountModalMode === 'edit') && (
+            <BaseButton variant="primary" onClick={handleAccountSave}>
+              Save
+            </BaseButton>
+          )}
+        </div>
+      </BaseModal>
+      <BaseModal
+        className="routing-config-crud-modal routing-config-working-time-modal"
+        kind="detail"
+        open={Boolean(previewWorkingTimePlan)}
+        title="View Working Time Plan"
+        width={1080}
+        onCancel={() => setPreviewWorkingTimePlan(null)}
+      >
+        {previewWorkingTimePlan && (
+          <WorkingTimePlanPreviewContent plan={previewWorkingTimePlan} />
+        )}
+        <div className="routing-config-crud-modal__footer">
+          <BaseButton
+            variant="secondary"
+            onClick={() => setPreviewWorkingTimePlan(null)}
+          >
+            Close
+          </BaseButton>
         </div>
       </BaseModal>
     </PageContainer>
@@ -3465,181 +4482,6 @@ export function SiteAccessVolumePage() {
   )
 }
 
-export function AccessAccountsPage() {
-  const accessAccounts = useRoutingConfigStore((state) => state.accessAccounts)
-  const upsertEntity = useRoutingConfigStore((state) => state.upsertEntity)
-  const deleteEntity = useRoutingConfigStore((state) => state.deleteEntity)
-  const { channels, routingRules } = useRoutingLookups()
-  const accountChannelOptions = useMemo(
-    () =>
-      channels
-        .filter((channel) => channel.channelCode !== 'PHONE')
-        .map((channel) => ({
-          label: channel.channelName,
-          value: channel.channelCode,
-        })),
-    [channels],
-  )
-  const channelNameByCode = useMemo(
-    () =>
-      new Map(
-        channels.map((channel) => [channel.channelCode, channel.channelName]),
-      ),
-    [channels],
-  )
-  const defaultChannelCode = accountChannelOptions[0]?.value ?? 'WHATSAPP'
-
-  return (
-    <RoutingConfigCrudPage<AccessAccount>
-      columns={[
-        {
-          dataIndex: 'accountCode',
-          title: 'Account ID',
-          width: 170,
-          render: (value: string) => <strong>{value}</strong>,
-        },
-        { dataIndex: 'accountName', ellipsis: true, title: 'Account Name', width: 210 },
-        {
-          dataIndex: 'channelCode',
-          title: 'Channel',
-          width: 130,
-          render: (value: string) => channelNameByCode.get(value) ?? value,
-        },
-        {
-          dataIndex: 'externalAccountId',
-          ellipsis: true,
-          title: 'External Account ID',
-          width: 180,
-        },
-        { dataIndex: 'secretRef', ellipsis: true, title: 'Secret Ref', width: 220 },
-        { dataIndex: 'status', title: 'Status', width: 110, render: renderRoutingStatus },
-      ]}
-      createDraft={() => ({
-        accountCode: 'ACC_NEW',
-        accountName: '',
-        channelCode: defaultChannelCode,
-        externalAccountId: '',
-        secretRef: 'secret://aicc/new',
-        status: 'Active',
-      })}
-      data={accessAccounts}
-      draftToRecord={(draft) => ({
-        accountCode: stringValue(draft.accountCode),
-        accountName: stringValue(draft.accountName),
-        channelCode: stringValue(draft.channelCode),
-        externalAccountId: stringValue(draft.externalAccountId),
-        extensionConfig: buildAccessAccountExtensionConfig(
-          draft,
-          stringValue(draft.channelCode),
-        ),
-        secretRef: stringValue(draft.secretRef),
-        status: statusValue(draft.status),
-      })}
-      fields={({ draft }) => [
-        {
-          key: 'accountCode',
-          label: 'Account ID',
-          readOnlyOnEdit: true,
-          required: true,
-          type: 'text',
-        },
-        { key: 'accountName', label: 'Account Name', required: true, type: 'text' },
-        {
-          key: 'channelCode',
-          label: 'Channel',
-          options: accountChannelOptions,
-          required: true,
-          type: 'select',
-        },
-        {
-          key: 'externalAccountId',
-          label: 'External Account ID',
-          required: true,
-          type: 'text',
-        },
-        { key: 'secretRef', label: 'Secret Ref', required: true, type: 'text' },
-        {
-          key: 'status',
-          label: 'Status',
-          switchLabels: statusSwitchLabels,
-          type: 'statusSwitch',
-        },
-        ...buildAccessAccountConfigFields(stringValue(draft.channelCode)),
-      ]}
-      filters={[
-        {
-          key: 'keyword',
-          label: 'Keyword',
-          match: (record, value) =>
-            [
-              record.accountCode,
-              record.accountName,
-              record.externalAccountId,
-              record.channelCode,
-              channelNameByCode.get(record.channelCode) ?? '',
-            ]
-              .join(' ')
-              .toLowerCase()
-              .includes(value.toLowerCase()),
-          placeholder: 'ID / name / external ID',
-          type: 'text',
-          width: 240,
-        },
-        {
-          key: 'channelCode',
-          label: 'Channel',
-          options: accountChannelOptions,
-          type: 'select',
-          width: 220,
-        },
-        {
-          key: 'status',
-          label: 'Status',
-          options: statusFilterOptions,
-          type: 'select',
-          width: 180,
-        },
-      ]}
-      getDeleteBlockReason={(record) =>
-        routingRules.some((rule) =>
-          rule.conditions.some(
-            (condition) =>
-              condition.factorCode === '17' &&
-              condition.factorValueCode === record.accountCode,
-          ),
-        )
-          ? 'This access account is referenced by routing rules.'
-          : null
-      }
-      idField="accountCode"
-      recordToDraft={buildAccessAccountDraft}
-      searchFields={['accountCode', 'accountName', 'channelCode', 'externalAccountId']}
-      title="Access Accounts"
-      validateDraft={(draft, currentRecord) => [
-        ...validateCode(stringValue(draft.accountCode), 'Account ID'),
-        ...validateUnique(
-          accessAccounts,
-          currentRecord,
-          'accountCode',
-          stringValue(draft.accountCode),
-          'Account ID',
-        ),
-        ...fieldRequired(draft, 'accountName', 'Account Name'),
-        ...fieldRequired(draft, 'channelCode', 'Channel'),
-        ...fieldRequired(draft, 'externalAccountId', 'External Account ID'),
-        ...fieldRequired(draft, 'secretRef', 'Secret Ref'),
-        ...getAccessAccountSchema(stringValue(draft.channelCode)).fields.flatMap(
-          (field) => fieldRequired(draft, field.key, field.label),
-        ),
-      ]}
-      onDelete={(record) =>
-        deleteEntity('accessAccounts', 'accountCode', record.accountCode)
-      }
-      onSave={(record) => upsertEntity('accessAccounts', 'accountCode', record)}
-    />
-  )
-}
-
 type WorkingTimeModalMode = 'add' | 'delete' | 'edit' | 'view' | null
 
 interface WorkingTimePlanFilters {
@@ -4954,11 +5796,241 @@ export function WorkingTimePlansPage() {
   )
 }
 
+type SkillQueueMessageField =
+  | 'nonWorkingTimeMessage'
+  | 'queueTimeoutMessage'
+  | 'queueWaitingMessage'
+
+const skillQueueVariablesByMessageField: Record<
+  SkillQueueMessageField,
+  string[]
+> = {
+  nonWorkingTimeMessage: ['{workTime}'],
+  queueTimeoutMessage: ['{customerName}'],
+  queueWaitingMessage: ['{estimatedWaitMinutes}'],
+}
+
+function formatWorkingTimeWeekdays(weekdays: string[]) {
+  const weekdayLabelMap = new Map(
+    workingTimeWeekdayOptions.map((option) => [option.value, option.label]),
+  )
+
+  return weekdays.map((weekday) => weekdayLabelMap.get(weekday) ?? weekday).join(', ') || '-'
+}
+
+function formatWorkingTimeRanges(ranges: WorkingTimeRange[]) {
+  return ranges
+    .map((range) => `${range.startTime || '-'} - ${range.endTime || '-'}`)
+    .join(', ') || '-'
+}
+
+function WorkingTimePlanPreviewContent({ plan }: { plan: WorkingTimePlan }) {
+  const renderWorkScheduleRows = (
+    rows: WorkScheduleRule[],
+    emptyText: string,
+  ) => (
+    <div className="routing-config-working-time-modal__list">
+      {rows.length === 0 ? (
+        <div className="routing-config-working-time-modal__empty">
+          {emptyText}
+        </div>
+      ) : (
+        rows.map((rule, index) => (
+          <div
+            className={`routing-config-working-time-modal__schedule-row routing-config-working-time-modal__schedule-row--work ${
+              index > 0
+                ? 'routing-config-working-time-modal__schedule-row--no-label'
+                : ''
+            }`}
+            key={rule.ruleId}
+          >
+            <span className="routing-config-working-time-modal__row-field">
+              {index === 0 && <span>Weekdays</span>}
+              <em>{formatWorkingTimeWeekdays(rule.weekdays)}</em>
+            </span>
+            <span className="routing-config-working-time-modal__row-field">
+              {index === 0 && <span>Time Range</span>}
+              <em>{formatWorkingTimeRanges(rule.timeRanges)}</em>
+            </span>
+          </div>
+        ))
+      )}
+    </div>
+  )
+  const renderHolidayRows = () => (
+    <div className="routing-config-working-time-modal__list">
+      {plan.holidayRules.length === 0 ? (
+        <div className="routing-config-working-time-modal__empty">
+          No holiday schedule configured.
+        </div>
+      ) : (
+        plan.holidayRules.map((rule, index) => (
+          <div
+            className={`routing-config-working-time-modal__schedule-row routing-config-working-time-modal__schedule-row--holiday ${
+              index > 0
+                ? 'routing-config-working-time-modal__schedule-row--no-label'
+                : ''
+            }`}
+            key={rule.ruleId}
+          >
+            <span className="routing-config-working-time-modal__row-field">
+              {index === 0 && <span>Start Date</span>}
+              <em>{rule.dateFrom || '-'}</em>
+            </span>
+            <span className="routing-config-working-time-modal__row-field">
+              {index === 0 && <span>End Date</span>}
+              <em>{rule.dateTo || '-'}</em>
+            </span>
+            <span className="routing-config-working-time-modal__row-field">
+              {index === 0 && <span>Holiday Name</span>}
+              <em>{rule.holidayName || '-'}</em>
+            </span>
+            <span className="routing-config-working-time-modal__row-field">
+              {index === 0 && <span>Non-working Time</span>}
+              <em>{formatWorkingTimeRanges(rule.nonWorkingRanges)}</em>
+            </span>
+          </div>
+        ))
+      )}
+    </div>
+  )
+  const renderSpecialWorkingRows = () => (
+    <div className="routing-config-working-time-modal__list">
+      {plan.specialWorkingPlans.length === 0 ? (
+        <div className="routing-config-working-time-modal__empty">
+          No special working plan configured.
+        </div>
+      ) : (
+        plan.specialWorkingPlans.map((rule, index) => (
+          <div
+            className={`routing-config-working-time-modal__schedule-row routing-config-working-time-modal__schedule-row--special ${
+              index > 0
+                ? 'routing-config-working-time-modal__schedule-row--no-label'
+                : ''
+            }`}
+            key={rule.ruleId}
+          >
+            <span className="routing-config-working-time-modal__row-field">
+              {index === 0 && <span>Start Date</span>}
+              <em>{rule.dateFrom || '-'}</em>
+            </span>
+            <span className="routing-config-working-time-modal__row-field">
+              {index === 0 && <span>End Date</span>}
+              <em>{rule.dateTo || '-'}</em>
+            </span>
+            <span className="routing-config-working-time-modal__row-field">
+              {index === 0 && <span>Reason</span>}
+              <em>{rule.reason || '-'}</em>
+            </span>
+            <span className="routing-config-working-time-modal__row-field">
+              {index === 0 && <span>Working Time</span>}
+              <em>{formatWorkingTimeRanges(rule.workingRanges)}</em>
+            </span>
+          </div>
+        ))
+      )}
+    </div>
+  )
+
+  return (
+    <div className="routing-config-working-time-modal__form">
+      <section className="routing-config-working-time-modal__section">
+        <header>
+          <strong>Basic Info</strong>
+        </header>
+        <div className="routing-config-working-time-modal__basic-grid">
+          <label className="routing-config-crud-modal__field">
+            <span>Plan ID</span>
+            <em>{plan.planCode}</em>
+          </label>
+          <label className="routing-config-crud-modal__field">
+            <span>Plan Name</span>
+            <em>{plan.planName}</em>
+          </label>
+          <label className="routing-config-crud-modal__field">
+            <span>Status</span>
+            <em>
+              <RoutingConfigStatusBadge status={plan.status} />
+            </em>
+          </label>
+          <label className="routing-config-crud-modal__field routing-config-working-time-modal__description">
+            <span>Description</span>
+            <em>{plan.description || '-'}</em>
+          </label>
+        </div>
+      </section>
+      <section className="routing-config-working-time-modal__section">
+        <header>
+          <strong>Work Schedule</strong>
+        </header>
+        {renderWorkScheduleRows(plan.workSchedules, 'No work schedule configured.')}
+      </section>
+      <section className="routing-config-working-time-modal__section">
+        <header>
+          <strong>Ramadan Work Schedule</strong>
+          <span className="routing-config-status-control">
+            <span className="routing-config-status-control__text">
+              {plan.ramadanSchedule.enabled ? 'Enabled' : 'Disabled'}
+            </span>
+          </span>
+        </header>
+        {plan.ramadanSchedule.enabled ? (
+          <>
+            <div className="routing-config-working-time-modal__ramadan-dates">
+              <label className="routing-config-crud-modal__field">
+                <span>Start Date</span>
+                <em>{plan.ramadanSchedule.dateFrom || '-'}</em>
+              </label>
+              <label className="routing-config-crud-modal__field">
+                <span>End Date</span>
+                <em>{plan.ramadanSchedule.dateTo || '-'}</em>
+              </label>
+            </div>
+            {renderWorkScheduleRows(
+              plan.ramadanSchedule.workSchedules,
+              'No Ramadan work schedule configured.',
+            )}
+          </>
+        ) : (
+          <div className="routing-config-working-time-modal__empty">
+            Ramadan schedule is disabled.
+          </div>
+        )}
+      </section>
+      <section className="routing-config-working-time-modal__section">
+        <header>
+          <strong>Holiday Schedule</strong>
+        </header>
+        {renderHolidayRows()}
+      </section>
+      <section className="routing-config-working-time-modal__section">
+        <header>
+          <strong>Special Working Plan</strong>
+        </header>
+        {renderSpecialWorkingRows()}
+      </section>
+      <div className="routing-config-working-time-modal__priority-note">
+        Priority: Special Working Plan &gt; Holiday Schedule &gt; Ramadan Work
+        Schedule &gt; Work Schedule.
+      </div>
+    </div>
+  )
+}
+
 export function SkillQueuesPage() {
   const skillQueues = useRoutingConfigStore((state) => state.skillQueues)
   const upsertEntity = useRoutingConfigStore((state) => state.upsertEntity)
   const deleteEntity = useRoutingConfigStore((state) => state.deleteEntity)
-  const { routingRules, vdnOptions, workTimeOptions } = useRoutingLookups()
+  const { routingRules, vdnOptions, workingTimePlans, workTimeOptions } =
+    useRoutingLookups()
+  const [previewWorkingTimePlan, setPreviewWorkingTimePlan] =
+    useState<WorkingTimePlan | null>(null)
+  const messageSelectionsRef = useRef<
+    Record<string, { end: number; start: number }>
+  >({})
+  const messageTextAreaRefs = useRef<Record<string, HTMLTextAreaElement | null>>(
+    {},
+  )
   const vdnLabelMap = useMemo(
     () => new Map(vdnOptions.map((option) => [option.value, option.label])),
     [vdnOptions],
@@ -4967,9 +6039,32 @@ export function SkillQueuesPage() {
     () => new Map(workTimeOptions.map((option) => [option.value, option.label])),
     [workTimeOptions],
   )
+  const workingTimePlanByCode = useMemo(
+    () => new Map(workingTimePlans.map((plan) => [plan.planCode, plan])),
+    [workingTimePlans],
+  )
+  const rememberMessageSelection = (
+    field: SkillQueueMessageField,
+    element: HTMLTextAreaElement,
+  ) => {
+    messageTextAreaRefs.current[field] = element
+    messageSelectionsRef.current[field] = {
+      end: element.selectionEnd,
+      start: element.selectionStart,
+    }
+  }
+  const queueMessageSelectionRemember = (
+    field: SkillQueueMessageField,
+    element: HTMLTextAreaElement,
+  ) => {
+    window.requestAnimationFrame(() => {
+      rememberMessageSelection(field, element)
+    })
+  }
 
   return (
-    <RoutingConfigCrudPage<SkillQueue>
+    <>
+      <RoutingConfigCrudPage<SkillQueue>
       columns={[
         {
           dataIndex: 'skillQueueCode',
@@ -4993,16 +6088,16 @@ export function SkillQueuesPage() {
             workTimeLabelMap.get(value) ?? 'Default 24x7',
         },
         {
-          dataIndex: 'maxQueueSize',
-          title: 'Max Queue Size',
-          width: 116,
-          render: (value: number) => `${value} items`,
+          dataIndex: 'maxQueueCustomers',
+          title: 'Max Queue Customers',
+          width: 150,
+          render: (value: number) => `${value} customers`,
         },
         {
-          dataIndex: 'queueTimeoutSeconds',
+          dataIndex: 'queueTimeoutMinutes',
           title: 'Queue Timeout',
-          width: 116,
-          render: (value: number) => `${value} sec`,
+          width: 130,
+          render: (value: number) => `${value} min`,
         },
         {
           dataIndex: 'supportsVideo',
@@ -5015,10 +6110,16 @@ export function SkillQueuesPage() {
       ]}
       createDraft={() => ({
         assignedAgentCount: 0,
-        maxQueueSize: 60,
+        maxQueueCustomers: 60,
+        nonWorkingTimeMessage:
+          'Service hours are currently closed. Please contact us during working hours.',
         platformSkillId: '',
         promptsText: 'TEXT|Timeout Message|Queue timeout.',
-        queueTimeoutSeconds: 100,
+        queueTimeoutMessage:
+          'All agents are busy. Please start a new conversation later.',
+        queueTimeoutMinutes: 10,
+        queueWaitingMessage:
+          'All agents are busy. Estimated waiting time is {estimatedWaitMinutes} minutes.',
         skillQueueCode: 'SQ_NEW',
         skillQueueName: '',
         status: 'Active',
@@ -5029,10 +6130,13 @@ export function SkillQueuesPage() {
       data={skillQueues}
       draftToRecord={(draft) => ({
         assignedAgentCount: numberValue(draft.assignedAgentCount),
-        maxQueueSize: numberValue(draft.maxQueueSize),
+        maxQueueCustomers: numberValue(draft.maxQueueCustomers),
+        nonWorkingTimeMessage: stringValue(draft.nonWorkingTimeMessage),
         platformSkillId: stringValue(draft.platformSkillId),
         prompts: textToPrompts(stringValue(draft.promptsText)),
-        queueTimeoutSeconds: numberValue(draft.queueTimeoutSeconds),
+        queueTimeoutMessage: stringValue(draft.queueTimeoutMessage),
+        queueTimeoutMinutes: numberValue(draft.queueTimeoutMinutes),
+        queueWaitingMessage: stringValue(draft.queueWaitingMessage),
         skillQueueCode: stringValue(draft.skillQueueCode),
         skillQueueName: stringValue(draft.skillQueueName),
         status: statusValue(draft.status),
@@ -5040,18 +6144,7 @@ export function SkillQueuesPage() {
         vdnCode: stringValue(draft.vdnCode),
         workTimePlanCode: stringValue(draft.workTimePlanCode),
       })}
-      fields={[
-        { key: 'skillQueueCode', label: 'Skill ID', readOnlyOnEdit: true, required: true, type: 'text' },
-        { key: 'platformSkillId', label: 'Platform Skill ID', required: true, type: 'text' },
-        { key: 'skillQueueName', label: 'Skill Name', required: true, type: 'text' },
-        { key: 'vdnCode', label: 'VDN', options: vdnOptions, required: true, type: 'select' },
-        { key: 'workTimePlanCode', label: 'Work Time Plan', options: workTimeOptions, type: 'select' },
-        { key: 'supportsVideo', label: 'Supports Video', options: videoSupportOptions, required: true, type: 'select' },
-        { addonAfter: 'items', key: 'maxQueueSize', label: 'Max Queue Size', max: 60000, min: 1, required: true, type: 'number' },
-        { addonAfter: 'sec', key: 'queueTimeoutSeconds', label: 'Queue Timeout', max: 10000, min: 0, required: true, type: 'number' },
-        { addonAfter: 'agents', key: 'assignedAgentCount', label: 'Assigned Agents', readOnly: true, type: 'number' },
-        { key: 'status', label: 'Status', required: true, switchLabels: statusSwitchLabels, type: 'statusSwitch' },
-      ]}
+      fields={[]}
       filters={[
         {
           key: 'keyword',
@@ -5092,12 +6185,16 @@ export function SkillQueuesPage() {
           : null
       }
       idField="skillQueueCode"
+      modalWidth={820}
       recordToDraft={(record) => ({
         assignedAgentCount: record.assignedAgentCount,
-        maxQueueSize: record.maxQueueSize,
+        maxQueueCustomers: record.maxQueueCustomers,
+        nonWorkingTimeMessage: record.nonWorkingTimeMessage,
         platformSkillId: record.platformSkillId,
         promptsText: promptsToText(record.prompts),
-        queueTimeoutSeconds: record.queueTimeoutSeconds,
+        queueTimeoutMessage: record.queueTimeoutMessage,
+        queueTimeoutMinutes: record.queueTimeoutMinutes,
+        queueWaitingMessage: record.queueWaitingMessage,
         skillQueueCode: record.skillQueueCode,
         skillQueueName: record.skillQueueName,
         status: record.status,
@@ -5105,6 +6202,365 @@ export function SkillQueuesPage() {
         vdnCode: record.vdnCode,
         workTimePlanCode: record.workTimePlanCode,
       })}
+      renderFormContent={({ draft, isReadOnly, mode, setDraftValue }) => {
+        const isEditMode = mode === 'edit'
+        const renderRequiredMark = () => <strong>*</strong>
+        const renderTextField = (
+          key: string,
+          label: string,
+          options?: {
+            readOnly?: boolean
+            readOnlyOnEdit?: boolean
+            required?: boolean
+          },
+        ) => {
+          const disabled =
+            Boolean(options?.readOnly) ||
+            (isEditMode && Boolean(options?.readOnlyOnEdit))
+
+          return (
+            <label className="routing-config-crud-modal__field">
+              <span>
+                {label}
+                {options?.required && renderRequiredMark()}
+              </span>
+              {isReadOnly ? (
+                <em>{stringValue(draft[key])}</em>
+              ) : (
+                <Input
+                  disabled={disabled}
+                  value={stringValue(draft[key])}
+                  onChange={(event) =>
+                    setDraftValue(key, event.target.value)
+                  }
+                />
+              )}
+            </label>
+          )
+        }
+        const renderSelectField = (
+          key: string,
+          label: string,
+          options: RoutingConfigSelectOption[],
+          required = false,
+        ) => {
+          const rawValue = stringValue(draft[key])
+          const displayValue =
+            options.find((option) => option.value === rawValue)?.label ??
+            rawValue
+
+          return (
+            <label className="routing-config-crud-modal__field">
+              <span>
+                {label}
+                {required && renderRequiredMark()}
+              </span>
+              {isReadOnly ? (
+                <em>{displayValue}</em>
+              ) : (
+                <Select
+                  options={options}
+                  value={rawValue}
+                  onChange={(value) => setDraftValue(key, value)}
+                />
+              )}
+            </label>
+          )
+        }
+        const renderWorkTimePlanField = () => {
+          const rawValue = stringValue(draft.workTimePlanCode)
+          const previewPlan = workingTimePlanByCode.get(rawValue)
+          const displayValue =
+            workTimeLabelMap.get(rawValue) ??
+            (rawValue ? rawValue : 'Default 24x7')
+
+          return (
+            <label className="routing-config-crud-modal__field routing-config-skill-queue-modal__work-time-field">
+              <span>Work Time Plan</span>
+              <div className="routing-config-skill-queue-modal__work-time-control">
+                {isReadOnly ? (
+                  <em>{displayValue}</em>
+                ) : (
+                  <Select
+                    options={workTimeOptions}
+                    value={rawValue}
+                    onChange={(value) => setDraftValue('workTimePlanCode', value)}
+                  />
+                )}
+                {previewPlan && (
+                  <BaseButton
+                    variant="secondary"
+                    onClick={() => setPreviewWorkingTimePlan(previewPlan)}
+                  >
+                    Preview
+                  </BaseButton>
+                )}
+              </div>
+            </label>
+          )
+        }
+        const renderNumberField = (
+          key: string,
+          label: string,
+          unit: string,
+          options?: {
+            max?: number
+            min?: number
+            readOnly?: boolean
+            required?: boolean
+          },
+        ) => {
+          const value = numberValue(draft[key])
+
+          return (
+            <label className="routing-config-crud-modal__field routing-config-media-rule-modal__number-field">
+              <span>
+                {label}
+                {options?.required && renderRequiredMark()}
+              </span>
+              {isReadOnly || options?.readOnly ? (
+                <em>
+                  {value} {unit}
+                </em>
+              ) : (
+                <span className="routing-config-media-rule-modal__number-control">
+                  <InputNumber
+                    max={options?.max}
+                    min={options?.min ?? 1}
+                    value={value}
+                    onChange={(nextValue) =>
+                      setDraftValue(key, Number(nextValue) || 0)
+                    }
+                  />
+                  <em>{unit}</em>
+                </span>
+              )}
+            </label>
+          )
+        }
+        const insertMessageVariable = (
+          field: SkillQueueMessageField,
+          variable: string,
+        ) => {
+          const currentValue = stringValue(draft[field])
+          const messageTextArea = messageTextAreaRefs.current[field]
+          const storedSelection = messageSelectionsRef.current[field]
+          const shouldReadLiveSelection =
+            messageTextArea && document.activeElement === messageTextArea
+          const activeSelection =
+            shouldReadLiveSelection &&
+            Number.isFinite(messageTextArea.selectionStart) &&
+            Number.isFinite(messageTextArea.selectionEnd)
+              ? {
+                  end: messageTextArea.selectionEnd,
+                  start: messageTextArea.selectionStart,
+                }
+              : storedSelection
+          const start = activeSelection
+            ? Math.min(activeSelection.start, currentValue.length)
+            : currentValue.length
+          const end = activeSelection
+            ? Math.min(activeSelection.end, currentValue.length)
+            : currentValue.length
+          const nextValue = `${currentValue.slice(0, start)}${variable}${currentValue.slice(end)}`
+          const nextCursorPosition = start + variable.length
+
+          setDraftValue(field, nextValue)
+          messageSelectionsRef.current[field] = {
+            end: nextCursorPosition,
+            start: nextCursorPosition,
+          }
+          window.requestAnimationFrame(() => {
+            const currentMessageTextArea = messageTextAreaRefs.current[field]
+            currentMessageTextArea?.focus()
+            currentMessageTextArea?.setSelectionRange(
+              nextCursorPosition,
+              nextCursorPosition,
+            )
+          })
+        }
+        const renderMessageField = (
+          field: SkillQueueMessageField,
+          label: string,
+          rows = 3,
+        ) => {
+          const variableOptions = skillQueueVariablesByMessageField[field]
+
+          return (
+            <label className="routing-config-crud-modal__field routing-config-media-rule-modal__message-field">
+              <span className="routing-config-media-rule-modal__field-heading">
+                <span>
+                  {label}
+                  {renderRequiredMark()}
+                </span>
+                {!isReadOnly && variableOptions.length > 0 && (
+                  <select
+                    aria-label={`${label} insert variable`}
+                    className="routing-config-media-rule-modal__variable-select"
+                    value=""
+                    onChange={(event) => {
+                      if (event.target.value) {
+                        insertMessageVariable(field, event.target.value)
+                      }
+                    }}
+                  >
+                    <option value="">Insert Variable</option>
+                    {variableOptions.map((variable) => (
+                      <option key={variable} value={variable}>
+                        {variable}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </span>
+              {isReadOnly ? (
+                <em>{stringValue(draft[field])}</em>
+              ) : (
+                <Input.TextArea
+                  rows={rows}
+                  value={stringValue(draft[field])}
+                  onBlur={(event) =>
+                    rememberMessageSelection(field, event.currentTarget)
+                  }
+                  onChange={(event) =>
+                    setDraftValue(field, event.target.value)
+                  }
+                  onClick={(event) =>
+                    rememberMessageSelection(field, event.currentTarget)
+                  }
+                  onFocus={(event) =>
+                    rememberMessageSelection(field, event.currentTarget)
+                  }
+                  onKeyDown={(event) =>
+                    queueMessageSelectionRemember(field, event.currentTarget)
+                  }
+                  onKeyUp={(event) =>
+                    rememberMessageSelection(field, event.currentTarget)
+                  }
+                  onMouseUp={(event) =>
+                    queueMessageSelectionRemember(field, event.currentTarget)
+                  }
+                  onSelect={(event) =>
+                    rememberMessageSelection(field, event.currentTarget)
+                  }
+                />
+              )}
+            </label>
+          )
+        }
+        const renderStatusField = () => (
+          <label className="routing-config-crud-modal__field">
+            <span>
+              Status
+              {renderRequiredMark()}
+            </span>
+            {isReadOnly ? (
+              <em>
+                <RoutingConfigStatusBadge
+                  status={statusValue(draft.status)}
+                />
+              </em>
+            ) : (
+              <span className="routing-config-crud-modal__switch-row">
+                <Switch
+                  checked={statusValue(draft.status) === 'Active'}
+                  className="routing-config-status-switch"
+                  size="small"
+                  onChange={(checked) =>
+                    setDraftValue('status', checked ? 'Active' : 'Disabled')
+                  }
+                />
+                <em>
+                  {statusValue(draft.status) === 'Active'
+                    ? statusSwitchLabels.checked
+                    : statusSwitchLabels.unchecked}
+                </em>
+              </span>
+            )}
+          </label>
+        )
+
+        return (
+          <div className="routing-config-skill-queue-modal">
+            <section className="routing-config-media-rule-modal__section">
+              <header>
+                <strong>Basic Information</strong>
+              </header>
+              <div className="routing-config-crud-modal__section-grid">
+                {renderTextField('skillQueueCode', 'Skill ID', {
+                  readOnlyOnEdit: true,
+                  required: true,
+                })}
+                {renderTextField('platformSkillId', 'Platform Skill ID', {
+                  required: true,
+                })}
+                {renderTextField('skillQueueName', 'Skill Name', {
+                  required: true,
+                })}
+                {renderSelectField('vdnCode', 'VDN', vdnOptions, true)}
+                {renderWorkTimePlanField()}
+                {renderSelectField(
+                  'supportsVideo',
+                  'Supports Video',
+                  videoSupportOptions,
+                  true,
+                )}
+                {renderNumberField('assignedAgentCount', 'Assigned Agents', 'agents', {
+                  readOnly: true,
+                })}
+                {renderStatusField()}
+              </div>
+            </section>
+            <section className="routing-config-media-rule-modal__section">
+              <header>
+                <strong>Queue Configuration</strong>
+              </header>
+              <div className="routing-config-media-rule-modal__subsections">
+                <div className="routing-config-media-rule-modal__subsection">
+                  <div className="routing-config-media-rule-modal__full-row">
+                    {renderMessageField(
+                      'nonWorkingTimeMessage',
+                      'Non-working Time Message',
+                    )}
+                  </div>
+                  <div className="routing-config-media-rule-modal__paired-row">
+                    {renderNumberField(
+                      'maxQueueCustomers',
+                      'Max Queue Customers',
+                      'customers',
+                      {
+                        max: 60000,
+                        min: 1,
+                        required: true,
+                      },
+                    )}
+                    {renderMessageField(
+                      'queueWaitingMessage',
+                      'Queue Waiting Message',
+                    )}
+                  </div>
+                  <div className="routing-config-media-rule-modal__paired-row">
+                    {renderNumberField(
+                      'queueTimeoutMinutes',
+                      'Queue Timeout',
+                      'min',
+                      {
+                        max: 10000,
+                        min: 1,
+                        required: true,
+                      },
+                    )}
+                    {renderMessageField(
+                      'queueTimeoutMessage',
+                      'Queue Timeout Message',
+                    )}
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        )
+      }}
       searchFields={['skillQueueCode', 'platformSkillId', 'skillQueueName', 'vdnCode']}
       title="Skill Queues"
       validateDraft={(draft, currentRecord) => [
@@ -5120,19 +6576,48 @@ export function SkillQueuesPage() {
         ...fieldRequired(draft, 'skillQueueName', 'Skill Name'),
         ...fieldRequired(draft, 'vdnCode', 'VDN'),
         ...fieldRequired(draft, 'supportsVideo', 'Supports Video'),
-        ...validateNumberRange(draft.maxQueueSize, 'Max Queue Size', 1, 60000),
         ...validateNumberRange(
-          draft.queueTimeoutSeconds,
+          draft.maxQueueCustomers,
+          'Max Queue Customers',
+          1,
+          60000,
+        ),
+        ...validateNumberRange(
+          draft.queueTimeoutMinutes,
           'Queue Timeout',
-          0,
+          1,
           10000,
         ),
+        ...fieldRequired(draft, 'nonWorkingTimeMessage', 'Non-working Time Message'),
+        ...fieldRequired(draft, 'queueWaitingMessage', 'Queue Waiting Message'),
+        ...fieldRequired(draft, 'queueTimeoutMessage', 'Queue Timeout Message'),
       ]}
       onDelete={(record) =>
         deleteEntity('skillQueues', 'skillQueueCode', record.skillQueueCode)
       }
       onSave={(record) => upsertEntity('skillQueues', 'skillQueueCode', record)}
-    />
+      />
+      <BaseModal
+        className="routing-config-crud-modal routing-config-working-time-modal"
+        kind="detail"
+        open={Boolean(previewWorkingTimePlan)}
+        title="View Working Time Plan"
+        width={1080}
+        onCancel={() => setPreviewWorkingTimePlan(null)}
+      >
+        {previewWorkingTimePlan && (
+          <WorkingTimePlanPreviewContent plan={previewWorkingTimePlan} />
+        )}
+        <div className="routing-config-crud-modal__footer">
+          <BaseButton
+            variant="secondary"
+            onClick={() => setPreviewWorkingTimePlan(null)}
+          >
+            Close
+          </BaseButton>
+        </div>
+      </BaseModal>
+    </>
   )
 }
 

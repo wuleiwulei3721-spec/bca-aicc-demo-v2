@@ -1,5 +1,4 @@
 import {
-  BankOutlined,
   CoffeeOutlined,
   DownOutlined,
   LoginOutlined,
@@ -7,7 +6,9 @@ import {
 } from '@ant-design/icons'
 import { Avatar, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
+import { useMemo } from 'react'
 import { headerAgentProfile } from '../../mock/agent'
+import { useCallManagementStore } from '../../store'
 import type { AgentStatus } from '../../types'
 
 export type AgentPresence = 'away' | 'busy' | 'offline' | 'ready'
@@ -31,19 +32,29 @@ export function AgentProfileArea({
   onStatusChange,
 }: AgentProfileAreaProps) {
   const isSignedIn = status !== 'Unsigned'
+  const busyReasons = useCallManagementStore((state) => state.busyReasons)
+  const enabledBusyReasons = useMemo(
+    () =>
+      busyReasons
+        .filter((reason) => reason.status === 'Active')
+        .sort((left, right) => {
+          if (left.isDefault !== right.isDefault) {
+            return left.isDefault ? -1 : 1
+          }
+
+          return left.busyReasonId.localeCompare(right.busyReasonId)
+        }),
+    [busyReasons],
+  )
+  const auxItems: MenuProps['items'] = enabledBusyReasons.map((reason) => ({
+    key: `AUX - ${reason.busyReasonName}`,
+    icon: <CoffeeOutlined />,
+    label: `AUX - ${reason.busyReasonName}`,
+  }))
 
   const actionItems: MenuProps['items'] = isSignedIn
     ? [
-        {
-          key: 'AUX - Ibadah',
-          icon: <BankOutlined />,
-          label: 'AUX - Ibadah',
-        },
-        {
-          key: 'AUX - Makan',
-          icon: <CoffeeOutlined />,
-          label: 'AUX - Makan',
-        },
+        ...auxItems,
         {
           key: 'divider-sign-out',
           type: 'divider',
@@ -73,8 +84,8 @@ export function AgentProfileArea({
       return
     }
 
-    if (key === 'AUX - Ibadah' || key === 'AUX - Makan') {
-      onStatusChange(key)
+    if (String(key).startsWith('AUX - ')) {
+      onStatusChange(key as AgentStatus)
     }
   }
 

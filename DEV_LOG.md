@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-04 16:48 +08:00
+最后更新：2026-06-05 11:53 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,531 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-05 11:53 +08:00 - Call Management 页面英文化并收敛 Busy Reason 操作
+
+修改页面或文件：
+
+- `src/pages/call-management/GlobalControlConfigurationPage.tsx`
+- `src/pages/call-management/BusyReasonManagementPage.tsx`
+- `src/mock/busyReasons.ts`
+- `src/layouts/BasicLayout.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-05-1153.md`
+- `.codex-backup/current-todo-2026-06-05-1153.md`
+- `.codex-backup/page-state-2026-06-05-1153.md`
+
+修改原因：
+
+- 用户要求去除 Busy Reason 维护页新增和删除等非编辑入口，仅支持编辑。
+- 用户要求列表再预设 7 条备用数据，可用扩展 1、扩展 2 等表示，且全部禁用。
+- 用户要求 `Global Control Configuration` 和 `Busy Reason Management` 两个页面都使用英文。
+
+修改结果：
+
+- 左侧 `Call Management` 子菜单改为 `Global Control Configuration`、`Busy Reason Management` 和 `Text Channel Settings`。
+- `GlobalControlConfigurationPage` 的标题、分区、字段、单位、按钮、校验和保存提示改为英文。
+- `BusyReasonManagementPage` 重写为英文编辑页，移除 Add/View/Delete 操作；列表 Actions 只保留 Edit。
+- Busy Reason 编辑弹框中 ID 只读，只允许维护 Busy Reason、Default、Status、Remark；保存仍更新 Updated Date / Updated By。
+- `defaultBusyReasons` 新增 `BR004` 至 `BR010`，名称为 `Extension 1` 至 `Extension 7`，全部为 `Disabled` 且非默认。
+- `callManagementStore` 的默认唯一逻辑和右上角 AUX 只显示启用原因的逻辑不变。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser 打开 `/call-management/busy-reasons`，验证英文标题、Keyword / Default / Status 查询、`Extension 1` 与 `Extension 7` 显示，Add/View/Delete 按钮数量为 0，Edit 按钮数量为 10。
+- Browser 打开 `/call-management/global-control-configuration`，验证英文标题、Answer Mode、Auto Answer、Max Text Media Services 等文案正常显示。
+
+回滚说明：
+
+- 如需恢复新增/查看/删除能力，可恢复 `BusyReasonManagementPage` 的 Add/View/Delete modal 逻辑和 `deleteBusyReason` 调用，并按业务决定是否保留 `Extension 1-7` 备用数据。
+- 如需恢复中文 UI，可把 `GlobalControlConfigurationPage`、`BusyReasonManagementPage` 和 `BasicLayout` 菜单文案恢复为 2026-06-05 11:30 前的中文口径。
+
+当前风险点：
+
+- 当前仍是前端 demo store，刷新页面会恢复 mock；备用 `Extension 1-7` 禁用状态不会持久化到后端。
+- `callManagementStore` 仍保留 `deleteBusyReason` 能力供旧代码或未来需求复用，但当前页面已不暴露删除入口。
+
+### 2026-06-05 11:30 +08:00 - 新增 Call Management 示忙原因维护
+
+修改页面或文件：
+
+- `src/types/agent.ts`
+- `src/types/busyReason.ts`
+- `src/types/index.ts`
+- `src/mock/busyReasons.ts`
+- `src/store/callManagementStore.ts`
+- `src/store/index.ts`
+- `src/pages/call-management/BusyReasonManagementPage.tsx`
+- `src/pages/call-management/index.ts`
+- `src/layouts/components/AgentProfileArea.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/routes.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-05-1130.md`
+- `.codex-backup/current-todo-2026-06-05-1130.md`
+- `.codex-backup/page-state-2026-06-05-1130.md`
+
+修改原因：
+
+- 用户要求在 `Call Management` 中增加 `示忙原因维护` 菜单，维护 ID、示忙原因、是否默认、状态、备注、更新时间、更新人。
+- 用户要求查询条件包含关键词（ID / 示忙原因 / 备注）、是否默认、状态。
+- 用户说明“是否默认”是示忙原因的系统默认值且只能唯一；状态为启用/禁用，只有启用原因才在话务条右上角 AUX 中显示。
+
+修改结果：
+
+- 新增 `BusyReason` 类型、默认 mock 和 `callManagementStore`。
+- 新增 `/call-management/busy-reasons` 页面和左侧 `Call Management > 示忙原因维护` 菜单。
+- 维护页支持查询、Add/View/Edit/Delete，本地保存更新时间和更新人。
+- 保存某条记录为默认时，store 自动取消其它记录默认值，保证默认唯一。
+- `AgentStatus` 改为支持动态 `AUX - ${string}`。
+- `AgentProfileArea` 的 AUX 菜单改为读取 `callManagementStore.busyReasons` 中启用的原因；禁用原因不显示。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser 打开 `http://127.0.0.1:5184/call-management/busy-reasons`，验证页面标题、查询条件、表格列和 Ibadah / Makan / Training mock 正常显示。
+- Browser 验证未签入时状态菜单只显示 `Sign In`；签入后 AUX 菜单显示启用的 `AUX - Ibadah`、`AUX - Makan`，不显示禁用的 `AUX - Training`。
+- Browser 验证编辑 `BR003 Training` 为启用后，表格状态更新为启用。
+
+回滚说明：
+
+- 如需回滚，删除 `BusyReasonManagementPage`、`busyReason` 类型、`busyReasons` mock、`callManagementStore`，恢复 `AgentStatus` 为固定 AUX union，并把 `AgentProfileArea` 的 AUX 菜单恢复为写死的 Ibadah / Makan。
+
+当前风险点：
+
+- 当前为前端 demo store，刷新页面会恢复默认 mock；尚未接后端持久化。
+- 浏览器已验证禁用原因不出现在 AUX 菜单，启用 Training 后表格状态可更新；由于浏览器顶部菜单点击在弹层关闭后偶发不稳定，建议后续人工再快速复查“启用 Training 后 AUX 菜单即时出现”。
+
+### 2026-06-05 10:47 +08:00 - Phone 异常工作时间方案新增并支持预览
+
+修改页面或文件：
+
+- `src/mock/routingConfiguration.ts`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-05-1047.md`
+- `.codex-backup/current-todo-2026-06-05-1047.md`
+- `.codex-backup/page-state-2026-06-05-1047.md`
+
+修改原因：
+
+- 用户要求新增时间方案 `连续3次输入有误-中文`，并在渠道管理中 Phone 渠道的 `Business Config > Exception Working Time Plan` 默认选中。
+- 用户指出 Phone Business Config 的异常工作时间方案下拉也有两个 24x7，需要去重；非默认 24x7 时需要提供预览按钮。
+
+修改结果：
+
+- 新增 Working Time Plan mock：`WTP_3_WRONG_INPUT_ZH / 连续3次输入有误-中文`。
+- Phone 渠道 VOICE Business Config 默认 `exceptionWorkTimePlanCode` 改为 `WTP_3_WRONG_INPUT_ZH`。
+- `Exception Working Time Plan` 直接使用 `useRoutingLookups().workTimeOptions`，不再手动 prepend `Default 24x7`，修复重复默认项。
+- Phone Business Config 中非默认工作时间方案显示 `Preview`；选择 `Default 24x7` 后不显示 Preview。
+- `Preview` 复用只读 `View Working Time Plan` 弹框展示方案详情。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser 打开 `http://127.0.0.1:5184/routing-config/channels`，验证 `Business config 101` 默认显示 `连续3次输入有误-中文` 和 `Preview`。
+- Browser 验证下拉真实选项为 `Default 24x7`、`Bank Working Hours`、`连续3次输入有误-中文`，其中 `Default 24x7` 只有一个。
+- Browser 验证点击 `Preview` 打开 `View Working Time Plan`，详情包含新方案名称、Basic Info、Work Schedule 和优先级提示。
+- Browser 验证选择 `Default 24x7` 后 `Preview` 消失。
+
+回滚说明：
+
+- 如需回滚，删除 `WTP_3_WRONG_INPUT_ZH` mock，将 Phone VOICE `exceptionWorkTimePlanCode` 恢复为原方案或空值，并移除 `renderExceptionWorkTimePlanField` 的 Preview 逻辑。
+
+当前风险点：
+
+- 新方案的具体工作时段为 demo mock 值，当前设为工作日 08:00-20:00、周末 09:00-15:00；如果业务确认该异常场景需要 24x7 或其它时段，需要调整该 Working Time Plan。
+
+### 2026-06-05 10:33 +08:00 - Skill Queues 工作时间方案去重与预览
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-05-1033.md`
+- `.codex-backup/current-todo-2026-06-05-1033.md`
+- `.codex-backup/page-state-2026-06-05-1033.md`
+
+修改原因：
+
+- 用户发现 `Skill Queues` 弹框中的 `Work Time Plan` 下拉出现两个 `Default 24x7`，并要求在选择非默认工作时间方案时提供只读预览按钮。
+
+修改结果：
+
+- `SkillQueuesPage` 删除本地重复构造的 `Default 24x7` 选项，Work Time Plan 下拉直接使用 `useRoutingLookups().workTimeOptions`。
+- `Default 24x7` 空值不显示 `Preview`；真实 Working Time Plan code 显示 `Preview`。
+- 新增 `View Working Time Plan` 只读预览弹框，展示 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan 和优先级提示。
+- Add/Edit/View 三种 Skill Queue 弹框模式都复用同一套 Work Time Plan 字段渲染规则；View 模式显示只读值和 Preview 按钮。
+- 新增本页 scoped 样式，保证 Work Time Plan 下拉和 Preview 按钮同行、按钮不挤压字段内容。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser 打开 `http://127.0.0.1:5184/routing-config/skill-queues`，验证 Add 弹框 Work Time Plan 下拉中只有一个 `Default 24x7`，并包含 `Bank Working Hours`。
+- Browser 验证 View 已绑定 `Bank Working Hours` 的 Skill Queue 时显示 `Preview`，点击后打开 `View Working Time Plan`，其中包含 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan 和优先级提示。
+
+回滚说明：
+
+- 如需回滚，移除 `renderWorkTimePlanField`、`WorkingTimePlanPreviewContent`、`previewWorkingTimePlan` state 和本次新增的 Skill Queue / Working Time preview 样式，恢复原 `renderSelectField('workTimePlanCode', 'Work Time Plan', workTimeOptions)` 即可。
+
+当前风险点：
+
+- `Preview` 只是前端只读查看，不会编辑 Working Time Plan；如果后续需要从预览跳转编辑，应另行设计入口。
+- 当前仅修复 Skill Queues 的重复默认项；其它页面如复用时再次手动 prepend `Default 24x7`，需要按页面场景单独检查。
+
+### 2026-06-05 10:18 +08:00 - Phone Business Config 增加异常工作时间方案
+
+修改页面或文件：
+
+- `src/types/routingConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-05-1018.md`
+- `.codex-backup/current-todo-2026-06-05-1018.md`
+- `.codex-backup/page-state-2026-06-05-1018.md`
+
+修改原因：
+
+- 用户要求在渠道管理中，为电话渠道的 `Business Config` 增加“异常情况工作时间方案”字段，通过下拉选择一个时间方案。
+
+修改结果：
+
+- `ChannelMediaBusinessConfig` 新增 `exceptionWorkTimePlanCode` 字段，用于保存异常情况工作时间方案 code。
+- Phone 渠道 mock 的 VOICE Business Config 默认选中 `WTP_BANK_HOURS`，页面显示为 `Bank Working Hours`。
+- `Channels > Business Config` 的 `Access Configuration` 对 `PHONE + VOICE` 显示 `Exception Working Time Plan` 下拉，选项复用 Working Time Plans，并包含 `Default 24x7` 空值选项。
+- Haloapp、Webchat、WhatsApp 等非 Phone 渠道不显示该字段。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning 和插件耗时提示。
+- Browser 打开 `http://127.0.0.1:5184/routing-config/channels`，验证 Phone 行 `Business config 101` 弹框显示 `Exception Working Time Plan` 和 `Bank Working Hours`。
+- Browser 验证 Haloapp 行 `Business config 201` 不显示 `Exception Working Time Plan`。
+
+回滚说明：
+
+- 如需回滚，移除 `ChannelMediaBusinessConfig.exceptionWorkTimePlanCode`、Phone mock 默认值和 `renderBusinessMediaForm` 中 `PHONE + VOICE` 的下拉渲染即可。
+
+当前风险点：
+
+- 当前只是前端 demo 配置字段，尚未接真实异常情况判定逻辑；后续需要定义何种异常场景读取该工作时间方案。
+
+### 2026-06-05 01:34 +08:00 - 优化 Skill Queues 排队配置弹框
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigCrudPage.tsx`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-05-0134.md`
+- `.codex-backup/current-todo-2026-06-05-0134.md`
+- `.codex-backup/page-state-2026-06-05-0134.md`
+
+修改原因：
+
+- 用户要求优化 `Skill Queues` 菜单中的新增/编辑弹框，把排队相关配置单独放在下方。
+- 用户要求排队提示语参考 `Channels > Business Config`，支持动态参数引用插入，并使用相近样式。
+
+修改结果：
+
+- `RoutingConfigCrudPage` 增加可选 `renderFormContent` 和 `modalWidth`，用于局部页面自定义弹框布局；默认 CRUD fields 渲染保持不变。
+- `Skill Queues` 弹框宽度调整为 820px，内容改为 `Basic Information` 和 `Queue Configuration` 两个 section。
+- `Queue Configuration` 独立放在下方，包含 `Non-working Time Message`、`Max Queue Customers + Queue Waiting Message`、`Queue Timeout + Queue Timeout Message`。
+- 三个提示语字段在 Add/Edit 下显示字段级 `Insert Variable` 下拉，View 下不显示；变量插入复用 textarea 光标/选区记录逻辑。
+- 当前变量范围：`{workTime}`、`{estimatedWaitMinutes}`、`{customerName}`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser 打开 `http://127.0.0.1:5184/routing-config/skill-queues`，验证 Add 弹框显示 `Basic Information`、`Queue Configuration`、排队字段和 `Insert Variable`。
+- Browser 验证 `Queue Waiting Message` 可插入 `{estimatedWaitMinutes}` 到当前输入内容。
+- Browser 验证 View 弹框只读展示 `Queue Configuration` 且不显示 `Insert Variable`；Edit 弹框显示变量入口。
+- Browser 回归打开 `Routing Config > Route Elements`，确认普通 CRUD Add 弹框仍可打开并显示字段。
+
+回滚说明：
+
+- 如需回滚本页布局，可移除 `Skill Queues` 的 `renderFormContent` 自定义渲染，恢复原 `fields` 配置。
+- 如需完全回滚通用容器扩展，可移除 `RoutingConfigCrudPage` 的 `renderFormContent` / `modalWidth` props；默认 CRUD 页面当前未依赖该扩展。
+
+当前风险点：
+
+- `Queue Timeout Message` 目前只配置 `{customerName}` 作为动态变量；如果业务后续需要排队位置、技能队列名称或渠道名称，需要补充变量口径和运行时替换来源。
+
+### 2026-06-05 00:49 +08:00 - 新增 Call Management 全局控制配置
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/routes.tsx`
+- `src/pages/call-management/GlobalControlConfigurationPage.tsx`
+- `src/pages/call-management/index.ts`
+- `src/types/globalControlConfiguration.ts`
+- `src/types/index.ts`
+- `src/mock/globalControlConfiguration.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-05-0049.md`
+- `.codex-backup/current-todo-2026-06-05-0049.md`
+- `.codex-backup/page-state-2026-06-05-0049.md`
+
+修改原因：
+
+- 用户要求在 `Call Management` 中增加 `全局控制配置` 子菜单，用于配置应答方式、应答时长、签入后状态、话后整理自动取消、久不操作自动签出/预警和文字媒体最大服务数。
+
+修改结果：
+
+- 左侧 `Call Management` 新增 `全局控制配置` 子菜单，位于 `Text Channel Settings` 上方；新增 `/call-management/global-control-configuration` 路由。
+- 新增全局控制配置页面，按应答配置、签入与话后整理、久不操作控制、文字媒体容量四个块状区域展示。
+- 默认值为自动应答、3 秒应答时长、就绪签入状态、5 秒自动取消话后整理、30 分钟久不操作自动签出、10 分钟提前预警、3 个文字媒体最大服务数。
+- 页面支持保存成功提示、恢复默认、必填与正数校验；手动应答时隐藏且不校验应答时长，提前预警时长必须小于自动签出时长。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser 打开 `http://127.0.0.1:5184/call-management/global-control-configuration`，验证页面标题和全部字段正常渲染。
+- Browser 切换 `应答方式` 为 `手动应答` 后验证 `应答时长` 隐藏；点击 `保存配置` 后验证成功提示出现。
+
+回滚说明：
+
+- 如需回滚本页，移除 `GlobalControlConfigurationPage`、对应 route、侧栏菜单项、类型/mock 文件和 `global-control-config` 样式即可，不影响 `Text Channel Settings`。
+
+当前风险点：
+
+- 当前保存仅为前端 demo 本地状态，未接后端接口、真实话务状态机、坐席签入默认状态或文字媒体容量控制；后续如要变成真实配置，需要补 store/API 合约和运行时读取逻辑。
+
+### 2026-06-04 21:50 +08:00 - Account 弹框加宽并精简 Voice/Video 业务配置
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-04-2150.md`
+- `.codex-backup/current-todo-2026-06-04-2150.md`
+- `.codex-backup/page-state-2026-06-04-2150.md`
+
+修改原因：
+
+- 用户反馈 Account Management 表格仍超出弹框，建议直接把弹框做大。
+- 用户要求 Business Config 中语音和视频媒体去掉 `Access Success Welcome Message` 字段。
+
+修改结果：
+
+- Account Management 主弹框宽度从 880px 加大到 1120px，保留表格展示。
+- Voice/Video 的 Business Config `Access Configuration` 只保留 `Max Concurrent Access` 和 `Min Scan Interval Seconds`。
+- Text 的 `Access Success Welcome Message` 保留。
+- 校验逻辑同步调整：`Access Success Welcome Message` 只对 Text 必填，Voice/Video 不再校验该字段。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- 浏览器打开 `http://127.0.0.1:5184/routing-config/channels`，使用 DOM 点击验证 Instagram Account Management 表格可打开。
+- 浏览器打开 Haloapp Business Config，验证 Voice 和 Video tab 均不显示 `Access Success Welcome Message`，仍显示并发数和最小扫描间隔。
+
+回滚说明：
+
+- 如需回滚 Account Management 弹框尺寸，将 accounts modal width 从 1120 改回 880。
+- 如需恢复 Voice/Video 欢迎语，将 `accessSuccessWelcomeMessage` 渲染和校验从 Text-only 改回三种媒体通用。
+
+当前风险点：
+
+- 仍建议用户在自己的实际演示分辨率下确认 1120px 弹框是否合适；如果屏幕宽度较小，可再改成响应式 `min(1120px, calc(100vw - 48px))` 方案。
+
+### 2026-06-04 21:39 +08:00 - Account Management 恢复表格展示
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-04-2139.md`
+- `.codex-backup/current-todo-2026-06-04-2139.md`
+- `.codex-backup/page-state-2026-06-04-2139.md`
+
+修改原因：
+
+- 用户反馈 Account Management 卡片版“太难看”，希望恢复之前的表格展示。
+
+修改结果：
+
+- Account Management 账号列表恢复为表格，列为 Account、Account Name、Credential / Secret Ref、Purpose、Status、Actions。
+- 移除卡片列表渲染和 `routing-config-channel-account-card*` 样式。
+- 表格放入 `routing-config-channel-account-table` 容器，保留弹框内横向滚动能力，避免回到最早的弹框溢出问题。
+- Account Management 主弹框宽度恢复为 880px；Add/Edit Account 二级弹框继续保持单列，避免长字段挤压。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- 浏览器打开 `http://127.0.0.1:5184/routing-config/channels`，使用 Instagram 两账号数据验证 Account Management 已恢复表格展示，DOM 中已无账号卡片结构。
+- `git diff --check` 仅提示 Windows 换行转换 warning。
+
+回滚说明：
+
+- 如需回到卡片版，可恢复 2026-06-04 21:32 版本中的 `routing-config-channel-account-card` 渲染和样式；当前以表格版为准。
+
+当前风险点：
+
+- 仍建议用户在自己的目标演示分辨率下人工复查账号表格横向滚动与操作列显示是否符合预期。
+
+### 2026-06-04 21:32 +08:00 - Account Management 弹框溢出修复
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-04-2132.md`
+- `.codex-backup/current-todo-2026-06-04-2132.md`
+- `.codex-backup/page-state-2026-06-04-2132.md`
+
+修改原因：
+
+- 用户反馈 `Channels > Account Management` 中内容仍然超出弹框范围。
+
+修改结果：
+
+- Account Management 主弹框中的账号列表从横向表格改为纵向账号卡片，避免多列叠加造成横向溢出。
+- 账号卡片中 Account、Account Name、Credential / Secret Ref、Purpose、Status 和 Edit/Delete 操作分层展示，长文本自动换行。
+- Account Management 内容区增加内部纵向滚动，账号数量变多时不撑高整个 modal。
+- Add/Edit Account 二级弹框表单改为单列，避免长字段在两列布局里挤压。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- 浏览器打开 `http://127.0.0.1:5184/routing-config/channels`，使用 Instagram 两账号数据验证 Account Management 弹框和 Add Account 二级弹框可正常打开，账号列表已不再渲染表格 header。
+- `git diff --check` 仅提示 Windows 换行转换 warning。
+
+回滚说明：
+
+- 如需回滚本次修复，恢复 Account Management 使用 `BaseTable` 和原 `accountColumns`，并移除 `routing-config-channel-account-*` 卡片样式与账号表单单列样式。
+
+当前风险点：
+
+- 仍建议用户在自己的目标演示分辨率下人工复查一次账号管理弹框视觉；当前自动浏览器截图存在缩放拼接现象，但 DOM 和本地页面交互已验证。
+
+### 2026-06-04 21:19 +08:00 - Channels 列表与弹框细节优化
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-04-2119.md`
+- `.codex-backup/current-todo-2026-06-04-2119.md`
+- `.codex-backup/page-state-2026-06-04-2119.md`
+
+修改原因：
+
+- 用户反馈 Channels 列表中的 `Access Parameters` 列价值不高，建议改为账号数量。
+- 用户希望 Edit 弹框将基本信息和接入参数分块展示。
+- 用户反馈 Business Config 层级过多，并指出话术变量入口被移除。
+- 用户反馈 Account Management 弹框内容超出弹框范围。
+- 用户建议动作顺序改为 Edit、Accounts、Business Config。
+
+修改结果：
+
+- Channels 列表将 `Access Parameters` 改为 `Account Count`。
+- 行内动作顺序调整为 `Edit`、`Accounts`、`Business Config`。
+- Edit Channel 弹框拆为 `Basic Information` 和 `Access Parameters` 两个块状 section。
+- Business Config 去掉外层 `Customer Service Configuration`，直接展示 `Access Configuration`。
+- Business Config 话术字段恢复字段级 `Insert Variable` 下拉，按字段支持 `{customerName}`、`{channelName}`、`{agentName}`、`{timeoutMinutes}`、`{reminderMinutes}` 等变量，并插入到当前光标/选区。
+- Account Management 表格列宽收敛、取消固定操作列、限制容器宽度，避免超出弹框。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+
+回滚说明：
+
+- 如需回滚本轮 UI 优化，恢复 Channels 列表 `Access Parameters` 列、原动作顺序、Edit 弹框连续布局、Business Config 外层 Customer Service section，并移除 Business Config 话术变量插入逻辑和账号表格宽度调整。
+
+当前风险点：
+
+- 仍需真实浏览器人工复查 Business Config 中间光标变量插入和 Account Management 弹框在目标演示分辨率下是否完全不溢出。
+
+### 2026-06-04 20:45 +08:00 - Channel Types 与 Channels 三层模型重构
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/routes.tsx`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `src/types/routingConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `src/store/routingConfigStore.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-04-2045.md`
+- `.codex-backup/current-todo-2026-06-04-2045.md`
+- `.codex-backup/page-state-2026-06-04-2045.md`
+
+修改原因：
+
+- 用户和领导评审后重新定义渠道模型：渠道类型只作为工程预置字段模板，渠道作为具体接入配置，账号作为某个渠道下的一个或多个官方服务账号。
+- 用户确认页面全部使用英文；`Access Accounts` 独立菜单删除，`Media Service Rule Plans` 入口删除，排队配置移动到 `Skill Queues`。
+
+修改结果：
+
+- 新增 `Channel Types` 菜单和 `/routing-config/channel-types` 路由，按许可字典只读展示 13 个渠道类型、支持媒体和接入参数模板；Phone 无接入参数。
+- `Channels` 删除业务用户 Add/Delete Channel，新增 Channel Type 列，行内动作改为 Edit、Business Config、Accounts。
+- Channel Edit 允许修改 Media Type、Status 和具体技术接入参数；Channel ID、Channel Name、Channel Type 只读。
+- Channel Business Config 按媒体类型 tab 联动：Text 显示客户服务接入配置、人工开场/结束、客户未回复、坐席未回复、坐席服务配置；Voice/Video 只显示客户服务接入配置。
+- Account Management 支持同一 Channel 下多账号，字段为 Account、Account Name、Credential / Secret Ref、Purpose、Status；mock 中 Instagram 展示一渠道多账号，Email 展示同类型多渠道不同邮件服务器配置。
+- `/routing-config/access-accounts` 和 `/routing-config/media-service-rule-plans` 直接访问重定向到 `/routing-config/channels`，左侧菜单不再显示这两个入口。
+- `Skill Queues` 新增排队配置字段：Non-working Time Message、Max Queue Customers、Queue Waiting Message、Queue Timeout、Queue Timeout Message。
+- `SkillRoutingRulesPage` 的 Access Account 路由要素来源改为 `channelAccounts`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- 本地 dev server `http://127.0.0.1:5184` 已启动，`/routing-config/channel-types`、`/routing-config/channels`、`/routing-config/skill-queues` 返回 200。
+- 当前工具环境没有 Playwright 或可用浏览器自动化工具，无法自动执行真实 React Router 页面点击；旧 URL 重定向已通过源码路由和 build 验证，仍需真实浏览器人工 smoke check。
+
+回滚说明：
+
+- 如需回滚本轮渠道模型重构，恢复 `Channel` / `AccessAccount` / `SkillQueue` 旧类型与 mock，恢复 `Channels` 旧 Add/Delete 和 Rule Plan 绑定 UI，恢复 `AccessAccountsPage` 路由与菜单，恢复 `Media Service Rule Plans` 菜单入口，并把 `Skill Queues` 排队话术字段移回媒体服务规则方案。
+
+当前风险点：
+
+- 本轮仍是前端 demo mock 改造，未接真实后端字段 schema。
+- 旧 `MediaServiceRulePlansPage` 源码仍保留作历史参考，但菜单和路由已不可达；后续如彻底废弃可单独删除旧源码。
+- 浏览器自动化受工具环境限制，需人工复查 Channel Types、Channels 三个弹框、Skill Queues 和旧 URL 重定向视觉。
 
 ### 2026-06-04 16:48 +08:00 - Media Service Rule Plans 支持语音视频简化接入配置
 

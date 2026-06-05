@@ -1,0 +1,430 @@
+import { EditOutlined } from '@ant-design/icons'
+import { Alert, Input, Select, Switch } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
+import { useMemo, useState } from 'react'
+import {
+  BaseButton,
+  BaseCard,
+  BaseModal,
+  BaseTable,
+  PageContainer,
+  StatusBadge,
+} from '../../components'
+import { useCallManagementStore } from '../../store'
+import type { BusyReason, BusyReasonStatus } from '../../types'
+
+type BusyReasonModalMode = 'edit' | null
+
+interface BusyReasonFilters {
+  isDefault: '' | 'false' | 'true'
+  keyword: string
+  status: '' | BusyReasonStatus
+}
+
+const defaultFilters: BusyReasonFilters = {
+  isDefault: '',
+  keyword: '',
+  status: '',
+}
+
+const statusOptions: Array<{ label: string; value: '' | BusyReasonStatus }> = [
+  { label: 'All', value: '' },
+  { label: 'Enabled', value: 'Active' },
+  { label: 'Disabled', value: 'Disabled' },
+]
+
+const defaultOptions: Array<{ label: string; value: '' | 'false' | 'true' }> = [
+  { label: 'All', value: '' },
+  { label: 'Yes', value: 'true' },
+  { label: 'No', value: 'false' },
+]
+
+function formatSavedTime(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hour = String(date.getHours()).padStart(2, '0')
+  const minute = String(date.getMinutes()).padStart(2, '0')
+
+  return `${year}-${month}-${day} ${hour}:${minute}`
+}
+
+function renderStatusBadge(status: BusyReasonStatus) {
+  return (
+    <StatusBadge
+      dot
+      label={status === 'Active' ? 'Enabled' : 'Disabled'}
+      size="small"
+      status={status === 'Active' ? 'success' : 'disabled'}
+    />
+  )
+}
+
+function renderDefaultBadge(isDefault: boolean) {
+  return (
+    <StatusBadge
+      dot
+      label={isDefault ? 'Yes' : 'No'}
+      size="small"
+      status={isDefault ? 'selected' : 'neutral'}
+    />
+  )
+}
+
+export function BusyReasonManagementPage() {
+  const busyReasons = useCallManagementStore((state) => state.busyReasons)
+  const upsertBusyReason = useCallManagementStore(
+    (state) => state.upsertBusyReason,
+  )
+  const [appliedFilters, setAppliedFilters] =
+    useState<BusyReasonFilters>(defaultFilters)
+  const [filterDraft, setFilterDraft] =
+    useState<BusyReasonFilters>(defaultFilters)
+  const [draft, setDraft] = useState<BusyReason | null>(null)
+  const [modalMode, setModalMode] = useState<BusyReasonModalMode>(null)
+  const [notice, setNotice] = useState('')
+  const [submitAttempted, setSubmitAttempted] = useState(false)
+
+  const filteredReasons = useMemo(
+    () =>
+      busyReasons.filter((reason) => {
+        const keyword = appliedFilters.keyword.trim().toLowerCase()
+        const keywordMatched = keyword
+          ? [
+              reason.busyReasonId,
+              reason.busyReasonName,
+              reason.remark,
+            ].some((value) => value.toLowerCase().includes(keyword))
+          : true
+        const defaultMatched = appliedFilters.isDefault
+          ? String(reason.isDefault) === appliedFilters.isDefault
+          : true
+        const statusMatched = appliedFilters.status
+          ? reason.status === appliedFilters.status
+          : true
+
+        return keywordMatched && defaultMatched && statusMatched
+      }),
+    [appliedFilters, busyReasons],
+  )
+
+  const validationErrors = useMemo(() => {
+    if (!draft) {
+      return []
+    }
+
+    const errors: string[] = []
+    const trimmedName = draft.busyReasonName.trim()
+
+    if (!trimmedName) {
+      errors.push('Busy Reason is required.')
+    }
+
+    return errors
+  }, [draft])
+
+  const updateDraft = <Key extends keyof BusyReason>(
+    key: Key,
+    value: BusyReason[Key],
+  ) => {
+    setDraft((currentDraft) =>
+      currentDraft
+        ? {
+            ...currentDraft,
+            [key]: value,
+          }
+        : currentDraft,
+    )
+    setNotice('')
+  }
+
+  const openEditModal = (record: BusyReason) => {
+    setDraft({ ...record })
+    setModalMode('edit')
+    setSubmitAttempted(false)
+    setNotice('')
+  }
+
+  const closeModal = () => {
+    setModalMode(null)
+    setDraft(null)
+    setSubmitAttempted(false)
+  }
+
+  const handleSearch = () => {
+    setAppliedFilters({ ...filterDraft })
+  }
+
+  const handleReset = () => {
+    setFilterDraft(defaultFilters)
+    setAppliedFilters(defaultFilters)
+  }
+
+  const handleSave = () => {
+    setSubmitAttempted(true)
+
+    if (!draft || validationErrors.length > 0) {
+      return
+    }
+
+    const nextRecord: BusyReason = {
+      ...draft,
+      busyReasonName: draft.busyReasonName.trim(),
+      remark: draft.remark.trim(),
+      updatedAt: formatSavedTime(new Date()),
+      updatedBy: 'Admin',
+    }
+
+    upsertBusyReason(nextRecord)
+    setNotice(
+      nextRecord.isDefault
+        ? 'Busy reason saved and set as the unique default.'
+        : 'Busy reason saved.',
+    )
+    closeModal()
+  }
+
+  const columns: ColumnsType<BusyReason> = [
+    {
+      dataIndex: 'busyReasonId',
+      title: 'ID',
+      width: 120,
+    },
+    {
+      dataIndex: 'busyReasonName',
+      title: 'Busy Reason',
+      width: 180,
+    },
+    {
+      dataIndex: 'isDefault',
+      render: (value: boolean) => renderDefaultBadge(value),
+      title: 'Default',
+      width: 120,
+    },
+    {
+      dataIndex: 'status',
+      render: (value: BusyReasonStatus) => renderStatusBadge(value),
+      title: 'Status',
+      width: 120,
+    },
+    {
+      dataIndex: 'remark',
+      ellipsis: true,
+      title: 'Remark',
+      width: 320,
+    },
+    {
+      dataIndex: 'updatedAt',
+      title: 'Updated Date',
+      width: 160,
+    },
+    {
+      dataIndex: 'updatedBy',
+      title: 'Updated By',
+      width: 120,
+    },
+    {
+      fixed: 'right',
+      render: (_, record) => (
+        <div className="routing-config-crud__row-actions">
+          <button
+            aria-label={`Edit ${record.busyReasonId}`}
+            title="Edit"
+            type="button"
+            onClick={() => openEditModal(record)}
+          >
+            <EditOutlined />
+          </button>
+        </div>
+      ),
+      title: 'Actions',
+      width: 88,
+    },
+  ]
+
+  return (
+    <PageContainer title="Busy Reason Management">
+      <section className="routing-config-page busy-reason-config">
+        {notice && (
+          <Alert
+            showIcon
+            className="routing-config-page__notice"
+            message={notice}
+            type="success"
+          />
+        )}
+        <BaseCard compact>
+          <div className="routing-config-page__admin-toolbar">
+            <div className="routing-config-page__query-group">
+              <div className="routing-config-page__filters">
+                <label
+                  className="routing-config-page__filter"
+                  style={{ width: 280 }}
+                >
+                  <span>Keyword</span>
+                  <Input
+                    placeholder="ID / Busy Reason / Remark"
+                    value={filterDraft.keyword}
+                    onChange={(event) =>
+                      setFilterDraft((currentDraft) => ({
+                        ...currentDraft,
+                        keyword: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label
+                  className="routing-config-page__filter"
+                  style={{ width: 160 }}
+                >
+                  <span>Default</span>
+                  <Select
+                    options={defaultOptions}
+                    value={filterDraft.isDefault}
+                    onChange={(value) =>
+                      setFilterDraft((currentDraft) => ({
+                        ...currentDraft,
+                        isDefault: value,
+                      }))
+                    }
+                  />
+                </label>
+                <label
+                  className="routing-config-page__filter"
+                  style={{ width: 160 }}
+                >
+                  <span>Status</span>
+                  <Select
+                    options={statusOptions}
+                    value={filterDraft.status}
+                    onChange={(value) =>
+                      setFilterDraft((currentDraft) => ({
+                        ...currentDraft,
+                        status: value,
+                      }))
+                    }
+                  />
+                </label>
+              </div>
+              <div className="routing-config-page__admin-actions">
+                <BaseButton variant="primary" onClick={handleSearch}>
+                  Search
+                </BaseButton>
+                <BaseButton variant="secondary" onClick={handleReset}>
+                  Reset
+                </BaseButton>
+              </div>
+            </div>
+          </div>
+          <BaseTable<BusyReason>
+            columns={columns}
+            dataSource={filteredReasons}
+            pagination={{
+              defaultPageSize: 20,
+              pageSizeOptions: [10, 20, 50, 100],
+              showTotal: (total, range) =>
+                `${range[0]}-${range[1]} / ${total} records`,
+            }}
+            rowKey="busyReasonId"
+            scroll={{ x: 1130 }}
+            size="small"
+          />
+        </BaseCard>
+      </section>
+      <BaseModal
+        className="routing-config-crud-modal"
+        destroyOnClose
+        kind="detail"
+        open={modalMode === 'edit' && Boolean(draft)}
+        title="Edit Busy Reason"
+        width={720}
+        onCancel={closeModal}
+      >
+        <div className="routing-config-crud-modal__sections">
+          {submitAttempted && validationErrors.length > 0 && (
+            <Alert
+              showIcon
+              className="routing-config-crud-modal__validation"
+              description={
+                <ul>
+                  {validationErrors.map((error) => (
+                    <li key={error}>{error}</li>
+                  ))}
+                </ul>
+              }
+              message="Please fix the form."
+              type="warning"
+            />
+          )}
+          {draft && (
+            <div className="busy-reason-config__modal-grid">
+              <label className="global-control-config__field">
+                <span>ID</span>
+                <em>{draft.busyReasonId}</em>
+              </label>
+              <label className="global-control-config__field">
+                <span>
+                  Busy Reason <strong>*</strong>
+                </span>
+                <Input
+                  value={draft.busyReasonName}
+                  onChange={(event) =>
+                    updateDraft('busyReasonName', event.target.value)
+                  }
+                />
+              </label>
+              <label className="global-control-config__field">
+                <span>Default</span>
+                <span className="busy-reason-config__switch-row">
+                  <Switch
+                    checked={draft.isDefault}
+                    size="small"
+                    onChange={(checked) => updateDraft('isDefault', checked)}
+                  />
+                  <em>{draft.isDefault ? 'Yes' : 'No'}</em>
+                </span>
+              </label>
+              <label className="global-control-config__field">
+                <span>Status</span>
+                <span className="busy-reason-config__switch-row">
+                  <Switch
+                    checked={draft.status === 'Active'}
+                    size="small"
+                    onChange={(checked) =>
+                      updateDraft('status', checked ? 'Active' : 'Disabled')
+                    }
+                  />
+                  <em>{draft.status === 'Active' ? 'Enabled' : 'Disabled'}</em>
+                </span>
+              </label>
+              <label className="global-control-config__field busy-reason-config__field--full">
+                <span>Remark</span>
+                <Input.TextArea
+                  rows={3}
+                  value={draft.remark}
+                  onChange={(event) => updateDraft('remark', event.target.value)}
+                />
+              </label>
+              <label className="global-control-config__field">
+                <span>Updated Date</span>
+                <em>{draft.updatedAt}</em>
+              </label>
+              <label className="global-control-config__field">
+                <span>Updated By</span>
+                <em>{draft.updatedBy}</em>
+              </label>
+            </div>
+          )}
+        </div>
+        <div className="routing-config-crud-modal__footer">
+          <BaseButton variant="secondary" onClick={closeModal}>
+            Cancel
+          </BaseButton>
+          <BaseButton variant="primary" onClick={handleSave}>
+            Save
+          </BaseButton>
+        </div>
+      </BaseModal>
+    </PageContainer>
+  )
+}

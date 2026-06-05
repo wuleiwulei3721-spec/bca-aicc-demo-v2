@@ -71,12 +71,10 @@ const routingConfigRoutesByMenuKey: Record<string, string> = {
   'routing-route-elements': '/routing-config/route-elements',
   'routing-vdn': '/routing-config/vdn',
   'routing-sites': '/routing-config/sites',
+  'routing-channel-types': '/routing-config/channel-types',
   'routing-channels': '/routing-config/channels',
-  'routing-media-service-rule-plans':
-    '/routing-config/media-service-rule-plans',
   'routing-business-types': '/routing-config/business-types',
   'routing-skill-queues': '/routing-config/skill-queues',
-  'routing-access-accounts': '/routing-config/access-accounts',
   'routing-site-access-volume': '/routing-config/site-access-volume',
   'routing-skill-routing-rules': '/routing-config/skill-routing-rules',
   'routing-working-time-plans': '/routing-config/working-time-plans',
@@ -145,6 +143,14 @@ const sideMenuItems: SideMenuItem[] = [
     label: 'Call Management',
     children: [
       {
+        key: 'call-global-control-configuration',
+        label: 'Global Control Configuration',
+      },
+      {
+        key: 'call-busy-reasons',
+        label: 'Busy Reason Management',
+      },
+      {
         key: 'call-text-channel-settings',
         label: 'Text Channel Settings',
       },
@@ -168,12 +174,12 @@ const sideMenuItems: SideMenuItem[] = [
         label: 'Access Sites',
       },
       {
-        key: 'routing-channels',
-        label: 'Channels',
+        key: 'routing-channel-types',
+        label: 'Channel Types',
       },
       {
-        key: 'routing-media-service-rule-plans',
-        label: 'Media Service Rule Plans',
+        key: 'routing-channels',
+        label: 'Channels',
       },
       {
         key: 'routing-business-types',
@@ -182,10 +188,6 @@ const sideMenuItems: SideMenuItem[] = [
       {
         key: 'routing-skill-queues',
         label: 'Skill Queues',
-      },
-      {
-        key: 'routing-access-accounts',
-        label: 'Access Accounts',
       },
       {
         key: 'routing-site-access-volume',
@@ -326,9 +328,13 @@ export function BasicLayout() {
   const routeSelectedMenuKey =
     location.pathname === '/call-management/routing-configuration'
       ? 'routing-route-elements'
-      : location.pathname === '/call-management/text-channel-settings'
-        ? 'call-text-channel-settings'
-        : routingConfigMenuKeyByRoute[location.pathname] ?? null
+      : location.pathname === '/call-management/global-control-configuration'
+        ? 'call-global-control-configuration'
+        : location.pathname === '/call-management/busy-reasons'
+          ? 'call-busy-reasons'
+          : location.pathname === '/call-management/text-channel-settings'
+            ? 'call-text-channel-settings'
+            : routingConfigMenuKeyByRoute[location.pathname] ?? null
   const activeMenuKey = routeSelectedMenuKey ?? selectedMenuKey
 
   const showCallHandoffNotice = useCallback(
@@ -762,6 +768,14 @@ export function BasicLayout() {
         navigate('/call-management/text-channel-settings')
       }
 
+      if (childKey === 'call-global-control-configuration') {
+        navigate('/call-management/global-control-configuration')
+      }
+
+      if (childKey === 'call-busy-reasons') {
+        navigate('/call-management/busy-reasons')
+      }
+
       const routingConfigPath = routingConfigRoutesByMenuKey[childKey]
 
       if (routingConfigPath) {
@@ -989,7 +1003,7 @@ export function BasicLayout() {
               const hasChildren = Boolean(item.children?.length)
               const isOpen =
                 openMenuKeys.includes(item.key) ||
-                (routeSelectedMenuKey === 'call-text-channel-settings' &&
+                (Boolean(routeSelectedMenuKey?.startsWith('call-')) &&
                   item.key === 'call-management') ||
                 (Boolean(routeSelectedMenuKey?.startsWith('routing-')) &&
                   item.key === 'routing-config') ||

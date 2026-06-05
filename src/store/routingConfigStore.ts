@@ -1,12 +1,13 @@
 import { create } from 'zustand'
 import {
-  accessAccounts,
   accessEntries,
   accessSites,
   businessTypes,
+  channelAccounts,
   channelMediaRuleBindings,
   channelMediaSettings,
   channels,
+  channelTypes,
   languageTypes,
   mediaServiceRulePlans,
   mediaTypes,
@@ -18,13 +19,14 @@ import {
   workingTimePlans,
 } from '../mock/routingConfiguration'
 import type {
-  AccessAccount,
   AccessEntry,
   AccessSite,
   BusinessType,
   Channel,
+  ChannelAccount,
   ChannelMedia,
   ChannelMediaRuleBinding,
+  ChannelType,
   LanguageType,
   MediaServiceRulePlan,
   MediaType,
@@ -37,13 +39,14 @@ import type {
 } from '../types'
 
 export interface RoutingConfigCollections {
-  accessAccounts: AccessAccount[]
   accessEntries: AccessEntry[]
   accessSites: AccessSite[]
   businessTypes: BusinessType[]
+  channelAccounts: ChannelAccount[]
   channelMediaRuleBindings: ChannelMediaRuleBinding[]
   channelMediaSettings: ChannelMedia[]
   channels: Channel[]
+  channelTypes: ChannelType[]
   languageTypes: LanguageType[]
   mediaServiceRulePlans: MediaServiceRulePlan[]
   mediaTypes: MediaType[]
@@ -77,17 +80,31 @@ interface RoutingConfigStore extends RoutingConfigCollections {
 
 function cloneInitialState(): RoutingConfigCollections {
   return {
-    accessAccounts: accessAccounts.map((item) => ({ ...item })),
     accessEntries: accessEntries.map((item) => ({ ...item })),
     accessSites: accessSites.map((item) => ({ ...item })),
     businessTypes: businessTypes.map((item) => ({ ...item })),
+    channelAccounts: channelAccounts.map((item) => ({ ...item })),
     channelMediaRuleBindings: channelMediaRuleBindings.map((item) => ({
       ...item,
     })),
     channelMediaSettings: channelMediaSettings.map((item) => ({ ...item })),
     channels: channels.map((item) => ({
       ...item,
+      accessConfig: { ...item.accessConfig },
+      businessConfig: Object.fromEntries(
+        Object.entries(item.businessConfig).map(([mediaCode, config]) => [
+          mediaCode,
+          config ? { ...config } : config,
+        ]),
+      ),
       mediaTypes: [...item.mediaTypes],
+    })),
+    channelTypes: channelTypes.map((item) => ({
+      ...item,
+      accessParameterFields: item.accessParameterFields.map((field) => ({
+        ...field,
+      })),
+      supportedMediaTypes: [...item.supportedMediaTypes],
     })),
     languageTypes: languageTypes.map((item) => ({ ...item })),
     mediaServiceRulePlans: mediaServiceRulePlans.map((item) => ({ ...item })),

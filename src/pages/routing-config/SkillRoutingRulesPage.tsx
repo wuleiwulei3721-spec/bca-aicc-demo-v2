@@ -141,7 +141,7 @@ export function SkillRoutingRulesPage() {
   const routeFactors = useRoutingConfigStore((state) => state.routeFactors)
   const routingRules = useRoutingConfigStore((state) => state.routingRules)
   const setRoutingRules = useRoutingConfigStore((state) => state.setRoutingRules)
-  const accessAccounts = useRoutingConfigStore((state) => state.accessAccounts)
+  const channelAccounts = useRoutingConfigStore((state) => state.channelAccounts)
   const accessEntries = useRoutingConfigStore((state) => state.accessEntries)
   const accessSites = useRoutingConfigStore((state) => state.accessSites)
   const businessTypes = useRoutingConfigStore((state) => state.businessTypes)
@@ -242,7 +242,7 @@ export function SkillRoutingRulesPage() {
         label: language.languageName,
         value: language.languageCode,
       })),
-      ...accessAccounts.map((account) => ({
+      ...channelAccounts.map((account) => ({
         factorCode: '17' as const,
         label: account.accountName,
         value: account.accountCode,
@@ -254,7 +254,7 @@ export function SkillRoutingRulesPage() {
       })),
     ]
   }, [
-    accessAccounts,
+    channelAccounts,
     accessEntries,
     accessSites,
     businessTypes,

@@ -1,12 +1,13 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { BasicLayout } from './layouts'
 import {
-  AccessAccountsPage,
   AgentWorkspace,
+  BusyReasonManagementPage,
   BusinessTypesPage,
+  ChannelTypesPage,
   ChannelsPage,
   DesignSystem,
-  MediaServiceRulePlansPage,
+  GlobalControlConfigurationPage,
   RoutingConfigurationPage,
   RouteElementsPage,
   SitesPage,
@@ -36,6 +37,14 @@ export const router = createBrowserRouter([
         element: <RoutingConfigurationPage />,
       },
       {
+        path: 'call-management/global-control-configuration',
+        element: <GlobalControlConfigurationPage />,
+      },
+      {
+        path: 'call-management/busy-reasons',
+        element: <BusyReasonManagementPage />,
+      },
+      {
         path: 'call-management/text-channel-settings',
         element: <TextChannelSettingsPage />,
       },
@@ -56,12 +65,16 @@ export const router = createBrowserRouter([
         element: <SitesPage />,
       },
       {
+        path: 'routing-config/channel-types',
+        element: <ChannelTypesPage />,
+      },
+      {
         path: 'routing-config/channels',
         element: <ChannelsPage />,
       },
       {
         path: 'routing-config/media-service-rule-plans',
-        element: <MediaServiceRulePlansPage />,
+        element: <Navigate replace to="/routing-config/channels" />,
       },
       {
         path: 'routing-config/business-types',
@@ -73,7 +86,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'routing-config/access-accounts',
-        element: <AccessAccountsPage />,
+        element: <Navigate replace to="/routing-config/channels" />,
       },
       {
         path: 'routing-config/site-access-volume',
