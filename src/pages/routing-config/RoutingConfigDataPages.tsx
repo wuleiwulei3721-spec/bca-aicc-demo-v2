@@ -634,12 +634,6 @@ export function VdnPage() {
           dataIndex: 'description',
           title: 'Description',
         },
-        {
-          dataIndex: 'status',
-          title: 'Status',
-          width: 120,
-          render: renderRoutingStatus,
-        },
       ]}
       createDraft={() => ({
         description: '',
@@ -653,7 +647,7 @@ export function VdnPage() {
       draftToRecord={(draft) => ({
         description: stringValue(draft.description),
         platformVdnId: stringValue(draft.platformVdnId),
-        status: statusValue(draft.status),
+        status: 'Active',
         vdnCode: stringValue(draft.vdnCode),
         vdnName: stringValue(draft.vdnName),
       })}
@@ -661,7 +655,6 @@ export function VdnPage() {
         { key: 'vdnCode', label: 'VDN ID', readOnlyOnEdit: true, required: true, type: 'text' },
         { key: 'vdnName', label: 'VDN Name', required: true, type: 'text' },
         { key: 'platformVdnId', label: 'Platform VDN ID', required: true, type: 'text' },
-        { key: 'status', label: 'Status', switchLabels: statusSwitchLabels, type: 'statusSwitch' },
         { key: 'description', label: 'Description', fullWidth: true, rows: 3, type: 'textarea' },
       ]}
       filters={[
@@ -678,14 +671,6 @@ export function VdnPage() {
           placeholder: 'VDN ID / Name / Platform ID',
           type: 'text',
           width: 240,
-        },
-        {
-          key: 'status',
-          label: 'Status',
-          match: (record, value) => record.status === value,
-          options: statusFilterOptions,
-          type: 'select',
-          width: 200,
         },
       ]}
       getDeleteBlockReason={(record) => {
@@ -706,7 +691,7 @@ export function VdnPage() {
       idField="vdnCode"
       recordToDraft={(record) => ({ ...record })}
       searchFields={['vdnCode', 'vdnName', 'platformVdnId']}
-      tableScrollX={980}
+      tableScrollX={860}
       title="VDN"
       validateDraft={(draft, currentRecord) => [
         ...validateCode(stringValue(draft.vdnCode), 'VDN ID'),
@@ -749,7 +734,6 @@ export function SitesPage() {
         { dataIndex: 'ownerName', title: 'Owner', width: 160 },
         { dataIndex: 'ownerPhone', title: 'Owner Phone', width: 170 },
         { dataIndex: 'address', title: 'Address' },
-        { dataIndex: 'status', title: 'Status', width: 120, render: renderRoutingStatus },
       ]}
       createDraft={() => ({
         address: '',
@@ -768,7 +752,7 @@ export function SitesPage() {
         ownerPhone: stringValue(draft.ownerPhone),
         siteCode: stringValue(draft.siteCode),
         siteName: stringValue(draft.siteName),
-        status: statusValue(draft.status),
+        status: 'Active',
       })}
       entityName="Site"
       fields={[
@@ -777,7 +761,6 @@ export function SitesPage() {
         { key: 'address', label: 'Address', rows: 2, type: 'textarea' },
         { key: 'ownerName', label: 'Owner Name', type: 'text' },
         { key: 'ownerPhone', label: 'Owner Phone', type: 'text' },
-        { key: 'status', label: 'Status', switchLabels: statusSwitchLabels, type: 'statusSwitch' },
       ]}
       filters={[
         {
@@ -793,14 +776,6 @@ export function SitesPage() {
           placeholder: 'Site ID / Name',
           type: 'text',
           width: 240,
-        },
-        {
-          key: 'status',
-          label: 'Status',
-          match: (record, value) => record.status === value,
-          options: statusFilterOptions,
-          type: 'select',
-          width: 200,
         },
       ]}
       getDeleteBlockReason={(record) =>
@@ -820,7 +795,7 @@ export function SitesPage() {
       idField="siteCode"
       recordToDraft={(record) => ({ ...record })}
       searchFields={['siteCode', 'siteName', 'ownerName']}
-      tableScrollX={1020}
+      tableScrollX={900}
       title="Access Sites"
       validateDraft={(draft, currentRecord) => [
         ...validateCode(stringValue(draft.siteCode), 'Site ID'),

@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-05 11:53 +08:00
+最后更新：2026-06-05 16:24 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：客户可访问 Production 版本已发布；当前本地分支 `codex/text-channel-config-settings` 已恢复 `Call Management` / `Routing Config` 菜单与路由，用于继续开发未完成管理功能。2026-06-05 11:53 后 `Call Management > Global Control Configuration` 与 `Busy Reason Management` 页面、菜单和弹框文案统一改为英文；`Busy Reason Management` 去除 Add/View/Delete，只保留 Edit，并在 mock 中新增 `Extension 1` 至 `Extension 7` 七条禁用备用示忙原因。2026-06-05 11:30 后 `Call Management` 新增示忙原因维护能力，维护 ID、示忙原因、是否默认、状态、备注、更新时间、更新人；启用状态的示忙原因会联动显示在右上角坐席状态菜单的 AUX 选项中，禁用的不显示，默认值保持唯一。2026-06-05 10:47 后新增 Working Time Plan `连续3次输入有误-中文`，并作为 Phone 渠道 `Business Config > Exception Working Time Plan` 默认值；该字段修复重复 `Default 24x7`，非默认方案显示 `Preview` 只读详情，默认 24x7 不显示预览。2026-06-05 10:33 后 `Routing Config > Skill Queues` 的 `Work Time Plan` 下拉去除重复 `Default 24x7`，非默认工作时间方案显示 `Preview` 按钮并打开只读 `View Working Time Plan` 详情弹框。2026-06-05 10:18 后 `Routing Config > Channels > Business Config` 对 Phone 渠道增加 `Exception Working Time Plan` 下拉字段，复用 Working Time Plans 方案；非 Phone 渠道不显示该字段。2026-06-05 01:34 后 `Routing Config > Skill Queues` 的新增/编辑/查看弹框改为分区展示，排队相关字段独立放入下方 `Queue Configuration`，并为排队提示语增加字段级 `Insert Variable` 动态参数插入。2026-06-05 00:49 后 `Call Management` 新增全局控制配置能力，用于前端 demo 维护应答方式、自动应答秒数、签入后状态、ACW 自动取消、久不操作自动签出/预警和文字媒体最大服务数；该页目前只保存本地前端状态，不接真实话务状态机。本轮已把 Routing Config 渠道模型重构为 `Channel Type` 字段模板、`Channel` 具体接入配置、`Channel Account` 多账号三层结构；`Access Accounts` 与 `Media Service Rule Plans` 入口已移除并重定向到 `Channels`，排队配置移入 `Skill Queues`。
+当前目标：客户可访问 Production 已发布 `Add customer AUX busy reason modal`，`main` 继续隐藏 `Call Management` / `Routing Config` 管理菜单和直达路由；当前本地分支 `codex/routing-vdn-sites-remove-status` 从 `codex/text-channel-config-settings` 创建，用于继续调整本地 Routing Config。2026-06-05 16:24 后 `Routing Config > VDN` 与 `Routing Config > Access Sites` 去掉 UI 中的 `Status` 列、`Status` 查询条件和弹框 `Status` 字段；内部类型与 mock 仍保留 `status`，新增/编辑保存默认写入 `Active`，避免影响 Skill Queues、Site Access Volume 和 Skill Routing Rules 引用。
 
 ## 0. 使用规则
 
@@ -40,8 +40,8 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`codex/text-channel-config-settings`
-当前 HEAD：以 `git rev-parse HEAD` 为准；当前本地开发分支基于 Production 发布提交 `cf4a94e` 继续开发，并重新开放 `Call Management` 与 `Routing Config` 菜单和页面路由。客户 Production 版本位于 `main`，继续隐藏这两个未完成管理菜单。
+当前分支：`codex/routing-vdn-sites-remove-status`
+当前 HEAD：以 `git rev-parse HEAD` 为准；当前本地开发分支从 `codex/text-channel-config-settings` 创建，并重新开放 `Call Management` 与 `Routing Config` 菜单和页面路由。客户 Production 版本位于 `main`，继续隐藏这两个未完成管理菜单，并已包含客户可见 AUX 示忙原因选择弹框。
 部署状态：`main` 已推送到 `origin/main` 并触发 Vercel Production；客户可访问 URL 为 `https://netinfo-aicc-demo-v2.vercel.app/`。
 部署目标：Vercel Production 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
@@ -121,7 +121,7 @@ codex-recovered-context.md
 - `src/pages/call-management/GlobalControlConfigurationPage.tsx`：`Call Management > Global Control Configuration` 页面，英文 UI，使用本地 mock 默认值维护 Answer Mode、Answer Delay、Status after Sign-in、Auto Cancel ACW Duration、Auto Sign-out Duration、Early Warning Duration 和 Max Text Media Services；当前不接真实话务状态机。
 - `src/pages/call-management/BusyReasonManagementPage.tsx`：`Call Management > Busy Reason Management` 页面，英文 UI，仅支持编辑已有示忙原因；维护 ID、Busy Reason、Default、Status、Remark、Updated Date、Updated By；查询支持 Keyword、Default、Status；保存默认项时通过 store 保持默认值唯一。
 - `src/pages/routing-config/RoutingConfigCrudPage.tsx`：Routing Config 普通主数据页复用的本地 CRUD 容器，提供 Search / Add / View / Edit / Delete 弹窗表单；2026-06-05 01:34 后支持可选 `renderFormContent` 和 `modalWidth`，供单页自定义弹框布局，默认 CRUD 页面不受影响。
-- `src/pages/routing-config/RoutingConfigDataPages.tsx`：Routing Config 主数据独立配置页，覆盖 Route Elements、VDN、Sites、Channel Types、Channels、Business Types、Site Access Volume、Working Time Plans、Skill Queues；2026-06-04 20:45 后新增 `Channel Types` 只读字段模板页，`Channels` 改为工程预置渠道的配置页，不再支持业务用户新增/删除渠道，行内只保留 Edit、Accounts、Business Config；Edit 可改 Media Type、Status 和具体技术接入参数，Business Config 按媒体类型展示业务配置，Text 展示接入欢迎语和 Text 专属开场/结束、客户未回复、坐席未回复、坐席服务配置，Voice/Video 只展示接入并发数和最小扫描间隔；2026-06-05 10:18 后 Phone 渠道的 Voice Business Config 在 Access Configuration 中额外显示 `Exception Working Time Plan` 下拉，选项来自 Working Time Plans；2026-06-05 10:47 后该字段不再重复拼接 `Default 24x7`，并在选择非默认方案时显示 `Preview`。Accounts 支持同一 Channel 下多官方账号。2026-06-04 21:50 后 Account Management 使用 1120px 表格弹框展示 Account、Account Name、Credential / Secret Ref、Purpose、Status 和操作。`Media Service Rule Plans` 和 `Access Accounts` 源码能力不再作为可访问菜单入口，旧 URL 重定向到 `Channels`；Working Time Plans 已改为印尼单国家自定义排班编辑器，Skill Queues 未选择方案时展示 `Default 24x7` 且现在承担排队配置；2026-06-05 01:34 后 Skill Queues 弹框使用 `Basic Information` + `Queue Configuration` 分区，排队提示语支持字段级变量插入；2026-06-05 10:33 后 Skill Queues 的 Work Time Plan 直接复用 `useRoutingLookups().workTimeOptions`，避免重复 `Default 24x7`，并可预览非默认 Working Time Plan。
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`：Routing Config 主数据独立配置页，覆盖 Route Elements、VDN、Sites、Channel Types、Channels、Business Types、Site Access Volume、Working Time Plans、Skill Queues；2026-06-04 20:45 后新增 `Channel Types` 只读字段模板页，`Channels` 改为工程预置渠道的配置页，不再支持业务用户新增/删除渠道，行内只保留 Edit、Accounts、Business Config；Edit 可改 Media Type、Status 和具体技术接入参数，Business Config 按媒体类型展示业务配置，Text 展示接入欢迎语和 Text 专属开场/结束、客户未回复、坐席未回复、坐席服务配置，Voice/Video 只展示接入并发数和最小扫描间隔；2026-06-05 10:18 后 Phone 渠道的 Voice Business Config 在 Access Configuration 中额外显示 `Exception Working Time Plan` 下拉，选项来自 Working Time Plans；2026-06-05 10:47 后该字段不再重复拼接 `Default 24x7`，并在选择非默认方案时显示 `Preview`。Accounts 支持同一 Channel 下多官方账号。2026-06-04 21:50 后 Account Management 使用 1120px 表格弹框展示 Account、Account Name、Credential / Secret Ref、Purpose、Status 和操作。`Media Service Rule Plans` 和 `Access Accounts` 源码能力不再作为可访问菜单入口，旧 URL 重定向到 `Channels`；Working Time Plans 已改为印尼单国家自定义排班编辑器，Skill Queues 未选择方案时展示 `Default 24x7` 且现在承担排队配置；2026-06-05 01:34 后 Skill Queues 弹框使用 `Basic Information` + `Queue Configuration` 分区，排队提示语支持字段级变量插入；2026-06-05 10:33 后 Skill Queues 的 Work Time Plan 直接复用 `useRoutingLookups().workTimeOptions`，避免重复 `Default 24x7`，并可预览非默认 Working Time Plan；2026-06-05 16:24 后 VDN 与 Access Sites 页面 UI 不再展示或筛选 `Status`，但内部保存仍默认写入 `Active`。
 - `src/pages/routing-config/SkillRoutingRulesPage.tsx`：独立技能路由规则页，支持按启用路由要素多选查询、规则列表要素拆列、批量新增拆分预览、重复组合勾选覆盖、规则查看/编辑/删除。
 - `src/pages/routing-config/RoutingConfigStatusBadge.tsx`：Routing Config 状态 badge 组件，避免页面组件导出非组件函数触发 Fast Refresh lint。
 - `src/pages/call-management/TextChannelSettingsPage.tsx`：数据呼叫管理下的文字渠道配置页，包含 Service Rules、Customer Timeout & Messages、Channel Queue Alerts 三组配置。
@@ -2683,8 +2683,8 @@ P0：
 - 人工复查 `Routing Config` 普通 CRUD 页工具栏：输入框、下拉框、Search/Reset/Add 按钮高度一致，普通页面统一使用 Keyword + Search/Reset + 右侧 Add。
 - 人工复查 `Routing Config` 所有二级页面：左上角只显示英文当前菜单名称，不显示 eyebrow、说明文案或标题右侧操作；新增/编辑/查看/删除弹框标题也使用英文。
 - 人工复查 `Routing Config > Route Elements`：查询条件为 `Keyword + Status`，Keyword 支持 Element ID / Element Name 多字段模糊搜索。
-- 人工复查 `Routing Config > VDN`：Platform VDN ID 必填，Description 独占整行且宽度合适，Status 与 Platform VDN ID 同行。
-- 人工复查 `Routing Config > VDN` 与 `Routing Config > Sites`：查询条件为 `Keyword + Status`，Keyword 分别支持 ID/Name/Platform ID 或 Site ID/Site Name 多字段模糊搜索。
+- 人工复查 `Routing Config > VDN`：Platform VDN ID 必填，Description 独占整行且宽度合适，列表、查询区和弹框均不显示 Status。
+- 人工复查 `Routing Config > VDN` 与 `Routing Config > Sites`：查询条件只保留 `Keyword`，Keyword 分别支持 ID/Name/Platform ID 或 Site ID/Site Name 多字段模糊搜索。
 - 人工复查 `Routing Config > Sites`：无顶部提示、无 Country/Country Code 字段，新增弹框标题为 `Add Site`。
 - 人工复查 `Routing Config > Channels`：列表字段为 Channel ID、Channel Name、Channel Type、Media Type、Account Count、Status、Actions；Channel ID 为数字；媒体类型多选符合 Phone=Voice、Haloapp/webchat=Voice/Video/Text、其它渠道=Text；查询区为 Keyword、Channel Type、Media Type、Status。
 - 人工复查 `Routing Config > Business Types`：查询条件为 Keyword + Status，Keyword 支持 Business Type ID / Name；列表和弹框都不显示 Project / Project Code。

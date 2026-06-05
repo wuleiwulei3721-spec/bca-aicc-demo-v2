@@ -813,3 +813,11 @@
 - `Channels > Business Config > Exception Working Time Plan` 也必须直接使用 `useRoutingLookups().workTimeOptions`，不要额外 prepend `Default 24x7`。
 - `Default 24x7` 空值不显示 `Preview`；`Bank Working Hours`、`连续3次输入有误-中文` 等真实方案显示 `Preview`。
 - `Preview` 复用只读 `View Working Time Plan` 弹框，不在 Channel Business Config 内直接编辑 Working Time Plan。
+
+## 2026-06-05 客户 AUX 发布与 VDN / Access Sites 状态 UI 口径
+
+- 客户可见 AUX 示忙原因选择弹框已合入并推送 `main`，触发 Vercel Production；客户版本仍隐藏 `Call Management` 与 `Routing Config`。
+- Production 右上角签入后只显示一个 `AUX` 入口；点击后弹框列出启用示忙原因，默认选中启用默认项，确认后状态变为 `AUX - {reasonName}`。
+- 后续 Routing Config 调整从本地管理分支继续，不混入客户 AUX 发布分支。
+- `Routing Config > VDN` 和 `Routing Config > Access Sites` 本轮只从 UI 移除 `Status`：列表列、查询条件、Add/Edit/View 弹框字段都不显示。
+- VDN / Access Sites 的内部类型与 mock 仍保留 `status`，新增/编辑保存默认写 `Active`，避免影响 Skill Queues、Site Access Volume、Skill Routing Rules 引用。

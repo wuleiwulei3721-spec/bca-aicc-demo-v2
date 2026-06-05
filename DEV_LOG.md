@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-05 11:53 +08:00
+最后更新：2026-06-05 16:24 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,56 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-05 16:24 +08:00 - 发布客户 AUX 弹框并移除 VDN / Access Sites 状态 UI
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-05-1624.md`
+- `.codex-backup/current-todo-2026-06-05-1624.md`
+- `.codex-backup/page-state-2026-06-05-1624.md`
+
+修改原因：
+
+- 用户确认客户可见 AUX 示忙原因选择弹框可以发布，需要合入 `main` 并推送触发 Vercel Production。
+- 发布后继续本地 Routing Config 调整，要求 `VDN` 与 `Access Sites` 两个菜单去掉 `Status` 字段。
+
+修改结果：
+
+- `codex/customer-aux-busy-reason-modal` 已提交 `99fba67 Add customer AUX busy reason modal`，并 fast-forward 合入 `main` 后推送 `origin/main`。
+- Production 客户版本仍隐藏 `Call Management` 与 `Routing Config`，直达 `/call-management/*` 和 `/routing-config/*` 会回到 `/`。
+- 从 `codex/text-channel-config-settings` 创建 `codex/routing-vdn-sites-remove-status` 继续本地管理菜单开发。
+- `Routing Config > VDN` 去掉列表 Status 列、查询 Status 条件、Add/Edit/View 弹框 Status 字段。
+- `Routing Config > Access Sites` 去掉列表 Status 列、查询 Status 条件、Add/Edit/View 弹框 Status 字段。
+- 内部 `status` 类型和 mock 暂不删除；新增/编辑保存时继续写入 `Active`，避免影响 Skill Queues、Site Access Volume、Skill Routing Rules 引用。
+
+验证：
+
+- AUX 发布前在客户分支运行 `npm run lint` 通过。
+- AUX 发布前在客户分支运行 `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- AUX 发布前运行 `git diff --check` 通过；仅有 Windows LF/CRLF 提示。
+- Production `https://netinfo-aicc-demo-v2.vercel.app/` 验证首页加载，左侧不显示 `Call Management` / `Routing Config`。
+- Production `/design-system` 正常加载。
+- Production `/call-management/busy-reasons` 与 `/routing-config/vdn` 均回到 `/`。
+- Production 右上角签入后只显示 `AUX`，不显示写死的 `AUX - Ibadah` / `AUX - Makan`；点击 `AUX` 打开 `Select AUX Reason`，只显示 `Ibadah` 和 `Makan`，隐藏 `Training`，确认后状态显示 `AUX - Ibadah`。
+- 本地 Routing Config 分支运行 `npm run lint` 通过。
+- 本地 Routing Config 分支运行 `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser 本地检查 `/routing-config/vdn` 与 `/routing-config/sites`：主页面表头、筛选区、Add 弹框均不再出现 `Status`。
+- Browser 本地回归 `/routing-config/skill-routing-rules` 与 `/routing-config/site-access-volume`：页面仍正常渲染，Access Site / Site Configuration 相关内容可见。
+
+回滚说明：
+
+- 如需回滚客户 AUX 发布，可在 `main` 回退或 revert `99fba67`，再推送触发 Vercel Production；注意这会恢复右上角写死 AUX 入口。
+- 如需恢复 VDN / Access Sites 的状态 UI，可把 `RoutingConfigDataPages.tsx` 中两个页面的 Status 列、Status filter 和 `statusSwitch` 字段配置加回，并把保存映射恢复为读取 `draft.status`。
+
+当前风险点：
+
+- VDN / Access Sites 的内部状态字段仍保留且保存默认写 `Active`；这符合本轮“UI 去状态”的口径，但如果后续真实后端仍需要禁用 VDN/站点，需要重新定义状态维护入口。
+- `codex/routing-vdn-sites-remove-status` 是本地管理菜单分支，不应直接发布给客户。
 
 ### 2026-06-05 11:53 +08:00 - Call Management 页面英文化并收敛 Busy Reason 操作
 
