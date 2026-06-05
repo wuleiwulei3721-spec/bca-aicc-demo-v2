@@ -376,7 +376,7 @@ function useRoutingLookups() {
       value: vdn.vdnCode,
     }))
     const workTimeOptions = [
-      { label: 'Default 24x7', value: '' },
+      { label: 'Default 24/7', value: '' },
       ...workingTimePlans.map((plan) => ({
         label: plan.planName,
         value: plan.planCode,
@@ -6060,7 +6060,7 @@ export function SkillQueuesPage() {
           title: 'Work Time Plan',
           width: 150,
           render: (value: string) =>
-            workTimeLabelMap.get(value) ?? 'Default 24x7',
+            workTimeLabelMap.get(value) ?? 'Default 24/7',
         },
         {
           dataIndex: 'maxQueueCustomers',
@@ -6238,7 +6238,7 @@ export function SkillQueuesPage() {
           const previewPlan = workingTimePlanByCode.get(rawValue)
           const displayValue =
             workTimeLabelMap.get(rawValue) ??
-            (rawValue ? rawValue : 'Default 24x7')
+            (rawValue ? rawValue : 'Default 24/7')
 
           return (
             <label className="routing-config-crud-modal__field routing-config-skill-queue-modal__work-time-field">

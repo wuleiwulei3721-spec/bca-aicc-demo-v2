@@ -64,19 +64,19 @@
 ## 2026-06-03 Working Time Plans 印尼排班口径
 
 - 本项目暂按印尼单国家场景处理，`Working Time Plans` 不展示或维护 `timezone`；后续如扩展多国家/多时区，再把时区加回工作时间方案层。
-- `Working Time Plans` 只维护自定义方案，不维护真实 `Default 24x7` 记录。
-- `Skill Queues` 的 `Work Time Plan` 非必填；空值必须在列表、详情和弹框中明确显示为 `Default 24x7`，不能让用户误以为空白漏配。
+- `Working Time Plans` 只维护自定义方案，不维护真实 `Default 24/7` 记录。
+- `Skill Queues` 的 `Work Time Plan` 非必填；空值必须在列表、详情和弹框中明确显示为 `Default 24/7`，不能让用户误以为空白漏配。
 - 弹框必须分为 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan。
 - 列表字段当前为 Plan ID、Plan Name、Description、Updated Date、Updated By、Status、Actions；Work Schedule 和 Ramadan Period 不在列表展示。
 - 弹框分区仍保留普通卡片容器；排班行本身不要每行外边框、卡片背景或横向分隔线。
 - Work/Ramadan/Holiday/Special 的 Add 按钮放在分区标题右上角；按钮文案使用 `Add`，不使用 `Add Row`；Ramadan 未启用时不显示 Add。
 - 多行排班只第一行显示字段名，后续行不重复显示字段名。
 - Holiday Schedule 不展示 `Closed` / `Closed All Day` 开关；字段为 Start Date、End Date、Holiday Name、Start、End。Holiday 表示非工作覆盖，全天非工作可用 `00:00-23:59` 表达。
-- Working Time Plans 弹框底部只展示优先级：`Priority: Special Working Plan > Holiday Schedule > Ramadan Work Schedule > Work Schedule.`；不要在该页解释 Skill Queue 未选择方案时的 `Default 24x7`。
+- Working Time Plans 弹框底部只展示优先级：`Priority: Special Working Plan > Holiday Schedule > Ramadan Work Schedule > Work Schedule.`；不要在该页解释 Skill Queue 未选择方案时的 `Default 24/7`。
 - Holiday / Special 排班行列宽使用 `150px 150px minmax(360px, 1fr) 120px 120px 30px`，让 Holiday Name / Reason 吃掉剩余空间，使 Start/End 时间列与 Work/Ramadan 排班行对齐。
 - Ramadan、Holiday、Special 的日期字段使用 AntD DatePicker，避免浏览器原生日期控件跟随系统语言显示中文。
 - Ramadan Work Schedule 放在 Work Schedule 后面；一个方案配置一个 Ramadan date range，日期段下配置工作日多选和时间范围，支持 Copy from Work Schedule。
-- 运行时优先级口径：未选择工作时间方案时直接 Default 24x7；选择自定义方案后按 Special Working Plan > Holiday Schedule > Ramadan Work Schedule > Work Schedule 判断；已选择方案但不命中工作规则时为非工作时间。
+- 运行时优先级口径：未选择工作时间方案时直接 Default 24/7；选择自定义方案后按 Special Working Plan > Holiday Schedule > Ramadan Work Schedule > Work Schedule 判断；已选择方案但不命中工作规则时为非工作时间。
 - Holiday Schedule 表示非工作覆盖；Special Working Plan 表示临时开工、加班或节假日营业等最高优先级覆盖。
 - 自定义方案至少需要一条 Work Schedule；Ramadan 启用后必须配置日期段和 Ramadan 工作时间；日期、时间范围必须合法。
 - 被 Skill Queue 引用的 Working Time Plan 不能直接删除，只能先解除引用或禁用。
@@ -610,11 +610,11 @@
 - `VDN` 是技能队列维护字段，选项来自 `VDN配置` 主数据；新增/编辑时为必填单选下拉，列表展示 VDN 名称。
 - 被技能队列引用的 VDN 不能直接删除；`VDN配置` 删除保护需要检查技能队列引用。
 - Skill Queues 表格不要强制横向滚动；列宽应保持管理台紧凑密度。
-- `Work Time Plan` 列表和弹框下拉展示工作时间方案名称，不直接展示方案编码；未选择方案时展示 `Default 24x7`。
+- `Work Time Plan` 列表和弹框下拉展示工作时间方案名称，不直接展示方案编码；未选择方案时展示 `Default 24/7`。
 - `Supports Video` 使用 `No / Yes`，默认 `No`。
 - `Max Queue Size` 默认 `60`，范围 `1-60000`，单位按字段语义展示为 `items`。
 - `Queue Timeout` 默认 `100`，范围 `0-10000`，单位按字段语义展示为 `sec`。
-- 弹框中除 `Work Time Plan` 外的可维护字段保持必填；`Platform Skill ID` 需要保存校验，`Work Time Plan` 空值表示 `Default 24x7`。
+- 弹框中除 `Work Time Plan` 外的可维护字段保持必填；`Platform Skill ID` 需要保存校验，`Work Time Plan` 空值表示 `Default 24/7`。
 - `Assigned Agents` 不是输入字段；弹框中只读禁用展示。
 - 弹框不展示 `Queue Prompts`；新增记录使用默认 prompt，编辑记录保留原 prompt。
 - `Routing Method` 不在列表和弹框展示；`SkillQueue` 类型和 mock 数据不再保留 `routingMethod` 字段。
@@ -793,15 +793,15 @@
 
 - `Routing Config > Channels > Business Config` 中，只有 Phone 渠道的 Voice 配置显示 `Exception Working Time Plan`。
 - 该字段对应中文需求“异常情况工作时间方案”，保存为 `ChannelMediaBusinessConfig.exceptionWorkTimePlanCode`。
-- 下拉选项复用 `Working Time Plans`，并包含 `Default 24x7` 空值选项。
+- 下拉选项复用 `Working Time Plans`，并包含 `Default 24/7` 空值选项。
 - Phone mock 默认使用 `WTP_BANK_HOURS`，页面显示 `Bank Working Hours`。
 - Haloapp、Webchat、WhatsApp、Email、Instagram 等非 Phone 渠道不显示该字段。
 - 当前只是前端 demo 配置字段，不接真实异常场景判定；后续需要定义何种异常情况使用该工作时间方案。
 
 ## 2026-06-05 Skill Queues Work Time Plan 预览口径
 
-- `useRoutingLookups().workTimeOptions` 已经包含 `Default 24x7` 空值选项；`SkillQueuesPage` 不要再额外 prepend `Default 24x7`。
-- `Default 24x7` 表示 `workTimePlanCode: ''`，没有真实 Working Time Plan 记录，因此不显示 `Preview`。
+- `useRoutingLookups().workTimeOptions` 已经包含 `Default 24/7` 空值选项；`SkillQueuesPage` 不要再额外 prepend `Default 24/7`。
+- `Default 24/7` 表示 `workTimePlanCode: ''`，没有真实 Working Time Plan 记录，因此不显示 `Preview`。
 - 非空 `workTimePlanCode` 必须能在 `workingTimePlans` 中找到对应方案，才显示 `Preview` 按钮。
 - `Preview` 打开只读 `View Working Time Plan` 弹框，展示 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan 和优先级提示。
 - `Preview` 不负责编辑、保存或删除 Working Time Plan；关闭后应回到原 Skill Queue 弹框上下文。
@@ -810,8 +810,8 @@
 
 - Working Time Plan 新增 `WTP_3_WRONG_INPUT_ZH / 连续3次输入有误-中文`，用于 Phone 异常场景“连续 3 次输入有误”的中文服务窗口 demo。
 - Phone 渠道 VOICE Business Config 默认选中 `WTP_3_WRONG_INPUT_ZH`，字段为 `exceptionWorkTimePlanCode`。
-- `Channels > Business Config > Exception Working Time Plan` 也必须直接使用 `useRoutingLookups().workTimeOptions`，不要额外 prepend `Default 24x7`。
-- `Default 24x7` 空值不显示 `Preview`；`Bank Working Hours`、`连续3次输入有误-中文` 等真实方案显示 `Preview`。
+- `Channels > Business Config > Exception Working Time Plan` 也必须直接使用 `useRoutingLookups().workTimeOptions`，不要额外 prepend `Default 24/7`。
+- `Default 24/7` 空值不显示 `Preview`；`Bank Working Hours`、`连续3次输入有误-中文` 等真实方案显示 `Preview`。
 - `Preview` 复用只读 `View Working Time Plan` 弹框，不在 Channel Business Config 内直接编辑 Working Time Plan。
 
 ## 2026-06-05 客户 AUX 发布与 VDN / Access Sites 状态 UI 口径
@@ -828,3 +828,11 @@
 - Skill Queues 列表不显示 Status 列，查询区不显示 Status 下拉，Add/Edit/View 弹框不显示 Status 控件。
 - `SkillQueue.status` 类型和 mock 暂时保留，新增/编辑保存默认写 `Active`，避免影响 Skill Routing Rules 引用。
 - 该调整只属于本地管理菜单分支，不应直接发布给客户。
+
+## 2026-06-05 Routing Config 24/7 标准写法口径
+
+- 海外英文 UI 中全天候服务统一写作 `24/7`。
+- Routing Config 默认全天候工作时间展示统一为 `Default 24/7`，不再使用 `Default 24x7`、`7x24` 或 `7X24`。
+- `Default 24/7` 仍表示 `workTimePlanCode: ''`，即未选择自定义工作时间方案。
+- 不创建真实 `Default 24/7` Working Time Plan 记录；Working Time Plans 继续只维护自定义方案。
+- Channels 的 Phone Exception Working Time Plan 和 Skill Queues 的 Work Time Plan 都复用 `useRoutingLookups().workTimeOptions`，因此空值文案必须保持一致。

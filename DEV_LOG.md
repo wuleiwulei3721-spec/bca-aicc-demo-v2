@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-05 17:10 +08:00
+最后更新：2026-06-05 17:57 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,47 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-05 17:57 +08:00 - Routing Config 全天候默认工作时间改为 24/7 标准写法
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-05-1757.md`
+- `.codex-backup/current-todo-2026-06-05-1757.md`
+- `.codex-backup/page-state-2026-06-05-1757.md`
+
+修改原因：
+
+- 用户要求把 Routing Config 中海外全天候工作时间的写法改为标准英文规范，避免继续使用 `24x7` / `7x24` 这类不标准写法。
+
+修改结果：
+
+- `useRoutingLookups().workTimeOptions` 空值 label 从 `Default 24x7` 改为 `Default 24/7`。
+- Skill Queues 列表和 Add/Edit/View 弹框的空 Work Time Plan fallback 展示统一改为 `Default 24/7`。
+- Channels > Business Config > Phone > Exception Working Time Plan 下拉会继承同一 `workTimeOptions`，同步展示 `Default 24/7`。
+- 不改变 `workTimePlanCode: ''` 的语义，不新增真实 `Default 24/7` 工作时间方案记录，不改变 Working Time Plans 排班逻辑。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser 本地检查 `/routing-config/skill-queues`：列表显示 `Default 24/7`，不再显示 `Default 24x7`。
+- Browser 本地检查 Skill Queues Add 弹框：Work Time Plan 下拉显示 `Default 24/7`，不再显示 `Default 24x7`。
+- Browser 本地检查 `/routing-config/channels` 的 Phone Business Config 弹框：Exception Working Time Plan 下拉显示一个 `Default 24/7`，不再显示 `Default 24x7`。
+- Browser 本地检查 `/routing-config/working-time-plans`：页面不出现真实 `Default 24/7` 方案记录。
+
+回滚说明：
+
+- 如需恢复旧写法，可把 `RoutingConfigDataPages.tsx` 中的 `Default 24/7` 改回 `Default 24x7`，并恢复文档口径。
+
+当前风险点：
+
+- 本轮只做 UI 展示文案规范化；如果后端或接口文档也存在 `24x7` 写法，需要后续在对应契约文档中单独同步。
+- 当前分支仍是本地管理菜单分支，不应直接发布给客户。
 
 ### 2026-06-05 17:10 +08:00 - Skill Queues 去除状态 UI
 
@@ -226,14 +267,14 @@
 修改原因：
 
 - 用户要求新增时间方案 `连续3次输入有误-中文`，并在渠道管理中 Phone 渠道的 `Business Config > Exception Working Time Plan` 默认选中。
-- 用户指出 Phone Business Config 的异常工作时间方案下拉也有两个 24x7，需要去重；非默认 24x7 时需要提供预览按钮。
+- 用户指出 Phone Business Config 的异常工作时间方案下拉也有两个 24/7，需要去重；非默认 24/7 时需要提供预览按钮。
 
 修改结果：
 
 - 新增 Working Time Plan mock：`WTP_3_WRONG_INPUT_ZH / 连续3次输入有误-中文`。
 - Phone 渠道 VOICE Business Config 默认 `exceptionWorkTimePlanCode` 改为 `WTP_3_WRONG_INPUT_ZH`。
-- `Exception Working Time Plan` 直接使用 `useRoutingLookups().workTimeOptions`，不再手动 prepend `Default 24x7`，修复重复默认项。
-- Phone Business Config 中非默认工作时间方案显示 `Preview`；选择 `Default 24x7` 后不显示 Preview。
+- `Exception Working Time Plan` 直接使用 `useRoutingLookups().workTimeOptions`，不再手动 prepend `Default 24/7`，修复重复默认项。
+- Phone Business Config 中非默认工作时间方案显示 `Preview`；选择 `Default 24/7` 后不显示 Preview。
 - `Preview` 复用只读 `View Working Time Plan` 弹框展示方案详情。
 
 验证：
@@ -241,9 +282,9 @@
 - `npm run lint` 通过。
 - `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
 - Browser 打开 `http://127.0.0.1:5184/routing-config/channels`，验证 `Business config 101` 默认显示 `连续3次输入有误-中文` 和 `Preview`。
-- Browser 验证下拉真实选项为 `Default 24x7`、`Bank Working Hours`、`连续3次输入有误-中文`，其中 `Default 24x7` 只有一个。
+- Browser 验证下拉真实选项为 `Default 24/7`、`Bank Working Hours`、`连续3次输入有误-中文`，其中 `Default 24/7` 只有一个。
 - Browser 验证点击 `Preview` 打开 `View Working Time Plan`，详情包含新方案名称、Basic Info、Work Schedule 和优先级提示。
-- Browser 验证选择 `Default 24x7` 后 `Preview` 消失。
+- Browser 验证选择 `Default 24/7` 后 `Preview` 消失。
 
 回滚说明：
 
@@ -251,7 +292,7 @@
 
 当前风险点：
 
-- 新方案的具体工作时段为 demo mock 值，当前设为工作日 08:00-20:00、周末 09:00-15:00；如果业务确认该异常场景需要 24x7 或其它时段，需要调整该 Working Time Plan。
+- 新方案的具体工作时段为 demo mock 值，当前设为工作日 08:00-20:00、周末 09:00-15:00；如果业务确认该异常场景需要 24/7 或其它时段，需要调整该 Working Time Plan。
 
 ### 2026-06-05 10:33 +08:00 - Skill Queues 工作时间方案去重与预览
 
@@ -268,12 +309,12 @@
 
 修改原因：
 
-- 用户发现 `Skill Queues` 弹框中的 `Work Time Plan` 下拉出现两个 `Default 24x7`，并要求在选择非默认工作时间方案时提供只读预览按钮。
+- 用户发现 `Skill Queues` 弹框中的 `Work Time Plan` 下拉出现两个 `Default 24/7`，并要求在选择非默认工作时间方案时提供只读预览按钮。
 
 修改结果：
 
-- `SkillQueuesPage` 删除本地重复构造的 `Default 24x7` 选项，Work Time Plan 下拉直接使用 `useRoutingLookups().workTimeOptions`。
-- `Default 24x7` 空值不显示 `Preview`；真实 Working Time Plan code 显示 `Preview`。
+- `SkillQueuesPage` 删除本地重复构造的 `Default 24/7` 选项，Work Time Plan 下拉直接使用 `useRoutingLookups().workTimeOptions`。
+- `Default 24/7` 空值不显示 `Preview`；真实 Working Time Plan code 显示 `Preview`。
 - 新增 `View Working Time Plan` 只读预览弹框，展示 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan 和优先级提示。
 - Add/Edit/View 三种 Skill Queue 弹框模式都复用同一套 Work Time Plan 字段渲染规则；View 模式显示只读值和 Preview 按钮。
 - 新增本页 scoped 样式，保证 Work Time Plan 下拉和 Preview 按钮同行、按钮不挤压字段内容。
@@ -282,7 +323,7 @@
 
 - `npm run lint` 通过。
 - `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
-- Browser 打开 `http://127.0.0.1:5184/routing-config/skill-queues`，验证 Add 弹框 Work Time Plan 下拉中只有一个 `Default 24x7`，并包含 `Bank Working Hours`。
+- Browser 打开 `http://127.0.0.1:5184/routing-config/skill-queues`，验证 Add 弹框 Work Time Plan 下拉中只有一个 `Default 24/7`，并包含 `Bank Working Hours`。
 - Browser 验证 View 已绑定 `Bank Working Hours` 的 Skill Queue 时显示 `Preview`，点击后打开 `View Working Time Plan`，其中包含 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan 和优先级提示。
 
 回滚说明：
@@ -292,7 +333,7 @@
 当前风险点：
 
 - `Preview` 只是前端只读查看，不会编辑 Working Time Plan；如果后续需要从预览跳转编辑，应另行设计入口。
-- 当前仅修复 Skill Queues 的重复默认项；其它页面如复用时再次手动 prepend `Default 24x7`，需要按页面场景单独检查。
+- 当前仅修复 Skill Queues 的重复默认项；其它页面如复用时再次手动 prepend `Default 24/7`，需要按页面场景单独检查。
 
 ### 2026-06-05 10:18 +08:00 - Phone Business Config 增加异常工作时间方案
 
@@ -316,7 +357,7 @@
 
 - `ChannelMediaBusinessConfig` 新增 `exceptionWorkTimePlanCode` 字段，用于保存异常情况工作时间方案 code。
 - Phone 渠道 mock 的 VOICE Business Config 默认选中 `WTP_BANK_HOURS`，页面显示为 `Bank Working Hours`。
-- `Channels > Business Config` 的 `Access Configuration` 对 `PHONE + VOICE` 显示 `Exception Working Time Plan` 下拉，选项复用 Working Time Plans，并包含 `Default 24x7` 空值选项。
+- `Channels > Business Config` 的 `Access Configuration` 对 `PHONE + VOICE` 显示 `Exception Working Time Plan` 下拉，选项复用 Working Time Plans，并包含 `Default 24/7` 空值选项。
 - Haloapp、Webchat、WhatsApp 等非 Phone 渠道不显示该字段。
 
 验证：
@@ -1011,15 +1052,15 @@
 
 修改原因：
 
-- 用户指出 `Empty Skill Queue plan means Default 24x7` 语义不准确，实际是技能队列未引用工作时间方案时默认按 24x7 处理，不应放在 Working Time Plans 页面底部解释。
+- 用户指出 `Empty Skill Queue plan means Default 24/7` 语义不准确，实际是技能队列未引用工作时间方案时默认按 24/7 处理，不应放在 Working Time Plans 页面底部解释。
 - 用户要求 Holiday Schedule 与 Special Working Plan 的时间控件宽度更接近 Ramadan Work Schedule，并缩短 Holiday Name / Reason 输入框。
 
 修改结果：
 
 - Working Time Plans 弹框底部提示只保留排班优先级：`Priority: Special Working Plan > Holiday Schedule > Ramadan Work Schedule > Work Schedule.`
-- 移除 `Empty Skill Queue plan means Default 24x7.` 文案。
+- 移除 `Empty Skill Queue plan means Default 24/7.` 文案。
 - Holiday / Special 行 grid 当时改为 `150px 150px 240px 120px 120px 30px`；后续 11:16 已修正为 `150px 150px minmax(360px, 1fr) 120px 120px 30px`，用于对齐 Start 列。
-- 未修改 `Default 24x7` 在 Skill Queues 中的展示口径。
+- 未修改 `Default 24/7` 在 Skill Queues 中的展示口径。
 
 验证：
 
@@ -1424,7 +1465,7 @@
 - Work/Ramadan/Holiday/Special 的行样式去掉外边框和卡片背景，改为浅分隔线。
 - 多行时只第一行显示字段名，后续行不重复显示 Weekdays/Start/End 等字段名称。
 - Holiday 的 `Closed` 改为 `Closed All Day`；全天关闭时隐藏 Non-working Start / Non-working End；非全天关闭时显示并沿用原时间段校验。
-- 不改变列表字段、Default 24x7 规则、Ramadan 业务规则和现有校验口径。
+- 不改变列表字段、Default 24/7 规则、Ramadan 业务规则和现有校验口径。
 
 验证：
 
@@ -1467,7 +1508,7 @@
 - 删除不再用于列表的 Work Schedule / Ramadan Period 摘要函数。
 - 弹框中的 Work/Ramadan/Holiday/Special 录入行从表头式网格退回普通字段行，每个控件恢复自己的 label。
 - 分区样式恢复为普通边框卡片，减少上一轮表格式样式带来的视觉混乱。
-- 本轮不改变无 timezone、无真实 Default 24x7 记录、Skill Queue 空方案显示 Default 24x7、Ramadan Work Schedule 的业务口径。
+- 本轮不改变无 timezone、无真实 Default 24/7 记录、Skill Queue 空方案显示 Default 24/7、Ramadan Work Schedule 的业务口径。
 
 验证：
 
@@ -1485,7 +1526,7 @@
 - 用户后续会逐项指定弹框交互和样式，因此本轮只做样式回退，不继续扩展复杂交互。
 - PowerShell 机械清理曾导致 `RoutingConfigDataPages.tsx` 编码异常，已转回 UTF-8 并修复被截断的中文标题；lint/build 已通过。
 
-### 2026-06-03 15:57 +08:00 - Working Time Plans 印尼排班与 Default 24x7 调整
+### 2026-06-03 15:57 +08:00 - Working Time Plans 印尼排班与 Default 24/7 调整
 
 修改页面或文件：
 
@@ -1504,7 +1545,7 @@
 修改原因：
 
 - 用户确认本项目暂时按印尼单国家场景处理，工作时间方案不需要 `timezone`。
-- 用户要求不再维护真实 `Default 24x7` 方案记录；技能队列未选择工作时间方案时明确显示 `Default 24x7`。
+- 用户要求不再维护真实 `Default 24/7` 方案记录；技能队列未选择工作时间方案时明确显示 `Default 24/7`。
 - 印尼存在斋月工作时间差异，斋月不应归入节假日或特殊工作计划，而应作为普通工作日时间的日期段覆盖。
 - 用户要求工作时间方案弹框更简洁整齐，减少大线框和控件高度不一致问题。
 
@@ -1512,7 +1553,7 @@
 
 - `WorkingTimePlan` 类型移除 `timezone`、`default24x7`、`createdAt`、`weekdayRule`、`holidayRule`、`specialDateRule` 等旧字段，新增 `ramadanSchedule`。
 - 默认 mock 删除真实 `WTP_24X7` 记录，仅保留自定义 `WTP_BANK_HOURS` 示例，并补充 Ramadan date range 与 Ramadan work schedule。
-- `Skill Queues` 的 `workTimePlanCode` 允许为空，空值在列表、详情和弹框中展示为 `Default 24x7`，保存校验不再要求工作时间方案必填。
+- `Skill Queues` 的 `workTimePlanCode` 允许为空，空值在列表、详情和弹框中展示为 `Default 24/7`，保存校验不再要求工作时间方案必填。
 - `Working Time Plans` 查询区精简为 `Keyword + Status`；列表字段改为 Plan ID、Plan Name、Work Schedule、Ramadan Period、Updated Date、Status、Actions。
 - Add/Edit/View 弹框按 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan 分区；Ramadan 启用后配置一个日期段和专属工作日时间，并支持 Copy from Work Schedule。
 - 工作时间行录入改为紧凑表格行，控件高度统一为 32px；Ramadan 开关靠近标题，减少标题与控件距离过远的问题。
@@ -1522,13 +1563,13 @@
 
 - `npm run lint` 通过。
 - `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
-- Browser `/routing-config/working-time-plans`：确认列表不再显示 Timezone / Schedule Mode / Default 24x7 真实记录，Add 弹框包含 Ramadan Work Schedule，启用 Ramadan 后显示 Start Date、End Date、Copy from Work Schedule。
-- Browser `/routing-config/skill-queues`：确认列表和 Add 弹框可见 `Default 24x7`，`Work Time Plan` 不再有必填星号。
+- Browser `/routing-config/working-time-plans`：确认列表不再显示 Timezone / Schedule Mode / Default 24/7 真实记录，Add 弹框包含 Ramadan Work Schedule，启用 Ramadan 后显示 Start Date、End Date、Copy from Work Schedule。
+- Browser `/routing-config/skill-queues`：确认列表和 Add 弹框可见 `Default 24/7`，`Work Time Plan` 不再有必填星号。
 - Browser 日志仍有既有 AntD deprecation warnings：`Alert.message`、`InputNumber.addonAfter`。
 
 回滚说明：
 
-- 如需回滚，恢复 `WorkingTimePlan` 的 timezone / 24x7 mode 字段、`WTP_24X7` mock 记录和 Skill Queue 工作时间方案必填校验，并移除 Ramadan Work Schedule 分区及相关样式。
+- 如需回滚，恢复 `WorkingTimePlan` 的 timezone / 24/7 mode 字段、`WTP_24X7` mock 记录和 Skill Queue 工作时间方案必填校验，并移除 Ramadan Work Schedule 分区及相关样式。
 
 当前风险点：
 
@@ -1554,7 +1595,7 @@
 
 修改原因：
 
-- 用户要求先解释并落地工作时间方案中的 `timezone` 与 `Default 24x7`，并参考附件将工作日、节假日、特殊工作计划拆开配置。
+- 用户要求先解释并落地工作时间方案中的 `timezone` 与 `Default 24/7`，并参考附件将工作日、节假日、特殊工作计划拆开配置。
 - 当前 demo 的 Working Time Plans 只是扁平文本字段，不足以表达真实 AICC 排班、节假日覆盖和特殊工作覆盖。
 
 修改结果：
@@ -1563,14 +1604,14 @@
 - 默认 mock 增加 `createdAt`、`updatedAt`、`description`、工作日规则、节假日规则和特殊工作计划示例。
 - `routingConfigStore` 对工作时间方案嵌套数组做深拷贝，避免编辑过程中污染初始 mock。
 - `Working Time Plans` 页面改为自定义管理页：查询区支持 Keyword / Timezone / Schedule Mode / Status，列表展示 Plan ID、Plan Name、Timezone、Schedule Mode、Description、Created Date、Updated Date、Status、Actions。
-- Add/Edit/View 弹框按 Basic Info、Work Schedule、Holiday Schedule、Special Working Plan 分区；24x7 模式显示全天候说明，Custom Schedule 模式展示规则行。
+- Add/Edit/View 弹框按 Basic Info、Work Schedule、Holiday Schedule、Special Working Plan 分区；24/7 模式显示全天候说明，Custom Schedule 模式展示规则行。
 - Custom Schedule 必须至少有一条 Work Schedule；日期和时间范围做合法性校验；被技能队列引用的方案删除仍受保护。
 
 验证：
 
 - `npm run lint` 通过。
 - `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
-- Browser `/routing-config/working-time-plans`：确认列表字段、Add 弹框、24x7 默认说明、Custom Schedule 分区和空自定义排班校验均可见。
+- Browser `/routing-config/working-time-plans`：确认列表字段、Add 弹框、24/7 默认说明、Custom Schedule 分区和空自定义排班校验均可见。
 - Browser 日志仍有既有 AntD deprecation warnings：`Alert.message`、`InputNumber.addonAfter`。
 
 回滚说明：
@@ -3098,7 +3139,7 @@
 - 新增一级菜单 `Routing Config`，二级页面包括 Route Elements、VDN、Sites、Channels、Channel Media、Media Types、Languages、Business Types、Site Access Volume、Access Accounts、Access Entries、Working Time Plans、Skill Queues、Skill Routing Rules。
 - `Call Management` 下只保留 `Text Channel Settings`；旧 `/call-management/routing-configuration` 改为重定向到 `/routing-config/route-elements`。
 - 新增 `routingConfigStore` 和通用 `RoutingConfigCrudPage`，普通配置页支持 Search / Add / View / Edit / Delete，本地状态刷新后恢复 mock。
-- Sites 类型、mock 和页面均移除 `timezone`；Working Time Plans 保留 `timezone` 并显示 `Default 24x7`。
+- Sites 类型、mock 和页面均移除 `timezone`；Working Time Plans 保留 `timezone` 并显示 `Default 24/7`。
 - 删除操作增加引用保护：被站点接入比例、路由规则、接入入口、技能队列等引用的记录不能直接删除。
 - Skill Routing Rules 独立页面支持批量新增、组合预览、重复组合展示、覆盖更新目标队列/优先级、未覆盖阻止保存、规则查看/编辑/删除和发布索引展示。
 
