@@ -6081,7 +6081,6 @@ export function SkillQueuesPage() {
           render: (value: boolean) => (value ? 'Yes' : 'No'),
         },
         { dataIndex: 'assignedAgentCount', title: 'Agents', width: 72 },
-        { dataIndex: 'status', title: 'Status', width: 100, render: renderRoutingStatus },
       ]}
       createDraft={() => ({
         assignedAgentCount: 0,
@@ -6114,7 +6113,7 @@ export function SkillQueuesPage() {
         queueWaitingMessage: stringValue(draft.queueWaitingMessage),
         skillQueueCode: stringValue(draft.skillQueueCode),
         skillQueueName: stringValue(draft.skillQueueName),
-        status: statusValue(draft.status),
+        status: 'Active',
         supportsVideo: booleanValue(draft.supportsVideo),
         vdnCode: stringValue(draft.vdnCode),
         workTimePlanCode: stringValue(draft.workTimePlanCode),
@@ -6144,13 +6143,6 @@ export function SkillQueuesPage() {
           type: 'select',
           width: 220,
         },
-        {
-          key: 'status',
-          label: 'Status',
-          options: statusFilterOptions,
-          type: 'select',
-          width: 200,
-        },
       ]}
       getDeleteBlockReason={(record) =>
         routingRules.some(
@@ -6172,7 +6164,6 @@ export function SkillQueuesPage() {
         queueWaitingMessage: record.queueWaitingMessage,
         skillQueueCode: record.skillQueueCode,
         skillQueueName: record.skillQueueName,
-        status: record.status,
         supportsVideo: record.supportsVideo ? 'true' : 'false',
         vdnCode: record.vdnCode,
         workTimePlanCode: record.workTimePlanCode,
@@ -6423,38 +6414,6 @@ export function SkillQueuesPage() {
             </label>
           )
         }
-        const renderStatusField = () => (
-          <label className="routing-config-crud-modal__field">
-            <span>
-              Status
-              {renderRequiredMark()}
-            </span>
-            {isReadOnly ? (
-              <em>
-                <RoutingConfigStatusBadge
-                  status={statusValue(draft.status)}
-                />
-              </em>
-            ) : (
-              <span className="routing-config-crud-modal__switch-row">
-                <Switch
-                  checked={statusValue(draft.status) === 'Active'}
-                  className="routing-config-status-switch"
-                  size="small"
-                  onChange={(checked) =>
-                    setDraftValue('status', checked ? 'Active' : 'Disabled')
-                  }
-                />
-                <em>
-                  {statusValue(draft.status) === 'Active'
-                    ? statusSwitchLabels.checked
-                    : statusSwitchLabels.unchecked}
-                </em>
-              </span>
-            )}
-          </label>
-        )
-
         return (
           <div className="routing-config-skill-queue-modal">
             <section className="routing-config-media-rule-modal__section">
@@ -6483,7 +6442,6 @@ export function SkillQueuesPage() {
                 {renderNumberField('assignedAgentCount', 'Assigned Agents', 'agents', {
                   readOnly: true,
                 })}
-                {renderStatusField()}
               </div>
             </section>
             <section className="routing-config-media-rule-modal__section">

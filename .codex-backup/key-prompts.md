@@ -821,3 +821,10 @@
 - 后续 Routing Config 调整从本地管理分支继续，不混入客户 AUX 发布分支。
 - `Routing Config > VDN` 和 `Routing Config > Access Sites` 本轮只从 UI 移除 `Status`：列表列、查询条件、Add/Edit/View 弹框字段都不显示。
 - VDN / Access Sites 的内部类型与 mock 仍保留 `status`，新增/编辑保存默认写 `Active`，避免影响 Skill Queues、Site Access Volume、Skill Routing Rules 引用。
+
+## 2026-06-05 Skill Queues 状态 UI 口径
+
+- `Routing Config > Skill Queues` 也先从 UI 移除 `Status`。
+- Skill Queues 列表不显示 Status 列，查询区不显示 Status 下拉，Add/Edit/View 弹框不显示 Status 控件。
+- `SkillQueue.status` 类型和 mock 暂时保留，新增/编辑保存默认写 `Active`，避免影响 Skill Routing Rules 引用。
+- 该调整只属于本地管理菜单分支，不应直接发布给客户。

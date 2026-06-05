@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-05 16:24 +08:00
+最后更新：2026-06-05 17:10 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,45 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-05 17:10 +08:00 - Skill Queues 去除状态 UI
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-05-1710.md`
+- `.codex-backup/current-todo-2026-06-05-1710.md`
+- `.codex-backup/page-state-2026-06-05-1710.md`
+
+修改原因：
+
+- 用户要求 `Routing Config > Skill Queues` 也先去除状态字段，与本轮 VDN / Access Sites 的简化口径保持一致。
+
+修改结果：
+
+- `Skill Queues` 列表移除 `Status` 列。
+- `Skill Queues` 查询区移除 `Status` 下拉，仅保留 `Keyword` 和 `VDN`。
+- `Skill Queues` Add/Edit/View 弹框移除 `Status` 控件。
+- 内部 `SkillQueue.status` 类型和 mock 暂不删除；新增/编辑保存时继续写入 `Active`，避免影响 Skill Routing Rules 的目标技能队列引用。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning，本次还出现一次 Vite plugin timing 提示。
+- Browser 本地 DOM 检查 `/routing-config/skill-queues`：主页面表头和筛选区不再出现 `Status`，表头为 Skill ID、Platform Skill ID、Skill Name、VDN、Work Time Plan、Max Queue Customers、Queue Timeout、Supports Video、Agents、Actions。
+- Browser 点击 Add 弹框时浏览器控制连接超时；源码 diff 已确认弹框 `renderStatusField` 和调用已删除，且 lint/build 均通过。
+
+回滚说明：
+
+- 如需恢复 Skill Queues 状态 UI，可把 `Status` 列、Status filter、`recordToDraft.status`、`draftToRecord` 的 `statusValue(draft.status)` 和 `renderStatusField()` 调用加回。
+
+当前风险点：
+
+- `SkillQueue.status` 仍保留并默认写入 `Active`；如果后续真实后端需要维护技能队列启停，需要重新确认该字段是否应该由工程脚本、隐藏配置或其它页面维护。
+- 当前分支仍是本地管理菜单分支，不应直接发布给客户。
 
 ### 2026-06-05 16:24 +08:00 - 发布客户 AUX 弹框并移除 VDN / Access Sites 状态 UI
 
