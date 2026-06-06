@@ -2,10 +2,12 @@ import {
   AppstoreOutlined,
   BarChartOutlined,
   BellOutlined,
+  BranchesOutlined,
   ExclamationCircleOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   MessageOutlined,
+  PhoneOutlined,
   SearchOutlined,
   SettingOutlined,
   UserOutlined,
@@ -13,7 +15,7 @@ import {
 import { Badge, Layout } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { headerAgentProfile } from '../mock/agent'
 import { useAppStore } from '../store'
 import type {
@@ -64,6 +66,26 @@ const initialCallTiming: CallTiming = {
   accumulatedHoldSeconds: 0,
   accumulatedMuteSeconds: 0,
 }
+
+const routingConfigRoutesByMenuKey: Record<string, string> = {
+  'routing-route-elements': '/routing-config/route-elements',
+  'routing-vdn': '/routing-config/vdn',
+  'routing-sites': '/routing-config/sites',
+  'routing-channel-types': '/routing-config/channel-types',
+  'routing-channels': '/routing-config/channels',
+  'routing-business-types': '/routing-config/business-types',
+  'routing-skill-queues': '/routing-config/skill-queues',
+  'routing-site-access-volume': '/routing-config/site-access-volume',
+  'routing-skill-routing-rules': '/routing-config/skill-routing-rules',
+  'routing-working-time-plans': '/routing-config/working-time-plans',
+}
+
+const routingConfigMenuKeyByRoute = Object.fromEntries(
+  Object.entries(routingConfigRoutesByMenuKey).map(([menuKey, path]) => [
+    path,
+    menuKey,
+  ]),
+) as Record<string, string>
 
 const sideMenuItems: SideMenuItem[] = [
   {
@@ -116,6 +138,72 @@ const sideMenuItems: SideMenuItem[] = [
     ],
   },
   {
+    key: 'call-management',
+    icon: <PhoneOutlined className="aicc-sider__menu-phone-icon" />,
+    label: 'Call Management',
+    children: [
+      {
+        key: 'call-global-control-configuration',
+        label: 'Global Control Configuration',
+      },
+      {
+        key: 'call-busy-reasons',
+        label: 'Busy Reason Management',
+      },
+      {
+        key: 'call-text-channel-settings',
+        label: 'Text Channel Settings',
+      },
+    ],
+  },
+  {
+    key: 'routing-config',
+    icon: <BranchesOutlined />,
+    label: 'Routing Config',
+    children: [
+      {
+        key: 'routing-route-elements',
+        label: 'Route Elements',
+      },
+      {
+        key: 'routing-vdn',
+        label: 'VDN',
+      },
+      {
+        key: 'routing-sites',
+        label: 'Access Sites',
+      },
+      {
+        key: 'routing-channel-types',
+        label: 'Channel Types',
+      },
+      {
+        key: 'routing-channels',
+        label: 'Channels',
+      },
+      {
+        key: 'routing-business-types',
+        label: 'Business Types',
+      },
+      {
+        key: 'routing-skill-queues',
+        label: 'Skill Queues',
+      },
+      {
+        key: 'routing-site-access-volume',
+        label: 'Site Access Volume',
+      },
+      {
+        key: 'routing-skill-routing-rules',
+        label: 'Skill Routing Rules',
+      },
+      {
+        key: 'routing-working-time-plans',
+        label: 'Working Time Plans',
+      },
+    ],
+  },
+  {
     key: 'reports',
     icon: <BarChartOutlined />,
     label: 'Reports',
@@ -124,6 +212,7 @@ const sideMenuItems: SideMenuItem[] = [
 
 export function BasicLayout() {
   const navigate = useNavigate()
+  const location = useLocation()
   const collapsed = useAppStore((state) => state.collapsed)
   const activeLiveChatSessionIds = useAppStore(
     (state) => state.activeLiveChatSessionIds,
@@ -236,6 +325,17 @@ export function BasicLayout() {
     callHandoffNotice.reason === 'active-call'
       ? 'Active call in progress. Please hang up and wait until the agent is Ready before accepting another voice or video interaction.'
       : 'Agent is not Ready. Please switch to Ready before accepting another voice or video interaction.'
+  const routeSelectedMenuKey =
+    location.pathname === '/call-management/routing-configuration'
+      ? 'routing-route-elements'
+      : location.pathname === '/call-management/global-control-configuration'
+        ? 'call-global-control-configuration'
+        : location.pathname === '/call-management/busy-reasons'
+          ? 'call-busy-reasons'
+          : location.pathname === '/call-management/text-channel-settings'
+            ? 'call-text-channel-settings'
+            : routingConfigMenuKeyByRoute[location.pathname] ?? null
+  const activeMenuKey = routeSelectedMenuKey ?? selectedMenuKey
 
   const showCallHandoffNotice = useCallback(
     (reason: CallHandoffNoticeReason) => {
@@ -664,6 +764,23 @@ export function BasicLayout() {
         requestWhatsAppDemoWorkspace()
       }
 
+      if (childKey === 'call-text-channel-settings') {
+        navigate('/call-management/text-channel-settings')
+      }
+
+      if (childKey === 'call-global-control-configuration') {
+        navigate('/call-management/global-control-configuration')
+      }
+
+      if (childKey === 'call-busy-reasons') {
+        navigate('/call-management/busy-reasons')
+      }
+
+      const routingConfigPath = routingConfigRoutesByMenuKey[childKey]
+
+      if (routingConfigPath) {
+        navigate(routingConfigPath)
+      }
     },
     [
       navigate,
@@ -886,12 +1003,16 @@ export function BasicLayout() {
               const hasChildren = Boolean(item.children?.length)
               const isOpen =
                 openMenuKeys.includes(item.key) ||
+                (Boolean(routeSelectedMenuKey?.startsWith('call-')) &&
+                  item.key === 'call-management') ||
+                (Boolean(routeSelectedMenuKey?.startsWith('routing-')) &&
+                  item.key === 'routing-config') ||
                 Boolean(menuSearchQuery.trim())
               const isSelected =
-                selectedMenuKey === item.key ||
+                activeMenuKey === item.key ||
                 Boolean(
                   item.children?.some(
-                    (childItem) => childItem.key === selectedMenuKey,
+                    (childItem) => childItem.key === activeMenuKey,
                   ),
                 )
 
@@ -939,7 +1060,7 @@ export function BasicLayout() {
                       {item.children?.map((childItem) => (
                         <button
                           className={`aicc-sider__menu-button aicc-sider__menu-button--child ${
-                            selectedMenuKey === childItem.key
+                            activeMenuKey === childItem.key
                               ? 'aicc-sider__menu-button--selected'
                               : ''
                           }`}
@@ -963,7 +1084,7 @@ export function BasicLayout() {
                       {item.children?.map((childItem) => (
                         <button
                           className={`aicc-sider__flyout-item ${
-                            selectedMenuKey === childItem.key
+                            activeMenuKey === childItem.key
                               ? 'aicc-sider__flyout-item--selected'
                               : ''
                           }`}

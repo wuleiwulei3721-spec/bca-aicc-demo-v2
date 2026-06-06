@@ -1,6 +1,14 @@
 ﻿# Key Prompts
 
-最后更新：2026-06-05 19:34 +08:00
+最后更新：2026-06-06 10:46 +08:00
+
+## 2026-06-06 内部管理分支整合口径
+
+- `main` 是客户安全发布线，继续隐藏 `Call Management` 与 `Routing Config` 菜单和直达 URL。
+- `codex/admin-config-latest` 是当前本地内部管理分支，已整合最新客户功能和本地管理菜单改造。
+- 后续继续改呼叫管理、路由策略、渠道、技能队列、工作时间方案时，应基于 `codex/admin-config-latest`，不要在客户安全分支上直接打开管理菜单。
+- 右上角 AUX 弹框使用 Busy Reason 数据源，但只展示启用原因；管理端 `Busy Reason Management` 可维护原因、默认值与状态。
+- Routing Config 的默认全天候工作时间展示采用海外标准 `Default 24/7`；空 `workTimePlanCode` 仍表示默认全天候，不新增真实默认方案记录。
 
 ## 项目方向
 
@@ -65,19 +73,19 @@
 ## 2026-06-03 Working Time Plans 印尼排班口径
 
 - 本项目暂按印尼单国家场景处理，`Working Time Plans` 不展示或维护 `timezone`；后续如扩展多国家/多时区，再把时区加回工作时间方案层。
-- `Working Time Plans` 只维护自定义方案，不维护真实 `Default 24x7` 记录。
-- `Skill Queues` 的 `Work Time Plan` 非必填；空值必须在列表、详情和弹框中明确显示为 `Default 24x7`，不能让用户误以为空白漏配。
+- `Working Time Plans` 只维护自定义方案，不维护真实 `Default 24/7` 记录。
+- `Skill Queues` 的 `Work Time Plan` 非必填；空值必须在列表、详情和弹框中明确显示为 `Default 24/7`，不能让用户误以为空白漏配。
 - 弹框必须分为 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan。
 - 列表字段当前为 Plan ID、Plan Name、Description、Updated Date、Updated By、Status、Actions；Work Schedule 和 Ramadan Period 不在列表展示。
 - 弹框分区仍保留普通卡片容器；排班行本身不要每行外边框、卡片背景或横向分隔线。
 - Work/Ramadan/Holiday/Special 的 Add 按钮放在分区标题右上角；按钮文案使用 `Add`，不使用 `Add Row`；Ramadan 未启用时不显示 Add。
 - 多行排班只第一行显示字段名，后续行不重复显示字段名。
 - Holiday Schedule 不展示 `Closed` / `Closed All Day` 开关；字段为 Start Date、End Date、Holiday Name、Start、End。Holiday 表示非工作覆盖，全天非工作可用 `00:00-23:59` 表达。
-- Working Time Plans 弹框底部只展示优先级：`Priority: Special Working Plan > Holiday Schedule > Ramadan Work Schedule > Work Schedule.`；不要在该页解释 Skill Queue 未选择方案时的 `Default 24x7`。
+- Working Time Plans 弹框底部只展示优先级：`Priority: Special Working Plan > Holiday Schedule > Ramadan Work Schedule > Work Schedule.`；不要在该页解释 Skill Queue 未选择方案时的 `Default 24/7`。
 - Holiday / Special 排班行列宽使用 `150px 150px minmax(360px, 1fr) 120px 120px 30px`，让 Holiday Name / Reason 吃掉剩余空间，使 Start/End 时间列与 Work/Ramadan 排班行对齐。
 - Ramadan、Holiday、Special 的日期字段使用 AntD DatePicker，避免浏览器原生日期控件跟随系统语言显示中文。
 - Ramadan Work Schedule 放在 Work Schedule 后面；一个方案配置一个 Ramadan date range，日期段下配置工作日多选和时间范围，支持 Copy from Work Schedule。
-- 运行时优先级口径：未选择工作时间方案时直接 Default 24x7；选择自定义方案后按 Special Working Plan > Holiday Schedule > Ramadan Work Schedule > Work Schedule 判断；已选择方案但不命中工作规则时为非工作时间。
+- 运行时优先级口径：未选择工作时间方案时直接 Default 24/7；选择自定义方案后按 Special Working Plan > Holiday Schedule > Ramadan Work Schedule > Work Schedule 判断；已选择方案但不命中工作规则时为非工作时间。
 - Holiday Schedule 表示非工作覆盖；Special Working Plan 表示临时开工、加班或节假日营业等最高优先级覆盖。
 - 自定义方案至少需要一条 Work Schedule；Ramadan 启用后必须配置日期段和 Ramadan 工作时间；日期、时间范围必须合法。
 - 被 Skill Queue 引用的 Working Time Plan 不能直接删除，只能先解除引用或禁用。
@@ -611,11 +619,11 @@
 - `VDN` 是技能队列维护字段，选项来自 `VDN配置` 主数据；新增/编辑时为必填单选下拉，列表展示 VDN 名称。
 - 被技能队列引用的 VDN 不能直接删除；`VDN配置` 删除保护需要检查技能队列引用。
 - Skill Queues 表格不要强制横向滚动；列宽应保持管理台紧凑密度。
-- `Work Time Plan` 列表和弹框下拉展示工作时间方案名称，不直接展示方案编码；未选择方案时展示 `Default 24x7`。
+- `Work Time Plan` 列表和弹框下拉展示工作时间方案名称，不直接展示方案编码；未选择方案时展示 `Default 24/7`。
 - `Supports Video` 使用 `No / Yes`，默认 `No`。
 - `Max Queue Size` 默认 `60`，范围 `1-60000`，单位按字段语义展示为 `items`。
 - `Queue Timeout` 默认 `100`，范围 `0-10000`，单位按字段语义展示为 `sec`。
-- 弹框中除 `Work Time Plan` 外的可维护字段保持必填；`Platform Skill ID` 需要保存校验，`Work Time Plan` 空值表示 `Default 24x7`。
+- 弹框中除 `Work Time Plan` 外的可维护字段保持必填；`Platform Skill ID` 需要保存校验，`Work Time Plan` 空值表示 `Default 24/7`。
 - `Assigned Agents` 不是输入字段；弹框中只读禁用展示。
 - 弹框不展示 `Queue Prompts`；新增记录使用默认 prompt，编辑记录保留原 prompt。
 - `Routing Method` 不在列表和弹框展示；`SkillQueue` 类型和 mock 数据不再保留 `routingMethod` 字段。

@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-05 20:07 +08:00
+最后更新：2026-06-06 10:46 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：在 `codex/livechat-current-empty-state` 上修复正式 Live Chat 文字弹屏 Current 客户清空后的右侧空态；Sign In 后 Live Chat 默认预设两个 Current 客户，其中 `livechat2-005` 为客户主动挂机待坐席关闭；Current 为空时右侧显示当前无客户接入空态，不再自动 fallback 到 History 客户详情。此前客户身份刷新、接入时长冻结和客户卡片 `Menu` 最后菜单提示已发布到 `main`。
+当前目标：在 `codex/admin-config-latest` 上整合本地内部管理菜单和已发布客户功能；`main` 继续作为客户安全版本，隐藏 `Call Management` / `Routing Config`，本分支打开两级管理菜单用于继续维护呼叫管理与路由策略配置。
 
 ## 0. 使用规则
 
@@ -40,8 +40,8 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`codex/livechat-current-empty-state`
-当前 HEAD：以 `git rev-parse HEAD` 为准；本分支从 `main` 创建，保留客户 Production 口径：主工作台、Channel Simulation、BankApp、WhatsApp、PSTN、Voice/Video handoff、正式 Live Chat 和 Design System 可用，`Call Management` 与 `Routing Config` 菜单及其直达 URL 继续屏蔽。本分支新增客户可见的来电弹屏客户身份刷新能力。
+当前分支：`codex/admin-config-latest`
+当前 HEAD：以 `git rev-parse HEAD` 为准；本分支从最新 `main` 创建并合入 `codex/routing-vdn-sites-remove-status`，保留客户 AUX、客户身份刷新、Live Chat Current 空态等已发布客户功能，同时恢复本地内部 `Call Management` 与 `Routing Config` 管理菜单和直达路由。本分支不用于客户 Production 发布。
 部署目标：Vercel Production 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -118,7 +118,7 @@ codex-recovered-context.md
 - `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`：正式 `Live Chat` Conversation tab 内容，包含消息记录、快捷回复、引用、撤回、Transfer、End/Close 和发送消息演示。
 - `src/pages/call-management/RoutingConfigurationPage.tsx`：旧路由配置入口兼容组件，重定向到 `/routing-config/route-elements`。
 - `src/pages/routing-config/RoutingConfigCrudPage.tsx`：Routing Config 普通主数据页复用的本地 CRUD 容器，提供 Search / Add / View / Edit / Delete 弹窗表单。
-- `src/pages/routing-config/RoutingConfigDataPages.tsx`：Routing Config 主数据独立配置页，覆盖 Route Elements、VDN、Sites、Channels、Media Service Rule Plans、Business Types、Site Access Volume、Access Accounts、Working Time Plans、Skill Queues；Channels 已支持按媒体引用服务规则方案，Media Service Rule Plans 当前完整维护 Text 媒体服务规则；Working Time Plans 已改为印尼单国家自定义排班编辑器，包含 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan，Skill Queues 未选择方案时展示 `Default 24x7`。
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`：Routing Config 主数据独立配置页，覆盖 Route Elements、VDN、Access Sites、Channel Type Management、Channels、Business Types、Skill Queues、Site Access Volume、Skill Routing Rules、Working Time Plans；Access Accounts 与 Media Service Rule Plans 直达路由已回到 Channels；VDN、Access Sites、Skill Queues 当前 UI 不展示 Status；Skill Queues 未选择工作时间方案时展示 `Default 24/7`。
 - `src/pages/routing-config/SkillRoutingRulesPage.tsx`：独立技能路由规则页，支持按启用路由要素多选查询、规则列表要素拆列、批量新增拆分预览、重复组合勾选覆盖、规则查看/编辑/删除。
 - `src/pages/routing-config/RoutingConfigStatusBadge.tsx`：Routing Config 状态 badge 组件，避免页面组件导出非组件函数触发 Fast Refresh lint。
 - `src/pages/call-management/TextChannelSettingsPage.tsx`：数据呼叫管理下的文字渠道配置页，包含 Service Rules、Customer Timeout & Messages、Channel Queue Alerts 三组配置。
@@ -127,7 +127,7 @@ codex-recovered-context.md
 - `src/pages/inbound/components/ChannelTag.tsx`：统一渠道标签，Customer Information 中可合并展示静态渠道接入耗时，例如 `PSTN · 05:23`、`BankApp · 02:11`。
 - `src/pages/DesignSystem.tsx`：设计系统展示页。
 - `src/store/appStore.ts`：workspace tab、BankApp demo tab、WhatsApp demo tab、Live Chat 聚焦/已读状态、多 `CallInteraction` 通话实例、voice/video handoff readiness、interaction timing 和 demo-only screen share 全局状态；`createLiveChat2HandoffSession()` 会保留来源 session 的 `customer.accessDuration`，不把客户卡片接入时长重置或改成服务时长；`setLiveChatTabOpen(true)` 在干净签入周期内预设 `livechat2-001` 和客户主动挂机的 `livechat2-005` 作为 Current 演示客户。
-- `src/store/callManagementStore.ts`：客户分支最小 Call Management 前端 store，目前只提供示忙原因列表给右上角 AUX 选择弹框使用，不暴露管理页面或维护能力。
+- `src/store/callManagementStore.ts`：Call Management 前端 store，提供示忙原因列表给右上角 AUX 选择弹框使用，并支持内部 `Busy Reason Management` 页面编辑维护；启用状态的示忙原因才会出现在 AUX 弹框中。
 - `src/hooks/useNow.ts`：前端运行时每秒 tick hook，用于 workspace tab 和 Live Chat 列表计时刷新。
 - `src/mock/bankapp.ts`：BankApp 联系方式、业务类型、客户身份/语言驱动的技能路由和截图素材路径配置。
 - `src/mock/inbound.ts`：Inbound 演示数据；包含未识别 PSTN 初始客户、身份刷新演示 ID `00000078987` 和 `lookupCustomerIdentityRefresh()` mock 查询 helper。
@@ -161,8 +161,8 @@ codex-recovered-context.md
 
 - `BasicLayout` 是所有页面的壳，包含顶部 Header、坐席状态、话务工具条、侧栏和内容区。
 - `AgentWorkspace` 默认显示 Home tab。
-- 客户预览发布版暂不显示 `Call Management` 和 `Routing Config` 两个一级菜单，直接访问 `/call-management/*` 或 `/routing-config/*` 也会回到 `/`。
-- `Call Management`、`Routing Config` 相关源码、mock、store 和类型仍保留在仓库中，用于后续继续开发；本轮没有删除功能代码。
+- 当前内部管理分支显示 `Call Management` 和 `Routing Config` 两个一级菜单，直达 `/call-management/*` 与 `/routing-config/*` 可进入对应本地管理页面。
+- 客户安全发布线仍以 `main` 为准，`main` 继续隐藏 `Call Management` / `Routing Config` 菜单和直达 URL；不要把本分支直接发布给客户。
 - 点击左侧 `Channel Simulation > BankApp` 会打开可关闭的 `BankApp Demo` tab，用于演示客户在 BankApp 内选择文字、语音或视频服务后进入 AICC；BankApp Demo tab 在切到坐席工作台时保持挂载，返回后不会重置当前步骤。
 - 点击左侧 `Channel Simulation > WhatsApp` 会打开可关闭的 `WhatsApp Demo` tab；当前使用用户提供的脱敏 WhatsApp 原图，并在第三步后切到 Live Chat 坐席工作台查看 WhatsApp 接入会话。
 - 坐席点击右上角 `Sign In` 后，`Live Chat` tab 会固定插入 Home tab 旁边，`closable: false`，用于承载实时文字聊天工作台。
@@ -190,7 +190,7 @@ codex-recovered-context.md
 - 顶部蓝色渐变 BANK 1 Header，恢复旧版主工作台视觉。
 - 可展开/收起左侧系统菜单，默认收起，`collapsedWidth` 为 `48px`，展开宽度使用 `--aicc-layout-sider-width`。
 - 左侧菜单支持 2 层级：展开态顶部显示折叠按钮与菜单搜索框，点击一级菜单在下方展开二级菜单；收起态仅显示一级图标，鼠标悬浮在一级图标时在右侧显示二级菜单浮层，鼠标移出浮层或点击菜单后浮层关闭。
-- 当前侧栏菜单使用英文企业呼叫中心文案：Channel Simulation（PSTN、BankApp、WhatsApp）、Agent Center（Agent Profile、Service History）、Operations（Alert KPI Management、Floor Management）、Reports。客户预览发布版暂不展示 `Call Management` 和 `Routing Config`。
+- 当前侧栏菜单使用英文企业呼叫中心文案：Channel Simulation（PSTN、BankApp、WhatsApp）、Call Management、Routing Config、Agent Center（Agent Profile、Service History）、Operations（Alert KPI Management、Floor Management）、Reports；本分支用于内部管理配置，不作为客户安全发布线。
 - Agent Toolbar：Answer、Hold、Mute、Transfer、Hang Up、More；电话/视频呼入时可在动作按钮最左侧展示 incoming identification；More 菜单点击打开，包含 Outbound Call 与 Settings。
 - Agent Profile Area：Signed out 时菜单只显示 `Sign In`；Signed in 后菜单显示单个 `AUX` 入口与 `Sign Out`。点击 `AUX` 会打开 `Select AUX Reason` 弹框，仅列出启用示忙原因，默认选中配置默认项，点击 `Confirm` 后切换为 `AUX - {reasonName}`。头像右下状态点使用 `effectiveAgentPresence`，由坐席状态和活跃客户互动共同决定。
 - Notifications 和 Internal Chat 入口。
@@ -576,8 +576,8 @@ Live Chat 当前 mock：
 截至 2026-06-04 11:02 +08:00，本轮调整 `Routing Config > Working Time Plans` 提示文案与排班行宽：
 
 - Working Time Plans 弹框底部提示只保留优先级：`Priority: Special Working Plan > Holiday Schedule > Ramadan Work Schedule > Work Schedule.`
-- 移除 `Empty Skill Queue plan means Default 24x7.`，避免把 Skill Queue 未引用工作时间方案的默认规则放在工作时间方案维护页解释。
-- `Default 24x7` 仍保留在 Skill Queues 的 Work Time Plan 空值展示中，本轮不全局改成 `Default 24/7`。
+- 移除 `Empty Skill Queue plan means Default 24/7.`，避免把 Skill Queue 未引用工作时间方案的默认规则放在工作时间方案维护页解释。
+- `Default 24/7` 仍保留在 Skill Queues 的 Work Time Plan 空值展示中，本轮不全局改成 `Default 24/7`。
 - Holiday / Special 排班行 grid 后续在 11:16 修正为 `150px 150px minmax(360px, 1fr) 120px 120px 30px`，让 Start 列与 Work/Ramadan 行对齐。
 - 不改变字段、校验、保存逻辑或数据结构。
 
@@ -585,7 +585,7 @@ Live Chat 当前 mock：
 
 - `npm run lint` 通过。
 - `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
-- Browser `/routing-config/working-time-plans`：确认页面正常渲染，列表页不出现 `Empty Skill Queue plan means Default 24x7`。
+- Browser `/routing-config/working-time-plans`：确认页面正常渲染，列表页不出现 `Empty Skill Queue plan means Default 24/7`。
 - 源码扫描确认弹框优先级提示已更新，旧文案不再存在。
 
 截至 2026-06-04 10:38 +08:00，本轮调整 `Routing Config > Skill Routing Rules` Batch Add 重复规则区：
@@ -731,7 +731,7 @@ Live Chat 当前 mock：
 - 列表不再展示 Work Schedule 和 Ramadan Period；这些详细排班只留在 View/Edit 弹框中维护。
 - `WorkingTimePlan` 类型和 mock 新增 `updatedBy`；新增/编辑保存时默认写入 `Admin`，用于前端 demo 展示更新人。
 - 弹框样式从上一轮紧凑表格式行回退为普通分区卡片和字段行；Work/Ramadan/Holiday/Special 的每行字段恢复独立 label，不再使用表头式 `Weekdays / Start / End` 网格。
-- 本轮不改变 15:57 确认的业务规则：无 timezone、无真实 Default 24x7 记录、Skill Queue 空工作时间方案显示 Default 24x7、Ramadan Work Schedule 作为常规工作日日期段覆盖。
+- 本轮不改变 15:57 确认的业务规则：无 timezone、无真实 Default 24/7 记录、Skill Queue 空工作时间方案显示 Default 24/7、Ramadan Work Schedule 作为常规工作日日期段覆盖。
 
 本轮验证：
 
@@ -742,12 +742,12 @@ Live Chat 当前 mock：
 截至 2026-06-03 15:57 +08:00，本轮调整 `Routing Config > Working Time Plans` 与 `Skill Queues` 的工作时间口径：
 
 - 本项目当前按印尼单国家场景处理，`WorkingTimePlan` 类型、mock、查询区、列表和弹框均移除 `timezone`；后续如果扩展多国家/多时区，再把时区加回工作时间方案层。
-- `Working Time Plans` 只维护自定义工作时间方案，不再维护真实 `Default 24x7` 方案记录；默认 mock 删除 `WTP_24X7`。
-- `Skill Queues` 的 `Work Time Plan` 改为非必填；未选择方案时内部保存空字符串，列表、详情和弹框明确展示 `Default 24x7`。
+- `Working Time Plans` 只维护自定义工作时间方案，不再维护真实 `Default 24/7` 方案记录；默认 mock 删除 `WTP_24X7`。
+- `Skill Queues` 的 `Work Time Plan` 改为非必填；未选择方案时内部保存空字符串，列表、详情和弹框明确展示 `Default 24/7`。
 - `WorkingTimePlan` 类型新增 `ramadanSchedule`，包含 `enabled`、`dateFrom`、`dateTo` 和 Ramadan 专属 `workSchedules`。
 - Working Time Plans 列表改为 `Keyword / Status` 查询，字段为 Plan ID、Plan Name、Work Schedule、Ramadan Period、Updated Date、Status、Actions，不展示 Timezone、Schedule Mode、Created Date。
 - Add/Edit/View 弹框按 `Basic Info / Work Schedule / Ramadan Work Schedule / Holiday Schedule / Special Working Plan` 分区；Ramadan 默认可见标题并由开关启用，启用后配置一个日期段和工作日时间，可一键 Copy from Work Schedule。
-- 排班运行时口径更新为：未选择工作时间方案时直接 `Default 24x7`；选择方案后按 `Special Working Plan > Holiday Schedule > Ramadan Work Schedule > Work Schedule` 判断；已选择方案但不命中任何工作规则时视为非工作时间。
+- 排班运行时口径更新为：未选择工作时间方案时直接 `Default 24/7`；选择方案后按 `Special Working Plan > Holiday Schedule > Ramadan Work Schedule > Work Schedule` 判断；已选择方案但不命中任何工作规则时视为非工作时间。
 - 行录入从大卡片改为紧凑表格行，控件高度统一为 32px，减少线框和大面积背景。
 - 校验规则为：自定义方案至少一条 Work Schedule；Ramadan 启用后必须填写日期段并至少一条 Ramadan 工作时间；日期起始不能晚于结束，时间起始必须早于结束；被技能队列引用的自定义方案不能直接删除。
 
@@ -755,8 +755,8 @@ Live Chat 当前 mock：
 
 - `npm run lint`：通过。
 - `npm run build`：通过；仍只有既有 Vite/Rolldown chunk size warning。
-- Browser `/routing-config/working-time-plans`：确认列表不再显示 Timezone / Schedule Mode / Default 24x7 真实记录，Add 弹框包含 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan；启用 Ramadan 后显示 Start Date、End Date、Copy from Work Schedule。
-- Browser `/routing-config/skill-queues`：确认列表和 Add 弹框均可见 `Default 24x7`，`Work Time Plan` 不再有必填星号，`Routing Method` 未回流。
+- Browser `/routing-config/working-time-plans`：确认列表不再显示 Timezone / Schedule Mode / Default 24/7 真实记录，Add 弹框包含 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan；启用 Ramadan 后显示 Start Date、End Date、Copy from Work Schedule。
+- Browser `/routing-config/skill-queues`：确认列表和 Add 弹框均可见 `Default 24/7`，`Work Time Plan` 不再有必填星号，`Routing Method` 未回流。
 - Browser 日志仍有既有 AntD deprecation warnings：`Alert.message`、`InputNumber.addonAfter`。
 
 截至 2026-06-03 14:36 +08:00，本轮继续调整 `Routing Config > Skill Routing Rules` 查询工具栏：
@@ -1001,12 +1001,12 @@ Live Chat 当前 mock：
 截至 2026-06-03 00:54 +08:00，本轮调整 `Routing Config > Skill Queues`：
 
 - 查询区改为 `Keyword + Status`；Keyword 同时匹配 `Skill ID`、`Platform Skill ID`、`Skill Name`。
-- 列表 `Work Time` 改为 `Work Time Plan`，展示工作时间方案名称；未选择自定义方案时展示 `Default 24x7`，不直接显示方案编码。
+- 列表 `Work Time` 改为 `Work Time Plan`，展示工作时间方案名称；未选择自定义方案时展示 `Default 24/7`，不直接显示方案编码。
 - 列表新增 `Supports Video` 字段，展示 `Yes / No`。
 - `Max Queue Size` 列表展示带单位 `items`；`Queue Timeout` 列表展示带单位 `sec`。
 - 新增默认值调整为 `Max Queue Size = 60 items`、`Queue Timeout = 100 sec`、`Supports Video = No`。
 - `Max Queue Size` 范围校验为 `1-60000`；`Queue Timeout` 范围校验为 `0-10000`。
-- 弹框大部分可维护字段标记必填；`Platform Skill ID` 纳入保存校验，`Work Time Plan` 不必填，空值表示 `Default 24x7`。
+- 弹框大部分可维护字段标记必填；`Platform Skill ID` 纳入保存校验，`Work Time Plan` 不必填，空值表示 `Default 24/7`。
 - 弹框去掉 `Routing Method` 字段，并从 `SkillQueue` 类型和 mock 数据中移除 `routingMethod`。
 - 弹框保留 `Assigned Agents`，但作为禁用只读字段展示，不允许新增/编辑时输入。
 - `SkillQueue` 类型和 mock 数据新增 `supportsVideo: boolean`。
@@ -1274,7 +1274,7 @@ Live Chat 当前 mock：
 - 新增一级菜单 `Routing Config`，二级菜单进入 Route Elements、VDN、Sites、Channels、Channel Media、Media Types、Languages、Business Types、Site Access Volume、Access Accounts、Access Entries、Working Time Plans、Skill Queues、Skill Routing Rules。
 - `/call-management/routing-configuration` 改为兼容重定向到 `/routing-config/route-elements`；`Call Management` 下只保留 `Text Channel Settings`。
 - 新增 `src/pages/routing-config/*` 页面和 `routingConfigStore`，普通配置页统一提供 Search / Add / View / Edit / Delete，本地 demo 状态刷新后恢复 mock。
-- Sites 页从类型、mock 和页面移除 `timezone`；当前印尼单国家场景下 Working Time Plans 也不维护 `timezone`，技能队列未选择工作时间方案时显示 `Default 24x7`。
+- Sites 页从类型、mock 和页面移除 `timezone`；当前印尼单国家场景下 Working Time Plans 也不维护 `timezone`，技能队列未选择工作时间方案时显示 `Default 24/7`。
 - 删除操作增加引用保护：被路由规则、站点接入比例、接入入口、技能队列等引用的主数据不能直接删除，只能先移除依赖或禁用。
 - Skill Routing Rules 拆为独立页面，保留批量新增、组合预览、重复组合展示、覆盖更新目标队列/优先级、未覆盖时阻止保存；规则编辑只允许改目标技能队列、优先级和状态。
 - 保留 `route_factor` 抽象、`channel_media` 拆分、`routing_rule_condition` 和 `routing_rule_index` 思路；Channel Media 作为独立二级配置页承载渠道 + 媒体配置。
@@ -2462,7 +2462,7 @@ P0：
 - 人工复查 `Routing Config` 精简结果：Channel Media、Media Types、Languages、Access Entries 不再出现在菜单中，旧 URL 不再进入旧页面。
 - 人工复查 `Routing Config > Access Accounts`：账号列表支持 Keyword / Channel / Status 查询；Channel 下拉不包含 Phone；新增/编辑弹框按渠道动态展示结构化字段且不再显示 `Channel-specific Config` 文本域。
 - 人工复查 `Routing Config` 各 CRUD 页：Search / Add / View / Edit / Delete 弹窗、状态字段、引用删除保护、本地保存提示符合演示口径。
-- 人工复查 `Routing Config > Sites` 和 `Working Time Plans` 均不再显示 timezone；`Working Time Plans` 不显示真实 `Default 24x7` 记录，支持 Basic Info / Work Schedule / Ramadan Work Schedule / Holiday Schedule / Special Working Plan 分区维护；弹框底部只显示优先级提示，不解释 Skill Queue 空工作时间方案；Holiday Name / Reason 列使用剩余空间，Holiday/Special 的 Start 时间列应与 Work/Ramadan 行 Start 列对齐；`Skill Queues` 未选择工作时间方案时显示 `Default 24x7`。
+- 人工复查 `Routing Config > Sites` 和 `Working Time Plans` 均不再显示 timezone；`Working Time Plans` 不显示真实 `Default 24/7` 记录，支持 Basic Info / Work Schedule / Ramadan Work Schedule / Holiday Schedule / Special Working Plan 分区维护；弹框底部只显示优先级提示，不解释 Skill Queue 空工作时间方案；Holiday Name / Reason 列使用剩余空间，Holiday/Special 的 Start 时间列应与 Work/Ramadan 行 Start 列对齐；`Skill Queues` 未选择工作时间方案时显示 `Default 24/7`。
 - 人工复查 `Routing Config > Skill Routing Rules`：查询区按启用路由要素多选 + Target Skill Queue + Status 展示且要素下拉无 All/Empty；Search/Reset 属于左侧查询操作组，`Batch Add` 作为右侧独立主操作按钮；列表为 Rule ID + 启用要素独立列 + Target Skill Queue / Updated Date / Updated By / Status；Batch Add 的 `Duplicate Routing Rules` 只展示重复规则，勾选覆盖原技能队列，取消勾选保留原配置，新组合保存时仍正常新增。
 - 人工复查所有 Routing Config 横向滚动表格：Actions / 操作列应固定在右侧，横向滚动只作用于非操作列。
 - 人工复查 `Call Management` 只保留 `Text Channel Settings`，旧 `/call-management/routing-configuration` 链接重定向到 `Routing Config > Route Elements`。
@@ -2546,7 +2546,16 @@ P2：
 - 如客户后续要求真正多路同时通话，需要在 `v0.6.x` 或新主版本中进一步拆分话务条状态机；当前 `v0.6.0` 仍保持单 active call。
 - 如 Vite chunk warning 影响部署评分，再考虑 code splitting。
 
-## 13. 关键 prompt 摘要
+## 13. 2026-06-06 内部管理分支整合状态
+
+- `codex/admin-config-latest` 是当前唯一建议继续修改 `Call Management` 与 `Routing Config` 的本地内部管理分支。
+- 本分支已从最新 `main` 创建并合入 `codex/routing-vdn-sites-remove-status`，保留客户 AUX 弹框、客户身份刷新、Live Chat Current 清空空态和路由管理配置改造。
+- 本分支打开 `Call Management` 与 `Routing Config` 左侧菜单和直达路由；`main` 仍是客户安全发布线，继续隐藏这两个管理菜单。
+- Busy Reason 采用同一份 `callManagementStore`：右上角坐席 AUX 弹框只读启用原因，`Call Management > Busy Reasons` 内部页面可编辑原因、默认值和状态。
+- Routing Config 当前口径：VDN、Access Sites、Skill Queues UI 不展示 Status；Skill Queues 默认工作时间展示使用海外标准 `Default 24/7`；Working Time Plans 不新增真实默认 24/7 记录。
+- 后续如果要发布给客户，必须从 `main` 或客户安全基线创建新分支，不能直接发布 `codex/admin-config-latest`。
+
+## 14. 关键 prompt 摘要
 
 这些 prompt 是项目方向的关键依据：
 
@@ -2566,7 +2575,7 @@ P2：
 - 从现在开始建立长期开发上下文管理机制，避免 sidebar 丢失、session 消失、切换账号或 Codex UI bug 导致上下文丢失。
 - 创建 `AGENTS.md`，将项目级 AI 开发规则固化到仓库根目录，使未来 Codex 会话自动继承规则。
 
-## 14. 回滚说明
+## 15. 回滚说明
 
 本次上下文机制只新增或更新文档与备份目录，不修改业务源码。
 
