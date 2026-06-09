@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-06-09 11:50 +08:00
+最后更新：2026-06-09 19:07 +08:00
 
 ## 项目方向
 
@@ -755,12 +755,13 @@
 ## 2026-06-09 登录页与媒体技能签入
 
 - 客户明确要求 UI mockup 中需要看到登录页，并考虑从登录到技能选择、AICC 与 CRM Application SSO 的正确工作流。
-- Demo 登录页字段：User Name、Password、EXT 可选、随机生成 6 位 PIN/captcha；demo 账号和密码固定为 `888888 / 888888`；点击验证码图片本身刷新验证码，不显示独立刷新按钮。
+- Demo 登录页字段：User Name、Password、EXT 可选；不再展示或校验 PIN/captcha；demo 账号和密码固定为 `888888 / 888888`。
 - 登录页左侧应使用实际视觉资源展示拼图/坐席插画方向，当前资源为 `/screenshots/login-illustration.svg`；不要再依赖容易错位的 CSS-only 拼图。
 - 登录页 BANK 1 logo 要在页面左上角，不要跟随左侧插画区垂直居中下移。
 - 真实程序讲解口径：AICC 调用 BCA LDAP 做身份认证；鉴权通过后获取用户信息、角色权限并进入匹配角色工作台；鉴权失败时 LDAP 返回错误消息，AICC 展示该错误并停留登录页。
 - SSO 不在 UI 中单独展示流程页；登录成功后直接进入工作台。CRM SSO 只体现在 mock session metadata 和讲解口径中。
 - 技能选择不放在登录页；登录只是系统认证。坐席进入工作台后仍为 `Unsigned`，右上角头像下拉使用 `Sign In` 分组，下面以纯文字选择 `Voice only`、`Digital only` 或 `Voice + Digital`，不使用模式图标。
 - 签入模式必须在右上角可见：头像区域第二行显示 `PBK BSB | {mode}`，下拉顶部也显示当前签入模式。
-- `Sign Out` 只退出媒体坐席状态并保留系统登录；系统级 `Log Out` 使用 Header 右上角独立红色电源按钮，清除 auth session 并返回 `/login`，不放在头像状态下拉中；按钮尺寸应与旁边状态下拉按钮一致。
+- `Sign Out` 只退出媒体坐席状态并保留系统登录；点击后必须二次确认，确认后才回到 `Unsigned`。
+- 系统级 `Log Out` 使用 Header 右上角独立红色电源按钮，不放在头像状态下拉中；点击后必须二次确认，确认后清除 auth session 并返回 `/login`；按钮尺寸应与旁边状态下拉按钮一致。
 - 媒体技能采用轻量拦截，不隐藏菜单：`Voice only` 阻止 Live Chat handoff 并展示明确 warning；`Digital only` 阻止 PSTN / Voice / Video handoff；`Voice + Digital` 允许全部现有 demo 流程。

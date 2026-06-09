@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-09 11:50 +08:00
+最后更新：2026-06-09 19:07 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,50 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-09 19:07 +08:00 - 登录页去掉 PIN 并增加退出确认
+
+修改页面或文件：
+
+- `src/pages/LoginPage.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/layouts/components/AgentProfileArea.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-09-1907.md`
+- `.codex-backup/current-todo-2026-06-09-1907.md`
+- `.codex-backup/page-state-2026-06-09-1907.md`
+
+修改原因：
+
+- 客户反馈登录页面不要 PIN。
+- 客户要求媒体 `Sign Out` 和系统 `Log Out` 都需要二次确认，避免误操作。
+
+修改结果：
+
+- 登录页移除 PIN 输入、验证码显示、点击验证码刷新逻辑和对应样式。
+- 登录校验改为只校验 User Name、Password，EXT 保持可选；demo LDAP 账号仍为 `888888 / 888888`。
+- 媒体 `Sign Out` 点击后弹出 `Confirm Sign Out`，确认后才回到 `Unsigned`；取消不改变坐席状态。
+- 系统红色 `Log Out` 点击后弹出 `Confirm Log Out`，确认后才清除 auth session、重置媒体状态并回到 `/login`；取消不登出。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仅保留既有 Vite chunk size warning。
+- 本地 Chrome CDP smoke check 通过：`/login` 只显示 User Name、Password、EXT，不再显示 PIN/captcha；`888888 / 888888` 无 PIN 登录成功进入 `/`。
+- 本地 Chrome CDP smoke check 通过：媒体 `Sign Out` 弹出 `Confirm Sign Out`；点击 `Cancel` 不改变签入模式，点击 `Sign Out` 后回到 `Unsigned` 且停留 `/`。
+- 本地 Chrome CDP smoke check 通过：系统 `Log Out` 弹出 `Confirm Log Out`；点击 `Cancel` 停留 `/`，点击 `Log Out` 后回到 `/login`；重新登录后 `/design-system` 可访问。
+
+回滚说明：
+
+- 如需恢复登录 PIN，可恢复 `LoginPage.tsx` 中的 captcha state、PIN 输入、captcha 按钮和 `index.less` 中 `.aicc-login-form__captcha*` 样式。
+- 如需取消二次确认，可把 `AgentProfileArea.tsx` 中 `sign-out` 分支恢复为直接 `onStatusChange('Unsigned')`，并把 `BasicLayout.tsx` 的 `handleLogout` 恢复为直接调用 `updateAgentStatus`、`logout` 和 `navigate('/login')`。
+
+当前风险点：
+
+- 当前只是前端 demo 交互调整；真实 LDAP / SSO 登录页是否保留验证码或其它风控项，需要以后按客户安全策略接后端。
 
 ### 2026-06-09 11:50 +08:00 - 登录账号与验证码口径调整
 

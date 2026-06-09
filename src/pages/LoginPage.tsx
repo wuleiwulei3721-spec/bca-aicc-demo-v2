@@ -1,6 +1,5 @@
 import {
   ApartmentOutlined,
-  KeyOutlined,
   LockOutlined,
   UserOutlined,
 } from '@ant-design/icons'
@@ -12,21 +11,15 @@ import { BaseButton } from '../components'
 import { useAuthStore } from '../store'
 
 interface LoginFormState {
-  captcha: string
   extension: string
   password: string
   username: string
 }
 
 const initialFormState: LoginFormState = {
-  captcha: '',
   extension: '',
   password: '',
   username: '',
-}
-
-function createCaptchaCode() {
-  return String(Math.floor(100000 + Math.random() * 900000))
 }
 
 export function LoginPage() {
@@ -34,17 +27,8 @@ export function LoginPage() {
   const login = useAuthStore((state) => state.login)
   const [formState, setFormState] =
     useState<LoginFormState>(initialFormState)
-  const [captchaCode, setCaptchaCode] = useState(createCaptchaCode)
   const [errorMessage, setErrorMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const refreshCaptcha = () => {
-    setCaptchaCode(createCaptchaCode())
-    setFormState((current) => ({
-      ...current,
-      captcha: '',
-    }))
-  }
 
   const updateFormField = (key: keyof LoginFormState, value: string) => {
     setFormState((current) => ({
@@ -60,7 +44,6 @@ export function LoginPage() {
     const username = formState.username.trim()
     const password = formState.password
     const extension = formState.extension.trim()
-    const captcha = formState.captcha.trim()
 
     if (!username) {
       setErrorMessage('User Name is required.')
@@ -69,17 +52,6 @@ export function LoginPage() {
 
     if (!password) {
       setErrorMessage('Password is required.')
-      return
-    }
-
-    if (!captcha) {
-      setErrorMessage('PIN is required.')
-      return
-    }
-
-    if (captcha !== captchaCode) {
-      setErrorMessage('PIN is incorrect. Please enter the displayed code.')
-      refreshCaptcha()
       return
     }
 
@@ -95,10 +67,8 @@ export function LoginPage() {
       setErrorMessage(result.message)
       setFormState((current) => ({
         ...current,
-        captcha: '',
         password: '',
       }))
-      setCaptchaCode(createCaptchaCode())
       return
     }
 
@@ -166,29 +136,6 @@ export function LoginPage() {
               updateFormField('extension', event.target.value)
             }
           />
-          <div className="aicc-login-form__captcha-row">
-            <Input
-              autoComplete="off"
-              className="aicc-login-form__input"
-              inputMode="numeric"
-              maxLength={6}
-              placeholder="PIN"
-              prefix={<KeyOutlined />}
-              size="large"
-              value={formState.captcha}
-              onChange={(event) =>
-                updateFormField('captcha', event.target.value)
-              }
-            />
-            <button
-              aria-label={`Current PIN ${captchaCode}. Click to refresh PIN`}
-              className="aicc-login-form__captcha"
-              type="button"
-              onClick={refreshCaptcha}
-            >
-              <span>{captchaCode}</span>
-            </button>
-          </div>
 
           <BaseButton
             block

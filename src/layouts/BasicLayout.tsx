@@ -12,7 +12,7 @@ import {
   SettingOutlined,
   UserOutlined,
 } from '@ant-design/icons'
-import { Badge, Layout } from 'antd'
+import { Badge, Layout, Modal } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
@@ -382,9 +382,20 @@ export function BasicLayout() {
   )
 
   const handleLogout = useCallback(() => {
-    updateAgentStatus('Unsigned', null)
-    logout()
-    navigate('/login', { replace: true })
+    Modal.confirm({
+      cancelText: 'Cancel',
+      centered: true,
+      content:
+        'This will end the system session, sign out media status, and return to the login page.',
+      okText: 'Log Out',
+      okType: 'danger',
+      title: 'Confirm Log Out',
+      onOk: () => {
+        updateAgentStatus('Unsigned', null)
+        logout()
+        navigate('/login', { replace: true })
+      },
+    })
   }, [logout, navigate, updateAgentStatus])
 
   const isSignedIn = agentStatus !== 'Unsigned'

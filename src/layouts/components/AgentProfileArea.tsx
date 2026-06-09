@@ -1,5 +1,5 @@
 import { DownOutlined } from '@ant-design/icons'
-import { Avatar, Dropdown } from 'antd'
+import { Avatar, Dropdown, Modal } from 'antd'
 import type { MenuProps } from 'antd'
 import { useMemo } from 'react'
 import { agentServiceModeOptions } from '../../mock/auth'
@@ -118,7 +118,15 @@ export function AgentProfileArea({
     }
 
     if (key === 'sign-out') {
-      onStatusChange('Unsigned')
+      Modal.confirm({
+        cancelText: 'Cancel',
+        centered: true,
+        content:
+          'This will sign out the current media session and return the agent status to Unsigned.',
+        okText: 'Sign Out',
+        title: 'Confirm Sign Out',
+        onOk: () => onStatusChange('Unsigned'),
+      })
       return
     }
 

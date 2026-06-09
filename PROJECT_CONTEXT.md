@@ -1,10 +1,10 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-09 11:50 +08:00
+最后更新：2026-06-09 19:07 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：在 `main` 上完善客户可见 Call Management、坐席 AUX 体验与登录/签入演示链路；Customer Verification Assist 已按 `Verification Channel Type + Business Type` 加载规则和题库，并加入 BankApp/HaloApp PIN 验证演示链路；本轮根据客户反馈恢复右上角 AUX 直接下拉选择，新增客户可见 `Busy Reason Management`，将 AUX 下拉调整为分类标题 + 纯文字原因项，新增 `/login`、demo LDAP auth、登录后媒体技能签入选择，已把系统级 `Log Out` 拆成右上角独立红色电源按钮并调小到与状态下拉按钮同尺寸，登录页左侧图改为本地视觉资产，BANK 1 固定到页面左上角，登录账号/密码口径改为 `888888 / 888888`，验证码改为 6 位且点击验证码本身刷新，并简化 Transfer / Outbound 弹框坐席状态展示。
+当前目标：在 `main` 上完善客户可见 Call Management、坐席 AUX 体验与登录/签入演示链路；Customer Verification Assist 已按 `Verification Channel Type + Business Type` 加载规则和题库，并加入 BankApp/HaloApp PIN 验证演示链路；本轮根据客户反馈恢复右上角 AUX 直接下拉选择，新增客户可见 `Busy Reason Management`，将 AUX 下拉调整为分类标题 + 纯文字原因项，新增 `/login`、demo LDAP auth、登录后媒体技能签入选择，已把系统级 `Log Out` 拆成右上角独立红色电源按钮并调小到与状态下拉按钮同尺寸，登录页左侧图改为本地视觉资产，BANK 1 固定到页面左上角，登录账号/密码口径改为 `888888 / 888888`，登录页已按客户反馈去掉 PIN/captcha，媒体 `Sign Out` 与系统 `Log Out` 都需要二次确认，并简化 Transfer / Outbound 弹框坐席状态展示。
 
-本轮已完成：PSTN、BankApp Voice 等 Customer Information 的 `Verify` 弹窗可根据渠道类型和启用业务类型动态加载规则；坐席可切换本次业务类型并重置答题进度；`Correct / Wrong / Skip` 会按一次验证会话累计结果，必问题计入总答对数，`Skip` 不计错也不计对，错答达到规则上限后失败。弹窗已简化为坐席操作优先的紧凑版，不展示标准答案或答案来源；坐席误点后可直接改同一题状态，不需要重新问或重置整次验证。规则区进一步收敛为 `Need N correct` 加 Mandatory / Dynamic / Static 等彩色达成块，顶部不再显示长统计串。BankApp/HaloApp 入口支持 `Send PIN Verification`，客户侧 BankApp Demo 自动弹出 4 位 PIN 页面并在提交后把坐席侧渠道类型切为 `HaloApp Registered` 规则。`Call Management` 已开放客户可见入口，包含 `Verification Rules`、`Text Channel Settings` 与 `Busy Reason Management`；AUX 已从弹窗确认恢复为头像菜单直接下拉，启用原因按客户截图原文显示，菜单中 `AUX` 只作为不可点击分类标题，原因项不维护也不显示独立图标。登录页已按 BANK 1 mock 风格新增：demo 账号和密码均为 `888888`、EXT 可选、随机 6 位 PIN/captcha；点击验证码图片本身会刷新验证码，不再显示独立刷新按钮；登录成功进入工作台但坐席仍为 `Unsigned`，右上角下拉以 `Sign In` 分组选择 `Voice only`、`Digital only` 或 `Voice + Digital`，并按所选模式轻量拦截不匹配的 voice/video 或 live chat handoff；系统级 `Log Out` 已移到头像状态下拉右侧的红色电源按钮，按钮尺寸与下拉按钮一致；登录页左侧插画已改为 `/screenshots/login-illustration.svg` 本地图片资源，BANK 1 固定在页面左上角。Transfer / Outbound 弹框中的 Agent tab 已去掉 Status 查询条件，坐席列表 Status 统一展示为 `Ready`。
+本轮已完成：PSTN、BankApp Voice 等 Customer Information 的 `Verify` 弹窗可根据渠道类型和启用业务类型动态加载规则；坐席可切换本次业务类型并重置答题进度；`Correct / Wrong / Skip` 会按一次验证会话累计结果，必问题计入总答对数，`Skip` 不计错也不计对，错答达到规则上限后失败。弹窗已简化为坐席操作优先的紧凑版，不展示标准答案或答案来源；坐席误点后可直接改同一题状态，不需要重新问或重置整次验证。规则区进一步收敛为 `Need N correct` 加 Mandatory / Dynamic / Static 等彩色达成块，顶部不再显示长统计串。BankApp/HaloApp 入口支持 `Send PIN Verification`，客户侧 BankApp Demo 自动弹出 4 位 PIN 页面并在提交后把坐席侧渠道类型切为 `HaloApp Registered` 规则。`Call Management` 已开放客户可见入口，包含 `Verification Rules`、`Text Channel Settings` 与 `Busy Reason Management`；AUX 已从弹窗确认恢复为头像菜单直接下拉，启用原因按客户截图原文显示，菜单中 `AUX` 只作为不可点击分类标题，原因项不维护也不显示独立图标。登录页已按 BANK 1 mock 风格新增：demo 账号和密码均为 `888888`、EXT 可选，不再展示 PIN/captcha；登录成功进入工作台但坐席仍为 `Unsigned`，右上角下拉以 `Sign In` 分组选择 `Voice only`、`Digital only` 或 `Voice + Digital`，并按所选模式轻量拦截不匹配的 voice/video 或 live chat handoff；媒体 `Sign Out` 会先弹出确认框，确认后才回到 `Unsigned`；系统级 `Log Out` 已移到头像状态下拉右侧的红色电源按钮，按钮尺寸与下拉按钮一致，点击后会先弹出确认框，确认后清除 auth session 并回 `/login`；登录页左侧插画已改为 `/screenshots/login-illustration.svg` 本地图片资源，BANK 1 固定在页面左上角。Transfer / Outbound 弹框中的 Agent tab 已去掉 Status 查询条件，坐席列表 Status 统一展示为 `Ready`。
 
 ## 0. 使用规则
 
@@ -110,7 +110,7 @@ codex-recovered-context.md
 - `src/routes.tsx`：定义 `/login` 公共登录页；`/`、`/design-system`、`/call-management/verification-rules`、`/call-management/text-channel-settings`、`/call-management/busy-reasons` 等业务路由通过 auth guard 保护；`/routing-config/*` 继续重定向回 `/`。
 - `src/components/AuthRouteGuards.tsx`：公共登录路由与业务路由认证守卫；未登录访问业务路由重定向 `/login`，已登录访问 `/login` 重定向 `/`。
 - `src/layouts/BasicLayout.tsx`：全局 Header、可展开/收起左侧菜单、坐席工具条、通话接入阻塞顶部提示、内部聊天入口和主内容出口。
-- `src/pages/LoginPage.tsx`：BANK 1 登录页，包含 User Name、Password、EXT、PIN/captcha 和 demo LDAP 错误提示；成功后写入 auth session 并进入 `/`；左侧视觉使用 `/screenshots/login-illustration.svg` 本地资源，BANK 1 logo 固定在页面左上角。
+- `src/pages/LoginPage.tsx`：BANK 1 登录页，包含 User Name、Password、EXT 和 demo LDAP 错误提示；不再展示 PIN/captcha；成功后写入 auth session 并进入 `/`；左侧视觉使用 `/screenshots/login-illustration.svg` 本地资源，BANK 1 logo 固定在页面左上角。
 - `src/pages/AgentWorkspace.tsx`：Home tab 与工作区交互 tab 容器，负责 Demo tabs、正式 `Live Chat` 固定 tab、多个 PSTN / Voice Call / Video Call 通话实例 tab 的页签名称、最长服务计时、短闪提示和 Live Chat 总未读 badge。
 - `src/pages/bankapp/BankAppDemoPage.tsx`：BankApp 客户侧模拟器，采用真实手机比例的客户端舞台和轻量 AICC Process rail；Voice / Video handoff 会在已有未挂断通话时显示 inline warning，坐席侧结果通过真实 workspace tab 跳转体现；本轮新增坐席触发的 4 位 PIN 输入页和 PIN verified 状态展示。
 - `src/pages/inbound/InteractionWorkspace.tsx`：电话、视频与 Live Chat 弹屏共用的三栏工作台；维护当前工作台实例内的客户身份刷新展示数据，刷新成功后只更新当前实例的 Customer Information、Customer Journey 与 Ticketing History，不写入全局 store；支持由弹屏 wrapper 显式传入 `showIvrJourney`，控制客户卡片 `Menu` 最后菜单提示与 Call Flow Detail 的 IVR Journey 展示。
@@ -177,9 +177,9 @@ codex-recovered-context.md
 页面关系：
 
 - 除 `/login` 外，当前业务路由都需要 demo auth session；未登录访问 `/`、`/design-system`、`/call-management/*` 会重定向到 `/login`。
-- 登录页模拟 AICC 调用 BCA LDAP：`888888 / 888888` 且 6 位 PIN/captcha 正确时返回用户、角色权限与 CRM SSO metadata；失败时展示 mock LDAP 错误并停留登录页；EXT 可选且只作为 session metadata；点击验证码图片本身刷新 PIN，不显示独立刷新按钮。
+- 登录页模拟 AICC 调用 BCA LDAP：`888888 / 888888` 正确时返回用户、角色权限与 CRM SSO metadata；失败时展示 mock LDAP 错误并停留登录页；EXT 可选且只作为 session metadata；登录页不再要求 PIN/captcha。
 - 登录成功只代表系统认证通过，坐席状态仍为 `Unsigned`；右上角头像下拉显示 `Sign In` 分组，下面以纯文字选择 `Voice only`、`Digital only`、`Voice + Digital`，选择后才进入坐席 Ready 状态。
-- 签入后右上角第二行显示 `PBK BSB | {mode}`，下拉顶部显示当前签入模式；`Sign Out` 只退出媒体坐席状态并保留系统登录；系统级 `Log Out` 使用右上角独立红色电源按钮，清除 auth session 并回到 `/login`。
+- 签入后右上角第二行显示 `PBK BSB | {mode}`，下拉顶部显示当前签入模式；`Sign Out` 只退出媒体坐席状态并保留系统登录，但执行前必须二次确认；系统级 `Log Out` 使用右上角独立红色电源按钮，执行前必须二次确认，确认后清除 auth session 并回到 `/login`。
 - 媒体技能采用轻量拦截而不是隐藏菜单：`Digital only` 阻止 PSTN / BankApp Voice / BankApp Video handoff；`Voice only` 阻止 WhatsApp / BankApp Live Chat handoff 并在客户侧流程显示明确 warning；`Voice + Digital` 允许现有全部演示流程。
 - `BasicLayout` 是所有页面的壳，包含顶部 Header、坐席状态、话务工具条、侧栏和内容区。
 - `AgentWorkspace` 默认显示 Home tab。
@@ -217,7 +217,7 @@ codex-recovered-context.md
 - 左侧菜单支持 2 层级：展开态顶部显示折叠按钮与菜单搜索框，点击一级菜单在下方展开二级菜单；收起态仅显示一级图标，鼠标悬浮在一级图标时在右侧显示二级菜单浮层，鼠标移出浮层或点击菜单后浮层关闭。
 - 当前侧栏菜单使用英文企业呼叫中心文案：Channel Simulation（PSTN、BankApp、WhatsApp）、Call Management（Verification Rules、Text Channel Settings、Busy Reason Management）、Agent Center（Agent Profile、Service History）、Operations（Alert KPI Management、Floor Management）、Reports。客户预览版继续不展示 `Routing Config`。
 - Agent Toolbar：Answer、Hold、Mute、Transfer、Hang Up、More；电话/视频呼入时可在动作按钮最左侧展示 incoming identification；More 菜单点击打开，包含 Outbound Call 与 Settings。
-- Agent Profile Area：Signed out 时菜单显示 `Sign In` 分组与三个纯文字服务模式；Signed in 后菜单显示当前服务模式、不可点击 `AUX` 分组标题、启用示忙原因和媒体 `Sign Out`。系统级 `Log Out` 已独立为 Header 右侧红色电源按钮，按钮尺寸与状态下拉按钮一致。示忙原因不显示独立图标，点击原因后立即切换为 `AUX - {reasonName}`，不再打开 `Select AUX Reason` 弹框。头像右下状态点使用 `effectiveAgentPresence`，由坐席状态和活跃客户互动共同决定。
+- Agent Profile Area：Signed out 时菜单显示 `Sign In` 分组与三个纯文字服务模式；Signed in 后菜单显示当前服务模式、不可点击 `AUX` 分组标题、启用示忙原因和媒体 `Sign Out`，点击 `Sign Out` 先弹出确认框。系统级 `Log Out` 已独立为 Header 右侧红色电源按钮，按钮尺寸与状态下拉按钮一致，点击也先弹出确认框。示忙原因不显示独立图标，点击原因后立即切换为 `AUX - {reasonName}`，不再打开 `Select AUX Reason` 弹框。头像右下状态点使用 `effectiveAgentPresence`，由坐席状态和活跃客户互动共同决定。
 - Notifications 和 Internal Chat 入口。
 - Internal Chat Modal。
 
@@ -2510,7 +2510,7 @@ P0：
 - 人工复查正式 Live Chat Current 清空后的新 route 恢复：从 WhatsApp 或 BankApp Demo route 新文字客户后，Current 应恢复显示新客户并渲染工作台。
 - 人工复查客户身份刷新：PSTN 初始显示 `Unidentified Customer`；Customer Journey / Ticketing History 显示未加载空态；Customer Information 右上角同时显示身份刷新图标和原编辑联系方式图标；两个图标在 hover 背景中居中；Customer ID 浮层不进入左侧菜单范围；点击 `Paste` 自动填入 `00000078987`；错误 ID 不关闭浮层并提示；正确 ID `Confirm` 后刷新 Customer Information、Customer Journey 和 Ticketing History。
 - 人工复查客户卡片 `Menu` 最后菜单提示：PSTN / BankApp Voice 等语音/IVR 类渠道在 Customer Information 底部第二行显示短标签 `Menu` 和最后一级 IVR 菜单，第一行渠道/接入时长/验证/Verify 不被挤压；点击渠道图标仍打开完整 Call Flow Detail；Live Chat 和 Video 不显示该提示。
-- 人工复查客户 AUX / Sign In 下拉：签出状态头像菜单只显示 `Sign In` 分组和 `Voice only`、`Digital only`、`Voice + Digital` 三个纯文字选项；签入后直接显示当前模式、`AUX` 分组、9 个启用原因和 `Sign Out`；系统级 `Log Out` 只在 Header 右侧红色按钮中出现；点击原因后状态计时区立即显示 `AUX - {reasonName}`，不再出现 `Select AUX Reason` 弹框。
+- 人工复查客户 AUX / Sign In 下拉：签出状态头像菜单只显示 `Sign In` 分组和 `Voice only`、`Digital only`、`Voice + Digital` 三个纯文字选项；签入后直接显示当前模式、`AUX` 分组、9 个启用原因和 `Sign Out`；点击 `Sign Out` 需要确认，确认后状态回到 `Unsigned`，取消不改变状态；系统级 `Log Out` 只在 Header 右侧红色按钮中出现，点击需要确认，确认后回 `/login`，取消不登出；点击原因后状态计时区立即显示 `AUX - {reasonName}`，不再出现 `Select AUX Reason` 弹框。
 - 人工复查客户可见管理入口：左侧菜单显示 `Call Management`，不显示 `Routing Config`；`/call-management/verification-rules`、`/call-management/text-channel-settings` 与 `/call-management/busy-reasons` 正常打开，`/routing-config/*` 仍回到 `/`。
 - 人工复查 `Routing Config > Route Elements`：英文标题、查询栏、独立靠右 Add、列表字段、短胶囊状态开关、弹框顶部标题栏背景、无额外 footer 背景、统一按钮宽度/高度和保存后校验提示符合管理台数据维护规范。
 - 人工复查 `Routing Config` 普通 CRUD 页状态展示：列表和详情统一为 `Enabled/Disabled` badge，新增/编辑统一为短 switch + 状态文本，不再混用 `Active`。
