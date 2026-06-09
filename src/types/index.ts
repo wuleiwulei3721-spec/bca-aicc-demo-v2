@@ -1,4 +1,5 @@
 export * from './agent'
+export * from './auth'
 export * from './bankapp'
 export * from './busyReason'
 export * from './chat'

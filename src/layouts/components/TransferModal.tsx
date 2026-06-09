@@ -23,18 +23,11 @@ type TransferModalVariant = 'call' | 'conversation'
 const callAgentActions = ['Consult', 'Transfer', 'Conference']
 const conversationPrimaryAgentActions = ['Transfer', 'Conference']
 const allFilterValue = 'all'
-const transferAgentStatusOptions: TransferAgentStatus[] = [
-  'Ready',
-  'Talking',
-  'Not Ready',
-]
 const transferStatusClassNames: Record<TransferAgentStatus, string> = {
   Ready: 'ready',
   Talking: 'talking',
   'Not Ready': 'not-ready',
 }
-
-type AgentStatusFilter = TransferAgentStatus | typeof allFilterValue
 
 function renderAgentStatus(status: TransferAgentStatus) {
   return (
@@ -79,8 +72,6 @@ function TransferAgentTab({
 }) {
   const [keyword, setKeyword] = useState('')
   const [skillQueue, setSkillQueue] = useState(allFilterValue)
-  const [statusFilter, setStatusFilter] =
-    useState<AgentStatusFilter>(allFilterValue)
 
   const skillQueueOptions = useMemo(
     () => Array.from(new Set(transferAgents.map((agent) => agent.skillName))),
@@ -98,12 +89,10 @@ function TransferAgentTab({
         )
       const matchesSkillQueue =
         skillQueue === allFilterValue || agent.skillName === skillQueue
-      const matchesStatus =
-        statusFilter === allFilterValue || agent.status === statusFilter
 
-      return matchesKeyword && matchesSkillQueue && matchesStatus
+      return matchesKeyword && matchesSkillQueue
     })
-  }, [keyword, skillQueue, statusFilter])
+  }, [keyword, skillQueue])
 
   const columns: ColumnsType<TransferAgent> = [
     {
@@ -173,18 +162,6 @@ function TransferAgentTab({
           ]}
           value={skillQueue}
           onChange={setSkillQueue}
-        />
-        <Select<AgentStatusFilter>
-          className="aicc-transfer-filter aicc-transfer-filter--status"
-          options={[
-            { label: 'All status', value: allFilterValue },
-            ...transferAgentStatusOptions.map((status) => ({
-              label: status,
-              value: status,
-            })),
-          ]}
-          value={statusFilter}
-          onChange={setStatusFilter}
         />
         <AppButton icon={<SearchOutlined />} type="primary">
           Search

@@ -2,10 +2,12 @@ import {
   AppstoreOutlined,
   BarChartOutlined,
   BellOutlined,
+  CustomerServiceOutlined,
   ExclamationCircleOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   MessageOutlined,
+  PoweroffOutlined,
   SearchOutlined,
   SettingOutlined,
   UserOutlined,
@@ -13,15 +15,16 @@ import {
 import { Badge, Layout } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { headerAgentProfile } from '../mock/agent'
-import { useAppStore } from '../store'
+import { useAppStore, useAuthStore } from '../store'
 import type {
+  DigitalHandoffReadiness,
   InboundPopupSource,
   VideoCallPopupSource,
   VoiceVideoHandoffReadiness,
 } from '../store'
-import type { AgentStatus, CallStatus } from '../types'
+import type { AgentServiceMode, AgentStatus, CallStatus } from '../types'
 import {
   AgentProfileArea,
   type AgentPresence,
@@ -65,6 +68,14 @@ const initialCallTiming: CallTiming = {
   accumulatedMuteSeconds: 0,
 }
 
+function canHandleDigital(mode: AgentServiceMode | null) {
+  return mode === 'digital' || mode === 'voice-digital'
+}
+
+function canHandleVoiceVideo(mode: AgentServiceMode | null) {
+  return mode === 'voice' || mode === 'voice-digital'
+}
+
 const sideMenuItems: SideMenuItem[] = [
   {
     key: 'test-menu',
@@ -82,6 +93,25 @@ const sideMenuItems: SideMenuItem[] = [
       {
         key: 'customer-whatsapp',
         label: 'WhatsApp',
+      },
+    ],
+  },
+  {
+    key: 'call-management',
+    icon: <CustomerServiceOutlined />,
+    label: 'Call Management',
+    children: [
+      {
+        key: 'call-management-verification-rules',
+        label: 'Verification Rules',
+      },
+      {
+        key: 'call-management-text-channel-settings',
+        label: 'Text Channel Settings',
+      },
+      {
+        key: 'call-management-busy-reasons',
+        label: 'Busy Reason Management',
       },
     ],
   },
@@ -124,7 +154,11 @@ const sideMenuItems: SideMenuItem[] = [
 
 export function BasicLayout() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const authSession = useAuthStore((state) => state.session)
+  const logout = useAuthStore((state) => state.logout)
   const collapsed = useAppStore((state) => state.collapsed)
+  const agentServiceMode = useAppStore((state) => state.agentServiceMode)
   const activeLiveChatSessionIds = useAppStore(
     (state) => state.activeLiveChatSessionIds,
   )
@@ -140,6 +174,9 @@ export function BasicLayout() {
   const callInteractions = useAppStore((state) => state.callInteractions)
   const closeAllCallInteractionTabs = useAppStore(
     (state) => state.closeAllCallInteractionTabs,
+  )
+  const clearAgentServiceMode = useAppStore(
+    (state) => state.clearAgentServiceMode,
   )
   const createCallInteraction = useAppStore(
     (state) => state.createCallInteraction,
@@ -166,6 +203,12 @@ export function BasicLayout() {
     (state) => state.bankAppVoiceCallRequestId,
   )
   const setCollapsed = useAppStore((state) => state.setCollapsed)
+  const setAgentServiceMode = useAppStore(
+    (state) => state.setAgentServiceMode,
+  )
+  const setDigitalHandoffReadiness = useAppStore(
+    (state) => state.setDigitalHandoffReadiness,
+  )
   const requestBankAppDemoWorkspace = useAppStore(
     (state) => state.requestBankAppDemoWorkspace,
   )
@@ -229,12 +272,22 @@ export function BasicLayout() {
   const voiceVideoHandoffReadiness: VoiceVideoHandoffReadiness =
     hasUnfinishedCurrentCall
       ? 'active-call'
-      : agentStatus === 'Ready' && callStatus === 'Idle'
+      : agentStatus !== 'Ready' || callStatus !== 'Idle'
+        ? 'not-ready'
+        : canHandleVoiceVideo(agentServiceMode)
+          ? 'available'
+          : 'voice-skill-unavailable'
+  const digitalHandoffReadiness: DigitalHandoffReadiness =
+    agentStatus !== 'Ready'
+      ? 'not-ready'
+      : canHandleDigital(agentServiceMode)
         ? 'available'
-        : 'not-ready'
+        : 'digital-skill-unavailable'
   const callHandoffNoticeMessage =
     callHandoffNotice.reason === 'active-call'
       ? 'Active call in progress. Please hang up and wait until the agent is Ready before accepting another voice or video interaction.'
+      : callHandoffNotice.reason === 'voice-skill-unavailable'
+        ? 'Current sign-in mode is Digital only. Please sign out and sign in with Voice or Voice + Digital before accepting a voice or video interaction.'
       : 'Agent is not Ready. Please switch to Ready before accepting another voice or video interaction.'
 
   const showCallHandoffNotice = useCallback(
@@ -258,12 +311,18 @@ export function BasicLayout() {
     )
   }, [])
 
-  const updateAgentStatus = useCallback((status: AgentStatus) => {
+  const updateAgentStatus = useCallback((
+    status: AgentStatus,
+    nextServiceMode: AgentServiceMode | null = agentServiceMode,
+  ) => {
     setAgentStatus(status)
     setStatusStartedAt(Date.now())
-    setLiveChatTabOpen(status !== 'Unsigned')
+    setLiveChatTabOpen(
+      status !== 'Unsigned' && canHandleDigital(nextServiceMode),
+    )
 
     if (status === 'Unsigned') {
+      clearAgentServiceMode()
       setCallStatus('Idle')
       setCallStatusStartedAt(Date.now())
       setCallTiming(initialCallTiming)
@@ -295,7 +354,9 @@ export function BasicLayout() {
       hideCallHandoffNotice()
     }
   }, [
+    agentServiceMode,
     callStatus,
+    clearAgentServiceMode,
     closeAllCallInteractionTabs,
     currentCallInteractionId,
     clearLiveChat2Sessions,
@@ -311,6 +372,20 @@ export function BasicLayout() {
     setCallStatus(status)
     setCallStatusStartedAt(Date.now())
   }, [])
+
+  const handleServiceSignIn = useCallback(
+    (mode: AgentServiceMode) => {
+      setAgentServiceMode(mode)
+      updateAgentStatus('Ready', mode)
+    },
+    [setAgentServiceMode, updateAgentStatus],
+  )
+
+  const handleLogout = useCallback(() => {
+    updateAgentStatus('Unsigned', null)
+    logout()
+    navigate('/login', { replace: true })
+  }, [logout, navigate, updateAgentStatus])
 
   const isSignedIn = agentStatus !== 'Unsigned'
   const isConnectedCall =
@@ -332,6 +407,10 @@ export function BasicLayout() {
   useEffect(() => {
     setVoiceVideoHandoffReadiness(voiceVideoHandoffReadiness)
   }, [setVoiceVideoHandoffReadiness, voiceVideoHandoffReadiness])
+
+  useEffect(() => {
+    setDigitalHandoffReadiness(digitalHandoffReadiness)
+  }, [digitalHandoffReadiness, setDigitalHandoffReadiness])
 
   useEffect(() => {
     if (!callHandoffNotice.reason) {
@@ -664,6 +743,17 @@ export function BasicLayout() {
         requestWhatsAppDemoWorkspace()
       }
 
+      if (childKey === 'call-management-verification-rules') {
+        navigate('/call-management/verification-rules')
+      }
+
+      if (childKey === 'call-management-text-channel-settings') {
+        navigate('/call-management/text-channel-settings')
+      }
+
+      if (childKey === 'call-management-busy-reasons') {
+        navigate('/call-management/busy-reasons')
+      }
     },
     [
       navigate,
@@ -782,6 +872,33 @@ export function BasicLayout() {
 
     return null
   }, [callStatus, currentCallInteraction])
+  const routeMenuKey = useMemo(() => {
+    if (location.pathname.startsWith('/call-management/verification-rules')) {
+      return 'call-management-verification-rules'
+    }
+
+    if (location.pathname.startsWith('/call-management/text-channel-settings')) {
+      return 'call-management-text-channel-settings'
+    }
+
+    if (location.pathname.startsWith('/call-management/busy-reasons')) {
+      return 'call-management-busy-reasons'
+    }
+
+    return null
+  }, [location.pathname])
+  const effectiveSelectedMenuKey = routeMenuKey ?? selectedMenuKey
+  const effectiveOpenMenuKeys = useMemo(() => {
+    if (
+      !collapsed &&
+      routeMenuKey?.startsWith('call-management') &&
+      !openMenuKeys.includes('call-management')
+    ) {
+      return [...openMenuKeys, 'call-management']
+    }
+
+    return openMenuKeys
+  }, [collapsed, openMenuKeys, routeMenuKey])
 
   return (
     <Layout className="aicc-app-shell">
@@ -826,10 +943,24 @@ export function BasicLayout() {
           </button>
           <span className="aicc-header__divider" />
           <AgentProfileArea
+            agentName={authSession?.displayName}
             presence={effectiveAgentPresence}
+            roleName={authSession?.roleName}
+            serviceMode={agentServiceMode}
             status={agentStatus}
+            teamName={authSession?.team}
+            onServiceSignIn={handleServiceSignIn}
             onStatusChange={updateAgentStatus}
           />
+          <button
+            aria-label="Log Out"
+            className="aicc-header__logout-button"
+            title="Log Out"
+            type="button"
+            onClick={handleLogout}
+          >
+            <PoweroffOutlined />
+          </button>
         </div>
       </Header>
       {callHandoffNotice.reason && (
@@ -885,13 +1016,13 @@ export function BasicLayout() {
             {visibleSideMenuItems.map((item) => {
               const hasChildren = Boolean(item.children?.length)
               const isOpen =
-                openMenuKeys.includes(item.key) ||
+                effectiveOpenMenuKeys.includes(item.key) ||
                 Boolean(menuSearchQuery.trim())
               const isSelected =
-                selectedMenuKey === item.key ||
+                effectiveSelectedMenuKey === item.key ||
                 Boolean(
                   item.children?.some(
-                    (childItem) => childItem.key === selectedMenuKey,
+                    (childItem) => childItem.key === effectiveSelectedMenuKey,
                   ),
                 )
 
@@ -939,7 +1070,7 @@ export function BasicLayout() {
                       {item.children?.map((childItem) => (
                         <button
                           className={`aicc-sider__menu-button aicc-sider__menu-button--child ${
-                            selectedMenuKey === childItem.key
+                            effectiveSelectedMenuKey === childItem.key
                               ? 'aicc-sider__menu-button--selected'
                               : ''
                           }`}
@@ -963,7 +1094,7 @@ export function BasicLayout() {
                       {item.children?.map((childItem) => (
                         <button
                           className={`aicc-sider__flyout-item ${
-                            selectedMenuKey === childItem.key
+                            effectiveSelectedMenuKey === childItem.key
                               ? 'aicc-sider__flyout-item--selected'
                               : ''
                           }`}

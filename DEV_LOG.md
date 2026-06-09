@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-05 20:07 +08:00
+最后更新：2026-06-09 11:50 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,478 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-09 11:50 +08:00 - 登录账号与验证码口径调整
+
+修改页面或文件：
+
+- `src/pages/LoginPage.tsx`
+- `src/mock/auth.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-09-1150.md`
+- `.codex-backup/current-todo-2026-06-09-1150.md`
+- `.codex-backup/page-state-2026-06-09-1150.md`
+
+修改原因：
+
+- 用户要求验证码按设计图改为 6 位数字。
+- 用户要求点击验证码本身即可刷新，不再需要右侧独立刷新按钮。
+- 用户要求 demo 登录账号和密码都简化为 6 个 8。
+
+修改结果：
+
+- `createCaptchaCode()` 改为生成随机 6 位数字，PIN 输入 `maxLength` 改为 6。
+- 登录页移除独立刷新按钮，只保留验证码图片按钮；点击验证码按钮刷新 PIN 并清空 PIN 输入。
+- 验证码行样式改为 `PIN input + captcha` 两列布局，captcha 宽度调整为适配 6 位数字。
+- Demo LDAP 账号从 `admin / 888888` 改为 `888888 / 888888`，session 中 username / LDAP DN / SSO subject 同步改为 `888888`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仅保留既有 Vite chunk size warning。
+- 本地 Chrome CDP smoke check 通过：验证码显示 6 位数字；点击验证码后刷新为另一组 6 位数字且 PIN 输入被清空；页面不存在独立 `Refresh PIN` 按钮。
+- 本地 Chrome CDP smoke check 通过：`admin / 888888` 加正确 PIN 登录失败并停留 `/login`；`888888 / 888888` 加正确 PIN 登录成功进入 `/` 且坐席仍为 `Unsigned`。
+
+回滚说明：
+
+- 如需回滚，可把 `createCaptchaCode()` 恢复为 5 位、PIN `maxLength` 恢复为 5，把独立刷新按钮和三列 captcha 样式恢复；`src/mock/auth.ts` 可恢复为 `admin / 888888`。
+
+当前风险点：
+
+- 当前 demo 账号过于简单，仅用于客户演示；真实系统仍应由 LDAP / SSO 后端控制账号、密码和安全策略。
+
+### 2026-06-09 11:46 +08:00 - 登录页视觉与 Header Log Out 尺寸微调
+
+修改页面或文件：
+
+- `src/pages/LoginPage.tsx`
+- `src/styles/index.less`
+- `public/screenshots/login-illustration.svg`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-09-1146.md`
+- `.codex-backup/current-todo-2026-06-09-1146.md`
+- `.codex-backup/page-state-2026-06-09-1146.md`
+
+修改原因：
+
+- 用户反馈右上角红色系统退出按钮太大，应与旁边状态下拉按钮一样大小。
+- 用户反馈登录页左侧插画如无法还原，可用前序 UI 图中的视觉方向做图；同时 BANK 1 logo 位置偏下，应放到左上角。
+
+修改结果：
+
+- `Log Out` 红色电源按钮尺寸从 38x38 调整为桌面 26x26、移动端 24x24，与状态下拉按钮一致。
+- 登录页左侧从 CSS 拼接图形改为实际图片资源 `/screenshots/login-illustration.svg`，视觉方向贴近 UI mock 中拼图、坐席人物、植物和灯泡的插画。
+- 登录页 BANK 1 logo 改为固定在视口左上角，桌面位置为 left 28px / top 26px。
+- 登录页移动端 padding 与 logo 定位同步调整，避免 logo 和登录卡重叠。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仅保留既有 Vite chunk size warning。
+- 本地 Chrome CDP 视觉 smoke check 通过：`/login` 中 BANK 1 位于 left 28 / top 26；左侧图片 natural size 为 620x360 并正常加载。
+- 本地 Chrome CDP 视觉 smoke check 通过：登录后 Header 状态下拉按钮与红色 `Log Out` 按钮均为 26x26。
+
+回滚说明：
+
+- 如需回滚，可恢复 `LoginPage.tsx` 中原 CSS 插画节点，删除 `/screenshots/login-illustration.svg`，并恢复 `.aicc-login-illustration*` 原 CSS；Header 按钮可恢复为 38x38。
+
+当前风险点：
+
+- 本轮未能直接从聊天附件中裁切原 UI 图片，因为附件没有作为仓库文件存在；当前使用本地 SVG 视觉资产复刻该方向。若后续用户提供原图文件，可替换 `/screenshots/login-illustration.svg` 为真实裁切图。
+
+### 2026-06-09 11:27 +08:00 - 系统 Log Out 独立按钮与 Sign In 分组菜单
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/layouts/components/AgentProfileArea.tsx`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-09-1127.md`
+- `.codex-backup/current-todo-2026-06-09-1127.md`
+- `.codex-backup/page-state-2026-06-09-1127.md`
+
+修改原因：
+
+- 用户确认 UI 提供的系统级 `Log Out` 应放在右上角并与坐席状态下拉并列，避免和媒体签入/签出混用。
+- 用户希望签入模式选择和 AUX 示忙原因一样按分类呈现，不使用图标。
+- 本轮浏览器验证时发现 `Voice only` 阻止 WhatsApp live chat handoff 的 warning 被 livechat 条件隐藏，需要补齐可见提示。
+
+修改结果：
+
+- `AgentProfileArea` 不再接收系统 logout 回调，下拉菜单只负责媒体状态。
+- 未签入时头像下拉显示 `Sign In` 分组，下面是纯文字 `Voice only`、`Digital only`、`Voice + Digital`。
+- 签入后头像下拉显示当前模式、`AUX` 分组、启用示忙原因和媒体 `Sign Out`，不再包含 `Log Out`。
+- `BasicLayout` 在头像状态下拉右侧新增红色电源按钮，点击后清除 auth session、重置媒体状态并返回 `/login`。
+- `BankAppDemoPage` 的 handoff warning 对 live chat 也可见，`Voice only` 阻止 WhatsApp/BankApp live chat handoff 时会展示明确提示。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仅保留既有 Vite chunk size warning。
+- 本地 Chrome CDP smoke check 通过：未登录访问 `/` 重定向 `/login`；错误 PIN 和错误密码都停留登录页并显示对应错误；`admin / 888888` 加正确 PIN 进入 `/` 且坐席仍为 `Unsigned`。
+- 本地 Chrome CDP smoke check 通过：未签入下拉显示 `Sign In` 分组和三个纯文字模式，菜单 icon count 为 0，菜单内不出现 `Log Out`。
+- 本地 Chrome CDP smoke check 通过：选择 `Digital only` 后 Header 第二行显示 `PBK BSB | Digital only`，signed-in 下拉显示 `Sign Out` 但不显示 `Log Out`；`Sign Out` 只回到 `Unsigned` 并停留 `/`。
+- 本地 Chrome CDP smoke check 通过：右上角红色 `Log Out` 返回 `/login` 并重新渲染登录表单。
+- 本地 Chrome CDP smoke check 通过：`Digital only` 阻止 PSTN 并显示 voice/video 技能不匹配提示；`Voice + Digital` 允许 PSTN；认证后 `/design-system` 可访问。
+- 本地 Chrome CDP smoke check 通过：`Voice only` 阻止 WhatsApp live chat handoff，并显示 `Current sign-in mode is Voice only...` warning。
+
+回滚说明：
+
+- 如需回滚，可把 `Log Out` 菜单项恢复到 `AgentProfileArea`，移除 `BasicLayout` 中的独立红色按钮和对应样式；把 unsigned 菜单恢复为平铺的 `Sign in - ...` 项；如不需要 live chat warning 修复，可恢复 `BankAppDemoPage` 中 handoff warning 对 livechat 的隐藏条件。
+
+当前风险点：
+
+- 这是前端 demo auth/session 行为，真实系统级退出后续仍需接后端 session/token 失效接口。
+- Header 右侧按钮已做本地 headless DOM smoke；仍建议在目标演示分辨率下人工确认按钮间距和截图视觉一致。
+
+### 2026-06-09 11:20 +08:00 - Transfer / Outbound 坐席列表去掉状态筛选
+
+修改页面或文件：
+
+- `src/layouts/components/TransferModal.tsx`
+- `src/layouts/components/OutboundCallModal.tsx`
+- `src/mock/transfer.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-09-1120.md`
+- `.codex-backup/current-todo-2026-06-09-1120.md`
+- `.codex-backup/page-state-2026-06-09-1120.md`
+
+修改原因：
+
+- 用户要求在转坐席弹框和外呼弹框的坐席 tab 中去掉状态查询条件，并把列表中的坐席状态统一展示为 Ready。
+
+修改结果：
+
+- `Transfer > Transfer Agent` 查询区去掉 Status 下拉，只保留 Keyword 和 Skill Queue。
+- `Outbound Call > Call Agent` 查询区去掉 Status 下拉，只保留 Keyword 和 Skill Queue。
+- `transferAgents` mock 中原 `Talking` / `Not Ready` 状态统一改为 `Ready`，两个弹框列表 Status 列均展示 Ready。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仅保留既有 Vite chunk size warning。
+- 本地 Chrome CDP smoke check 通过：`Outbound Call > Call Agent` 不显示 `All status`，6 行坐席状态全部为 `Ready`。
+- 本地 Chrome CDP smoke check 通过：通话态 `Transfer > Transfer Agent` 不显示 `All status`，6 行坐席状态全部为 `Ready`。
+
+回滚说明：
+
+- 如需回滚，可恢复两个弹框中的 `statusFilter` 状态、Status Select 和过滤条件，并把 `transferAgents` mock 中对应坐席状态恢复为 `Talking` / `Not Ready`。
+
+当前风险点：
+
+- 这是前端 demo mock 口径；真实系统如果后续要按坐席实时状态筛选，需要从后端实时坐席状态服务恢复状态筛选能力。
+
+### 2026-06-09 11:13 +08:00 - 新增登录页与媒体技能签入模式
+
+修改页面或文件：
+
+- `src/pages/LoginPage.tsx`
+- `src/components/AuthRouteGuards.tsx`
+- `src/routes.tsx`
+- `src/types/auth.ts`
+- `src/mock/auth.ts`
+- `src/store/authStore.ts`
+- `src/store/appStore.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/layouts/components/AgentProfileArea.tsx`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-09-1113.md`
+- `.codex-backup/current-todo-2026-06-09-1113.md`
+- `.codex-backup/page-state-2026-06-09-1113.md`
+
+修改原因：
+
+- 客户要求在 UI mockup 中看到登录页，并从登录到技能选择准备 AICC 与 CRM 应用之间的 SSO 工作流口径。
+- 用户确认 demo 账号使用 `admin / 888888`，EXT 可选，验证码随机生成；真实程序口径是 AICC 调用 BCA LDAP，失败错误由 LDAP 返回后在 AICC 展示。
+- 用户进一步确认技能选择不应放在登录页，而应在登录后的坐席签入时选择，以兼容监控/Supervisor 等不需要 voice/digital 技能的角色；签入方式采用头像下拉直接选择。
+
+修改结果：
+
+- 新增 `/login` 公共登录页，视觉沿用 BANK 1 蓝色 mock 方向，包含 User Name、Password、EXT、PIN/captcha、刷新验证码和错误提示。
+- 新增 demo LDAP auth mock 与 `authStore`：成功返回用户 profile、角色权限和 CRM SSO-ready metadata；只把 session/profile metadata 写入 `sessionStorage`，不保存密码。
+- 所有业务路由通过 `RequireAuth` 保护；未登录访问 `/`、`/design-system`、`/call-management/*` 会重定向 `/login`，已登录访问 `/login` 会重定向 `/`。
+- 登录成功后进入 `/`，坐席仍为 `Unsigned`；右上角下拉显示 `Sign in - Voice only`、`Sign in - Digital only`、`Sign in - Voice + Digital`。
+- 签入后右上角第二行显示 `PBK BSB · {mode}`，下拉顶部显示当前 mode；`Sign Out` 只退出媒体签入状态，`Log Out` 清除 auth session 并回到 `/login`。
+- `appStore` 新增 `agentServiceMode`、digital readiness 与 voice/video readiness；`Digital only` 拦截 PSTN / voice / video handoff，`Voice only` 拦截 Live Chat handoff，`Voice + Digital` 保持现有流程可用。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仅保留既有 Vite chunk size warning。
+- 本地 dev server：`http://127.0.0.1:5173/login` 返回 200。
+- Headless Chrome smoke check 通过：未登录访问 `/` 重定向 `/login`；错误 PIN 展示错误并停留登录页；错误密码展示 LDAP mock 错误并停留登录页；`admin / 888888` 加正确 PIN 进入 `/` 且坐席仍为 `Unsigned`；未签入下拉显示三种签入方式；`Digital only` 拦截 PSTN 并展示技能不匹配提示；`Voice + Digital` 可打开 PSTN；认证后 `/design-system` 可访问。
+
+回滚说明：
+
+- 如需回滚登录能力，可移除 `/login`、`AuthRouteGuards`、`authStore`、`mock/auth`、`types/auth`，把 `routes.tsx` 恢复为直接挂载 `BasicLayout`；把 `AgentProfileArea` 未签入菜单恢复为单个 `Sign In`，并删除 `agentServiceMode` / digital readiness / skill mismatch 文案。
+
+当前风险点：
+
+- 当前 LDAP、角色权限、CRM SSO metadata 都是前端 demo mock，不接真实 BCA LDAP、真实 CRM SSO 或后端 session。
+- Auth session 只保存在 `sessionStorage`，刷新保留、关闭标签页清除；后续接真实服务时需要改为后端 token/session 策略。
+- Headless Chrome 中 WhatsApp Demo 的 `Next Step` 未推进到 handoff 点，未能从 UI 自动验证 `Voice only` 阻止 Live Chat；代码路径已在 `BankAppDemoPage` 的 livechat handoff 前读取 `digitalHandoffReadiness` 并显示对应提示，建议人工再走一次 WhatsApp/BankApp Live Chat handoff。
+
+### 2026-06-09 10:52 +08:00 - AUX 下拉改为分组标题和纯文字原因项
+
+修改页面或文件：
+
+- `src/layouts/components/AgentProfileArea.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-09-1052.md`
+- `.codex-backup/current-todo-2026-06-09-1052.md`
+- `.codex-backup/page-state-2026-06-09-1052.md`
+
+修改原因：
+
+- 用户反馈 signed-in AUX 下拉中所有原因都使用同一个图标，容易造成每个原因都需要配置图标的误解。
+- 本轮选择让 `AUX` 作为分类标题，原因项只显示文字，不在管理台增加图标维护字段。
+
+修改结果：
+
+- `AgentProfileArea` signed-in 菜单中增加不可点击的 `AUX` group title。
+- 启用示忙原因仍按 `BR001` 到 `BR020` 顺序展示，但不再带 `CoffeeOutlined` 图标。
+- `No enabled AUX reason` 仍显示在 `AUX` 分组下，保持 disabled。
+- Sign Out / Log Out 继续保留原动作图标。
+- 新增本地菜单样式，使 `AUX` 分组标题更轻量，原因项左侧按普通文字菜单对齐。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仅保留既有 Vite chunk size warning。
+- 本地 Chrome CDP smoke check 通过：未签入菜单显示服务签入项和 `Log Out`；签入后菜单显示 `AUX` group title，group title role 为 `presentation`，点击 group title 不切换状态；9 个原因项 icon count 为 0；点击 `Break` / `Keperluan Pribadi` 后状态仍分别切换为 `AUX - Break` / `AUX - Keperluan Pribadi`。
+
+回滚说明：
+
+- 如需回滚，可把 `AgentProfileArea` 中的 `AUX` group item 改回原因项平铺，并恢复原因项 `CoffeeOutlined` icon；同时删除本轮新增的 group title 样式。
+
+当前风险点：
+
+- Busy Reason 仍是前端 demo store，不接真实后端；刷新浏览器后恢复 mock 默认值。
+- 如果客户之后要求每个原因有不同图标，需要另行扩展配置字段和管理台，不建议当前版本提前增加。
+
+### 2026-06-09 10:10 +08:00 - 恢复 AUX 直接下拉并新增 Busy Reason Management
+
+修改页面或文件：
+
+- `src/layouts/components/AgentProfileArea.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/routes.tsx`
+- `src/pages/call-management/BusyReasonManagementPage.tsx`
+- `src/pages/call-management/index.ts`
+- `src/mock/busyReasons.ts`
+- `src/store/callManagementStore.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-09-1010.md`
+- `.codex-backup/current-todo-2026-06-09-1010.md`
+- `.codex-backup/page-state-2026-06-09-1010.md`
+
+修改原因：
+
+- 客户反馈不喜欢 AUX 新弹框，认为之前直接下拉选择示忙原因更快。
+- 售前提供客户现有 AUX 截图，用户确认前两项 `AUX`、`Aux New Updated` 不作为业务示忙原因，其余原因按客户原文保留。
+
+修改结果：
+
+- 移除右上角 `Select AUX Reason` 弹框流程，signed-in 头像菜单直接显示启用示忙原因，点击原因立即切换为 `AUX - {reasonName}`。
+- `busyReasons` mock 更新为 20 条：前 9 条 `Break`、`Istirahat`、`Job Routine`、`Keagamaan`、`Keperluan Pribadi`、`Meeting/Coaching`、`Special Assignment`、`Toilet`、`Yoga` 为 Enabled；`Extension 1-11` 为 Disabled 备用；Default 全部为 No。
+- 新增 `Call Management > Busy Reason Management`，支持 Keyword / Default / Status 查询和 Edit 维护；不提供 Add/Delete。
+- `callManagementStore` 增加 `upsertBusyReason` / `resetBusyReasons`，管理页编辑会立即影响坐席 AUX 下拉；刷新后恢复 mock 默认值。
+- `Routing Config` 继续隐藏并直达回首页。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仅保留既有 Vite chunk size warning。
+- `git diff --check` 通过，仅有 Windows CRLF 换行提示。
+- 本地 Chrome CDP smoke check 通过：`/` 正常加载；未签入头像菜单只显示 `Sign In`；签入后菜单显示 9 个启用原因和 `Sign Out`，不显示 `AUX`、`Aux New Updated`、`Extension 1-11` 或 `Select AUX Reason`；点击 `Break` / `Keperluan Pribadi` 后状态分别切换为 `AUX - Break` / `AUX - Keperluan Pribadi`。
+- 本地 Chrome CDP smoke check 通过：`/call-management/busy-reasons` 显示 20 条示忙原因；BR001-BR009 为 Enabled，BR010-BR020 为 Disabled，Default 全部为 No；页面无 Add/Delete；编辑 BR001 为 Disabled 后 AUX 下拉不再显示 `Break`，编辑 BR010 为 Enabled 后 AUX 下拉显示 `Extension 1`。
+- 本地 Chrome CDP smoke check 通过：`/call-management/verification-rules` 与 `/call-management/text-channel-settings` 正常加载，`/routing-config/channel-types` 回到 `/`。
+
+回滚说明：
+
+- 如需回滚，可恢复 `AgentProfileArea` 中的单个 `AUX` 入口、`Select AUX Reason` 弹框、原 `Ibadah/Makan` mock 数据，并移除 `BusyReasonManagementPage` 路由和菜单入口。
+
+当前风险点：
+
+- Busy Reason 仍是前端 demo store，不接真实后端；刷新浏览器后恢复 mock 默认值。
+- 客户截图中的原因名称按原文保留，若后续客户提供正式字典，应以正式字典替换当前 mock。
+
+### 2026-06-06 16:35 +08:00 - 简化验证规则达成展示并开放 Call Management 验证规则配置页
+
+修改页面或文件：
+
+- `src/types/inbound.ts`
+- `src/mock/inbound.ts`
+- `src/store/appStore.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/routes.tsx`
+- `src/pages/call-management/index.ts`
+- `src/pages/call-management/VerificationRulesPage.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/pages/inbound/components/CustomerVerificationModal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-06-1635.md`
+- `.codex-backup/current-todo-2026-06-06-1635.md`
+- `.codex-backup/page-state-2026-06-06-1635.md`
+
+修改原因：
+
+- 用户要求验证弹窗去掉业务类型后的长统计串，把“需要 5 个正确，其中 1 必填、2 动态、2 静态”的达成情况合并为颜色/进度区分。
+- 当前没有客户可看的验证规则配置页，用户确认配置入口应放在 `Call Management`，不是 `Routing Config`；`Routing Config` 继续隐藏。
+
+修改结果：
+
+- 验证弹窗顶部只保留 `Channel Type`、紧凑 `Business Type` 和轻量状态 badge，不再展示 `Correct 0/5 · Wrong 0/3 · Skip 0 · In Progress`。
+- 规则区展示 `Need N correct`、Mandatory / Dynamic / Static / Alternative / Layering / Special 彩色达成块，以及弱提示 `Wrong x/y`；删除重复的 remaining 说明。
+- 新增 `VerificationRule.status` 与 `needLayering`，规则只读取 enabled 配置。
+- `verificationRules` 从 mock clone 到 `appStore`，新增 `updateVerificationRule` / `resetVerificationRules`；坐席验证弹窗和配置页共用同一份前端 demo store。
+- 左侧菜单开放 `Call Management`，二级包含 `Verification Rules` 和 `Text Channel Settings`；`/call-management` 默认进入 `/call-management/verification-rules`，`/routing-config/*` 继续回到 `/`。
+- 新增 `VerificationRulesPage`，列表按 `Verification Channel Type + Business Type` 展示规则，View/Edit 弹窗可配置渠道类型、业务类型、启停、答对阈值、各题组 required count、错答上限、layering 和 Question Set；配置页不展示标准答案或答案来源。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite chunk size warning。
+- Browser check `/call-management/verification-rules`：页面正常打开，表格字段 `Channel Type`、`Business Type`、`Required Rule`、`Question Set`、`Max Wrong`、`Layering`、`Status`、`Actions` 均可见。
+- Browser check `/call-management/text-channel-settings`：页面正常打开。
+- Browser check `/call-management`：自动跳转到 `/call-management/verification-rules`。
+- Browser check `/routing-config`：继续重定向到 `/`，未展示 Routing Config 内容。
+- Browser check `/call-management/verification-rules`：`Edit phone-perbankan` 弹窗可打开，能看到配置字段；弹窗未出现 `Demo answer` 或 `Source`。
+- Browser check `/design-system`：页面正常加载；console 仅有既有 Ant Design `destroyOnClose` deprecation warning。
+
+回滚说明：
+
+- 如需回滚本轮配置页，可移除 `VerificationRulesPage` 路由和菜单入口，把 `/call-management/*` 恢复为重定向 `/`；将 `CustomerInformationCard` 改回直接读取 mock `verificationRules`。
+- 如需回滚弹窗视觉，可恢复长统计串和旧 rule bar 样式，但应保留上一轮“不展示答案/来源”和“单题可改”的业务口径，除非用户明确要求回退。
+
+当前风险点：
+
+- `Call Management > Verification Rules` 当前仅为前端 demo store，不接真实后端，刷新后恢复 mock 默认值。
+- 本轮浏览器插件可以验证配置页、路由和 DOM 内容，但在当前会话中 Sign In 下拉与截图 CDP 控制不稳定，未能完整从 UI 触发 PSTN 验证弹窗复查；代码已通过 lint/build，且源码确认坐席弹窗读取同一份 `verificationRules` store。仍需人工在本地页面走一次 `Sign In -> PSTN -> Verify` 验证规则块和配置改动联动。
+- 生产环境答案来源、后端匹配方式、验证记录落库和错答处置仍待客户确认。
+
+### 2026-06-06 15:47 +08:00 - 简化 Customer Verification Assist 坐席操作弹窗
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerVerificationModal.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-06-1547.md`
+- `.codex-backup/current-todo-2026-06-06-1547.md`
+- `.codex-backup/page-state-2026-06-06-1547.md`
+
+修改原因：
+
+- 用户反馈验证页面内容过多、规则和进度占用高度过高、业务类型下拉框过高、问题行显示答案和来源不适合坐席侧。
+- 用户指出坐席误点后不应通过重置整次验证来处理，因为实际业务中不可能要求客户重新回答全部问题。
+
+修改结果：
+
+- 弹窗顶部改为一行紧凑信息栏，包含 `Channel Type`、`Business Type` 和 `Correct/Wrong/Skip/Status` 摘要。
+- 规则和进度合并为一条轻量 rule bar；详细规则 notes 收进问号 popover，不再常驻展示。
+- 题目行只展示序号、题目分组、问题文本和操作按钮；不再展示 `Demo answer`、`Source` 或答案来源。
+- 单题状态支持覆盖修改：坐席可把同一题从 `Wrong` 改为 `Correct`，或从 `Skip` 改为其它状态，统计会实时更新。
+- 错答达到上限后仍允许在 Apply 前修正单题；错答数降回上限以下后恢复进行中状态。
+- `Reset Progress` 改为低优先级 `Clear All`，仅用于坐席主动清空整次验证进度。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite chunk size warning。
+- Browser smoke check `/`：PSTN `Verify` 弹窗顶部为紧凑信息栏，规则文本按 `Mandatory, Dynamic, Static` 顺序展示，弹窗中 `Demo answer` 和 `Source` 计数为 0。
+- Browser smoke check `/`：第一题先点 `Wrong` 再点 `Correct`，统计从 `Wrong 1/3` 变为 `Wrong 0/3`，`Correct` 增加，无需 `Clear All`。
+- Browser smoke check `/`：第二题先点 `Skip` 再点 `Correct`，`Skip` 回到 0，统计正确更新。
+- Browser smoke check `/`：错答 3 次后出现 `Apply Failed`，随后把一题改为 `Correct`，状态回到 `In Progress` 且 `Apply Failed` 消失。
+- Browser smoke check `/`：满足 `Phone + Perbankan` 通过条件后 `Apply Verified` 可用。
+- Browser smoke check `/`：BankApp Voice 未 PIN 时显示紧凑 `PIN required` 和 `Send PIN Verification`，不加载题库；客户侧提交 PIN 后坐席侧加载 `HaloApp Registered` 紧凑题库。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚本轮简化，可恢复 `CustomerVerificationModal` 中旧的 metrics、requirements、notes 和 answer/source 渲染；同时恢复题目操作在通过/失败后禁用，以及 footer 文案 `Reset Progress`。
+
+当前风险点：
+
+- 本轮只调整坐席侧验证弹窗展示和前端状态覆盖逻辑，不改变 mock 规则、不接真实答案校验服务。
+- `answer` / `answerSource` 仍保留在 mock/type 中作为后续接口讨论材料，但生产是否允许前端持有标准答案仍需客户确认。
+
+### 2026-06-06 14:55 +08:00 - 实现客户身份验证动态题库 Demo
+
+修改页面或文件：
+
+- `src/types/inbound.ts`
+- `src/mock/inbound.ts`
+- `src/store/appStore.ts`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/pages/inbound/components/CustomerVerificationModal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-06-1455.md`
+- `.codex-backup/current-todo-2026-06-06-1455.md`
+- `.codex-backup/page-state-2026-06-06-1455.md`
+
+修改原因：
+
+- 用户要求把固定 10 问客户身份验证升级为动态题库 demo，按验证渠道类型和启用业务类型加载题库与规则。
+- 用户补充 BankApp 是脱敏名，客户真实含义为 HaloApp；HaloApp 客户接入坐席后，坐席先发送 PIN 输入页，客户在 App 中输入 4 位 PIN 后再继续问题验证。
+
+修改结果：
+
+- 新增验证渠道类型、业务类型、题目分组和验证规则类型；mock 规则覆盖 `Phone + Perbankan`、`HaloApp Registered + Perbankan`、`Phone + Kartu Kredit`、`HaloApp Registered + Kartu Kredit`、`HaloApp Registered + Paylater`。
+- Customer Information 的 `Verify` 弹窗升级为 Customer Verification Assist，展示渠道类型、业务类型、规则摘要、题目分组、demo answer、answer source、剩余达标条件和自动通过/失败状态。
+- 坐席可切换本次业务类型；切换后题库和答题进度重置。`Correct / Wrong / Skip` 按一次验证会话累计，必问题计入总答对数，`Skip` 不计错也不计对，错答达到上限后进入失败状态。
+- BankApp/HaloApp 入口增加 `Send PIN Verification` 演示链路；坐席发送后客户侧 BankApp Demo 展示 4 位 PIN 输入页，客户提交后坐席侧渠道类型切为 `HaloApp Registered` 并加载已登录规则。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite chunk size warning。
+- Browser smoke check `/`：Sign In 后 Live Chat 默认入口仍出现；PSTN Customer Information、Refresh identity、Edit contact、Verify 与 IVR Menu 入口仍可见。
+- Browser smoke check `/`：PSTN `Verify` 默认显示 `PSTN / Phone + Perbankan`，答对 1 mandatory + 2 dynamic + 2 static 后 `Apply Verified` 可用并把客户状态改为 `Verified`。
+- Browser smoke check `/`：同一次验证会话错答 3 次后 `Apply Failed` 可用，题目操作进入禁用状态。
+- Browser smoke check `/`：BankApp Voice 接入后验证弹窗先显示 `HaloApp Unregistered` 和 PIN 前置要求；发送 PIN 后客户侧 BankApp Demo 显示 PIN 输入页，提交后坐席侧重新打开验证弹窗显示 `HaloApp Registered`。
+- Browser smoke check `/`：在 HaloApp Registered 验证弹窗切换业务类型到 `Paylater` 后，题库和规则重置为 Paylater demo 规则。
+- Browser smoke check `/design-system`：页面正常加载。
+
+回滚说明：
+
+- 如需回滚，可恢复 `CustomerVerificationModal` 为固定 `verificationQuestions` 渲染，移除 `verificationRules` / `verificationBusinessTypes` mock 与新增验证类型，删除 `appStore` 中 BankApp PIN 状态和 `BankAppDemoPage` PIN 输入页；`CustomerInformationCard` 恢复为只传固定问题列表。
+
+当前风险点：
+
+- 当前仅为前端 demo mock，不接真实 CRM、Card Link、CardPack、Base24、HaloApp 登录态接口或后端验证服务。
+- Demo 阶段会显示标准答案，生产是否允许坐席看到答案需要客户确认。
+- HaloApp PIN 成功后的规则等同性、其它已认证入口是否减免题数、`Berurut` 是否强制顺序、错答 3 次后的处置、验证记录落库和特殊场景触发条件仍待客户确认。
 
 ### 2026-06-05 20:07 +08:00 - 修复 Live Chat Current 清空后的右侧空态
 

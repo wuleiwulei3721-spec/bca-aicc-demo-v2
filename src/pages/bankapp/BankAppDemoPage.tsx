@@ -5,6 +5,7 @@ import {
   ExclamationCircleOutlined,
   FileDoneOutlined,
   IdcardOutlined,
+  LockOutlined,
   MobileOutlined,
   PhoneOutlined,
   PlayCircleOutlined,
@@ -22,6 +23,7 @@ import {
 import {
   useAppStore,
   type BankAppVideoShareState,
+  type DigitalHandoffReadiness,
   type VoiceVideoHandoffReadiness,
 } from '../../store'
 import type {
@@ -38,7 +40,7 @@ const WHATSAPP_LIVE_CHAT_SESSION_ID = 'live-chat-001'
 type HandoffWarningReason = Exclude<
   VoiceVideoHandoffReadiness,
   'available'
->
+> | Exclude<DigitalHandoffReadiness, 'available'>
 
 type CustomerAppDemoVariant = 'bankapp' | 'whatsapp'
 
@@ -304,11 +306,23 @@ export function BankAppDemoPage({
   const voiceVideoHandoffReadiness = useAppStore(
     (state) => state.voiceVideoHandoffReadiness,
   )
+  const digitalHandoffReadiness = useAppStore(
+    (state) => state.digitalHandoffReadiness,
+  )
   const bankAppVideoShareState = useAppStore(
     (state) => state.bankAppVideoShareState,
   )
+  const bankAppPinVerificationStatus = useAppStore(
+    (state) => state.bankAppPinVerificationStatus,
+  )
+  const completeBankAppPinVerification = useAppStore(
+    (state) => state.completeBankAppPinVerification,
+  )
   const resetBankAppVideoDesktopShare = useAppStore(
     (state) => state.resetBankAppVideoDesktopShare,
+  )
+  const resetBankAppPinVerification = useAppStore(
+    (state) => state.resetBankAppPinVerification,
   )
   const [customerType, setCustomerType] =
     useState<BankAppCustomerType>('registered')
@@ -348,10 +362,19 @@ export function BankAppDemoPage({
   const handoffWarningMessage =
     handoffWarningReason === 'active-call'
       ? 'Please hang up the current call and wait until the agent is Ready before routing this interaction to Agent Workspace.'
-      : 'Agent must be Ready before routing this interaction to Agent Workspace.'
+      : handoffWarningReason === 'voice-skill-unavailable'
+        ? 'Current sign-in mode is Digital only. Sign in with Voice or Voice + Digital before routing this voice or video interaction.'
+        : handoffWarningReason === 'digital-skill-unavailable'
+          ? 'Current sign-in mode is Voice only. Sign in with Digital or Voice + Digital before routing this chat interaction.'
+          : 'Agent must be Ready before routing this interaction to Agent Workspace.'
 
   const triggerAgentWorkspace = (activateWorkspace = false) => {
     if (contactMethod === 'livechat') {
+      if (digitalHandoffReadiness !== 'available') {
+        setHandoffWarningReason(digitalHandoffReadiness)
+        return false
+      }
+
       setHandoffWarningReason(null)
       requestLiveChatWorkspace(config.liveChatSessionId, activateWorkspace)
       return true
@@ -399,6 +422,7 @@ export function BankAppDemoPage({
 
   const handleCustomerTypeChange = (nextCustomerType: BankAppCustomerType) => {
     resetBankAppVideoDesktopShare()
+    resetBankAppPinVerification()
     setHandoffWarningReason(null)
     setCustomerType(nextCustomerType)
     setDemoStep('channel')
@@ -406,6 +430,7 @@ export function BankAppDemoPage({
 
   const handleMethodChange = (nextMethod: BankAppContactMethod) => {
     resetBankAppVideoDesktopShare()
+    resetBankAppPinVerification()
     setHandoffWarningReason(null)
     setContactMethod(nextMethod)
     setDemoStep('channel')
@@ -417,6 +442,7 @@ export function BankAppDemoPage({
     setBusinessType('mobile-login')
     setDemoStep('channel')
     setHandoffWarningReason(null)
+    resetBankAppPinVerification()
     resetBankAppVideoDesktopShare()
   }
 
@@ -694,6 +720,34 @@ export function BankAppDemoPage({
     </div>
   )
 
+  const renderPinVerificationScreen = () => (
+    <div className="bankapp-pin-screen">
+      <div className="bankapp-pin-screen__header">
+        <LockOutlined />
+        <span>BANK App Secure PIN</span>
+      </div>
+      <div className="bankapp-pin-screen__content">
+        <strong>Enter 4-digit PIN</strong>
+        <p>
+          This secure page was pushed by the agent to verify the logged-in
+          customer.
+        </p>
+        <div aria-label="Demo PIN value 1234" className="bankapp-pin-screen__pin">
+          {['1', '2', '3', '4'].map((digit) => (
+            <span key={digit}>{digit}</span>
+          ))}
+        </div>
+        <BaseButton
+          size="small"
+          type="primary"
+          onClick={completeBankAppPinVerification}
+        >
+          Submit PIN
+        </BaseButton>
+      </div>
+    </div>
+  )
+
   const renderChatScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--livechat-chat">
       <img
@@ -723,6 +777,10 @@ export function BankAppDemoPage({
   )
 
   const renderPhoneContent = () => {
+    if (variant === 'bankapp' && bankAppPinVerificationStatus === 'sent') {
+      return renderPinVerificationScreen()
+    }
+
     if (visibleDemoStep === 'channel') {
       return renderChannelScreen()
     }
@@ -899,7 +957,7 @@ export function BankAppDemoPage({
                 Reset
               </BaseButton>
             </div>
-            {handoffWarningReason && contactMethod !== 'livechat' && (
+            {handoffWarningReason && (
               <div
                 aria-live="polite"
                 className="bankapp-process__handoff-warning"
@@ -909,6 +967,21 @@ export function BankAppDemoPage({
                 <span>{handoffWarningMessage}</span>
               </div>
             )}
+            {variant === 'bankapp' &&
+              bankAppPinVerificationStatus !== 'idle' && (
+                <div
+                  aria-live="polite"
+                  className={`bankapp-process__pin-status bankapp-process__pin-status--${bankAppPinVerificationStatus}`}
+                  role="status"
+                >
+                  <LockOutlined />
+                  <span>
+                    {bankAppPinVerificationStatus === 'verified'
+                      ? 'Customer PIN verified in BANK App.'
+                      : 'PIN verification page is open in BANK App.'}
+                  </span>
+                </div>
+              )}
           </div>
 
           <ol className="bankapp-process__rail">

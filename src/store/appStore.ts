@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type {
+  AgentServiceMode,
   LiveChat2EndReason,
   LiveChat2Message,
   LiveChat2Session,
@@ -7,20 +8,27 @@ import type {
   LiveChat2SessionStatus,
   LiveChat2SortMode,
   LiveChat2StarColor,
+  VerificationRule,
 } from '../types'
-import { liveChat2Sessions } from '../mock/inbound'
+import { liveChat2Sessions, verificationRules } from '../mock/inbound'
 import { parseDurationSeconds } from '../utils/duration'
 
 export type InboundPopupSource = 'pstn' | 'bankapp-voice'
 export type VideoCallPopupSource = 'standard' | 'bankapp-video'
+export type BankAppPinVerificationStatus = 'idle' | 'sent' | 'verified'
 export type BankAppVideoShareState = 'idle' | 'selecting-program' | 'sharing'
 export type CallInteractionKind = 'voice' | 'video'
 export type CallInteractionPhase = 'incoming' | 'active' | 'ended'
 export type CallInteractionSource = InboundPopupSource | VideoCallPopupSource
+export type DigitalHandoffReadiness =
+  | 'available'
+  | 'digital-skill-unavailable'
+  | 'not-ready'
 export type VoiceVideoHandoffReadiness =
   | 'active-call'
   | 'available'
   | 'not-ready'
+  | 'voice-skill-unavailable'
 
 export interface InteractionTiming {
   flashUntil: number
@@ -69,6 +77,15 @@ const liveChat2SessionById = Object.fromEntries(
 ) as Record<string, (typeof liveChat2Sessions)[number]>
 const fallbackLiveChat2SessionId =
   liveChat2Sessions.find((session) => !session.isInitialHistory)?.id ?? null
+
+function cloneVerificationRules(): VerificationRule[] {
+  return verificationRules.map((rule) => ({
+    ...rule,
+    notes: [...rule.notes],
+    questions: rule.questions.map((question) => ({ ...question })),
+    requiredGroups: { ...rule.requiredGroups },
+  }))
+}
 
 function formatCurrentLiveChat2Time() {
   return new Intl.DateTimeFormat('en-GB', {
@@ -210,10 +227,13 @@ function getCallInteractionTitle(
 
 interface AppState {
   activeWorkspaceTabKey: string
+  agentServiceMode: AgentServiceMode | null
   activeLiveChatSessionIds: string[]
   activeLiveChat2SessionIds: string[]
   bankAppVideoCallActivateWorkspace: boolean
   bankAppVideoCallRequestId: number
+  bankAppPinVerificationRequestId: number
+  bankAppPinVerificationStatus: BankAppPinVerificationStatus
   bankAppVideoShareState: BankAppVideoShareState
   bankAppVoiceCallActivateWorkspace: boolean
   bankAppVoiceCallRequestId: number
@@ -223,6 +243,7 @@ interface AppState {
   collapsed: boolean
   currentCallInteractionId: string | null
   customerOutboundCallRequestId: number
+  digitalHandoffReadiness: DigitalHandoffReadiness
   isBankAppDemoTabOpen: boolean
   isLiveChat2TabOpen: boolean
   isLiveChatTabOpen: boolean
@@ -248,12 +269,15 @@ interface AppState {
   liveChatFocusRequestId: number
   liveChatFocusSessionId: string | null
   readLiveChatSessionIds: string[]
+  verificationRules: VerificationRule[]
   voiceVideoHandoffReadiness: VoiceVideoHandoffReadiness
+  clearAgentServiceMode: () => void
   closeAllCallInteractionTabs: () => void
   closeBankAppDemoTab: () => void
   closeCallInteractionTab: (interactionId: string) => void
   closeLiveChatSession: (sessionId: string) => void
   closeWhatsAppDemoTab: () => void
+  completeBankAppPinVerification: () => void
   confirmBankAppVideoScreenShare: () => void
   createCallInteraction: (
     kind: CallInteractionKind,
@@ -266,6 +290,7 @@ interface AppState {
   markLiveChatSessionRead: (sessionId: string) => void
   clearCurrentCallInteraction: () => void
   requestBankAppDemoWorkspace: () => void
+  requestBankAppPinVerification: () => void
   requestBankAppVideoCall: (activate?: boolean) => void
   requestBankAppVoiceCall: (activate?: boolean) => void
   requestLiveChat2Workspace: (
@@ -281,8 +306,13 @@ interface AppState {
   requestLiveChatWorkspace: (sessionId?: string, activate?: boolean) => void
   requestCustomerOutboundCall: () => void
   requestWhatsAppDemoWorkspace: () => void
+  resetVerificationRules: () => void
   setActiveWorkspaceTabKey: (tabKey: string) => void
+  setAgentServiceMode: (mode: AgentServiceMode) => void
   setCollapsed: (collapsed: boolean) => void
+  setDigitalHandoffReadiness: (
+    readiness: DigitalHandoffReadiness,
+  ) => void
   setLiveChat2DraftMessage: (sessionId: string, message: string) => void
   setLiveChat2FocusedSession: (sessionId: string | null) => void
   setLiveChat2SortMode: (sortMode: LiveChat2SortMode) => void
@@ -296,7 +326,9 @@ interface AppState {
   setVoiceVideoHandoffReadiness: (
     readiness: VoiceVideoHandoffReadiness,
   ) => void
+  updateVerificationRule: (rule: VerificationRule) => void
   startBankAppVideoShareSelection: () => void
+  resetBankAppPinVerification: () => void
   resetBankAppVideoDesktopShare: () => void
   closeLiveChat2Session: (sessionId: string) => void
   endLiveChat2Session: (
@@ -317,10 +349,13 @@ interface AppState {
 
 export const useAppStore = create<AppState>((set) => ({
   activeWorkspaceTabKey: 'home',
+  agentServiceMode: null,
   activeLiveChatSessionIds: [],
   activeLiveChat2SessionIds: [],
   bankAppVideoCallActivateWorkspace: false,
   bankAppVideoCallRequestId: 0,
+  bankAppPinVerificationRequestId: 0,
+  bankAppPinVerificationStatus: 'idle',
   bankAppVideoShareState: 'idle',
   bankAppVoiceCallActivateWorkspace: false,
   bankAppVoiceCallRequestId: 0,
@@ -330,6 +365,7 @@ export const useAppStore = create<AppState>((set) => ({
   collapsed: true,
   currentCallInteractionId: null,
   customerOutboundCallRequestId: 0,
+  digitalHandoffReadiness: 'not-ready',
   isBankAppDemoTabOpen: false,
   isLiveChat2TabOpen: false,
   isLiveChatTabOpen: false,
@@ -355,7 +391,14 @@ export const useAppStore = create<AppState>((set) => ({
   liveChatFocusRequestId: 0,
   liveChatFocusSessionId: null,
   readLiveChatSessionIds: [],
+  verificationRules: cloneVerificationRules(),
   voiceVideoHandoffReadiness: 'not-ready',
+  clearAgentServiceMode: () =>
+    set({
+      agentServiceMode: null,
+      digitalHandoffReadiness: 'not-ready',
+      voiceVideoHandoffReadiness: 'not-ready',
+    }),
   closeAllCallInteractionTabs: () =>
     set((state) => ({
       activeWorkspaceTabKey: state.activeWorkspaceTabKey.startsWith('call-')
@@ -378,6 +421,7 @@ export const useAppStore = create<AppState>((set) => ({
         state.activeWorkspaceTabKey === 'bankapp-demo'
           ? 'home'
           : state.activeWorkspaceTabKey,
+      bankAppPinVerificationStatus: 'idle',
       isBankAppDemoTabOpen: false,
     })),
   closeCallInteractionTab: (interactionId) =>
@@ -446,6 +490,10 @@ export const useAppStore = create<AppState>((set) => ({
           : state.activeWorkspaceTabKey,
       isWhatsAppDemoTabOpen: false,
     })),
+  completeBankAppPinVerification: () =>
+    set({
+      bankAppPinVerificationStatus: 'verified',
+    }),
   confirmBankAppVideoScreenShare: () =>
     set({
       activeWorkspaceTabKey: 'bankapp-demo',
@@ -596,10 +644,21 @@ export const useAppStore = create<AppState>((set) => ({
       activeWorkspaceTabKey: 'bankapp-demo',
       isBankAppDemoTabOpen: true,
     }),
+  requestBankAppPinVerification: () =>
+    set((state) => ({
+      bankAppPinVerificationRequestId:
+        state.bankAppPinVerificationRequestId + 1,
+      bankAppPinVerificationStatus: 'sent',
+      isBankAppDemoTabOpen: true,
+    })),
   requestWhatsAppDemoWorkspace: () =>
     set({
       activeWorkspaceTabKey: 'whatsapp-demo',
       isWhatsAppDemoTabOpen: true,
+    }),
+  resetVerificationRules: () =>
+    set({
+      verificationRules: cloneVerificationRules(),
     }),
   requestBankAppVideoCall: (activate = false) =>
     set((state) => ({
@@ -831,7 +890,15 @@ export const useAppStore = create<AppState>((set) => ({
     set({
       activeWorkspaceTabKey: tabKey,
     }),
+  setAgentServiceMode: (agentServiceMode) =>
+    set({
+      agentServiceMode,
+    }),
   setCollapsed: (collapsed) => set({ collapsed }),
+  setDigitalHandoffReadiness: (digitalHandoffReadiness) =>
+    set({
+      digitalHandoffReadiness,
+    }),
   setLiveChat2DraftMessage: (sessionId, message) =>
     set((state) => {
       const nextDrafts = { ...state.liveChat2DraftMessages }
@@ -951,10 +1018,27 @@ export const useAppStore = create<AppState>((set) => ({
     set({
       voiceVideoHandoffReadiness,
     }),
+  updateVerificationRule: (rule) =>
+    set((state) => ({
+      verificationRules: state.verificationRules.map((item) =>
+        item.id === rule.id
+          ? {
+              ...rule,
+              notes: [...rule.notes],
+              questions: rule.questions.map((question) => ({ ...question })),
+              requiredGroups: { ...rule.requiredGroups },
+            }
+          : item,
+      ),
+    })),
   startBankAppVideoShareSelection: () =>
     set({
       bankAppVideoShareState: 'selecting-program',
       isScreenShareActive: false,
+    }),
+  resetBankAppPinVerification: () =>
+    set({
+      bankAppPinVerificationStatus: 'idle',
     }),
   resetBankAppVideoDesktopShare: () =>
     set({

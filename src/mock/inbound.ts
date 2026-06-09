@@ -8,6 +8,8 @@ import type {
   NextBestActionItem,
   QuickActionItem,
   TicketHistoryItem,
+  VerificationBusinessTypeOption,
+  VerificationRule,
   VerificationQuestion,
 } from '../types'
 
@@ -750,58 +752,371 @@ export const callFlowDetail: CallFlowDetail = {
   ],
 }
 
-export const verificationQuestions: VerificationQuestion[] = [
+export const verificationBusinessTypes: VerificationBusinessTypeOption[] = [
+  { code: 'perbankan', enabled: true, label: 'Perbankan' },
+  { code: 'kartu-kredit', enabled: true, label: 'Kartu Kredit' },
+  { code: 'paylater', enabled: true, label: 'Paylater' },
+]
+
+const perbankanQuestions: VerificationQuestion[] = [
   {
-    id: 'verify-001',
-    question: 'Mohon sebutkan nama gadis ibu kandung Anda.',
     answer: 'Santoso',
+    answerSource: 'CRM customer profile',
+    group: 'mandatory',
+    id: 'perbankan-mandatory-001',
+    question: 'Mohon sebutkan nama gadis ibu kandung Anda.',
+    sequence: 1,
   },
   {
-    id: 'verify-002',
-    question: 'Mohon sebutkan tempat lahir yang terdaftar pada data nasabah.',
-    answer: 'Jakarta',
+    answer: 'Transfer Rp 1.250.000 ke Raka Aditya',
+    answerSource: 'Core banking transaction history',
+    group: 'dynamic',
+    id: 'perbankan-dynamic-001',
+    question: 'Mohon sebutkan salah satu dari 5 transaksi keluar terakhir.',
+    sequence: 2,
   },
   {
-    id: 'verify-003',
-    question: 'Mohon sebutkan empat digit terakhir nomor rekening tabungan utama Anda.',
-    answer: '8987',
+    answer: 'myBCA, KlikBCA, dan mobile banking',
+    answerSource: 'E-Channel profile',
+    group: 'dynamic',
+    id: 'perbankan-dynamic-002',
+    question: 'Mohon sebutkan fasilitas E-Channel yang Anda miliki.',
+    sequence: 3,
   },
   {
-    id: 'verify-004',
-    question: 'Mohon sebutkan kode pos alamat penagihan yang terdaftar.',
-    answer: '12190',
+    answer: 'Debit Mastercard Platinum',
+    answerSource: 'Card profile',
+    group: 'dynamic',
+    id: 'perbankan-dynamic-003',
+    question: 'Mohon sebutkan jenis kartu debit yang Anda miliki.',
+    sequence: 4,
   },
   {
-    id: 'verify-005',
-    question: 'Mohon sebutkan kantor cabang pembukaan profil nasabah Anda.',
+    answer: 'Tahapan',
+    answerSource: 'Account profile',
+    group: 'dynamic',
+    id: 'perbankan-dynamic-004',
+    question: 'Mohon sebutkan jenis rekening yang Anda miliki.',
+    sequence: 5,
+  },
+  {
     answer: 'KCU BANK 1 Sudirman',
+    answerSource: 'Account opening branch',
+    group: 'dynamic',
+    id: 'perbankan-dynamic-005',
+    question: 'Mohon sebutkan cabang asal rekening Anda.',
+    sequence: 6,
   },
   {
-    id: 'verify-006',
-    question: 'Mohon sebutkan kategori merchant transaksi kartu terakhir Anda.',
-    answer: 'Supermarket',
-  },
-  {
-    id: 'verify-007',
-    question: 'Mohon sebutkan nomor ponsel yang terdaftar untuk notifikasi perbankan.',
-    answer: '087825100234',
-  },
-  {
-    id: 'verify-008',
-    question: 'Mohon sebutkan alamat email yang terdaftar pada data nasabah.',
     answer: 'Dimas@gmail.com',
+    answerSource: 'CRM customer profile',
+    group: 'static',
+    id: 'perbankan-static-001',
+    question: 'Mohon sebutkan alamat email yang terdaftar.',
+    sequence: 7,
   },
   {
-    id: 'verify-009',
-    question: 'Mohon sebutkan segmen nasabah Anda yang terdaftar di sistem kami.',
-    answer: 'Nasabah Prioritas',
+    answer: '087825100234',
+    answerSource: 'CRM customer profile',
+    group: 'static',
+    id: 'perbankan-static-002',
+    question: 'Mohon sebutkan nomor HP yang terdaftar.',
+    sequence: 8,
   },
   {
-    id: 'verify-010',
-    question: 'Mohon sebutkan jenis permintaan layanan terakhir yang berhasil diproses.',
-    answer: 'Pembukaan Blokir Kartu',
+    answer: '3174********0001',
+    answerSource: 'Identity document profile',
+    group: 'static',
+    id: 'perbankan-static-003',
+    question: 'Mohon sebutkan NIK, paspor, atau KITAS yang terdaftar.',
+    sequence: 9,
+  },
+  {
+    answer: 'Jl. Senopati Raya No. 88, Jakarta Selatan',
+    answerSource: 'CRM customer profile',
+    group: 'static',
+    id: 'perbankan-static-004',
+    question: 'Mohon sebutkan alamat yang terdaftar.',
+    sequence: 10,
+  },
+  {
+    answer: 'Dimas Abimanyu Prabowo',
+    answerSource: 'KTP profile',
+    group: 'static',
+    id: 'perbankan-static-005',
+    question: 'Mohon sebutkan nama lengkap sesuai KTP.',
+    sequence: 11,
+  },
+  {
+    answer: 'Jakarta, 18 Mei 1988',
+    answerSource: 'KTP profile',
+    group: 'static',
+    id: 'perbankan-static-006',
+    question: 'Mohon sebutkan tempat dan tanggal lahir.',
+    sequence: 12,
   },
 ]
+
+const kartuKreditQuestions: VerificationQuestion[] = [
+  {
+    answer: 'Santoso',
+    answerSource: 'Cardholder profile',
+    group: 'mandatory',
+    id: 'card-mandatory-001',
+    question: 'Mohon sebutkan nama gadis ibu kandung Anda.',
+    sequence: 1,
+  },
+  {
+    answer: 'E-mail billing ke Dimas@gmail.com',
+    answerSource: 'Credit card billing profile',
+    group: 'static',
+    id: 'card-static-001',
+    question:
+      'Mohon konfirmasi alamat penagihan kartu kredit. Jika e-mail, sebutkan alamat e-mail.',
+    sequence: 2,
+  },
+  {
+    answer: 'Jl. Senopati Raya No. 88, Jakarta Selatan',
+    answerSource: 'Credit card billing profile',
+    group: 'static',
+    id: 'card-static-002',
+    question:
+      'Mohon sebutkan e-mail atau alamat penagihan yang belum ditanyakan.',
+    sequence: 3,
+  },
+  {
+    answer: 'myBCA',
+    answerSource: 'Credit card payment history',
+    group: 'dynamic',
+    id: 'card-dynamic-001',
+    question:
+      'Mohon sebutkan channel pembayaran terakhir tagihan kartu kredit.',
+    sequence: 4,
+  },
+  {
+    answer: 'Rangga Pratama',
+    answerSource: 'Supplementary card profile',
+    group: 'alternative',
+    id: 'card-alternative-001',
+    question: 'Mohon sebutkan nama pemilik kartu tambahan, jika ada.',
+    sequence: 5,
+  },
+  {
+    answer: 'Rp 75.000.000',
+    answerSource: 'Credit card limit profile',
+    group: 'alternative',
+    id: 'card-alternative-002',
+    question: 'Mohon sebutkan limit gabungan kartu kredit Anda.',
+    sequence: 6,
+  },
+  {
+    answer: 'Jakarta, 18 Mei 1988',
+    answerSource: 'Cardholder profile',
+    group: 'alternative',
+    id: 'card-alternative-003',
+    question: 'Mohon sebutkan tempat dan tanggal lahir.',
+    sequence: 7,
+  },
+  {
+    answer: '2 kartu kredit',
+    answerSource: 'Credit card profile',
+    group: 'alternative',
+    id: 'card-alternative-004',
+    question: 'Mohon sebutkan berapa kartu kredit yang Anda miliki.',
+    sequence: 8,
+  },
+  {
+    answer: 'Nomor berakhiran 4412, valid thru 08/29',
+    answerSource: 'Credit card profile',
+    group: 'layering',
+    id: 'card-layering-001',
+    notes: 'Layering demo for ATO or add-on requests.',
+    question: 'Mohon sebutkan nomor kartu kredit dan expired date.',
+    sequence: 9,
+  },
+  {
+    answer: 'Transaksi marketplace Rp 2.450.000',
+    answerSource: 'Credit card transaction history',
+    group: 'layering',
+    id: 'card-layering-002',
+    notes: 'Layering demo for ATO or add-on requests.',
+    question: 'Mohon sebutkan transaksi terakhir kartu kredit.',
+    sequence: 10,
+  },
+]
+
+const paylaterQuestions: VerificationQuestion[] = [
+  {
+    answer: 'Santoso',
+    answerSource: 'CRM customer profile',
+    group: 'mandatory',
+    id: 'paylater-mandatory-001',
+    question: 'Mohon sebutkan nama gadis ibu kandung Anda.',
+    sequence: 1,
+  },
+  {
+    answer: '087825100234',
+    answerSource: 'CRM customer profile',
+    group: 'static',
+    id: 'paylater-static-001',
+    question: 'Mohon sebutkan nomor telepon atau HP yang terdaftar.',
+    sequence: 2,
+  },
+  {
+    answer: 'dimas.bank1',
+    answerSource: 'Paylater profile',
+    group: 'static',
+    id: 'paylater-static-002',
+    question: 'Mohon sebutkan BANK 1 ID yang terkoneksi dengan Paylater.',
+    sequence: 3,
+  },
+  {
+    answer: 'Dimas@gmail.com',
+    answerSource: 'CRM customer profile',
+    group: 'static',
+    id: 'paylater-static-003',
+    question: 'Mohon sebutkan alamat email nasabah.',
+    sequence: 4,
+  },
+  {
+    answer: 'Dimas Abimanyu Prabowo',
+    answerSource: 'KTP profile',
+    group: 'static',
+    id: 'paylater-static-004',
+    question: 'Mohon sebutkan nama lengkap sesuai KTP.',
+    sequence: 5,
+  },
+  {
+    answer: 'Rp 12.000.000',
+    answerSource: 'Paylater limit profile',
+    group: 'dynamic',
+    id: 'paylater-dynamic-001',
+    question: 'Mohon sebutkan limit Paylater Anda.',
+    sequence: 6,
+  },
+  {
+    answer: 'Rp 680.000',
+    answerSource: 'Paylater transaction history',
+    group: 'dynamic',
+    id: 'paylater-dynamic-002',
+    question: 'Mohon sebutkan nominal transaksi Paylater terakhir.',
+    sequence: 7,
+  },
+  {
+    answer: 'Rp 725.000',
+    answerSource: 'Paylater repayment history',
+    group: 'dynamic',
+    id: 'paylater-dynamic-003',
+    question: 'Mohon sebutkan nominal pembayaran tagihan Paylater terakhir.',
+    sequence: 8,
+  },
+]
+
+export const verificationRules: VerificationRule[] = [
+  {
+    businessType: 'perbankan',
+    channelType: 'phone',
+    correctRequired: 5,
+    id: 'phone-perbankan',
+    maxWrongAttempts: 3,
+    needLayering: false,
+    notes: [
+      'Mandatory question counts toward the total correct answer requirement.',
+      'Wrong answers are counted across the whole verification session.',
+      'Skip does not count as wrong and does not count as correct.',
+    ],
+    questions: perbankanQuestions,
+    requiredGroups: {
+      dynamic: 2,
+      mandatory: 1,
+      static: 2,
+    },
+    status: 'enabled',
+    summary:
+      '5 correct answers: 1 mandatory, 2 dynamic, and 2 static. Max wrong: 3.',
+  },
+  {
+    businessType: 'perbankan',
+    channelType: 'haloapp-registered',
+    correctRequired: 3,
+    id: 'haloapp-registered-perbankan',
+    maxWrongAttempts: 3,
+    needLayering: false,
+    notes: [
+      'Demo treats a successful 4-digit HaloApp PIN as HaloApp Registered.',
+      'Customer confirmation is still needed for whether this reduction applies to other authenticated channels.',
+    ],
+    questions: perbankanQuestions,
+    requiredGroups: {
+      dynamic: 2,
+      mandatory: 1,
+    },
+    status: 'enabled',
+    summary:
+      'HaloApp Registered: 3 correct answers, including 1 mandatory and 2 dynamic. Max wrong: 3.',
+  },
+  {
+    businessType: 'kartu-kredit',
+    channelType: 'phone',
+    correctRequired: 4,
+    id: 'phone-kartu-kredit',
+    maxWrongAttempts: 3,
+    needLayering: true,
+    notes: [
+      'ATO and add-on scenarios may require 4 additional layering questions.',
+      'Layering trigger is a customer-confirmation item for production.',
+    ],
+    questions: kartuKreditQuestions,
+    requiredGroups: {
+      mandatory: 1,
+    },
+    status: 'enabled',
+    summary:
+      '4 correct answers with mother maiden name as mandatory. Max wrong: 3.',
+  },
+  {
+    businessType: 'kartu-kredit',
+    channelType: 'haloapp-registered',
+    correctRequired: 3,
+    id: 'haloapp-registered-kartu-kredit',
+    maxWrongAttempts: 3,
+    needLayering: true,
+    notes: [
+      'Demo follows the customer document rule that HaloApp Registered can pass with 3 correct answers.',
+      'ATO and add-on layering remains available as visible reference questions.',
+    ],
+    questions: kartuKreditQuestions,
+    requiredGroups: {
+      mandatory: 1,
+    },
+    status: 'enabled',
+    summary:
+      'HaloApp Registered: 3 correct answers with mother maiden name as mandatory. Max wrong: 3.',
+  },
+  {
+    businessType: 'paylater',
+    channelType: 'haloapp-registered',
+    correctRequired: 3,
+    id: 'haloapp-registered-paylater',
+    maxWrongAttempts: 3,
+    needLayering: false,
+    notes: [
+      'Demo follows the HaloApp Registered banking threshold until BANK 1 confirms a Paylater-specific rule.',
+      'The source document says Paylater may follow banking verification or internal Halo policy.',
+    ],
+    questions: paylaterQuestions,
+    requiredGroups: {
+      mandatory: 1,
+      static: 2,
+    },
+    status: 'enabled',
+    summary:
+      'Demo default: 3 correct answers, including 1 mandatory and 2 static. Max wrong: 3.',
+  },
+]
+
+export const verificationQuestions: VerificationQuestion[] =
+  verificationRules[0].questions
 
 export const customerJourney: CustomerJourneyItem[] = [
   {

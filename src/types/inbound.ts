@@ -145,10 +145,57 @@ export interface CallFlowDetail {
   transferHistory: CallTransferRecord[]
 }
 
+export type VerificationChannelType =
+  | 'phone'
+  | 'haloapp-registered'
+  | 'haloapp-unregistered'
+  | 'whatsapp'
+  | 'webchat'
+  | 'video'
+
+export type VerificationBusinessType =
+  | 'perbankan'
+  | 'kartu-kredit'
+  | 'paylater'
+
+export type VerificationQuestionGroup =
+  | 'mandatory'
+  | 'dynamic'
+  | 'static'
+  | 'alternative'
+  | 'layering'
+  | 'special'
+
+export type VerificationRuleStatus = 'enabled' | 'disabled'
+
+export interface VerificationBusinessTypeOption {
+  code: VerificationBusinessType
+  enabled: boolean
+  label: string
+}
+
 export interface VerificationQuestion {
+  answerSource?: string
+  group: VerificationQuestionGroup
   id: string
   question: string
   answer: string
+  notes?: string
+  sequence: number
+}
+
+export interface VerificationRule {
+  businessType: VerificationBusinessType
+  channelType: VerificationChannelType
+  correctRequired: number
+  id: string
+  maxWrongAttempts: number | null
+  needLayering: boolean
+  notes: string[]
+  questions: VerificationQuestion[]
+  requiredGroups: Partial<Record<VerificationQuestionGroup, number>>
+  status: VerificationRuleStatus
+  summary: string
 }
 
 export interface InteractionConversationMessage {

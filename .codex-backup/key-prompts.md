@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-06-05 19:34 +08:00
+最后更新：2026-06-09 11:50 +08:00
 
 ## 项目方向
 
@@ -26,22 +26,23 @@
 - 坐席状态菜单负责 Ready、Not Ready、AUX、Sign Out。
 - 增加 Agent Toolbar 与 Inbound 页面之间的联动逻辑。
 
-## 2026-06-05 客户 AUX 示忙原因选择弹框
+## 2026-06-09 客户 AUX 直接下拉与示忙原因管理
 
-- AUX 改造是客户可见功能，必须从 `main` 或隐藏管理菜单的客户安全基线开发，不能把本地 `Call Management` / `Routing Config` 管理菜单带出去。
-- 右上角头像状态菜单在 signed-in 状态只显示一个 `AUX` 入口和 `Sign Out`，不直接列出多条 `AUX - reason`。
-- 点击 `AUX` 打开 `Select AUX Reason` 弹框，数据来自最小 Busy Reason mock/store。
-- 弹框只显示 `status === 'Active'` 的示忙原因。
-- 默认选中 `isDefault === true` 的启用原因；如果没有启用默认项，则选中启用列表第一条。
-- 点击 `Confirm` 后切换状态为 `AUX - {reasonName}`，复用现有 `BasicLayout.updateAgentStatus` 的 AUX 副作用。
-- 点击 `Cancel` 不改变状态。
-- 当前客户分支 mock：`Ibadah` 默认启用、`Makan` 启用、`Training` 禁用、`Extension 1-7` 禁用。
-- 客户分支继续隐藏 `Call Management` 与 `Routing Config` 菜单和 `/call-management/*`、`/routing-config/*` 直达 URL。
+- 客户反馈 AUX 弹框操作慢，要求恢复坐席头像菜单里的直接下拉选择。
+- 右上角头像状态菜单在 signed-in 状态显示不可点击的 `AUX` 分组标题、启用的示忙原因和 `Sign Out`，不再显示单个可点击 `AUX` 入口，也不打开 `Select AUX Reason` 弹框。
+- 示忙原因项只显示文字，不维护也不展示独立图标，避免管理台增加复杂的图标配置字段。
+- 点击原因后立即切换状态为 `AUX - {reasonName}`，复用现有 `BasicLayout.updateAgentStatus` 的 AUX 副作用。
+- 客户截图里的原因是英文 + 印尼语混合，按客户现有名称原样保留，不翻译。
+- 截图前两项 `AUX`、`Aux New Updated` 不作为业务示忙原因；它们更像状态父项或临时测试项。
+- 当前客户分支 mock：`Break`、`Istirahat`、`Job Routine`、`Keagamaan`、`Keperluan Pribadi`、`Meeting/Coaching`、`Special Assignment`、`Toilet`、`Yoga` 启用；`Extension 1-11` 禁用备用；Default 全部为 No。
+- `Call Management > Busy Reason Management` 使用同一份前端 demo store，编辑状态后会立即影响 AUX 下拉；刷新后恢复 mock 默认值。
+- 客户分支继续隐藏 `Routing Config` 菜单和 `/routing-config/*` 直达 URL。
 
 ## 功能弹窗
 
 - 新增 Transfer Modal。
 - 新增 Outbound Call Modal。
+- `Transfer Agent` 和 `Call Agent` 坐席列表不展示 Status 查询条件；当前 demo 坐席列表状态统一展示为 `Ready`。
 - 新增 Internal Chat Modal。
 - 新增 Toolbar Settings Modal。
 - 新增 Call Flow Detail Modal。
@@ -730,3 +731,36 @@
 - Current 视图只从当前服务列表选客户；History 视图只从历史列表选客户。
 - Current 清空后右侧必须显示 `No current Live Chat customers` 空态，不自动 fallback 到 History 客户，也不继续渲染旧 Customer Information / Conversation / Assistant 客户上下文。
 - History 需要坐席手动切换查看；切到 History 后仍可选择并查看已关闭客户。
+
+## 2026-06-06 客户身份验证动态题库 Demo
+
+- Customer Verification 从固定 10 问升级为 Customer Verification Assist，按 `Verification Channel Type + Business Type` 加载题库和通过规则。
+- 验证业务类型来自启用的 Business Types 配置，不使用 Skill Queue；系统默认读取 IVR / HaloApp / chatbot / CRM 等入口传入业务类型，坐席可修改本次业务类型，修改后重置答题进度和题库。
+- 当前 demo 优先覆盖 `Phone + Perbankan`、`HaloApp Registered + Perbankan`、`Phone + Kartu Kredit`、`HaloApp Registered + Kartu Kredit`、`HaloApp Registered + Paylater`。
+- 验证动作包括 `Correct / Wrong / Skip`；必问题计入总答对数，错答按一次验证会话累计，`Skip` 不计错也不计对，错答达到规则上限后失败。
+- 验证弹窗必须以坐席操作为主：顶部一行只展示 Channel Type、Business Type 和轻量状态 badge，不展示 Correct/Wrong/Skip/In Progress 长统计串；规则和进度合并为轻量 rule bar，用 `Need N correct` 与 Mandatory / Dynamic / Static 等彩色达成块展示是否满足，详细规则放问号提示，不要常驻大段说明。
+- 坐席 UI 不展示标准答案、`Demo answer` 或答案来源；`answer` / `answerSource` 可暂时保留在 mock/type 中作为内部讨论材料。
+- 坐席误点后应支持单题直接改选，例如 `Wrong -> Correct` 或 `Skip -> Correct`，统计实时更新；不要要求坐席 `Clear All` 后重新问客户。
+- 错答达到上限后，在点击 `Apply Failed` 前仍允许修正单题；修正后错答数低于上限时恢复进行中状态。
+- `Clear All` 只用于坐席主动清空整次验证进度，不作为误点修正的主要路径。
+- 验证规则配置页放在 `Call Management > Verification Rules`，不是 `Routing Config`；`Call Management` 客户可见，二级包含 `Verification Rules` 和 `Text Channel Settings`，`Routing Config` 继续隐藏且直达 URL 回到 `/`。
+- `Verification Rules` 配置页按 `Verification Channel Type + Business Type` 展示规则，View/Edit 支持配置阈值、题组 required count、错答上限、layering、启停和 Question Set；配置页和坐席弹窗都不展示标准答案或答案来源。
+- 当前验证规则配置只保存到前端 demo store，不接后端，不做刷新后持久化；坐席验证弹窗读取同一份 store，因此配置修改会影响后续打开的弹窗。
+- `BankApp` 是外网演示脱敏名，对客户讲解时解释为真实 `HaloApp`；demo UI 继续显示 `BankApp/BANK App`。
+- HaloApp/BankApp 语音入口先显示 `Send PIN Verification`；坐席发送后客户侧 BankApp Demo 弹出 4 位 PIN 输入页，客户提交后坐席侧状态变为 `PIN Verified / HaloApp Registered`，再继续问题验证。
+- Demo 阶段本地 mock 可保留标准答案用于内部配置和后续接口确认，但坐席侧默认只看问题和操作结果；生产需要客户确认答案来源是 CRM、Card Link、CardPack、Base24、HaloApp 登录态接口还是 AICC 静态配置，以及 AICC 前端是否允许持有标准答案。
+- 对客户讲解口径：这是动态验证助手，不是固定 10 个问题；系统根据接入类型和业务类型自动加载规则，坐席按客户回答标记结果，系统自动判断通过或失败。
+- 待客户确认：`Berurut` 是否强制顺序；PIN 成功后是否等同 `HaloApp Registered`；已认证入口减免范围；业务类型能否修改及是否记录原因；错答 3 次处理；验证记录落库字段；ATO/add-on/O1-O5/mbl d/KBB/BBP 触发条件；Paylater 是否沿用 Perbankan。
+
+## 2026-06-09 登录页与媒体技能签入
+
+- 客户明确要求 UI mockup 中需要看到登录页，并考虑从登录到技能选择、AICC 与 CRM Application SSO 的正确工作流。
+- Demo 登录页字段：User Name、Password、EXT 可选、随机生成 6 位 PIN/captcha；demo 账号和密码固定为 `888888 / 888888`；点击验证码图片本身刷新验证码，不显示独立刷新按钮。
+- 登录页左侧应使用实际视觉资源展示拼图/坐席插画方向，当前资源为 `/screenshots/login-illustration.svg`；不要再依赖容易错位的 CSS-only 拼图。
+- 登录页 BANK 1 logo 要在页面左上角，不要跟随左侧插画区垂直居中下移。
+- 真实程序讲解口径：AICC 调用 BCA LDAP 做身份认证；鉴权通过后获取用户信息、角色权限并进入匹配角色工作台；鉴权失败时 LDAP 返回错误消息，AICC 展示该错误并停留登录页。
+- SSO 不在 UI 中单独展示流程页；登录成功后直接进入工作台。CRM SSO 只体现在 mock session metadata 和讲解口径中。
+- 技能选择不放在登录页；登录只是系统认证。坐席进入工作台后仍为 `Unsigned`，右上角头像下拉使用 `Sign In` 分组，下面以纯文字选择 `Voice only`、`Digital only` 或 `Voice + Digital`，不使用模式图标。
+- 签入模式必须在右上角可见：头像区域第二行显示 `PBK BSB | {mode}`，下拉顶部也显示当前签入模式。
+- `Sign Out` 只退出媒体坐席状态并保留系统登录；系统级 `Log Out` 使用 Header 右上角独立红色电源按钮，清除 auth session 并返回 `/login`，不放在头像状态下拉中；按钮尺寸应与旁边状态下拉按钮一致。
+- 媒体技能采用轻量拦截，不隐藏菜单：`Voice only` 阻止 Live Chat handoff 并展示明确 warning；`Digital only` 阻止 PSTN / Voice / Video handoff；`Voice + Digital` 允许全部现有 demo 流程。

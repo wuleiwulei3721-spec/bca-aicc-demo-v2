@@ -1,11 +1,21 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
-import { BasicLayout } from './layouts'
-import { AgentWorkspace, DesignSystem } from './pages'
+import { PublicLoginRoute, RequireAuth } from './components/AuthRouteGuards'
+import {
+  AgentWorkspace,
+  BusyReasonManagementPage,
+  DesignSystem,
+  TextChannelSettingsPage,
+  VerificationRulesPage,
+} from './pages'
 
 export const router = createBrowserRouter([
   {
+    path: '/login',
+    element: <PublicLoginRoute />,
+  },
+  {
     path: '/',
-    element: <BasicLayout />,
+    element: <RequireAuth />,
     children: [
       {
         index: true,
@@ -17,11 +27,23 @@ export const router = createBrowserRouter([
       },
       {
         path: 'call-management',
-        element: <Navigate replace to="/" />,
+        element: <Navigate replace to="/call-management/verification-rules" />,
+      },
+      {
+        path: 'call-management/verification-rules',
+        element: <VerificationRulesPage />,
+      },
+      {
+        path: 'call-management/text-channel-settings',
+        element: <TextChannelSettingsPage />,
+      },
+      {
+        path: 'call-management/busy-reasons',
+        element: <BusyReasonManagementPage />,
       },
       {
         path: 'call-management/*',
-        element: <Navigate replace to="/" />,
+        element: <Navigate replace to="/call-management/verification-rules" />,
       },
       {
         path: 'routing-config',

@@ -22,7 +22,7 @@ export const transferAgents: TransferAgent[] = [
     department: 'Card Service',
     name: 'Rangga Aditya',
     skillName: 'Credit Card',
-    status: 'Talking',
+    status: 'Ready',
     extension: '81088',
   },
   {
@@ -31,7 +31,7 @@ export const transferAgents: TransferAgent[] = [
     department: 'Loan Service',
     name: 'Maya Anggraini',
     skillName: 'Loan',
-    status: 'Not Ready',
+    status: 'Ready',
     extension: '81142',
   },
   {
@@ -58,7 +58,7 @@ export const transferAgents: TransferAgent[] = [
     department: 'Branch Support',
     name: 'Bambang Wijaya',
     skillName: 'Debit Card',
-    status: 'Not Ready',
+    status: 'Ready',
     extension: '81244',
   },
 ]
