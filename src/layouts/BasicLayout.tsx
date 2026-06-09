@@ -387,6 +387,9 @@ export function BasicLayout() {
       centered: true,
       content:
         'This will end the system session, sign out media status, and return to the login page.',
+      okButtonProps: {
+        className: 'aicc-logout-confirm__ok',
+      },
       okText: 'Log Out',
       okType: 'danger',
       title: 'Confirm Log Out',

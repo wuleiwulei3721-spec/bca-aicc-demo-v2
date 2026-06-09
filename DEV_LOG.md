@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-09 19:07 +08:00
+最后更新：2026-06-09 19:36 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,43 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-09 19:36 +08:00 - 强化 Log Out 确认按钮 hover 样式
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-09-1936.md`
+- `.codex-backup/current-todo-2026-06-09-1936.md`
+- `.codex-backup/page-state-2026-06-09-1936.md`
+
+修改原因：
+
+- 用户反馈系统 `Log Out` 二次确认弹框里的 `Log Out` 按钮 hover 样式不明显。
+
+修改结果：
+
+- `Confirm Log Out` 的确认按钮增加 `aicc-logout-confirm__ok` 专用 class。
+- 仅针对该按钮加强 hover 样式：更深红色背景/边框、外圈红色光晕、阴影和轻微上移。
+- 增加更清晰的 `focus-visible` 轮廓；不影响媒体 `Sign Out` 确认弹框或其它全局 danger 按钮。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仅保留既有 Vite chunk size warning。
+- 本地 Chrome CDP smoke check 通过：`Confirm Log Out` 弹框确认按钮带有 `aicc-logout-confirm__ok` class；hover 后背景从默认白底红边变为深红底，出现红色光晕、阴影并轻微上移。
+
+回滚说明：
+
+- 如需回滚，可删除 `BasicLayout.tsx` 中 `okButtonProps.className`，并删除 `index.less` 中 `.aicc-logout-confirm__ok*` 样式块。
+
+当前风险点：
+
+- 本轮仅调整 hover/focus 视觉，不改变登出确认逻辑、auth session 清理或媒体状态重置。
 
 ### 2026-06-09 19:07 +08:00 - 登录页去掉 PIN 并增加退出确认
 

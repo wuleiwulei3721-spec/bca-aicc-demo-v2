@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-06-09 19:07 +08:00
+最后更新：2026-06-09 19:36 +08:00
 
 ## 项目方向
 
@@ -764,4 +764,5 @@
 - 签入模式必须在右上角可见：头像区域第二行显示 `PBK BSB | {mode}`，下拉顶部也显示当前签入模式。
 - `Sign Out` 只退出媒体坐席状态并保留系统登录；点击后必须二次确认，确认后才回到 `Unsigned`。
 - 系统级 `Log Out` 使用 Header 右上角独立红色电源按钮，不放在头像状态下拉中；点击后必须二次确认，确认后清除 auth session 并返回 `/login`；按钮尺寸应与旁边状态下拉按钮一致。
+- `Confirm Log Out` 弹框里的 `Log Out` 按钮 hover/focus 必须有明显反馈；当前使用专用 `aicc-logout-confirm__ok` class 加深红色、阴影、光晕和轻微上移，不影响其它确认弹框。
 - 媒体技能采用轻量拦截，不隐藏菜单：`Voice only` 阻止 Live Chat handoff 并展示明确 warning；`Digital only` 阻止 PSTN / Voice / Video handoff；`Voice + Digital` 允许全部现有 demo 流程。
