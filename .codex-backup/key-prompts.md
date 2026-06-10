@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-06-10 16:03 +08:00
+最后更新：2026-06-10 18:17 +08:00
 
 ## 项目方向
 
@@ -37,6 +37,15 @@
 - 当前客户分支 mock：`Break`、`Istirahat`、`Job Routine`、`Keagamaan`、`Keperluan Pribadi`、`Meeting/Coaching`、`Special Assignment`、`Toilet`、`Yoga` 启用；`Extension 1-11` 禁用备用；Default 全部为 No。
 - `Call Management > Busy Reason Management` 使用同一份前端 demo store，编辑状态后会立即影响 AUX 下拉；刷新后恢复 mock 默认值。
 - 客户分支继续隐藏 `Routing Config` 菜单和 `/routing-config/*` 直达 URL。
+
+## 2026-06-10 AUX / Pre-AUX 下拉优化
+
+- 客户反馈坐席已经进入 AUX 后，下拉不应继续展示所有 AUX reasons；Aditya 认为恢复 Ready 应在同一个状态下拉中展示，比顶部 `Not Ready` 更直观。
+- 修正口径：客户要移除的是其它 AUX reason，不是媒体 `Sign Out`。AUX/Pre-AUX 下拉必须保留 `Sign Out`，避免坐席为了签出被迫先 Ready，导致可能被分配新客户。
+- Ready / Not Ready 下拉仍展示 `AUX` 分组和启用原因；进入 `AUX - {reason}` 或 `Pre-AUX - {reason}` 后，只展示当前状态、`Ready` 和 `Sign Out`。
+- 选择 AUX reason 时，如果仍有电话、视频或文字会话等活跃服务，先进入 `Pre-AUX - {reason}`；Pre-AUX 阻止新 handoff/分配，但不清理当前服务。
+- 当前所有活跃服务结束后，系统自动从 `Pre-AUX - {reason}` 切换到 `AUX - {reason}`。
+- Pre-AUX 下点击 `Ready` 取消 pending AUX；点击 `Sign Out` 走媒体签出二次确认并回到 `Unsigned`，不要求先 Ready。
 
 ## 2026-06-10 正式 Live Chat 客户预览修复
 
@@ -792,3 +801,11 @@
 - `liveChat2Sessions` 的客户预览场景包括：WhatsApp 卡片解锁、Haloapps 设备绑定、Webchat 网点预约、信用卡分期、补卡配送和 Paylater 还款历史。
 - Quick Replies 默认短语使用 BANK 1 客服口径，覆盖检查记录、提交服务请求、建单跟进、客户验证和“不要分享 OTP/PIN/CVV/密码/完整卡号”的安全提醒。
 - 本轮文案为脱敏 demo 数据，仍需客户确认最终业务语气、英文/印尼语混合策略和是否要替换为客户指定脚本。
+
+## 2026-06-10 Live Chat 默认接入与退出保护
+
+- 正式 Live Chat 默认两个 Current 客户只在媒体签入动作中接入一次，不应因为坐席从 Not Ready / AUX / Pre-AUX 回到 Ready 而重复出现。
+- `Digital only` 和 `Voice + Digital` 签入会创建默认 `livechat2-001` 与 `livechat2-005`；`Voice only` 不创建文字客户。
+- 关闭/结束默认客户后，同一签入周期内只允许通过真实 Channel Simulation handoff 或重新签入再次出现客户，不自动回补默认客户。
+- 媒体 `Sign Out` 和系统 `Log Out` 都必须在没有当前客户服务时才允许继续二次确认；存在 active call、voice/video 或 active Live Chat session 时显示阻断提示。
+- 阻断发生在点击动作时，不隐藏菜单或按钮；提示文案使用 `Active Service in Progress`，要求坐席先 finish / close 当前客户服务。

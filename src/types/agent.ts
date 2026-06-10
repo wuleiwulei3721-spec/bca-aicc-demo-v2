@@ -3,6 +3,7 @@ export type AgentStatus =
   | 'Ready'
   | 'Not Ready'
   | `AUX - ${string}`
+  | `Pre-AUX - ${string}`
 
 export type CallStatus =
   | 'Idle'

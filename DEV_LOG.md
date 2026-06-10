@@ -1,7 +1,7 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-10 16:03 +08:00
-项目路径：`D:\03projects\bca-aicc-demo-v2`
+最后更新：2026-06-10 18:49 +08:00
+项目路径：`D:\03projects\bca-aicc-demo-v2-main-fix`
 
 ## 记录规则
 
@@ -17,6 +17,102 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-10 18:49 +08:00 - Live Chat 默认接入与签出/登出拦截优化
+
+修改页面或文件：
+
+- `src/store/appStore.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/layouts/components/AgentProfileArea.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-10-1849.md`
+- `.codex-backup/current-todo-2026-06-10-1849.md`
+- `.codex-backup/page-state-2026-06-10-1849.md`
+
+修改原因：
+
+- 用户反馈 Live Chat 默认两个客户应只在坐席媒体签入后默认接入，不应每次恢复 Ready 后重复出现。
+- 用户补充媒体 `Sign Out` 和系统 `Log Out` 都只能在当前没有客户服务时操作成功，否则需要提示，避免误结束服务。
+
+修改结果：
+
+- `setLiveChatTabOpen()` 增加显式 `seedDefaultCurrentSessions` 参数；默认只打开/保持 Live Chat tab，不再自动播种默认客户。
+- `Digital only` 与 `Voice + Digital` 媒体签入时传入播种参数，默认创建 `livechat2-001` 与 `livechat2-005` 两个 Current 演示客户。
+- Ready / Not Ready / AUX / Pre-AUX 状态切换不再重新创建默认 Live Chat 客户。
+- `Sign Out` 点击时如存在 active call、voice/video 或 active Live Chat session，显示 `Active Service in Progress` 阻断提示，不进入二次确认，也不切到 `Unsigned`。
+- 系统红色 `Log Out` 点击时如存在当前客户服务，同样显示阻断提示，不清除 auth session，不跳转 `/login`。
+- 无当前客户服务时，`Sign Out` 和 `Log Out` 保持既有二次确认流程。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仅保留既有 Vite chunk size warning。
+- in-app browser 插件连接两次超时，改用本地 Headless Chrome/CDP 连接临时 5177 dev server 验证，验证后已停止 dev server。
+- Headless Chrome/CDP Live Chat smoke 通过：登录、`Digital only` 签入后默认两个 Current 客户出现；active Live Chat 下 `Sign Out` / `Log Out` 均显示 `Active Service in Progress` 阻断提示；关闭默认客户后 Current 为空；从 AUX 回 Ready 不回补默认客户；无当前服务时 `Confirm Sign Out` / `Confirm Log Out` 恢复正常。
+- Headless Chrome/CDP PSTN smoke 通过：`Voice only` 签入后触发 PSTN active call；active call 下 `Sign Out` / `Log Out` 均显示阻断提示并停留在工作台。
+
+回滚说明：
+
+- 如需回滚本轮，可恢复 `setLiveChatTabOpen(open)` 的原签名和内部自动播种逻辑，移除 `BasicLayout.updateAgentStatus` 的 `seedDefaultLiveChat` 选项。
+- 同时移除 `BasicLayout` / `AgentProfileArea` 的 active service guard，使 `Sign Out` 和 `Log Out` 回到仅二次确认、不检查当前服务的旧行为。
+
+当前风险点：
+
+- active service 判断仍基于前端 `callStatus`、`activeLiveChatSessionIds` 和 `activeLiveChat2SessionIds`；未来接真实后端后应以后端服务生命周期为准。
+- in-app browser 插件本轮仍不可用；浏览器验证改用本地 Headless Chrome/CDP 完成。
+
+### 2026-06-10 18:17 +08:00 - AUX / Pre-AUX 下拉与状态机优化
+
+修改页面或文件：
+
+- `src/types/agent.ts`
+- `src/utils/agentStatus.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/layouts/components/AgentProfileArea.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-10-1817.md`
+- `.codex-backup/current-todo-2026-06-10-1817.md`
+- `.codex-backup/page-state-2026-06-10-1817.md`
+
+修改原因：
+
+- 客户反馈坐席进入 AUX 后，下拉不应继续显示所有 AUX reasons，只应在同一位置提供恢复 Ready。
+- 用户指出如果 AUX/Pre-AUX 下拉移除 `Sign Out`，坐席会被迫先 Ready 再签出，存在刚 Ready 就被分配客户的风险。
+- 客户补充 Pre-AUX 口径：选择 AUX 后如仍有当前服务，应停止新分配，待当前服务完成后自动进入 AUX。
+
+修改结果：
+
+- `AgentStatus` 增加动态 `Pre-AUX - {reason}`。
+- 新增 `src/utils/agentStatus.ts`，统一识别 AUX / Pre-AUX、提取 reason 并生成状态字符串。
+- Ready / Not Ready 下拉继续展示 `AUX` 分组和启用示忙原因。
+- 进入 `AUX - {reason}` 或 `Pre-AUX - {reason}` 后，下拉只显示当前状态、`Ready` 和媒体 `Sign Out`，不再展示其它 AUX reasons。
+- 选择 AUX reason 时，如果当前存在 active call、voice/video 服务或 active Live Chat session，先进入 `Pre-AUX - {reason}`，不清理当前服务。
+- Pre-AUX 阻止新 handoff/分配；当前所有活跃服务结束后自动进入最终 `AUX - {reason}`。
+- Pre-AUX 下点击 `Ready` 取消 pending AUX；点击 `Sign Out` 仍走既有二次确认并直接回 `Unsigned`，不要求先 Ready。
+
+验证：
+
+- `npx tsc --noEmit` 通过。
+- `npm run lint` 通过。
+- `npm run build` 通过，仅保留既有 Vite chunk size warning。
+- in-app browser 插件连接两次超时，未能直接控制用户当前 5176 页签。
+- 已确认当前 5176 dev server 来自 `D:\03projects\bca-aicc-demo-v2`，不是本轮 `main-fix` 工作树；因此临时从 `D:\03projects\bca-aicc-demo-v2-main-fix` 启动 5177 验证，验证后已停止监听进程。
+- Headless Chrome/CDP smoke 通过：注入 auth session 后进入 workspace；`Voice only` 签入后 Ready 菜单仍显示 AUX reasons；选择 `Break` 后进入 `AUX - Break`，下拉只保留当前状态、`Ready`、`Sign Out` 且不显示 `Istirahat`；AUX 下 `Sign Out` 能打开确认框；`Voice + Digital` 签入后因默认 Live Chat 当前会话存在，选择 `Break` 进入 `Pre-AUX - Break`，下拉同样只保留当前状态、`Ready`、`Sign Out`。
+
+回滚说明：
+
+- 如需回滚，可删除 `src/utils/agentStatus.ts`，把 `AgentStatus` 恢复为不包含 `Pre-AUX - ${string}`，并恢复 `AgentProfileArea` signed-in 菜单始终展示 AUX reasons。
+- 同时恢复 `BasicLayout.updateAgentStatus` 中选择 AUX 立即进入最终 AUX 并清理 call / Live Chat 的旧行为。
+
+当前风险点：
+
+- Pre-AUX 自动进入最终 AUX 依赖前端 active call 与 active Live Chat session 计数；如果未来接入后端真实分配状态，需要以后端 session lifecycle 事件为准。
+- 本轮 smoke 使用临时 5177 端口和 headless Chrome/CDP；用户当前 5176 页签连接的是另一个工作树，未作为本轮最终验证来源。
 
 ### 2026-06-10 16:03 +08:00 - 修复话务条长时计时和 Message Record 二次搜索
 

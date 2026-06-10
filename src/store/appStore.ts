@@ -60,6 +60,10 @@ export interface CallInteraction {
   title: string
 }
 
+interface SetLiveChatTabOpenOptions {
+  seedDefaultCurrentSessions?: boolean
+}
+
 const INTERACTION_FLASH_MS = 5000
 const LIVE_CHAT_TAB_KEY = 'live-chat'
 const LEGACY_LIVECHAT2_TAB_KEY = 'livechat2'
@@ -347,7 +351,10 @@ interface AppState {
     sessionId: string,
     starColor: LiveChat2StarColor,
   ) => void
-  setLiveChatTabOpen: (open: boolean) => void
+  setLiveChatTabOpen: (
+    open: boolean,
+    options?: SetLiveChatTabOpenOptions,
+  ) => void
   setOpenEyeVideoWindowVisible: (visible: boolean) => void
   setScreenShareActive: (active: boolean) => void
   setVoiceVideoHandoffReadiness: (
@@ -956,7 +963,7 @@ export const useAppStore = create<AppState>((set) => ({
         [sessionId]: starColor,
       },
     })),
-  setLiveChatTabOpen: (open) =>
+  setLiveChatTabOpen: (open, options) =>
     set((state) => {
       if (!open) {
         return {
@@ -988,6 +995,7 @@ export const useAppStore = create<AppState>((set) => ({
       }
 
       const shouldSeedDefaultCurrentSessions =
+        options?.seedDefaultCurrentSessions === true &&
         state.activeLiveChat2SessionIds.length === 0 &&
         state.liveChat2ClosedSessionIds.length === 0 &&
         Object.keys(state.liveChat2SessionInstances).length === 0 &&

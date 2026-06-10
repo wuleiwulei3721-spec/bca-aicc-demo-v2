@@ -1,10 +1,10 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-10 16:03 +08:00
-项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：在客户安全基线 `main` 的 `codex/livechat-copy-update` 上继续修复客户预览问题；本轮修复话务条长时计时格式，统一为小于 1 小时 `mm:ss`、达到 1 小时后 `hh:mm:ss`，并修复正式 Live Chat Message Record 定位后二次搜索无法输入的问题。
+最后更新：2026-06-10 18:49 +08:00
+项目路径：`D:\03projects\bca-aicc-demo-v2-main-fix`
+当前目标：在客户 Production `main` 工作树上实现 Live Chat 默认接入和签出/登出保护优化；默认文字客户只在媒体签入时接入一次，坐席恢复 Ready 不再重新播种默认客户，媒体 Sign Out 与系统 Log Out 在存在当前客户服务时被阻断。
 
-本轮已完成：话务条 `AgentToolbar` 移除本地累计分钟 formatter，改为复用共享 `formatDuration()`，避免 `969:32` 这类累计分钟格式；Message Record 定位后焦点回到搜索框，输入新关键词时清理旧 located 高亮，支持连续二次搜索。前一轮的 Conversation 默认底部滚动、Message Record 面板内定位、Haloapps 菜单、文字渠道 Transfer History、默认客户不闪、handoff 新客户短闪、WhatsApp 隐藏 Recall/Re-edit 等能力继续保留。
+本轮已完成：`setLiveChatTabOpen()` 增加显式默认客户播种参数，只有 `Digital only` / `Voice + Digital` 媒体签入会创建默认 `livechat2-001` 与 `livechat2-005`；Ready / Not Ready / AUX / Pre-AUX 状态切换只保持 Live Chat 工作区，不回补默认客户。`Sign Out` 和 `Log Out` 在存在 active call、voice/video 或 active Live Chat session 时显示阻断提示，要求坐席先结束或关闭当前服务。
 
 ## 0. 使用规则
 
@@ -42,8 +42,8 @@
 项目名称：`bca-aicc-demo-v2`  
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
-当前分支：`codex/livechat-copy-update`
-当前 HEAD：以 `git rev-parse HEAD` 为准；当前客户 Production 口径保留：登录页、主工作台、Channel Simulation、BankApp、WhatsApp、PSTN、Voice/Video handoff、正式 Live Chat、Call Management 下的验证规则/文字渠道配置/示忙原因管理和 Design System 可用；`Routing Config` 菜单及其直达 URL 继续屏蔽。本轮新增客户身份验证动态题库、BankApp/HaloApp PIN 演示能力、Call Management 的验证规则与示忙原因前端配置页，以及 demo LDAP 登录与媒体技能签入选择。
+当前分支：`main`
+当前 HEAD：以 `git rev-parse HEAD` 为准；当前客户 Production 口径保留：登录页、主工作台、Channel Simulation、BankApp、WhatsApp、PSTN、Voice/Video handoff、正式 Live Chat、Call Management 下的验证规则/文字渠道配置/示忙原因管理和 Design System 可用；`Routing Config` 菜单及其直达 URL 继续屏蔽。本轮新增 Live Chat 默认客户只在签入接入一次，以及签出/登出 active service guard。
 部署目标：Vercel Production 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -109,7 +109,8 @@ codex-recovered-context.md
 - `src/App.tsx`：Ant Design `ConfigProvider` + `RouterProvider`。
 - `src/routes.tsx`：定义 `/login` 公共登录页；`/`、`/design-system`、`/call-management/verification-rules`、`/call-management/text-channel-settings`、`/call-management/busy-reasons` 等业务路由通过 auth guard 保护；`/routing-config/*` 继续重定向回 `/`。
 - `src/components/AuthRouteGuards.tsx`：公共登录路由与业务路由认证守卫；未登录访问业务路由重定向 `/login`，已登录访问 `/login` 重定向 `/`。
-- `src/layouts/BasicLayout.tsx`：全局 Header、可展开/收起左侧菜单、坐席工具条、通话接入阻塞顶部提示、内部聊天入口和主内容出口。
+- `src/layouts/BasicLayout.tsx`：全局 Header、可展开/收起左侧菜单、坐席工具条、通话接入阻塞顶部提示、内部聊天入口和主内容出口；同时维护 AUX / Pre-AUX 状态机、媒体签入时的默认 Live Chat 客户播种，以及 `Sign Out` / `Log Out` active service guard。
+- `src/layouts/components/AgentProfileArea.tsx`：Header 右上角坐席头像、状态点和状态下拉；Signed out 时显示 `Sign In` 分组，普通 signed-in 状态显示 AUX reasons，AUX/Pre-AUX 状态只显示当前状态、Ready 和媒体 Sign Out；点击 Sign Out 时如仍有当前服务会先显示阻断提示。
 - `src/layouts/components/AgentToolbar.tsx`：坐席话务条按钮和状态计时；计时统一复用共享 `formatDuration()`，显示 `mm:ss`，达到 1 小时后显示 `hh:mm:ss`。
 - `src/pages/LoginPage.tsx`：BANK 1 登录页，包含 User Name、Password、EXT 和 demo LDAP 错误提示；不再展示 PIN/captcha；成功后写入 auth session 并进入 `/`；左侧视觉使用 `/screenshots/login-illustration.svg` 本地资源，BANK 1 logo 固定在页面左上角。
 - `src/pages/AgentWorkspace.tsx`：Home tab 与工作区交互 tab 容器，负责 Demo tabs、正式 `Live Chat` 固定 tab、多个 PSTN / Voice Call / Video Call 通话实例 tab 的页签名称、最长服务计时、短闪提示和 Live Chat 总未读 badge。
@@ -125,7 +126,7 @@ codex-recovered-context.md
 - `src/pages/inbound/components/CustomerInformationCard.tsx`：客户卡片、身份刷新、最后 IVR 菜单提示和 Customer Verification Assist 入口；支持 PSTN/Voice 最后一级 IVR Menu，以及 Haloapps 文本一级 Access Menu；本轮按渠道类型和业务类型选择验证规则，并把 BankApp PIN 状态接入验证弹窗。
 - `src/pages/inbound/components/CustomerVerificationModal.tsx`：动态身份验证助手弹窗；展示验证渠道类型、业务类型、紧凑规则进度、PIN 验证入口、分组题库和自动通过/失败结果；坐席 UI 不展示标准答案或答案来源。
 - `src/mock/inbound.ts`：Inbound mock 数据；包含正式 Live Chat `liveChat2Sessions` 客户、历史消息、当前消息、队列、意图、可选 `lastMenuName` 和未读数；Live Chat 内容为客户预览版脱敏 BANK 1 银行业务场景。文件还包含 `verificationBusinessTypes` 和 `verificationRules`，覆盖 `Phone + Perbankan`、`HaloApp Registered + Perbankan`、`Phone + Kartu Kredit`、`HaloApp Registered + Kartu Kredit`、`HaloApp Registered + Paylater`。
-- `src/store/appStore.ts`：workspace tab、话务、Live Chat 和 demo 全局状态；正式 Live Chat 预置 Current 客户不再写入 `flashUntil`，Channel Simulation handoff 新会话仍写入短闪并把克隆消息 timestamp/time 平移到当前接入时间；同时保留 `bankAppPinVerificationStatus`、request id、PIN 请求/完成/重置、`verificationRules`、`agentServiceMode`、voice/video readiness 与 digital readiness。
+- `src/store/appStore.ts`：workspace tab、话务、Live Chat 和 demo 全局状态；正式 Live Chat 预置 Current 客户不再写入 `flashUntil`，且只在 `setLiveChatTabOpen(true, { seedDefaultCurrentSessions: true })` 时播种；Channel Simulation handoff 新会话仍写入短闪并把克隆消息 timestamp/time 平移到当前接入时间；同时保留 `bankAppPinVerificationStatus`、request id、PIN 请求/完成/重置、`verificationRules`、`agentServiceMode`、voice/video readiness 与 digital readiness。
 - `src/store/authStore.ts`：demo auth session store；调用 mock LDAP，成功后只把 session/profile/role/CRM SSO metadata 写入 `sessionStorage`，不保存密码。
 - `src/pages/call-management/RoutingConfigurationPage.tsx`：旧路由配置入口兼容组件，重定向到 `/routing-config/route-elements`。
 - `src/pages/call-management/VerificationRulesPage.tsx`：Call Management 下的验证规则配置页，按 `Verification Channel Type + Business Type` 展示规则，支持 View/Edit 配置阈值、题目分组、错答上限、layering 和启停状态；不展示标准答案或答案来源，保存到前端 demo store。
@@ -139,7 +140,7 @@ codex-recovered-context.md
 - `src/pages/inbound/components/CustomerInformationCard.tsx`：Inbound 左栏客户信息卡容器，包含客户验证、联系信息维护、呼出申请、Call Flow、Send Email，以及右上角客户身份刷新浮层；身份刷新图标和原编辑联系方式图标必须同时显示在卡片右上角，Customer ID 浮层使用 `bottom` placement，hover 背景内图标必须居中；语音/IVR 类渠道在底部第二行以 `Menu` 短标签展示最后一级菜单，从现有 `callFlowDetail.ivrJourney` 取最后一级菜单，并在 title / aria 中保留 `Last IVR menu` 完整语义。
 - `src/pages/inbound/components/ChannelTag.tsx`：统一渠道标签，Customer Information 中可合并展示静态渠道接入耗时，例如 `PSTN · 05:23`、`BankApp · 02:11`。
 - `src/pages/DesignSystem.tsx`：设计系统展示页。
-- `src/store/appStore.ts`：workspace tab、BankApp demo tab、WhatsApp demo tab、Live Chat 聚焦/已读状态、多 `CallInteraction` 通话实例、voice/video handoff readiness、interaction timing 和 demo-only screen share 全局状态；`createLiveChat2HandoffSession()` 会保留来源 session 的 `customer.accessDuration`，不把客户卡片接入时长重置或改成服务时长；`setLiveChatTabOpen(true)` 在干净签入周期内预设 `livechat2-001` 和客户主动挂机的 `livechat2-005` 作为 Current 演示客户。
+- `src/store/appStore.ts`：workspace tab、BankApp demo tab、WhatsApp demo tab、Live Chat 聚焦/已读状态、多 `CallInteraction` 通话实例、voice/video handoff readiness、interaction timing 和 demo-only screen share 全局状态；`createLiveChat2HandoffSession()` 会保留来源 session 的 `customer.accessDuration`，不把客户卡片接入时长重置或改成服务时长；`setLiveChatTabOpen(true, { seedDefaultCurrentSessions: true })` 只在媒体签入时预设 `livechat2-001` 和客户主动挂机的 `livechat2-005` 作为 Current 演示客户。
 - `src/store/callManagementStore.ts`：客户分支 Call Management 前端 demo store，提供示忙原因列表给右上角 AUX 下拉和 `Busy Reason Management` 页面共用；编辑后立即影响 AUX 下拉，刷新后恢复 mock 默认值。
 - `src/hooks/useNow.ts`：前端运行时每秒 tick hook，用于 workspace tab 和 Live Chat 列表计时刷新。
 - `src/mock/bankapp.ts`：BankApp 联系方式、业务类型、客户身份/语言驱动的技能路由和截图素材路径配置。
@@ -152,10 +153,12 @@ codex-recovered-context.md
 - `src/types/inbound.ts`：Inbound 业务类型，包含客户身份刷新结果类型 `CustomerIdentityRefreshResult`；正式 Live Chat 会话类型 `LiveChat2Session` 支持可选 `lastMenuName`，用于 Haloapps 文本接入一级菜单。
 - `src/types/busyReason.ts`：客户分支示忙原因类型，供 AUX 下拉、Busy Reason Management 页面和 store 使用。
 - `src/types/auth.ts`：登录、角色、auth session、CRM SSO context 与 `AgentServiceMode` 类型。
+- `src/types/agent.ts`：坐席状态类型，包含 `Unsigned`、`Ready`、`Not Ready`、动态 `AUX - {reason}` 和 `Pre-AUX - {reason}`。
 - `src/types/routingConfiguration.ts`：路由配置页专用类型，覆盖 route factor、channel_media、site_access_ratio、working_time_plan、skill_queue、routing_rule 和 routing_rule_index 等结构。
 - `src/store/routingConfigStore.ts`：Routing Config 前端 demo 本地状态 store，刷新后恢复 mock；普通 CRUD、渠道媒体规则方案、Channel + Media 规则绑定和技能路由规则共用。
 - `src/types/textChannelSettings.ts`：文字渠道配置页专用类型，渠道 code 为 `haloapp | webchat | whatsapp`，避免与现有 `AccessChannel` 耦合。
 - `src/utils/duration.ts`：共享持续时间解析、格式化、elapsed 计算和 Live Chat SLA 阈值工具。
+- `src/utils/agentStatus.ts`：共享 AUX / Pre-AUX 状态 helper，用于识别状态、提取 reason，并生成 `AUX - {reason}` / `Pre-AUX - {reason}`。
 - `src/styles/index.less`：全局样式与页面样式主文件，包含 workspace tab、Live Chat 客户列表、Conversation 和 SLA 视觉状态。
 - `src/styles/tokens.less`：全局 CSS token；Live Chat SLA warning / breach 使用独立 token，当前为 `#f59e0b` / `#f04438`。
 - `.github/workflows/ci.yml`：GitHub Actions 最小 CI，PR 到 `main` 或 push 到 `main` / `codex/**` 时运行 `npm ci`、`npm run lint`、`npm run build`。
@@ -181,7 +184,9 @@ codex-recovered-context.md
 - 除 `/login` 外，当前业务路由都需要 demo auth session；未登录访问 `/`、`/design-system`、`/call-management/*` 会重定向到 `/login`。
 - 登录页模拟 AICC 调用 BCA LDAP：`888888 / 888888` 正确时返回用户、角色权限与 CRM SSO metadata；失败时展示 mock LDAP 错误并停留登录页；EXT 可选且只作为 session metadata；登录页不再要求 PIN/captcha。
 - 登录成功只代表系统认证通过，坐席状态仍为 `Unsigned`；右上角头像下拉显示 `Sign In` 分组，下面以纯文字选择 `Voice only`、`Digital only`、`Voice + Digital`，选择后才进入坐席 Ready 状态。
-- 签入后右上角第二行显示 `PBK BSB | {mode}`，下拉顶部显示当前签入模式；`Sign Out` 只退出媒体坐席状态并保留系统登录，但执行前必须二次确认；系统级 `Log Out` 使用右上角独立红色电源按钮，执行前必须二次确认，确认后清除 auth session 并回到 `/login`。
+- 签入后右上角第二行显示 `PBK BSB | {mode}`，下拉顶部显示当前签入模式；`Sign Out` 只退出媒体坐席状态并保留系统登录，系统级 `Log Out` 使用右上角独立红色电源按钮。两个退出动作都先检查当前是否仍有客户服务，存在 active call、voice/video 或 active Live Chat session 时显示阻断提示；无当前服务时才进入二次确认。
+- Ready / Not Ready 状态下，右上角状态下拉显示 `AUX` 分组和启用示忙原因；进入 `AUX - {reason}` 或 `Pre-AUX - {reason}` 后，下拉不再显示其它示忙原因，只显示当前状态、`Ready` 和媒体 `Sign Out`。这样坐席可以直接从 AUX/Pre-AUX 签出，不需要先 Ready，避免恢复 Ready 后被分配新客户。
+- 选择 AUX reason 时，如果当前仍有电话、视频或文字会话等活跃服务，坐席先进入 `Pre-AUX - {reason}`；Pre-AUX 不接新 handoff/分配，但不清理当前服务。当前所有活跃服务结束后，系统自动进入 `AUX - {reason}`。
 - 媒体技能采用轻量拦截而不是隐藏菜单：`Digital only` 阻止 PSTN / BankApp Voice / BankApp Video handoff；`Voice only` 阻止 WhatsApp / BankApp Live Chat handoff 并在客户侧流程显示明确 warning；`Voice + Digital` 允许现有全部演示流程。
 - `BasicLayout` 是所有页面的壳，包含顶部 Header、坐席状态、话务工具条、侧栏和内容区。
 - `AgentWorkspace` 默认显示 Home tab。
@@ -203,7 +208,7 @@ codex-recovered-context.md
 - `requestLiveChatWorkspace(sessionId?, activate?)` 会打开固定 Live Chat tab；旧会话 id 会映射到新版 `liveChat2*` 状态并聚焦对应客户：`live-chat-001 -> livechat2-001`、`live-chat-002 -> livechat2-002`、`live-chat-003 -> livechat2-003`，未知 id fallback 到首个非历史 livechat2 会话。`activate` 默认为 `true`，BankApp 演示可传 `false` 在后台准备文字坐席页。
 - 2026-05-29 17:42 后，`requestLiveChatWorkspace` 每次从 WhatsApp / BankApp Demo handoff 都会基于对应 livechat2 mock 模板创建新的会话实例，例如 `livechat2-001-handoff-1`；这样重复从 demo 跳入会表现为新客户接入，而不是回到旧客户行。
 - 正式 Live Chat 的 Customer Information 渠道标签中的 `accessDuration` 只表示客户从渠道接入到转人工成功前的耗时；接入坐席后必须保持固定。服务中持续计时只出现在 workspace tab、Live Chat 客户列表、Conversation header、SLA / 未回复计时等服务时长 UI。
-- `requestLiveChat2Workspace(sessionIds, options?)` 作为兼容入口仍存在，但也会打开正式 `Live Chat` tab，不再创建单独 `livechat2` tab；`liveChat2*` 状态独立保存排序、星标、草稿、已读、未回复计时、结束态、历史列表和消息覆盖，Sign Out / AUX 会通过 `clearLiveChat2Sessions()` 清理。
+- `requestLiveChat2Workspace(sessionIds, options?)` 作为兼容入口仍存在，但也会打开正式 `Live Chat` tab，不再创建单独 `livechat2` tab；`liveChat2*` 状态独立保存排序、星标、草稿、已读、未回复计时、结束态、历史列表和消息覆盖。Sign Out / Log Out / 最终 AUX 会通过 `clearLiveChat2Sessions()` 清理；Pre-AUX 不清理当前 active sessions。
 - Workspace 交互页签现在统一使用同一套 label 结构和样式，图标与文字间距保持普通 tab 的 4px；PSTN 电话呼入为 `PSTN (mm:ss)`，BankApp Voice 为 `Voice Call (mm:ss)`，BankApp Video 为 `Video Call (mm:ss)`，Live Chat 有 active session 时显示最长会话运行时长 `Live Chat (mm:ss)`，右上角显示当前未读总数且大于 99 显示 `99+`。
 - 新通话交互进入且当前不在该 tab 时，workspace tab 会轻微短闪约 5 秒；Live Chat tab key 仍保持 `live-chat`，只要有新 active session 进入就会短闪，即使当前已停留在 Live Chat tab；Live Chat 的短闪作用在整个 tab item 背景范围，不只包住 label 文本；通话 tab key 改为动态 `call-n`。
 - 当前正在通话的 call tab 不可关闭；Hang Up 后该 tab 保留、duration 冻结并变为可关闭。旧 ended tab 用于坐席继续登记，不代表仍有客户互动。
@@ -219,7 +224,7 @@ codex-recovered-context.md
 - 左侧菜单支持 2 层级：展开态顶部显示折叠按钮与菜单搜索框，点击一级菜单在下方展开二级菜单；收起态仅显示一级图标，鼠标悬浮在一级图标时在右侧显示二级菜单浮层，鼠标移出浮层或点击菜单后浮层关闭。
 - 当前侧栏菜单使用英文企业呼叫中心文案：Channel Simulation（PSTN、BankApp、WhatsApp）、Call Management（Verification Rules、Text Channel Settings、Busy Reason Management）、Agent Center（Agent Profile、Service History）、Operations（Alert KPI Management、Floor Management）、Reports。客户预览版继续不展示 `Routing Config`。
 - Agent Toolbar：Answer、Hold、Mute、Transfer、Hang Up、More；电话/视频呼入时可在动作按钮最左侧展示 incoming identification；More 菜单点击打开，包含 Outbound Call 与 Settings。
-- Agent Profile Area：Signed out 时菜单显示 `Sign In` 分组与三个纯文字服务模式；Signed in 后菜单显示当前服务模式、不可点击 `AUX` 分组标题、启用示忙原因和媒体 `Sign Out`，点击 `Sign Out` 先弹出确认框。系统级 `Log Out` 已独立为 Header 右侧红色电源按钮，按钮尺寸与状态下拉按钮一致，点击也先弹出确认框；`Confirm Log Out` 的 `Log Out` 按钮 hover/focus 样式比 AntD 默认 danger 按钮更明显。示忙原因不显示独立图标，点击原因后立即切换为 `AUX - {reasonName}`，不再打开 `Select AUX Reason` 弹框。头像右下状态点使用 `effectiveAgentPresence`，由坐席状态和活跃客户互动共同决定。
+- Agent Profile Area：Signed out 时菜单显示 `Sign In` 分组与三个纯文字服务模式；Ready / Not Ready signed-in 后菜单显示当前服务模式、不可点击 `AUX` 分组标题、启用示忙原因和媒体 `Sign Out`。处于 `AUX - {reason}` 或 `Pre-AUX - {reason}` 时，下拉只显示当前状态、`Ready` 和媒体 `Sign Out`，不再展示其它 AUX reasons。媒体 `Sign Out` 与系统级红色 `Log Out` 都会先检查当前服务，存在 active service 时显示 `Active Service in Progress` 阻断提示；无当前服务时才弹出二次确认。`Confirm Log Out` 的 `Log Out` 按钮 hover/focus 样式比 AntD 默认 danger 按钮更明显。示忙原因不显示独立图标，点击原因后根据当前是否有活跃服务切换为 `Pre-AUX - {reasonName}` 或 `AUX - {reasonName}`，不再打开 `Select AUX Reason` 弹框。头像右下状态点使用 `effectiveAgentPresence`，由坐席状态和活跃客户互动共同决定。
 - Notifications 和 Internal Chat 入口。
 - Internal Chat Modal。
 
@@ -231,6 +236,7 @@ type AgentStatus =
   | 'Ready'
   | 'Not Ready'
   | `AUX - ${string}`
+  | `Pre-AUX - ${string}`
 ```
 
 话务状态类型：
@@ -246,7 +252,7 @@ type CallStatus =
 
 关键逻辑：
 
-- Sign In 后 `BasicLayout` 调用 `setLiveChatTabOpen(true)`，使 Home 旁出现固定 `Live Chat` tab；Sign Out 后调用 `setLiveChatTabOpen(false)` 并在当前 tab 是 Live Chat 时退回 Home。
+- Sign In 后 `BasicLayout` 调用 `setLiveChatTabOpen(true, { seedDefaultCurrentSessions: true })`，使 Home 旁出现固定 `Live Chat` tab，并且仅在本次媒体签入时播种默认 Current 客户。后续 Ready / Not Ready / AUX / Pre-AUX 状态切换只保持或关闭 Live Chat tab，不重新创建默认客户；Sign Out 后调用 `setLiveChatTabOpen(false)` 并在当前 tab 是 Live Chat 时退回 Home。
 - Sign In 后如果暂无电话、视频或文字客户接入，右上角状态点为绿色；Sign Out 为灰色。
 - `BasicLayout` 计算 `effectiveAgentPresence`：`callStatus !== 'Idle'` 或 `activeLiveChatSessionIds.length > 0` 时为 busy 红色，覆盖 Ready/Talking/Hold/Mute/Incoming 等展示；Ready 且无互动为绿色；AUX / Not Ready / ACW 且无互动为黄色。
 - Ready + Idle 且没有未结束 `CallInteraction` 时点击 `Channel Simulation > PSTN` 可触发电话弹屏；`BasicLayout` 会计算并同步 `voiceVideoHandoffReadiness` 到 store，统一区分 `available`、`active-call` 和 `not-ready`。被阻塞时只显示轻量顶部 warning，不改变当前通话、不打开 modal、不新增 tab。
@@ -263,8 +269,9 @@ type CallStatus =
 - Hold 和 Mute 有独立累计计时。
 - Hang Up 后当前 `CallInteraction` 被标记为 `ended`，tab duration 停止并冻结；随后进入 After Call Work 逻辑：先 Not Ready，约 5 秒后回 Ready。
 - 旧 ended call tab 被选中查看时，右上角状态点和话务条仍按当前坐席状态显示，不回放旧通话状态。
-- Sign Out 会关闭所有 call tabs；AUX 会结束当前 active call 并保留 ended tab，同时清理 Live Chat active sessions。End Service、关闭 Live Chat tab、Sign Out、AUX 会清理对应 Live Chat active session timing。
-- Unsigned 或 AUX 状态会重置 call 状态与计时，并清空 active live chat sessions。
+- 选择 AUX reason 时，如果当前有 active call、voice/video service 或 active Live Chat session，状态先进入 Pre-AUX；Pre-AUX 不结束当前 call，不清理 Live Chat active sessions，只阻止新的 handoff/分配。
+- Pre-AUX 下点击 `Ready` 会取消 pending AUX 并恢复接入；点击 `Sign Out` 不要求先 Ready，但如仍有当前客户服务会被阻断，需结束或关闭服务后才进入二次确认并回 `Unsigned`。
+- 当前所有活跃服务结束后，Pre-AUX 自动切换到最终 `AUX - {reason}`。最终 AUX 会重置 call 状态与计时、清理 active live chat sessions 和共享状态；Sign Out 仍会关闭所有 call tabs。
 
 ## 6. Inbound 工作台
 
@@ -362,7 +369,7 @@ interface CrmWorkspaceTab {
 
 - 坐席 Sign In 后，Home tab 旁新增固定 `Live Chat` tab，不能关闭。
 - `LiveChatPage` 复用 `InteractionWorkspace`，在原三栏左侧增加 `LiveChatCustomerList`。
-- Sign In 后默认没有 active live chat session，页面展示 `No active conversation` 空态；不会预先显示 mock 客户。
+- `Digital only` / `Voice + Digital` 媒体签入时默认接入两个 Current 演示客户：`livechat2-001` 服务中，`livechat2-005` 客户主动挂机待坐席关闭；关闭/结束这些客户后，Ready / Not Ready / AUX / Pre-AUX 状态切换不会自动回补默认客户。
 - BankApp Demo Live Chat 路径触发后只加入 BankApp 客户 `live-chat-002`；WhatsApp Demo 触发后只加入 WhatsApp 客户 `live-chat-001`。
 - Webchat mock 客户暂时隐藏，不进入 active session 列表，也不显示 Webchat 筛选项；后续新增 Webchat 客户入口时再启用。
 - 客户列表默认收起；展开后顶部显示 ALL、WhatsApp、BankApp 图标筛选按钮，hover 显示渠道名；渠道为多选，ALL 代表当前启用渠道全选。

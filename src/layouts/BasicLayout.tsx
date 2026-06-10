@@ -26,6 +26,14 @@ import type {
 } from '../store'
 import type { AgentServiceMode, AgentStatus, CallStatus } from '../types'
 import {
+  createAuxStatus,
+  createPreAuxStatus,
+  getAuxReason,
+  isAuxLikeStatus,
+  isAuxStatus,
+  isPreAuxStatus,
+} from '../utils/agentStatus'
+import {
   AgentProfileArea,
   type AgentPresence,
 } from './components/AgentProfileArea'
@@ -59,6 +67,10 @@ type CallHandoffNoticeReason = Exclude<
   VoiceVideoHandoffReadiness,
   'available'
 >
+
+interface AgentStatusUpdateOptions {
+  seedDefaultLiveChat?: boolean
+}
 
 const initialCallTiming: CallTiming = {
   talkingStartedAt: null,
@@ -314,14 +326,27 @@ export function BasicLayout() {
   const updateAgentStatus = useCallback((
     status: AgentStatus,
     nextServiceMode: AgentServiceMode | null = agentServiceMode,
+    options: AgentStatusUpdateOptions = {},
   ) => {
-    setAgentStatus(status)
+    const hasActiveWork =
+      callStatus !== 'Idle' ||
+      activeLiveChatSessionIds.length > 0 ||
+      activeLiveChat2SessionIds.length > 0
+    const nextStatus =
+      isAuxStatus(status) && hasActiveWork
+        ? createPreAuxStatus(getAuxReason(status))
+        : status
+
+    setAgentStatus(nextStatus)
     setStatusStartedAt(Date.now())
     setLiveChatTabOpen(
-      status !== 'Unsigned' && canHandleDigital(nextServiceMode),
+      nextStatus !== 'Unsigned' && canHandleDigital(nextServiceMode),
+      {
+        seedDefaultCurrentSessions: options.seedDefaultLiveChat === true,
+      },
     )
 
-    if (status === 'Unsigned') {
+    if (nextStatus === 'Unsigned') {
       clearAgentServiceMode()
       setCallStatus('Idle')
       setCallStatusStartedAt(Date.now())
@@ -337,7 +362,19 @@ export function BasicLayout() {
       return
     }
 
-    if (status.startsWith('AUX')) {
+    if (nextStatus === 'Ready') {
+      setIsAfterCallWork(false)
+      hideCallHandoffNotice()
+      return
+    }
+
+    if (isPreAuxStatus(nextStatus)) {
+      setIsAfterCallWork(false)
+      hideCallHandoffNotice()
+      return
+    }
+
+    if (isAuxStatus(nextStatus)) {
       if (callStatus !== 'Idle' && currentCallInteractionId) {
         markCallInteractionEnded(currentCallInteractionId)
       }
@@ -354,6 +391,8 @@ export function BasicLayout() {
       hideCallHandoffNotice()
     }
   }, [
+    activeLiveChat2SessionIds,
+    activeLiveChatSessionIds,
     agentServiceMode,
     callStatus,
     clearAgentServiceMode,
@@ -376,12 +415,43 @@ export function BasicLayout() {
   const handleServiceSignIn = useCallback(
     (mode: AgentServiceMode) => {
       setAgentServiceMode(mode)
-      updateAgentStatus('Ready', mode)
+      updateAgentStatus('Ready', mode, { seedDefaultLiveChat: true })
     },
     [setAgentServiceMode, updateAgentStatus],
   )
 
+  const isSignedIn = agentStatus !== 'Unsigned'
+  const isConnectedCall =
+    callStatus === 'Talking' || callStatus === 'Hold' || callStatus === 'Mute'
+  const hasActiveCallInteraction = callStatus !== 'Idle'
+  const hasActiveTextInteraction =
+    activeLiveChatSessionIds.length > 0 ||
+    activeLiveChat2SessionIds.length > 0
+  const hasActiveCustomerInteraction =
+    isSignedIn && (hasActiveCallInteraction || hasActiveTextInteraction)
+
+  const showActiveServiceExitWarning = useCallback(
+    (action: 'logging out' | 'signing out') => {
+      Modal.warning({
+        centered: true,
+        content: `Please finish or close all current customer services before ${action}.`,
+        okText: 'OK',
+        title: 'Active Service in Progress',
+      })
+    },
+    [],
+  )
+
+  const handleBlockedSignOut = useCallback(() => {
+    showActiveServiceExitWarning('signing out')
+  }, [showActiveServiceExitWarning])
+
   const handleLogout = useCallback(() => {
+    if (hasActiveCustomerInteraction) {
+      showActiveServiceExitWarning('logging out')
+      return
+    }
+
     Modal.confirm({
       cancelText: 'Cancel',
       centered: true,
@@ -399,17 +469,14 @@ export function BasicLayout() {
         navigate('/login', { replace: true })
       },
     })
-  }, [logout, navigate, updateAgentStatus])
+  }, [
+    hasActiveCustomerInteraction,
+    logout,
+    navigate,
+    showActiveServiceExitWarning,
+    updateAgentStatus,
+  ])
 
-  const isSignedIn = agentStatus !== 'Unsigned'
-  const isConnectedCall =
-    callStatus === 'Talking' || callStatus === 'Hold' || callStatus === 'Mute'
-  const hasActiveCallInteraction = callStatus !== 'Idle'
-  const hasActiveTextInteraction =
-    activeLiveChatSessionIds.length > 0 ||
-    activeLiveChat2SessionIds.length > 0
-  const hasActiveCustomerInteraction =
-    isSignedIn && (hasActiveCallInteraction || hasActiveTextInteraction)
   const effectiveAgentPresence: AgentPresence = !isSignedIn
     ? 'offline'
     : hasActiveCustomerInteraction
@@ -417,6 +484,18 @@ export function BasicLayout() {
       : agentStatus === 'Ready'
         ? 'ready'
         : 'away'
+
+  useEffect(() => {
+    if (!isPreAuxStatus(agentStatus) || hasActiveCustomerInteraction) {
+      return undefined
+    }
+
+    const timer = window.setTimeout(() => {
+      updateAgentStatus(createAuxStatus(getAuxReason(agentStatus)))
+    }, 0)
+
+    return () => window.clearTimeout(timer)
+  }, [agentStatus, hasActiveCustomerInteraction, updateAgentStatus])
 
   useEffect(() => {
     setVoiceVideoHandoffReadiness(voiceVideoHandoffReadiness)
@@ -689,6 +768,8 @@ export function BasicLayout() {
   }, [callStatus, updateCallStatus])
 
   const handleHangUp = useCallback(() => {
+    const shouldKeepPreAux = isPreAuxStatus(agentStatus)
+
     if (currentCallInteractionId) {
       markCallInteractionEnded(currentCallInteractionId)
     }
@@ -696,12 +777,15 @@ export function BasicLayout() {
     updateCallStatus('Idle')
     setCallTiming(initialCallTiming)
     setActiveCallChannel(null)
-    setIsAfterCallWork(true)
+    setIsAfterCallWork(!shouldKeepPreAux)
     hideCallHandoffNotice()
     setOpenEyeVideoWindowVisible(false)
     resetBankAppVideoDesktopShare()
-    updateAgentStatus('Not Ready')
+    if (!shouldKeepPreAux) {
+      updateAgentStatus('Not Ready')
+    }
   }, [
+    agentStatus,
     currentCallInteractionId,
     hideCallHandoffNotice,
     markCallInteractionEnded,
@@ -846,7 +930,7 @@ export function BasicLayout() {
       }
     }
 
-    if (agentStatus.startsWith('AUX')) {
+    if (isAuxLikeStatus(agentStatus)) {
       return {
         label: agentStatus,
         startedAt: statusStartedAt,
@@ -963,6 +1047,8 @@ export function BasicLayout() {
             serviceMode={agentServiceMode}
             status={agentStatus}
             teamName={authSession?.team}
+            hasActiveCustomerInteraction={hasActiveCustomerInteraction}
+            onBlockedSignOut={handleBlockedSignOut}
             onServiceSignIn={handleServiceSignIn}
             onStatusChange={updateAgentStatus}
           />

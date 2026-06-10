@@ -6,6 +6,7 @@ import { agentServiceModeOptions } from '../../mock/auth'
 import { headerAgentProfile } from '../../mock/agent'
 import { useCallManagementStore } from '../../store'
 import type { AgentServiceMode, AgentStatus } from '../../types'
+import { createAuxStatus, isAuxLikeStatus } from '../../utils/agentStatus'
 
 export type AgentPresence = 'away' | 'busy' | 'offline' | 'ready'
 
@@ -23,6 +24,8 @@ interface AgentProfileAreaProps {
   serviceMode: AgentServiceMode | null
   status: AgentStatus
   teamName?: string
+  hasActiveCustomerInteraction: boolean
+  onBlockedSignOut: () => void
   onServiceSignIn: (mode: AgentServiceMode) => void
   onStatusChange: (status: AgentStatus) => void
 }
@@ -34,10 +37,13 @@ export function AgentProfileArea({
   serviceMode,
   status,
   teamName = headerAgentProfile.team,
+  hasActiveCustomerInteraction,
+  onBlockedSignOut,
   onServiceSignIn,
   onStatusChange,
 }: AgentProfileAreaProps) {
   const isSignedIn = status !== 'Unsigned'
+  const isAuxLike = isAuxLikeStatus(status)
   const busyReasons = useCallManagementStore((state) => state.busyReasons)
   const serviceModeLabel = serviceMode
     ? (agentServiceModeOptions.find((option) => option.value === serviceMode)
@@ -58,8 +64,38 @@ export function AgentProfileArea({
     label: option.label,
   }))
 
-  const actionItems: MenuProps['items'] = isSignedIn
+  const signedInMenuItems: MenuProps['items'] = isAuxLike
     ? [
+        {
+          key: 'current-service-mode',
+          disabled: true,
+          label: serviceModeLabel
+            ? `Signed in: ${serviceModeLabel}`
+            : 'Signed in',
+        },
+        {
+          key: 'current-agent-status',
+          disabled: true,
+          label: `Current status: ${status}`,
+        },
+        {
+          key: 'divider-ready',
+          type: 'divider',
+        },
+        {
+          key: 'ready',
+          label: 'Ready',
+        },
+        {
+          key: 'divider-sign-out',
+          type: 'divider',
+        },
+        {
+          key: 'sign-out',
+          label: 'Sign Out',
+        },
+      ]
+    : [
         {
           key: 'current-service-mode',
           disabled: true,
@@ -98,6 +134,9 @@ export function AgentProfileArea({
           label: 'Sign Out',
         },
       ]
+
+  const actionItems: MenuProps['items'] = isSignedIn
+    ? signedInMenuItems
     : [
         {
           key: 'sign-in',
@@ -118,6 +157,11 @@ export function AgentProfileArea({
     }
 
     if (key === 'sign-out') {
+      if (hasActiveCustomerInteraction) {
+        onBlockedSignOut()
+        return
+      }
+
       Modal.confirm({
         cancelText: 'Cancel',
         centered: true,
@@ -130,12 +174,17 @@ export function AgentProfileArea({
       return
     }
 
+    if (key === 'ready') {
+      onStatusChange('Ready')
+      return
+    }
+
     const selectedReason = enabledBusyReasons.find(
       (reason) => key === `aux-reason-${reason.busyReasonId}`,
     )
 
     if (selectedReason) {
-      onStatusChange(`AUX - ${selectedReason.busyReasonName}`)
+      onStatusChange(createAuxStatus(selectedReason.busyReasonName))
     }
   }
 
