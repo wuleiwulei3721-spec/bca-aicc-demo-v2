@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-10 11:43 +08:00
+最后更新：2026-06-10 14:53 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,50 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-10 14:53 +08:00 - 细化 Live Chat 记录定位、菜单详情和角标位置
+
+修改页面或文件：
+
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/InteractionWorkspace.tsx`
+- `src/pages/inbound/components/LeftColumn.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/pages/inbound/components/CallFlowDetailModal.tsx`
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-10-1453.md`
+- `.codex-backup/current-todo-2026-06-10-1453.md`
+- `.codex-backup/page-state-2026-06-10-1453.md`
+
+修改原因：
+
+- 用户反馈 Conversation 默认没有落在最新消息，Message Record 搜索后的定位不应跳转到 Conversation，Haloapps Menu 不需要显示 `Single-level menu`，文字渠道详情缺少类似电话弹屏的坐席记录，且 Live Chat tab 未读角标下移后遮挡计时。
+
+修改结果：
+
+- Conversation 消息区在切换会话或消息变化后默认滚动到最新消息。
+- Message Record 的 `Locate` 改为在右侧记录面板内工作：搜索后点击定位会清空 keyword、返回该日期范围的连续记录列表，并在记录面板内滚动/高亮对应记录，不再触发 Conversation 定位。
+- Haloapps Menu 弹框只显示菜单名称，不再显示 `Single-level menu`。
+- Live Chat 文字渠道详情弹框通过 `showTransferHistory` 显示 Transfer History / 坐席记录，参考 PSTN 电话弹屏。
+- Live Chat tab 未读角标重新放到计时上方右侧，并增加 tab nav 顶部空间和 visible overflow，避免裁剪且不遮挡 `(00:xx)` 计时。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仅保留既有 Vite chunk size warning。
+- 本地 Chrome/CDP smoke check 通过：Conversation 默认在底部；Message Record 搜索 `Customer reported` 后 `Locate` 回到 7 条连续记录并在记录面板内高亮，Conversation scrollTop 不变化且无 Conversation located class；Haloapps Menu 弹框无 `Single-level menu`，显示 `Transfer History`；未读角标不遮挡计时且仍在 tab nav 可见区域内。
+
+回滚说明：
+
+- 可按文件回滚本轮 Live Chat 细化；若只回滚 Message Record 定位，需要恢复 `onLocateMessage` 从记录面板传回 Conversation 的链路。
+
+当前风险点：
+
+- 文字渠道 Transfer History 仍复用前端 demo 的 mock 坐席记录；如客户需要真实文字渠道坐席轨迹字段，后续应补独立 mock/type。
 
 ### 2026-06-10 11:43 +08:00 - 修复正式 Live Chat 交互与 Haloapps 菜单详情
 

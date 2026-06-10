@@ -28,7 +28,6 @@ import { formatDuration } from '../../../utils/duration'
 import type { LiveChat2SessionView } from './LiveChat2CustomerPanel'
 import {
   getLiveChat2VisibleMessages,
-  type LiveChat2MessageLocateRequest,
 } from './liveChat2MessageUtils'
 import type { LiveChat2QuickReplyOption } from './liveChat2QuickReplies'
 
@@ -38,7 +37,6 @@ interface LiveChat2ConversationWorkspaceProps {
   composerFocusRequest: LiveChat2ComposerFocusRequest | null
   draftMessage: string
   isMessageRecordOpen: boolean
-  messageLocateRequest: LiveChat2MessageLocateRequest | null
   messages: LiveChat2Message[]
   quickReplies: LiveChat2QuickReplyOption[]
   recalledMessageIds: string[]
@@ -170,7 +168,6 @@ function renderMessageContent(
 
 interface LiveChat2MessageRecordPanelProps {
   messages: LiveChat2Message[]
-  onLocateMessage: (messageId: string) => void
 }
 
 type MessageRecordDateRange = [Dayjs, Dayjs]
@@ -228,7 +225,6 @@ function getDateBoundary(dateValue: Dayjs, type: 'end' | 'start') {
 
 export function LiveChat2MessageRecordPanel({
   messages,
-  onLocateMessage,
 }: LiveChat2MessageRecordPanelProps) {
   const latestMessageTimestamp = getLatestMessageTimestamp(messages)
   const defaultFilters = getDefaultRecordFilters(latestMessageTimestamp)
@@ -250,6 +246,11 @@ export function LiveChat2MessageRecordPanel({
   const { appliedFilters, draftFilters, isSearchResultMode } =
     activeFilterState
   const appliedKeyword = appliedFilters.keyword.trim()
+  const recordNodeRefs = useRef<Record<string, HTMLElement | null>>({})
+  const [locatedRecordRequest, setLocatedRecordRequest] = useState<{
+    messageId: string
+    requestId: number
+  } | null>(null)
 
   const matchedRecordMessages = useMemo(() => {
     const fromTime = getDateBoundary(appliedFilters.dateRange[0], 'start')
@@ -273,6 +274,7 @@ export function LiveChat2MessageRecordPanel({
     messages,
   ])
   const handleSearch = () => {
+    setLocatedRecordRequest(null)
     setFilterState({
       appliedFilters: {
         dateRange: [draftFilters.dateRange[0], draftFilters.dateRange[1]],
@@ -284,15 +286,40 @@ export function LiveChat2MessageRecordPanel({
     })
   }
   const handleLocateMessage = (messageId: string) => {
-    const nextFilters = getDefaultRecordFilters(latestMessageTimestamp)
+    const nextFilters = {
+      dateRange: [appliedFilters.dateRange[0], appliedFilters.dateRange[1]],
+      keyword: '',
+    } satisfies MessageRecordFilters
+
     setFilterState({
       appliedFilters: nextFilters,
       draftFilters: nextFilters,
       isSearchResultMode: false,
       latestMessageTimestamp,
     })
-    onLocateMessage(messageId)
+    setLocatedRecordRequest((currentRequest) => ({
+      messageId,
+      requestId: (currentRequest?.requestId ?? 0) + 1,
+    }))
   }
+
+  useEffect(() => {
+    if (!locatedRecordRequest) {
+      return
+    }
+
+    const targetNode = recordNodeRefs.current[locatedRecordRequest.messageId]
+
+    if (!targetNode) {
+      return
+    }
+
+    targetNode.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    })
+    targetNode.focus({ preventScroll: true })
+  }, [locatedRecordRequest, matchedRecordMessages])
 
   return (
     <aside
@@ -363,7 +390,19 @@ export function LiveChat2MessageRecordPanel({
       <div className="livechat2-records__list">
         {matchedRecordMessages.length > 0 ? (
           matchedRecordMessages.map((message) => (
-            <article key={`record-${message.id}`} tabIndex={0}>
+            <article
+              className={
+                locatedRecordRequest?.messageId === message.id
+                  ? 'livechat2-records__item--located'
+                  : undefined
+              }
+              data-livechat2-record-id={message.id}
+              key={`record-${message.id}`}
+              ref={(node) => {
+                recordNodeRefs.current[message.id] = node
+              }}
+              tabIndex={0}
+            >
               <div className="livechat2-records__item-head">
                 <strong>{message.senderName}</strong>
                 <time>
@@ -395,7 +434,6 @@ export function LiveChat2ConversationWorkspace({
   composerFocusRequest,
   draftMessage,
   isMessageRecordOpen,
-  messageLocateRequest,
   messages,
   quickReplies,
   recalledMessageIds,
@@ -415,10 +453,7 @@ export function LiveChat2ConversationWorkspace({
     listKey: '',
   })
   const composerRef = useRef<HTMLTextAreaElement>(null)
-  const messageNodeRefs = useRef<Record<string, HTMLElement | null>>({})
-  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(
-    null,
-  )
+  const messagesListRef = useRef<HTMLElement | null>(null)
   const readOnly = session.statusDisplay === 'history'
   const isEnded = session.statusDisplay === 'ended'
   const canCompose = !readOnly && !isEnded
@@ -429,6 +464,8 @@ export function LiveChat2ConversationWorkspace({
     session.historyMessages,
     messages,
   )
+  const latestVisibleMessageId =
+    visibleMessages[visibleMessages.length - 1]?.id ?? ''
   const quickReplyKeyword = draftMessage.startsWith('/')
     ? draftMessage.slice(1).trim().toLowerCase()
     : ''
@@ -451,32 +488,14 @@ export function LiveChat2ConversationWorkspace({
       : 0
 
   useEffect(() => {
-    if (!messageLocateRequest) {
-      return undefined
+    const messagesList = messagesListRef.current
+
+    if (!messagesList) {
+      return
     }
 
-    const targetNode = messageNodeRefs.current[messageLocateRequest.messageId]
-
-    if (!targetNode) {
-      return undefined
-    }
-
-    targetNode.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center',
-    })
-    setHighlightedMessageId(messageLocateRequest.messageId)
-
-    const timeoutId = window.setTimeout(() => {
-      setHighlightedMessageId((currentMessageId) =>
-        currentMessageId === messageLocateRequest.messageId
-          ? null
-          : currentMessageId,
-      )
-    }, 1800)
-
-    return () => window.clearTimeout(timeoutId)
-  }, [messageLocateRequest])
+    messagesList.scrollTop = messagesList.scrollHeight
+  }, [latestVisibleMessageId, session.id])
 
   useEffect(() => {
     if (
@@ -663,7 +682,11 @@ export function LiveChat2ConversationWorkspace({
       </header>
 
       <div className="livechat2-conversation__body">
-        <section className="livechat2-conversation__messages" role="log">
+        <section
+          className="livechat2-conversation__messages"
+          ref={messagesListRef}
+          role="log"
+        >
           {visibleMessages.map((message) => {
             const displayType = getMessageDisplayType(message)
             const isRecalled = recalledMessageIds.includes(message.id)
@@ -673,15 +696,9 @@ export function LiveChat2ConversationWorkspace({
                 className={[
                   'livechat2-message',
                   `livechat2-message--${displayType}`,
-                  highlightedMessageId === message.id
-                    ? 'livechat2-message--located'
-                    : '',
                 ].join(' ')}
                 data-livechat2-message-id={message.id}
                 key={message.id}
-                ref={(node) => {
-                  messageNodeRefs.current[message.id] = node
-                }}
               >
                 {displayType !== 'system' && displayType !== 'current-agent' && (
                   <span className="livechat2-message__avatar">

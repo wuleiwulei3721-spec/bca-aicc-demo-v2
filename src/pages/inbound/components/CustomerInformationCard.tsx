@@ -47,6 +47,7 @@ interface CustomerInformationCardProps {
   identityRefreshPasteValue: string
   onCustomerIdentityRefresh: (customerId: string) => boolean
   showIvrJourney?: boolean
+  showTransferHistory?: boolean
 }
 
 function createContactRecord(type: ContactType, value: string): ContactRecord {
@@ -163,6 +164,7 @@ export function CustomerInformationCard({
   identityRefreshPasteValue,
   onCustomerIdentityRefresh,
   showIvrJourney,
+  showTransferHistory,
 }: CustomerInformationCardProps) {
   const requestCustomerOutboundCall = useAppStore(
     (state) => state.requestCustomerOutboundCall,
@@ -527,6 +529,7 @@ export function CustomerInformationCard({
         accessMenuName={accessMenuName}
         open={isCallFlowOpen}
         showIvrJourney={shouldShowIvrJourney}
+        showTransferHistory={showTransferHistory}
         onClose={() => setIsCallFlowOpen(false)}
       />
       <SendEmailModal

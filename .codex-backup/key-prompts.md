@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-06-10 11:43 +08:00
+最后更新：2026-06-10 14:53 +08:00
 
 ## 项目方向
 
@@ -48,6 +48,11 @@
 - 客户卡片底部的 `Menu` 只在 PSTN/语音 IVR 与 Haloapps 文本接入展示；PSTN 展示最后一级 IVR menu，Haloapps 文本展示一级菜单名；WhatsApp/Webchat/Video 不展示。
 - Haloapps 文本接入如果有菜单名，点击接入渠道详情也要展示说明；它只有一级菜单，用 `Haloapps Menu` 单节点表达，不显示 PSTN 的多级 IVR Journey。
 - Haloapps 文本一级菜单名本轮使用 session `intent` / `lastMenuName`。
+- Conversation 消息区默认应滚动到最新消息。
+- Message Record 搜索后的 `Locate` 不应跳转到 Conversation，而是在 Message Record 面板内清空 keyword、返回连续记录列表，并滚动/高亮对应记录。
+- Haloapps Menu 弹框不显示 `Single-level menu`，只展示完整一级菜单名。
+- 文字渠道接入详情也要展示类似电话弹屏的坐席记录 / Transfer History。
+- Live Chat tab 未读角标不能被裁剪，也不能遮挡 `(00:xx)` 计时。
 
 ## 功能弹窗
 

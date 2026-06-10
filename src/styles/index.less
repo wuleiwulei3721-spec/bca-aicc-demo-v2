@@ -4869,6 +4869,12 @@ a {
   flex: 0 0 auto;
   min-height: 28px;
   margin-bottom: 6px;
+  padding-top: 6px;
+  overflow: visible;
+}
+
+.agent-workspace-tabs .ant-tabs-nav-wrap {
+  overflow: visible;
 }
 
 .agent-workspace-tabs > .ant-tabs-content-holder {
@@ -4973,8 +4979,8 @@ a {
 
 .agent-workspace-tabs .ant-tabs-tab-btn .workspace-tab-label__unread {
   position: absolute;
-  top: -2px;
-  right: -10px;
+  top: -8px;
+  right: -20px;
   display: inline-flex;
   min-width: 16px;
   height: 16px;
@@ -8176,6 +8182,13 @@ button.inbound-list-row .inbound-list-row__title {
 .livechat2-records__list article:focus-within {
   background: #f6faff;
   box-shadow: inset 2px 0 0 var(--aicc-primary);
+}
+
+.livechat2-records__list article.livechat2-records__item--located {
+  background: #eaf4ff;
+  box-shadow:
+    inset 2px 0 0 var(--aicc-primary),
+    0 0 0 1px rgba(24, 103, 192, 0.18);
 }
 
 .livechat2-records__list time,

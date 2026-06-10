@@ -24,6 +24,7 @@ interface LeftColumnProps {
   onCustomerIdentityRefresh: (customerId: string) => boolean
   onOpenCrm: (tab: CrmWorkspaceTab) => void
   showIvrJourney?: boolean
+  showTransferHistory?: boolean
 }
 
 export function LeftColumn({
@@ -38,6 +39,7 @@ export function LeftColumn({
   onCustomerIdentityRefresh,
   onOpenCrm,
   showIvrJourney,
+  showTransferHistory,
 }: LeftColumnProps) {
   return (
     <div className="inbound-left-column">
@@ -48,6 +50,7 @@ export function LeftColumn({
           customer={customer}
           identityRefreshPasteValue={identityRefreshPasteValue}
           showIvrJourney={showIvrJourney}
+          showTransferHistory={showTransferHistory}
           onCustomerIdentityRefresh={onCustomerIdentityRefresh}
         />
       </div>

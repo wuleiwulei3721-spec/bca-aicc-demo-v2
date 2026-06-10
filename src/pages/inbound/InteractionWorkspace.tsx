@@ -40,6 +40,7 @@ interface InteractionWorkspaceProps {
   onAssistantCloseExtraTab?: (targetKey: string) => void
   overlay?: ReactNode
   showIvrJourney?: boolean
+  showTransferHistory?: boolean
 }
 
 export function InteractionWorkspace({
@@ -60,6 +61,7 @@ export function InteractionWorkspace({
   onAssistantCloseExtraTab,
   overlay,
   showIvrJourney,
+  showTransferHistory,
 }: InteractionWorkspaceProps) {
   const [crmWorkspace, setCrmWorkspace] = useState<{
     activeKey: string
@@ -210,6 +212,7 @@ export function InteractionWorkspace({
           quickActions={quickActions}
           tickets={identityData.tickets}
           showIvrJourney={showIvrJourney}
+          showTransferHistory={showTransferHistory}
           onCustomerIdentityRefresh={refreshCustomerIdentity}
           onOpenCrm={openCrmWorkspaceTab}
         />

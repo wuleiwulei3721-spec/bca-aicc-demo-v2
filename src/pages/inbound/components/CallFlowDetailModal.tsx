@@ -6,6 +6,7 @@ interface CallFlowDetailModalProps {
   accessMenuName?: string
   open: boolean
   showIvrJourney?: boolean
+  showTransferHistory?: boolean
   onClose: () => void
 }
 
@@ -14,10 +15,12 @@ export function CallFlowDetailModal({
   accessMenuName,
   open,
   showIvrJourney = true,
+  showTransferHistory,
   onClose,
 }: CallFlowDetailModalProps) {
   const shouldShowTransferHistory =
-    showIvrJourney && callFlowDetail.transferHistory.length > 0
+    (showTransferHistory ?? showIvrJourney) &&
+    callFlowDetail.transferHistory.length > 0
 
   return (
     <BaseModal
@@ -57,7 +60,6 @@ export function CallFlowDetailModal({
               items={[
                 {
                   id: 'access-menu-single-level',
-                  meta: 'Single-level menu',
                   title: accessMenuName,
                 },
               ]}

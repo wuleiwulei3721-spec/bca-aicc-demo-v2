@@ -26,7 +26,6 @@ import {
 import { LiveChat2QuickRepliesPanel } from './components/LiveChat2QuickRepliesPanel'
 import {
   getLiveChat2VisibleMessages,
-  type LiveChat2MessageLocateRequest,
 } from './components/liveChat2MessageUtils'
 import {
   defaultLiveChat2QuickReplyGroups,
@@ -115,8 +114,6 @@ export function LiveChat2Page() {
     requestId: number
     sessionId: string
   } | null>(null)
-  const [messageLocateRequest, setMessageLocateRequest] =
-    useState<LiveChat2MessageLocateRequest | null>(null)
   const [rightPanelActiveKey, setRightPanelActiveKey] = useState('assistant')
   const activeLiveChat2SessionIds = useAppStore(
     (state) => state.activeLiveChat2SessionIds,
@@ -379,13 +376,6 @@ export function LiveChat2Page() {
     setRightPanelActiveKey(LIVECHAT2_MESSAGE_RECORD_TAB_KEY)
   }
 
-  const handleLocateMessageRecord = (messageId: string) => {
-    setMessageLocateRequest((currentRequest) => ({
-      messageId,
-      requestId: (currentRequest?.requestId ?? 0) + 1,
-    }))
-  }
-
   const handleInsertQuickReply = (text: string) => {
     if (!activeSession) {
       return
@@ -485,7 +475,6 @@ export function LiveChat2Page() {
             children: (
               <LiveChat2MessageRecordPanel
                 messages={messageRecordMessages}
-                onLocateMessage={handleLocateMessageRecord}
               />
             ),
             icon: <HistoryOutlined />,
@@ -520,7 +509,6 @@ export function LiveChat2Page() {
           composerFocusRequest={composerFocusRequest}
           draftMessage={liveChat2DraftMessages[activeSession.id] ?? ''}
           isMessageRecordOpen={isMessageRecordTabOpen}
-          messageLocateRequest={messageLocateRequest}
           messages={messages}
           quickReplies={quickReplyOptions}
           recalledMessageIds={liveChat2RecalledMessageIds}
@@ -538,6 +526,7 @@ export function LiveChat2Page() {
       leadPanel={leadPanel}
       onAssistantActiveKeyChange={setRightPanelActiveKey}
       onAssistantCloseExtraTab={handleCloseRightPanelTab}
+      showTransferHistory
     />
   )
 }
