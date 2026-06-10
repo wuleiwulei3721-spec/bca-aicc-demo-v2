@@ -4,12 +4,10 @@ import {
   AgentWorkspace,
   BusyReasonManagementPage,
   BusinessTypesPage,
-  ChannelTypesPage,
   ChannelsPage,
   DesignSystem,
   GlobalControlConfigurationPage,
   RoutingConfigurationPage,
-  RouteElementsPage,
   SitesPage,
   SiteAccessVolumePage,
   SkillQueuesPage,
@@ -50,11 +48,11 @@ export const router = createBrowserRouter([
       },
       {
         path: 'routing-config',
-        element: <Navigate replace to="/routing-config/route-elements" />,
+        element: <Navigate replace to="/routing-config/channels" />,
       },
       {
         path: 'routing-config/route-elements',
-        element: <RouteElementsPage />,
+        element: <Navigate replace to="/routing-config/channels" />,
       },
       {
         path: 'routing-config/vdn',
@@ -66,7 +64,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'routing-config/channel-types',
-        element: <ChannelTypesPage />,
+        element: <Navigate replace to="/routing-config/channels" />,
       },
       {
         path: 'routing-config/channels',

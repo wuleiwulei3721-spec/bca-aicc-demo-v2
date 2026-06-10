@@ -3,6 +3,7 @@ import { Alert, InputNumber, Select } from 'antd'
 import { useMemo, useState } from 'react'
 import { BaseButton, BaseCard, PageContainer } from '../../components'
 import { defaultGlobalControlConfiguration } from '../../mock/globalControlConfiguration'
+import { useRoutingConfigStore } from '../../store/routingConfigStore'
 import type {
   GlobalControlAnswerMode,
   GlobalControlConfiguration,
@@ -98,11 +99,26 @@ function SelectField<Value extends string>({
 }
 
 export function GlobalControlConfigurationPage() {
+  const skillQueues = useRoutingConfigStore((state) => state.skillQueues)
   const [config, setConfig] = useState<GlobalControlConfiguration>(
     cloneDefaultConfig,
   )
   const [savedAt, setSavedAt] = useState(formatSavedTime(new Date()))
   const [savedNotice, setSavedNotice] = useState('')
+  const activeSkillQueueOptions = useMemo(
+    () =>
+      skillQueues
+        .filter((skillQueue) => skillQueue.status === 'Active')
+        .map((skillQueue) => ({
+          label: skillQueue.skillQueueName,
+          value: skillQueue.skillQueueCode,
+        })),
+    [skillQueues],
+  )
+  const activeSkillQueueCodes = useMemo(
+    () => new Set(activeSkillQueueOptions.map((option) => option.value)),
+    [activeSkillQueueOptions],
+  )
 
   const updateConfig = <Key extends keyof GlobalControlConfiguration>(
     key: Key,
@@ -150,8 +166,14 @@ export function GlobalControlConfigurationPage() {
       errors.push('Max Text Media Services must be greater than 0.')
     }
 
+    if (!config.defaultSkillQueueCode) {
+      errors.push('Default Skill Queue is required.')
+    } else if (!activeSkillQueueCodes.has(config.defaultSkillQueueCode)) {
+      errors.push('Default Skill Queue must be an active skill queue.')
+    }
+
     return errors
-  }, [config])
+  }, [activeSkillQueueCodes, config])
 
   const hasValidationErrors = validationErrors.length > 0
 
@@ -286,6 +308,19 @@ export function GlobalControlConfigurationPage() {
                 value={config.maxTextMediaServices}
                 onChange={(value) =>
                   updateConfig('maxTextMediaServices', value)
+                }
+              />
+            </div>
+          </BaseCard>
+
+          <BaseCard compact title="Routing Fallback">
+            <div className="global-control-config__row global-control-config__row--single">
+              <SelectField
+                label="Default Skill Queue"
+                options={activeSkillQueueOptions}
+                value={config.defaultSkillQueueCode}
+                onChange={(value) =>
+                  updateConfig('defaultSkillQueueCode', value)
                 }
               />
             </div>

@@ -9,5 +9,6 @@ export interface GlobalControlConfiguration {
   idleAutoSignOutMinutes: number
   idleWarningMinutes: number
   maxTextMediaServices: number
+  defaultSkillQueueCode: string
   signInDefaultStatus: GlobalControlSignInStatus
 }

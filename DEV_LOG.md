@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-06 10:46 +08:00
+最后更新：2026-06-10 17:03 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,229 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-10 17:03 +08:00 - Skill Queues 页面精简视频与排队配置
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-10-1703.md`
+- `.codex-backup/current-todo-2026-06-10-1703.md`
+- `.codex-backup/page-state-2026-06-10-1703.md`
+
+修改原因：
+
+- 用户要求 `Routing Config > Skill Queues` 页面去除 `Supports Video` 配置，并去除 `Queue Configuration` 配置内容。
+
+修改结果：
+
+- Skill Queues 列表去掉 `Max Queue Customers`、`Queue Timeout`、`Supports Video` 列。
+- Add/Edit/View 弹框去掉 `Supports Video` 字段。
+- Add/Edit/View 弹框去掉整个 `Queue Configuration` 分区，包括非工作时间提示语、最大排队人数、排队提示语、排队超时时长和排队超时提示语。
+- 底层 `supportsVideo` 与 queue 相关字段仍保留在类型/mock/draft 中，并在保存时透传，不清空现有数据。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `git diff --check` 通过；仅输出既有 CRLF 工作区提示。
+
+回滚说明：
+
+- 如需恢复，可在 Skill Queues 列表重新加入 Max Queue Customers、Queue Timeout、Supports Video 列，并恢复弹框中的 Supports Video 字段、Queue Configuration 分区及相关校验。
+
+当前风险点：
+
+- 当前需求文档中的技能队列排队配置如果仍保留，需要同步调整文档；本轮仅按用户要求修改 demo 页面。
+
+### 2026-06-10 11:12 +08:00 - 全局控制配置新增默认技能队列
+
+修改页面或文件：
+
+- `src/pages/call-management/GlobalControlConfigurationPage.tsx`
+- `src/types/globalControlConfiguration.ts`
+- `src/mock/globalControlConfiguration.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-10-1112.md`
+- `.codex-backup/current-todo-2026-06-10-1112.md`
+- `.codex-backup/page-state-2026-06-10-1112.md`
+
+修改原因：
+
+- 用户确认路由策略无规则命中时需要进入全局默认技能队列，并要求先在 demo 的 `Call Management > Global Control Configuration` 中增加默认技能队列配置字段。
+
+修改结果：
+
+- `GlobalControlConfiguration` 类型新增 `defaultSkillQueueCode`。
+- 默认 mock 设置为 `SQ_GENERAL_ID`，对应 `General Service - Indonesian`。
+- 全局控制页面新增 `Routing Fallback` 分块和必填 `Default Skill Queue` 下拉。
+- 下拉来源为 `Routing Config > Skill Queues` 中 `Active` 的技能队列；当前值缺失、不存在或非启用时阻止保存并提示。
+- 本轮只补齐前端 demo 配置项，不实现真实后端路由执行引擎。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `git diff --check` 通过；仅输出既有 CRLF 工作区提示。
+
+回滚说明：
+
+- 如需回滚，删除 `defaultSkillQueueCode` 类型/mock 字段，并移除全局控制页面中的 `Routing Fallback` 分块、skill queue store 引用和默认队列校验。
+
+当前风险点：
+
+- 该字段引用 Routing Config 的前端 demo store；如果后续拆分真实后端模块，需要改为读取系统参数或统一配置接口。
+
+### 2026-06-09 19:31 +08:00 - 增强危险确认按钮悬浮样式
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户反馈登出二次确认弹框中的 `Log Out` 按钮 hover 样式不明显。
+
+修改结果：
+
+- 全局 `BaseButton` danger 样式改为红色填充按钮。
+- danger 按钮 hover / focus-visible 时加深为暗红，并增加红色焦点阴影。
+- danger 按钮 active 状态进一步加深，提升 `Log Out` / `Delete` 等危险确认按钮的反馈清晰度。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite chunk size warning。
+
+回滚说明：
+
+- 如需回滚，删除 `src/styles/index.less` 中 `.aicc-button--danger.ant-btn-dangerous` 相关样式块，恢复 Ant Design 默认 danger 按钮 hover。
+
+当前风险点：
+
+- 该样式会同步影响所有使用 `BaseButton variant="danger"` 的确认按钮，包括 Delete 类操作；这是符合危险操作统一视觉的预期影响。
+
+### 2026-06-09 19:16 +08:00 - 调整工作时间方案名称
+
+修改页面或文件：
+
+- `src/mock/routingConfiguration.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求将 Working Time Plans 中的 `连续3次输入有误-中文` 改为 `输入有误-中文`。
+
+修改结果：
+
+- 仅更新该工作时间方案的 `planName` 展示文本。
+- 方案 code 和渠道业务配置里的引用关系不变。
+
+验证：
+
+- `rg "连续3次输入有误-中文|输入有误-中文|3次输入" src` 确认源码 mock 中旧展示名已移除，新展示名存在；文档中保留旧名称仅作为变更记录。
+
+回滚说明：
+
+- 如需恢复旧名称，把 `src/mock/routingConfiguration.ts` 中该方案 `planName` 改回 `连续3次输入有误-中文`。
+
+当前风险点：
+
+- 无。该改动只影响 mock 展示名称，不改变工作时间方案结构或绑定关系。
+
+### 2026-06-09 19:13 +08:00 - Business Config 空媒体配置空态优化
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-09-1913.md`
+- `.codex-backup/current-todo-2026-06-09-1913.md`
+- `.codex-backup/page-state-2026-06-09-1913.md`
+
+修改原因：
+
+- 用户反馈 Channels Business Config 中部分媒体类型没有任何配置字段时，不应再显示一个空的 `Access Configuration` 标题。
+
+修改结果：
+
+- Business Config 先判断当前媒体 tab 是否有实际可配置字段。
+- 如果没有字段，直接显示 `No configuration available for this media type.`。
+- 空媒体配置不再渲染 `Access Configuration` section。
+- 有字段的媒体仍保持现有分区：社媒渠道显示并发/扫描字段，Phone Voice 显示异常工作时间方案，Text 显示文字媒体业务配置。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite chunk size warning。
+- Chrome CDP smoke check：Haloapp Business Config 的 Voice / Video tab 显示空态提示，且不包含 `Access Configuration` 标题。
+
+回滚说明：
+
+- 如需恢复旧展示方式，可移除 `hasAccessConfiguration` 判断并重新无条件渲染 `Access Configuration` section。
+
+当前风险点：
+
+- 目前空态判断依赖当前字段渲染条件；后续如果为 Voice / Video 增加字段，需要同步纳入 `hasAccessConfiguration` 或对应媒体专属分区判断。
+
+### 2026-06-09 18:10 +08:00 - 收口 Routing Config 菜单与 Channels 配置字段
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/routes.tsx`
+- `src/pages/call-management/RoutingConfigurationPage.tsx`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-09-1810.md`
+- `.codex-backup/current-todo-2026-06-09-1810.md`
+- `.codex-backup/page-state-2026-06-09-1810.md`
+
+修改原因：
+
+- 用户要求本地 Routing Config 去除 `Route Elements` 与 `Channel Types` 菜单入口。
+- 用户要求 Channels 编辑弹框不再展示 `Access Parameters` 块。
+- 用户要求 Channels Business Config 中 `Max Concurrent Access` 改名为英文 `Maximum Concurrent Calls`，并且该字段与 `Min Scan Interval Seconds` 只针对社媒渠道有效，Haloapp、Webchat、WhatsApp 不适用。
+
+修改结果：
+
+- `Routing Config` 二级菜单移除 `Route Elements` 与 `Channel Types`，当前默认入口为 `Channels`。
+- `/routing-config`、`/routing-config/route-elements`、`/routing-config/channel-types` 和旧 `/call-management/routing-configuration` 均重定向到 `/routing-config/channels`。
+- Channels 编辑弹框移除 `Access Parameters` 分区，保存时保留原有 `accessConfig` 数据，不再隐藏校验参数模板。
+- Channels Business Config 里社媒渠道显示并校验 `Maximum Concurrent Calls` 与 `Min Scan Interval Seconds`；Haloapp、Webchat、WhatsApp 不展示也不校验这两个字段。
+- 本轮社媒判断按 Channel Type `category === 'social'`，当前覆盖 Instagram、LinkedIn、Facebook、X、Tik Tok、YouTube。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite chunk size warning。
+- Chrome CDP smoke check：`/routing-config/route-elements` 与 `/routing-config/channel-types` 均回到 `/routing-config/channels`。
+- Chrome CDP smoke check：Routing Config 菜单只显示 `VDN|Access Sites|Channels|Business Types|Skill Queues|Site Access Volume|Skill Routing Rules|Working Time Plans`。
+- Chrome CDP smoke check：Channels Edit 弹框不含 `Access Parameters`。
+- Chrome CDP smoke check：Instagram Business Config 显示 `Maximum Concurrent Calls` 与 `Min Scan Interval Seconds`；Haloapp 与 WhatsApp Business Config 不显示这两个字段。
+
+回滚说明：
+
+- 如需恢复 `Route Elements` 或 `Channel Types` 菜单，可在 `BasicLayout` 重新接回二级菜单，并在 `routes.tsx` 恢复对应页面路由。
+- 如需恢复 Channels 编辑弹框中的 Access Parameters，可恢复 `channelTypeParameterSchemas`、`buildChannelAccessConfig`、`updateAccessConfig` 和相关分区渲染/校验。
+- 如需让 Haloapp、Webchat、WhatsApp 也配置并发/扫描字段，可把 Business Config 的 `usesSocialAccessCapacity` 判断改为包含对应渠道类型。
+
+当前风险点：
+
+- `Route Elements` 与 `Channel Types` 源码和 mock 仍保留，仅 UI/route 不暴露；若未来彻底删除，需要检查 Skill Routing Rules 和 route factor 相关依赖。
+- 社媒判定依赖 Channel Type `category`，如果后续新增社媒字典项，需要保证 category 设为 `social`。
 
 ### 2026-06-06 10:46 +08:00 - 整合内部管理菜单分支
 

@@ -1,8 +1,8 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-06 10:46 +08:00
+最后更新：2026-06-10 17:03 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：在 `codex/admin-config-latest` 上整合本地内部管理菜单和已发布客户功能；`main` 继续作为客户安全版本，隐藏 `Call Management` / `Routing Config`，本分支打开两级管理菜单用于继续维护呼叫管理与路由策略配置。
+当前目标：在 `codex/admin-config-latest` 上继续维护本地内部管理菜单；`main` 继续作为客户安全版本，隐藏 `Call Management` / `Routing Config`。本分支当前打开管理菜单，但 Routing Config 已收口为 Channels 默认入口，`Route Elements` 与 `Channel Types` 不再显示在菜单中，直达 URL 回到 Channels。
 
 ## 0. 使用规则
 
@@ -116,9 +116,9 @@ codex-recovered-context.md
 - `src/pages/inbound/LiveChat2Page.tsx`：正式 `Live Chat` 弹屏页面，继续使用 `liveChat2*` store、mock 和组件实现客户列表、Conversation、Message Record 与 Quick Replies；Customer Information 使用 `activeSession.customer.accessDuration` 的静态接入耗时，不再用服务中 `elapsedSeconds` 覆盖；Current 与 History 视图各自选择客户，Current 清空时显示当前无客户空态，不再自动展示 History 客户。
 - `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`：正式 `Live Chat` 客户列表，包含收起/展开、渠道筛选、排序、Current/History 文字 tab、未读、未回复计时、星标和关闭结束会话；客户行使用两行 grid 对齐且不再展示转接图标，收起态保留 SLA 左侧色条并在渠道头像内展示只读星标；Current / History 列表为空时在展开态显示轻量空态提示。
 - `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`：正式 `Live Chat` Conversation tab 内容，包含消息记录、快捷回复、引用、撤回、Transfer、End/Close 和发送消息演示。
-- `src/pages/call-management/RoutingConfigurationPage.tsx`：旧路由配置入口兼容组件，重定向到 `/routing-config/route-elements`。
+- `src/pages/call-management/RoutingConfigurationPage.tsx`：旧路由配置入口兼容组件，重定向到 `/routing-config/channels`。
 - `src/pages/routing-config/RoutingConfigCrudPage.tsx`：Routing Config 普通主数据页复用的本地 CRUD 容器，提供 Search / Add / View / Edit / Delete 弹窗表单。
-- `src/pages/routing-config/RoutingConfigDataPages.tsx`：Routing Config 主数据独立配置页，覆盖 Route Elements、VDN、Access Sites、Channel Type Management、Channels、Business Types、Skill Queues、Site Access Volume、Skill Routing Rules、Working Time Plans；Access Accounts 与 Media Service Rule Plans 直达路由已回到 Channels；VDN、Access Sites、Skill Queues 当前 UI 不展示 Status；Skill Queues 未选择工作时间方案时展示 `Default 24/7`。
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`：Routing Config 主数据独立配置页，覆盖 VDN、Access Sites、Channels、Business Types、Skill Queues、Site Access Volume、Skill Routing Rules、Working Time Plans；Route Elements 与 Channel Type Management 源码保留但不再作为菜单入口或直达页面，旧 URL 回到 Channels；Access Accounts 与 Media Service Rule Plans 直达路由也已回到 Channels；VDN、Access Sites、Skill Queues 当前 UI 不展示 Status；Skill Queues 未选择工作时间方案时展示 `Default 24/7`。
 - `src/pages/routing-config/SkillRoutingRulesPage.tsx`：独立技能路由规则页，支持按启用路由要素多选查询、规则列表要素拆列、批量新增拆分预览、重复组合勾选覆盖、规则查看/编辑/删除。
 - `src/pages/routing-config/RoutingConfigStatusBadge.tsx`：Routing Config 状态 badge 组件，避免页面组件导出非组件函数触发 Fast Refresh lint。
 - `src/pages/call-management/TextChannelSettingsPage.tsx`：数据呼叫管理下的文字渠道配置页，包含 Service Rules、Customer Timeout & Messages、Channel Queue Alerts 三组配置。
@@ -141,7 +141,7 @@ codex-recovered-context.md
 - `src/store/routingConfigStore.ts`：Routing Config 前端 demo 本地状态 store，刷新后恢复 mock；普通 CRUD、渠道媒体规则方案、Channel + Media 规则绑定和技能路由规则共用。
 - `src/types/textChannelSettings.ts`：文字渠道配置页专用类型，渠道 code 为 `haloapp | webchat | whatsapp`，避免与现有 `AccessChannel` 耦合。
 - `src/utils/duration.ts`：共享持续时间解析、格式化、elapsed 计算和 Live Chat SLA 阈值工具。
-- `src/styles/index.less`：全局样式与页面样式主文件，包含 workspace tab、Live Chat 客户列表、Conversation 和 SLA 视觉状态。
+- `src/styles/index.less`：全局样式与页面样式主文件，包含 workspace tab、Live Chat 客户列表、Conversation、SLA 视觉状态；全局 `BaseButton` danger 样式已增强为红色填充按钮，hover/focus/active 会明显加深并显示焦点阴影，用于 Log Out / Delete 等危险确认操作。
 - `src/styles/tokens.less`：全局 CSS token；Live Chat SLA warning / breach 使用独立 token，当前为 `#f59e0b` / `#f04438`。
 - `.github/workflows/ci.yml`：GitHub Actions 最小 CI，PR 到 `main` 或 push 到 `main` / `codex/**` 时运行 `npm ci`、`npm run lint`、`npm run build`。
 
@@ -151,17 +151,22 @@ codex-recovered-context.md
 
 - `/` -> `BasicLayout` -> `AgentWorkspace`
 - `/design-system` -> `BasicLayout` -> `DesignSystem`
-- `/call-management` -> `BasicLayout` -> 重定向到 `/`
-- `/call-management/*` -> `BasicLayout` -> 重定向到 `/`
-- `/routing-config` -> `BasicLayout` -> 重定向到 `/`
-- `/routing-config/*` -> `BasicLayout` -> 重定向到 `/`
+- `/call-management/routing-configuration` -> `BasicLayout` -> 重定向到 `/routing-config/channels`
+- `/call-management/global-control-configuration` -> `BasicLayout` -> `GlobalControlConfigurationPage`
+- `/call-management/busy-reasons` -> `BasicLayout` -> `BusyReasonManagementPage`
+- `/call-management/text-channel-settings` -> `BasicLayout` -> `TextChannelSettingsPage`
+- `/routing-config` -> `BasicLayout` -> 重定向到 `/routing-config/channels`
+- `/routing-config/route-elements` -> `BasicLayout` -> 重定向到 `/routing-config/channels`
+- `/routing-config/channel-types` -> `BasicLayout` -> 重定向到 `/routing-config/channels`
+- `/routing-config/channels` -> `BasicLayout` -> `ChannelsPage`
+- `/routing-config/vdn`、`/routing-config/sites`、`/routing-config/business-types`、`/routing-config/skill-queues`、`/routing-config/site-access-volume`、`/routing-config/skill-routing-rules`、`/routing-config/working-time-plans` -> 对应内部管理页面
 - `*` -> 重定向到 `/`
 
 页面关系：
 
 - `BasicLayout` 是所有页面的壳，包含顶部 Header、坐席状态、话务工具条、侧栏和内容区。
 - `AgentWorkspace` 默认显示 Home tab。
-- 当前内部管理分支显示 `Call Management` 和 `Routing Config` 两个一级菜单，直达 `/call-management/*` 与 `/routing-config/*` 可进入对应本地管理页面。
+- 当前内部管理分支显示 `Call Management` 和 `Routing Config` 两个一级菜单；Routing Config 当前可见二级菜单为 VDN、Access Sites、Channels、Business Types、Skill Queues、Site Access Volume、Skill Routing Rules、Working Time Plans。
 - 客户安全发布线仍以 `main` 为准，`main` 继续隐藏 `Call Management` / `Routing Config` 菜单和直达 URL；不要把本分支直接发布给客户。
 - 点击左侧 `Channel Simulation > BankApp` 会打开可关闭的 `BankApp Demo` tab，用于演示客户在 BankApp 内选择文字、语音或视频服务后进入 AICC；BankApp Demo tab 在切到坐席工作台时保持挂载，返回后不会重置当前步骤。
 - 点击左侧 `Channel Simulation > WhatsApp` 会打开可关闭的 `WhatsApp Demo` tab；当前使用用户提供的脱敏 WhatsApp 原图，并在第三步后切到 Live Chat 坐席工作台查看 WhatsApp 接入会话。
@@ -190,7 +195,7 @@ codex-recovered-context.md
 - 顶部蓝色渐变 BANK 1 Header，恢复旧版主工作台视觉。
 - 可展开/收起左侧系统菜单，默认收起，`collapsedWidth` 为 `48px`，展开宽度使用 `--aicc-layout-sider-width`。
 - 左侧菜单支持 2 层级：展开态顶部显示折叠按钮与菜单搜索框，点击一级菜单在下方展开二级菜单；收起态仅显示一级图标，鼠标悬浮在一级图标时在右侧显示二级菜单浮层，鼠标移出浮层或点击菜单后浮层关闭。
-- 当前侧栏菜单使用英文企业呼叫中心文案：Channel Simulation（PSTN、BankApp、WhatsApp）、Call Management、Routing Config、Agent Center（Agent Profile、Service History）、Operations（Alert KPI Management、Floor Management）、Reports；本分支用于内部管理配置，不作为客户安全发布线。
+- 当前侧栏菜单使用英文企业呼叫中心文案：Channel Simulation（PSTN、BankApp、WhatsApp）、Call Management、Routing Config、Agent Center（Agent Profile、Service History）、Operations（Alert KPI Management、Floor Management）、Reports；Routing Config 不再展示 Route Elements / Channel Types；本分支用于内部管理配置，不作为客户安全发布线。
 - Agent Toolbar：Answer、Hold、Mute、Transfer、Hang Up、More；电话/视频呼入时可在动作按钮最左侧展示 incoming identification；More 菜单点击打开，包含 Outbound Call 与 Settings。
 - Agent Profile Area：Signed out 时菜单只显示 `Sign In`；Signed in 后菜单显示单个 `AUX` 入口与 `Sign Out`。点击 `AUX` 会打开 `Select AUX Reason` 弹框，仅列出启用示忙原因，默认选中配置默认项，点击 `Confirm` 后切换为 `AUX - {reasonName}`。头像右下状态点使用 `effectiveAgentPresence`，由坐席状态和活跃客户互动共同决定。
 - Notifications 和 Internal Chat 入口。
@@ -2553,6 +2558,13 @@ P2：
 - 本分支打开 `Call Management` 与 `Routing Config` 左侧菜单和直达路由；`main` 仍是客户安全发布线，继续隐藏这两个管理菜单。
 - Busy Reason 采用同一份 `callManagementStore`：右上角坐席 AUX 弹框只读启用原因，`Call Management > Busy Reasons` 内部页面可编辑原因、默认值和状态。
 - Routing Config 当前口径：VDN、Access Sites、Skill Queues UI 不展示 Status；Skill Queues 默认工作时间展示使用海外标准 `Default 24/7`；Working Time Plans 不新增真实默认 24/7 记录。
+- 2026-06-09 18:10 后，Routing Config 菜单去掉 Route Elements 与 Channel Types，旧 `/routing-config/route-elements`、`/routing-config/channel-types` 和 `/call-management/routing-configuration` 均回到 `/routing-config/channels`。
+- Channels 编辑弹框只保留 Basic Info，不再展示 Access Parameters；原 `accessConfig` 数据仍保留在 store/mock 中以免影响后续恢复。
+- Channels Business Config 中 `Maximum Concurrent Calls` 与 `Min Scan Interval Seconds` 只针对社媒渠道类型生效，当前按 Channel Type `category === 'social'` 判断，即 Instagram、LinkedIn、Facebook、X、Tik Tok、YouTube；Haloapp、Webchat、WhatsApp 不展示也不校验这两个字段。
+- Channels Business Config 中如果某个媒体 tab 没有任何可配置字段，则只显示 `No configuration available for this media type.` 空态提示，不再显示空的 `Access Configuration` 分区标题。
+- Working Time Plans mock 中原方案名称 `连续3次输入有误-中文` 已改为 `输入有误-中文`；方案 code 和引用关系不变。
+- 2026-06-10 11:12 后，`Call Management > Global Control Configuration` 新增 `Routing Fallback` 分块和必填 `Default Skill Queue` 字段；下拉只展示 `Routing Config > Skill Queues` 中 `Active` 的技能队列，默认值为 `SQ_GENERAL_ID / General Service - Indonesian`。该字段用于需求口径中的“无技能路由规则命中时进入全局默认技能队列”，当前 demo 仅补齐配置项，不实现真实后端路由执行引擎。
+- 2026-06-10 17:03 后，`Routing Config > Skill Queues` 页面不再展示 `Supports Video` 配置，也不再展示 `Queue Configuration` 分区；列表同步去掉 Max Queue Customers、Queue Timeout、Supports Video 列。底层 `supportsVideo` 和 queue 相关字段暂保留并在保存时透传，避免影响现有 mock、默认技能队列和后续恢复。
 - 后续如果要发布给客户，必须从 `main` 或客户安全基线创建新分支，不能直接发布 `codex/admin-config-latest`。
 
 ## 14. 关键 prompt 摘要

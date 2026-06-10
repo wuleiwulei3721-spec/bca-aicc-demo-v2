@@ -1,6 +1,17 @@
 ﻿# Key Prompts
 
-最后更新：2026-06-06 10:46 +08:00
+最后更新：2026-06-09 19:13 +08:00
+
+## 2026-06-09 Routing Config 菜单收口与 Channels Business Config 口径
+
+- `codex/admin-config-latest` 上 Routing Config 默认入口为 `Channels`。
+- `Route Elements` 与 `Channel Types` 不再显示在 Routing Config 二级菜单中；旧 `/routing-config/route-elements` 与 `/routing-config/channel-types` 直达 URL 必须回到 `/routing-config/channels`。
+- 旧 `/call-management/routing-configuration` 兼容入口也回到 `/routing-config/channels`。
+- Channels 编辑弹框不展示 `Access Parameters` 分区；底层 `accessConfig` 数据暂保留，避免影响后续恢复或 mock 兼容。
+- Channels Business Config 中原 `Max Concurrent Access` 页面文案改为 `Maximum Concurrent Calls`。
+- `Maximum Concurrent Calls` 与 `Min Scan Interval Seconds` 只针对社媒渠道有效；当前社媒渠道按 Channel Type `category === 'social'` 判断，覆盖 Instagram、LinkedIn、Facebook、X、Tik Tok、YouTube。
+- Haloapp、Webchat、WhatsApp 的 Business Config 不展示也不校验 `Maximum Concurrent Calls` / `Min Scan Interval Seconds`。
+- Channels Business Config 中，如果某个媒体 tab 当前没有任何实际配置字段，只显示 `No configuration available for this media type.`，不要显示空的 `Access Configuration` 标题。
 
 ## 2026-06-06 内部管理分支整合口径
 
@@ -738,3 +749,19 @@
 - Current 视图只从当前服务列表选客户；History 视图只从历史列表选客户。
 - Current 清空后右侧必须显示 `No current Live Chat customers` 空态，不自动 fallback 到 History 客户，也不继续渲染旧 Customer Information / Conversation / Assistant 客户上下文。
 - History 需要坐席手动切换查看；切到 History 后仍可选择并查看已关闭客户。
+
+## 2026-06-10 路由默认技能队列口径
+
+- 路由策略无技能路由规则命中时，进入 `Call Management > Global Control Configuration` 中配置的全局默认技能队列。
+- 默认技能队列字段放在全局控制配置，不在 Skill Queue 增加唯一 `Is Default` 字段。
+- demo 默认值为 `SQ_GENERAL_ID / General Service - Indonesian`。
+- 默认技能队列下拉只展示 `Routing Config > Skill Queues` 中 `Active` 的技能队列。
+- 运行时需求口径：默认队列不存在、禁用或不支持当前媒体类型时，路由失败。
+- 当前前端 demo 仅补齐配置项，不实现真实后端路由执行引擎。
+
+## 2026-06-10 Skill Queues 页面精简
+
+- `Routing Config > Skill Queues` 页面不再展示 `Supports Video` 配置。
+- `Routing Config > Skill Queues` 页面不再展示 `Queue Configuration` 分区。
+- 列表同步去掉 `Max Queue Customers`、`Queue Timeout`、`Supports Video` 列。
+- 底层 `supportsVideo` 和 queue 相关字段暂保留并透传，避免破坏现有 mock、默认队列和后续恢复。

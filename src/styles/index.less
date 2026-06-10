@@ -4071,6 +4071,30 @@ a {
   background: #f7fbff;
 }
 
+.aicc-button--danger.ant-btn-dangerous {
+  border-color: var(--aicc-danger);
+  background: var(--aicc-danger);
+  color: #fff;
+  box-shadow: 0 8px 16px rgba(214, 69, 69, 0.22);
+}
+
+.aicc-button--danger.ant-btn-dangerous:not(:disabled):hover,
+.aicc-button--danger.ant-btn-dangerous:not(:disabled):focus-visible {
+  border-color: #b83232;
+  background: #b83232;
+  color: #fff;
+  box-shadow:
+    0 0 0 2px rgba(214, 69, 69, 0.18),
+    0 10px 20px rgba(184, 50, 50, 0.28);
+}
+
+.aicc-button--danger.ant-btn-dangerous:not(:disabled):active {
+  border-color: #982626;
+  background: #982626;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(152, 38, 38, 0.26);
+}
+
 .aicc-button--ghost.ant-btn-default {
   border-color: transparent;
   background: transparent;

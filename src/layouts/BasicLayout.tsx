@@ -68,10 +68,8 @@ const initialCallTiming: CallTiming = {
 }
 
 const routingConfigRoutesByMenuKey: Record<string, string> = {
-  'routing-route-elements': '/routing-config/route-elements',
   'routing-vdn': '/routing-config/vdn',
   'routing-sites': '/routing-config/sites',
-  'routing-channel-types': '/routing-config/channel-types',
   'routing-channels': '/routing-config/channels',
   'routing-business-types': '/routing-config/business-types',
   'routing-skill-queues': '/routing-config/skill-queues',
@@ -162,20 +160,12 @@ const sideMenuItems: SideMenuItem[] = [
     label: 'Routing Config',
     children: [
       {
-        key: 'routing-route-elements',
-        label: 'Route Elements',
-      },
-      {
         key: 'routing-vdn',
         label: 'VDN',
       },
       {
         key: 'routing-sites',
         label: 'Access Sites',
-      },
-      {
-        key: 'routing-channel-types',
-        label: 'Channel Types',
       },
       {
         key: 'routing-channels',
@@ -327,7 +317,7 @@ export function BasicLayout() {
       : 'Agent is not Ready. Please switch to Ready before accepting another voice or video interaction.'
   const routeSelectedMenuKey =
     location.pathname === '/call-management/routing-configuration'
-      ? 'routing-route-elements'
+      ? 'routing-channels'
       : location.pathname === '/call-management/global-control-configuration'
         ? 'call-global-control-configuration'
         : location.pathname === '/call-management/busy-reasons'

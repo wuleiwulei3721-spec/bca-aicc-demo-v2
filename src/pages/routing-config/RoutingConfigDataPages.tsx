@@ -15,7 +15,6 @@ import type {
   AccessSite,
   BusinessType,
   Channel,
-  ChannelAccessConfig,
   ChannelAccount,
   ChannelBusinessConfig,
   ChannelMediaBusinessConfig,
@@ -53,169 +52,6 @@ const statusFilterOptions: RoutingConfigSelectOption[] = [
   { label: 'Disabled', value: 'Disabled' },
 ]
 
-const videoSupportOptions: RoutingConfigSelectOption[] = [
-  { label: 'No', value: 'false' },
-  { label: 'Yes', value: 'true' },
-]
-
-interface ChannelAccessParameterSchemaField {
-  key: string
-  label: string
-  required?: boolean
-}
-
-interface ChannelTypeParameterSchema {
-  fields: ChannelAccessParameterSchemaField[]
-}
-
-const channelTypeParameterSchemas: Record<string, ChannelTypeParameterSchema> = {
-  PHONE: {
-    fields: [],
-  },
-  HALOAPP: {
-    fields: [
-      { key: 'tenantId', label: 'Tenant ID', required: true },
-      { key: 'appId', label: 'App ID', required: true },
-      { key: 'webhookUrl', label: 'Webhook URL', required: true },
-      {
-        key: 'signatureSecretRef',
-        label: 'Signature Secret Ref',
-        required: true,
-      },
-    ],
-  },
-  WEBCHAT: {
-    fields: [
-      { key: 'widgetId', label: 'Widget ID', required: true },
-      { key: 'allowedDomain', label: 'Allowed Domain', required: true },
-      { key: 'webhookUrl', label: 'Webhook URL', required: true },
-      {
-        key: 'signatureSecretRef',
-        label: 'Signature Secret Ref',
-        required: true,
-      },
-    ],
-  },
-  WHATSAPP: {
-    fields: [
-      { key: 'wabaId', label: 'WABA ID', required: true },
-      { key: 'metaAppId', label: 'Meta App ID', required: true },
-      {
-        key: 'webhookVerifyTokenRef',
-        label: 'Webhook Verify Token Ref',
-        required: true,
-      },
-      { key: 'accessTokenRef', label: 'Access Token Ref', required: true },
-    ],
-  },
-  EMAIL: {
-    fields: [
-      { key: 'protocol', label: 'Protocol', required: true },
-      { key: 'imapHost', label: 'IMAP Host', required: true },
-      { key: 'imapPort', label: 'IMAP Port', required: true },
-      { key: 'imapSecurity', label: 'IMAP Security', required: true },
-      { key: 'smtpHost', label: 'SMTP Host', required: true },
-      { key: 'smtpPort', label: 'SMTP Port', required: true },
-      { key: 'smtpSecurity', label: 'SMTP Security', required: true },
-      {
-        key: 'pollingIntervalSeconds',
-        label: 'Polling Interval',
-        required: true,
-      },
-      { key: 'authSecretRef', label: 'Auth Secret Ref', required: true },
-    ],
-  },
-  INSTAGRAM: {
-    fields: [
-      { key: 'metaAppId', label: 'Meta App ID', required: true },
-      {
-        key: 'webhookVerifyTokenRef',
-        label: 'Webhook Verify Token Ref',
-        required: true,
-      },
-      { key: 'accessTokenRef', label: 'Access Token Ref', required: true },
-    ],
-  },
-  LINKEDIN: {
-    fields: [
-      { key: 'organizationId', label: 'Organization ID', required: true },
-      { key: 'developerAppId', label: 'Developer App ID', required: true },
-      { key: 'oauthClientId', label: 'OAuth Client ID', required: true },
-      { key: 'oauthSecretRef', label: 'OAuth Secret Ref', required: true },
-    ],
-  },
-  FACEBOOK: {
-    fields: [
-      { key: 'metaAppId', label: 'Meta App ID', required: true },
-      {
-        key: 'webhookVerifyTokenRef',
-        label: 'Webhook Verify Token Ref',
-        required: true,
-      },
-      {
-        key: 'pageAccessTokenRef',
-        label: 'Page Access Token Ref',
-        required: true,
-      },
-    ],
-  },
-  X: {
-    fields: [
-      { key: 'appId', label: 'App ID', required: true },
-      {
-        key: 'webhookEnvironment',
-        label: 'Webhook Environment',
-        required: true,
-      },
-      { key: 'oauthClientId', label: 'OAuth Client ID', required: true },
-      { key: 'oauthSecretRef', label: 'OAuth Secret Ref', required: true },
-    ],
-  },
-  TIKTOK: {
-    fields: [
-      { key: 'appId', label: 'App ID', required: true },
-      { key: 'clientKey', label: 'Client Key', required: true },
-      { key: 'webhookUrl', label: 'Webhook URL', required: true },
-      { key: 'oauthSecretRef', label: 'OAuth Secret Ref', required: true },
-    ],
-  },
-  YOUTUBE: {
-    fields: [
-      { key: 'googleProjectId', label: 'Google Project ID', required: true },
-      { key: 'oauthClientId', label: 'OAuth Client ID', required: true },
-      { key: 'oauthSecretRef', label: 'OAuth Secret Ref', required: true },
-    ],
-  },
-  APPSTORE: {
-    fields: [
-      { key: 'issuerId', label: 'Issuer ID', required: true },
-      { key: 'keyId', label: 'Key ID', required: true },
-      { key: 'appId', label: 'App ID', required: true },
-      {
-        key: 'privateKeySecretRef',
-        label: 'Private Key Secret Ref',
-        required: true,
-      },
-    ],
-  },
-  PLAYSTORE: {
-    fields: [
-      { key: 'packageName', label: 'Package Name', required: true },
-      { key: 'googleProjectId', label: 'Google Project ID', required: true },
-      {
-        key: 'serviceAccountEmail',
-        label: 'Service Account Email',
-        required: true,
-      },
-      {
-        key: 'serviceAccountSecretRef',
-        label: 'Service Account Secret Ref',
-        required: true,
-      },
-    ],
-  },
-}
-
 function stringValue(value: unknown) {
   return typeof value === 'string' ? value : ''
 }
@@ -234,42 +70,6 @@ function statusValue(value: unknown): RoutingConfigStatus {
 
 function fieldRequired(draft: RoutingConfigDraft, field: string, label: string) {
   return stringValue(draft[field]).trim() ? [] : [`${label} is required.`]
-}
-
-function getChannelTypeParameterSchema(channelTypeCode: string) {
-  return (
-    channelTypeParameterSchemas[channelTypeCode] ?? {
-      fields: [],
-    }
-  )
-}
-
-function buildChannelAccessConfig(
-  draft: ChannelAccessConfig,
-  channelTypeCode: string,
-): ChannelAccessConfig {
-  return getChannelTypeParameterSchema(channelTypeCode).fields.reduce<ChannelAccessConfig>(
-    (config, field) => ({
-      ...config,
-      [field.key]: stringValue(draft[field.key]).trim(),
-    }),
-    {},
-  )
-}
-
-function validateNumberRange(
-  value: unknown,
-  label: string,
-  min: number,
-  max: number,
-) {
-  const nextValue = numberValue(value)
-
-  if (nextValue < min || nextValue > max) {
-    return [`${label} must be between ${min} and ${max}.`]
-  }
-
-  return []
 }
 
 function validateCode(
@@ -1241,15 +1041,6 @@ export function ChannelsPage() {
       setBusinessMediaCode(mediaTypes[0] ?? 'TEXT')
     }
   }
-  const updateAccessConfig = (key: string, value: string) => {
-    setDraft((currentDraft) => ({
-      ...currentDraft,
-      accessConfig: {
-        ...currentDraft.accessConfig,
-        [key]: value,
-      },
-    }))
-  }
   const updateBusinessConfig = <Key extends keyof ChannelMediaBusinessConfig>(
     mediaCode: MediaTypeCode,
     key: Key,
@@ -1293,30 +1084,30 @@ export function ChannelsPage() {
         errors.push('Media Type must be supported by the Channel Type.')
       }
 
-      getChannelTypeParameterSchema(draft.channelTypeCode).fields.forEach(
-        (field) => {
-          if (field.required && !draft.accessConfig[field.key]?.trim()) {
-            errors.push(`${field.label} is required.`)
-          }
-        },
-      )
     }
 
     if (modalMode === 'business') {
+      const channelType = channelTypeByCode.get(draft.channelTypeCode)
+      const usesSocialAccessCapacity = channelType?.category === 'social'
+
       draft.mediaTypes.forEach((mediaCode) => {
         const config =
           draft.businessConfig[mediaCode] ??
           createDefaultChannelBusinessConfig(mediaCode)
         const mediaLabel = mediaLabelByValue.get(mediaCode) ?? mediaCode
 
-        if (config.maxConcurrentAccess <= 0) {
-          errors.push(`${mediaLabel} Max Concurrent Access must be greater than 0.`)
-        }
+        if (usesSocialAccessCapacity) {
+          if (config.maxConcurrentAccess <= 0) {
+            errors.push(
+              `${mediaLabel} Maximum Concurrent Calls must be greater than 0.`,
+            )
+          }
 
-        if (config.minScanIntervalSeconds <= 0) {
-          errors.push(
-            `${mediaLabel} Min Scan Interval Seconds must be greater than 0.`,
-          )
+          if (config.minScanIntervalSeconds <= 0) {
+            errors.push(
+              `${mediaLabel} Min Scan Interval Seconds must be greater than 0.`,
+            )
+          }
         }
 
         if (mediaCode === 'TEXT') {
@@ -1448,10 +1239,7 @@ export function ChannelsPage() {
       ...draft,
       channelId: draft.channelId.trim(),
       channelName: draft.channelName.trim(),
-      accessConfig: buildChannelAccessConfig(
-        draft.accessConfig,
-        draft.channelTypeCode,
-      ),
+      accessConfig: { ...draft.accessConfig },
       businessConfig: normalizeChannelBusinessConfig(
         draft.mediaTypes,
         draft.businessConfig,
@@ -1790,35 +1578,55 @@ export function ChannelsPage() {
     const isText = mediaCode === 'TEXT'
     const isPhoneVoice =
       draft.channelTypeCode === 'PHONE' && mediaCode === 'VOICE'
+    const channelType = channelTypeByCode.get(draft.channelTypeCode)
+    const usesSocialAccessCapacity = channelType?.category === 'social'
+    const hasAccessConfiguration =
+      usesSocialAccessCapacity || isPhoneVoice || isText
+
+    if (!hasAccessConfiguration && !isText) {
+      return (
+        <div className="routing-config-channel-business">
+          <Alert
+            showIcon
+            message="No configuration available for this media type."
+            type="info"
+          />
+        </div>
+      )
+    }
 
     return (
       <div className="routing-config-channel-business">
-        <section className="routing-config-media-rule-modal__section">
-          <header>
-            <strong>Access Configuration</strong>
-          </header>
-          <div className="routing-config-crud-modal__section-grid">
-            {renderBusinessNumberField(
-              mediaCode,
-              'maxConcurrentAccess',
-              'Max Concurrent Access',
-            )}
-            {renderBusinessNumberField(
-              mediaCode,
-              'minScanIntervalSeconds',
-              'Min Scan Interval Seconds',
-            )}
-            {isPhoneVoice && renderExceptionWorkTimePlanField(mediaCode)}
-            {isText &&
-              renderBusinessMessageField(
-                mediaCode,
-                'accessSuccessWelcomeMessage',
-                'Access Success Welcome Message',
-                2,
-                true,
-              )}
-          </div>
-        </section>
+        {hasAccessConfiguration && (
+          <section className="routing-config-media-rule-modal__section">
+            <header>
+              <strong>Access Configuration</strong>
+            </header>
+            <div className="routing-config-crud-modal__section-grid">
+              {usesSocialAccessCapacity &&
+                renderBusinessNumberField(
+                  mediaCode,
+                  'maxConcurrentAccess',
+                  'Maximum Concurrent Calls',
+                )}
+              {usesSocialAccessCapacity &&
+                renderBusinessNumberField(
+                  mediaCode,
+                  'minScanIntervalSeconds',
+                  'Min Scan Interval Seconds',
+                )}
+              {isPhoneVoice && renderExceptionWorkTimePlanField(mediaCode)}
+              {isText &&
+                renderBusinessMessageField(
+                  mediaCode,
+                  'accessSuccessWelcomeMessage',
+                  'Access Success Welcome Message',
+                  2,
+                  true,
+                )}
+            </div>
+          </section>
+        )}
         {isText && (
           <>
             <section className="routing-config-media-rule-modal__section">
@@ -2264,41 +2072,6 @@ export function ChannelsPage() {
                     </span>
                   </label>
                 </div>
-              </section>
-              <section className="routing-config-media-rule-modal__section">
-                <header>
-                  <strong>Access Parameters</strong>
-                </header>
-                {getChannelTypeParameterSchema(draft.channelTypeCode).fields
-                  .length === 0 ? (
-                  <Alert
-                    showIcon
-                    message="This channel type has no access parameters."
-                    type="info"
-                  />
-                ) : (
-                  <div className="routing-config-crud-modal__section-grid">
-                    {getChannelTypeParameterSchema(
-                      draft.channelTypeCode,
-                    ).fields.map((field) => (
-                      <label
-                        className="routing-config-crud-modal__field"
-                        key={field.key}
-                      >
-                        <span>
-                          {field.label}
-                          {field.required && <strong>*</strong>}
-                        </span>
-                        <Input
-                          value={draft.accessConfig[field.key] ?? ''}
-                          onChange={(event) =>
-                            updateAccessConfig(field.key, event.target.value)
-                          }
-                        />
-                      </label>
-                    ))}
-                  </div>
-                )}
               </section>
             </>
           )}
@@ -5771,20 +5544,6 @@ export function WorkingTimePlansPage() {
   )
 }
 
-type SkillQueueMessageField =
-  | 'nonWorkingTimeMessage'
-  | 'queueTimeoutMessage'
-  | 'queueWaitingMessage'
-
-const skillQueueVariablesByMessageField: Record<
-  SkillQueueMessageField,
-  string[]
-> = {
-  nonWorkingTimeMessage: ['{workTime}'],
-  queueTimeoutMessage: ['{customerName}'],
-  queueWaitingMessage: ['{estimatedWaitMinutes}'],
-}
-
 function formatWorkingTimeWeekdays(weekdays: string[]) {
   const weekdayLabelMap = new Map(
     workingTimeWeekdayOptions.map((option) => [option.value, option.label]),
@@ -6000,12 +5759,6 @@ export function SkillQueuesPage() {
     useRoutingLookups()
   const [previewWorkingTimePlan, setPreviewWorkingTimePlan] =
     useState<WorkingTimePlan | null>(null)
-  const messageSelectionsRef = useRef<
-    Record<string, { end: number; start: number }>
-  >({})
-  const messageTextAreaRefs = useRef<Record<string, HTMLTextAreaElement | null>>(
-    {},
-  )
   const vdnLabelMap = useMemo(
     () => new Map(vdnOptions.map((option) => [option.value, option.label])),
     [vdnOptions],
@@ -6018,24 +5771,6 @@ export function SkillQueuesPage() {
     () => new Map(workingTimePlans.map((plan) => [plan.planCode, plan])),
     [workingTimePlans],
   )
-  const rememberMessageSelection = (
-    field: SkillQueueMessageField,
-    element: HTMLTextAreaElement,
-  ) => {
-    messageTextAreaRefs.current[field] = element
-    messageSelectionsRef.current[field] = {
-      end: element.selectionEnd,
-      start: element.selectionStart,
-    }
-  }
-  const queueMessageSelectionRemember = (
-    field: SkillQueueMessageField,
-    element: HTMLTextAreaElement,
-  ) => {
-    window.requestAnimationFrame(() => {
-      rememberMessageSelection(field, element)
-    })
-  }
 
   return (
     <>
@@ -6061,24 +5796,6 @@ export function SkillQueuesPage() {
           width: 150,
           render: (value: string) =>
             workTimeLabelMap.get(value) ?? 'Default 24/7',
-        },
-        {
-          dataIndex: 'maxQueueCustomers',
-          title: 'Max Queue Customers',
-          width: 150,
-          render: (value: number) => `${value} customers`,
-        },
-        {
-          dataIndex: 'queueTimeoutMinutes',
-          title: 'Queue Timeout',
-          width: 130,
-          render: (value: number) => `${value} min`,
-        },
-        {
-          dataIndex: 'supportsVideo',
-          title: 'Supports Video',
-          width: 112,
-          render: (value: boolean) => (value ? 'Yes' : 'No'),
         },
         { dataIndex: 'assignedAgentCount', title: 'Agents', width: 72 },
       ]}
@@ -6304,116 +6021,6 @@ export function SkillQueuesPage() {
             </label>
           )
         }
-        const insertMessageVariable = (
-          field: SkillQueueMessageField,
-          variable: string,
-        ) => {
-          const currentValue = stringValue(draft[field])
-          const messageTextArea = messageTextAreaRefs.current[field]
-          const storedSelection = messageSelectionsRef.current[field]
-          const shouldReadLiveSelection =
-            messageTextArea && document.activeElement === messageTextArea
-          const activeSelection =
-            shouldReadLiveSelection &&
-            Number.isFinite(messageTextArea.selectionStart) &&
-            Number.isFinite(messageTextArea.selectionEnd)
-              ? {
-                  end: messageTextArea.selectionEnd,
-                  start: messageTextArea.selectionStart,
-                }
-              : storedSelection
-          const start = activeSelection
-            ? Math.min(activeSelection.start, currentValue.length)
-            : currentValue.length
-          const end = activeSelection
-            ? Math.min(activeSelection.end, currentValue.length)
-            : currentValue.length
-          const nextValue = `${currentValue.slice(0, start)}${variable}${currentValue.slice(end)}`
-          const nextCursorPosition = start + variable.length
-
-          setDraftValue(field, nextValue)
-          messageSelectionsRef.current[field] = {
-            end: nextCursorPosition,
-            start: nextCursorPosition,
-          }
-          window.requestAnimationFrame(() => {
-            const currentMessageTextArea = messageTextAreaRefs.current[field]
-            currentMessageTextArea?.focus()
-            currentMessageTextArea?.setSelectionRange(
-              nextCursorPosition,
-              nextCursorPosition,
-            )
-          })
-        }
-        const renderMessageField = (
-          field: SkillQueueMessageField,
-          label: string,
-          rows = 3,
-        ) => {
-          const variableOptions = skillQueueVariablesByMessageField[field]
-
-          return (
-            <label className="routing-config-crud-modal__field routing-config-media-rule-modal__message-field">
-              <span className="routing-config-media-rule-modal__field-heading">
-                <span>
-                  {label}
-                  {renderRequiredMark()}
-                </span>
-                {!isReadOnly && variableOptions.length > 0 && (
-                  <select
-                    aria-label={`${label} insert variable`}
-                    className="routing-config-media-rule-modal__variable-select"
-                    value=""
-                    onChange={(event) => {
-                      if (event.target.value) {
-                        insertMessageVariable(field, event.target.value)
-                      }
-                    }}
-                  >
-                    <option value="">Insert Variable</option>
-                    {variableOptions.map((variable) => (
-                      <option key={variable} value={variable}>
-                        {variable}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </span>
-              {isReadOnly ? (
-                <em>{stringValue(draft[field])}</em>
-              ) : (
-                <Input.TextArea
-                  rows={rows}
-                  value={stringValue(draft[field])}
-                  onBlur={(event) =>
-                    rememberMessageSelection(field, event.currentTarget)
-                  }
-                  onChange={(event) =>
-                    setDraftValue(field, event.target.value)
-                  }
-                  onClick={(event) =>
-                    rememberMessageSelection(field, event.currentTarget)
-                  }
-                  onFocus={(event) =>
-                    rememberMessageSelection(field, event.currentTarget)
-                  }
-                  onKeyDown={(event) =>
-                    queueMessageSelectionRemember(field, event.currentTarget)
-                  }
-                  onKeyUp={(event) =>
-                    rememberMessageSelection(field, event.currentTarget)
-                  }
-                  onMouseUp={(event) =>
-                    queueMessageSelectionRemember(field, event.currentTarget)
-                  }
-                  onSelect={(event) =>
-                    rememberMessageSelection(field, event.currentTarget)
-                  }
-                />
-              )}
-            </label>
-          )
-        }
         return (
           <div className="routing-config-skill-queue-modal">
             <section className="routing-config-media-rule-modal__section">
@@ -6433,62 +6040,9 @@ export function SkillQueuesPage() {
                 })}
                 {renderSelectField('vdnCode', 'VDN', vdnOptions, true)}
                 {renderWorkTimePlanField()}
-                {renderSelectField(
-                  'supportsVideo',
-                  'Supports Video',
-                  videoSupportOptions,
-                  true,
-                )}
                 {renderNumberField('assignedAgentCount', 'Assigned Agents', 'agents', {
                   readOnly: true,
                 })}
-              </div>
-            </section>
-            <section className="routing-config-media-rule-modal__section">
-              <header>
-                <strong>Queue Configuration</strong>
-              </header>
-              <div className="routing-config-media-rule-modal__subsections">
-                <div className="routing-config-media-rule-modal__subsection">
-                  <div className="routing-config-media-rule-modal__full-row">
-                    {renderMessageField(
-                      'nonWorkingTimeMessage',
-                      'Non-working Time Message',
-                    )}
-                  </div>
-                  <div className="routing-config-media-rule-modal__paired-row">
-                    {renderNumberField(
-                      'maxQueueCustomers',
-                      'Max Queue Customers',
-                      'customers',
-                      {
-                        max: 60000,
-                        min: 1,
-                        required: true,
-                      },
-                    )}
-                    {renderMessageField(
-                      'queueWaitingMessage',
-                      'Queue Waiting Message',
-                    )}
-                  </div>
-                  <div className="routing-config-media-rule-modal__paired-row">
-                    {renderNumberField(
-                      'queueTimeoutMinutes',
-                      'Queue Timeout',
-                      'min',
-                      {
-                        max: 10000,
-                        min: 1,
-                        required: true,
-                      },
-                    )}
-                    {renderMessageField(
-                      'queueTimeoutMessage',
-                      'Queue Timeout Message',
-                    )}
-                  </div>
-                </div>
               </div>
             </section>
           </div>
@@ -6508,22 +6062,6 @@ export function SkillQueuesPage() {
         ...fieldRequired(draft, 'platformSkillId', 'Platform Skill ID'),
         ...fieldRequired(draft, 'skillQueueName', 'Skill Name'),
         ...fieldRequired(draft, 'vdnCode', 'VDN'),
-        ...fieldRequired(draft, 'supportsVideo', 'Supports Video'),
-        ...validateNumberRange(
-          draft.maxQueueCustomers,
-          'Max Queue Customers',
-          1,
-          60000,
-        ),
-        ...validateNumberRange(
-          draft.queueTimeoutMinutes,
-          'Queue Timeout',
-          1,
-          10000,
-        ),
-        ...fieldRequired(draft, 'nonWorkingTimeMessage', 'Non-working Time Message'),
-        ...fieldRequired(draft, 'queueWaitingMessage', 'Queue Waiting Message'),
-        ...fieldRequired(draft, 'queueTimeoutMessage', 'Queue Timeout Message'),
       ]}
       onDelete={(record) =>
         deleteEntity('skillQueues', 'skillQueueCode', record.skillQueueCode)
