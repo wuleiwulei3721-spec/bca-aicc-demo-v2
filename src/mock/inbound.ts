@@ -416,6 +416,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
     initialStarColor: 'red',
     initialUnansweredSeconds: 76,
     intent: 'Mobile banking device binding',
+    lastMenuName: 'Mobile banking device binding',
     lastMessage:
       'Can you keep my account access secure while you reset the device?',
     lastMessageAt: '2026-05-27T14:34:00+08:00',
@@ -637,6 +638,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
     initialStarColor: 'gray',
     initialUnansweredSeconds: null,
     intent: 'Replacement card delivery',
+    lastMenuName: 'Replacement card delivery',
     lastMessage: 'Customer ended the conversation after receiving delivery status.',
     lastMessageAt: '2026-05-27T14:39:25+08:00',
     lastMessageTime: '14:39',
@@ -701,6 +703,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
     initialUnansweredSeconds: null,
     intent: 'Paylater repayment schedule',
     isInitialHistory: true,
+    lastMenuName: 'Paylater repayment schedule',
     lastMessage: 'The updated repayment schedule has been sent.',
     lastMessageAt: '2026-05-27T13:52:00+08:00',
     lastMessageTime: '13:52',

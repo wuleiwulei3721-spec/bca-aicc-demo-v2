@@ -180,15 +180,42 @@ interface MessageRecordFilters {
   keyword: string
 }
 
-function getDefaultRecordDateRange(): MessageRecordDateRange {
-  const today = dayjs()
-
-  return [today.subtract(6, 'day'), today]
+interface MessageRecordFilterState {
+  appliedFilters: MessageRecordFilters
+  draftFilters: MessageRecordFilters
+  isSearchResultMode: boolean
+  latestMessageTimestamp: number
 }
 
-function getDefaultRecordFilters(): MessageRecordFilters {
+function getMessageTime(message: LiveChat2Message) {
+  const time = new Date(message.timestamp).getTime()
+
+  return Number.isFinite(time) ? time : 0
+}
+
+function getLatestMessageTimestamp(messages: LiveChat2Message[]) {
+  return messages.reduce(
+    (latestTimestamp, message) =>
+      Math.max(latestTimestamp, getMessageTime(message)),
+    0,
+  )
+}
+
+function getDefaultRecordDateRange(
+  latestMessageTimestamp = 0,
+): MessageRecordDateRange {
+  const latestMessageDate =
+    latestMessageTimestamp > 0 ? dayjs(latestMessageTimestamp) : dayjs()
+  const anchorDate = latestMessageDate.isValid() ? latestMessageDate : dayjs()
+
+  return [anchorDate.subtract(6, 'day'), anchorDate]
+}
+
+function getDefaultRecordFilters(
+  latestMessageTimestamp = 0,
+): MessageRecordFilters {
   return {
-    dateRange: getDefaultRecordDateRange(),
+    dateRange: getDefaultRecordDateRange(latestMessageTimestamp),
     keyword: '',
   }
 }
@@ -199,24 +226,31 @@ function getDateBoundary(dateValue: Dayjs, type: 'end' | 'start') {
     : dateValue.endOf('day').valueOf()
 }
 
-function getMessageTime(message: LiveChat2Message) {
-  const time = new Date(message.timestamp).getTime()
-
-  return Number.isFinite(time) ? time : 0
-}
-
 export function LiveChat2MessageRecordPanel({
   messages,
   onLocateMessage,
 }: LiveChat2MessageRecordPanelProps) {
-  const [draftFilters, setDraftFilters] = useState<MessageRecordFilters>(() =>
-    getDefaultRecordFilters(),
-  )
-  const [appliedFilters, setAppliedFilters] = useState<MessageRecordFilters>(
-    () => getDefaultRecordFilters(),
-  )
-  const [isSearchResultMode, setIsSearchResultMode] = useState(false)
+  const latestMessageTimestamp = getLatestMessageTimestamp(messages)
+  const defaultFilters = getDefaultRecordFilters(latestMessageTimestamp)
+  const [filterState, setFilterState] = useState<MessageRecordFilterState>(() => ({
+    appliedFilters: defaultFilters,
+    draftFilters: defaultFilters,
+    isSearchResultMode: false,
+    latestMessageTimestamp,
+  }))
+  const activeFilterState =
+    filterState.latestMessageTimestamp === latestMessageTimestamp
+      ? filterState
+      : {
+          appliedFilters: defaultFilters,
+          draftFilters: defaultFilters,
+          isSearchResultMode: false,
+          latestMessageTimestamp,
+        }
+  const { appliedFilters, draftFilters, isSearchResultMode } =
+    activeFilterState
   const appliedKeyword = appliedFilters.keyword.trim()
+
   const matchedRecordMessages = useMemo(() => {
     const fromTime = getDateBoundary(appliedFilters.dateRange[0], 'start')
     const toTime = getDateBoundary(appliedFilters.dateRange[1], 'end')
@@ -239,17 +273,24 @@ export function LiveChat2MessageRecordPanel({
     messages,
   ])
   const handleSearch = () => {
-    setIsSearchResultMode(true)
-    setAppliedFilters({
-      dateRange: [draftFilters.dateRange[0], draftFilters.dateRange[1]],
-      keyword: draftFilters.keyword.trim(),
+    setFilterState({
+      appliedFilters: {
+        dateRange: [draftFilters.dateRange[0], draftFilters.dateRange[1]],
+        keyword: draftFilters.keyword.trim(),
+      },
+      draftFilters,
+      isSearchResultMode: true,
+      latestMessageTimestamp,
     })
   }
   const handleLocateMessage = (messageId: string) => {
-    const nextFilters = getDefaultRecordFilters()
-    setDraftFilters(nextFilters)
-    setAppliedFilters(nextFilters)
-    setIsSearchResultMode(false)
+    const nextFilters = getDefaultRecordFilters(latestMessageTimestamp)
+    setFilterState({
+      appliedFilters: nextFilters,
+      draftFilters: nextFilters,
+      isSearchResultMode: false,
+      latestMessageTimestamp,
+    })
     onLocateMessage(messageId)
   }
 
@@ -277,9 +318,15 @@ export function LiveChat2MessageRecordPanel({
               return
             }
 
-            setDraftFilters((current) => ({
-              ...current,
-              dateRange: [dates[0], dates[1]],
+            setFilterState((current) => ({
+              ...activeFilterState,
+              draftFilters: {
+                ...(current.latestMessageTimestamp === latestMessageTimestamp
+                  ? current.draftFilters
+                  : draftFilters),
+                dateRange: [dates[0], dates[1]],
+              },
+              latestMessageTimestamp,
             }))
           }}
         />
@@ -291,9 +338,15 @@ export function LiveChat2MessageRecordPanel({
           size="small"
           value={draftFilters.keyword}
           onChange={(event) =>
-            setDraftFilters((current) => ({
-              ...current,
-              keyword: event.target.value,
+            setFilterState((current) => ({
+              ...activeFilterState,
+              draftFilters: {
+                ...(current.latestMessageTimestamp === latestMessageTimestamp
+                  ? current.draftFilters
+                  : draftFilters),
+                keyword: event.target.value,
+              },
+              latestMessageTimestamp,
             }))
           }
         />
@@ -369,6 +422,8 @@ export function LiveChat2ConversationWorkspace({
   const readOnly = session.statusDisplay === 'history'
   const isEnded = session.statusDisplay === 'ended'
   const canCompose = !readOnly && !isEnded
+  const canRecallMessages =
+    session.channel === 'Haloapps' || session.channel === 'Webchat'
   const trimmedDraft = draftMessage.trim()
   const visibleMessages = getLiveChat2VisibleMessages(
     session.historyMessages,
@@ -661,7 +716,7 @@ export function LiveChat2ConversationWorkspace({
                             <RollbackOutlined />
                             Quote
                           </button>
-                          {message.isCurrentAgent && (
+                          {message.isCurrentAgent && canRecallMessages && (
                             <button
                               type="button"
                               onClick={() => onRecallMessage(message.id)}
@@ -672,7 +727,10 @@ export function LiveChat2ConversationWorkspace({
                           )}
                         </>
                       )}
-                      {message.isCurrentAgent && isRecalled && canCompose && (
+                      {message.isCurrentAgent &&
+                        canRecallMessages &&
+                        isRecalled &&
+                        canCompose && (
                         <button
                           type="button"
                           onClick={() => handleReEditMessage(message)}

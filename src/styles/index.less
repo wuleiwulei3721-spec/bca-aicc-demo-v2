@@ -4895,6 +4895,7 @@ a {
   font-size: 12px;
   justify-content: center;
   line-height: 20px;
+  overflow: visible;
 }
 
 .agent-workspace-tabs.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab + .ant-tabs-tab {
@@ -4903,6 +4904,11 @@ a {
 
 .agent-workspace-tabs .ant-tabs-nav-list {
   gap: 2px;
+  overflow: visible;
+}
+
+.agent-workspace-tabs .ant-tabs-tab-btn {
+  overflow: visible;
 }
 
 .agent-workspace-tabs .ant-tabs-tab-remove {
@@ -4967,8 +4973,8 @@ a {
 
 .agent-workspace-tabs .ant-tabs-tab-btn .workspace-tab-label__unread {
   position: absolute;
-  top: -8px;
-  right: -14px;
+  top: -2px;
+  right: -10px;
   display: inline-flex;
   min-width: 16px;
   height: 16px;
@@ -4985,6 +4991,7 @@ a {
   font-weight: 750;
   line-height: 14px;
   pointer-events: none;
+  z-index: 2;
 }
 
 .agent-workspace-tabs

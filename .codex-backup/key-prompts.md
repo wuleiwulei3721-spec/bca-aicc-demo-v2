@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-06-09 19:36 +08:00
+最后更新：2026-06-10 11:43 +08:00
 
 ## 项目方向
 
@@ -37,6 +37,17 @@
 - 当前客户分支 mock：`Break`、`Istirahat`、`Job Routine`、`Keagamaan`、`Keperluan Pribadi`、`Meeting/Coaching`、`Special Assignment`、`Toilet`、`Yoga` 启用；`Extension 1-11` 禁用备用；Default 全部为 No。
 - `Call Management > Busy Reason Management` 使用同一份前端 demo store，编辑状态后会立即影响 AUX 下拉；刷新后恢复 mock 默认值。
 - 客户分支继续隐藏 `Routing Config` 菜单和 `/routing-config/*` 直达 URL。
+
+## 2026-06-10 正式 Live Chat 客户预览修复
+
+- 当前客户预览分支为 `codex/livechat-copy-update`，应继续从干净 `main` worktree `D:\03projects\bca-aicc-demo-v2-main-fix` 修改并推送 Vercel Preview，不把内部管理分支 `codex/admin-config-latest` 发布给客户。
+- Sign In 自动预置的 `livechat2-001` / `livechat2-005` 是已有列表客户，不应作为新接入闪烁；只有从 WhatsApp / BankApp Channel Simulation handoff 新生成的 `*-handoff-*` 客户需要短闪提醒。
+- WhatsApp 文字聊天没有消息撤回能力，不展示 `Recall` / `Re-edit`；Haloapps 和 Webchat 保留撤回与重新编辑能力。
+- Message Record 对默认已有 mock 客户也必须默认显示记录，日期范围应按当前会话消息时间覆盖；handoff 新客户克隆消息时 timestamp/time 应平移到当前接入时间附近。
+- Live Chat workspace tab 的未读 badge 必须完整显示，不能被 tab 容器裁剪。
+- 客户卡片底部的 `Menu` 只在 PSTN/语音 IVR 与 Haloapps 文本接入展示；PSTN 展示最后一级 IVR menu，Haloapps 文本展示一级菜单名；WhatsApp/Webchat/Video 不展示。
+- Haloapps 文本接入如果有菜单名，点击接入渠道详情也要展示说明；它只有一级菜单，用 `Haloapps Menu` 单节点表达，不显示 PSTN 的多级 IVR Journey。
+- Haloapps 文本一级菜单名本轮使用 session `intent` / `lastMenuName`。
 
 ## 功能弹窗
 

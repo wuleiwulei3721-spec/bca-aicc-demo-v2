@@ -109,6 +109,7 @@ export interface LiveChat2Session {
   initialStarColor: LiveChat2StarColor
   initialUnansweredSeconds: number | null
   intent: string
+  lastMenuName?: string
   endReason?: LiveChat2EndReason
   isInitialHistory?: boolean
   lastMessage: string

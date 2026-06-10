@@ -87,12 +87,16 @@ function cloneVerificationRules(): VerificationRule[] {
   }))
 }
 
-function formatCurrentLiveChat2Time() {
+function formatLiveChat2Time(date: Date) {
   return new Intl.DateTimeFormat('en-GB', {
     hour: '2-digit',
     hour12: false,
     minute: '2-digit',
-  }).format(new Date())
+  }).format(date)
+}
+
+function formatCurrentLiveChat2Time() {
+  return formatLiveChat2Time(new Date())
 }
 
 function createLiveChat2Status(
@@ -122,7 +126,7 @@ function createDefaultLiveChat2CurrentState(now: number) {
     )
 
     sessionTimings[sessionId] = {
-      flashUntil: now + INTERACTION_FLASH_MS,
+      flashUntil: 0,
       startedAt: now - initialElapsedSeconds * 1000,
     }
     sessionStatuses[sessionId] = createLiveChat2Status(
@@ -168,11 +172,20 @@ function cloneLiveChat2MessageForSession(
   message: LiveChat2Message,
   sourceSessionId: string,
   nextSessionId: string,
+  timestamp?: number,
 ) {
-  return {
+  const nextMessage = {
     ...message,
     id: message.id.replace(sourceSessionId, nextSessionId),
   }
+
+  if (typeof timestamp === 'number') {
+    const messageDate = new Date(timestamp)
+    nextMessage.time = formatLiveChat2Time(messageDate)
+    nextMessage.timestamp = messageDate.toISOString()
+  }
+
+  return nextMessage
 }
 
 function createLiveChat2HandoffSession(
@@ -181,7 +194,19 @@ function createLiveChat2HandoffSession(
   accessSequence: number,
   now: number,
 ): LiveChat2Session {
-  const time = formatCurrentLiveChat2Time()
+  const time = formatLiveChat2Time(new Date(now))
+  const sourceMessages = [
+    ...sourceSession.historyMessages,
+    ...sourceSession.messages,
+  ]
+  const firstMessageTimestamp =
+    now - Math.max(sourceMessages.length - 1, 0) * 60 * 1000
+  const messageTimestampById = new Map(
+    sourceMessages.map((message, index) => [
+      message.id,
+      firstMessageTimestamp + index * 60 * 1000,
+    ]),
+  )
 
   return {
     ...sourceSession,
@@ -197,6 +222,7 @@ function createLiveChat2HandoffSession(
         message,
         sourceSession.id,
         nextSessionId,
+        messageTimestampById.get(message.id),
       ),
     ),
     id: nextSessionId,
@@ -207,6 +233,7 @@ function createLiveChat2HandoffSession(
         message,
         sourceSession.id,
         nextSessionId,
+        messageTimestampById.get(message.id),
       ),
     ),
     serviceStartedAt: time,

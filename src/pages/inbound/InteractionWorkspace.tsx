@@ -23,6 +23,8 @@ import { LeftColumn } from './components/LeftColumn'
 const CRM_TAB_KEY = 'crm'
 
 interface InteractionWorkspaceProps {
+  accessMenuLabel?: string
+  accessMenuName?: string
   ariaLabel: string
   assistantActiveKey?: string
   assistantExtraTabs?: AssistantPanelExtraTab[]
@@ -41,6 +43,8 @@ interface InteractionWorkspaceProps {
 }
 
 export function InteractionWorkspace({
+  accessMenuLabel,
+  accessMenuName,
   ariaLabel,
   assistantActiveKey,
   assistantExtraTabs,
@@ -197,6 +201,8 @@ export function InteractionWorkspace({
       >
         {leadPanel}
         <LeftColumn
+          accessMenuLabel={accessMenuLabel}
+          accessMenuName={accessMenuName}
           customer={displayCustomer}
           identityRefreshPasteValue={CUSTOMER_IDENTITY_REFRESH_DEMO_ID}
           journey={identityData.journey}

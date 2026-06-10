@@ -2,16 +2,23 @@ import { BaseButton, BaseModal, TimelineFlow } from '../../../components'
 import { callFlowDetail } from '../../../mock/inbound'
 
 interface CallFlowDetailModalProps {
+  accessMenuLabel?: string
+  accessMenuName?: string
   open: boolean
   showIvrJourney?: boolean
   onClose: () => void
 }
 
 export function CallFlowDetailModal({
+  accessMenuLabel = 'Access Menu',
+  accessMenuName,
   open,
   showIvrJourney = true,
   onClose,
 }: CallFlowDetailModalProps) {
+  const shouldShowTransferHistory =
+    showIvrJourney && callFlowDetail.transferHistory.length > 0
+
   return (
     <BaseModal
       className="inbound-call-flow-modal"
@@ -38,7 +45,27 @@ export function CallFlowDetailModal({
           </section>
         ) : null}
 
-        {callFlowDetail.transferHistory.length > 0 ? (
+        {accessMenuName ? (
+          <section className="aicc-modal-section inbound-call-flow__section">
+            <div className="aicc-modal-section__header inbound-call-flow__section-header">
+              <span className="aicc-modal-section__title">
+                {accessMenuLabel}
+              </span>
+            </div>
+            <TimelineFlow
+              className="inbound-call-flow__steps"
+              items={[
+                {
+                  id: 'access-menu-single-level',
+                  meta: 'Single-level menu',
+                  title: accessMenuName,
+                },
+              ]}
+            />
+          </section>
+        ) : null}
+
+        {shouldShowTransferHistory ? (
           <section className="aicc-modal-section inbound-call-flow__section">
             <div className="aicc-modal-section__header inbound-call-flow__section-header">
               <span className="aicc-modal-section__title">

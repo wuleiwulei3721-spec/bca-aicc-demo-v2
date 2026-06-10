@@ -1,10 +1,10 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-10 10:08 +08:00
+最后更新：2026-06-10 11:43 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`  
-当前目标：在客户安全基线 `main` 上创建 `codex/livechat-copy-update`，只调整正式 Live Chat 弹屏的客户与聊天演示内容，用于 Vercel Preview 给客户查看；本轮不改路由、store、类型或旧版 `LiveChatPage.tsx`，继续保留客户可见登录、Call Management、AUX、PSTN、BankApp、WhatsApp、Voice/Video handoff 和正式 Live Chat 能力。
+当前目标：在客户安全基线 `main` 的 `codex/livechat-copy-update` 上继续修复正式 Live Chat 弹屏交互，用于 Vercel Preview 给客户查看；本轮修复默认客户闪烁、按渠道撤回能力、Message Record 默认记录、Live Chat tab 未读角标裁剪，以及 Haloapps 文本接入菜单在客户卡片和接入详情弹框中的展示。
 
-本轮已完成：正式 Live Chat 的 `liveChat2Sessions` 已更新为更适合客户预览的脱敏银行演示场景，覆盖 WhatsApp 卡片解锁、Haloapps 设备绑定、Webchat 网点预约、信用卡分期、补卡配送和 Paylater 还款历史；Quick Replies 默认短语同步更新为 BANK 1 客服口径和安全提醒。PSTN、BankApp Voice 等 Customer Verification Assist、登录页、AUX、Call Management 和 Log Out 行为保持上一轮能力不变。
+本轮已完成：正式 Live Chat 的预置 Current 客户不再作为新接入闪烁，Channel Simulation handoff 生成的新 `*-handoff-*` 客户仍保持短闪；WhatsApp 隐藏 Recall/Re-edit，Haloapps/Webchat 保留；Message Record 默认日期范围按当前会话最新消息自动覆盖，handoff 克隆消息会平移到当前接入时间附近；`LiveChat2Session` 新增可选 `lastMenuName`，Haloapps 文本接入在客户卡片底部展示一级 `Menu`，点击渠道详情后以 `Haloapps Menu` 单节点展示，不复用 PSTN 多级 IVR Journey；Live Chat tab 未读角标位置已下调避免裁剪。PSTN、BankApp Voice 等 Customer Verification Assist、登录页、AUX、Call Management 和 Log Out 行为保持上一轮能力不变。
 
 ## 0. 使用规则
 
@@ -113,18 +113,18 @@ codex-recovered-context.md
 - `src/pages/LoginPage.tsx`：BANK 1 登录页，包含 User Name、Password、EXT 和 demo LDAP 错误提示；不再展示 PIN/captcha；成功后写入 auth session 并进入 `/`；左侧视觉使用 `/screenshots/login-illustration.svg` 本地资源，BANK 1 logo 固定在页面左上角。
 - `src/pages/AgentWorkspace.tsx`：Home tab 与工作区交互 tab 容器，负责 Demo tabs、正式 `Live Chat` 固定 tab、多个 PSTN / Voice Call / Video Call 通话实例 tab 的页签名称、最长服务计时、短闪提示和 Live Chat 总未读 badge。
 - `src/pages/bankapp/BankAppDemoPage.tsx`：BankApp 客户侧模拟器，采用真实手机比例的客户端舞台和轻量 AICC Process rail；Voice / Video handoff 会在已有未挂断通话时显示 inline warning，坐席侧结果通过真实 workspace tab 跳转体现；本轮新增坐席触发的 4 位 PIN 输入页和 PIN verified 状态展示。
-- `src/pages/inbound/InteractionWorkspace.tsx`：电话、视频与 Live Chat 弹屏共用的三栏工作台；维护当前工作台实例内的客户身份刷新展示数据，刷新成功后只更新当前实例的 Customer Information、Customer Journey 与 Ticketing History，不写入全局 store；支持由弹屏 wrapper 显式传入 `showIvrJourney`，控制客户卡片 `Menu` 最后菜单提示与 Call Flow Detail 的 IVR Journey 展示。
+- `src/pages/inbound/InteractionWorkspace.tsx`：电话、视频与 Live Chat 弹屏共用的三栏工作台；维护当前工作台实例内的客户身份刷新展示数据，刷新成功后只更新当前实例的 Customer Information、Customer Journey 与 Ticketing History，不写入全局 store；支持由弹屏 wrapper 显式传入 `showIvrJourney`、`accessMenuName` 和 `accessMenuLabel`，控制客户卡片 `Menu` 最后菜单提示与 Call Flow Detail / Haloapps Menu 展示。
 - `src/pages/inbound/InboundPage.tsx`：PSTN / Voice Call 电话弹屏 wrapper；PSTN 初始使用未识别客户和空 Journey / Ticketing，BankApp Voice 保持已识别客户。
 - `src/pages/inbound/VideoCallPage.tsx`：Video Call 弹屏 wrapper，复用三栏工作台并叠加 OpenEye 浮窗。
 - `src/pages/inbound/LiveChatPage.tsx`：旧版 Live Chat 页面源码，当前不再作为正式 tab 渲染，保留作回滚参考。
-- `src/pages/inbound/LiveChat2Page.tsx`：正式 `Live Chat` 弹屏页面，继续使用 `liveChat2*` store、mock 和组件实现客户列表、Conversation、Message Record 与 Quick Replies；Customer Information 使用 `activeSession.customer.accessDuration` 的静态接入耗时，不再用服务中 `elapsedSeconds` 覆盖；Current 与 History 视图各自选择客户，Current 清空时显示当前无客户空态，不再自动展示 History 客户。本轮仅更新其读取的 mock 文案，不改页面逻辑。
+- `src/pages/inbound/LiveChat2Page.tsx`：正式 `Live Chat` 弹屏页面，继续使用 `liveChat2*` store、mock 和组件实现客户列表、Conversation、Message Record 与 Quick Replies；Customer Information 使用 `activeSession.customer.accessDuration` 的静态接入耗时，不再用服务中 `elapsedSeconds` 覆盖；Current 与 History 视图各自选择客户，Current 清空时显示当前无客户空态，不再自动展示 History 客户；Haloapps 文本会话会把 `lastMenuName ?? intent` 作为一级菜单传给客户卡片和接入详情弹框。
 - `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`：正式 `Live Chat` 客户列表，包含收起/展开、渠道筛选、排序、Current/History 文字 tab、未读、未回复计时、星标和关闭结束会话；客户行使用两行 grid 对齐且不再展示转接图标，收起态保留 SLA 左侧色条并在渠道头像内展示只读星标；Current / History 列表为空时在展开态显示轻量空态提示。
-- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`：正式 `Live Chat` Conversation tab 内容，包含消息记录、快捷回复、引用、撤回、Transfer、End/Close 和发送消息演示。
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`：正式 `Live Chat` Conversation tab 内容，包含消息记录、快捷回复、引用、撤回、Transfer、End/Close 和发送消息演示；Recall/Re-edit 只在 Haloapps/Webchat 渠道展示，WhatsApp 不展示；Message Record 默认按当前会话最新消息时间生成日期范围，默认打开不再因 mock 日期早于当天而为空。
 - `src/pages/inbound/components/liveChat2QuickReplies.ts`：正式 Live Chat 默认快捷回复分组与短语，本轮同步更新为 BANK 1 客服确认、建单、验证和安全提醒口径。
-- `src/pages/inbound/components/CustomerInformationCard.tsx`：客户卡片、身份刷新、最后 IVR 菜单提示和 Customer Verification Assist 入口；本轮按渠道类型和业务类型选择验证规则，并把 BankApp PIN 状态接入验证弹窗。
+- `src/pages/inbound/components/CustomerInformationCard.tsx`：客户卡片、身份刷新、最后 IVR 菜单提示和 Customer Verification Assist 入口；支持 PSTN/Voice 最后一级 IVR Menu，以及 Haloapps 文本一级 Access Menu；本轮按渠道类型和业务类型选择验证规则，并把 BankApp PIN 状态接入验证弹窗。
 - `src/pages/inbound/components/CustomerVerificationModal.tsx`：动态身份验证助手弹窗；展示验证渠道类型、业务类型、紧凑规则进度、PIN 验证入口、分组题库和自动通过/失败结果；坐席 UI 不展示标准答案或答案来源。
-- `src/mock/inbound.ts`：Inbound mock 数据；包含正式 Live Chat `liveChat2Sessions` 客户、历史消息、当前消息、队列、意图和未读数；本轮将 Live Chat 内容更新为客户预览版脱敏 BANK 1 银行业务场景。文件还包含 `verificationBusinessTypes` 和 `verificationRules`，覆盖 `Phone + Perbankan`、`HaloApp Registered + Perbankan`、`Phone + Kartu Kredit`、`HaloApp Registered + Kartu Kredit`、`HaloApp Registered + Paylater`。
-- `src/store/appStore.ts`：workspace tab、话务、Live Chat 和 demo 全局状态；本轮新增 `bankAppPinVerificationStatus`、request id 与 PIN 请求/完成/重置动作，并把 `verificationRules` 放入前端 demo store，供配置页和坐席验证弹窗共用；同时新增 `agentServiceMode`、voice/video readiness 与 digital readiness，支持登录后媒体技能签入和轻量拦截。
+- `src/mock/inbound.ts`：Inbound mock 数据；包含正式 Live Chat `liveChat2Sessions` 客户、历史消息、当前消息、队列、意图、可选 `lastMenuName` 和未读数；Live Chat 内容为客户预览版脱敏 BANK 1 银行业务场景。文件还包含 `verificationBusinessTypes` 和 `verificationRules`，覆盖 `Phone + Perbankan`、`HaloApp Registered + Perbankan`、`Phone + Kartu Kredit`、`HaloApp Registered + Kartu Kredit`、`HaloApp Registered + Paylater`。
+- `src/store/appStore.ts`：workspace tab、话务、Live Chat 和 demo 全局状态；正式 Live Chat 预置 Current 客户不再写入 `flashUntil`，Channel Simulation handoff 新会话仍写入短闪并把克隆消息 timestamp/time 平移到当前接入时间；同时保留 `bankAppPinVerificationStatus`、request id、PIN 请求/完成/重置、`verificationRules`、`agentServiceMode`、voice/video readiness 与 digital readiness。
 - `src/store/authStore.ts`：demo auth session store；调用 mock LDAP，成功后只把 session/profile/role/CRM SSO metadata 写入 `sessionStorage`，不保存密码。
 - `src/pages/call-management/RoutingConfigurationPage.tsx`：旧路由配置入口兼容组件，重定向到 `/routing-config/route-elements`。
 - `src/pages/call-management/VerificationRulesPage.tsx`：Call Management 下的验证规则配置页，按 `Verification Channel Type + Business Type` 展示规则，支持 View/Edit 配置阈值、题目分组、错答上限、layering 和启停状态；不展示标准答案或答案来源，保存到前端 demo store。
@@ -148,7 +148,7 @@ codex-recovered-context.md
 - `src/mock/auth.ts`：demo LDAP 认证 mock，账号和密码固定为 `888888 / 888888`，返回坐席 profile、角色权限和 CRM SSO-ready metadata；错误消息模拟 LDAP 返回后由 AICC 展示。
 - `src/mock/textChannelSettings.ts`：文字渠道配置页默认 mock，包含并发人数、自动回复、Webchat 撤回、客户超时话术、渠道排队阈值和通知对象。
 - `src/types/bankapp.ts`：BankApp demo 联系方式、业务类型和步骤类型。
-- `src/types/inbound.ts`：Inbound 业务类型，包含客户身份刷新结果类型 `CustomerIdentityRefreshResult`。
+- `src/types/inbound.ts`：Inbound 业务类型，包含客户身份刷新结果类型 `CustomerIdentityRefreshResult`；正式 Live Chat 会话类型 `LiveChat2Session` 支持可选 `lastMenuName`，用于 Haloapps 文本接入一级菜单。
 - `src/types/busyReason.ts`：客户分支示忙原因类型，供 AUX 下拉、Busy Reason Management 页面和 store 使用。
 - `src/types/auth.ts`：登录、角色、auth session、CRM SSO context 与 `AgentServiceMode` 类型。
 - `src/types/routingConfiguration.ts`：路由配置页专用类型，覆盖 route factor、channel_media、site_access_ratio、working_time_plan、skill_queue、routing_rule 和 routing_rule_index 等结构。
@@ -2497,7 +2497,7 @@ M src/types/inbound.ts
 - 关闭 Video Call tab 只隐藏 workspace 与 OpenEye 浮窗，不自动 Hang Up；Hang Up 会同步隐藏 OpenEye 浮窗。
 - 菜单搜索当前只在展开态显示，收起菜单时会清空搜索条件，避免影响收起态图标列表。
 - 收起态二级菜单浮层当前通过 CSS hover 打开，并通过 `closedFlyoutKey` 控制点击后关闭；如后续增加键盘导航，需要再补充键盘触发规则。
-- 本轮已重新运行 `npm run lint` 和 `npm run build`，均通过；build 仍有 Vite chunk size warning。
+- 本轮已重新运行 `npm run lint` 和 `npm run build`，均通过；build 仍有 Vite chunk size warning；浏览器 smoke 已验证默认 Live Chat 客户不闪、WhatsApp 无撤回、Message Record 有记录且 Locate 可用、Haloapps 菜单卡片/详情弹框、PSTN IVR Journey 以及 WhatsApp handoff 新客户短闪和未读 badge 不裁剪。
 - 当前项目没有自动化测试体系。
 - 历史 build 出现过 Vite chunk size warning，但不影响运行。
 - `codex-recovered-context.md` 是 UTF-8 中文文件，PowerShell 非 UTF-8 读取时可能显示乱码；应使用 `Get-Content -Raw -Encoding UTF8 codex-recovered-context.md`。
@@ -2520,7 +2520,7 @@ P0：
 - 人工复查正式 Live Chat 当前客户清空空态：Sign In 后打开 Live Chat，Current 默认显示两个客户，其中 `livechat2-005` 为客户主动挂机并显示 `Close`；关闭已挂机客户、再 End Service / Close 剩余服务中客户后，Current 计数为 0，右侧显示 `No current Live Chat customers`，不再渲染旧 Customer Information / Conversation / Assistant 客户上下文；切换 History 后仍可查看已关闭客户。
 - 人工复查正式 Live Chat Current 清空后的新 route 恢复：从 WhatsApp 或 BankApp Demo route 新文字客户后，Current 应恢复显示新客户并渲染工作台。
 - 人工复查客户身份刷新：PSTN 初始显示 `Unidentified Customer`；Customer Journey / Ticketing History 显示未加载空态；Customer Information 右上角同时显示身份刷新图标和原编辑联系方式图标；两个图标在 hover 背景中居中；Customer ID 浮层不进入左侧菜单范围；点击 `Paste` 自动填入 `00000078987`；错误 ID 不关闭浮层并提示；正确 ID `Confirm` 后刷新 Customer Information、Customer Journey 和 Ticketing History。
-- 人工复查客户卡片 `Menu` 最后菜单提示：PSTN / BankApp Voice 等语音/IVR 类渠道在 Customer Information 底部第二行显示短标签 `Menu` 和最后一级 IVR 菜单，第一行渠道/接入时长/验证/Verify 不被挤压；点击渠道图标仍打开完整 Call Flow Detail；Live Chat 和 Video 不显示该提示。
+- 人工复查客户卡片 `Menu` 最后菜单提示：PSTN / BankApp Voice 等语音/IVR 类渠道在 Customer Information 底部第二行显示短标签 `Menu` 和最后一级 IVR 菜单，第一行渠道/接入时长/验证/Verify 不被挤压；点击渠道图标仍打开完整 Call Flow Detail；Haloapps 文本接入显示一级 `Haloapps Menu`，点击渠道后详情弹框只显示单节点菜单；WhatsApp/Webchat/Video 不显示该提示。
 - 人工复查客户 AUX / Sign In 下拉：签出状态头像菜单只显示 `Sign In` 分组和 `Voice only`、`Digital only`、`Voice + Digital` 三个纯文字选项；签入后直接显示当前模式、`AUX` 分组、9 个启用原因和 `Sign Out`；点击 `Sign Out` 需要确认，确认后状态回到 `Unsigned`，取消不改变状态；系统级 `Log Out` 只在 Header 右侧红色按钮中出现，点击需要确认，确认后回 `/login`，取消不登出；点击原因后状态计时区立即显示 `AUX - {reasonName}`，不再出现 `Select AUX Reason` 弹框。
 - 人工复查客户可见管理入口：左侧菜单显示 `Call Management`，不显示 `Routing Config`；`/call-management/verification-rules`、`/call-management/text-channel-settings` 与 `/call-management/busy-reasons` 正常打开，`/routing-config/*` 仍回到 `/`。
 - 人工复查 `Routing Config > Route Elements`：英文标题、查询栏、独立靠右 Add、列表字段、短胶囊状态开关、弹框顶部标题栏背景、无额外 footer 背景、统一按钮宽度/高度和保存后校验提示符合管理台数据维护规范。
@@ -2544,6 +2544,9 @@ P0：
 - 人工复查 `Call Management` 只保留客户可见配置入口 `Verification Rules` 与 `Text Channel Settings`；旧 `/call-management/routing-configuration` 不作为客户入口展示，应重定向到当前可见配置页或首页而不是进入隐藏 Routing Config。
 - 人工复查 `Call Management > Text Channel Settings`：三页签、默认服务人数 3、坐席未回复 2 分钟自动回复、Webchat 撤回 2 分钟、客户未回复 5 分钟自动关闭、关闭前 1 分钟提醒、队列阈值 10、Save Draft / Publish 本地提示均符合演示口径。
 - 人工复查正式 `Live Chat` tab：右上角总未读数 badge 应聚合当前 active 服务会话，已读/ended/history 不计入，大于 99 显示 `99+`。
+- 人工复查正式 `Live Chat` tab：预置 Current 客户不闪烁，WhatsApp/BankApp Channel Simulation handoff 新接入客户仍闪烁；未读 badge 顶部不再被 tab 容器裁剪。
+- 人工复查正式 `Live Chat` Message Record：默认已有 mock 客户和 handoff 新客户打开 Message Record 都应有记录；默认日期范围应覆盖当前会话最新消息时间；搜索和 Locate 应继续可用。
+- 人工复查正式 `Live Chat` 撤回能力：WhatsApp 消息不显示 `Recall` / `Re-edit`；Haloapps 和 Webchat 保留该能力。
 - 人工复查正式 `Live Chat` 替换：Sign In 后 tab label 仍是 `Live Chat`，空态不再出现可见 `livechat2` 文案。
 - 人工复查旧跳转流程：WhatsApp Demo 应进入正式 `Live Chat` 并聚焦 `livechat2-001`；BankApp Live Chat 应进入正式 `Live Chat` 并聚焦 `livechat2-002`。
 - 人工复查左侧菜单：`Channel Simulation` 下只保留 PSTN、BankApp、WhatsApp，不再显示临时 `livechat2` 入口。

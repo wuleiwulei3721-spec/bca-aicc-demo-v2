@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-10 10:08 +08:00
+最后更新：2026-06-10 11:43 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,55 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-10 11:43 +08:00 - 修复正式 Live Chat 交互与 Haloapps 菜单详情
+
+修改页面或文件：
+
+- `src/types/inbound.ts`
+- `src/mock/inbound.ts`
+- `src/store/appStore.ts`
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/InteractionWorkspace.tsx`
+- `src/pages/inbound/components/LeftColumn.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/pages/inbound/components/CallFlowDetailModal.tsx`
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-10-1143.md`
+- `.codex-backup/current-todo-2026-06-10-1143.md`
+- `.codex-backup/page-state-2026-06-10-1143.md`
+
+修改原因：
+
+- 用户反馈正式 `Live Chat` 中默认列表客户不应作为新接入闪烁，WhatsApp 不应有撤回功能，Message Record 默认无记录，Live Chat tab 未读角标被裁剪，以及 Haloapps 文本接入需要像 PSTN IVR 一样在客户卡片和接入渠道详情中展示菜单。
+
+修改结果：
+
+- Sign In 自动预置的 `livechat2-001` / `livechat2-005` 不再设置短闪；从 Channel Simulation handoff 生成的 `*-handoff-*` 新会话继续短闪。
+- `LiveChat2Session` 新增可选 `lastMenuName`，Haloapps mock 使用当前 intent 作为一级菜单名；Live Chat 页面只为 Haloapps 文本会话传入 `Haloapps Menu`，WhatsApp/Webchat/Video 不展示菜单。
+- `CallFlowDetailModal` 支持 PSTN 多级 IVR Journey 和 Haloapps 单节点菜单两种展示；Haloapps 不展示 PSTN 的多级 IVR Journey。
+- Message Record 默认日期范围改为按当前会话最新消息时间生成；handoff 新会话克隆消息时会把 timestamp/time 平移到当前接入时间附近。
+- WhatsApp 隐藏 `Recall` / `Re-edit`；Haloapps/Webchat 保留撤回与重新编辑能力。
+- Live Chat workspace tab 未读角标位置下调并允许 tab label overflow，避免顶部被裁剪。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仅保留既有 Vite chunk size warning。
+- 本地 Chrome/CDP smoke check 通过：`/login` 使用 `888888 / 888888` 登录，`Voice + Digital` 签入后正式 `Live Chat` 默认客户无闪烁；WhatsApp 当前客户无 `Recall` / `Re-edit` 且无 `Menu`；Message Record 默认显示 7 条记录，搜索 `card` 后有 4 条结果并可 `Locate`；Haloapps 当前客户卡片显示 `Menu + Replacement card delivery`，接入详情弹框显示 `Haloapps Menu` 单节点且不显示 IVR Journey；PSTN 接入详情仍显示 IVR Journey 与 Transfer History；WhatsApp Demo handoff 后新客户短闪，未读 badge 完整落在 tab 边界内。
+
+回滚说明：
+
+- 可按文件回滚上述 Live Chat 行为修复；若回滚 `lastMenuName`，需同时恢复 `src/types/inbound.ts`、`src/mock/inbound.ts` 和 Customer Information / Call Flow 传参链路。
+
+当前风险点：
+
+- 本轮仍是前端 demo 状态，不接真实消息网关或后端记录查询；Message Record 时间范围逻辑基于当前会话消息 timestamp。
+- Haloapps 菜单名暂按用户假设使用 session `intent`，仍需客户确认最终菜单命名。
 
 ### 2026-06-10 10:08 +08:00 - 调整正式 Live Chat 客户预览文案
 

@@ -13,6 +13,8 @@ import { QuickActionCard } from './QuickActionCard'
 import { TicketingHistoryCard } from './TicketingHistoryCard'
 
 interface LeftColumnProps {
+  accessMenuLabel?: string
+  accessMenuName?: string
   customer: CustomerInformation
   identityRefreshPasteValue: string
   journey: CustomerJourneyItem[]
@@ -25,6 +27,8 @@ interface LeftColumnProps {
 }
 
 export function LeftColumn({
+  accessMenuLabel,
+  accessMenuName,
   customer,
   identityRefreshPasteValue,
   journey,
@@ -39,6 +43,8 @@ export function LeftColumn({
     <div className="inbound-left-column">
       <div className="inbound-left-column__fixed">
         <CustomerInformationCard
+          accessMenuLabel={accessMenuLabel}
+          accessMenuName={accessMenuName}
           customer={customer}
           identityRefreshPasteValue={identityRefreshPasteValue}
           showIvrJourney={showIvrJourney}

@@ -41,6 +41,8 @@ import {
 import { SendEmailModal } from './SendEmailModal'
 
 interface CustomerInformationCardProps {
+  accessMenuLabel?: string
+  accessMenuName?: string
   customer: CustomerInformation
   identityRefreshPasteValue: string
   onCustomerIdentityRefresh: (customerId: string) => boolean
@@ -155,6 +157,8 @@ function findVerificationRule(
 }
 
 export function CustomerInformationCard({
+  accessMenuLabel = 'Access Menu',
+  accessMenuName,
   customer,
   identityRefreshPasteValue,
   onCustomerIdentityRefresh,
@@ -243,6 +247,12 @@ export function CustomerInformationCard({
   const finalIvrStep = shouldShowIvrJourney
     ? callFlowDetail.ivrJourney[callFlowDetail.ivrJourney.length - 1]
     : undefined
+  const routeMenuName = accessMenuName ?? finalIvrStep?.nodeName
+  const routeMenuAriaLabel = accessMenuName
+    ? `${accessMenuLabel}: ${accessMenuName}`
+    : routeMenuName
+      ? `Last IVR menu: ${routeMenuName}`
+      : ''
   const verificationChannelType = getVerificationChannelType(
     customer,
     bankAppPinVerificationStatus,
@@ -433,18 +443,18 @@ export function CustomerInformationCard({
           />
         }
         accessRouteHintNode={
-          finalIvrStep ? (
+          routeMenuName ? (
             <>
               <ApartmentOutlined />
               <span className="aicc-customer-info__route-label">
                 Menu
               </span>
               <span
-                aria-label={`Last IVR menu: ${finalIvrStep.nodeName}`}
+                aria-label={routeMenuAriaLabel}
                 className="aicc-customer-info__route-value"
-                title={`Last IVR menu: ${finalIvrStep.nodeName}`}
+                title={routeMenuAriaLabel}
               >
-                {finalIvrStep.nodeName}
+                {routeMenuName}
               </span>
             </>
           ) : undefined
@@ -513,6 +523,8 @@ export function CustomerInformationCard({
         />
       </BaseModal>
       <CallFlowDetailModal
+        accessMenuLabel={accessMenuLabel}
+        accessMenuName={accessMenuName}
         open={isCallFlowOpen}
         showIvrJourney={shouldShowIvrJourney}
         onClose={() => setIsCallFlowOpen(false)}
