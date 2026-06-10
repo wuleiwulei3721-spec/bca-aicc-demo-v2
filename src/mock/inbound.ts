@@ -285,7 +285,8 @@ export const liveChat2Sessions: LiveChat2Session[] = [
       {
         id: 'livechat2-001-history-1',
         kind: 'text',
-        message: 'The debit card was locked after a fraud alert confirmation.',
+        message:
+          'Customer reported a blocked debit card after three incorrect PIN attempts at an ATM.',
         sender: 'customer',
         senderName: 'Dimas Abimanyu Prabowo',
         time: '13:42',
@@ -294,7 +295,8 @@ export const liveChat2Sessions: LiveChat2Session[] = [
       {
         id: 'livechat2-001-history-2',
         kind: 'text',
-        message: 'I checked the fraud note and routed the case to card support.',
+        message:
+          'I confirmed the card is active and routed the case to Card Services for unblock authorization.',
         sender: 'agent',
         senderName: 'Rina Putri',
         time: '13:45',
@@ -312,8 +314,9 @@ export const liveChat2Sessions: LiveChat2Session[] = [
     ],
     initialStarColor: 'yellow',
     initialUnansweredSeconds: 38,
-    intent: 'Card unlock',
-    lastMessage: 'Can I use the card again today?',
+    intent: 'Debit card unblock',
+    lastMessage:
+      'Please help. I need to withdraw cash before my travel this afternoon.',
     lastMessageAt: '2026-05-27T14:32:00+08:00',
     lastMessageTime: '14:32',
     messages: [
@@ -321,7 +324,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         id: 'livechat2-001-message-1',
         kind: 'system',
         message:
-          'Welcome. If you do not reply for 5 minutes, the conversation may be closed automatically.',
+          'Welcome to BANK 1. If you do not reply for 5 minutes, this conversation may be closed automatically.',
         sender: 'system',
         senderName: 'System',
         time: '14:28',
@@ -330,7 +333,8 @@ export const liveChat2Sessions: LiveChat2Session[] = [
       {
         id: 'livechat2-001-message-2',
         kind: 'text',
-        message: 'My debit card is still blocked after verification.',
+        message:
+          'Hi BANK 1, my debit card is blocked after I changed my PIN.',
         sender: 'customer',
         senderName: 'Dimas Abimanyu Prabowo',
         time: '14:30',
@@ -340,7 +344,8 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         id: 'livechat2-001-message-3',
         isCurrentAgent: true,
         kind: 'text',
-        message: 'I will validate the fraud hold and card status first.',
+        message:
+          'I will verify your card status and submit the unblock request after authentication.',
         sender: 'agent',
         senderName: 'Nadia Putri',
         time: '14:31',
@@ -349,7 +354,8 @@ export const liveChat2Sessions: LiveChat2Session[] = [
       {
         id: 'livechat2-001-message-4',
         kind: 'text',
-        message: 'Can I use the card again today?',
+        message:
+          'Please help. I need to withdraw cash before my travel this afternoon.',
         sender: 'customer',
         senderName: 'Dimas Abimanyu Prabowo',
         time: '14:32',
@@ -389,7 +395,8 @@ export const liveChat2Sessions: LiveChat2Session[] = [
       {
         id: 'livechat2-002-history-1',
         kind: 'text',
-        message: 'I cannot sign in to mobile banking after changing my phone.',
+        message:
+          'I changed to a new phone and cannot complete mobile banking sign-in.',
         sender: 'customer',
         senderName: 'Sari Amelia',
         time: '13:58',
@@ -398,7 +405,8 @@ export const liveChat2Sessions: LiveChat2Session[] = [
       {
         id: 'livechat2-002-history-2',
         kind: 'text',
-        message: 'Please prepare your ID number and registered phone number.',
+        message:
+          'Please keep your registered mobile number ready for verification.',
         sender: 'agent',
         senderName: 'Maya Lestari',
         time: '14:00',
@@ -407,15 +415,17 @@ export const liveChat2Sessions: LiveChat2Session[] = [
     ],
     initialStarColor: 'red',
     initialUnansweredSeconds: 76,
-    intent: 'Mobile banking login',
-    lastMessage: 'The reset page still says my device is not recognized.',
+    intent: 'Mobile banking device binding',
+    lastMessage:
+      'Can you keep my account access secure while you reset the device?',
     lastMessageAt: '2026-05-27T14:34:00+08:00',
     lastMessageTime: '14:34',
     messages: [
       {
         id: 'livechat2-002-message-1',
         kind: 'text',
-        message: 'I forgot my mobile banking password this morning.',
+        message:
+          'The BANK 1 app says this device is not registered to my account.',
         sender: 'customer',
         senderName: 'Sari Amelia',
         time: '14:24',
@@ -426,7 +436,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         isCurrentAgent: true,
         kind: 'text',
         message:
-          'I sent the password reset guide to your registered number. Please try it once.',
+          'I can help reset the device binding after we complete verification.',
         sender: 'agent',
         senderName: 'Nadia Putri',
         time: '14:27',
@@ -435,14 +445,15 @@ export const liveChat2Sessions: LiveChat2Session[] = [
       {
         id: 'livechat2-002-message-3',
         kind: 'text',
-        message: 'The reset page still says my device is not recognized.',
+        message:
+          'Can you keep my account access secure while you reset the device?',
         sender: 'customer',
         senderName: 'Sari Amelia',
         time: '14:34',
         timestamp: '2026-05-27T14:34:00+08:00',
       },
     ],
-    queueName: 'Digital Banking',
+    queueName: 'Digital Banking Support',
     serviceStartedAt: '14:24',
     status: 'active',
     unreadCount: 10,
@@ -469,7 +480,8 @@ export const liveChat2Sessions: LiveChat2Session[] = [
       {
         id: 'livechat2-003-history-1',
         kind: 'text',
-        message: 'The guest opened a product information page before webchat.',
+        message:
+          'Guest opened the priority banking appointment page before starting webchat.',
         sender: 'system',
         senderName: 'System',
         time: '14:05',
@@ -478,15 +490,16 @@ export const liveChat2Sessions: LiveChat2Session[] = [
     ],
     initialStarColor: 'gray',
     initialUnansweredSeconds: 132,
-    intent: 'Branch appointment',
-    lastMessage: 'Can I book an appointment for priority banking?',
+    intent: 'Priority branch appointment',
+    lastMessage:
+      'Can I book an appointment at the nearest priority branch this week?',
     lastMessageAt: '2026-05-27T14:35:00+08:00',
     lastMessageTime: '14:35',
     messages: [
       {
         id: 'livechat2-003-message-1',
         kind: 'text',
-        message: 'Hello, I am browsing from the website.',
+        message: 'Hello, I am browsing from the BANK 1 website.',
         sender: 'customer',
         senderName: 'Guest-20418',
         time: '14:31',
@@ -504,14 +517,15 @@ export const liveChat2Sessions: LiveChat2Session[] = [
       {
         id: 'livechat2-003-message-3',
         kind: 'text',
-        message: 'Can I book an appointment for priority banking?',
+        message:
+          'Can I book an appointment at the nearest priority branch this week?',
         sender: 'customer',
         senderName: 'Guest-20418',
         time: '14:35',
         timestamp: '2026-05-27T14:35:00+08:00',
       },
     ],
-    queueName: 'Branch Service',
+    queueName: 'Branch Appointment',
     serviceStartedAt: '14:31',
     status: 'active',
     unreadCount: 99,
@@ -539,7 +553,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         id: 'livechat2-004-history-1',
         kind: 'file',
         fileName: 'statement-dispute.pdf',
-        message: 'Statement dispute attachment',
+        message: 'Credit card statement attachment',
         sender: 'customer',
         senderName: 'Andika Saputra',
         time: '14:12',
@@ -548,15 +562,16 @@ export const liveChat2Sessions: LiveChat2Session[] = [
     ],
     initialStarColor: 'blue',
     initialUnansweredSeconds: null,
-    intent: 'Credit card installment',
-    lastMessage: 'Thank you, I will wait for the adjustment result.',
+    intent: 'Credit card installment conversion',
+    lastMessage: 'Thank you, please send the installment confirmation to me.',
     lastMessageAt: '2026-05-27T14:21:00+08:00',
     lastMessageTime: '14:21',
     messages: [
       {
         id: 'livechat2-004-message-1',
         kind: 'text',
-        message: 'I see an installment fee difference on my statement.',
+        message:
+          'I want to convert this credit card transaction into installments.',
         sender: 'customer',
         senderName: 'Andika Saputra',
         time: '14:14',
@@ -567,7 +582,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         isCurrentAgent: true,
         kind: 'text',
         message:
-          'I have registered the adjustment request and attached your statement.',
+          'I have checked the eligible transaction and registered the installment request.',
         sender: 'agent',
         senderName: 'Nadia Putri',
         time: '14:20',
@@ -576,14 +591,14 @@ export const liveChat2Sessions: LiveChat2Session[] = [
       {
         id: 'livechat2-004-message-3',
         kind: 'text',
-        message: 'Thank you, I will wait for the adjustment result.',
+        message: 'Thank you, please send the installment confirmation to me.',
         sender: 'customer',
         senderName: 'Andika Saputra',
         time: '14:21',
         timestamp: '2026-05-27T14:21:00+08:00',
       },
     ],
-    queueName: 'Credit Card',
+    queueName: 'Credit Card Services',
     serviceStartedAt: '14:14',
     status: 'active',
     unreadCount: 0,
@@ -611,7 +626,8 @@ export const liveChat2Sessions: LiveChat2Session[] = [
       {
         id: 'livechat2-005-history-1',
         kind: 'text',
-        message: 'Customer authenticated through BankApp before chat routing.',
+        message:
+          'Customer authenticated through BANK 1 mobile app before chat routing.',
         sender: 'system',
         senderName: 'System',
         time: '14:18',
@@ -620,15 +636,16 @@ export const liveChat2Sessions: LiveChat2Session[] = [
     ],
     initialStarColor: 'gray',
     initialUnansweredSeconds: null,
-    intent: 'Card delivery status',
-    lastMessage: 'This user has ended the session.',
+    intent: 'Replacement card delivery',
+    lastMessage: 'Customer ended the conversation after receiving delivery status.',
     lastMessageAt: '2026-05-27T14:39:25+08:00',
     lastMessageTime: '14:39',
     messages: [
       {
         id: 'livechat2-005-message-1',
         kind: 'text',
-        message: 'I want to check whether my replacement card has been sent.',
+        message:
+          'I want to check whether my replacement debit card has been delivered.',
         sender: 'customer',
         senderName: 'Lina Nuraini',
         time: '14:36',
@@ -638,7 +655,8 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         id: 'livechat2-005-message-2',
         isCurrentAgent: true,
         kind: 'text',
-        message: 'I am checking the delivery record now.',
+        message:
+          'I am checking the courier status and registered delivery address now.',
         sender: 'agent',
         senderName: 'Nadia Putri',
         time: '14:38',
@@ -647,7 +665,8 @@ export const liveChat2Sessions: LiveChat2Session[] = [
       {
         id: 'livechat2-005-message-3',
         kind: 'system',
-        message: 'This user has ended the session.',
+        message:
+          'Customer ended the conversation after receiving delivery status.',
         sender: 'system',
         senderName: 'System',
         time: '14:39',
@@ -680,16 +699,16 @@ export const liveChat2Sessions: LiveChat2Session[] = [
     historyMessages: [],
     initialStarColor: 'gray',
     initialUnansweredSeconds: null,
-    intent: 'Loan repayment',
+    intent: 'Paylater repayment schedule',
     isInitialHistory: true,
-    lastMessage: 'The repayment schedule has been sent.',
+    lastMessage: 'The updated repayment schedule has been sent.',
     lastMessageAt: '2026-05-27T13:52:00+08:00',
     lastMessageTime: '13:52',
     messages: [
       {
         id: 'livechat2-history-001-message-1',
         kind: 'text',
-        message: 'Please help me check my loan repayment schedule.',
+        message: 'Please help me check my BANK 1 Paylater repayment schedule.',
         sender: 'customer',
         senderName: 'Raka Aditya',
         time: '13:42',
@@ -699,14 +718,14 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         id: 'livechat2-history-001-message-2',
         isCurrentAgent: true,
         kind: 'text',
-        message: 'The repayment schedule has been sent.',
+        message: 'The updated repayment schedule has been sent.',
         sender: 'agent',
         senderName: 'Nadia Putri',
         time: '13:52',
         timestamp: '2026-05-27T13:52:00+08:00',
       },
     ],
-    queueName: 'Loan Service',
+    queueName: 'Paylater Support',
     serviceStartedAt: '13:42',
     status: 'ended',
     unreadCount: 0,

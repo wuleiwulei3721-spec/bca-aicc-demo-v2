@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-09 19:36 +08:00
+最后更新：2026-06-10 10:08 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,45 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-10 10:08 +08:00 - 调整正式 Live Chat 客户预览文案
+
+修改页面或文件：
+
+- `src/mock/inbound.ts`
+- `src/pages/inbound/components/liveChat2QuickReplies.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-10-1008.md`
+- `.codex-backup/current-todo-2026-06-10-1008.md`
+- `.codex-backup/page-state-2026-06-10-1008.md`
+
+修改原因：
+
+- 用户需要调整文字弹屏，也就是正式 `Live Chat` 页面内容，并通过 Vercel Preview 发布给客户查看。
+- 当前 `codex/admin-config-latest` 有内部管理分支改动且不适合直接发布，因此本轮从干净 `main` worktree 创建客户预览分支 `codex/livechat-copy-update`。
+
+修改结果：
+
+- `liveChat2Sessions` 更新为客户预览版脱敏银行演示场景，覆盖 WhatsApp 卡片解锁、Haloapps 设备绑定、Webchat 网点预约、信用卡分期、补卡配送和 Paylater 还款历史。
+- Quick Replies 默认短语更新为 BANK 1 客服检查记录、提交服务请求、建单跟进、验证和安全提醒口径。
+- 未修改旧版 `LiveChatPage.tsx`、路由、store、类型或内部管理分支 `codex/admin-config-latest`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仅保留既有 Vite chunk size warning 和 plugin timing 提示。
+- `git diff --check` 通过。
+- 本地 Chrome CDP smoke check 通过：`/login` 使用 `888888 / 888888` 登录，右上角选择 `Voice + Digital` 后打开正式 `Live Chat`；默认 Current 客户展示新的卡片解锁和客户主动结束话术；Quick Replies 展示新的 BANK 1 客服与安全提醒短语；Message Record 侧栏可打开；页面未显示 `Routing Config`。
+
+回滚说明：
+
+- 可按文件恢复 `src/mock/inbound.ts` 与 `src/pages/inbound/components/liveChat2QuickReplies.ts` 中本轮文案改动；无需数据库迁移或类型回滚。
+
+当前风险点：
+
+- 本轮由 AI 根据客户预览目标拟定演示文案，仍需客户最终确认业务语气、语言口径和具体场景是否符合实际演示。
 
 ### 2026-06-09 19:36 +08:00 - 强化 Log Out 确认按钮 hover 样式
 

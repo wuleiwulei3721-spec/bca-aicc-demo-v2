@@ -766,3 +766,11 @@
 - 系统级 `Log Out` 使用 Header 右上角独立红色电源按钮，不放在头像状态下拉中；点击后必须二次确认，确认后清除 auth session 并返回 `/login`；按钮尺寸应与旁边状态下拉按钮一致。
 - `Confirm Log Out` 弹框里的 `Log Out` 按钮 hover/focus 必须有明显反馈；当前使用专用 `aicc-logout-confirm__ok` class 加深红色、阴影、光晕和轻微上移，不影响其它确认弹框。
 - 媒体技能采用轻量拦截，不隐藏菜单：`Voice only` 阻止 Live Chat handoff 并展示明确 warning；`Digital only` 阻止 PSTN / Voice / Video handoff；`Voice + Digital` 允许全部现有 demo 流程。
+
+## 2026-06-10 Live Chat 客户预览文案
+
+- 本轮从干净 `main` worktree 创建 `codex/livechat-copy-update`，用于 Vercel Preview 给客户查看，不从内部管理分支 `codex/admin-config-latest` 发布。
+- 正式文字弹屏只调整新版 `LiveChat2Page` 读取的内容数据，不修改旧版 `LiveChatPage.tsx`、路由、store 或类型。
+- `liveChat2Sessions` 的客户预览场景包括：WhatsApp 卡片解锁、Haloapps 设备绑定、Webchat 网点预约、信用卡分期、补卡配送和 Paylater 还款历史。
+- Quick Replies 默认短语使用 BANK 1 客服口径，覆盖检查记录、提交服务请求、建单跟进、客户验证和“不要分享 OTP/PIN/CVV/密码/完整卡号”的安全提醒。
+- 本轮文案为脱敏 demo 数据，仍需客户确认最终业务语气、英文/印尼语混合策略和是否要替换为客户指定脚本。

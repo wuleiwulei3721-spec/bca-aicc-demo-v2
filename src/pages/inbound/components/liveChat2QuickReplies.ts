@@ -29,17 +29,17 @@ export const defaultLiveChat2QuickReplyGroups: LiveChat2QuickReplyGroup[] = [
       {
         code: 'aa',
         id: 'my-aa',
-        text: 'Thank you for waiting. I am checking the latest record now.',
+        text: 'Thank you for waiting. I am checking your latest BANK 1 record now.',
       },
       {
         code: 'ac',
         id: 'my-ac',
-        text: 'I have submitted the request. Please wait for confirmation.',
+        text: 'I have submitted the service request. Please keep this chat open for confirmation.',
       },
       {
         code: 'ae',
         id: 'my-ae',
-        text: 'The ticket has been created and will be followed up by the related team.',
+        text: 'Your case has been recorded. The related team will follow up through your registered contact.',
       },
     ],
   },
@@ -51,7 +51,7 @@ export const defaultLiveChat2QuickReplyGroups: LiveChat2QuickReplyGroup[] = [
       {
         code: 'ab',
         id: 'public-ab',
-        text: 'Please provide your registered mobile number for verification.',
+        text: 'For verification, please confirm your registered mobile number and date of birth.',
       },
     ],
   },
@@ -63,12 +63,12 @@ export const defaultLiveChat2QuickReplyGroups: LiveChat2QuickReplyGroup[] = [
       {
         code: 'ad',
         id: 'public-ad',
-        text: 'For your security, please do not share OTP or PIN in this chat.',
+        text: 'For your security, never share OTP, PIN, CVV, password, or full card number in this chat.',
       },
       {
         code: 'af',
         id: 'public-af',
-        text: 'Is there anything else I can help you with today?',
+        text: 'I can help with one more request before we close this conversation.',
       },
     ],
   },
