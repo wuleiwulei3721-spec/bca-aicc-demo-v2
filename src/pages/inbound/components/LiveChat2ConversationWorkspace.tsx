@@ -19,6 +19,7 @@ import {
   WhatsAppOutlined,
 } from '@ant-design/icons'
 import { DatePicker, Input } from 'antd'
+import type { InputRef } from 'antd'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { BaseButton, BaseModal } from '../../../components'
@@ -247,6 +248,7 @@ export function LiveChat2MessageRecordPanel({
     activeFilterState
   const appliedKeyword = appliedFilters.keyword.trim()
   const recordNodeRefs = useRef<Record<string, HTMLElement | null>>({})
+  const searchInputRef = useRef<InputRef>(null)
   const [locatedRecordRequest, setLocatedRecordRequest] = useState<{
     messageId: string
     requestId: number
@@ -318,7 +320,11 @@ export function LiveChat2MessageRecordPanel({
       behavior: 'smooth',
       block: 'center',
     })
-    targetNode.focus({ preventScroll: true })
+    window.setTimeout(() => {
+      searchInputRef.current?.focus({
+        cursor: 'end',
+      })
+    }, 0)
   }, [locatedRecordRequest, matchedRecordMessages])
 
   return (
@@ -345,6 +351,7 @@ export function LiveChat2MessageRecordPanel({
               return
             }
 
+            setLocatedRecordRequest(null)
             setFilterState((current) => ({
               ...activeFilterState,
               draftFilters: {
@@ -362,9 +369,11 @@ export function LiveChat2MessageRecordPanel({
           aria-label="Search message record"
           placeholder="Search messages"
           prefix={<SearchOutlined />}
+          ref={searchInputRef}
           size="small"
           value={draftFilters.keyword}
-          onChange={(event) =>
+          onChange={(event) => {
+            setLocatedRecordRequest(null)
             setFilterState((current) => ({
               ...activeFilterState,
               draftFilters: {
@@ -375,7 +384,7 @@ export function LiveChat2MessageRecordPanel({
               },
               latestMessageTimestamp,
             }))
-          }
+          }}
         />
         <BaseButton htmlType="submit" size="small" type="primary" variant="primary">
           Search

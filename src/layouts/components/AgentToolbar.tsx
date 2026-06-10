@@ -13,6 +13,7 @@ import type { MenuProps } from 'antd'
 import { useEffect, useState } from 'react'
 import { PhoneIcon, ToolbarButton } from '../../components'
 import type { AgentStatus, CallStatus } from '../../types'
+import { formatDuration } from '../../utils/duration'
 import { OutboundCallModal } from './OutboundCallModal'
 import { ToolbarSettingsModal } from './ToolbarSettingsModal'
 import { TransferModal } from './TransferModal'
@@ -38,13 +39,6 @@ interface AgentToolbarProps {
   onMuteToggle: () => void
   onReadyToggle: () => void
   onToolbarDisplayModeChange: (displayMode: ToolbarDisplayMode) => void
-}
-
-function formatDuration(totalSeconds: number) {
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
-
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
 export function AgentToolbar({

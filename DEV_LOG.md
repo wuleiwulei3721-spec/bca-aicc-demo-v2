@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-10 14:53 +08:00
+最后更新：2026-06-10 16:03 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,46 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-10 16:03 +08:00 - 修复话务条长时计时和 Message Record 二次搜索
+
+修改页面或文件：
+
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-10-1603.md`
+- `.codex-backup/current-todo-2026-06-10-1603.md`
+- `.codex-backup/page-state-2026-06-10-1603.md`
+
+修改原因：
+
+- 客户反馈话务条通话计时出现 `969:32` 这类累计分钟格式，要求按 `mm:ss / hh:mm:ss` 展示。
+- 用户反馈正式 Live Chat 历史消息 Message Record 第一次搜索并 Locate 后，搜索框无法继续输入第二次搜索。
+
+修改结果：
+
+- `AgentToolbar` 移除组件内本地 `formatDuration()`，统一复用 `src/utils/duration.ts` 的共享 formatter：小于 1 小时显示 `mm:ss`，达到 1 小时后显示 `hh:mm:ss`。
+- Message Record `Locate` 后不再把焦点留在记录 article 上，定位滚动完成后把焦点返回搜索框。
+- 用户在搜索框再次输入或调整日期范围时，会清理上一条 located 高亮，第二次搜索可正常刷新结果。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过，仅保留既有 Vite chunk size warning。
+- 本地源码函数验证：`0 -> 00:00`、`3599 -> 59:59`、`3600 -> 01:00:00`、`58172 -> 16:09:32`。
+- 本地 Chrome/CDP smoke check 通过：Message Record 搜索 `Customer reported` 后 Locate，搜索框值清空且保持 focus；再输入 `authentication` 可正常搜索，结果刷新为 1 条，旧 located 高亮清除，Conversation 不出现 located class。
+
+回滚说明：
+
+- 如需回滚计时格式，恢复 `AgentToolbar.tsx` 的本地 formatter 即可，但会重新引入累计分钟风险。
+- 如需回滚二次搜索修复，恢复 Message Record 对 article 的 focus 行为即可，但会重新出现搜索框焦点问题。
+
+当前风险点：
+
+- 当前仅修复前端展示格式；若后端或其它系统传入已格式化的累计分钟字符串，仍需在数据入口统一转换。
 
 ### 2026-06-10 14:53 +08:00 - 细化 Live Chat 记录定位、菜单详情和角标位置
 

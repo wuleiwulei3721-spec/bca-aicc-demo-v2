@@ -1,6 +1,6 @@
 ﻿# Key Prompts
 
-最后更新：2026-06-10 14:53 +08:00
+最后更新：2026-06-10 16:03 +08:00
 
 ## 项目方向
 
@@ -53,6 +53,8 @@
 - Haloapps Menu 弹框不显示 `Single-level menu`，只展示完整一级菜单名。
 - 文字渠道接入详情也要展示类似电话弹屏的坐席记录 / Transfer History。
 - Live Chat tab 未读角标不能被裁剪，也不能遮挡 `(00:xx)` 计时。
+- 话务条通话计时是 duration，文档口径应写 `mm:ss / hh:mm:ss`：小于 1 小时显示 `mm:ss`，达到 1 小时后显示 `hh:mm:ss`，不能显示累计分钟格式如 `969:32`。
+- Message Record 第一次搜索并 Locate 后，搜索框必须可继续输入第二个关键词；再次输入时清理旧 located 高亮。
 
 ## 功能弹窗
 
