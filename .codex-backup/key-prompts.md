@@ -809,3 +809,11 @@
 - 关闭/结束默认客户后，同一签入周期内只允许通过真实 Channel Simulation handoff 或重新签入再次出现客户，不自动回补默认客户。
 - 媒体 `Sign Out` 和系统 `Log Out` 都必须在没有当前客户服务时才允许继续二次确认；存在 active call、voice/video 或 active Live Chat session 时显示阻断提示。
 - 阻断发生在点击动作时，不隐藏菜单或按钮；提示文案使用 `Active Service in Progress`，要求坐席先 finish / close 当前客户服务。
+
+## 2026-06-11 主线整合与管理菜单环境开关
+
+- 客户版和工程人员内部版不应长期维护为两套分叉代码。
+- 新的整合方向是一套主线代码，通过 `VITE_ENABLE_ADMIN_MENUS` 控制 `Call Management` / `Routing Config` 是否可见和可直达。
+- 客户 Production 默认 `VITE_ENABLE_ADMIN_MENUS=false` 或不设置，管理菜单隐藏，`/call-management/*` 和 `/routing-config/*` 回到 `/`。
+- 工程人员本地 `.env.local` 设置 `VITE_ENABLE_ADMIN_MENUS=true`，可打开 Verification Rules、Global Control Configuration、Busy Reasons、Text Channel Settings 和完整 Routing Config。
+- 整合时必须保留 `main` 的登录鉴权、服务模式签入、话务条、状态机、Live Chat 默认接入与退出保护；不能为了打开 Routing Config 回退客户工作台能力。

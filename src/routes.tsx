@@ -1,12 +1,125 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { PublicLoginRoute, RequireAuth } from './components/AuthRouteGuards'
+import { featureFlags } from './config/featureFlags'
 import {
   AgentWorkspace,
   BusyReasonManagementPage,
+  BusinessTypesPage,
+  ChannelsPage,
   DesignSystem,
+  GlobalControlConfigurationPage,
+  RoutingConfigurationPage,
+  SitesPage,
+  SiteAccessVolumePage,
+  SkillQueuesPage,
+  SkillRoutingRulesPage,
   TextChannelSettingsPage,
   VerificationRulesPage,
+  VdnPage,
+  WorkingTimePlansPage,
 } from './pages'
+
+const adminRoutes = featureFlags.enableAdminMenus
+  ? [
+      {
+        path: 'call-management',
+        element: <Navigate replace to="/call-management/verification-rules" />,
+      },
+      {
+        path: 'call-management/verification-rules',
+        element: <VerificationRulesPage />,
+      },
+      {
+        path: 'call-management/routing-configuration',
+        element: <RoutingConfigurationPage />,
+      },
+      {
+        path: 'call-management/global-control-configuration',
+        element: <GlobalControlConfigurationPage />,
+      },
+      {
+        path: 'call-management/busy-reasons',
+        element: <BusyReasonManagementPage />,
+      },
+      {
+        path: 'call-management/text-channel-settings',
+        element: <TextChannelSettingsPage />,
+      },
+      {
+        path: 'call-management/*',
+        element: <Navigate replace to="/call-management/verification-rules" />,
+      },
+      {
+        path: 'routing-config',
+        element: <Navigate replace to="/routing-config/channels" />,
+      },
+      {
+        path: 'routing-config/route-elements',
+        element: <Navigate replace to="/routing-config/channels" />,
+      },
+      {
+        path: 'routing-config/vdn',
+        element: <VdnPage />,
+      },
+      {
+        path: 'routing-config/sites',
+        element: <SitesPage />,
+      },
+      {
+        path: 'routing-config/channel-types',
+        element: <Navigate replace to="/routing-config/channels" />,
+      },
+      {
+        path: 'routing-config/channels',
+        element: <ChannelsPage />,
+      },
+      {
+        path: 'routing-config/media-service-rule-plans',
+        element: <Navigate replace to="/routing-config/channels" />,
+      },
+      {
+        path: 'routing-config/business-types',
+        element: <BusinessTypesPage />,
+      },
+      {
+        path: 'routing-config/skill-queues',
+        element: <SkillQueuesPage />,
+      },
+      {
+        path: 'routing-config/access-accounts',
+        element: <Navigate replace to="/routing-config/channels" />,
+      },
+      {
+        path: 'routing-config/site-access-volume',
+        element: <SiteAccessVolumePage />,
+      },
+      {
+        path: 'routing-config/skill-routing-rules',
+        element: <SkillRoutingRulesPage />,
+      },
+      {
+        path: 'routing-config/working-time-plans',
+        element: <WorkingTimePlansPage />,
+      },
+    ]
+  : [
+      {
+        path: 'call-management',
+        element: <Navigate replace to="/" />,
+      },
+      {
+        path: 'call-management/*',
+        element: <Navigate replace to="/" />,
+      },
+      {
+        path: 'routing-config',
+        element: <Navigate replace to="/" />,
+      },
+      {
+        path: 'routing-config/*',
+        element: <Navigate replace to="/" />,
+      },
+    ]
 
 export const router = createBrowserRouter([
   {
@@ -25,34 +138,7 @@ export const router = createBrowserRouter([
         path: 'design-system',
         element: <DesignSystem />,
       },
-      {
-        path: 'call-management',
-        element: <Navigate replace to="/call-management/verification-rules" />,
-      },
-      {
-        path: 'call-management/verification-rules',
-        element: <VerificationRulesPage />,
-      },
-      {
-        path: 'call-management/text-channel-settings',
-        element: <TextChannelSettingsPage />,
-      },
-      {
-        path: 'call-management/busy-reasons',
-        element: <BusyReasonManagementPage />,
-      },
-      {
-        path: 'call-management/*',
-        element: <Navigate replace to="/call-management/verification-rules" />,
-      },
-      {
-        path: 'routing-config',
-        element: <Navigate replace to="/" />,
-      },
-      {
-        path: 'routing-config/*',
-        element: <Navigate replace to="/" />,
-      },
+      ...adminRoutes,
       {
         path: '*',
         element: <Navigate replace to="/" />,

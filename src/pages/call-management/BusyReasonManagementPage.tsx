@@ -114,8 +114,9 @@ export function BusyReasonManagementPage() {
     }
 
     const errors: string[] = []
+    const trimmedName = draft.busyReasonName.trim()
 
-    if (!draft.busyReasonName.trim()) {
+    if (!trimmedName) {
       errors.push('Busy Reason is required.')
     }
 
@@ -192,7 +193,7 @@ export function BusyReasonManagementPage() {
     {
       dataIndex: 'busyReasonName',
       title: 'Busy Reason',
-      width: 190,
+      width: 180,
     },
     {
       dataIndex: 'isDefault',
@@ -356,12 +357,12 @@ export function BusyReasonManagementPage() {
             />
           )}
           {draft && (
-            <div className="routing-config-crud-modal__form">
-              <label className="routing-config-crud-modal__field">
+            <div className="busy-reason-config__modal-grid">
+              <label className="global-control-config__field">
                 <span>ID</span>
                 <em>{draft.busyReasonId}</em>
               </label>
-              <label className="routing-config-crud-modal__field">
+              <label className="global-control-config__field">
                 <span>
                   Busy Reason <strong>*</strong>
                 </span>
@@ -372,9 +373,9 @@ export function BusyReasonManagementPage() {
                   }
                 />
               </label>
-              <label className="routing-config-crud-modal__field">
+              <label className="global-control-config__field">
                 <span>Default</span>
-                <span className="routing-config-crud-modal__switch-row">
+                <span className="busy-reason-config__switch-row">
                   <Switch
                     checked={draft.isDefault}
                     size="small"
@@ -383,9 +384,9 @@ export function BusyReasonManagementPage() {
                   <em>{draft.isDefault ? 'Yes' : 'No'}</em>
                 </span>
               </label>
-              <label className="routing-config-crud-modal__field">
+              <label className="global-control-config__field">
                 <span>Status</span>
-                <span className="routing-config-crud-modal__switch-row">
+                <span className="busy-reason-config__switch-row">
                   <Switch
                     checked={draft.status === 'Active'}
                     size="small"
@@ -396,7 +397,7 @@ export function BusyReasonManagementPage() {
                   <em>{draft.status === 'Active' ? 'Enabled' : 'Disabled'}</em>
                 </span>
               </label>
-              <label className="routing-config-crud-modal__field routing-config-crud-modal__field--full">
+              <label className="global-control-config__field busy-reason-config__field--full">
                 <span>Remark</span>
                 <Input.TextArea
                   rows={3}
@@ -404,11 +405,11 @@ export function BusyReasonManagementPage() {
                   onChange={(event) => updateDraft('remark', event.target.value)}
                 />
               </label>
-              <label className="routing-config-crud-modal__field">
+              <label className="global-control-config__field">
                 <span>Updated Date</span>
                 <em>{draft.updatedAt}</em>
               </label>
-              <label className="routing-config-crud-modal__field">
+              <label className="global-control-config__field">
                 <span>Updated By</span>
                 <em>{draft.updatedBy}</em>
               </label>

@@ -1,7 +1,7 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-10 18:49 +08:00
-项目路径：`D:\03projects\bca-aicc-demo-v2-main-fix`
+最后更新：2026-06-11 11:00 +08:00
+项目路径：`D:\03projects\bca-aicc-demo-v2-integration`
 
 ## 记录规则
 
@@ -17,6 +17,70 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-11 11:00 +08:00 - 主线整合内部管理能力与环境开关
+
+修改页面或文件：
+
+- `.gitignore`
+- `.env.example`
+- `.env.local`（本地忽略文件）
+- `src/config/featureFlags.ts`
+- `src/routes.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/call-management/index.ts`
+- `src/pages/call-management/BusyReasonManagementPage.tsx`
+- `src/pages/call-management/GlobalControlConfigurationPage.tsx`
+- `src/pages/routing-config/*`
+- `src/mock/globalControlConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `src/store/routingConfigStore.ts`
+- `src/types/globalControlConfiguration.ts`
+- `src/types/routingConfiguration.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-11-1100.md`
+- `.codex-backup/current-todo-2026-06-11-1100.md`
+- `.codex-backup/page-state-2026-06-11-1100.md`
+
+修改原因：
+
+- 用户确认客户版与工程人员版除管理入口外应保持同一套功能，不能继续让 `main` 和 `codex/admin-config-latest` 长期分叉。
+- 需要把 `main` 的登录、话务状态机、Live Chat 退出保护等客户功能与内部 Routing Config / Call Management 能力整合为同一主线候选，并通过环境变量控制客户可见性。
+
+修改结果：
+
+- 新建 integration worktree：`D:\03projects\bca-aicc-demo-v2-integration`，分支 `codex/admin-config-mainline-integration`，基于 `origin/main`。
+- 合入 `codex/admin-config-latest` 的内部管理页面和 mock/store/type 改造。
+- 保留 `main` 的 `/login`、`RequireAuth`、认证 store、服务模式签入、Sign Out / Log Out active service guard。
+- 新增 `src/config/featureFlags.ts`，通过 `VITE_ENABLE_ADMIN_MENUS` 控制管理菜单和直达路由。
+- `Call Management` 合并为：Verification Rules、Global Control Configuration、Text Channel Settings、Busy Reason Management。
+- `Routing Config` 保留内部管理页：VDN、Access Sites、Channels、Business Types、Skill Queues、Site Access Volume、Skill Routing Rules、Working Time Plans。
+- `VITE_ENABLE_ADMIN_MENUS=false` 或未设置时，`/call-management/*` 与 `/routing-config/*` 回到 `/`。
+- 本地 `.env.local` 设置 `VITE_ENABLE_ADMIN_MENUS=true`，用于工程人员查看管理入口；该文件被 Git 忽略。
+
+验证：
+
+- `npm ci` 通过，安装 237 个包，0 vulnerabilities。
+- `npm run lint` 通过。
+- `VITE_ENABLE_ADMIN_MENUS=false npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning 和 plugin timing 提示。
+- `git diff --check` 通过；仅输出既有 CRLF 工作区提示。
+- 本地 Chrome DevTools Protocol smoke check 通过：
+  - 客户安全 preview `http://127.0.0.1:5203/routing-config/channels` 在预置登录态后回到 `http://127.0.0.1:5203/`，页面不含 Channels / Routing Config / Call Management。
+  - 工程模式 dev `http://127.0.0.1:5204/routing-config/channels` 正常停留在 `/routing-config/channels` 并显示 Channels。
+  - 工程模式 dev `http://127.0.0.1:5204/call-management/global-control-configuration` 正常显示 Global Control Configuration。
+
+回滚说明：
+
+- 如需回滚整合，删除 integration worktree 和分支即可，不影响原 `main` worktree 和原 `codex/admin-config-latest` worktree。
+- 如只回滚 feature flag，可删除 `src/config/featureFlags.ts`，恢复 `routes.tsx` 和 `BasicLayout.tsx` 的固定菜单/路由逻辑，并删除 `.env.example` 与 `.gitignore` 中的 `!.env.example`。
+
+当前风险点：
+
+- 本分支是合线候选，已完成 lint/build 和核心路由 smoke；仍建议人工检查登录、签入、PSTN、Live Chat、Verification Rules、Channels 和 Global Control 的关键演示路径。
+- `VITE_ENABLE_ADMIN_MENUS` 是前端 demo 级可见性控制；真实系统仍需后端角色权限和接口权限。
 
 ### 2026-06-10 18:49 +08:00 - Live Chat 默认接入与签出/登出拦截优化
 

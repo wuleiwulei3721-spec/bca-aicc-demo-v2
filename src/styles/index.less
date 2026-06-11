@@ -2117,7 +2117,8 @@ a {
   font-weight: 700;
 }
 
-.verification-rules-page {
+.verification-rules-page,
+.global-control-config {
   display: flex;
   min-width: 0;
   flex-direction: column;
@@ -2213,6 +2214,131 @@ a {
 }
 
 .verification-rule-config-modal__switch-field em {
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.global-control-config__header-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.global-control-config__header-actions > span {
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.global-control-config__notice.ant-alert {
+  border-radius: var(--aicc-radius);
+}
+
+.global-control-config__notice ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.global-control-config__grid {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.global-control-config__row {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.global-control-config__row--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.global-control-config__field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.global-control-config__field > span {
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.global-control-config__field > span strong {
+  margin-left: 2px;
+  color: var(--aicc-danger);
+}
+
+.global-control-config__field .ant-select {
+  width: min(100%, 260px);
+}
+
+.global-control-config__field .ant-select-selector,
+.global-control-config__field .ant-input-number {
+  border-radius: var(--aicc-radius-sm);
+}
+
+.global-control-config__number-control {
+  display: inline-grid;
+  width: fit-content;
+  max-width: 100%;
+  grid-template-columns: 160px auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.global-control-config__number-control .ant-input-number {
+  width: 160px;
+}
+
+.global-control-config__number-control em {
+  color: var(--aicc-text-tertiary);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.busy-reason-config__modal-grid {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.busy-reason-config__field--full {
+  grid-column: 1 / -1;
+}
+
+.busy-reason-config__modal-grid .global-control-config__field > em {
+  min-height: 32px;
+  color: var(--aicc-text);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 650;
+  line-height: 20px;
+}
+
+.busy-reason-config__switch-row {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 8px;
+}
+
+.busy-reason-config__switch-row > em {
   color: var(--aicc-text-secondary);
   font-size: 12px;
   font-style: normal;
@@ -3016,6 +3142,133 @@ a {
   background: #f4f8ff;
 }
 
+.routing-config-channel-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.routing-config-channel-actions button {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius-sm);
+  color: var(--aicc-text-secondary);
+  background: #fff;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 22px;
+  white-space: nowrap;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.routing-config-channel-actions button:hover {
+  border-color: var(--aicc-primary);
+  color: var(--aicc-primary);
+  background: #f4f8ff;
+}
+
+.routing-config-tag-list,
+.routing-config-field-template-list {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.routing-config-tag-list .ant-tag,
+.routing-config-field-template-list .ant-tag {
+  margin: 0;
+  border-radius: var(--aicc-radius-sm);
+  font-size: 11px;
+}
+
+.routing-config-muted-text {
+  color: var(--aicc-text-tertiary);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.routing-config-channel-business {
+  display: flex;
+  max-height: min(68vh, 720px);
+  min-width: 0;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.routing-config-channel-business__work-time-control {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.routing-config-channel-business__work-time-control .aicc-button.ant-btn {
+  height: 32px;
+  min-height: 32px;
+  flex-shrink: 0;
+  padding-inline: 10px;
+}
+
+.routing-config-channel-accounts {
+  display: flex;
+  max-height: min(68vh, 620px);
+  min-width: 0;
+  max-width: 100%;
+  flex-direction: column;
+  gap: 12px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.routing-config-channel-accounts__toolbar {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.routing-config-channel-accounts__toolbar > strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--aicc-text);
+  font-size: 13px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routing-config-channel-accounts__toolbar .aicc-button.ant-btn {
+  flex-shrink: 0;
+}
+
+.routing-config-channel-account-table {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.routing-config-channel-account-table .ant-table-wrapper,
+.routing-config-channel-account-table .ant-table-container {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .routing-config-crud-modal__form {
   --routing-config-control-height: 32px;
 
@@ -3026,6 +3279,10 @@ a {
 
 .routing-config-crud-modal__form--compact {
   grid-template-columns: repeat(2, minmax(180px, 1fr));
+}
+
+.routing-config-crud-modal__form--custom {
+  display: block;
 }
 
 .routing-config-crud-modal__form > .ant-alert {
@@ -3161,6 +3418,10 @@ a {
   gap: 14px;
 }
 
+.routing-config-crud-modal__section-grid--account {
+  grid-template-columns: 1fr;
+}
+
 .routing-config-crud-modal__section {
   display: flex;
   min-width: 0;
@@ -3213,10 +3474,66 @@ a {
   min-height: var(--routing-config-control-height);
 }
 
+.routing-config-media-rule-modal__form {
+  --routing-config-control-height: 32px;
+
+  display: flex;
+  max-height: min(70vh, 760px);
+  min-width: 0;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.routing-config-media-rule-modal__section {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 12px;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius-sm);
+  background: #fff;
+  gap: 12px;
+}
+
+.routing-config-media-rule-modal__section header {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.routing-config-media-rule-modal__section header strong {
+  color: var(--aicc-text);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 18px;
+}
+
+.routing-config-media-rule-modal__basic-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.routing-config-media-rule-modal__description {
+  grid-column: span 2;
+}
+
 .routing-config-media-rule-modal__variables {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
+}
+
+.routing-config-media-rule-modal__variables > span {
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
 }
 
 .routing-config-media-rule-modal__variables .ant-tag {
@@ -3225,44 +3542,154 @@ a {
   font-size: 11px;
 }
 
-.routing-config-media-rule-modal__queue-alerts {
+.routing-config-media-rule-modal__field-heading {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.routing-config-media-rule-modal__queue-alert-head,
-.routing-config-media-rule-modal__queue-alert-row {
-  display: grid;
-  grid-template-columns: 140px 100px 170px minmax(220px, 1fr);
-  align-items: center;
+.routing-config-media-rule-modal__field-heading > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routing-config-media-rule-modal__variable-select {
+  width: auto;
+  height: 24px;
+  min-height: 24px;
+  flex: 0 0 auto;
+  padding: 0 22px 0 8px;
+  border: 1px solid #d7e4f5;
+  border-radius: var(--aicc-radius-sm);
+  color: var(--aicc-primary-strong);
+  background: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 22px;
+}
+
+.routing-config-media-rule-modal__subsections {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.routing-config-media-rule-modal__subsection {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 10px 12px;
+  border: 1px solid #edf2f8;
+  border-radius: var(--aicc-radius-sm);
+  background: #fbfdff;
   gap: 10px;
 }
 
-.routing-config-media-rule-modal__queue-alert-head {
+.routing-config-media-rule-modal__subsection h4 {
+  margin: 0;
   color: var(--aicc-text);
   font-size: 12px;
   font-weight: 800;
   line-height: 18px;
 }
 
-.routing-config-media-rule-modal__queue-alert-row strong {
-  color: var(--aicc-text);
-  font-size: 12px;
-  line-height: 18px;
+.routing-config-media-rule-modal__compact-row,
+.routing-config-media-rule-modal__full-row,
+.routing-config-media-rule-modal__paired-row {
+  display: grid;
+  min-width: 0;
+  align-items: start;
+  gap: 12px;
 }
 
-.routing-config-media-rule-modal__queue-alert-row .ant-input,
-.routing-config-media-rule-modal__queue-alert-row .ant-input-number,
-.routing-config-media-rule-modal__queue-alert-row .ant-input-number-group-wrapper {
-  height: var(--routing-config-control-height);
-  min-height: var(--routing-config-control-height);
+.routing-config-media-rule-modal__compact-row {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 170px));
+  justify-content: start;
+}
+
+.routing-config-media-rule-modal__full-row {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.routing-config-media-rule-modal__paired-row {
+  grid-template-columns: 160px minmax(0, 1fr);
+}
+
+.routing-config-media-rule-modal__number-field {
+  width: 160px;
+}
+
+.routing-config-media-rule-modal__number-control {
+  display: grid;
+  width: 160px;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.routing-config-media-rule-modal__number-control .ant-input-number {
   width: 100%;
 }
 
-.routing-config-media-rule-modal__queue-alert-row .ant-input-number-input {
-  height: calc(var(--routing-config-control-height) - 2px);
-  line-height: calc(var(--routing-config-control-height) - 2px);
+.routing-config-media-rule-modal__number-control em {
+  color: var(--aicc-text-secondary);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.routing-config-media-rule-modal__message-field {
+  min-width: 0;
+}
+
+.routing-config-media-rule-modal__message-field--full {
+  grid-column: 1 / -1;
+}
+
+.routing-config-skill-queue-modal {
+  display: flex;
+  max-height: min(70vh, 760px);
+  min-width: 0;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.routing-config-skill-queue-modal .routing-config-crud-modal__section-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.routing-config-skill-queue-modal__work-time-control {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.routing-config-skill-queue-modal__work-time-control > em {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--aicc-text);
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.routing-config-skill-queue-modal__work-time-control .aicc-button.ant-btn {
+  height: 32px;
+  min-height: 32px;
+  flex-shrink: 0;
+  padding-inline: 10px;
 }
 
 .routing-config-site-volume-modal__form {
@@ -3513,6 +3940,18 @@ a {
   font-size: 11px;
   font-weight: 700;
   line-height: 16px;
+}
+
+.routing-config-working-time-modal__row-field > em {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 650;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .routing-config-working-time-modal__table-head,
@@ -3917,6 +4356,30 @@ a {
 
 .aicc-button.ant-btn-default:not(:disabled):hover {
   background: #f7fbff;
+}
+
+.aicc-button--danger.ant-btn-dangerous {
+  border-color: var(--aicc-danger);
+  background: var(--aicc-danger);
+  color: #fff;
+  box-shadow: 0 8px 16px rgba(214, 69, 69, 0.22);
+}
+
+.aicc-button--danger.ant-btn-dangerous:not(:disabled):hover,
+.aicc-button--danger.ant-btn-dangerous:not(:disabled):focus-visible {
+  border-color: #b83232;
+  background: #b83232;
+  color: #fff;
+  box-shadow:
+    0 0 0 2px rgba(214, 69, 69, 0.18),
+    0 10px 20px rgba(184, 50, 50, 0.28);
+}
+
+.aicc-button--danger.ant-btn-dangerous:not(:disabled):active {
+  border-color: #982626;
+  background: #982626;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(152, 38, 38, 0.26);
 }
 
 .aicc-button--ghost.ant-btn-default {
@@ -12635,6 +13098,7 @@ button.inbound-list-row .inbound-list-row__title {
   }
 
   .text-channel-settings__overview,
+  .global-control-config__row,
   .routing-config__overview,
   .routing-config__validation-list,
   .routing-config__grid--model,
@@ -12683,6 +13147,10 @@ button.inbound-list-row .inbound-list-row__title {
   }
 
   .text-channel-settings__header-actions {
+    justify-content: flex-start;
+  }
+
+  .global-control-config__header-actions {
     justify-content: flex-start;
   }
 

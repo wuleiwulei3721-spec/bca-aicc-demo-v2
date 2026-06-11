@@ -1,10 +1,10 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-10 18:49 +08:00
-项目路径：`D:\03projects\bca-aicc-demo-v2-main-fix`
-当前目标：在客户 Production `main` 工作树上实现 Live Chat 默认接入和签出/登出保护优化；默认文字客户只在媒体签入时接入一次，坐席恢复 Ready 不再重新播种默认客户，媒体 Sign Out 与系统 Log Out 在存在当前客户服务时被阻断。
+最后更新：2026-06-11 11:00 +08:00
+项目路径：`D:\03projects\bca-aicc-demo-v2-integration`
+当前目标：在 `codex/admin-config-mainline-integration` 上把客户 `main` 的登录、话务条、状态机、Live Chat 退出保护等功能与内部 `Routing Config` / `Call Management` 管理能力合并到同一代码主线；客户 Production 通过 `VITE_ENABLE_ADMIN_MENUS=false` 隐藏管理菜单并阻止直达，工程人员本地通过 `.env.local` 设置 `VITE_ENABLE_ADMIN_MENUS=true` 打开管理入口。
 
-本轮已完成：`setLiveChatTabOpen()` 增加显式默认客户播种参数，只有 `Digital only` / `Voice + Digital` 媒体签入会创建默认 `livechat2-001` 与 `livechat2-005`；Ready / Not Ready / AUX / Pre-AUX 状态切换只保持 Live Chat 工作区，不回补默认客户。`Sign Out` 和 `Log Out` 在存在 active call、voice/video 或 active Live Chat session 时显示阻断提示，要求坐席先结束或关闭当前服务。
+本轮已完成：从 `origin/main` 创建 integration worktree，合入 `codex/admin-config-latest`，保留 `main` 的登录鉴权、服务模式、Sign Out / Log Out active service guard，并合入内部 `Global Control Configuration` 与完整 `Routing Config` 页面；新增 `src/config/featureFlags.ts`、`.env.example` 和本地 `.env.local`，使 `Call Management` / `Routing Config` 的可见性由环境变量控制，而不是长期分支差异。
 
 ## 0. 使用规则
 
@@ -43,7 +43,7 @@
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
 当前分支：`main`
-当前 HEAD：以 `git rev-parse HEAD` 为准；当前客户 Production 口径保留：登录页、主工作台、Channel Simulation、BankApp、WhatsApp、PSTN、Voice/Video handoff、正式 Live Chat、Call Management 下的验证规则/文字渠道配置/示忙原因管理和 Design System 可用；`Routing Config` 菜单及其直达 URL 继续屏蔽。本轮新增 Live Chat 默认客户只在签入接入一次，以及签出/登出 active service guard。
+当前 HEAD：以 `git rev-parse HEAD` 为准；integration 分支目标是成为新的单一主线候选：同一套代码同时包含客户工作台功能和内部管理配置页。客户 Production 必须设置或默认保持 `VITE_ENABLE_ADMIN_MENUS=false`，此时 `Call Management` / `Routing Config` 菜单不可见且 `/call-management/*`、`/routing-config/*` 回到 `/`；工程人员本地可用 `.env.local` 打开这些入口。
 部署目标：Vercel Production 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -131,6 +131,7 @@ codex-recovered-context.md
 - `src/pages/call-management/RoutingConfigurationPage.tsx`：旧路由配置入口兼容组件，重定向到 `/routing-config/route-elements`。
 - `src/pages/call-management/VerificationRulesPage.tsx`：Call Management 下的验证规则配置页，按 `Verification Channel Type + Business Type` 展示规则，支持 View/Edit 配置阈值、题目分组、错答上限、layering 和启停状态；不展示标准答案或答案来源，保存到前端 demo store。
 - `src/pages/call-management/BusyReasonManagementPage.tsx`：Call Management 下的示忙原因配置页，客户 UI 为英文但示忙原因名称按 BCA 截图原文保留；当前预置 20 条，前 9 条启用，后 11 条 Extension 禁用备用，只支持编辑。
+- `src/pages/call-management/GlobalControlConfigurationPage.tsx`：内部全局控制配置页，包含 Routing Fallback / Default Skill Queue 等 demo 配置。
 - `src/pages/routing-config/RoutingConfigCrudPage.tsx`：Routing Config 普通主数据页复用的本地 CRUD 容器，提供 Search / Add / View / Edit / Delete 弹窗表单。
 - `src/pages/routing-config/RoutingConfigDataPages.tsx`：Routing Config 主数据独立配置页，覆盖 Route Elements、VDN、Sites、Channels、Media Service Rule Plans、Business Types、Site Access Volume、Access Accounts、Working Time Plans、Skill Queues；Channels 已支持按媒体引用服务规则方案，Media Service Rule Plans 当前完整维护 Text 媒体服务规则；Working Time Plans 已改为印尼单国家自定义排班编辑器，包含 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan，Skill Queues 未选择方案时展示 `Default 24x7`。
 - `src/pages/routing-config/SkillRoutingRulesPage.tsx`：独立技能路由规则页，支持按启用路由要素多选查询、规则列表要素拆列、批量新增拆分预览、重复组合勾选覆盖、规则查看/编辑/删除。
@@ -190,7 +191,8 @@ codex-recovered-context.md
 - 媒体技能采用轻量拦截而不是隐藏菜单：`Digital only` 阻止 PSTN / BankApp Voice / BankApp Video handoff；`Voice only` 阻止 WhatsApp / BankApp Live Chat handoff 并在客户侧流程显示明确 warning；`Voice + Digital` 允许现有全部演示流程。
 - `BasicLayout` 是所有页面的壳，包含顶部 Header、坐席状态、话务工具条、侧栏和内容区。
 - `AgentWorkspace` 默认显示 Home tab。
-- 客户演示版显示 `Call Management` 一级菜单，二级包含 `Verification Rules`、`Text Channel Settings` 和 `Busy Reason Management`；`Routing Config` 继续不在菜单展示，直接访问 `/routing-config/*` 仍回到 `/`。
+- 2026-06-11 integration 后，`Call Management` 和 `Routing Config` 是否显示由 `VITE_ENABLE_ADMIN_MENUS` 控制：客户 Production 默认隐藏并阻止直达，工程人员本地打开后可见。
+- `Call Management` 二级包含 `Verification Rules`、`Global Control Configuration`、`Text Channel Settings` 和 `Busy Reason Management`。
 - `Call Management > Verification Rules` 是前端 demo 配置页，和坐席侧 Customer Verification Assist 读取同一份 `verificationRules` store；当前不接后端持久化，刷新后恢复 mock 默认规则。
 - `Call Management > Busy Reason Management` 是前端 demo 配置页，和右上角坐席 AUX 下拉读取同一份 `busyReasons` store；当前不接后端持久化，刷新后恢复 mock 默认原因。
 - 点击左侧 `Channel Simulation > BankApp` 会打开可关闭的 `BankApp Demo` tab，用于演示客户在 BankApp 内选择文字、语音或视频服务后进入 AICC；BankApp Demo tab 在切到坐席工作台时保持挂载，返回后不会重置当前步骤。

@@ -2,6 +2,7 @@ import {
   AppstoreOutlined,
   BarChartOutlined,
   BellOutlined,
+  BranchesOutlined,
   CustomerServiceOutlined,
   ExclamationCircleOutlined,
   MenuFoldOutlined,
@@ -16,6 +17,7 @@ import { Badge, Layout, Modal } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { featureFlags } from '../config/featureFlags'
 import { headerAgentProfile } from '../mock/agent'
 import { useAppStore, useAuthStore } from '../store'
 import type {
@@ -88,7 +90,27 @@ function canHandleVoiceVideo(mode: AgentServiceMode | null) {
   return mode === 'voice' || mode === 'voice-digital'
 }
 
-const sideMenuItems: SideMenuItem[] = [
+const routingConfigRoutesByMenuKey: Record<string, string> = {
+  'routing-vdn': '/routing-config/vdn',
+  'routing-sites': '/routing-config/sites',
+  'routing-channels': '/routing-config/channels',
+  'routing-business-types': '/routing-config/business-types',
+  'routing-skill-queues': '/routing-config/skill-queues',
+  'routing-site-access-volume': '/routing-config/site-access-volume',
+  'routing-skill-routing-rules': '/routing-config/skill-routing-rules',
+  'routing-working-time-plans': '/routing-config/working-time-plans',
+}
+
+const routingConfigMenuKeyByRoute = Object.fromEntries(
+  Object.entries(routingConfigRoutesByMenuKey).map(([menuKey, path]) => [
+    path,
+    menuKey,
+  ]),
+) as Record<string, string>
+
+const adminMenuKeys = new Set(['call-management', 'routing-config'])
+
+const allSideMenuItems: SideMenuItem[] = [
   {
     key: 'test-menu',
     icon: <AppstoreOutlined />,
@@ -118,12 +140,55 @@ const sideMenuItems: SideMenuItem[] = [
         label: 'Verification Rules',
       },
       {
+        key: 'call-management-global-control-configuration',
+        label: 'Global Control Configuration',
+      },
+      {
         key: 'call-management-text-channel-settings',
         label: 'Text Channel Settings',
       },
       {
         key: 'call-management-busy-reasons',
         label: 'Busy Reason Management',
+      },
+    ],
+  },
+  {
+    key: 'routing-config',
+    icon: <BranchesOutlined />,
+    label: 'Routing Config',
+    children: [
+      {
+        key: 'routing-vdn',
+        label: 'VDN',
+      },
+      {
+        key: 'routing-sites',
+        label: 'Access Sites',
+      },
+      {
+        key: 'routing-channels',
+        label: 'Channels',
+      },
+      {
+        key: 'routing-business-types',
+        label: 'Business Types',
+      },
+      {
+        key: 'routing-skill-queues',
+        label: 'Skill Queues',
+      },
+      {
+        key: 'routing-site-access-volume',
+        label: 'Site Access Volume',
+      },
+      {
+        key: 'routing-skill-routing-rules',
+        label: 'Skill Routing Rules',
+      },
+      {
+        key: 'routing-working-time-plans',
+        label: 'Working Time Plans',
       },
     ],
   },
@@ -163,6 +228,10 @@ const sideMenuItems: SideMenuItem[] = [
     label: 'Reports',
   },
 ]
+
+const sideMenuItems = allSideMenuItems.filter(
+  (item) => featureFlags.enableAdminMenus || !adminMenuKeys.has(item.key),
+)
 
 export function BasicLayout() {
   const navigate = useNavigate()
@@ -845,12 +914,22 @@ export function BasicLayout() {
         navigate('/call-management/verification-rules')
       }
 
+      if (childKey === 'call-management-global-control-configuration') {
+        navigate('/call-management/global-control-configuration')
+      }
+
       if (childKey === 'call-management-text-channel-settings') {
         navigate('/call-management/text-channel-settings')
       }
 
       if (childKey === 'call-management-busy-reasons') {
         navigate('/call-management/busy-reasons')
+      }
+
+      const routingConfigPath = routingConfigRoutesByMenuKey[childKey]
+
+      if (routingConfigPath) {
+        navigate(routingConfigPath)
       }
     },
     [
@@ -975,6 +1054,14 @@ export function BasicLayout() {
       return 'call-management-verification-rules'
     }
 
+    if (
+      location.pathname.startsWith(
+        '/call-management/global-control-configuration',
+      )
+    ) {
+      return 'call-management-global-control-configuration'
+    }
+
     if (location.pathname.startsWith('/call-management/text-channel-settings')) {
       return 'call-management-text-channel-settings'
     }
@@ -983,10 +1070,18 @@ export function BasicLayout() {
       return 'call-management-busy-reasons'
     }
 
-    return null
+    return routingConfigMenuKeyByRoute[location.pathname] ?? null
   }, [location.pathname])
   const effectiveSelectedMenuKey = routeMenuKey ?? selectedMenuKey
   const effectiveOpenMenuKeys = useMemo(() => {
+    if (
+      !collapsed &&
+      routeMenuKey?.startsWith('routing-') &&
+      !openMenuKeys.includes('routing-config')
+    ) {
+      return [...openMenuKeys, 'routing-config']
+    }
+
     if (
       !collapsed &&
       routeMenuKey?.startsWith('call-management') &&
