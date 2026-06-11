@@ -50,7 +50,8 @@
 - `VITE_ENABLE_ADMIN_MENUS=false npm.cmd run build` 通过；仅保留既有 Vite chunk size warning。
 - 客户模式构建产物确认 `enableRoutingConfigMenus: false`、`Call Management` label 存在、`Text Channel Settings` label 不存在。
 - `git diff --check` 通过；仅输出既有 CRLF 工作区提示。
-- 发布后需确认 Vercel 状态和线上客户 URL。
+- 已推送 `main` 并确认线上 Production 首页引用新 asset `/assets/index-hJHC-o_T.js`。
+- 线上 JS 确认 `{enableRoutingConfigMenus:!1}`、`Call Management` label 存在、`Text Channel Settings` label 不存在。
 
 回滚说明：
 
