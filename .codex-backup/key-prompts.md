@@ -813,14 +813,28 @@
 ## 2026-06-11 主线整合与管理菜单环境开关
 
 - 客户版和工程人员内部版不应长期维护为两套分叉代码。
-- 新的整合方向是一套主线代码，通过 `VITE_ENABLE_ADMIN_MENUS` 控制 `Call Management` / `Routing Config` 是否可见和可直达。
-- 客户 Production 默认 `VITE_ENABLE_ADMIN_MENUS=false` 或不设置，管理菜单隐藏，`/call-management/*` 和 `/routing-config/*` 回到 `/`。
-- 工程人员本地 `.env.local` 设置 `VITE_ENABLE_ADMIN_MENUS=true`，可打开 Verification Rules、Global Control Configuration、Busy Reasons、Text Channel Settings 和完整 Routing Config。
+- 新的整合方向是一套主线代码，通过 `VITE_ENABLE_ADMIN_MENUS` 控制 `Routing Config` 是否可见和可直达；`Call Management` 当前是客户可见菜单。
+- 客户 Production 默认 `VITE_ENABLE_ADMIN_MENUS=false` 或不设置，`Call Management` 可见，`Routing Config` 隐藏且 `/routing-config/*` 回到 `/`。
+- 工程人员本地 `.env.local` 设置 `VITE_ENABLE_ADMIN_MENUS=true`，可打开 Verification Rules、Global Control Configuration、Busy Reasons 和完整 Routing Config；Text Channel Settings 不再作为菜单入口展示。
 - 整合时必须保留 `main` 的登录鉴权、服务模式签入、话务条、状态机、Live Chat 默认接入与退出保护；不能为了打开 Routing Config 回退客户工作台能力。
 
 ## 2026-06-11 单项目 main 管理原则
 
 - 后续本机和 Codex 默认只使用 `D:\03projects\bca-aicc-demo-v2`。
 - 后续默认只在本地 `main` 上继续开发；不要再用长期 worktree 或长期分支来区分客户版和工程人员版。
-- 客户是否能看到 `Call Management` / `Routing Config` 只由环境变量决定：客户 Production 保持 false/unset，本地工程调试 `.env.local` 为 true。
+- 客户是否能看到 `Routing Config` 只由环境变量决定：客户 Production 保持 false/unset，本地工程调试 `.env.local` 为 true；`Call Management` 客户可见。
 - 如果未来需要临时分支或 worktree 做高风险实验，必须先说明原因、预期生命周期和清理方式，不能让用户长期承担版本区分成本。
+
+## 2026-06-11 Text Channel Settings 菜单移除
+
+- `Call Management` 当前二级菜单只保留 `Verification Rules`、`Global Control Configuration` 和 `Busy Reason Management`。
+- `Text Channel Settings` 已从菜单移除；旧 `/call-management/text-channel-settings` 直达 URL 回到 `/call-management/verification-rules`。
+- `TextChannelSettingsPage` 源码暂保留，不作为当前入口展示。
+
+## 2026-06-11 客户开放 Call Management，仅隐藏 Routing Config
+
+- 最新客户发布口径：客户侧也要显示 `Call Management`，只隐藏策略/路由配置菜单 `Routing Config`。
+- `VITE_ENABLE_ADMIN_MENUS=false` 或未设置时，`Call Management` 仍可见并可访问；`Routing Config` 菜单隐藏，`/routing-config/*` 仍回到 `/`。
+- `VITE_ENABLE_ADMIN_MENUS=true` 仅用于工程人员本地或内部演示打开 `Routing Config`。
+- 当前 `Call Management` 二级菜单保持 `Verification Rules`、`Global Control Configuration`、`Busy Reason Management`；`Text Channel Settings` 继续隐藏，旧 URL 回到 Verification Rules。
+- 旧 `/call-management/routing-configuration` 不能再进入隐藏的 Routing Config，应回到 `/call-management/verification-rules`。

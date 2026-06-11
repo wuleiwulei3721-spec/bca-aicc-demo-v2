@@ -108,7 +108,7 @@ const routingConfigMenuKeyByRoute = Object.fromEntries(
   ]),
 ) as Record<string, string>
 
-const adminMenuKeys = new Set(['call-management', 'routing-config'])
+const routingConfigMenuKeys = new Set(['routing-config'])
 
 const allSideMenuItems: SideMenuItem[] = [
   {
@@ -142,10 +142,6 @@ const allSideMenuItems: SideMenuItem[] = [
       {
         key: 'call-management-global-control-configuration',
         label: 'Global Control Configuration',
-      },
-      {
-        key: 'call-management-text-channel-settings',
-        label: 'Text Channel Settings',
       },
       {
         key: 'call-management-busy-reasons',
@@ -230,7 +226,9 @@ const allSideMenuItems: SideMenuItem[] = [
 ]
 
 const sideMenuItems = allSideMenuItems.filter(
-  (item) => featureFlags.enableAdminMenus || !adminMenuKeys.has(item.key),
+  (item) =>
+    featureFlags.enableRoutingConfigMenus ||
+    !routingConfigMenuKeys.has(item.key),
 )
 
 export function BasicLayout() {
@@ -918,10 +916,6 @@ export function BasicLayout() {
         navigate('/call-management/global-control-configuration')
       }
 
-      if (childKey === 'call-management-text-channel-settings') {
-        navigate('/call-management/text-channel-settings')
-      }
-
       if (childKey === 'call-management-busy-reasons') {
         navigate('/call-management/busy-reasons')
       }
@@ -1060,10 +1054,6 @@ export function BasicLayout() {
       )
     ) {
       return 'call-management-global-control-configuration'
-    }
-
-    if (location.pathname.startsWith('/call-management/text-channel-settings')) {
-      return 'call-management-text-channel-settings'
     }
 
     if (location.pathname.startsWith('/call-management/busy-reasons')) {

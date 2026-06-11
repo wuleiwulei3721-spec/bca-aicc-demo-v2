@@ -8,47 +8,48 @@ import {
   ChannelsPage,
   DesignSystem,
   GlobalControlConfigurationPage,
-  RoutingConfigurationPage,
   SitesPage,
   SiteAccessVolumePage,
   SkillQueuesPage,
   SkillRoutingRulesPage,
-  TextChannelSettingsPage,
   VerificationRulesPage,
   VdnPage,
   WorkingTimePlansPage,
 } from './pages'
 
-const adminRoutes = featureFlags.enableAdminMenus
+const callManagementRoutes = [
+  {
+    path: 'call-management',
+    element: <Navigate replace to="/call-management/verification-rules" />,
+  },
+  {
+    path: 'call-management/verification-rules',
+    element: <VerificationRulesPage />,
+  },
+  {
+    path: 'call-management/routing-configuration',
+    element: <Navigate replace to="/call-management/verification-rules" />,
+  },
+  {
+    path: 'call-management/global-control-configuration',
+    element: <GlobalControlConfigurationPage />,
+  },
+  {
+    path: 'call-management/busy-reasons',
+    element: <BusyReasonManagementPage />,
+  },
+  {
+    path: 'call-management/text-channel-settings',
+    element: <Navigate replace to="/call-management/verification-rules" />,
+  },
+  {
+    path: 'call-management/*',
+    element: <Navigate replace to="/call-management/verification-rules" />,
+  },
+]
+
+const routingConfigRoutes = featureFlags.enableRoutingConfigMenus
   ? [
-      {
-        path: 'call-management',
-        element: <Navigate replace to="/call-management/verification-rules" />,
-      },
-      {
-        path: 'call-management/verification-rules',
-        element: <VerificationRulesPage />,
-      },
-      {
-        path: 'call-management/routing-configuration',
-        element: <RoutingConfigurationPage />,
-      },
-      {
-        path: 'call-management/global-control-configuration',
-        element: <GlobalControlConfigurationPage />,
-      },
-      {
-        path: 'call-management/busy-reasons',
-        element: <BusyReasonManagementPage />,
-      },
-      {
-        path: 'call-management/text-channel-settings',
-        element: <TextChannelSettingsPage />,
-      },
-      {
-        path: 'call-management/*',
-        element: <Navigate replace to="/call-management/verification-rules" />,
-      },
       {
         path: 'routing-config',
         element: <Navigate replace to="/routing-config/channels" />,
@@ -104,14 +105,6 @@ const adminRoutes = featureFlags.enableAdminMenus
     ]
   : [
       {
-        path: 'call-management',
-        element: <Navigate replace to="/" />,
-      },
-      {
-        path: 'call-management/*',
-        element: <Navigate replace to="/" />,
-      },
-      {
         path: 'routing-config',
         element: <Navigate replace to="/" />,
       },
@@ -138,7 +131,8 @@ export const router = createBrowserRouter([
         path: 'design-system',
         element: <DesignSystem />,
       },
-      ...adminRoutes,
+      ...callManagementRoutes,
+      ...routingConfigRoutes,
       {
         path: '*',
         element: <Navigate replace to="/" />,

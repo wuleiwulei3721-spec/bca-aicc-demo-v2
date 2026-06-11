@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-11 11:18 +08:00
+最后更新：2026-06-11 17:43 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,89 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-11 17:43 +08:00 - 客户开放 Call Management，仅隐藏 Routing Config
+
+修改页面或文件：
+
+- `.env.example`
+- `src/config/featureFlags.ts`
+- `src/routes.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-11-1743.md`
+- `.codex-backup/current-todo-2026-06-11-1743.md`
+- `.codex-backup/page-state-2026-06-11-1743.md`
+
+修改原因：
+
+- 用户反馈客户已经看到 `Call Management` 菜单，因此最新发布口径改为客户开放 `Call Management`，只隐藏策略/路由配置菜单 `Routing Config`。
+
+修改结果：
+
+- `VITE_ENABLE_ADMIN_MENUS=false` 或未设置时，左侧仍显示 `Call Management`，二级保留 `Verification Rules`、`Global Control Configuration`、`Busy Reason Management`。
+- `Routing Config` 继续由环境变量控制；客户模式下菜单隐藏，`/routing-config/*` 仍重定向到 `/`。
+- 旧 `/call-management/routing-configuration` 和 `/call-management/text-channel-settings` 都重定向到 `/call-management/verification-rules`，避免客户进入隐藏策略页或已移除入口。
+- 保留 14:05 已完成的 `Text Channel Settings` 菜单移除。
+
+验证：
+
+- `npm.cmd run lint` 通过。
+- `VITE_ENABLE_ADMIN_MENUS=false npm.cmd run build` 通过；仅保留既有 Vite chunk size warning。
+- 客户模式构建产物确认 `enableRoutingConfigMenus: false`、`Call Management` label 存在、`Text Channel Settings` label 不存在。
+- `git diff --check` 通过；仅输出既有 CRLF 工作区提示。
+- 发布后需确认 Vercel 状态和线上客户 URL。
+
+回滚说明：
+
+- 如需回滚为客户隐藏 `Call Management`，恢复 `src/routes.tsx` 中按 feature flag 包裹 `call-management/*` 的路由，并把 `BasicLayout` 的过滤集合恢复为同时过滤 `call-management` 与 `routing-config`。
+- 如只需重新开放 `Routing Config`，在目标环境设置 `VITE_ENABLE_ADMIN_MENUS=true` 即可。
+
+当前风险点：
+
+- `VITE_ENABLE_ADMIN_MENUS` 变量名仍沿用旧名，但当前只控制 `Routing Config`；如未来改名，需要同步 Vercel 环境变量和文档。
+- 前端可见性仍只是 demo visibility guard，不是生产级权限控制。
+
+### 2026-06-11 14:05 +08:00 - 移除 Text Channel Settings 菜单入口
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/routes.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-11-1405.md`
+- `.codex-backup/current-todo-2026-06-11-1405.md`
+- `.codex-backup/page-state-2026-06-11-1405.md`
+
+修改原因：
+
+- 用户要求删除 `Call Management` 下的 `Text Channel Settings` 菜单。
+
+修改结果：
+
+- 左侧 `Call Management` 二级菜单不再显示 `Text Channel Settings`。
+- `BasicLayout` 中移除对应菜单点击跳转和当前路由选中逻辑。
+- `/call-management/text-channel-settings` 在管理菜单开启时也会重定向到 `/call-management/verification-rules`。
+- `TextChannelSettingsPage` 源码、mock、类型和样式暂保留，方便后续如需恢复或参考。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仅保留既有 Vite chunk size warning。
+- `git diff --check` 通过；仅输出既有 CRLF 工作区提示。
+- 源码检查确认 `src/layouts/BasicLayout.tsx` / `src/routes.tsx` 中不再存在旧菜单 label 或菜单 key；旧 `/call-management/text-channel-settings` 路由仅作为 redirect 保留。
+
+回滚说明：
+
+- 如需恢复，重新在 `BasicLayout` 的 `Call Management` children 中加入 `Text Channel Settings`，恢复点击跳转和路由选中逻辑，并把 `/call-management/text-channel-settings` 路由恢复为 `TextChannelSettingsPage`。
+
+当前风险点：
+
+- 历史文档中仍保留 Text Channel Settings 的过往记录；当前状态以本条日志和 `PROJECT_CONTEXT.md` 当前路由/菜单关系为准。
 
 ### 2026-06-11 11:18 +08:00 - 收敛本地项目目录、worktree 与 main 主线
 
