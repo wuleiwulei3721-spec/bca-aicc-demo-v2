@@ -817,3 +817,10 @@
 - 客户 Production 默认 `VITE_ENABLE_ADMIN_MENUS=false` 或不设置，管理菜单隐藏，`/call-management/*` 和 `/routing-config/*` 回到 `/`。
 - 工程人员本地 `.env.local` 设置 `VITE_ENABLE_ADMIN_MENUS=true`，可打开 Verification Rules、Global Control Configuration、Busy Reasons、Text Channel Settings 和完整 Routing Config。
 - 整合时必须保留 `main` 的登录鉴权、服务模式签入、话务条、状态机、Live Chat 默认接入与退出保护；不能为了打开 Routing Config 回退客户工作台能力。
+
+## 2026-06-11 单项目 main 管理原则
+
+- 后续本机和 Codex 默认只使用 `D:\03projects\bca-aicc-demo-v2`。
+- 后续默认只在本地 `main` 上继续开发；不要再用长期 worktree 或长期分支来区分客户版和工程人员版。
+- 客户是否能看到 `Call Management` / `Routing Config` 只由环境变量决定：客户 Production 保持 false/unset，本地工程调试 `.env.local` 为 true。
+- 如果未来需要临时分支或 worktree 做高风险实验，必须先说明原因、预期生命周期和清理方式，不能让用户长期承担版本区分成本。

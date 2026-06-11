@@ -1,10 +1,10 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-11 11:00 +08:00
-项目路径：`D:\03projects\bca-aicc-demo-v2-integration`
-当前目标：在 `codex/admin-config-mainline-integration` 上把客户 `main` 的登录、话务条、状态机、Live Chat 退出保护等功能与内部 `Routing Config` / `Call Management` 管理能力合并到同一代码主线；客户 Production 通过 `VITE_ENABLE_ADMIN_MENUS=false` 隐藏管理菜单并阻止直达，工程人员本地通过 `.env.local` 设置 `VITE_ENABLE_ADMIN_MENUS=true` 打开管理入口。
+最后更新：2026-06-11 11:18 +08:00
+项目路径：`D:\03projects\bca-aicc-demo-v2`
+当前目标：本机开发和后续 Codex 操作统一只使用 `D:\03projects\bca-aicc-demo-v2` 这一份项目目录，当前分支为 `main`。客户发布也以 `main` 为唯一主线；客户 Production 默认不设置或设置 `VITE_ENABLE_ADMIN_MENUS=false`，隐藏 `Call Management` / `Routing Config` 并阻止直达；工程人员本地通过 `.env.local` 设置 `VITE_ENABLE_ADMIN_MENUS=true` 打开管理入口。
 
-本轮已完成：从 `origin/main` 创建 integration worktree，合入 `codex/admin-config-latest`，保留 `main` 的登录鉴权、服务模式、Sign Out / Log Out active service guard，并合入内部 `Global Control Configuration` 与完整 `Routing Config` 页面；新增 `src/config/featureFlags.ts`、`.env.example` 和本地 `.env.local`，使 `Call Management` / `Routing Config` 的可见性由环境变量控制，而不是长期分支差异。
+本轮已完成：`main` 已合入原内部管理分支能力，保留客户登录鉴权、服务模式、Sign Out / Log Out active service guard，并合入内部 `Global Control Configuration` 与完整 `Routing Config` 页面；新增 `src/config/featureFlags.ts`、`.env.example` 和本地 `.env.local`，使 `Call Management` / `Routing Config` 的可见性由环境变量控制，而不是长期分支差异。额外 worktree 目录 `bca-aicc-demo-v2-main-fix`、`bca-aicc-demo-v2-integration` 和非 Git 私有素材目录 `bca-aicc-demo-v2-private-assets` 已删除，本地 `codex/*` 分支已清理，后续无需在指令中区分目录或分支。
 
 ## 0. 使用规则
 
@@ -43,7 +43,7 @@
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
 当前分支：`main`
-当前 HEAD：以 `git rev-parse HEAD` 为准；integration 分支目标是成为新的单一主线候选：同一套代码同时包含客户工作台功能和内部管理配置页。客户 Production 必须设置或默认保持 `VITE_ENABLE_ADMIN_MENUS=false`，此时 `Call Management` / `Routing Config` 菜单不可见且 `/call-management/*`、`/routing-config/*` 回到 `/`；工程人员本地可用 `.env.local` 打开这些入口。
+当前 HEAD：以 `git rev-parse HEAD` 为准；当前 `main` 是唯一长期开发主线：同一套代码同时包含客户工作台功能和内部管理配置页。客户 Production 必须设置或默认保持 `VITE_ENABLE_ADMIN_MENUS=false`，此时 `Call Management` / `Routing Config` 菜单不可见且 `/call-management/*`、`/routing-config/*` 回到 `/`；工程人员本地可用 `.env.local` 打开这些入口。
 部署目标：Vercel Production 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -191,7 +191,7 @@ codex-recovered-context.md
 - 媒体技能采用轻量拦截而不是隐藏菜单：`Digital only` 阻止 PSTN / BankApp Voice / BankApp Video handoff；`Voice only` 阻止 WhatsApp / BankApp Live Chat handoff 并在客户侧流程显示明确 warning；`Voice + Digital` 允许现有全部演示流程。
 - `BasicLayout` 是所有页面的壳，包含顶部 Header、坐席状态、话务工具条、侧栏和内容区。
 - `AgentWorkspace` 默认显示 Home tab。
-- 2026-06-11 integration 后，`Call Management` 和 `Routing Config` 是否显示由 `VITE_ENABLE_ADMIN_MENUS` 控制：客户 Production 默认隐藏并阻止直达，工程人员本地打开后可见。
+- 2026-06-11 后，`Call Management` 和 `Routing Config` 是否显示由 `VITE_ENABLE_ADMIN_MENUS` 控制：客户 Production 默认隐藏并阻止直达，工程人员本地打开后可见。
 - `Call Management` 二级包含 `Verification Rules`、`Global Control Configuration`、`Text Channel Settings` 和 `Busy Reason Management`。
 - `Call Management > Verification Rules` 是前端 demo 配置页，和坐席侧 Customer Verification Assist 读取同一份 `verificationRules` store；当前不接后端持久化，刷新后恢复 mock 默认规则。
 - `Call Management > Busy Reason Management` 是前端 demo 配置页，和右上角坐席 AUX 下拉读取同一份 `busyReasons` store；当前不接后端持久化，刷新后恢复 mock 默认原因。

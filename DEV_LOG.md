@@ -1,7 +1,7 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-11 11:00 +08:00
-项目路径：`D:\03projects\bca-aicc-demo-v2-integration`
+最后更新：2026-06-11 11:18 +08:00
+项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
 
@@ -17,6 +17,52 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-11 11:18 +08:00 - 收敛本地项目目录、worktree 与 main 主线
+
+修改页面或文件：
+
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-11-1118.md`
+- `.codex-backup/current-todo-2026-06-11-1118.md`
+- `.codex-backup/page-state-2026-06-11-1118.md`
+- Git 本地分支与 worktree 状态
+- 删除本地目录：`D:\03projects\bca-aicc-demo-v2-main-fix`
+- 删除本地目录：`D:\03projects\bca-aicc-demo-v2-integration`
+- 删除本地目录：`D:\03projects\bca-aicc-demo-v2-private-assets`
+
+修改原因：
+
+- 用户明确要求后续只保留一个本地项目目录 `D:\03projects\bca-aicc-demo-v2`，客户发布也只走 `main`，不再让 Codex 或用户每次区分客户版、本地版、integration worktree 或内部管理分支。
+- 原先用分支/目录差异控制管理菜单可见性会造成后续功能漂移风险；正确方式是单一 `main` 代码主线加环境变量控制菜单与路由。
+
+修改结果：
+
+- 已将整合提交快进到本地 `main`。
+- `D:\03projects\bca-aicc-demo-v2` 当前为唯一 Git worktree，当前分支为 `main`。
+- 本地 `codex/admin-config-latest`、`codex/admin-config-mainline-integration`、`codex/livechat-copy-update` 均已删除；这些分支的内容已并入当前 `main`。
+- `D:\03projects` 下只剩 `bca-aicc-demo-v2` 一个项目目录。
+- 本地 `.env.local` 保留 `VITE_ENABLE_ADMIN_MENUS=true`，方便工程人员在本机看到 `Call Management` / `Routing Config`；该文件仍被 Git 忽略。
+- 客户发布环境不设置或设置 `VITE_ENABLE_ADMIN_MENUS=false` 时，管理菜单隐藏且 `/call-management/*`、`/routing-config/*` 回到 `/`。
+
+验证：
+
+- 已执行 `git worktree list`，只剩 `D:/03projects/bca-aicc-demo-v2 c6582f6 [main]`。
+- 已执行 `git branch -vv`，只剩本地 `main`。
+- 已执行目录检查，`D:\03projects` 下只剩 `D:\03projects\bca-aicc-demo-v2`。
+- 本轮目录/分支收敛后仍需再次执行 `npm run lint` 和客户安全 build，确认单目录 `main` 状态无回归。
+
+回滚说明：
+
+- 若要恢复本地额外 worktree，可从当前 `main` 重新 `git worktree add`；但后续默认不再这么做。
+- 删除的 `private-assets` 为非 Git 私有素材备份目录，已按用户要求删除；仓库运行和构建不依赖该目录。
+
+当前风险点：
+
+- 当前 `main` 仍只在本地，领先 `origin/main`；未 push 前客户线上 Production 不会变化。
+- `VITE_ENABLE_ADMIN_MENUS` 是前端 demo 可见性开关，不是后端权限边界；真实系统仍应由登录角色和后端权限控制。
 
 ### 2026-06-11 11:00 +08:00 - 主线整合内部管理能力与环境开关
 
