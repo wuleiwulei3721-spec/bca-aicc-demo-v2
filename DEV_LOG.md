@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-11 17:43 +08:00
+最后更新：2026-06-11 21:12 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,187 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-11 21:12 +08:00 - 名单管理增加勾选删除能力
+
+修改页面或文件：
+
+- `src/pages/call-management/BlacklistManagementPage.tsx`
+- `src/pages/call-management/PriorityListManagementPage.tsx`
+- `src/store/callManagementStore.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-11-2112.md`
+- `.codex-backup/current-todo-2026-06-11-2112.md`
+- `.codex-backup/page-state-2026-06-11-2112.md`
+
+修改原因：
+
+- 用户确认黑名单管理和优先名单管理都缺少删除入口，要求使用列表勾选加 toolbar 删除，支持单条和批量删除，避免增加每行操作列。
+
+修改结果：
+
+- `Blacklist Management` 与 `Priority List Management` 表格最前方增加 checkbox 选择列。
+- 表头 checkbox 可全选/取消当前页可见记录；跨页选择通过受控 selected row keys 保留。
+- `Add`、`Batch Add` 后新增 `Delete` danger 按钮；未选择记录时禁用，选择后显示 `Delete (n)`。
+- 点击删除会打开确认弹窗，按选中数量显示 `Delete 1 selected record?` 或 `Delete n selected records?`。
+- 确认后调用前端 demo store 删除选中记录，清空已选项并显示成功提示。
+- 执行 Search / Reset 会清空已选项，避免删除隐藏筛选结果。
+- `callManagementStore` 新增 `deleteBlacklistEntries(ids)` 与 `deletePriorityListEntries(ids)`；刷新后仍恢复 mock 默认数据。
+
+验证：
+
+- `npm.cmd run lint` 通过。
+- `npm.cmd run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `/call-management/blacklist` HTTP smoke 返回 200。
+- `/call-management/priority-list` HTTP smoke 返回 200。
+- Browser 插件初始化连续超时，未完成可视化点击验证。
+
+回滚说明：
+
+- 如需回滚本次删除能力，移除两个名单页的 `rowSelection`、`selectedEntryIds` 状态、删除确认弹窗和 toolbar `Delete` 按钮，并从 `callManagementStore.ts` 中移除两个 delete 方法。
+
+当前风险点：
+
+- 删除当前仍是前端 demo session 状态，不接后端持久化；刷新页面后会恢复 mock 默认名单。
+- 本轮 Browser 插件初始化连续超时，未完成可视化点击验证，仍建议人工复查 checkbox、确认弹窗和单条/批量删除交互。
+
+### 2026-06-11 21:02 +08:00 - 移除黑名单全渠道新增并新增优先名单管理
+
+修改页面或文件：
+
+- `src/pages/call-management/BlacklistManagementPage.tsx`
+- `src/pages/call-management/PriorityListManagementPage.tsx`
+- `src/pages/call-management/index.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/routes.tsx`
+- `src/types/priorityList.ts`
+- `src/types/index.ts`
+- `src/mock/priorityList.ts`
+- `src/mock/blacklist.ts`
+- `src/store/callManagementStore.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-11-2102.md`
+- `.codex-backup/current-todo-2026-06-11-2102.md`
+- `.codex-backup/page-state-2026-06-11-2102.md`
+
+修改原因：
+
+- 用户确认不同渠道号码不共用，黑名单新增不需要 `All Channels`。
+- 用户要求新增 `Priority List Management`，用于维护排队时优先排队的客户名单，页面与黑名单管理类似但无 `Restriction Policy` 和 `Validity Days`。
+
+修改结果：
+
+- 黑名单查询 Channel 仍保留 `All`，用于不过滤渠道。
+- 黑名单 Add / Batch Add 的 Channel 下拉移除 `All Channels`，只显示 Routing Config 中启用的具体渠道名称；没有启用渠道时保存会提示需要先启用渠道。
+- 黑名单默认 mock 不再使用 `All Channels`。
+- 新增 `Priority List Management` 菜单和 `/call-management/priority-list` 路由。
+- 新增优先名单类型、mock 和 `callManagementStore` slice：`priorityListEntries`、`addPriorityListEntries`、`resetPriorityListEntries`。
+- 优先名单页支持 Channel、Priority Number 查询；列表展示 No.、Channel、Priority Number、Remark、Created Date、Created By；支持 Add / Batch Add，批量输入用分号分隔。
+
+验证：
+
+- `npm.cmd run lint` 通过。
+- `npm.cmd run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `/call-management/blacklist` HTTP smoke 返回 200。
+- `/call-management/priority-list` HTTP smoke 返回 200。
+- `git diff --check` 通过，仅提示既有 CRLF 工作区转换警告。
+
+回滚说明：
+
+- 如需回滚优先名单功能，删除 `PriorityListManagementPage.tsx`、`src/types/priorityList.ts`、`src/mock/priorityList.ts`，恢复 `callManagementStore.ts`、`routes.tsx`、`BasicLayout.tsx`、`pages/call-management/index.ts` 和文档/备份。
+- 如需恢复黑名单 `All Channels` 新增能力，恢复 `BlacklistManagementPage.tsx` 的 `All Channels` form option 和默认 draft/mock 数据。
+
+当前风险点：
+
+- Priority List 当前只是前端 demo 配置页，不接真实排队优先级服务或路由引擎。
+- 若 Routing Config 中所有渠道都被禁用，黑名单和优先名单新增会被阻止；这是本轮按“必须选择具体启用渠道”的默认行为。
+
+### 2026-06-11 20:52 +08:00 - 黑名单管理 Channel 选项改为读取启用渠道
+
+修改页面或文件：
+
+- `src/pages/call-management/BlacklistManagementPage.tsx`
+- `src/types/blacklist.ts`
+- `src/mock/blacklist.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-11-2052.md`
+- `.codex-backup/current-todo-2026-06-11-2052.md`
+- `.codex-backup/page-state-2026-06-11-2052.md`
+
+修改原因：
+
+- 用户要求黑名单管理查询条件中的 Channel 除了 `All` 外，其它数据来源于路由策略下 `Channels` 管理中启用的渠道名称。
+
+修改结果：
+
+- `Blacklist Management` 查询区 Channel 下拉保留 `All`，其余选项从 `useRoutingConfigStore().channels` 中读取 `status === 'Active'` 的 `channelName`。
+- Add / Batch Add 弹框的 Channel 下拉复用同一批启用渠道名称，并额外保留 `All Channels` 作为全渠道限制记录选项。
+- `BlacklistEntry.channel` 改为字符串类型，默认 mock 的 channel 值改为 `All Channels`、`Phone`、`WhatsApp`、`Haloapp`，与渠道管理名称口径对齐。
+
+验证：
+
+- `npm.cmd run lint` 通过。
+- `npm.cmd run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+
+回滚说明：
+
+- 如需回滚为固定 Channel 枚举，恢复 `src/types/blacklist.ts` 中的 union 类型、`BlacklistManagementPage.tsx` 中的固定 `channelLabels/channelOptions/formChannelOptions`，并把 `src/mock/blacklist.ts` 的 channel 值恢复为原枚举值。
+
+当前风险点：
+
+- 如果后续 Channels 页面允许禁用当前黑名单记录已使用的渠道名称，该记录仍会留在列表中；查询下拉不再显示该禁用渠道，需产品确认禁用渠道后历史黑名单记录的查询口径。
+
+### 2026-06-11 20:40 +08:00 - 新增 Call Management 黑名单管理
+
+修改页面或文件：
+
+- `src/pages/call-management/BlacklistManagementPage.tsx`
+- `src/pages/call-management/index.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/routes.tsx`
+- `src/types/blacklist.ts`
+- `src/types/index.ts`
+- `src/mock/blacklist.ts`
+- `src/store/callManagementStore.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-11-2040.md`
+- `.codex-backup/current-todo-2026-06-11-2040.md`
+- `.codex-backup/page-state-2026-06-11-2040.md`
+
+修改原因：
+
+- 用户要求在 `Call Management` 下增加黑名单管理菜单，用于全渠道限制号码配置，在有效期内禁止转人工或禁止接入，并支持批量号码添加。
+
+修改结果：
+
+- 左侧 `Call Management` 二级菜单新增 `Blacklist Management`，路由为 `/call-management/blacklist`。
+- 新增 `BlacklistManagementPage`：查询条件为 Channel、Restricted Number、Restriction Policy；列表字段为 No.、Channel、Restricted Number、Restriction Policy、Validity Days、Remark、Created Date、Created By。
+- 新增黑名单类型、mock 数据和 `callManagementStore` slice；新增记录保存在前端 demo store 中，刷新后恢复 mock 默认值。
+- `Add` 支持单个号码；`Batch Add` 支持分号分隔批量号码，批量模式下 Restricted Number 使用 6 行文本框，placeholder 为 `Use semicolons for batch add`。
+- `Validity Days` 非必填，留空保存为 `null`，列表显示 `Permanent`；录入人优先读取当前 demo session 的 `displayName`，取不到时使用 `Admin`。
+
+验证：
+
+- `npm.cmd run lint` 通过。
+- `npm.cmd run build` 通过；仍只有既有 Vite/Rolldown chunk size warning 和 plugin timing 提示。
+- 本地 dev server 运行在 `http://127.0.0.1:5175/`，`Invoke-WebRequest http://127.0.0.1:5175/call-management/blacklist` 返回 200。
+- Codex in-app Browser 连接三次超时，未完成可视化 smoke check。
+
+回滚说明：
+
+- 如需回滚本次功能，删除 `BlacklistManagementPage.tsx`、`src/types/blacklist.ts`、`src/mock/blacklist.ts`，恢复 `BasicLayout` 菜单和点击处理、`routes.tsx` 路由、`callManagementStore.ts` store slice、`types/index.ts` 导出和 `styles/index.less` 中 `blacklist-management` 样式。
+- 回滚后同步恢复 `PROJECT_CONTEXT.md`、`DEV_LOG.md` 和本次 `.codex-backup` 三件套。
+
+当前风险点：
+
+- 黑名单管理当前只是前端 demo 配置页，不接真实渠道接入网关、转人工路由或号码黑名单服务。
+- 本轮未完成浏览器可视化检查，仍建议人工打开 `/call-management/blacklist` 检查菜单、列表、Add 和 Batch Add 弹框视觉。
 
 ### 2026-06-11 17:43 +08:00 - 客户开放 Call Management，仅隐藏 Routing Config
 

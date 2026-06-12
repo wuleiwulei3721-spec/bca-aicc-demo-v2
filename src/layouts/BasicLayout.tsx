@@ -144,6 +144,14 @@ const allSideMenuItems: SideMenuItem[] = [
         label: 'Global Control Configuration',
       },
       {
+        key: 'call-management-blacklist',
+        label: 'Blacklist Management',
+      },
+      {
+        key: 'call-management-priority-list',
+        label: 'Priority List Management',
+      },
+      {
         key: 'call-management-busy-reasons',
         label: 'Busy Reason Management',
       },
@@ -916,6 +924,14 @@ export function BasicLayout() {
         navigate('/call-management/global-control-configuration')
       }
 
+      if (childKey === 'call-management-blacklist') {
+        navigate('/call-management/blacklist')
+      }
+
+      if (childKey === 'call-management-priority-list') {
+        navigate('/call-management/priority-list')
+      }
+
       if (childKey === 'call-management-busy-reasons') {
         navigate('/call-management/busy-reasons')
       }
@@ -1058,6 +1074,14 @@ export function BasicLayout() {
 
     if (location.pathname.startsWith('/call-management/busy-reasons')) {
       return 'call-management-busy-reasons'
+    }
+
+    if (location.pathname.startsWith('/call-management/blacklist')) {
+      return 'call-management-blacklist'
+    }
+
+    if (location.pathname.startsWith('/call-management/priority-list')) {
+      return 'call-management-priority-list'
     }
 
     return routingConfigMenuKeyByRoute[location.pathname] ?? null

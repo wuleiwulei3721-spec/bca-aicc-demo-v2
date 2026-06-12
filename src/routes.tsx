@@ -3,11 +3,13 @@ import { PublicLoginRoute, RequireAuth } from './components/AuthRouteGuards'
 import { featureFlags } from './config/featureFlags'
 import {
   AgentWorkspace,
+  BlacklistManagementPage,
   BusyReasonManagementPage,
   BusinessTypesPage,
   ChannelsPage,
   DesignSystem,
   GlobalControlConfigurationPage,
+  PriorityListManagementPage,
   SitesPage,
   SiteAccessVolumePage,
   SkillQueuesPage,
@@ -33,6 +35,14 @@ const callManagementRoutes = [
   {
     path: 'call-management/global-control-configuration',
     element: <GlobalControlConfigurationPage />,
+  },
+  {
+    path: 'call-management/blacklist',
+    element: <BlacklistManagementPage />,
+  },
+  {
+    path: 'call-management/priority-list',
+    element: <PriorityListManagementPage />,
   },
   {
     path: 'call-management/busy-reasons',

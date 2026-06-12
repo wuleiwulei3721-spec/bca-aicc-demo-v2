@@ -1,4 +1,6 @@
+export * from './BlacklistManagementPage'
 export * from './BusyReasonManagementPage'
+export * from './PriorityListManagementPage'
 export * from './RoutingConfigurationPage'
 export * from './GlobalControlConfigurationPage'
 export * from './TextChannelSettingsPage'
