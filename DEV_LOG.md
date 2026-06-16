@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-16 14:36 +08:00
+最后更新：2026-06-16 19:20 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,222 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-16 19:20 +08:00 - 移除客户卡片 Menu 并默认开放 Routing Config
+
+修改页面或文件：
+
+- `.env.example`
+- `src/config/featureFlags.ts`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-16-1920.md`
+- `.codex-backup/current-todo-2026-06-16-1920.md`
+- `.codex-backup/page-state-2026-06-16-1920.md`
+
+修改原因：
+
+- 用户确认业务菜单已移动到顶部话务条 `Skill`，`Customer Information` 卡片底部不再需要重复展示 `Menu`。
+- 客户已开始询问渠道策略，需要默认开放 `Routing Config` 整体菜单给客户查看，但保留后续可关闭开关。
+- 用户补充 `Webchat Message Recall Limit (sec)` 只对 Webchat 渠道有效，其它渠道不应展示该字段。
+- 用户补充 Phone 渠道没有账号配置，Channels 列表中的 `Accounts` 按钮应置灰不可点击。
+
+修改结果：
+
+- `CustomerInformationCard` 不再传入 `accessRouteHintNode`，客户卡片底部不再显示 `Menu` 与最新菜单名；内部 `routeMenuName` 继续用于 V2 Verification 默认 Skill Queue 映射。
+- `VITE_ENABLE_ADMIN_MENUS` 改为默认开放；仅显式配置为 `false` 时隐藏 `Routing Config` 菜单并阻止 `/routing-config/*` 直达。
+- `.env.example` 默认值改为 `VITE_ENABLE_ADMIN_MENUS=true`，并说明可设置为 `false` 隐藏。
+- `Routing Config > Channels` 中 Phone 渠道 `Accounts` 按钮置灰，点击不会打开账号管理弹框。
+- `Business Config` 中 `Webchat Message Recall Limit (sec)` 仅在 `WEBCHAT + TEXT` 下展示。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 已通过。
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite/Rolldown chunk size warning。
+- HTTP smoke 已通过：`/`、`/routing-config/channels`、`/routing-config/skill-routing-rules`、`/routing-config/business-types`、`/design-system` 均返回 200。
+- `git diff --check` 无实际 whitespace error；仅有既有 Windows LF/CRLF warning。
+- 新增行敏感词扫描无命中。
+- Browser 插件连接 in-app browser 超时，未完成截图/DOM 级浏览器验证。
+
+回滚说明：
+
+- 如需回滚客户卡片 `Menu`，恢复 `CustomerInformationCard` 的 `accessRouteHintNode` 渲染与 `ApartmentOutlined` import 即可。
+- 如需再次隐藏 `Routing Config`，无需代码回滚，发布环境设置 `VITE_ENABLE_ADMIN_MENUS=false` 即可；如需代码默认隐藏，则恢复 `featureFlags` 为仅 `true` 开放并将 `.env.example` 改回 `false`。
+- 如需恢复所有文字渠道的 recall 字段，移除 `isWebchatText` 条件即可。
+- 如需让 Phone 可维护账号，移除 `canManageChannelAccounts` 对 `PHONE` 的限制即可。
+
+当前风险点：
+
+- 截图级浏览器验证仍建议在客户演示前人工复查，重点是 `/routing-config/channels` 中 Phone 账号按钮置灰、Webchat 业务配置展示 recall 字段，以及其它文字渠道不展示该字段。
+
+### 2026-06-16 17:05 +08:00 - Skill 标签按客户原文大小写
+
+修改页面或文件：
+
+- `src/layouts/components/AgentToolbar.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-16-1705.md`
+- `.codex-backup/current-todo-2026-06-16-1705.md`
+- `.codex-backup/page-state-2026-06-16-1705.md`
+
+修改原因：
+
+- 用户确认客户截图写法是 `Skill`，界面应尊重客户原文大小写，不应改为全大写 `SKILL`。
+- 用户询问截图中的 `e.g.` 含义；本轮解释为 “for example / 例如”，不是需要显示在 UI 中的文案。
+
+修改结果：
+
+- 顶部话务条识别区第二行标签改回 `Skill`。
+- tooltip / aria title 中同步使用 `Skill`。
+- 自适应两列对齐布局不变：号码和业务菜单名称仍从同一 value 列起始位置对齐。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 已通过。
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite/Rolldown chunk size warning。
+- HTTP smoke 已通过：`/` 与 `/design-system` 均返回 200。
+
+回滚说明：
+
+- 如需回滚，仅将 `AgentToolbar` 中可见标签和 call context title 的 `Skill` 改回 `SKILL`；不涉及状态模型或样式回滚。
+
+当前风险点：
+
+- 仍建议目标演示分辨率人工确认两列自适应宽度和右侧 Header 操作间距。
+
+### 2026-06-16 16:59 +08:00 - 顶部识别区标签与 value 对齐
+
+修改页面或文件：
+
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-16-1659.md`
+- `.codex-backup/current-todo-2026-06-16-1659.md`
+- `.codex-backup/page-state-2026-06-16-1659.md`
+
+修改原因：
+
+- 用户确认当前两行识别区仍有两个视觉问题：`IVR` 与 `Skill` 标签样式不一致，且固定宽度导致号码和业务菜单名称后面出现一大块空白。
+
+修改结果：
+
+- 顶部识别区第二行标签从 `Skill` 改为 `SKILL`，与 `IVR` 标签保持同一字样风格。
+- 识别区改为自适应宽度 grid：左列为标签，右列为 value，号码与业务菜单名称从同一列起始位置对齐。
+- 移除识别区固定 196px 宽度，保留最大宽度与 value 省略，避免长业务名挤压右侧 Header 操作。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 已通过。
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite/Rolldown chunk size warning。
+- HTTP smoke 已通过：`/` 与 `/design-system` 均返回 200。
+- `git diff --check` 无实际 whitespace error；仅有既有 Windows LF/CRLF warning。
+
+回滚说明：
+
+- 如需回滚，仅恢复 `.aicc-agent-toolbar__identification` 为固定宽度 flex 两行样式，并将第二行可见标签恢复为 `Skill`。
+
+当前风险点：
+
+- 仍建议在目标演示分辨率人工确认自适应宽度下不会遮挡 Header 右侧消息按钮。
+
+### 2026-06-16 16:46 +08:00 - 顶部 Skill 识别区改为两行
+
+修改页面或文件：
+
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-16-1646.md`
+- `.codex-backup/current-todo-2026-06-16-1646.md`
+- `.codex-backup/page-state-2026-06-16-1646.md`
+
+修改原因：
+
+- 用户发现上一版将 `IVR/BankID` 与 `Skill` 横向拼接后，顶部话务条长度可能遮挡 Header 右侧消息按钮。
+- 需要保留 ringing 时立即展示 Skill，同时避免继续横向扩张。
+
+修改结果：
+
+- `AgentToolbar` 的 call context 从横向两段改为识别区内部上下两行：第一行显示 `IVR/BankID + value`，第二行显示 `Skill + Credit card activation`。
+- 话务按钮、Ready 状态、计时器和 more 按钮仍保持单行。
+- `.aicc-agent-toolbar` 不再扩大到 `72vw / 960px`，回到原有安全宽度；识别区固定约 196px 并对长文本省略。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 已通过。
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite/Rolldown chunk size warning。
+- HTTP smoke 已通过：`/` 与 `/design-system` 均返回 200。
+- `git diff --check` 无实际 whitespace error；仅有既有 Windows LF/CRLF warning。
+- 本轮尝试使用本机 Edge CDP 做几何检查，但 Node CDP 脚本被 Windows permission error 阻断；截图级浏览器验证未完成，仍建议客户演示前在目标分辨率人工确认消息按钮不被遮挡。
+
+回滚说明：
+
+- 如需回滚，仅恢复 `AgentToolbar` 中 call context 的横向 item class，并恢复 `.aicc-agent-toolbar__identification` 横向 `inline-flex` 样式；不影响 `CallInteraction.skillDisplayName` 数据模型。
+
+当前风险点：
+
+- 仍需人工视觉确认两行识别区在目标演示分辨率下不会显得过挤。
+- 当前 Skill 文案仍为 demo 默认值，尚未接入来源菜单动态映射。
+
+### 2026-06-16 16:02 +08:00 - Inbound ringing 顶部 Skill 展示
+
+修改页面或文件：
+
+- `src/store/appStore.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-16-1602.md`
+- `.codex-backup/current-todo-2026-06-16-1602.md`
+- `.codex-backup/page-state-2026-06-16-1602.md`
+
+修改原因：
+
+- 客户在现有原型截图中标注要求坐席收到来电的 ringing pop-up 立即显示 `Skill`，示例为 `Skill: Credit card activation`。
+- 该信息应与顶部话务条的 `IVR/BankID` 接入标识同生命周期展示，而不是主要放在 `Customer Information` 下方。
+
+修改结果：
+
+- `CallInteraction` 新增 `skillDisplayName`，当前 demo 来电统一写入 `Credit card activation`。
+- `BasicLayout` 在非 Idle 的当前通话中读取 `skillDisplayName` 并传给 `AgentToolbar`。
+- `AgentToolbar` 将接入标识渲染为紧凑 call context：`IVR 08123456789 | Skill Credit card activation` 或 `BankID 00012345 | Skill Credit card activation`。
+- 顶部话务条宽度和识别区样式已调整，Skill 长文本会省略，避免挤压 Header 右侧操作。
+- `Customer Information` 中现有 `Menu` 提示保留为辅助信息，不再作为本需求主要展示点。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 已通过。
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite/Rolldown chunk size warning。
+- HTTP smoke 已通过：`/` 与 `/design-system` 均返回 200。
+- Browser 插件连接 in-app browser 两次超时，且本地未安装 Playwright/Puppeteer，因此本轮未完成 DOM/截图级浏览器交互验证。
+
+回滚说明：
+
+- 如需回滚，移除 `CallInteraction.skillDisplayName`、恢复 `AgentToolbar` 单一 `callIdentification` 渲染，并恢复 `.aicc-agent-toolbar` 与 `.aicc-agent-toolbar__identification` 的旧样式即可。
+
+当前风险点：
+
+- 当前 Skill 文案为 demo 默认值，尚未按 IVR/Haloapp 实际菜单或 BankApp 选项动态映射。
+- 仍建议客户演示前人工打开 `/`，确认 Incoming、Talking、Hold、Mute 和 Hang Up 后的顶部话务条显示/隐藏符合预期。
 
 ### 2026-06-16 14:36 +08:00 - 合并 V2 为正式 Verification Rules 菜单
 

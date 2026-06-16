@@ -1,6 +1,15 @@
 ﻿# Key Prompts
 
-最后更新：2026-06-16 14:36 +08:00
+最后更新：2026-06-16 19:20 +08:00
+
+## 2026-06-16 Routing Config 默认开放与 Channels 例外
+
+- `Routing Config` 现在默认对客户开放，便于客户查看渠道管理和路由策略配置。
+- `VITE_ENABLE_ADMIN_MENUS` 开关继续保留；只有显式设置为 `false` 时隐藏 `Routing Config` 菜单并阻止 `/routing-config/*` 直达。
+- 客户信息卡片底部不再展示 `Menu` 最新 IVR/HaloApp 菜单提示；业务菜单展示已移动到顶部话务条 `Skill`。
+- `CustomerInformationCard` 仍可保留内部 `routeMenuName` 计算，用于 V2 Verification 默认 Skill Queue 映射，不作为客户卡片可见信息。
+- `Routing Config > Channels` 中 Phone 渠道没有账号配置，`Accounts` 按钮必须置灰不可点击。
+- `Webchat Message Recall Limit (sec)` 只针对 Webchat 渠道有效，只在 `WEBCHAT` 的 Text `Business Config` 中展示；其它文字渠道不展示该字段。
 
 ## 2026-06-16 Verification Rules 正式指向 V2
 
@@ -1096,3 +1105,11 @@
 - 坐席侧和 Preview 的 `Agent Hint` 必须完整展示，不做单行截断；提示可以占整行并自然换行。
 - 问题列表可以有 hover / focus 行反馈，帮助坐席扫读当前鼠标所在题目。
 - 不要在坐席点击某题后自动把下一道未答题显示成 selected / active 行效果；自动推进只能作为内部逻辑，不应造成下一行被默认选中的视觉误解。
+
+## 2026-06-16 Inbound Ringing Skill Display
+
+- 客户确认来电 ringing pop-up 需要马上显示 `Skill`，示例为 `Skill: Credit card activation`。
+- 这里的 `Skill` 是坐席需要立即识别的业务菜单/业务意图展示名，不是后台 `Skill Queue` 名，也不是完整 IVR 节点长路径。
+- `Skill` 应与顶部话务条的接入标识同生命周期展示：Incoming 立刻显示，Talking / Hold / Mute 继续显示，Idle / Ended 隐藏。
+- 顶部话务条目标展示为识别区内部上下两行：第一行 `IVR 08123456789` 或 `BankID 00012345`，第二行 `Skill Credit card activation`；`Skill` 必须按客户截图原文大小写展示，不改成全大写。号码和业务菜单名称从同一 value 列起始位置对齐，识别区宽度按内容自适应，不要固定出大块空白，也不要遮挡 Header 右侧消息按钮。
+- Customer Information 中不再展示 `Menu` 辅助信息，避免与顶部话务条 `Skill` 重复。

@@ -1000,7 +1000,13 @@ export function ChannelsPage() {
     mediaTypes
       .map((mediaType) => mediaLabelByValue.get(mediaType) ?? mediaType)
       .join(', ')
+  const canManageChannelAccounts = (channel: Channel) =>
+    channel.channelTypeCode !== 'PHONE'
   const openModal = (mode: 'accounts' | 'business' | 'edit', record: Channel) => {
+    if (mode === 'accounts' && !canManageChannelAccounts(record)) {
+      return
+    }
+
     const nextDraft = normalizeChannelDraft(record)
     const firstMedia = nextDraft.mediaTypes[0] ?? 'TEXT'
 
@@ -1576,6 +1582,7 @@ export function ChannelsPage() {
   }
   const renderBusinessMediaForm = (mediaCode: MediaTypeCode) => {
     const isText = mediaCode === 'TEXT'
+    const isWebchatText = draft.channelCode === 'WEBCHAT' && isText
     const isPhoneVoice =
       draft.channelTypeCode === 'PHONE' && mediaCode === 'VOICE'
     const channelType = channelTypeByCode.get(draft.channelTypeCode)
@@ -1712,11 +1719,12 @@ export function ChannelsPage() {
                 <strong>Agent Service Configuration</strong>
               </header>
               <div className="routing-config-crud-modal__section-grid">
-                {renderBusinessNumberField(
-                  mediaCode,
-                  'webchatRecallLimitSeconds',
-                  'Webchat Message Recall Limit (sec)',
-                )}
+                {isWebchatText &&
+                  renderBusinessNumberField(
+                    mediaCode,
+                    'webchatRecallLimitSeconds',
+                    'Webchat Message Recall Limit (sec)',
+                  )}
                 {renderBusinessNumberField(
                   mediaCode,
                   'agentNoReplyWarningSeconds',
@@ -1825,31 +1833,41 @@ export function ChannelsPage() {
       fixed: 'right',
       title: 'Actions',
       width: 250,
-      render: (_, record) => (
-        <div className="routing-config-channel-actions">
-          <button
-            aria-label={`Edit ${record.channelId}`}
-            type="button"
-            onClick={() => openModal('edit', record)}
-          >
-            Edit
-          </button>
-          <button
-            aria-label={`Account management ${record.channelId}`}
-            type="button"
-            onClick={() => openModal('accounts', record)}
-          >
-            Accounts
-          </button>
-          <button
-            aria-label={`Business config ${record.channelId}`}
-            type="button"
-            onClick={() => openModal('business', record)}
-          >
-            Business Config
-          </button>
-        </div>
-      ),
+      render: (_, record) => {
+        const accountsEnabled = canManageChannelAccounts(record)
+
+        return (
+          <div className="routing-config-channel-actions">
+            <button
+              aria-label={`Edit ${record.channelId}`}
+              type="button"
+              onClick={() => openModal('edit', record)}
+            >
+              Edit
+            </button>
+            <button
+              aria-label={`Account management ${record.channelId}`}
+              disabled={!accountsEnabled}
+              title={
+                accountsEnabled
+                  ? 'Account management'
+                  : 'Phone channel has no account configuration.'
+              }
+              type="button"
+              onClick={() => openModal('accounts', record)}
+            >
+              Accounts
+            </button>
+            <button
+              aria-label={`Business config ${record.channelId}`}
+              type="button"
+              onClick={() => openModal('business', record)}
+            >
+              Business Config
+            </button>
+          </div>
+        )
+      },
     },
   ]
 

@@ -1059,6 +1059,10 @@ export function BasicLayout() {
 
     return null
   }, [callStatus, currentCallInteraction])
+  const callSkillDisplayName =
+    callStatus === 'Idle' || !currentCallInteraction
+      ? null
+      : currentCallInteraction.skillDisplayName
   const routeMenuKey = useMemo(() => {
     if (location.pathname.startsWith('/call-management/verification-rules')) {
       return 'call-management-verification-rules'
@@ -1118,6 +1122,7 @@ export function BasicLayout() {
             agentStatus={agentStatus}
             callStatus={callStatus}
             callIdentification={callIdentification}
+            callSkillDisplayName={callSkillDisplayName}
             baseElapsedSeconds={timerState.elapsedSeconds}
             timerLabel={timerState.label}
             timerStartedAt={timerState.startedAt}

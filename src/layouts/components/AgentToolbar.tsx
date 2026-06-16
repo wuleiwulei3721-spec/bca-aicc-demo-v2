@@ -29,6 +29,7 @@ interface AgentToolbarProps {
   agentStatus: AgentStatus
   baseElapsedSeconds: number | null
   callIdentification?: CallIdentification | null
+  callSkillDisplayName?: string | null
   callStatus: CallStatus
   timerLabel: string
   timerStartedAt: number
@@ -45,6 +46,7 @@ export function AgentToolbar({
   agentStatus,
   baseElapsedSeconds,
   callIdentification,
+  callSkillDisplayName,
   callStatus,
   timerLabel,
   timerStartedAt,
@@ -102,6 +104,35 @@ export function AgentToolbar({
       setIsSettingsOpen(true)
     }
   }
+  const callContextTitle = [
+    callIdentification
+      ? `${callIdentification.label} ${callIdentification.value}`
+      : null,
+    callSkillDisplayName ? `Skill ${callSkillDisplayName}` : null,
+  ]
+    .filter(Boolean)
+    .join(' | ')
+  const callContextNode =
+    callIdentification || callSkillDisplayName ? (
+      <div
+        aria-label={callContextTitle}
+        className="aicc-agent-toolbar__identification"
+        title={callContextTitle}
+      >
+        {callIdentification && (
+          <span className="aicc-agent-toolbar__identification-row">
+            <span>{callIdentification.label}</span>
+            <strong>{callIdentification.value}</strong>
+          </span>
+        )}
+        {callSkillDisplayName && (
+          <span className="aicc-agent-toolbar__identification-row aicc-agent-toolbar__identification-row--skill">
+            <span>Skill</span>
+            <strong>{callSkillDisplayName}</strong>
+          </span>
+        )}
+      </div>
+    ) : null
 
   return (
     <>
@@ -118,16 +149,7 @@ export function AgentToolbar({
       >
         {!isInCall && (
           <>
-            {callIdentification && (
-              <div
-                aria-label={`${callIdentification.label} ${callIdentification.value}`}
-                className="aicc-agent-toolbar__identification"
-                title={`${callIdentification.label} ${callIdentification.value}`}
-              >
-                <span>{callIdentification.label}</span>
-                <strong>{callIdentification.value}</strong>
-              </div>
-            )}
+            {callContextNode}
             <ToolbarButton
               aria-label="Answer"
               disabled={!isIncoming}
@@ -144,16 +166,7 @@ export function AgentToolbar({
 
         {isInCall && (
           <>
-            {callIdentification && (
-              <div
-                aria-label={`${callIdentification.label} ${callIdentification.value}`}
-                className="aicc-agent-toolbar__identification"
-                title={`${callIdentification.label} ${callIdentification.value}`}
-              >
-                <span>{callIdentification.label}</span>
-                <strong>{callIdentification.value}</strong>
-              </div>
-            )}
+            {callContextNode}
             <ToolbarButton
               active={callStatus === 'Hold'}
               aria-label="Hold"

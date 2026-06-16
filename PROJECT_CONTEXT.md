@@ -1,8 +1,10 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-16 14:36 +08:00
+最后更新：2026-06-16 19:20 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
-当前目标：本机开发和后续 Codex 操作统一只使用 `D:\03projects\bca-aicc-demo-v2` 这一份项目目录，当前分支为 `main`。客户发布也以 `main` 为唯一主线；客户 Production 默认不设置或设置 `VITE_ENABLE_ADMIN_MENUS=false`，开放 `Call Management`，仅隐藏 `Routing Config` 并阻止直达；工程人员本地通过 `.env.local` 设置 `VITE_ENABLE_ADMIN_MENUS=true` 打开 `Routing Config`。当前重点是客户身份验证规则 V2 演示、管理台统一规范，以及 `Priority List Management` 按客户反馈支持批量维护、逐渠道保存、邮箱域名匹配和重复过滤。
+当前目标：本机开发和后续 Codex 操作统一只使用 `D:\03projects\bca-aicc-demo-v2` 这一份项目目录，当前分支为 `main`。客户发布也以 `main` 为唯一主线；`Routing Config` 现在默认开放给客户查看，继续保留 `VITE_ENABLE_ADMIN_MENUS=false` 作为快速关闭开关；客户问到渠道策略时可直接查看 `Routing Config > Channels` 和 `Skill Routing Rules`。当前重点是客户身份验证规则 V2 演示、管理台统一规范，以及渠道管理/路由策略配置对客户反馈的持续补齐。
+
+最新状态：2026-06-16 19:20 已移除 `Customer Information` 卡片底部的 `Menu` 最新菜单提示，业务菜单现在以顶部话务条 `Skill` 为主要展示；`CallInteraction.skillDisplayName` 继续驱动 Incoming、Talking、Hold、Mute 的两行 `IVR/BankID` + `Skill` 展示，Idle/Ended 隐藏。`Routing Config` 默认开放，只有显式配置 `VITE_ENABLE_ADMIN_MENUS=false` 时才隐藏菜单并阻止 `/routing-config/*` 直达。`Routing Config > Channels` 中 Phone 渠道的 `Accounts` 按钮已置灰不可点击；`Business Config` 中 `Webchat Message Recall Limit (sec)` 仅在 Webchat 的 Text 配置下展示，其它文字渠道不展示该字段。
 
 本轮已完成：`main` 已合入原内部管理分支能力，保留客户登录鉴权、服务模式、Sign Out / Log Out active service guard，并合入内部 `Global Control Configuration` 与完整 `Routing Config` 页面；新增 `src/config/featureFlags.ts`、`.env.example` 和本地 `.env.local`，使 `Routing Config` 的可见性由环境变量控制，而不是长期分支差异。客户可见 `Call Management` 保留 `Verification Rules`、`Global Control Configuration`、`Blacklist Management`、`Priority List Management`、`Busy Reason Management`，并移除 `Text Channel Settings` 入口。2026-06-12 11:11 已将 `Routing Config > Skill Queues` 默认启用队列扩展为 12 条去客户敏感化名称：`Perbankan`、`Kartu Kredit`、`Prio Soli Perbankan`、`Prio Soli Kartu Kredit`、`Bank Bisnis`、`Personal Banker`、`Layanan Cabang`、`KlikBank Bisnis`、`KPR`、`Personal Loan`、`Merchant Solution`、`Paylater`；默认技能队列 code `SQ_GENERAL_ID` 不变，仅展示名改为 `Perbankan`。2026-06-12 13:16 已新增 `Call Management > Verification Rule V2`，支持问题库维护、按启用渠道 + 技能队列 + 客户级别配置验证规则、自动汇总必对数量、Max Wrong/No Limit、Failure Action、ATO/add-on layering、Branch Combined 和 Organization Segment Override；Customer Information 的 `Verify` 弹框现在读取 V2 规则，并在弹框顶部提供 `Demo Conditions` 来模拟特殊触发字段。2026-06-12 14:10 已优化 V2 规则编辑弹框：Max Wrong 默认无限制且无限制时隐藏数字输入，问题配置改为按需添加/删除分类块，每个分类通过独立选题弹框搜索勾选题库题目后再带入排序列表；V2 题库已按客户 Excel 附件 C 列原文补齐，并按附件规则扩展默认规则覆盖 Perbankan、Kartu Kredit、Prio/Soli、HBB、Personal Banker、Layanan Cabang、KlikBank Bisnis、KPR、Personal Loan、Merchant Solution、Paylater。2026-06-12 14:27 已继续优化 V2 Question Bank：新增按问题名称和状态筛选，新增/编辑改为独立弹框，状态改为开关，列表默认每页 10 条且支持 20 条时表格内部滚动，Question Bank 弹框固定高度。2026-06-12 14:41 已将 V2 Question Bank 简化为仅维护问题名称，移除题库状态字段和状态筛选；题库原文问题按归一化名称合并去重为 56 条唯一题目，并在新增/编辑时拦截同名问题；筛选少量或空结果时表格主体保持固定高度。2026-06-12 14:50 已简化 V2 问题分类块顶部，仅将分类名、Questions 数量、Select、Correct、Order 和删除放入单行操作栏；`Berurut` 页面显示为 `Order` 并通过 tooltip 解释为按配置顺序提问，Alternative 说明也改为 tooltip，已选问题条目行高和上下箭头排序保持不变。2026-06-12 15:27 已将 V2 Special Rules 改成按需添加规则块，只显示已启用的 Case Type Layering、Branch Combined Verification、Organization Segment Override；删除规则块仅设为 disabled 并保留内部配置；Strict Failure Handling 从特殊规则模型和 UI 中移除，失败后是否阻断统一由基础配置里的 `Failure Action` 控制。2026-06-12 16:24 已将 V2 外层表格恢复为标准管理台表格行为：移除专用纵向滚动容器和空滚动框，收紧列宽，横向滚动只作为窄屏兜底，`Actions` 列固定在右侧；查询区继续保留结构化筛选和多选 `+N` 收敛。2026-06-12 16:42 已补齐 V2 规则管理 CRUD：外层规则列表 Actions 增加 Delete，删除前二次确认，确认后仅从当前前端 demo store 删除规则，不删除 Question Bank 题目。2026-06-12 17:03 已将 V2 外层操作区按管理台规范收敛到筛选工具栏右侧，新增按钮统一为 `Add`，列表/弹框/校验统一字段名 `Skill Queue`，并继续压缩表格列宽。2026-06-12 17:05 已在 `Routing Config > Business Types` 增加业务来源代码字段；2026-06-12 17:16 已将该字段统一命名为 `Source Business Code` / `sourceBusinessCode`，用于维护客户页面或 IVR 菜单 ID 与内部业务类型的映射；查询关键词、列表、Add/Edit/View 弹框和唯一校验均已同步。2026-06-12 17:51 已新增 `src/components/admin/*` 管理台统一组件，并将 `RoutingConfigCrudPage`、Routing Config 自定义页、`Verification Rules`、`Verification Rule V2`、`Blacklist Management`、`Priority List Management`、`Busy Reason Management` 等页面接入统一 AdminPage/AdminToolbar/AdminTable/AdminModal 规范；主列表默认 20 条分页、统一分页文案、表头加粗但列表数据正常字重、主页面纵向滚动、弹框内长表格内部滚动，`/design-system` 新增 Admin Management Page 示例。额外 worktree 目录 `bca-aicc-demo-v2-main-fix`、`bca-aicc-demo-v2-integration` 和非 Git 私有素材目录 `bca-aicc-demo-v2-private-assets` 已删除，本地 `codex/*` 分支已清理，后续无需在指令中区分目录或分支。
 
@@ -109,7 +111,7 @@
 项目类型：银行 AICC 前端演示系统  
 当前仓库：`https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2.git`  
 当前分支：`main`
-当前 HEAD：以 `git rev-parse HEAD` 为准；当前 `main` 是唯一长期开发主线：同一套代码同时包含客户工作台功能、客户可见 `Call Management` 和内部 `Routing Config` 配置页。客户 Production 必须设置或默认保持 `VITE_ENABLE_ADMIN_MENUS=false`，此时 `Call Management` 菜单可见，`Routing Config` 菜单不可见且 `/routing-config/*` 回到 `/`；工程人员本地可用 `.env.local` 打开 `Routing Config`。
+当前 HEAD：以 `git rev-parse HEAD` 为准；当前 `main` 是唯一长期开发主线：同一套代码同时包含客户工作台功能、客户可见 `Call Management` 和客户可见 `Routing Config` 配置页。`Routing Config` 默认开放，只有显式设置 `VITE_ENABLE_ADMIN_MENUS=false` 时才隐藏菜单并让 `/routing-config/*` 回到 `/`，便于后续领导要求关闭时快速回退可见性。
 部署目标：Vercel Production 静态部署，产物目录 `dist`  
 浏览器标题与 metadata：`BANK 1 AICC Demo`
 
@@ -258,8 +260,8 @@ codex-recovered-context.md
 - `/call-management/priority-list` -> `BasicLayout` -> `PriorityListManagementPage`
 - `/call-management/busy-reasons` -> `BasicLayout` -> `BusyReasonManagementPage`
 - `/call-management/*` -> `BasicLayout` -> 重定向到 `/call-management/verification-rules`
-- `/routing-config` -> `BasicLayout` -> 客户模式重定向到 `/`；工程模式重定向到 `/routing-config/channels`
-- `/routing-config/*` -> `BasicLayout` -> 客户模式重定向到 `/`；工程模式打开对应 `Routing Config` 页面
+- `/routing-config` -> `BasicLayout` -> 默认重定向到 `/routing-config/channels`；仅 `VITE_ENABLE_ADMIN_MENUS=false` 时回到 `/`
+- `/routing-config/*` -> `BasicLayout` -> 默认打开对应 `Routing Config` 页面；仅 `VITE_ENABLE_ADMIN_MENUS=false` 时回到 `/`
 - `*` -> 重定向到 `/`
 
 页面关系：
@@ -273,7 +275,7 @@ codex-recovered-context.md
 - 媒体技能采用轻量拦截而不是隐藏菜单：`Digital only` 阻止 PSTN / BankApp Voice / BankApp Video handoff；`Voice only` 阻止 WhatsApp / BankApp Live Chat handoff 并在客户侧流程显示明确 warning；`Voice + Digital` 允许现有全部演示流程。
 - `BasicLayout` 是所有页面的壳，包含顶部 Header、坐席状态、话务工具条、侧栏和内容区。
 - `AgentWorkspace` 默认显示 Home tab。
-- 2026-06-11 17:43 后，`Call Management` 是客户可见菜单；`VITE_ENABLE_ADMIN_MENUS` 只控制 `Routing Config` 是否显示和是否允许直达。客户 Production 默认 false/unset 时隐藏 `Routing Config` 并阻止 `/routing-config/*` 直达，工程人员本地打开后可见。
+- 2026-06-16 19:20 后，`Call Management` 与 `Routing Config` 默认都是客户可见菜单；`VITE_ENABLE_ADMIN_MENUS` 继续只控制 `Routing Config` 是否显示和是否允许直达，但只有显式配置为 `false` 时才隐藏并阻止 `/routing-config/*` 直达。
 - `Call Management` 二级包含 `Verification Rules`、`Global Control Configuration`、`Blacklist Management`、`Priority List Management` 和 `Busy Reason Management`；`Text Channel Settings` 已从菜单移除，旧 URL 回到 `Verification Rules`。
 - `Call Management > Verification Rules` 现在是新版场景化客户验证规则演示页，和坐席侧 V2 Customer Verification 弹框读取同一份 `verificationV2Rules` / `verificationV2QuestionBank` store；当前不接后端持久化，刷新后恢复 mock 默认规则。旧 `VerificationRulesPage` 源码保留但不再作为客户菜单或路由入口。
 - `Call Management > Blacklist Management` 是前端 demo 配置页，维护按渠道限制号码；查询 Channel 下拉保留 `All` 作为不过滤渠道，Add / Batch Add 只能选择 Routing Config 中启用的具体渠道名称；限制策略为 `Prohibit Transfer to Agent` 或 `Prohibit Access`，Validity Days 留空即永久有效；当前只在配置页本地 store 生效，不接真实路由/接入服务。

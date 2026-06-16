@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  ApartmentOutlined,
   EditOutlined,
   SyncOutlined,
 } from '@ant-design/icons'
@@ -179,11 +178,6 @@ export function CustomerInformationCard({
     ? callFlowDetail.ivrJourney[callFlowDetail.ivrJourney.length - 1]
     : undefined
   const routeMenuName = accessMenuName ?? finalIvrStep?.nodeName
-  const routeMenuAriaLabel = accessMenuName
-    ? `${accessMenuLabel}: ${accessMenuName}`
-    : routeMenuName
-      ? `Last IVR menu: ${routeMenuName}`
-      : ''
   const initialVerificationV2Conditions = useMemo<VerificationV2DemoConditions>(
     () => ({
       channelCode: getDefaultVerificationV2ChannelCode(customer.accessChannel),
@@ -329,23 +323,6 @@ export function CustomerInformationCard({
             duration={customer.accessDuration}
             value={customer.accessChannel}
           />
-        }
-        accessRouteHintNode={
-          routeMenuName ? (
-            <>
-              <ApartmentOutlined />
-              <span className="aicc-customer-info__route-label">
-                Menu
-              </span>
-              <span
-                aria-label={routeMenuAriaLabel}
-                className="aicc-customer-info__route-value"
-                title={routeMenuAriaLabel}
-              >
-                {routeMenuName}
-              </span>
-            </>
-          ) : undefined
         }
         className="inbound-section-card inbound-section-card--customer"
         customer={customer}

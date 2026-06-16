@@ -435,27 +435,45 @@ a {
 }
 
 .aicc-agent-toolbar__identification {
-  display: inline-flex;
-  align-items: center;
+  display: grid;
+  flex: 0 1 auto;
+  grid-auto-rows: 13px;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-content: center;
+  column-gap: 6px;
   height: 29px;
-  padding: 0 12px 0 4px;
+  width: fit-content;
+  min-width: 0;
+  max-width: min(28vw, 260px);
+  padding: 0 10px 0 4px;
   border-right: 1px solid var(--aicc-agent-toolbar-divider);
   color: #4f647d;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 600;
   white-space: nowrap;
-  gap: 5px;
 }
 
-.aicc-agent-toolbar__identification span {
+.aicc-agent-toolbar__identification-row {
+  display: contents;
+}
+
+.aicc-agent-toolbar__identification-row span {
+  grid-column: 1;
   color: #4f647d;
   font-weight: 600;
+  line-height: 13px;
 }
 
-.aicc-agent-toolbar__identification strong {
+.aicc-agent-toolbar__identification-row strong {
+  grid-column: 2;
+  min-width: 0;
+  overflow: hidden;
   color: var(--aicc-text);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  line-height: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @keyframes aicc-call-pulse {
@@ -4210,6 +4228,14 @@ a {
   border-color: var(--aicc-primary);
   color: var(--aicc-primary);
   background: #f4f8ff;
+}
+
+.routing-config-channel-actions button:disabled,
+.routing-config-channel-actions button:disabled:hover {
+  border-color: var(--aicc-border);
+  color: var(--aicc-text-tertiary);
+  background: #f5f7fb;
+  cursor: not-allowed;
 }
 
 .routing-config-tag-list,

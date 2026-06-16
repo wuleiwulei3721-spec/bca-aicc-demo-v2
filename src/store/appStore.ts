@@ -64,6 +64,7 @@ export interface CallInteraction {
   id: string
   kind: CallInteractionKind
   phase: CallInteractionPhase
+  skillDisplayName: string
   source: CallInteractionSource
   startedAt: number
   tabKey: string
@@ -75,6 +76,7 @@ interface SetLiveChatTabOpenOptions {
 }
 
 const INTERACTION_FLASH_MS = 5000
+const DEFAULT_INBOUND_SKILL_DISPLAY_NAME = 'Credit card activation'
 const LIVE_CHAT_TAB_KEY = 'live-chat'
 const LEGACY_LIVECHAT2_TAB_KEY = 'livechat2'
 const DEFAULT_LIVECHAT2_CURRENT_SESSION_IDS = [
@@ -273,6 +275,10 @@ function getCallInteractionTitle(
   }
 
   return source === 'bankapp-voice' ? 'Voice Call' : 'PSTN'
+}
+
+function getCallInteractionSkillDisplayName() {
+  return DEFAULT_INBOUND_SKILL_DISPLAY_NAME
 }
 
 interface AppState {
@@ -578,6 +584,7 @@ export const useAppStore = create<AppState>((set) => ({
         id,
         kind,
         phase: 'incoming',
+        skillDisplayName: getCallInteractionSkillDisplayName(),
         source,
         startedAt: now,
         tabKey: id,
