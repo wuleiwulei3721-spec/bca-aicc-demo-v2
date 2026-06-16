@@ -19,12 +19,11 @@ interface ChannelTagProps {
 }
 
 const channelClassNames: Record<string, string> = {
-  BankApp: 'inbound-channel-tag--haloapps',
+  BankApp: 'inbound-channel-tag--bankapp',
   Phone: 'inbound-channel-tag--phone',
   Video: 'inbound-channel-tag--video',
-  'Haloapps Voice': 'inbound-channel-tag--haloapps',
-  'Haloapps Video': 'inbound-channel-tag--haloapps',
-  Haloapps: 'inbound-channel-tag--haloapps',
+  'BankApp Voice': 'inbound-channel-tag--bankapp',
+  'BankApp Video': 'inbound-channel-tag--bankapp',
   Webchat: 'inbound-channel-tag--webchat',
   'Webchat Voice': 'inbound-channel-tag--webchat',
   Email: 'inbound-channel-tag--email',
@@ -36,9 +35,8 @@ const channelClassNames: Record<string, string> = {
 
 const channelDisplayLabels: Partial<Record<ChannelTagValue, string>> = {
   BankApp: 'BankApp',
-  'Haloapps Voice': 'BankApp',
-  'Haloapps Video': 'BankApp',
-  Haloapps: 'BankApp',
+  'BankApp Voice': 'BankApp',
+  'BankApp Video': 'BankApp',
   Phone: 'PSTN',
   Video: 'Video Call',
 }
@@ -54,9 +52,8 @@ function renderIcon(value: ChannelTagValue) {
 
   if (
     value === 'BankApp' ||
-    value === 'Haloapps' ||
-    value === 'Haloapps Voice' ||
-    value === 'Haloapps Video'
+    value === 'BankApp Voice' ||
+    value === 'BankApp Video'
   ) {
     return <MobileOutlined />
   }

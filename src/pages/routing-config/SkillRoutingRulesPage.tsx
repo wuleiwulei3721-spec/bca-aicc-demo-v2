@@ -10,9 +10,11 @@ import { useMemo, useState } from 'react'
 import {
   BaseButton,
   BaseCard,
-  BaseModal,
-  BaseTable,
-  PageContainer,
+  AdminFilterField,
+  AdminModal,
+  AdminTable,
+  AdminPage,
+  AdminToolbar,
 } from '../../components'
 import { routingProjectCode } from '../../mock/routingConfiguration'
 import { useRoutingConfigStore } from '../../store'
@@ -356,10 +358,10 @@ export function SkillRoutingRulesPage() {
   ])
 
   const paginationConfig = {
-    defaultPageSize: 20,
+    defaultPageSize: 10,
     pageSizeOptions: [10, 20, 50, 100],
     showTotal: (total: number, range: [number, number]) =>
-      `${range[0]}-${range[1]} of ${total} records`,
+      `${range[0]}-${range[1]} / ${total} records`,
   }
 
   const factorOptions = (factor: RouteFactor) =>
@@ -736,7 +738,7 @@ export function SkillRoutingRulesPage() {
         : 'View Skill Routing Rule'
 
   return (
-    <PageContainer title="Skill Routing Rules">
+    <AdminPage title="Skill Routing Rules">
       <section className="routing-config-page routing-config-rules">
         {notice && (
           <Alert
@@ -748,16 +750,16 @@ export function SkillRoutingRulesPage() {
         )}
 
         <BaseCard compact>
-          <div className="routing-config-page__admin-toolbar routing-config-page__admin-toolbar--rules">
-            <div className="routing-config-page__query-group">
-              <div className="routing-config-page__filters routing-config-page__filters--rules">
+          <AdminToolbar
+            className="routing-config-page__admin-toolbar--rules"
+            filters={
+              <>
                 {activeFactors.map((factor) => (
-                  <label
+                  <AdminFilterField
                     key={factor.factorCode}
-                    className="routing-config-page__filter"
-                    style={{ width: 180 }}
+                    label={factor.factorName}
+                    width={180}
                   >
-                    <span>{factor.factorName}</span>
                     <Select
                       maxTagCount="responsive"
                       mode="multiple"
@@ -772,10 +774,9 @@ export function SkillRoutingRulesPage() {
                         }))
                       }
                     />
-                  </label>
+                  </AdminFilterField>
                 ))}
-                <label className="routing-config-page__filter" style={{ width: 180 }}>
-                  <span>Target Skill Queue</span>
+                <AdminFilterField label="Target Skill Queue" width={180}>
                   <Select
                     showSearch
                     optionFilterProp="label"
@@ -789,9 +790,8 @@ export function SkillRoutingRulesPage() {
                     value={targetQueueFilterDraft}
                     onChange={setTargetQueueFilterDraft}
                   />
-                </label>
-                <label className="routing-config-page__filter" style={{ width: 180 }}>
-                  <span>Status</span>
+                </AdminFilterField>
+                <AdminFilterField label="Status" width={180}>
                   <Select
                     options={[
                       {
@@ -803,18 +803,19 @@ export function SkillRoutingRulesPage() {
                     value={ruleStatusFilterDraft}
                     onChange={setRuleStatusFilterDraft}
                   />
-                </label>
-              </div>
-              <div className="routing-config-page__admin-actions">
-                <BaseButton variant="primary" onClick={handleRuleSearch}>
-                  Search
-                </BaseButton>
-                <BaseButton variant="secondary" onClick={handleRuleReset}>
-                  Reset
-                </BaseButton>
-              </div>
-            </div>
-            <div className="routing-config-page__add-action">
+                </AdminFilterField>
+                <div className="routing-config-page__admin-actions routing-config-page__admin-actions--rules-inline">
+                  <BaseButton variant="primary" onClick={handleRuleSearch}>
+                    Search
+                  </BaseButton>
+                  <BaseButton variant="secondary" onClick={handleRuleReset}>
+                    Reset
+                  </BaseButton>
+                </div>
+              </>
+            }
+            filtersClassName="routing-config-page__filters--rules"
+            primaryActions={
               <BaseButton
                 icon={<PlusOutlined />}
                 variant="primary"
@@ -822,9 +823,9 @@ export function SkillRoutingRulesPage() {
               >
                 Batch Add
               </BaseButton>
-            </div>
-          </div>
-          <BaseTable<RoutingRule>
+            }
+          />
+          <AdminTable<RoutingRule>
             columns={ruleColumns}
             dataSource={filteredRules}
             pagination={paginationConfig}
@@ -835,7 +836,7 @@ export function SkillRoutingRulesPage() {
         </BaseCard>
       </section>
 
-      <BaseModal
+      <AdminModal
         className="routing-config-crud-modal"
         kind="detail"
         open={batchModalOpen}
@@ -888,7 +889,7 @@ export function SkillRoutingRulesPage() {
                 queue; unselected rows will remain unchanged.
               </p>
             )}
-            <BaseTable<RulePreviewRow>
+            <AdminTable<RulePreviewRow>
               className="routing-config__preview-table"
               columns={previewColumns}
               dataSource={duplicatePreviewRows}
@@ -916,9 +917,9 @@ export function SkillRoutingRulesPage() {
             Save
           </BaseButton>
         </div>
-      </BaseModal>
+      </AdminModal>
 
-      <BaseModal
+      <AdminModal
         className="routing-config-crud-modal"
         kind="detail"
         open={Boolean(modalMode)}
@@ -1023,7 +1024,7 @@ export function SkillRoutingRulesPage() {
             </BaseButton>
           )}
         </div>
-      </BaseModal>
-    </PageContainer>
+      </AdminModal>
+    </AdminPage>
   )
 }

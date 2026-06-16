@@ -186,6 +186,7 @@ export interface LanguageType {
 export interface BusinessType {
   businessName: string
   businessTypeCode: string
+  sourceBusinessCode: string
   projectCode: string
   status: RoutingConfigStatus
 }

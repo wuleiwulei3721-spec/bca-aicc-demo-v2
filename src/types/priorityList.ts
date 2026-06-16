@@ -1,8 +1,11 @@
+export type PriorityListMatchRule = 'email_domain_match' | 'exact_match'
+
 export interface PriorityListEntry {
   channel: string
   createdAt: string
   createdBy: string
   id: string
-  priorityNumber: string
+  identifier: string
+  matchRule: PriorityListMatchRule
   remark: string
 }

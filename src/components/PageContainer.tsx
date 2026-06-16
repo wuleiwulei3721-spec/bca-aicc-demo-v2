@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 
 export interface PageContainerProps {
+  className?: string
   title?: ReactNode
   description?: ReactNode
   eyebrow?: ReactNode
@@ -9,6 +10,7 @@ export interface PageContainerProps {
 }
 
 export function PageContainer({
+  className,
   title,
   description,
   eyebrow,
@@ -16,9 +18,12 @@ export function PageContainer({
   children,
 }: PageContainerProps) {
   const hasHeader = Boolean(title || description || eyebrow || extra)
+  const containerClassName = ['aicc-page-container', className]
+    .filter(Boolean)
+    .join(' ')
 
   return (
-    <main className="aicc-page-container">
+    <main className={containerClassName}>
       {hasHeader && (
         <div className="aicc-page-container__header">
           <div>

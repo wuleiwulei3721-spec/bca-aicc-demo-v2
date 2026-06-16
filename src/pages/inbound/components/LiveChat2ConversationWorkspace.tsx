@@ -88,7 +88,7 @@ function getInitials(name: string) {
 }
 
 function getChannelLabel(channel: LiveChat2SessionView['channel']) {
-  if (channel === 'Haloapps') {
+  if (channel === 'BankApp') {
     return 'BankApp'
   }
 
@@ -100,7 +100,7 @@ function getChannelIcon(channel: LiveChat2SessionView['channel']) {
     return <WhatsAppOutlined />
   }
 
-  if (channel === 'Haloapps') {
+  if (channel === 'BankApp') {
     return <MobileOutlined />
   }
 
@@ -108,7 +108,7 @@ function getChannelIcon(channel: LiveChat2SessionView['channel']) {
 }
 
 function getChannelClassName(channel: LiveChat2SessionView['channel']) {
-  if (channel === 'Haloapps') {
+  if (channel === 'BankApp') {
     return 'livechat2-channel-avatar--bankapp'
   }
 
@@ -467,7 +467,7 @@ export function LiveChat2ConversationWorkspace({
   const isEnded = session.statusDisplay === 'ended'
   const canCompose = !readOnly && !isEnded
   const canRecallMessages =
-    session.channel === 'Haloapps' || session.channel === 'Webchat'
+    session.channel === 'BankApp' || session.channel === 'Webchat'
   const trimmedDraft = draftMessage.trim()
   const visibleMessages = getLiveChat2VisibleMessages(
     session.historyMessages,

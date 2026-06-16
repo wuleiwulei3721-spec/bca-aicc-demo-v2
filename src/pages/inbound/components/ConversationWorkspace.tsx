@@ -81,13 +81,13 @@ function getInitials(name: string) {
 }
 
 const channelLabels: Record<LiveChatSession['channel'], string> = {
-  Haloapps: 'BankApp',
+  BankApp: 'BankApp',
   Webchat: 'Webchat',
   WhatsApp: 'WhatsApp',
 }
 
 function getChannelIconClassName(channel: LiveChatSession['channel']) {
-  if (channel === 'Haloapps') {
+  if (channel === 'BankApp') {
     return 'live-chat-channel-icon--bankapp'
   }
 
@@ -99,7 +99,7 @@ function renderChannelIcon(channel: LiveChatSession['channel']) {
   const icon =
     channel === 'WhatsApp' ? (
       <WhatsAppOutlined />
-    ) : channel === 'Haloapps' ? (
+    ) : channel === 'BankApp' ? (
       <MobileOutlined />
     ) : (
       <GlobalOutlined />

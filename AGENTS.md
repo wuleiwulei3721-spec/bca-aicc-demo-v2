@@ -123,10 +123,15 @@ Inbound 当前是核心页面，采用三栏：
 
 - 不要覆盖或回滚用户已有改动，除非用户明确要求。
 - 业务页面优先使用现有设计系统组件和 Less token。
+- 遇到业务复杂度上升、例外规则增多或同类逻辑反复补丁时，必须先判断该概念是否应上升为数据模型、配置维度或独立流程，不要急于在现有 UI 上继续打补丁；推荐方案应优先解释模型边界和后续扩展性。
+- 遇到高影响不确定性、业务语义可能理解错误或会影响后续模型结构的问题时，必须先向用户提出清晰问题，并说明当前推荐方案与原因；在用户确认前不要把不确定假设固化成实现。
+- 新增或维护 `Call Management`、`Routing Config` 等管理台数据维护页面时，必须优先使用 `src/components/admin/*` 的 `AdminPage`、`AdminToolbar`、`AdminFilterField`、`AdminTable`、`AdminModal`、`AdminFormField`；不要在页面内重新手写查询栏、分页、表格字重、Actions 固定列、弹框 footer 或输入框高度。
+- 管理台列表默认遵循统一规范：查询控件 32px 高，Search/Reset 等高等宽；Keyword 查询宽度约 240-260px，普通 input/select 约 200-220px，Status 约 150-160px；Search 使用 primary，Reset 使用 secondary；Add/Batch Add 属于右侧主操作区，使用 primary 样式并按文本自然宽度展示，Delete 保持 danger；表头加粗但列表数据正常字重，首个字段不额外加粗；列表状态列统一用 StatusBadge 文本标签展示，状态开关只放在新增/编辑弹框内；主列表默认 10 条分页并由页面容器纵向滚动，只有弹框内长列表使用表格内部纵向滚动；复杂 toolbar 中筛选条件可换行，但 Search/Reset 留在查询动作区，Batch Add 留在右侧主操作区。
 - 新增接口或 mock 字段时，必须同步更新对应 TypeScript 类型。
 - 新增页面时，必须确认路由、布局、状态入口、样式作用域和设计系统复用关系。
 - 修改 Inbound 相关逻辑时，必须关注 `BasicLayout` 状态机、`appStore`、`AgentWorkspace`、`InboundPage` 和子组件之间的联动。
 - 修改 prompt 或业务话术时，必须同步更新 `.codex-backup/key-prompts.md` 或对应恢复摘要。
+- 客户可见 UI、mock 展示数据、演示话术、文档摘要和备份说明中不要出现旧客户品牌词等敏感字样；统一用 Bank / BankApp / BANK 1 等脱敏口径替换，替换后必须保持英文或印尼语句子通顺。内部兼容 code 如确需保留，必须避免直接展示给客户。
 - 不要在仓库、备份目录或日志中保存密钥、token、账号密码、真实客户敏感数据。
 
 ## 3. 自动备份规则

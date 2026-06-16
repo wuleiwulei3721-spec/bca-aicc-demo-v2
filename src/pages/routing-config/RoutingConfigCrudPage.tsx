@@ -4,11 +4,15 @@ import type { ColumnsType } from 'antd/es/table'
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
+  AdminFilterField,
+  AdminFormField,
+  AdminModal,
+  AdminModalFooter,
+  AdminPage,
+  AdminTable,
+  AdminToolbar,
   BaseButton,
   BaseCard,
-  BaseModal,
-  BaseTable,
-  PageContainer,
   SearchInput,
 } from '../../components'
 import type { RoutingConfigStatus } from '../../types'
@@ -367,12 +371,6 @@ export function RoutingConfigCrudPage<RecordType extends object>({
   const [notice, setNotice] = useState<string | null>(null)
   const [submitAttempted, setSubmitAttempted] = useState(false)
   const hasConfiguredFilters = Boolean(filters?.length)
-  const paginationConfig = {
-    defaultPageSize: 20,
-    pageSizeOptions: [10, 20, 50, 100],
-    showTotal: (total: number, range: [number, number]) =>
-      `${range[0]}-${range[1]} of ${total} records`,
-  }
 
   const filteredData = useMemo(() => {
     if (hasConfiguredFilters && filters) {
@@ -574,8 +572,7 @@ export function RoutingConfigCrudPage<RecordType extends object>({
   ]
 
   return (
-    <PageContainer title={title}>
-      <section className="routing-config-page">
+    <AdminPage title={title}>
         {notice && (
           <Alert
             showIcon
@@ -586,17 +583,26 @@ export function RoutingConfigCrudPage<RecordType extends object>({
         )}
         {extraContent}
         <BaseCard compact>
-          <div className="routing-config-page__admin-toolbar">
-            <div className="routing-config-page__query-group">
-              {hasConfiguredFilters && filters ? (
-                <div className="routing-config-page__filters">
+          <AdminToolbar
+            actions={
+              <>
+                <BaseButton variant="primary" onClick={handleSearch}>
+                  {searchButtonText}
+                </BaseButton>
+                <BaseButton variant="secondary" onClick={handleReset}>
+                  {resetButtonText}
+                </BaseButton>
+              </>
+            }
+            filters={
+              hasConfiguredFilters && filters ? (
+                <>
                   {filters.map((filter) => (
-                    <label
+                    <AdminFilterField
                       key={filter.key}
-                      className="routing-config-page__filter"
-                      style={{ width: filter.width }}
+                      label={filter.label}
+                      width={filter.width}
                     >
-                      <span>{filter.label}</span>
                       {filter.type === 'multiSelect' ? (
                         <Select
                           maxTagCount="responsive"
@@ -650,35 +656,23 @@ export function RoutingConfigCrudPage<RecordType extends object>({
                           onPressEnter={handleSearch}
                         />
                       )}
-                    </label>
+                    </AdminFilterField>
                   ))}
-                </div>
+                </>
               ) : (
-                <div className="routing-config-page__filters">
-                  <label
-                    className="routing-config-page__filter"
-                    style={{ width: 240 }}
-                  >
-                    <span>Keyword</span>
+                <>
+                  <AdminFilterField label="Keyword" width={240}>
                     <SearchInput
                       placeholder={`Search ${title}`}
                       value={searchDraft}
                       onChange={(event) => setSearchDraft(event.target.value)}
                       onPressEnter={handleSearch}
                     />
-                  </label>
-                </div>
-              )}
-              <div className="routing-config-page__admin-actions">
-                <BaseButton variant="primary" onClick={handleSearch}>
-                  {searchButtonText}
-                </BaseButton>
-                <BaseButton variant="secondary" onClick={handleReset}>
-                  {resetButtonText}
-                </BaseButton>
-              </div>
-            </div>
-            <div className="routing-config-page__add-action">
+                  </AdminFilterField>
+                </>
+              )
+            }
+            primaryActions={
               <BaseButton
                 icon={<PlusOutlined />}
                 variant="primary"
@@ -686,22 +680,18 @@ export function RoutingConfigCrudPage<RecordType extends object>({
               >
                 {addButtonText}
               </BaseButton>
-            </div>
-          </div>
-          <BaseTable<RecordType>
+            }
+          />
+          <AdminTable<RecordType>
             columns={actionColumns}
             dataSource={filteredData}
-            pagination={paginationConfig}
+            pagination={{}}
             rowKey={(record) => String(record[idField])}
-            scroll={tableScrollX ? { x: tableScrollX } : undefined}
-            size="small"
+            horizontalScroll={tableScrollX}
           />
         </BaseCard>
-      </section>
 
-      <BaseModal
-        className="routing-config-crud-modal"
-        kind="detail"
+      <AdminModal
         open={Boolean(modalMode)}
         title={modalTitle}
         width={modalWidth}
@@ -777,11 +767,14 @@ export function RoutingConfigCrudPage<RecordType extends object>({
                 }`
 
                 return (
-                  <label key={field.key} className={fieldClassName}>
-                    <span>
-                      {field.label}
-                      {field.required && <strong>*</strong>}
-                    </span>
+                  <AdminFormField
+                    key={field.key}
+                    className={fieldClassName}
+                    fullWidth={field.fullWidth}
+                    helper={field.helper}
+                    label={field.label}
+                    required={field.required}
+                  >
                     {isReadOnly ? (
                       <em>{formatViewValue(field, value)}</em>
                     ) : (
@@ -792,14 +785,13 @@ export function RoutingConfigCrudPage<RecordType extends object>({
                         })),
                       )
                     )}
-                    {field.helper && <small>{field.helper}</small>}
-                  </label>
+                  </AdminFormField>
                 )
               })
             )}
           </div>
         )}
-        <div className="routing-config-crud-modal__footer">
+        <AdminModalFooter>
           <BaseButton variant="secondary" onClick={closeModal}>
             {isReadOnly
               ? modalLabels?.close ?? 'Close'
@@ -815,8 +807,8 @@ export function RoutingConfigCrudPage<RecordType extends object>({
               {modalLabels?.save ?? 'Save'}
             </BaseButton>
           )}
-        </div>
-      </BaseModal>
-    </PageContainer>
+        </AdminModalFooter>
+      </AdminModal>
+    </AdminPage>
   )
 }

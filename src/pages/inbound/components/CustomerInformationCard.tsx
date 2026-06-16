@@ -11,26 +11,21 @@ import {
   CustomerInformationPanel,
   type CustomerOutboundRequestStatus,
 } from '../../../components'
-import {
-  callFlowDetail,
-  verificationBusinessTypes,
-} from '../../../mock/inbound'
+import { callFlowDetail } from '../../../mock/inbound'
 import { useAppStore } from '../../../store'
-import type { BankAppPinVerificationStatus } from '../../../store'
 import type {
   CustomerInformation,
-  VerificationBusinessType,
-  VerificationChannelType,
-  VerificationQuestion,
-  VerificationRule,
+  VerificationV2CustomerSegment,
+  VerificationV2DemoConditions,
   VerificationStatus,
 } from '../../../types'
+import {
+  getDefaultVerificationV2ChannelCode,
+  getDefaultVerificationV2SkillQueueCode,
+} from '../../../utils/verificationRuleV2'
 import { CallFlowDetailModal } from './CallFlowDetailModal'
 import { ChannelTag } from './ChannelTag'
-import {
-  CustomerVerificationModal,
-  type QuestionStepStatus,
-} from './CustomerVerificationModal'
+import { CustomerVerificationV2Modal } from './CustomerVerificationV2Modal'
 import { ContactManagementModal } from './ContactManagementModal'
 import {
   CONTACT_TYPES,
@@ -82,79 +77,33 @@ function createContactsForCustomerProfile(
   return initialContacts
 }
 
-function getDefaultVerificationBusinessType(
-  customer: CustomerInformation,
-): VerificationBusinessType {
-  if (customer.accessChannel === 'Webchat') {
-    return 'paylater'
+function getCustomerSegmentFromProfile(
+  customerType: string,
+): VerificationV2CustomerSegment {
+  const normalizedCustomerType = customerType.trim().toLowerCase()
+
+  if (
+    normalizedCustomerType.includes('organisasi') ||
+    normalizedCustomerType.includes('organization') ||
+    normalizedCustomerType.includes('business') ||
+    normalizedCustomerType.includes('bisnis') ||
+    normalizedCustomerType.includes('corporate')
+  ) {
+    return 'organization-business'
   }
 
-  return 'perbankan'
-}
-
-function getVerificationChannelType(
-  customer: CustomerInformation,
-  pinStatus: BankAppPinVerificationStatus,
-): VerificationChannelType {
-  if (customer.accessChannel === 'Phone') {
-    return 'phone'
-  }
-
-  if (customer.accessChannel === 'Video') {
-    return 'video'
-  }
-
-  if (customer.accessChannel === 'WhatsApp') {
-    return 'whatsapp'
-  }
-
-  if (customer.accessChannel === 'Webchat') {
-    return 'webchat'
-  }
-
-  if (customer.accessChannel === 'Haloapps') {
-    return 'haloapp-registered'
+  if (normalizedCustomerType.includes('solitaire')) {
+    return 'solitaire'
   }
 
   if (
-    customer.accessChannel === 'BankApp' ||
-    customer.accessChannel === 'Haloapps Voice' ||
-    customer.accessChannel === 'Haloapps Video'
+    normalizedCustomerType.includes('priority') ||
+    normalizedCustomerType.includes('prioritas')
   ) {
-    return pinStatus === 'verified'
-      ? 'haloapp-registered'
-      : 'haloapp-unregistered'
+    return 'priority'
   }
 
-  return 'phone'
-}
-
-function findVerificationRule(
-  verificationRules: VerificationRule[],
-  channelType: VerificationChannelType,
-  businessType: VerificationBusinessType,
-): VerificationRule | null {
-  if (channelType === 'haloapp-unregistered') {
-    return null
-  }
-
-  const exactRule = verificationRules.find(
-    (rule) =>
-      rule.channelType === channelType && rule.businessType === businessType,
-  )
-
-  if (exactRule?.status === 'enabled') {
-    return exactRule
-  }
-
-  return (
-    verificationRules.find(
-      (rule) =>
-        rule.channelType === 'phone' &&
-        rule.businessType === businessType &&
-        rule.status === 'enabled',
-    ) ?? null
-  )
+  return 'regular'
 }
 
 export function CustomerInformationCard({
@@ -169,14 +118,11 @@ export function CustomerInformationCard({
   const requestCustomerOutboundCall = useAppStore(
     (state) => state.requestCustomerOutboundCall,
   )
-  const bankAppPinVerificationStatus = useAppStore(
-    (state) => state.bankAppPinVerificationStatus,
+  const verificationV2QuestionBank = useAppStore(
+    (state) => state.verificationV2QuestionBank,
   )
-  const configuredVerificationRules = useAppStore(
-    (state) => state.verificationRules,
-  )
-  const requestBankAppPinVerification = useAppStore(
-    (state) => state.requestBankAppPinVerification,
+  const verificationV2Rules = useAppStore(
+    (state) => state.verificationV2Rules,
   )
   const { profile } = customer
   const customerKey = [
@@ -192,19 +138,6 @@ export function CustomerInformationCard({
     status: customer.verificationStatus,
   }))
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const defaultVerificationBusinessType =
-    getDefaultVerificationBusinessType(customer)
-  const [selectedBusinessState, setSelectedBusinessState] = useState<{
-    businessType: VerificationBusinessType
-    customerKey: string
-  }>(() => ({
-    businessType: defaultVerificationBusinessType,
-    customerKey,
-  }))
-  const [activeQuestionIndex, setActiveQuestionIndex] = useState(0)
-  const [questionStatuses, setQuestionStatuses] = useState<
-    Record<string, QuestionStepStatus>
-  >({})
   const [isCallFlowOpen, setIsCallFlowOpen] = useState(false)
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
   const defaultContacts = useMemo(
@@ -228,10 +161,6 @@ export function CustomerInformationCard({
     verificationState.customerKey === customerKey
       ? verificationState.status
       : customer.verificationStatus
-  const selectedBusinessType =
-    selectedBusinessState.customerKey === customerKey
-      ? selectedBusinessState.businessType
-      : defaultVerificationBusinessType
   const contacts =
     contactsState.customerKey === customerKey
       ? contactsState.contacts
@@ -255,18 +184,18 @@ export function CustomerInformationCard({
     : routeMenuName
       ? `Last IVR menu: ${routeMenuName}`
       : ''
-  const verificationChannelType = getVerificationChannelType(
-    customer,
-    bankAppPinVerificationStatus,
-  )
-  const verificationRule = useMemo(
-    () =>
-      findVerificationRule(
-        configuredVerificationRules,
-        verificationChannelType,
-        selectedBusinessType,
+  const initialVerificationV2Conditions = useMemo<VerificationV2DemoConditions>(
+    () => ({
+      channelCode: getDefaultVerificationV2ChannelCode(customer.accessChannel),
+      customerSegment: getCustomerSegmentFromProfile(profile.customerType),
+      organizationSegment: 'none',
+      skillQueueCode: getDefaultVerificationV2SkillQueueCode(
+        customer.accessChannel,
+        accessMenuName ?? routeMenuName,
       ),
-    [configuredVerificationRules, selectedBusinessType, verificationChannelType],
+      scenarioId: 'default',
+    }),
+    [accessMenuName, customer.accessChannel, profile.customerType, routeMenuName],
   )
 
   useEffect(
@@ -278,51 +207,8 @@ export function CustomerInformationCard({
     [],
   )
 
-  const resetVerificationProgress = () => {
-    setActiveQuestionIndex(0)
-    setQuestionStatuses({})
-  }
-
   const openVerification = () => {
-    resetVerificationProgress()
     setIsModalOpen(true)
-  }
-
-  const handleBusinessTypeChange = (
-    nextBusinessType: VerificationBusinessType,
-  ) => {
-    setSelectedBusinessState({
-      businessType: nextBusinessType,
-      customerKey,
-    })
-    resetVerificationProgress()
-  }
-
-  const handleQuestionAction = (
-    question: VerificationQuestion,
-    questionIndex: number,
-    status: QuestionStepStatus,
-  ) => {
-    const questions = verificationRule?.questions ?? []
-    const nextQuestionStatuses = {
-      ...questionStatuses,
-      [question.id]: status,
-    }
-    const nextQuestionIndex = questions.findIndex(
-      (item, index) => index > questionIndex && !nextQuestionStatuses[item.id],
-    )
-    const firstOpenQuestionIndex = questions.findIndex(
-      (item) => !nextQuestionStatuses[item.id],
-    )
-
-    setQuestionStatuses(nextQuestionStatuses)
-    setActiveQuestionIndex(
-      nextQuestionIndex >= 0
-        ? nextQuestionIndex
-        : firstOpenQuestionIndex >= 0
-          ? firstOpenQuestionIndex
-          : Math.min(questionIndex, Math.max(questions.length - 1, 0)),
-    )
   }
 
   const finishVerification = (status: VerificationStatus) => {
@@ -503,25 +389,18 @@ export function CustomerInformationCard({
 
       <BaseModal
         className="inbound-verification-modal"
+        destroyOnHidden
         kind="verification"
         open={isModalOpen}
         title="Customer Verification"
-        width={760}
+        width={980}
         onCancel={() => setIsModalOpen(false)}
       >
-        <CustomerVerificationModal
-          activeQuestionIndex={activeQuestionIndex}
-          businessTypes={verificationBusinessTypes}
-          channelType={verificationChannelType}
-          pinStatus={bankAppPinVerificationStatus}
-          questionStatuses={questionStatuses}
-          rule={verificationRule}
-          selectedBusinessType={selectedBusinessType}
-          onBusinessTypeChange={handleBusinessTypeChange}
+        <CustomerVerificationV2Modal
+          initialConditions={initialVerificationV2Conditions}
+          questionBank={verificationV2QuestionBank}
+          rules={verificationV2Rules}
           onFinish={finishVerification}
-          onQuestionAction={handleQuestionAction}
-          onReset={resetVerificationProgress}
-          onSendPinVerification={requestBankAppPinVerification}
         />
       </BaseModal>
       <CallFlowDetailModal

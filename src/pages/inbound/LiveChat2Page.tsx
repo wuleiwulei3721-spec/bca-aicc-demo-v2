@@ -35,7 +35,7 @@ import type { LiveChat2QuickReplyGroup } from './components/liveChat2QuickReplie
 
 const liveChat2Channels: Array<LiveChat2Session['channel']> = [
   'WhatsApp',
-  'Haloapps',
+  'BankApp',
   'Webchat',
 ]
 
@@ -485,13 +485,13 @@ export function LiveChat2Page() {
       : []),
   ]
   const activeSessionAccessMenuName =
-    activeSession.channel === 'Haloapps'
+    activeSession.channel === 'BankApp'
       ? activeSession.lastMenuName ?? activeSession.intent
       : undefined
 
   return (
     <InteractionWorkspace
-      accessMenuLabel="Haloapps Menu"
+      accessMenuLabel="BankApp Menu"
       accessMenuName={activeSessionAccessMenuName}
       ariaLabel="Live Chat workspace"
       assistantActiveKey={rightPanelActiveKey}

@@ -147,9 +147,9 @@ export const liveChatSessions: LiveChatSession[] = [
   },
   {
     id: 'live-chat-002',
-    channel: 'Haloapps',
+    channel: 'BankApp',
     customer: {
-      accessChannel: 'Haloapps',
+      accessChannel: 'BankApp',
       accessDuration: '02:11',
       profile: {
         avatarInitials: 'SA',
@@ -376,9 +376,9 @@ export const liveChat2Sessions: LiveChat2Session[] = [
   {
     id: 'livechat2-002',
     accessSequence: 2,
-    channel: 'Haloapps',
+    channel: 'BankApp',
     customer: {
-      accessChannel: 'Haloapps',
+      accessChannel: 'BankApp',
       accessDuration: '01:12',
       profile: {
         avatarInitials: 'SA',
@@ -607,9 +607,9 @@ export const liveChat2Sessions: LiveChat2Session[] = [
   {
     id: 'livechat2-005',
     accessSequence: 5,
-    channel: 'Haloapps',
+    channel: 'BankApp',
     customer: {
-      accessChannel: 'Haloapps',
+      accessChannel: 'BankApp',
       accessDuration: '02:53',
       profile: {
         avatarInitials: 'LN',
@@ -683,9 +683,9 @@ export const liveChat2Sessions: LiveChat2Session[] = [
   {
     id: 'livechat2-history-001',
     accessSequence: 99,
-    channel: 'Haloapps',
+    channel: 'BankApp',
     customer: {
-      accessChannel: 'Haloapps',
+      accessChannel: 'BankApp',
       accessDuration: '08:46',
       profile: {
         avatarInitials: 'RA',
@@ -798,7 +798,7 @@ const perbankanQuestions: VerificationQuestion[] = [
     sequence: 2,
   },
   {
-    answer: 'myBCA, KlikBCA, dan mobile banking',
+    answer: 'myBank, KlikBank, dan mobile banking',
     answerSource: 'E-Channel profile',
     group: 'dynamic',
     id: 'perbankan-dynamic-002',
@@ -907,7 +907,7 @@ const kartuKreditQuestions: VerificationQuestion[] = [
     sequence: 3,
   },
   {
-    answer: 'myBCA',
+    answer: 'myBank',
     answerSource: 'Credit card payment history',
     group: 'dynamic',
     id: 'card-dynamic-001',
@@ -1059,13 +1059,13 @@ export const verificationRules: VerificationRule[] = [
   },
   {
     businessType: 'perbankan',
-    channelType: 'haloapp-registered',
+    channelType: 'bankapp-registered',
     correctRequired: 3,
-    id: 'haloapp-registered-perbankan',
+    id: 'bankapp-registered-perbankan',
     maxWrongAttempts: 3,
     needLayering: false,
     notes: [
-      'Demo treats a successful 4-digit HaloApp PIN as HaloApp Registered.',
+      'Demo treats a successful 4-digit BankApp PIN as BankApp Registered.',
       'Customer confirmation is still needed for whether this reduction applies to other authenticated channels.',
     ],
     questions: perbankanQuestions,
@@ -1075,7 +1075,7 @@ export const verificationRules: VerificationRule[] = [
     },
     status: 'enabled',
     summary:
-      'HaloApp Registered: 3 correct answers, including 1 mandatory and 2 dynamic. Max wrong: 3.',
+      'BankApp Registered: 3 correct answers, including 1 mandatory and 2 dynamic. Max wrong: 3.',
   },
   {
     businessType: 'kartu-kredit',
@@ -1098,13 +1098,13 @@ export const verificationRules: VerificationRule[] = [
   },
   {
     businessType: 'kartu-kredit',
-    channelType: 'haloapp-registered',
+    channelType: 'bankapp-registered',
     correctRequired: 3,
-    id: 'haloapp-registered-kartu-kredit',
+    id: 'bankapp-registered-kartu-kredit',
     maxWrongAttempts: 3,
     needLayering: true,
     notes: [
-      'Demo follows the customer document rule that HaloApp Registered can pass with 3 correct answers.',
+      'Demo follows the customer document rule that BankApp Registered can pass with 3 correct answers.',
       'ATO and add-on layering remains available as visible reference questions.',
     ],
     questions: kartuKreditQuestions,
@@ -1113,18 +1113,18 @@ export const verificationRules: VerificationRule[] = [
     },
     status: 'enabled',
     summary:
-      'HaloApp Registered: 3 correct answers with mother maiden name as mandatory. Max wrong: 3.',
+      'BankApp Registered: 3 correct answers with mother maiden name as mandatory. Max wrong: 3.',
   },
   {
     businessType: 'paylater',
-    channelType: 'haloapp-registered',
+    channelType: 'bankapp-registered',
     correctRequired: 3,
-    id: 'haloapp-registered-paylater',
+    id: 'bankapp-registered-paylater',
     maxWrongAttempts: 3,
     needLayering: false,
     notes: [
-      'Demo follows the HaloApp Registered banking threshold until BANK 1 confirms a Paylater-specific rule.',
-      'The source document says Paylater may follow banking verification or internal Halo policy.',
+      'Demo follows the BankApp Registered banking threshold until BANK 1 confirms a Paylater-specific rule.',
+      'The source document says Paylater may follow banking verification or internal Bank policy.',
     ],
     questions: paylaterQuestions,
     requiredGroups: {

@@ -3,11 +3,14 @@ import { Alert, Input, InputNumber, Select } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useMemo, useState } from 'react'
 import {
+  AdminFilterField,
+  AdminModal,
+  AdminModalFooter,
+  AdminPage,
+  AdminTable,
+  AdminToolbar,
   BaseButton,
   BaseCard,
-  BaseModal,
-  BaseTable,
-  PageContainer,
 } from '../../components'
 import {
   useAuthStore,
@@ -306,52 +309,51 @@ export function BlacklistManagementPage() {
       render: (_, record) =>
         filteredEntries.findIndex((entry) => entry.id === record.id) + 1,
       title: 'No.',
-      width: 76,
+      width: 56,
     },
     {
       dataIndex: 'channel',
       title: 'Channel',
-      width: 150,
+      width: 112,
     },
     {
       dataIndex: 'restrictedNumber',
       title: 'Restricted Number',
-      width: 170,
+      width: 140,
     },
     {
       dataIndex: 'restrictionPolicy',
       render: (value: BlacklistRestrictionPolicy) =>
         restrictionPolicyLabels[value],
       title: 'Restriction Policy',
-      width: 220,
+      width: 156,
     },
     {
       dataIndex: 'validityDays',
       render: (value: number | null) => value ?? 'Permanent',
       title: 'Validity Days',
-      width: 140,
+      width: 104,
     },
     {
       dataIndex: 'remark',
       ellipsis: true,
       title: 'Remark',
-      width: 320,
+      width: 230,
     },
     {
       dataIndex: 'createdAt',
       title: 'Created Date',
-      width: 160,
+      width: 124,
     },
     {
       dataIndex: 'createdBy',
       title: 'Created By',
-      width: 130,
+      width: 100,
     },
   ]
 
   return (
-    <PageContainer title="Blacklist Management">
-      <section className="routing-config-page blacklist-management">
+    <AdminPage className="blacklist-management" title="Blacklist Management">
         {notice && (
           <Alert
             showIcon
@@ -361,14 +363,20 @@ export function BlacklistManagementPage() {
           />
         )}
         <BaseCard compact>
-          <div className="routing-config-page__admin-toolbar">
-            <div className="routing-config-page__query-group">
-              <div className="routing-config-page__filters">
-                <label
-                  className="routing-config-page__filter"
-                  style={{ width: 180 }}
-                >
-                  <span>Channel</span>
+          <AdminToolbar
+            actions={
+              <>
+                <BaseButton variant="primary" onClick={handleSearch}>
+                  Search
+                </BaseButton>
+                <BaseButton variant="secondary" onClick={handleReset}>
+                  Reset
+                </BaseButton>
+              </>
+            }
+            filters={
+              <>
+                <AdminFilterField label="Channel" width={200}>
                   <Select
                     options={channelFilterOptions}
                     value={filterDraft.channel}
@@ -379,12 +387,8 @@ export function BlacklistManagementPage() {
                       }))
                     }
                   />
-                </label>
-                <label
-                  className="routing-config-page__filter"
-                  style={{ width: 220 }}
-                >
-                  <span>Restricted Number</span>
+                </AdminFilterField>
+                <AdminFilterField label="Restricted Number" width={240}>
                   <Input
                     placeholder="Restricted number"
                     value={filterDraft.restrictedNumber}
@@ -395,12 +399,8 @@ export function BlacklistManagementPage() {
                       }))
                     }
                   />
-                </label>
-                <label
-                  className="routing-config-page__filter"
-                  style={{ width: 240 }}
-                >
-                  <span>Restriction Policy</span>
+                </AdminFilterField>
+                <AdminFilterField label="Restriction Policy" width={220}>
                   <Select
                     options={restrictionPolicyOptions}
                     value={filterDraft.restrictionPolicy}
@@ -411,21 +411,14 @@ export function BlacklistManagementPage() {
                       }))
                     }
                   />
-                </label>
-              </div>
-              <div className="routing-config-page__admin-actions">
-                <BaseButton variant="primary" onClick={handleSearch}>
-                  Search
-                </BaseButton>
-                <BaseButton variant="secondary" onClick={handleReset}>
-                  Reset
-                </BaseButton>
-              </div>
-            </div>
-            <div className="routing-config-page__add-action call-management-list__add-actions">
+                </AdminFilterField>
+              </>
+            }
+            primaryActions={
+              <div className="call-management-list__add-actions">
               <BaseButton
                 icon={<PlusOutlined />}
-                variant="secondary"
+                variant="primary"
                 onClick={() => openCreateModal('single')}
               >
                 Add
@@ -444,17 +437,13 @@ export function BlacklistManagementPage() {
               >
                 {selectedCount > 0 ? `Delete (${selectedCount})` : 'Delete'}
               </BaseButton>
-            </div>
-          </div>
-          <BaseTable<BlacklistEntry>
+              </div>
+            }
+          />
+          <AdminTable<BlacklistEntry>
             columns={columns}
             dataSource={filteredEntries}
-            pagination={{
-              defaultPageSize: 20,
-              pageSizeOptions: [10, 20, 50, 100],
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} / ${total} records`,
-            }}
+            pagination={{}}
             rowSelection={{
               preserveSelectedRowKeys: true,
               selectedRowKeys: selectedEntryIds,
@@ -462,15 +451,10 @@ export function BlacklistManagementPage() {
                 setSelectedEntryIds(selectedRowKeys.map(String)),
             }}
             rowKey="id"
-            scroll={{ x: 1366 }}
-            size="small"
           />
         </BaseCard>
-      </section>
-      <BaseModal
-        className="routing-config-crud-modal"
+      <AdminModal
         destroyOnClose
-        kind="detail"
         open={Boolean(modalMode)}
         title={isBatchMode ? 'Batch Add Blacklist' : 'Add Blacklist'}
         width={760}
@@ -524,7 +508,7 @@ export function BlacklistManagementPage() {
               </span>
               {isBatchMode ? (
                 <Input.TextArea
-                  rows={6}
+                  rows={8}
                   placeholder="Use semicolons for batch add"
                   value={draft.restrictedNumbers}
                   onChange={(event) =>
@@ -563,19 +547,17 @@ export function BlacklistManagementPage() {
             </label>
           </div>
         </div>
-        <div className="routing-config-crud-modal__footer">
+        <AdminModalFooter>
           <BaseButton variant="secondary" onClick={closeModal}>
             Cancel
           </BaseButton>
           <BaseButton variant="primary" onClick={handleSave}>
             Save
           </BaseButton>
-        </div>
-      </BaseModal>
-      <BaseModal
-        className="routing-config-crud-modal"
+        </AdminModalFooter>
+      </AdminModal>
+      <AdminModal
         destroyOnClose
-        kind="detail"
         open={deleteConfirmOpen}
         title="Delete Blacklist Records"
         width={520}
@@ -591,15 +573,15 @@ export function BlacklistManagementPage() {
             type="warning"
           />
         </div>
-        <div className="routing-config-crud-modal__footer">
+        <AdminModalFooter>
           <BaseButton variant="secondary" onClick={closeDeleteConfirm}>
             Cancel
           </BaseButton>
           <BaseButton variant="danger" onClick={handleDeleteSelected}>
             Delete
           </BaseButton>
-        </div>
-      </BaseModal>
-    </PageContainer>
+        </AdminModalFooter>
+      </AdminModal>
+    </AdminPage>
   )
 }

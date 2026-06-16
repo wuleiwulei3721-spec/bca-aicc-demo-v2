@@ -11,8 +11,8 @@ export interface TextChannelMeta {
 
 export const textChannelMetas: TextChannelMeta[] = [
   {
-    code: 'haloapp',
-    label: 'Haloapp',
+    code: 'bankapp',
+    label: 'Bankapp',
     tone: 'bankapp',
   },
   {
@@ -62,7 +62,7 @@ export const defaultTextChannelSettings: TextChannelSettingsConfig = {
   },
   queueAlerts: [
     {
-      channel: 'haloapp',
+      channel: 'bankapp',
       enabled: true,
       recipients: 'Monitoring Team',
       threshold: 10,

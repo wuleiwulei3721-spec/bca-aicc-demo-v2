@@ -19,7 +19,7 @@ type LiveChatSessionSummary = Pick<
 
 const liveChatChannels: LiveChatChannel[] = [
   'WhatsApp',
-  'Haloapps',
+  'BankApp',
 ]
 
 function createInitialConversationMessages() {

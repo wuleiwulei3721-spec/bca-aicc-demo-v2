@@ -9,9 +9,19 @@ import type {
   LiveChat2SortMode,
   LiveChat2StarColor,
   VerificationRule,
+  VerificationV2Question,
+  VerificationV2Rule,
 } from '../types'
 import { liveChat2Sessions, verificationRules } from '../mock/inbound'
+import {
+  verificationV2QuestionBank,
+  verificationV2Rules,
+} from '../mock/verificationRuleV2'
 import { parseDurationSeconds } from '../utils/duration'
+import {
+  cloneVerificationV2QuestionBank,
+  cloneVerificationV2Rules,
+} from '../utils/verificationRuleV2'
 
 export type InboundPopupSource = 'pstn' | 'bankapp-voice'
 export type VideoCallPopupSource = 'standard' | 'bankapp-video'
@@ -89,6 +99,15 @@ function cloneVerificationRules(): VerificationRule[] {
     questions: rule.questions.map((question) => ({ ...question })),
     requiredGroups: { ...rule.requiredGroups },
   }))
+}
+
+function cloneVerificationRuleV2State() {
+  return {
+    verificationV2QuestionBank: cloneVerificationV2QuestionBank(
+      verificationV2QuestionBank,
+    ),
+    verificationV2Rules: cloneVerificationV2Rules(verificationV2Rules),
+  }
 }
 
 function formatLiveChat2Time(date: Date) {
@@ -301,6 +320,8 @@ interface AppState {
   liveChatFocusSessionId: string | null
   readLiveChatSessionIds: string[]
   verificationRules: VerificationRule[]
+  verificationV2QuestionBank: VerificationV2Question[]
+  verificationV2Rules: VerificationV2Rule[]
   voiceVideoHandoffReadiness: VoiceVideoHandoffReadiness
   clearAgentServiceMode: () => void
   closeAllCallInteractionTabs: () => void
@@ -338,6 +359,7 @@ interface AppState {
   requestCustomerOutboundCall: () => void
   requestWhatsAppDemoWorkspace: () => void
   resetVerificationRules: () => void
+  resetVerificationRuleV2: () => void
   setActiveWorkspaceTabKey: (tabKey: string) => void
   setAgentServiceMode: (mode: AgentServiceMode) => void
   setCollapsed: (collapsed: boolean) => void
@@ -361,6 +383,10 @@ interface AppState {
     readiness: VoiceVideoHandoffReadiness,
   ) => void
   updateVerificationRule: (rule: VerificationRule) => void
+  upsertVerificationV2Question: (question: VerificationV2Question) => void
+  upsertVerificationV2Rule: (rule: VerificationV2Rule) => void
+  deleteVerificationV2Rule: (ruleId: string) => void
+  deleteVerificationV2Question: (questionId: string) => void
   startBankAppVideoShareSelection: () => void
   resetBankAppPinVerification: () => void
   resetBankAppVideoDesktopShare: () => void
@@ -426,6 +452,7 @@ export const useAppStore = create<AppState>((set) => ({
   liveChatFocusSessionId: null,
   readLiveChatSessionIds: [],
   verificationRules: cloneVerificationRules(),
+  ...cloneVerificationRuleV2State(),
   voiceVideoHandoffReadiness: 'not-ready',
   clearAgentServiceMode: () =>
     set({
@@ -694,6 +721,7 @@ export const useAppStore = create<AppState>((set) => ({
     set({
       verificationRules: cloneVerificationRules(),
     }),
+  resetVerificationRuleV2: () => set(cloneVerificationRuleV2State()),
   requestBankAppVideoCall: (activate = false) =>
     set((state) => ({
       bankAppVideoCallActivateWorkspace: activate,
@@ -1065,6 +1093,98 @@ export const useAppStore = create<AppState>((set) => ({
             }
           : item,
       ),
+    })),
+  upsertVerificationV2Question: (question) =>
+    set((state) => {
+      const nextQuestion = { ...question }
+      const existingQuestion = state.verificationV2QuestionBank.some(
+        (item) => item.id === question.id,
+      )
+
+      return {
+        verificationV2QuestionBank: existingQuestion
+          ? state.verificationV2QuestionBank.map((item) =>
+              item.id === question.id ? nextQuestion : item,
+            )
+          : [...state.verificationV2QuestionBank, nextQuestion],
+      }
+    }),
+  upsertVerificationV2Rule: (rule) =>
+    set((state) => {
+      const nextRule = cloneVerificationV2Rules([rule])[0]
+      const existingRule = state.verificationV2Rules.some(
+        (item) => item.id === rule.id,
+      )
+
+      return {
+        verificationV2Rules: existingRule
+          ? state.verificationV2Rules.map((item) =>
+              item.id === rule.id ? nextRule : item,
+            )
+          : [...state.verificationV2Rules, nextRule],
+      }
+    }),
+  deleteVerificationV2Rule: (ruleId) =>
+    set((state) => ({
+      verificationV2Rules: state.verificationV2Rules.filter(
+        (rule) => rule.id !== ruleId,
+      ),
+    })),
+  deleteVerificationV2Question: (questionId) =>
+    set((state) => ({
+      verificationV2QuestionBank: state.verificationV2QuestionBank.filter(
+        (question) => question.id !== questionId,
+      ),
+      verificationV2Rules: state.verificationV2Rules.map((rule) => {
+        const removeQuestion = (questionIds: string[]) =>
+          questionIds.filter((id) => id !== questionId)
+
+        return {
+          ...rule,
+          groups: rule.groups
+            ? {
+                alternative: {
+                  ...rule.groups.alternative,
+                  questionIds: removeQuestion(
+                    rule.groups.alternative.questionIds,
+                  ),
+                },
+                dynamic: {
+                  ...rule.groups.dynamic,
+                  questionIds: removeQuestion(
+                    rule.groups.dynamic.questionIds,
+                  ),
+                },
+                mandatory: {
+                  ...rule.groups.mandatory,
+                  questionIds: removeQuestion(
+                    rule.groups.mandatory.questionIds,
+                  ),
+                },
+                static: {
+                  ...rule.groups.static,
+                  questionIds: removeQuestion(
+                    rule.groups.static.questionIds,
+                  ),
+                },
+              }
+            : undefined,
+          scenarios: rule.scenarios?.map((scenario) => ({
+            ...scenario,
+            questionBlocks: scenario.questionBlocks.map((block) => ({
+              ...block,
+              questionIds: removeQuestion(block.questionIds),
+            })),
+          })),
+          specialRules: {
+            ...rule.specialRules,
+            scenarios: rule.specialRules.scenarios.map((scenario) => ({
+              ...scenario,
+              questionIds: removeQuestion(scenario.questionIds),
+            })),
+          },
+        }
+      }),
     })),
   startBankAppVideoShareSelection: () =>
     set({

@@ -31,14 +31,14 @@ interface LiveChatCustomerListProps {
 }
 
 const channelLabels: Record<LiveChatSession['channel'], string> = {
-  Haloapps: 'BankApp',
+  BankApp: 'BankApp',
   Webchat: 'Webchat',
   WhatsApp: 'WhatsApp',
 }
 
 const liveChatChannels: LiveChatChannel[] = [
   'WhatsApp',
-  'Haloapps',
+  'BankApp',
 ]
 
 const channelFilterOptions: Array<{
@@ -58,8 +58,8 @@ const channelFilterOptions: Array<{
   },
   {
     icon: <MobileOutlined />,
-    label: channelLabels.Haloapps,
-    value: 'Haloapps',
+    label: channelLabels.BankApp,
+    value: 'BankApp',
   },
 ]
 
@@ -68,7 +68,7 @@ function getChannelIconClassName(channel: LiveChatChannelFilter) {
     return 'live-chat-channel-icon--all'
   }
 
-  if (channel === 'Haloapps') {
+  if (channel === 'BankApp') {
     return 'live-chat-channel-icon--bankapp'
   }
 

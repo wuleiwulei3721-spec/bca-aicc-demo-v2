@@ -32,7 +32,7 @@ export const defaultBlacklistEntries: BlacklistEntry[] = [
     validityDays: 7,
   },
   {
-    channel: 'Haloapp',
+    channel: 'Bankapp',
     createdAt: '2026-06-11 11:05',
     createdBy: 'Risk Ops',
     id: 'BL004',

@@ -7,11 +7,12 @@ import { Checkbox, InputNumber, Select, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useMemo, useState } from 'react'
 import {
+  AdminModal,
+  AdminModalFooter,
+  AdminPage,
+  AdminTable,
   BaseButton,
   BaseCard,
-  BaseModal,
-  BaseTable,
-  PageContainer,
   StatusBadge,
 } from '../../components'
 import { verificationBusinessTypes } from '../../mock/inbound'
@@ -28,8 +29,8 @@ import type {
 type RuleModalMode = 'view' | 'edit'
 
 const channelTypeLabels: Record<VerificationChannelType, string> = {
-  'haloapp-registered': 'HaloApp Registered',
-  'haloapp-unregistered': 'HaloApp Unregistered',
+  'bankapp-registered': 'BankApp Registered',
+  'bankapp-unregistered': 'BankApp Unregistered',
   phone: 'PSTN / Phone',
   video: 'Video',
   webchat: 'Webchat',
@@ -38,7 +39,7 @@ const channelTypeLabels: Record<VerificationChannelType, string> = {
 
 const configurableChannelTypes: VerificationChannelType[] = [
   'phone',
-  'haloapp-registered',
+  'bankapp-registered',
   'whatsapp',
   'webchat',
   'video',
@@ -338,7 +339,7 @@ export function VerificationRulesPage() {
   }
 
   return (
-    <PageContainer
+    <AdminPage
       extra={
         <BaseButton icon={<ReloadOutlined />} onClick={resetVerificationRules}>
           Reset Demo Rules
@@ -348,7 +349,7 @@ export function VerificationRulesPage() {
     >
       <div className="verification-rules-page">
         <BaseCard compact>
-          <BaseTable<VerificationRule>
+          <AdminTable<VerificationRule>
             columns={columns}
             dataSource={verificationRules}
             pagination={false}
@@ -357,10 +358,9 @@ export function VerificationRulesPage() {
         </BaseCard>
       </div>
 
-      <BaseModal
+      <AdminModal
         centered
         className="verification-rule-config-modal"
-        kind="detail"
         open={Boolean(draftRule)}
         title={
           isViewMode ? 'View Verification Rule' : 'Edit Verification Rule'
@@ -501,7 +501,7 @@ export function VerificationRulesPage() {
               </div>
             </BaseCard>
 
-            <div className="aicc-modal-footer verification-rule-config-modal__footer">
+            <AdminModalFooter className="verification-rule-config-modal__footer">
               <BaseButton onClick={() => setDraftRule(null)}>
                 {isViewMode ? 'Close' : 'Cancel'}
               </BaseButton>
@@ -510,10 +510,10 @@ export function VerificationRulesPage() {
                   Save
                 </BaseButton>
               )}
-            </div>
+            </AdminModalFooter>
           </div>
         )}
-      </BaseModal>
-    </PageContainer>
+      </AdminModal>
+    </AdminPage>
   )
 }

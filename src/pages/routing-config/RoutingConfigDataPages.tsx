@@ -1,4 +1,4 @@
-﻿import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons'
 import { Alert, DatePicker, Input, InputNumber, Select, Switch, Tabs, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -6,9 +6,9 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import {
   BaseButton,
   BaseCard,
-  BaseModal,
-  BaseTable,
-  PageContainer,
+  AdminModal,
+  AdminTable,
+  AdminPage,
 } from '../../components'
 import { useRoutingConfigStore } from '../../store'
 import type {
@@ -822,7 +822,7 @@ export function ChannelTypesPage() {
   ]
 
   return (
-    <PageContainer title="Channel Types">
+    <AdminPage title="Channel Types">
       <section className="routing-config-page">
         <BaseCard compact>
           <div className="routing-config-page__admin-toolbar">
@@ -885,7 +885,7 @@ export function ChannelTypesPage() {
               </div>
             </div>
           </div>
-          <BaseTable
+          <AdminTable
             columns={columns}
             dataSource={filteredChannelTypes}
             pagination={{
@@ -900,7 +900,7 @@ export function ChannelTypesPage() {
           />
         </BaseCard>
       </section>
-    </PageContainer>
+    </AdminPage>
   )
 }
 
@@ -1854,7 +1854,7 @@ export function ChannelsPage() {
   ]
 
   return (
-    <PageContainer title="Channels">
+    <AdminPage title="Channels">
       <section className="routing-config-page">
         <BaseCard compact>
           <div className="routing-config-page__admin-toolbar">
@@ -1961,7 +1961,7 @@ export function ChannelsPage() {
               </div>
             </div>
           </div>
-          <BaseTable
+          <AdminTable
             columns={columns}
             dataSource={filteredChannels}
             pagination={paginationConfig}
@@ -1972,7 +1972,7 @@ export function ChannelsPage() {
         </BaseCard>
       </section>
 
-      <BaseModal
+      <AdminModal
         className="routing-config-crud-modal"
         destroyOnClose
         kind="detail"
@@ -2106,7 +2106,7 @@ export function ChannelsPage() {
                 />
               ) : (
                 <div className="routing-config-channel-account-table">
-                  <BaseTable
+                  <AdminTable
                     columns={accountColumns}
                     dataSource={selectedChannelAccounts}
                     pagination={false}
@@ -2129,8 +2129,8 @@ export function ChannelsPage() {
             </BaseButton>
           )}
         </div>
-      </BaseModal>
-      <BaseModal
+      </AdminModal>
+      <AdminModal
         className="routing-config-crud-modal"
         destroyOnClose
         kind="detail"
@@ -2262,8 +2262,8 @@ export function ChannelsPage() {
             </BaseButton>
           )}
         </div>
-      </BaseModal>
-      <BaseModal
+      </AdminModal>
+      <AdminModal
         className="routing-config-crud-modal routing-config-working-time-modal"
         kind="detail"
         open={Boolean(previewWorkingTimePlan)}
@@ -2282,8 +2282,8 @@ export function ChannelsPage() {
             Close
           </BaseButton>
         </div>
-      </BaseModal>
-    </PageContainer>
+      </AdminModal>
+    </AdminPage>
   )
 }
 
@@ -2305,25 +2305,25 @@ const mediaServiceVariablesByMessageField: Partial<
 }
 
 const mediaServiceModalTitleByMode = {
-  add: '新增媒体服务规则方案',
-  delete: '删除媒体服务规则方案',
-  edit: '编辑媒体服务规则方案',
-  view: '查看媒体服务规则方案',
+  add: '����ý�������򷽰�',
+  delete: 'ɾ��ý�������򷽰�',
+  edit: '�༭ý�������򷽰�',
+  view: '�鿴ý�������򷽰�',
 }
 
 const mediaServiceModalMediaOptions: Array<{
   label: string
   value: MediaTypeCode
 }> = [
-  { label: '文字媒体', value: 'TEXT' },
-  { label: '语音媒体', value: 'VOICE' },
-  { label: '视频媒体', value: 'VIDEO' },
+  { label: '����ý��', value: 'TEXT' },
+  { label: '����ý��', value: 'VOICE' },
+  { label: '��Ƶý��', value: 'VIDEO' },
 ]
 
 const mediaServiceAccessWelcomeMessageByMedia: Record<MediaTypeCode, string> = {
-  TEXT: '您好，智能小助手为您提供服务。',
-  VIDEO: '您好，视频智能小助手为您提供服务。',
-  VOICE: '您好，语音智能小助手为您提供服务。',
+  TEXT: '���ã�����С����Ϊ���ṩ����',
+  VIDEO: '���ã���Ƶ����С����Ϊ���ṩ����',
+  VOICE: '���ã���������С����Ϊ���ṩ����',
 }
 
 function createDefaultMediaServiceRulePlan(
@@ -2336,33 +2336,33 @@ function createDefaultMediaServiceRulePlan(
   return {
     accessSuccessWelcomeMessage:
       mediaServiceAccessWelcomeMessageByMedia[mediaCode],
-    agentNoReplyAutoResponseMessage: '请稍候，我们正在处理。',
+    agentNoReplyAutoResponseMessage: '���Ժ��������ڴ����',
     agentNoReplyBreachSeconds: 120,
     agentNoReplyTimeoutSeconds: 120,
     agentNoReplyWarningSeconds: 60,
-    agentEndReminder: '很高兴为您服务，祝您生活愉快！',
+    agentEndReminder: '�ܸ���Ϊ������ף��������죡',
     assignedAgentGreeting:
-      '尊敬的{customerName}您好，{agentName}将为您服务，若您超过{timeoutMinutes}分钟未回复，会话将自动关闭，请您及时查看。',
-    agentTimeoutNotice: '客户超时未回复，会话自动关闭。',
+      '�𾴵�{customerName}���ã�{agentName}��Ϊ��������������{timeoutMinutes}����δ�ظ����Ự���Զ��رգ�������ʱ�鿴��',
+    agentTimeoutNotice: '�ͻ���ʱδ�ظ����Ự�Զ��رա�',
     customerNoReplyTimeoutMinutes: 5,
     customerTimeoutNotice:
-      '未收到您的回复，已自动关闭服务，若有需要可再次联系客服。',
+      'δ�յ����Ļظ������Զ��رշ���������Ҫ���ٴ���ϵ�ͷ���',
     description: '',
     maxConcurrentAccess: 50,
     maxQueueCustomers: 20,
     mediaCode,
     minScanIntervalSeconds: 30,
     nonWorkingTimeMessage:
-      '抱歉，工作时间为{workTime}，请在此时间联系我们。',
+      '��Ǹ������ʱ��Ϊ{workTime}�����ڴ�ʱ����ϵ���ǡ�',
     planCode: `MSRP_${mediaCode}_${String(nextIndex).padStart(2, '0')}`,
     planName: '',
     preTimeoutReminderMessage:
-      '系统未收到回复，将在{reminderMinutes}分钟后结束会话。',
+      'ϵͳδ�յ��ظ�������{reminderMinutes}���Ӻ�����Ự��',
     preTimeoutReminderMinutes: 1,
-    queueTimeoutMessage: '当前人工服务繁忙，请稍后再试。',
+    queueTimeoutMessage: '��ǰ�˹�����æ�����Ժ����ԡ�',
     queueTimeoutMinutes: 10,
     queueWaitingMessage:
-      '当前人工服务繁忙，预计等待{estimatedWaitMinutes}分钟。',
+      '��ǰ�˹�����æ��Ԥ�Ƶȴ�{estimatedWaitMinutes}���ӡ�',
     status: 'Active',
     updatedAt: '',
     updatedBy: 'Admin',
@@ -2543,9 +2543,9 @@ export function MediaServiceRulePlansPage() {
     const planCode = draft.planCode.trim()
 
     if (!planCode) {
-      errors.push('方案ID为必填项。')
+      errors.push('����IDΪ�����')
     } else if (!/^[A-Z0-9_-]+$/.test(planCode)) {
-      errors.push('方案ID只能使用大写英文字母、数字、下划线或连字符。')
+      errors.push('����IDֻ��ʹ�ô�дӢ����ĸ�����֡��»��߻����ַ���')
     }
 
     const duplicatedPlanCode = mediaServiceRulePlans.some(
@@ -2555,31 +2555,31 @@ export function MediaServiceRulePlansPage() {
     )
 
     if (duplicatedPlanCode) {
-      errors.push('方案ID已存在。')
+      errors.push('����ID�Ѵ��ڡ�')
     }
 
     if (!draft.planName.trim()) {
-      errors.push('方案名称为必填项。')
+      errors.push('��������Ϊ�����')
     }
 
     const positiveNumberFields: Array<[keyof MediaServiceRulePlan, string]> = [
       [
         'maxConcurrentAccess',
-        draft.mediaCode === 'VIDEO' ? '接入并发视频数' : '接入并发呼叫数',
+        draft.mediaCode === 'VIDEO' ? '���벢����Ƶ��' : '���벢�������',
       ],
-      ['minScanIntervalSeconds', '接入最小扫描间隔'],
+      ['minScanIntervalSeconds', '������Сɨ����'],
     ]
 
     if (draft.mediaCode === 'TEXT') {
       positiveNumberFields.push(
-        ['maxQueueCustomers', '最大排队人数'],
-        ['queueTimeoutMinutes', '排队超时时长'],
-        ['preTimeoutReminderMinutes', '未回复超时前提醒时间'],
-        ['customerNoReplyTimeoutMinutes', '客户未回复超时时长'],
-        ['agentNoReplyTimeoutSeconds', '坐席未回复超时时长'],
-        ['webchatRecallLimitSeconds', 'Webchat消息撤回时限'],
-        ['agentNoReplyWarningSeconds', '坐席未回复黄色提醒'],
-        ['agentNoReplyBreachSeconds', '坐席未回复红色警示'],
+        ['maxQueueCustomers', '����Ŷ�����'],
+        ['queueTimeoutMinutes', '�Ŷӳ�ʱʱ��'],
+        ['preTimeoutReminderMinutes', 'δ�ظ���ʱǰ����ʱ��'],
+        ['customerNoReplyTimeoutMinutes', '�ͻ�δ�ظ���ʱʱ��'],
+        ['agentNoReplyTimeoutSeconds', '��ϯδ�ظ���ʱʱ��'],
+        ['webchatRecallLimitSeconds', 'Webchat��Ϣ����ʱ��'],
+        ['agentNoReplyWarningSeconds', '��ϯδ�ظ���ɫ����'],
+        ['agentNoReplyBreachSeconds', '��ϯδ�ظ���ɫ��ʾ'],
       )
     }
 
@@ -2587,39 +2587,39 @@ export function MediaServiceRulePlansPage() {
       const value = draft[field]
 
       if (typeof value !== 'number' || value <= 0) {
-        errors.push(`${label}必须大于0。`)
+        errors.push(`${label}�������0��`)
       }
     })
 
     const requiredMessageFields: Array<[keyof MediaServiceRulePlan, string]> = [
-      ['accessSuccessWelcomeMessage', '接入成功欢迎语'],
+      ['accessSuccessWelcomeMessage', '����ɹ���ӭ��'],
     ]
 
     if (draft.mediaCode === 'TEXT') {
       if (
         draft.preTimeoutReminderMinutes >= draft.customerNoReplyTimeoutMinutes
       ) {
-        errors.push('未回复超时前提醒时间必须小于客户未回复超时时长。')
+        errors.push('δ�ظ���ʱǰ����ʱ�����С�ڿͻ�δ�ظ���ʱʱ����')
       }
 
       if (draft.agentNoReplyWarningSeconds > draft.agentNoReplyBreachSeconds) {
-        errors.push('坐席未回复黄色提醒时间必须小于或等于红色警示时间。')
+        errors.push('��ϯδ�ظ���ɫ����ʱ�����С�ڻ���ں�ɫ��ʾʱ�䡣')
       }
 
       if (draft.agentNoReplyBreachSeconds > draft.agentNoReplyTimeoutSeconds) {
-        errors.push('坐席未回复红色警示时间必须小于或等于坐席未回复超时时长。')
+        errors.push('��ϯδ�ظ���ɫ��ʾʱ�����С�ڻ������ϯδ�ظ���ʱʱ����')
       }
 
       requiredMessageFields.push(
-        ['agentNoReplyAutoResponseMessage', '自动回复内容'],
-        ['preTimeoutReminderMessage', '未回复超时前提醒'],
-        ['customerTimeoutNotice', '未回复超时客户提醒'],
-        ['agentTimeoutNotice', '未回复超时坐席提醒'],
-        ['nonWorkingTimeMessage', '非人工服务时间提示语'],
-        ['queueWaitingMessage', '排队提示语'],
-        ['queueTimeoutMessage', '排队超时提示语'],
-        ['assignedAgentGreeting', '分配坐席成功问候语'],
-        ['agentEndReminder', '坐席挂断提醒'],
+        ['agentNoReplyAutoResponseMessage', '�Զ��ظ�����'],
+        ['preTimeoutReminderMessage', 'δ�ظ���ʱǰ����'],
+        ['customerTimeoutNotice', 'δ�ظ���ʱ�ͻ�����'],
+        ['agentTimeoutNotice', 'δ�ظ���ʱ��ϯ����'],
+        ['nonWorkingTimeMessage', '���˹�����ʱ����ʾ��'],
+        ['queueWaitingMessage', '�Ŷ���ʾ��'],
+        ['queueTimeoutMessage', '�Ŷӳ�ʱ��ʾ��'],
+        ['assignedAgentGreeting', '������ϯ�ɹ��ʺ���'],
+        ['agentEndReminder', '��ϯ�Ҷ�����'],
       )
     }
 
@@ -2627,7 +2627,7 @@ export function MediaServiceRulePlansPage() {
       const value = draft[field]
 
       if (typeof value !== 'string' || !value.trim()) {
-        errors.push(`${label}为必填项。`)
+        errors.push(`${label}Ϊ�����`)
       }
     })
 
@@ -2668,7 +2668,7 @@ export function MediaServiceRulePlansPage() {
     channelMediaRuleBindings.some(
       (binding) => binding.rulePlanCode === record.planCode,
     )
-      ? '该规则方案已被渠道媒体绑定引用，不能删除。'
+      ? '�ù��򷽰��ѱ�����ý������ã�����ɾ����'
       : null
   const handleSave = () => {
     setSubmitAttempted(true)
@@ -2728,7 +2728,7 @@ export function MediaServiceRulePlansPage() {
           </span>
           {!isReadOnly && variableOptions.length > 0 && (
             <select
-              aria-label={`${label}插入变量`}
+              aria-label={`${label}�������`}
               className="routing-config-media-rule-modal__variable-select"
               value=""
               onChange={(event) => {
@@ -2737,7 +2737,7 @@ export function MediaServiceRulePlansPage() {
                 }
               }}
             >
-              <option value="">插入变量</option>
+              <option value="">�������</option>
               {variableOptions.map((variable) => (
                 <option key={variable} value={variable}>
                   {variable}
@@ -2801,7 +2801,7 @@ export function MediaServiceRulePlansPage() {
   )
   const renderModalStatus = () =>
     isReadOnly ? (
-      <em>{draft.status === 'Active' ? '启用' : '禁用'}</em>
+      <em>{draft.status === 'Active' ? '����' : '����'}</em>
     ) : (
       <span className="routing-config-crud-modal__switch-row">
         <Switch
@@ -2812,7 +2812,7 @@ export function MediaServiceRulePlansPage() {
             updateDraft('status', checked ? 'Active' : 'Disabled')
           }
         />
-        <em>{draft.status === 'Active' ? '启用' : '禁用'}</em>
+        <em>{draft.status === 'Active' ? '����' : '����'}</em>
       </span>
     )
   const columns: ColumnsType<MediaServiceRulePlan> = [
@@ -2875,7 +2875,7 @@ export function MediaServiceRulePlansPage() {
   ]
 
   return (
-    <PageContainer title="Media Service Rule Plans">
+    <AdminPage title="Media Service Rule Plans">
       <section className="routing-config-page">
         <BaseCard compact>
           <div className="routing-config-page__admin-toolbar">
@@ -2970,7 +2970,7 @@ export function MediaServiceRulePlansPage() {
               </BaseButton>
             </div>
           </div>
-          <BaseTable
+          <AdminTable
             columns={columns}
             dataSource={filteredPlans}
             pagination={paginationConfig}
@@ -2981,7 +2981,7 @@ export function MediaServiceRulePlansPage() {
         </BaseCard>
       </section>
 
-      <BaseModal
+      <AdminModal
         className="routing-config-crud-modal routing-config-media-rule-modal"
         destroyOnClose
         kind="detail"
@@ -2989,7 +2989,7 @@ export function MediaServiceRulePlansPage() {
         title={
           modalMode
             ? mediaServiceModalTitleByMode[modalMode]
-            : '媒体服务规则方案'
+            : 'ý�������򷽰�'
         }
         width={1120}
         onCancel={closeModal}
@@ -2999,7 +2999,7 @@ export function MediaServiceRulePlansPage() {
             <Alert
               showIcon
               className="routing-config-crud-modal__validation"
-              message="请检查以下配置"
+              message="������������"
               description={
                 <ul>
                   {validationErrors.map((error) => (
@@ -3024,14 +3024,14 @@ export function MediaServiceRulePlansPage() {
                 <Alert
                   showIcon
                   description={deleteBlockReason}
-                  message="当前记录不能删除。"
+                  message="��ǰ��¼����ɾ����"
                   type="warning"
                 />
               ) : (
                 <Alert
                   showIcon
-                  description="此操作只影响当前前端演示会话。"
-                  message={`确认删除 ${selectedPlan?.planName ?? ''}？`}
+                  description="�˲���ֻӰ�쵱ǰǰ����ʾ�Ự��"
+                  message={`ȷ��ɾ�� ${selectedPlan?.planName ?? ''}��`}
                   type="warning"
                 />
               )}
@@ -3040,12 +3040,12 @@ export function MediaServiceRulePlansPage() {
             <>
               <section className="routing-config-media-rule-modal__section">
                 <header>
-                  <strong>基础信息</strong>
+                  <strong>������Ϣ</strong>
                 </header>
                 <div className="routing-config-media-rule-modal__basic-grid">
                   <label className="routing-config-crud-modal__field">
                     <span>
-                      方案ID <strong>*</strong>
+                      ����ID <strong>*</strong>
                     </span>
                     <Input
                       disabled={isReadOnly || modalMode === 'edit'}
@@ -3057,7 +3057,7 @@ export function MediaServiceRulePlansPage() {
                   </label>
                   <label className="routing-config-crud-modal__field">
                     <span>
-                      方案名称 <strong>*</strong>
+                      �������� <strong>*</strong>
                     </span>
                     <Input
                       disabled={isReadOnly}
@@ -3068,7 +3068,7 @@ export function MediaServiceRulePlansPage() {
                     />
                   </label>
                   <label className="routing-config-crud-modal__field">
-                    <span>媒体类型</span>
+                    <span>ý������</span>
                     <Select
                       disabled={isReadOnly || modalMode === 'edit'}
                       options={mediaServiceModalMediaOptions}
@@ -3079,11 +3079,11 @@ export function MediaServiceRulePlansPage() {
                     />
                   </label>
                   <label className="routing-config-crud-modal__field routing-config-crud-modal__field--status">
-                    <span>状态</span>
+                    <span>״̬</span>
                     {renderModalStatus()}
                   </label>
                   <label className="routing-config-crud-modal__field routing-config-media-rule-modal__description">
-                    <span>备注</span>
+                    <span>��ע</span>
                     <Input.TextArea
                       disabled={isReadOnly}
                       rows={2}
@@ -3098,31 +3098,31 @@ export function MediaServiceRulePlansPage() {
 
               <section className="routing-config-media-rule-modal__section">
                 <header>
-                  <strong>客户服务配置</strong>
+                  <strong>�ͻ���������</strong>
                 </header>
                 <div className="routing-config-media-rule-modal__subsections">
                   <div className="routing-config-media-rule-modal__subsection">
                     <h4>
-                      {draft.mediaCode === 'TEXT' ? '接入量配置' : '接入配置'}
+                      {draft.mediaCode === 'TEXT' ? '����������' : '��������'}
                     </h4>
                     <div className="routing-config-media-rule-modal__compact-row">
                       {renderNumberField(
                         'maxConcurrentAccess',
                         draft.mediaCode === 'VIDEO'
-                          ? '接入并发视频数'
-                          : '接入并发呼叫数',
-                        '个',
+                          ? '���벢����Ƶ��'
+                          : '���벢�������',
+                        '��',
                       )}
                       {renderNumberField(
                         'minScanIntervalSeconds',
-                        '接入最小扫描间隔',
-                        '秒',
+                        '������Сɨ����',
+                        '��',
                       )}
                     </div>
                     <div className="routing-config-media-rule-modal__full-row">
                       {renderMessageField(
                         'accessSuccessWelcomeMessage',
-                        '接入成功欢迎语',
+                        '����ɹ���ӭ��',
                         2,
                         true,
                       )}
@@ -3132,11 +3132,11 @@ export function MediaServiceRulePlansPage() {
                   {draft.mediaCode === 'TEXT' && (
                     <>
                       <div className="routing-config-media-rule-modal__subsection">
-                        <h4>排队配置</h4>
+                        <h4>�Ŷ�����</h4>
                         <div className="routing-config-media-rule-modal__full-row">
                           {renderMessageField(
                             'nonWorkingTimeMessage',
-                            '非人工服务时间提示语',
+                            '���˹�����ʱ����ʾ��',
                             2,
                             true,
                           )}
@@ -3144,33 +3144,33 @@ export function MediaServiceRulePlansPage() {
                         <div className="routing-config-media-rule-modal__paired-row">
                           {renderNumberField(
                             'maxQueueCustomers',
-                            '最大排队人数',
-                            '人',
+                            '����Ŷ�����',
+                            '��',
                           )}
                           {renderMessageField(
                             'queueWaitingMessage',
-                            '排队提示语',
+                            '�Ŷ���ʾ��',
                           )}
                         </div>
                         <div className="routing-config-media-rule-modal__paired-row">
                           {renderNumberField(
                             'queueTimeoutMinutes',
-                            '排队超时时长',
-                            '分',
+                            '�Ŷӳ�ʱʱ��',
+                            '��',
                           )}
                           {renderMessageField(
                             'queueTimeoutMessage',
-                            '排队超时提示语',
+                            '�Ŷӳ�ʱ��ʾ��',
                           )}
                         </div>
                       </div>
 
                       <div className="routing-config-media-rule-modal__subsection">
-                        <h4>人工开场/结束配置</h4>
+                        <h4>�˹�����/��������</h4>
                         <div className="routing-config-media-rule-modal__full-row">
                           {renderMessageField(
                             'assignedAgentGreeting',
-                            '分配坐席成功问候语',
+                            '������ϯ�ɹ��ʺ���',
                             2,
                             true,
                           )}
@@ -3178,7 +3178,7 @@ export function MediaServiceRulePlansPage() {
                         <div className="routing-config-media-rule-modal__full-row">
                           {renderMessageField(
                             'agentEndReminder',
-                            '坐席挂断提醒',
+                            '��ϯ�Ҷ�����',
                             2,
                             true,
                           )}
@@ -3186,33 +3186,33 @@ export function MediaServiceRulePlansPage() {
                       </div>
 
                       <div className="routing-config-media-rule-modal__subsection">
-                        <h4>客户未回复配置</h4>
+                        <h4>�ͻ�δ�ظ�����</h4>
                         <div className="routing-config-media-rule-modal__paired-row">
                           {renderNumberField(
                             'preTimeoutReminderMinutes',
-                            '未回复超时前提醒时间',
-                            '分',
+                            'δ�ظ���ʱǰ����ʱ��',
+                            '��',
                           )}
                           {renderMessageField(
                             'preTimeoutReminderMessage',
-                            '未回复超时前提醒',
+                            'δ�ظ���ʱǰ����',
                           )}
                         </div>
                         <div className="routing-config-media-rule-modal__paired-row">
                           {renderNumberField(
                             'customerNoReplyTimeoutMinutes',
-                            '客户未回复超时时长',
-                            '分',
+                            '�ͻ�δ�ظ���ʱʱ��',
+                            '��',
                           )}
                           {renderMessageField(
                             'customerTimeoutNotice',
-                            '未回复超时客户提醒',
+                            'δ�ظ���ʱ�ͻ�����',
                           )}
                         </div>
                         <div className="routing-config-media-rule-modal__full-row">
                           {renderMessageField(
                             'agentTimeoutNotice',
-                            '未回复超时坐席提醒',
+                            'δ�ظ���ʱ��ϯ����',
                             2,
                             true,
                           )}
@@ -3220,16 +3220,16 @@ export function MediaServiceRulePlansPage() {
                       </div>
 
                       <div className="routing-config-media-rule-modal__subsection">
-                        <h4>坐席未回复配置</h4>
+                        <h4>��ϯδ�ظ�����</h4>
                         <div className="routing-config-media-rule-modal__paired-row">
                           {renderNumberField(
                             'agentNoReplyTimeoutSeconds',
-                            '坐席未回复超时时长',
-                            '秒',
+                            '��ϯδ�ظ���ʱʱ��',
+                            '��',
                           )}
                           {renderMessageField(
                             'agentNoReplyAutoResponseMessage',
-                            '自动回复内容',
+                            '�Զ��ظ�����',
                           )}
                         </div>
                       </div>
@@ -3241,32 +3241,32 @@ export function MediaServiceRulePlansPage() {
               {draft.mediaCode === 'TEXT' && (
                 <section className="routing-config-media-rule-modal__section">
                   <header>
-                    <strong>坐席服务配置</strong>
+                    <strong>��ϯ��������</strong>
                   </header>
                   <div className="routing-config-media-rule-modal__subsections">
                     <div className="routing-config-media-rule-modal__subsection">
-                      <h4>Webchat 消息撤回</h4>
+                      <h4>Webchat ��Ϣ����</h4>
                       <div className="routing-config-media-rule-modal__compact-row">
                         {renderNumberField(
                           'webchatRecallLimitSeconds',
-                          'Webchat消息撤回时限',
-                          '秒',
+                          'Webchat��Ϣ����ʱ��',
+                          '��',
                         )}
                       </div>
                     </div>
 
                     <div className="routing-config-media-rule-modal__subsection">
-                      <h4>坐席未回复服务级别</h4>
+                      <h4>��ϯδ�ظ����񼶱�</h4>
                       <div className="routing-config-media-rule-modal__compact-row">
                         {renderNumberField(
                           'agentNoReplyWarningSeconds',
-                          '黄色提醒',
-                          '秒',
+                          '��ɫ����',
+                          '��',
                         )}
                         {renderNumberField(
                           'agentNoReplyBreachSeconds',
-                          '红色警示',
-                          '秒',
+                          '��ɫ��ʾ',
+                          '��',
                         )}
                       </div>
                     </div>
@@ -3282,7 +3282,7 @@ export function MediaServiceRulePlansPage() {
             variant="secondary"
             onClick={closeModal}
           >
-            <span>{modalMode === 'view' ? '关闭' : '取消'}</span>
+            <span>{modalMode === 'view' ? '�ر�' : 'ȡ��'}</span>
           </BaseButton>
           {modalMode === 'delete' && !deleteBlockReason && (
             <BaseButton
@@ -3290,7 +3290,7 @@ export function MediaServiceRulePlansPage() {
               variant="danger"
               onClick={handleDelete}
             >
-              <span>删除</span>
+              <span>ɾ��</span>
             </BaseButton>
           )}
           {(modalMode === 'add' || modalMode === 'edit') && (
@@ -3299,12 +3299,12 @@ export function MediaServiceRulePlansPage() {
               variant="primary"
               onClick={handleSave}
             >
-              <span>保存</span>
+              <span>����</span>
             </BaseButton>
           )}
         </div>
-      </BaseModal>
-    </PageContainer>
+      </AdminModal>
+    </AdminPage>
   )
 }
 
@@ -3323,6 +3323,11 @@ export function BusinessTypesPage() {
           width: 170,
           render: (value: string) => <strong>{value}</strong>,
         },
+        {
+          dataIndex: 'sourceBusinessCode',
+          title: 'Source Business Code',
+          width: 210,
+        },
         { dataIndex: 'businessName', title: 'Business Name' },
         { dataIndex: 'status', title: 'Status', width: 120, render: renderRoutingStatus },
       ]}
@@ -3330,6 +3335,7 @@ export function BusinessTypesPage() {
         businessName: '',
         businessTypeCode: '04',
         projectCode: 'BANK1',
+        sourceBusinessCode: '',
         status: 'Active',
       })}
       data={businessTypes}
@@ -3338,10 +3344,12 @@ export function BusinessTypesPage() {
         businessName: stringValue(draft.businessName),
         businessTypeCode: stringValue(draft.businessTypeCode),
         projectCode: stringValue(draft.projectCode) || 'BANK1',
+        sourceBusinessCode: stringValue(draft.sourceBusinessCode),
         status: statusValue(draft.status),
       })}
       fields={[
         { key: 'businessTypeCode', label: 'Business Type ID', readOnlyOnEdit: true, required: true, type: 'text' },
+        { key: 'sourceBusinessCode', label: 'Source Business Code', required: true, type: 'text' },
         { key: 'businessName', label: 'Business Name', required: true, type: 'text' },
         { key: 'status', label: 'Status', switchLabels: statusSwitchLabels, type: 'statusSwitch' },
       ]}
@@ -3352,13 +3360,15 @@ export function BusinessTypesPage() {
           match: (record, value) => {
             const keyword = value.toLowerCase()
 
-            return [record.businessTypeCode, record.businessName].some(
-              (fieldValue) => fieldValue.toLowerCase().includes(keyword),
-            )
+            return [
+              record.businessTypeCode,
+              record.sourceBusinessCode,
+              record.businessName,
+            ].some((fieldValue) => fieldValue.toLowerCase().includes(keyword))
           },
-          placeholder: 'Business Type ID / Name',
+          placeholder: 'Business Type ID / Source Business Code / Name',
           type: 'text',
-          width: 240,
+          width: 360,
         },
         {
           key: 'status',
@@ -3382,7 +3392,7 @@ export function BusinessTypesPage() {
       }
       idField="businessTypeCode"
       recordToDraft={(record) => ({ ...record })}
-      searchFields={['businessTypeCode', 'businessName']}
+      searchFields={['businessTypeCode', 'sourceBusinessCode', 'businessName']}
       title="Business Types"
       validateDraft={(draft, currentRecord) => [
         ...validateCode(
@@ -3396,6 +3406,17 @@ export function BusinessTypesPage() {
           'businessTypeCode',
           stringValue(draft.businessTypeCode),
           'Business Type ID',
+        ),
+        ...validateCode(
+          stringValue(draft.sourceBusinessCode),
+          'Source Business Code',
+        ),
+        ...validateUnique(
+          businessTypes,
+          currentRecord,
+          'sourceBusinessCode',
+          stringValue(draft.sourceBusinessCode),
+          'Source Business Code',
         ),
         ...fieldRequired(draft, 'businessName', 'Business Name'),
       ]}
@@ -3973,7 +3994,7 @@ export function SiteAccessVolumePage() {
   }
 
   return (
-    <PageContainer title="Site Access Volume">
+    <AdminPage title="Site Access Volume">
       <section className="routing-config-page">
         {notice && (
           <Alert
@@ -4059,7 +4080,7 @@ export function SiteAccessVolumePage() {
               </BaseButton>
             </div>
           </div>
-          <BaseTable<SiteAccessVolumeMediaRow>
+          <AdminTable<SiteAccessVolumeMediaRow>
             columns={columns}
             dataSource={filteredData}
             pagination={paginationConfig}
@@ -4070,7 +4091,7 @@ export function SiteAccessVolumePage() {
         </BaseCard>
       </section>
 
-      <BaseModal
+      <AdminModal
         className="routing-config-crud-modal routing-config-site-volume-modal"
         kind="detail"
         open={Boolean(modalMode)}
@@ -4225,8 +4246,8 @@ export function SiteAccessVolumePage() {
             </BaseButton>
           )}
         </div>
-      </BaseModal>
-    </PageContainer>
+      </AdminModal>
+    </AdminPage>
   )
 }
 
@@ -5342,7 +5363,7 @@ export function WorkingTimePlansPage() {
   )
 
   return (
-    <PageContainer title="Working Time Plans">
+    <AdminPage title="Working Time Plans">
       <section className="routing-config-page">
         {notice && (
           <Alert
@@ -5412,7 +5433,7 @@ export function WorkingTimePlansPage() {
               </BaseButton>
             </div>
           </div>
-          <BaseTable<WorkingTimePlan>
+          <AdminTable<WorkingTimePlan>
             columns={columns}
             dataSource={filteredData}
             pagination={paginationConfig}
@@ -5423,7 +5444,7 @@ export function WorkingTimePlansPage() {
         </BaseCard>
       </section>
 
-      <BaseModal
+      <AdminModal
         className="routing-config-crud-modal routing-config-working-time-modal"
         kind="detail"
         open={Boolean(modalMode)}
@@ -5539,8 +5560,8 @@ export function WorkingTimePlansPage() {
             </BaseButton>
           )}
         </div>
-      </BaseModal>
-    </PageContainer>
+      </AdminModal>
+    </AdminPage>
   )
 }
 
@@ -6068,7 +6089,7 @@ export function SkillQueuesPage() {
       }
       onSave={(record) => upsertEntity('skillQueues', 'skillQueueCode', record)}
       />
-      <BaseModal
+      <AdminModal
         className="routing-config-crud-modal routing-config-working-time-modal"
         kind="detail"
         open={Boolean(previewWorkingTimePlan)}
@@ -6087,7 +6108,7 @@ export function SkillQueuesPage() {
             Close
           </BaseButton>
         </div>
-      </BaseModal>
+      </AdminModal>
     </>
   )
 }

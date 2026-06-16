@@ -236,8 +236,8 @@ export const channelTypes: ChannelType[] = [
       },
     ],
     category: 'owned-digital',
-    channelTypeCode: 'HALOAPP',
-    channelTypeName: 'Haloapp',
+    channelTypeCode: 'BANKAPP',
+    channelTypeName: 'Bankapp',
     licenseStatus: 'Licensed',
     status: 'Active',
     supportedMediaTypes: ['VOICE', 'VIDEO', 'TEXT'],
@@ -446,16 +446,16 @@ export const channels: Channel[] = [
   },
   {
     accessConfig: {
-      appId: 'haloapp-bank1-prod',
-      signatureSecretRef: 'secret://aicc/haloapp/signature',
+      appId: 'bankapp-bank1-prod',
+      signatureSecretRef: 'secret://aicc/bankapp/signature',
       tenantId: 'tenant-bank1',
-      webhookUrl: 'https://aicc.bank1.example/hooks/haloapp',
+      webhookUrl: 'https://aicc.bank1.example/hooks/bankapp',
     },
     businessConfig: buildBusinessConfig(['VOICE', 'VIDEO', 'TEXT']),
-    channelCode: 'HALOAPP',
+    channelCode: 'BANKAPP',
     channelId: '201',
-    channelName: 'Haloapp',
-    channelTypeCode: 'HALOAPP',
+    channelName: 'Bankapp',
+    channelTypeCode: 'BANKAPP',
     mediaTypes: ['VOICE', 'VIDEO', 'TEXT'],
     status: 'Active',
   },
@@ -678,8 +678,8 @@ export const channelMediaSettings: ChannelMedia[] = [
     status: 'Active',
   },
   {
-    channelCode: 'HALOAPP',
-    channelMediaCode: 'HALOAPP_TEXT',
+    channelCode: 'BANKAPP',
+    channelMediaCode: 'BANKAPP_TEXT',
     extensionConfig: 'BankID binding, customer app session',
     maxConcurrency: 50,
     mediaCode: 'TEXT',
@@ -688,8 +688,8 @@ export const channelMediaSettings: ChannelMedia[] = [
     status: 'Active',
   },
   {
-    channelCode: 'HALOAPP',
-    channelMediaCode: 'HALOAPP_VOICE',
+    channelCode: 'BANKAPP',
+    channelMediaCode: 'BANKAPP_VOICE',
     extensionConfig: 'OpenEye app voice handoff',
     maxConcurrency: 50,
     mediaCode: 'VOICE',
@@ -698,8 +698,8 @@ export const channelMediaSettings: ChannelMedia[] = [
     status: 'Active',
   },
   {
-    channelCode: 'HALOAPP',
-    channelMediaCode: 'HALOAPP_VIDEO',
+    channelCode: 'BANKAPP',
+    channelMediaCode: 'BANKAPP_VIDEO',
     extensionConfig: 'OpenEye video and desktop share',
     maxConcurrency: 50,
     mediaCode: 'VIDEO',
@@ -916,7 +916,7 @@ export const channelMediaRuleBindings: ChannelMediaRuleBinding[] = channels
     channelCode: channel.channelCode,
     mediaCode: 'TEXT',
     rulePlanCode:
-      channel.channelCode === 'HALOAPP'
+      channel.channelCode === 'BANKAPP'
         ? 'MSRP_TEXT_PRIORITY'
         : 'MSRP_TEXT_STANDARD',
     status: 'Active',
@@ -948,18 +948,21 @@ export const businessTypes: BusinessType[] = [
     businessName: 'General Service',
     businessTypeCode: '01',
     projectCode: routingProjectCode,
+    sourceBusinessCode: 'MENU_PERBANKAN',
     status: 'Active',
   },
   {
     businessName: 'Card Lost',
     businessTypeCode: '02',
     projectCode: routingProjectCode,
+    sourceBusinessCode: 'MENU_KARTU_KREDIT',
     status: 'Active',
   },
   {
     businessName: 'Loan Information',
     businessTypeCode: '03',
     projectCode: routingProjectCode,
+    sourceBusinessCode: 'MENU_LOAN_INFORMATION',
     status: 'Active',
   },
 ]
@@ -986,9 +989,9 @@ export const siteAccessRatioGroups: SiteAccessRatioGroup[] = [
     status: 'Active',
   },
   {
-    channelCode: 'HALOAPP',
+    channelCode: 'BANKAPP',
     mediaCode: 'VOICE',
-    ratioGroupCode: 'RATIO_HALOAPP_VOICE_DEFAULT',
+    ratioGroupCode: 'RATIO_BANKAPP_VOICE_DEFAULT',
     ratios: [
       {
         ratioPercent: 34,
@@ -1006,9 +1009,9 @@ export const siteAccessRatioGroups: SiteAccessRatioGroup[] = [
     status: 'Active',
   },
   {
-    channelCode: 'HALOAPP',
+    channelCode: 'BANKAPP',
     mediaCode: 'VIDEO',
-    ratioGroupCode: 'RATIO_HALOAPP_VIDEO_DEFAULT',
+    ratioGroupCode: 'RATIO_BANKAPP_VIDEO_DEFAULT',
     ratios: [
       {
         ratioPercent: 34,
@@ -1026,9 +1029,9 @@ export const siteAccessRatioGroups: SiteAccessRatioGroup[] = [
     status: 'Active',
   },
   {
-    channelCode: 'HALOAPP',
+    channelCode: 'BANKAPP',
     mediaCode: 'TEXT',
-    ratioGroupCode: 'RATIO_HALOAPP_TEXT_DEFAULT',
+    ratioGroupCode: 'RATIO_BANKAPP_TEXT_DEFAULT',
     ratios: [
       {
         ratioPercent: 60,
@@ -1069,11 +1072,11 @@ export const siteAccessRatioGroups: SiteAccessRatioGroup[] = [
 
 export const channelAccounts: ChannelAccount[] = [
   {
-    account: 'haloapp-bank1-prod',
-    accountCode: 'ACC_HALOAPP_BANK1',
-    accountName: 'BANK 1 Haloapp',
-    channelCode: 'HALOAPP',
-    credentialRef: 'secret://aicc/haloapp/main',
+    account: 'bankapp-bank1-prod',
+    accountCode: 'ACC_BANKAPP_BANK1',
+    accountName: 'BANK 1 Bankapp',
+    channelCode: 'BANKAPP',
+    credentialRef: 'secret://aicc/bankapp/main',
     purpose: 'BankApp official service account.',
     status: 'Active',
   },
@@ -1205,16 +1208,16 @@ export const accessEntries: AccessEntry[] = [
     status: 'Active',
   },
   {
-    accountCode: 'ACC_HALOAPP_BANK1',
-    channelMediaCode: 'HALOAPP_TEXT',
-    entryCode: 'ENTRY_HALOAPP_CHAT',
+    accountCode: 'ACC_BANKAPP_BANK1',
+    channelMediaCode: 'BANKAPP_TEXT',
+    entryCode: 'ENTRY_BANKAPP_CHAT',
     entryValue: 'bank1://service/chat',
     status: 'Active',
   },
   {
-    accountCode: 'ACC_HALOAPP_BANK1',
-    channelMediaCode: 'HALOAPP_VOICE',
-    entryCode: 'ENTRY_HALOAPP_VOICE',
+    accountCode: 'ACC_BANKAPP_BANK1',
+    channelMediaCode: 'BANKAPP_VOICE',
+    entryCode: 'ENTRY_BANKAPP_VOICE',
     entryValue: 'bank1://service/voice',
     status: 'Active',
     vdnCode: 'VDN_RETAIL_IN',
@@ -1323,92 +1326,136 @@ export const workingTimePlans: WorkingTimePlan[] = [
   },
 ]
 
+const createSkillQueue = ({
+  assignedAgentCount,
+  maxQueueCustomers = 100,
+  platformSkillId,
+  queueTimeoutMinutes = 10,
+  skillQueueCode,
+  skillQueueName,
+  vdnCode = 'VDN_RETAIL_IN',
+  workTimePlanCode = '',
+}: {
+  assignedAgentCount: number
+  maxQueueCustomers?: number
+  platformSkillId: string
+  queueTimeoutMinutes?: number
+  skillQueueCode: string
+  skillQueueName: string
+  vdnCode?: string
+  workTimePlanCode?: string
+}): SkillQueue => ({
+  assignedAgentCount,
+  maxQueueCustomers,
+  nonWorkingTimeMessage:
+    'Service hours are currently closed. Please contact us during working hours.',
+  platformSkillId,
+  prompts: [
+    {
+      mediaCode: 'TEXT',
+      promptType: 'Timeout Message',
+      value: 'Queue timeout. Please start a new conversation.',
+    },
+  ],
+  queueTimeoutMessage:
+    'All agents are busy. Please start a new conversation later.',
+  queueTimeoutMinutes,
+  queueWaitingMessage:
+    'All agents are busy. Estimated waiting time is {estimatedWaitMinutes} minutes.',
+  skillQueueCode,
+  skillQueueName,
+  status: 'Active',
+  supportsVideo: false,
+  vdnCode,
+  workTimePlanCode,
+})
+
 export const skillQueues: SkillQueue[] = [
-  {
+  createSkillQueue({
     assignedAgentCount: 24,
     maxQueueCustomers: 120,
-    nonWorkingTimeMessage:
-      'Service hours are currently closed. Please contact us during working hours.',
     platformSkillId: 'GX-SK-1001',
-    prompts: [
-      {
-        mediaCode: 'VOICE',
-        promptType: 'Wait Audio',
-        value: 'bank1-standard-waiting.wav',
-      },
-      {
-        mediaCode: 'TEXT',
-        promptType: 'Timeout Message',
-        value: 'Queue timeout. Please start a new conversation.',
-      },
-    ],
-    queueTimeoutMessage:
-      'All agents are busy. Please start a new conversation later.',
-    queueTimeoutMinutes: 10,
-    queueWaitingMessage:
-      'All agents are busy. Estimated waiting time is {estimatedWaitMinutes} minutes.',
     skillQueueCode: 'SQ_GENERAL_ID',
-    skillQueueName: 'General Service - Indonesian',
-    status: 'Active',
-    supportsVideo: false,
-    vdnCode: 'VDN_RETAIL_IN',
-    workTimePlanCode: '',
-  },
-  {
+    skillQueueName: 'Perbankan',
+  }),
+  createSkillQueue({
     assignedAgentCount: 18,
     maxQueueCustomers: 80,
-    nonWorkingTimeMessage:
-      'Card emergency service is currently outside working hours.',
     platformSkillId: 'GX-SK-1002',
-    prompts: [
-      {
-        mediaCode: 'VOICE',
-        promptType: 'Wait Audio',
-        value: 'bank1-card-priority.wav',
-      },
-      {
-        mediaCode: 'TEXT',
-        promptType: 'Timeout Message',
-        value: 'Card service is busy. Please wait or call emergency hotline.',
-      },
-    ],
-    queueTimeoutMessage:
-      'Card service is busy. Please contact the emergency hotline if needed.',
     queueTimeoutMinutes: 7,
-    queueWaitingMessage:
-      'Card emergency agents are busy. Estimated waiting time is {estimatedWaitMinutes} minutes.',
     skillQueueCode: 'SQ_CARD_PRIORITY',
-    skillQueueName: 'Card Emergency Priority',
-    status: 'Active',
-    supportsVideo: false,
+    skillQueueName: 'Kartu Kredit',
     vdnCode: 'VDN_CARD_URGENT',
-    workTimePlanCode: '',
-  },
-  {
-    assignedAgentCount: 14,
-    maxQueueCustomers: 100,
-    nonWorkingTimeMessage:
-      'Digital banking service is currently outside working hours.',
+  }),
+  createSkillQueue({
+    assignedAgentCount: 12,
     platformSkillId: 'GX-SK-1003',
-    prompts: [
-      {
-        mediaCode: 'TEXT',
-        promptType: 'Timeout Message',
-        value: 'Digital banking agents are currently busy.',
-      },
-    ],
-    queueTimeoutMessage:
-      'Digital banking agents are busy. Please try again later.',
-    queueTimeoutMinutes: 8,
-    queueWaitingMessage:
-      'Digital banking agents are busy. Estimated waiting time is {estimatedWaitMinutes} minutes.',
-    skillQueueCode: 'SQ_DIGITAL_EN',
-    skillQueueName: 'Digital Service - English',
-    status: 'Active',
-    supportsVideo: true,
-    vdnCode: 'VDN_RETAIL_IN',
+    skillQueueCode: 'SQ_PRIO_SOLI_PERBANKAN',
+    skillQueueName: 'Prio Soli Perbankan',
+  }),
+  createSkillQueue({
+    assignedAgentCount: 10,
+    platformSkillId: 'GX-SK-1004',
+    skillQueueCode: 'SQ_PRIO_SOLI_KARTU_KREDIT',
+    skillQueueName: 'Prio Soli Kartu Kredit',
+    vdnCode: 'VDN_CARD_URGENT',
+  }),
+  createSkillQueue({
+    assignedAgentCount: 16,
+    platformSkillId: 'GX-SK-1005',
+    skillQueueCode: 'SQ_BANK_BISNIS',
+    skillQueueName: 'Bank Bisnis',
     workTimePlanCode: 'WTP_BANK_HOURS',
-  },
+  }),
+  createSkillQueue({
+    assignedAgentCount: 10,
+    platformSkillId: 'GX-SK-1006',
+    skillQueueCode: 'SQ_PERSONAL_BANKER',
+    skillQueueName: 'Personal Banker',
+    workTimePlanCode: 'WTP_BANK_HOURS',
+  }),
+  createSkillQueue({
+    assignedAgentCount: 14,
+    platformSkillId: 'GX-SK-1007',
+    skillQueueCode: 'SQ_LAYANAN_CABANG',
+    skillQueueName: 'Layanan Cabang',
+    workTimePlanCode: 'WTP_BANK_HOURS',
+  }),
+  createSkillQueue({
+    assignedAgentCount: 14,
+    platformSkillId: 'GX-SK-1008',
+    skillQueueCode: 'SQ_DIGITAL_EN',
+    skillQueueName: 'KlikBank Bisnis',
+    workTimePlanCode: 'WTP_BANK_HOURS',
+  }),
+  createSkillQueue({
+    assignedAgentCount: 12,
+    platformSkillId: 'GX-SK-1009',
+    skillQueueCode: 'SQ_KPR',
+    skillQueueName: 'KPR',
+    workTimePlanCode: 'WTP_BANK_HOURS',
+  }),
+  createSkillQueue({
+    assignedAgentCount: 12,
+    platformSkillId: 'GX-SK-1010',
+    skillQueueCode: 'SQ_PERSONAL_LOAN',
+    skillQueueName: 'Personal Loan',
+    workTimePlanCode: 'WTP_BANK_HOURS',
+  }),
+  createSkillQueue({
+    assignedAgentCount: 10,
+    platformSkillId: 'GX-SK-1011',
+    skillQueueCode: 'SQ_MERCHANT_SOLUTION',
+    skillQueueName: 'Merchant Solution',
+    workTimePlanCode: 'WTP_BANK_HOURS',
+  }),
+  createSkillQueue({
+    assignedAgentCount: 12,
+    platformSkillId: 'GX-SK-1012',
+    skillQueueCode: 'SQ_PAYLATER',
+    skillQueueName: 'Paylater',
+    workTimePlanCode: 'WTP_BANK_HOURS',
+  }),
 ]
 
 export const routingRules: RoutingRule[] = [
@@ -1544,7 +1591,7 @@ export const routingRules: RoutingRule[] = [
     conditions: [
       {
         factorCode: '11',
-        factorValueCode: 'HALOAPP',
+        factorValueCode: 'BANKAPP',
       },
       {
         factorCode: '12',

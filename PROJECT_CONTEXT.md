@@ -1,10 +1,76 @@
 ﻿# BANK 1 AICC Demo V2 - 长期开发上下文
 
-最后更新：2026-06-11 21:12 +08:00
+最后更新：2026-06-16 14:36 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
-当前目标：本机开发和后续 Codex 操作统一只使用 `D:\03projects\bca-aicc-demo-v2` 这一份项目目录，当前分支为 `main`。客户发布也以 `main` 为唯一主线；客户 Production 默认不设置或设置 `VITE_ENABLE_ADMIN_MENUS=false`，开放 `Call Management`，仅隐藏 `Routing Config` 并阻止直达；工程人员本地通过 `.env.local` 设置 `VITE_ENABLE_ADMIN_MENUS=true` 打开 `Routing Config`。
+当前目标：本机开发和后续 Codex 操作统一只使用 `D:\03projects\bca-aicc-demo-v2` 这一份项目目录，当前分支为 `main`。客户发布也以 `main` 为唯一主线；客户 Production 默认不设置或设置 `VITE_ENABLE_ADMIN_MENUS=false`，开放 `Call Management`，仅隐藏 `Routing Config` 并阻止直达；工程人员本地通过 `.env.local` 设置 `VITE_ENABLE_ADMIN_MENUS=true` 打开 `Routing Config`。当前重点是客户身份验证规则 V2 演示、管理台统一规范，以及 `Priority List Management` 按客户反馈支持批量维护、逐渠道保存、邮箱域名匹配和重复过滤。
 
-本轮已完成：`main` 已合入原内部管理分支能力，保留客户登录鉴权、服务模式、Sign Out / Log Out active service guard，并合入内部 `Global Control Configuration` 与完整 `Routing Config` 页面；新增 `src/config/featureFlags.ts`、`.env.example` 和本地 `.env.local`，使 `Routing Config` 的可见性由环境变量控制，而不是长期分支差异。客户可见 `Call Management` 保留 `Verification Rules`、`Global Control Configuration`、`Blacklist Management`、`Priority List Management`、`Busy Reason Management`，并移除 `Text Channel Settings` 入口。2026-06-11 21:12 已为 `Blacklist Management` 与 `Priority List Management` 新增列表勾选和 toolbar 删除能力：表头 checkbox 可全选/取消当前页记录，`Delete` 按钮在未选择时禁用，选择后可单条或批量确认删除。额外 worktree 目录 `bca-aicc-demo-v2-main-fix`、`bca-aicc-demo-v2-integration` 和非 Git 私有素材目录 `bca-aicc-demo-v2-private-assets` 已删除，本地 `codex/*` 分支已清理，后续无需在指令中区分目录或分支。
+本轮已完成：`main` 已合入原内部管理分支能力，保留客户登录鉴权、服务模式、Sign Out / Log Out active service guard，并合入内部 `Global Control Configuration` 与完整 `Routing Config` 页面；新增 `src/config/featureFlags.ts`、`.env.example` 和本地 `.env.local`，使 `Routing Config` 的可见性由环境变量控制，而不是长期分支差异。客户可见 `Call Management` 保留 `Verification Rules`、`Global Control Configuration`、`Blacklist Management`、`Priority List Management`、`Busy Reason Management`，并移除 `Text Channel Settings` 入口。2026-06-12 11:11 已将 `Routing Config > Skill Queues` 默认启用队列扩展为 12 条去客户敏感化名称：`Perbankan`、`Kartu Kredit`、`Prio Soli Perbankan`、`Prio Soli Kartu Kredit`、`Bank Bisnis`、`Personal Banker`、`Layanan Cabang`、`KlikBank Bisnis`、`KPR`、`Personal Loan`、`Merchant Solution`、`Paylater`；默认技能队列 code `SQ_GENERAL_ID` 不变，仅展示名改为 `Perbankan`。2026-06-12 13:16 已新增 `Call Management > Verification Rule V2`，支持问题库维护、按启用渠道 + 技能队列 + 客户级别配置验证规则、自动汇总必对数量、Max Wrong/No Limit、Failure Action、ATO/add-on layering、Branch Combined 和 Organization Segment Override；Customer Information 的 `Verify` 弹框现在读取 V2 规则，并在弹框顶部提供 `Demo Conditions` 来模拟特殊触发字段。2026-06-12 14:10 已优化 V2 规则编辑弹框：Max Wrong 默认无限制且无限制时隐藏数字输入，问题配置改为按需添加/删除分类块，每个分类通过独立选题弹框搜索勾选题库题目后再带入排序列表；V2 题库已按客户 Excel 附件 C 列原文补齐，并按附件规则扩展默认规则覆盖 Perbankan、Kartu Kredit、Prio/Soli、HBB、Personal Banker、Layanan Cabang、KlikBank Bisnis、KPR、Personal Loan、Merchant Solution、Paylater。2026-06-12 14:27 已继续优化 V2 Question Bank：新增按问题名称和状态筛选，新增/编辑改为独立弹框，状态改为开关，列表默认每页 10 条且支持 20 条时表格内部滚动，Question Bank 弹框固定高度。2026-06-12 14:41 已将 V2 Question Bank 简化为仅维护问题名称，移除题库状态字段和状态筛选；题库原文问题按归一化名称合并去重为 56 条唯一题目，并在新增/编辑时拦截同名问题；筛选少量或空结果时表格主体保持固定高度。2026-06-12 14:50 已简化 V2 问题分类块顶部，仅将分类名、Questions 数量、Select、Correct、Order 和删除放入单行操作栏；`Berurut` 页面显示为 `Order` 并通过 tooltip 解释为按配置顺序提问，Alternative 说明也改为 tooltip，已选问题条目行高和上下箭头排序保持不变。2026-06-12 15:27 已将 V2 Special Rules 改成按需添加规则块，只显示已启用的 Case Type Layering、Branch Combined Verification、Organization Segment Override；删除规则块仅设为 disabled 并保留内部配置；Strict Failure Handling 从特殊规则模型和 UI 中移除，失败后是否阻断统一由基础配置里的 `Failure Action` 控制。2026-06-12 16:24 已将 V2 外层表格恢复为标准管理台表格行为：移除专用纵向滚动容器和空滚动框，收紧列宽，横向滚动只作为窄屏兜底，`Actions` 列固定在右侧；查询区继续保留结构化筛选和多选 `+N` 收敛。2026-06-12 16:42 已补齐 V2 规则管理 CRUD：外层规则列表 Actions 增加 Delete，删除前二次确认，确认后仅从当前前端 demo store 删除规则，不删除 Question Bank 题目。2026-06-12 17:03 已将 V2 外层操作区按管理台规范收敛到筛选工具栏右侧，新增按钮统一为 `Add`，列表/弹框/校验统一字段名 `Skill Queue`，并继续压缩表格列宽。2026-06-12 17:05 已在 `Routing Config > Business Types` 增加业务来源代码字段；2026-06-12 17:16 已将该字段统一命名为 `Source Business Code` / `sourceBusinessCode`，用于维护客户页面或 IVR 菜单 ID 与内部业务类型的映射；查询关键词、列表、Add/Edit/View 弹框和唯一校验均已同步。2026-06-12 17:51 已新增 `src/components/admin/*` 管理台统一组件，并将 `RoutingConfigCrudPage`、Routing Config 自定义页、`Verification Rules`、`Verification Rule V2`、`Blacklist Management`、`Priority List Management`、`Busy Reason Management` 等页面接入统一 AdminPage/AdminToolbar/AdminTable/AdminModal 规范；主列表默认 20 条分页、统一分页文案、表头加粗但列表数据正常字重、主页面纵向滚动、弹框内长表格内部滚动，`/design-system` 新增 Admin Management Page 示例。额外 worktree 目录 `bca-aicc-demo-v2-main-fix`、`bca-aicc-demo-v2-integration` 和非 Git 私有素材目录 `bca-aicc-demo-v2-private-assets` 已删除，本地 `codex/*` 分支已清理，后续无需在指令中区分目录或分支。
+
+2026-06-13 11:07 已修复 `Verification Rule V2` 新增/编辑规则勾选问题后的运行时错误：`renderQuestionOrderList` 使用的 Ant Design `Space` 已补回导入；V2 外层列表将原 `Updated At` 拆为 `Updated By` 与 `Updated Time`，规则保存和状态切换会写入 `updatedBy: 'Admin'` 与更新时间；`AGENTS.md` 已新增客户可见内容脱敏规则，`src/` 下演示 UI、mock 展示数据和内部演示 code 已统一使用 Bank / BankApp / BANKAPP 口径，大小写不敏感扫描已确认不再包含旧敏感词。
+
+2026-06-13 11:31 已完成管理台规范二次修正：Admin 主列表默认分页从 20 改为 10，状态列统一用 `StatusBadge` 文本标签，查询宽度规则收敛为 Keyword 240-260px、普通 input/select 200-220px、Status 150-160px；`Verification Rule V2` 状态列从开关改为标签，V2 多标签列单行收敛且 1366x768 下分页首屏可见；`Question Bank` 默认 10 条自然展示，不再强制内部表格滚动；`Blacklist Management` 的 Add/Batch Add 按钮改为同权重并收紧列宽；`Priority List Management` 的 Channel 与 Priority Number 查询宽度统一；`Busy Reason Management` 保持示忙原因名称原文，仅按名称替换启用项 remark 为简短英文说明且不含敏感品牌词；`/design-system` 的 Admin Management Page 示例同步为最新规范。2026-06-13 11:42 继续修正主操作按钮规范：Search 留在查询动作区并使用 primary，Add/Batch Add 属于右侧主操作区，也使用 primary 且宽度按文本自然撑开；`Skill Routing Rules` 的 Batch Add 已恢复右侧主操作位，`Blacklist Management` 与 `Priority List Management` 的 Add/Batch Add 已改为与 Search 同样的 primary 样式。2026-06-13 11:54 按用户截图继续修正 `Skill Routing Rules` 查询区：前 6 个查询条件可在 1366 桌面宽度第一行展示，第二行左侧为 `Status + Search + Reset`，右侧为自然宽度 primary `Batch Add`，不再出现 Status、查询按钮、右侧主操作被拆成三层的大块空白布局；`/design-system` 规范文案同步为“查询动作区 + 右侧主操作区”。2026-06-13 12:10 继续修正宽屏空位问题：规则页不再用右侧主操作 grid 列提前挤压第一行筛选区，宽屏时 `Status` 可进入第一行，Search/Reset 自动换到第二行左侧，Batch Add 保持第二行右侧且不重叠。2026-06-15 14:47 已按客户对优先名单的反馈调整 `Priority List Management`：`Priority Number` 改为 `Identifier`，Channel 查询和新增改为多选且默认空值表示 All Channels；页面按维护视角保留一条多渠道配置记录，列表增加自动 `Match Rule`，普通标识为 `Exact Match`，形如 `@ojk.co.id` 的邮箱域名为 `Email Domain Match`。
+
+2026-06-13 16:33 已按客户身份验证讨论结论调整 V2 口径：`Verification Rule V2` 继续只维护问题验证（KBV）规则，不新增 PIN 配置或接入认证状态；PIN 被定义为入口认证流程，KBV 是业务办理前的问题核验。坐席弹屏中的 `Demo Conditions` 已改为 `Verification Scenario`，特殊场景按坐席手动选择处理，包括 Case Type、Branch Service 和 Organization Segment；V2 规则匹配新增同渠道同客户级别的 Perbankan 默认回退，先精确匹配 `Channel + Skill Queue + Customer Segment`，未命中时回退 `Channel + SQ_GENERAL_ID + Customer Segment`，仍未命中才显示无可用 KBV 规则。管理台特殊规则文案同步改成“可由坐席在验证弹屏中选择的 KBV 场景”，不再暗示必须由外部系统自动触发。
+
+2026-06-13 16:45 已继续压缩 `CustomerVerificationV2Modal` 弹框：`Channel` 改为只读文本展示，不再可下拉选择；删除重复的 Channel/Skill Queue/Customer Segment 胶囊匹配行；`In Progress / Passed / Failed` 状态移入 rule bar，与 `Need N correct` 同行展示；问题列表 Correct/Wrong/Skip 改为图标按钮并保留 aria-label，列表只允许纵向滚动，禁止不必要的横向滚动条。
+
+2026-06-13 16:53 已修正 `CustomerVerificationV2Modal` 场景切换行为：`Case Type`、`Organization Segment`、`Branch Service` 或其它条件变化时，不再直接清空全部答题结果；系统会按新命中的有效题目集保留仍存在题目的 `Correct/Wrong/Skip` 状态，只移除已不在新题目集中的题目结果，新增题目保持未答。`Clear All` 仍是唯一清空整次验证进度的主入口。
+
+2026-06-13 17:23 已将 `Verification Rule V2` 的特殊规则从固定枚举改为自维护特殊场景问题块：管理台可添加多个 `Special Scenario`，每个场景可输入名称、选择题目、设置必对数量和 `Order`；默认规则中 `ATO / add-on`、`mbl d`、`KBB`、`BBP`、`Prioritas`、`Solitaire`、`HBB` 已迁移为可选场景。`CustomerVerificationV2Modal` 中 `Case Type` 与 `Branch Service` 下拉合并为 `Special Scenario`，默认 `None`，坐席选择后只追加该场景题目，并继续保留基础题已答状态。组织客户 `O1-O3 / O4-O5` 覆盖规则仍作为固定 `Organization Segment Override` 保留。
+
+2026-06-13 17:32 已继续优化 `Verification Rule V2` 编辑弹框：V2 Channel 选项只保留启用的 `Phone` 与 `BankApp`；Customer Segment 选项固定按 `Layanan Reguler`、`Layanan Prioritas`、`Solitaire`、`Organisasi/Bisnis` 顺序展示；`Question Configuration` 与 `Special Rules` 合并为 `Question & Special Configuration`，新增基础题组不再使用下拉 + Add，而是直接点击 `Mandatory / Dynamic / Static / Alternative` 按钮添加，和 `Add Special Scenario` / `Add Organization Override` 同一交互模式。
+
+2026-06-13 17:52 已进一步简化 `Verification Rule V2` 编辑弹框的问题配置区：标题回到 `Question Configuration`，不再展示说明文案；配置块头部移除 `Order` 开关、`Questions N` 计数和重复的 Alternative 标签；题目选择按钮统一显示为 `Questions`，并与 `Correct` 数字输入组合在同一个问题控制组中；特殊场景名称改为短输入框，placeholder 为 `Scenario`；已选题目列表不再设置内部滚动高度，改为跟随弹框页面滚动。
+
+2026-06-13 18:00 已恢复 `Verification Rule V2` 中 Alternative 的提示说明：不再使用占位标签，而是在 `Alternative` 标题旁增加小问号 tooltip，说明替代题只用于替代 Dynamic 或 Static，不单独配置必对数量。
+
+2026-06-13 18:21 已继续简化 `Verification Rule V2` 编辑弹框：`Max Wrong Limit` 与 `Max Wrong` 合并为单个 `Max Wrong` 配置项，同一行通过 `No Limit` 开关控制是否展示数字输入，保存时仍按已选题目总数校验最大答错数；问题配置块和特殊场景块头部的 `Questions / Correct / Delete` 操作区统一靠右，特殊场景名称输入框加宽但不占满整行。默认 `Layanan Cabang` 规则中的 `KBB / BBP / Prioritas / Solitaire / HBB` 不再拆成五个特殊场景，已改为一个 `Branch Combined Verification` 场景，包含 3 个分行数据问题和 3 个客户数据问题，`Correct` 暂按 6 配置；当前模型可满足固定 6 题全答对的 demo 表达，若后续客户要求“分行题任选答对 3 个 + 客户题任选答对 3 个”，需要再增加特殊场景内部子分组能力。
+
+2026-06-13 18:52 已为 `Verification Rule V2` 特殊场景新增 `Mode`：`Append` 表示基础题库后追加特殊场景题，`Replace` 表示本次验证只使用特殊场景题；`Max Wrong` 与 `Failure Action` 仍沿用外层规则。管理台 `Special Scenario` 行新增紧凑 `Mode` 下拉，新建特殊场景默认 `Append`，旧数据读取时无 `mode` 也按 `Append` 兼容。坐席 V2 验证弹框计算逻辑已支持 `Replace`：选择替换模式场景时跳过基础题库，仅展示特殊题，必对数等于该场景 `Correct`。默认规则中 `ATO / add-on` 保持 `Append`，`Khusus laporan mbl d` 与 `Branch Combined Verification` 改为 `Replace`。
+
+2026-06-15 11:47 已将 `Verification Rule V2` 从“基础题库 + Special Scenario Append/Replace”重构为“一条规则下多个 Verification Scenario”。`VerificationV2Rule` 保留外层匹配条件、Max Wrong、Failure Action 和状态，新增 `scenarios`；每个 scenario 维护多个 question block，每个 block 维护名称、题目和必对数量。管理台编辑弹框改为按 `Verification Scenario` 维护问题配置，支持 Add Scenario、Copy Scenario、Delete 非默认场景、Add Block、选择题目、排序和设置 Correct；旧 Append/Replace 不再作为客户可见维护概念。坐席 `Customer Verification` 弹框中的 `Special Scenario` 改为 `Scenario`，默认选择规则默认场景，切换场景时按底层 questionId 保留相同题目的已答状态。默认 `Layanan Cabang` 明确配置 `Default` 和 `Branch to Other Services` 两个场景，其中后者包含 `Branch Data` 5 题选 3 + `Customer Data` 6 题选 3；旧特殊场景字段仅保留用于兼容历史 mock。`AGENTS.md` 新增建模与沟通原则：业务复杂度上升时先判断是否应提升为模型层概念，遇到高影响不确定性先向用户确认关键问题。
+
+2026-06-15 15:28 已继续优化 `Verification Rule V2` 场景化配置交互：question block 新增显式 `blockType`，恢复固定 `Mandatory / Dynamic / Static / Alternative` 分类，不再依赖手输名称识别规则；`Custom Block` 才允许自由命名，用于 `Branch Data`、`Customer Data`、`Layering` 等业务块。编辑弹框中的场景切换改为卡片式，卡片展示场景名称、Correct Required 和 block 数量；新增场景通过小弹框选择 `Copy current scenario` 或 `Blank scenario`，默认复制当前场景；非默认场景支持重命名、复制和删除。客户可见 `Organization Segment Override` 已从管理台移除，组织客户 `O1-O3 / O4-O5` 默认规则改为普通 Verification Scenario。坐席侧仅在规则存在多个场景时显示 Scenario 下拉，单场景规则不显示；管理台编辑弹框新增 `Preview`，使用当前未保存 draft 调用坐席侧同款验证弹框预览，不保存规则、不写客户验证状态。
+
+2026-06-15 15:48 已按客户给出的批量维护示例继续调整 `Priority List Management`：默认 mock 改为 Bankapp、Phone、Social Media 和 Email/Webchat 四组真实维护视角示例；Batch Add tooltip 补充手机号、社媒账号、Email/Webchat 三组分号批量输入示例；新增保存前按 `Channel + normalized Identifier + Match Rule` 检查重复，弹框下方只读展示重复项，保存时自动跳过重复 Channel，并保留同一 Identifier 中仍未重复的 Channel；全部重复时不关闭弹框并提示 `All selected identifiers already exist.`。
+
+2026-06-15 16:06 已按管理台规范继续优化 `Verification Rule V2` 编辑弹框：弹框改为固定最大高度，底部 `Preview / Cancel / Save` 固定可见，中间配置内容单独滚动；基础配置字段接入 `AdminFormField`，`Channel` 与 `Customer Segment` 多选按单行 `+N` 收敛，避免撑高。`Verification Scenario` 从大卡片改成紧凑横向场景条，外层重复 `Copy Scenario` 按钮移除，新增场景弹框继续支持复制当前场景或空白场景；非默认场景通过笔图标行内改名，通过删除图标移除，默认场景不可删除。问题分类、题目选择、Preview 和坐席侧场景逻辑不改。
+
+2026-06-15 16:10 已修正 `Priority List Management` 重复预览的现有记录显示：重复列表不再展示内部 id 如 `PL009`，列名改为 `Existing No.`，值按当前优先名单完整列表序号展示，如第 9 条显示 `9`，与主列表 `No.` 口径保持一致。
+
+2026-06-15 16:23 已润色 `Priority List Management` 的 Identifier 问号提示：文案改为先说明 Identifier 是用于优先排队匹配的客户标识，再说明邮箱域名必须以 `@` 开头并按域名匹配，其它值按精确匹配；批量示例单独整理为 Phone、Social Media、Email/Webchat 三行清单，避免例子散落在多段文字中。
+
+2026-06-15 16:32 已将 `Verification Rule V2` 的验证策略从整体规则下沉到 `Verification Scenario`：整体 rule 的客户可见配置只保留 Channel、Skill Queue、Customer Segment 和 Status；每个场景维护自己的 Correct Required（按问题块汇总只读）、Max Wrong、Failure Action 和 Agent Hint。坐席侧 `Customer Verification` 现在使用当前场景的 Max Wrong / Failure Action，并在配置了 Agent Hint 时显示轻量提示；No Limit 时不展示 Wrong 计数，tooltip 改为 `Max Wrong: No Limit`。旧 rule 级 `maxWrongAttempts` / `failureAction` 保留为兼容字段，读取旧数据时会自动注入到各场景，保存时同步默认场景策略回旧字段。未增加强制顺序字段；“问题 1-3 必须在开头询问”先通过题目排序和场景 Agent Hint 表达。
+
+2026-06-15 16:35 已调高 `Blacklist Management` 与 `Priority List Management` 的 Batch Add 批量输入框：两个页面的批量 TextArea 从 6 行改为 8 行，统一最小高度从 128px 调整为 176px，仍保留可手动拖拽调整高度。
+
+2026-06-15 17:27 已按客户确认删除 `Verification Rule V2` 中无真实阻断能力的 `Failure Action / Action`：V2 类型、mock、规则 clone/default/effective 计算、管理台场景策略和坐席侧阻断提示均已移除该字段，场景策略只保留 `Correct Required`、`Max Wrong` 与 `Agent Hint`。坐席侧 `Customer Verification` 顶部条件区去掉 `Channel`，统一为一行 `Customer Segment`、`Skill`、`Scenario`，且单场景规则隐藏 `Scenario`。管理台 Preview 继续复用坐席侧弹框，但传入 `readonlyConditions`，预览中 `Customer Segment` 与 `Skill` 只读，仍允许在当前规则的多个场景之间切换。
+
+2026-06-15 17:53 已按客户原始 Excel 复核 V2 默认规则的最大错答配置：Personal Banker、Layanan Cabang、KPR、Merchant Solution 原文明确为无最大错答限制，继续保留 `No Limit`；Paylater 原文只说明可沿用 Perbankan 或内部团队规则，当前 demo 按“沿用 Perbankan”改为 `Max Wrong = 3`。同时修复 Preview 条件状态滞留问题：Preview 组件 key 现在包含规则、渠道、客户级别、技能、场景和场景题目配置摘要，避免切换规则后沿用旧 Skill / Customer Segment 导致无法预览。坐席侧/预览侧 rule bar 去掉 `In Progress / Passed / Failed` 状态字段和小问号按钮，改为紧凑展示 `Need N correct`、题组进度 chip 和 `Wrong 0/N`；`Agent Hint` 保留为下一行轻量提示。
+
+2026-06-15 17:57 已按客户继续反馈微调坐席侧与 Preview 的 V2 验证弹框：`Agent Hint` 改为占整行自然换行显示，不再被单行截断；问题列表删除自动下一题 active 行底色，只保留鼠标悬浮和按钮聚焦所在行的轻量 hover/focus 行效果，避免坐席点击某题后下一行看起来被默认选中。
+
+2026-06-15 18:12 已纠正 V2 最大错答规则理解和场景继承逻辑：原文 `maksimal 3 kali salah jawab` 明确表示最多答错 3 次，应配置为 `Max Wrong = 3`；只有写明 `tidak ada ketentuan maksimal salah jawab/salah` 的规则才是 `No Limit`。修复旧 `groups` 规则自动生成 Verification Scenario 时把外层 `maxWrongAttempts: 3` 错误覆盖为场景 `null` 的问题，并兼容当前 session 中已被旧逻辑固化为 null 的 legacy default / special scenario，使 Perbankan、Kartu Kredit、Prio/Soli、Bank Bisnis、KlikBank Bisnis、Personal Loan、Paylater 等规则正确显示和使用 `Max Wrong = 3`。
+
+2026-06-16 11:24 已按客户反馈微调 V2 Customer Verification 问题行 hover / focus 背景色，从较淡的 `#f7fbff` 改回更明显的 `#f3f8ff`，仅影响问题列表鼠标悬浮和按钮聚焦行效果。
+
+2026-06-16 11:29 已按客户确认简化 `Priority List Management`：移除单独 `Add` 入口，仅保留 `Batch Add`；新增/批量保存时按 `选中 Channel x Identifier` 展开为一条 Channel 一条列表记录，`PriorityListEntry` 类型从 `channels: string[]` 改为 `channel: string`。`Match Rule` 由 Channel 与 Identifier 共同派生：仅 `Webchat`、`Email Contact`、`Email Priority` 遇到规范邮箱域名格式如 `@ojk.co.id` 时显示 `Email Domain Match`，其它组合均显示 `Exact Match`，不阻断 Phone 等渠道录入邮箱域名类字符串。默认 mock 已按客户示例拆为 Bankapp 1 条、Phone 3 条、社媒 5 渠道 x 4 标识、Email/Webchat 3 渠道 x 3 标识；重复过滤继续按 `Channel + normalized Identifier + Match Rule` 跳过，并在弹框中展示 Existing No.。
+
+2026-06-16 11:34 已修复 `Customer Verification` 中 `Prio Soli Perbankan` 误显示 Perbankan 默认回退提示的问题。根因不是 `Prio Soli Perbankan` 规则缺失，而是 `CustomerInformationCard` 打开 V2 验证弹框时把 `customerSegment` 固定为 `regular`，而 `SQ_PRIO_SOLI_PERBANKAN` 规则只配置给 `priority` 与 `solitaire`，因此精确匹配失败后触发同渠道 Perbankan 默认回退。现已新增客户资料 `customerType` 到 V2 Customer Segment 的映射：Priority/Prioritas -> `priority`，Solitaire -> `solitaire`，Organization/Business/Corporate/Bisnis/Organisasi -> `organization-business`，其余为 `regular`；同时 `getDefaultVerificationV2SkillQueueCode` 已识别 `Prio/Soli/Prioritas/Solitaire` 菜单关键词，优先映射 `Prio Soli Kartu Kredit`，否则映射 `Prio Soli Perbankan`。
+
+2026-06-16 11:40 已按客户确认修正 V2 KBV 默认规则与提示话术边界：Perbankan 默认值仅用于上游未传入 Skill Queue 或客户身份时的初始条件，不再作为“已传值但未配置规则”的自动回退规则。`findVerificationV2RuleMatch` 现在只做 `Channel + Skill Queue + Customer Segment` 精确匹配，返回 `exact` 或 `none`；未命中时坐席侧显示 `No KBV Rule Available` 和题目空状态，不再切换到 Perbankan 题库，也不再显示系统回退提示。`Customer Verification` 的提示话术区域现在只展示当前 Scenario 配置的 `Agent Hint`，不承载系统匹配、默认回退或未配置规则说明。Preview 继续只预览当前 draft rule，不允许通过默认回退命中其它规则。
+
+2026-06-16 12:02 已调整 V2 `Customer Verification` 失败提交交互：`Apply Failed` 与 `Apply Verified` 在 footer 固定同时展示。只要当前有可用 KBV 规则，坐席即可手动点击 `Apply Failed` 提交验证失败；`Apply Verified` 仍只有满足当前场景的通过条件后才可点击。`Max Wrong = No Limit` 现在明确表示“系统不按错答次数自动判失败”，不代表本次验证不能失败；有 Max Wrong 限制时达到上限仍会触发失败态和红色 Wrong 提示，但坐席可以修正误点后恢复。无可用规则时两个最终提交按钮均不可用，避免将配置缺失误记为客户验证失败。
+
+2026-06-16 14:02 已修正 `KlikBank Bisnis` 组织客户 V2 默认规则：`O1-O3` 不再只展示 3 道题，而是和 `O4-O5` 展示同一套完整组织客户候选题。`O1-O3` 场景配置为 Mandatory 1 + Dynamic 2 + Static 0，总必对 3；`O4-O5` 场景配置为 Mandatory 1 + Dynamic 2 + Static 2，总必对 5。原文 `Pertanyaan 1-3 wajib ditanyakan di awal` 按坐席提示语处理，两个场景均写入 `Agent Hint: Please ask questions 1-3 first.`，不再被理解为只显示 3 道题。
+
+2026-06-16 14:18 已补充 `Personal Loan` 的坐席提示和统一提示条样式：`Personal Loan` 默认场景继续保持 7 道候选题、必对 5、`Max Wrong = 3`，并将客户原文 `Jika Nasabah salah menjawab 3 kali pertanyaan verifikasi maka CCO tidak bisa lanjut proses permohonan / permintaan nasabah` 写入 `Agent Hint`。V2 坐席侧和 Preview 的 `Agent Hint` 视觉从浅弱提示增强为浅蓝信息条，使用浅蓝底、深蓝字和更清晰边框，不使用红色或深蓝白字，避免与错误/失败状态混淆。Paylater 当前 demo 仍按“可沿用 Perbankan”理解处理，保持 `Max Wrong = 3`；是否使用内部团队独立规则仍待客户最终确认。
+
+2026-06-16 14:36 已将新版场景化验证规则配置正式合并为客户可见 `Call Management > Verification Rules`：左侧菜单不再显示 `Verification Rule V2`，只保留一个 `Verification Rules`；`/call-management/verification-rules` 现在渲染 `VerificationRuleV2Page`；旧 `/call-management/verification-rule-v2` 保留兼容重定向到 `/call-management/verification-rules`。旧 `VerificationRulesPage` 源码暂时保留但不再被菜单或路由引用，便于必要时回滚或参考。
+
+2026-06-15 16:55 已按客户反馈继续修正 `Verification Rule V2` 编辑弹框：V2 弹框内 input、select、number 高度统一为 32px，避免同一行控件不齐；默认场景允许点击笔图标重命名但仍不可删除；场景 tab 只展示场景名称，不再展示 Correct / Wrong / Blocks 统计；`Failure Action` 不再作为外层列表列或独立常驻字段，只在当前场景关闭 `Max Wrong > No Limit` 后作为达到错误上限后的动作出现。`Question Bank` 删除题目前新增引用判断：若题目已被 V2 规则任意场景或问题块引用，会先提示引用次数和规则数量，确认后才删除并从规则配置中移除。
+
+2026-06-15 16:56 已修复名单页批量输入框高度未生效的根因：管理台统一 CRUD 表单原本用 `.routing-config-crud-modal__field .ant-input` 统一设置 32px 高度，但 Ant Design TextArea 也带 `.ant-input`，导致黑名单/优先名单 Batch Add 的 8 行与 176px 最小高度被覆盖。现已改为 `.ant-input:not(textarea)` 只约束单行输入，并新增 `textarea.ant-input` 多行输入规范（普通 textarea 自动高度、最小 76px、可纵向拖拽），批量输入框 176px 规则可以正常生效。
 
 ## 0. 使用规则
 
@@ -107,8 +173,9 @@ codex-recovered-context.md
 
 - `src/main.tsx`：React 入口，引入 Ant Design reset 和全局 Less。
 - `src/App.tsx`：Ant Design `ConfigProvider` + `RouterProvider`。
-- `src/routes.tsx`：定义 `/login` 公共登录页；`/`、`/design-system`、`/call-management/verification-rules`、`/call-management/global-control-configuration`、`/call-management/blacklist`、`/call-management/priority-list`、`/call-management/busy-reasons` 等业务路由通过 auth guard 保护；旧 `/call-management/text-channel-settings` 会回到 `/call-management/verification-rules`；`/routing-config/*` 在客户安全模式下继续重定向回 `/`。
+- `src/routes.tsx`：定义 `/login` 公共登录页；`/`、`/design-system`、`/call-management/verification-rules`、`/call-management/global-control-configuration`、`/call-management/blacklist`、`/call-management/priority-list`、`/call-management/busy-reasons` 等业务路由通过 auth guard 保护；`/call-management/verification-rules` 渲染新版场景化 `VerificationRuleV2Page`；旧 `/call-management/verification-rule-v2` 与 `/call-management/text-channel-settings` 会回到 `/call-management/verification-rules`；`/routing-config/*` 在客户安全模式下继续重定向回 `/`。
 - `src/components/AuthRouteGuards.tsx`：公共登录路由与业务路由认证守卫；未登录访问业务路由重定向 `/login`，已登录访问 `/login` 重定向 `/`。
+- `src/components/admin/*`：管理台数据维护页统一组件层，封装 AdminPage、AdminToolbar、AdminFilterField、AdminTable、AdminModal、AdminFormField 和分页/action helper；后续 `Call Management`、`Routing Config` 等维护页不得重新手写查询栏、分页、表格字重、Actions 固定列和弹框 footer；主列表默认 10 条分页并统一 `10/20/50/100` 选项。
 - `src/layouts/BasicLayout.tsx`：全局 Header、可展开/收起左侧菜单、坐席工具条、通话接入阻塞顶部提示、内部聊天入口和主内容出口；同时维护 AUX / Pre-AUX 状态机、媒体签入时的默认 Live Chat 客户播种，以及 `Sign Out` / `Log Out` active service guard。
 - `src/layouts/components/AgentProfileArea.tsx`：Header 右上角坐席头像、状态点和状态下拉；Signed out 时显示 `Sign In` 分组，普通 signed-in 状态显示 AUX reasons，AUX/Pre-AUX 状态只显示当前状态、Ready 和媒体 Sign Out；点击 Sign Out 时如仍有当前服务会先显示阻断提示。
 - `src/layouts/components/AgentToolbar.tsx`：坐席话务条按钮和状态计时；计时统一复用共享 `formatDuration()`，显示 `mm:ss`，达到 1 小时后显示 `hh:mm:ss`。
@@ -123,37 +190,40 @@ codex-recovered-context.md
 - `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`：正式 `Live Chat` 客户列表，包含收起/展开、渠道筛选、排序、Current/History 文字 tab、未读、未回复计时、星标和关闭结束会话；客户行使用两行 grid 对齐且不再展示转接图标，收起态保留 SLA 左侧色条并在渠道头像内展示只读星标；Current / History 列表为空时在展开态显示轻量空态提示。
 - `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`：正式 `Live Chat` Conversation tab 内容，包含消息记录、快捷回复、引用、撤回、Transfer、End/Close 和发送消息演示；Recall/Re-edit 只在 Haloapps/Webchat 渠道展示，WhatsApp 不展示；Conversation 消息区默认滚动到最新消息；Message Record 默认按当前会话最新消息时间生成日期范围，搜索后 `Locate` 在 Message Record 面板内回到连续记录并高亮，不再定位 Conversation；定位后焦点返回搜索框，支持继续输入并二次搜索。
 - `src/pages/inbound/components/liveChat2QuickReplies.ts`：正式 Live Chat 默认快捷回复分组与短语，本轮同步更新为 BANK 1 客服确认、建单、验证和安全提醒口径。
-- `src/pages/inbound/components/CustomerInformationCard.tsx`：客户卡片、身份刷新、最后 IVR 菜单提示和 Customer Verification Assist 入口；支持 PSTN/Voice 最后一级 IVR Menu，以及 Haloapps 文本一级 Access Menu；本轮按渠道类型和业务类型选择验证规则，并把 BankApp PIN 状态接入验证弹窗。
-- `src/pages/inbound/components/CustomerVerificationModal.tsx`：动态身份验证助手弹窗；展示验证渠道类型、业务类型、紧凑规则进度、PIN 验证入口、分组题库和自动通过/失败结果；坐席 UI 不展示标准答案或答案来源。
+- `src/pages/inbound/components/CustomerInformationCard.tsx`：客户卡片、身份刷新、最后 IVR 菜单提示和 Customer Verification Assist 入口；支持 PSTN/Voice 最后一级 IVR Menu，以及 Haloapps 文本一级 Access Menu；当前 `Verify` 入口读取 V2 规则，默认识别 Channel、Skill Queue 和 Customer Segment，并把弹框验证结果写回当前客户卡片状态。
+- `src/pages/inbound/components/CustomerVerificationModal.tsx`：旧版动态身份验证助手弹窗源码保留，供旧 V1 规则回滚参考；当前 Customer Information 的 `Verify` 已切换到 V2 弹框。
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`：V2 身份验证弹框；按 Channel、Skill Queue、Customer Segment 匹配 V2 规则，并在弹框顶部提供 `Demo Conditions` 模拟 ATO/add-on、O1-O3/O4-O5、Branch Combined 等特殊触发字段；坐席 UI 只展示问题、题型、规则进度和 Correct/Wrong/Skip，不展示标准答案或答案来源。
 - `src/mock/inbound.ts`：Inbound mock 数据；包含正式 Live Chat `liveChat2Sessions` 客户、历史消息、当前消息、队列、意图、可选 `lastMenuName` 和未读数；Live Chat 内容为客户预览版脱敏 BANK 1 银行业务场景。文件还包含 `verificationBusinessTypes` 和 `verificationRules`，覆盖 `Phone + Perbankan`、`HaloApp Registered + Perbankan`、`Phone + Kartu Kredit`、`HaloApp Registered + Kartu Kredit`、`HaloApp Registered + Paylater`。
-- `src/store/appStore.ts`：workspace tab、话务、Live Chat 和 demo 全局状态；正式 Live Chat 预置 Current 客户不再写入 `flashUntil`，且只在 `setLiveChatTabOpen(true, { seedDefaultCurrentSessions: true })` 时播种；Channel Simulation handoff 新会话仍写入短闪并把克隆消息 timestamp/time 平移到当前接入时间；同时保留 `bankAppPinVerificationStatus`、request id、PIN 请求/完成/重置、`verificationRules`、`agentServiceMode`、voice/video readiness 与 digital readiness。
+- `src/store/appStore.ts`：workspace tab、话务、Live Chat 和 demo 全局状态；正式 Live Chat 预置 Current 客户不再写入 `flashUntil`，且只在 `setLiveChatTabOpen(true, { seedDefaultCurrentSessions: true })` 时播种；Channel Simulation handoff 新会话仍写入短闪并把克隆消息 timestamp/time 平移到当前接入时间；同时保留 `bankAppPinVerificationStatus`、request id、PIN 请求/完成/重置、旧版 `verificationRules`、新版 `verificationV2Rules` / `verificationV2QuestionBank` 及其本地 upsert/delete、`agentServiceMode`、voice/video readiness 与 digital readiness。
 - `src/store/authStore.ts`：demo auth session store；调用 mock LDAP，成功后只把 session/profile/role/CRM SSO metadata 写入 `sessionStorage`，不保存密码。
 - `src/pages/call-management/RoutingConfigurationPage.tsx`：旧路由配置入口兼容源码仍保留，但当前 `/call-management/routing-configuration` 路由会回到 `/call-management/verification-rules`，避免客户通过旧入口进入隐藏的 `Routing Config`。
 - `src/pages/call-management/VerificationRulesPage.tsx`：Call Management 下的验证规则配置页，按 `Verification Channel Type + Business Type` 展示规则，支持 View/Edit 配置阈值、题目分组、错答上限、layering 和启停状态；不展示标准答案或答案来源，保存到前端 demo store。
-- `src/pages/call-management/BlacklistManagementPage.tsx`：Call Management 下的黑名单管理配置页，覆盖按具体渠道限制号码维护；查询条件为 Channel、Restricted Number、Restriction Policy，其中查询 Channel 下拉保留 `All`，其它选项来自 `Routing Config > Channels` 中 `status === 'Active'` 的 `channelName`；Add / Batch Add 的 Channel 只允许启用具体渠道名称，不提供 `All Channels`；列表展示 No.、Channel、Restricted Number、Restriction Policy、Validity Days、Remark、Created Date、Created By；批量添加时 Restricted Number 使用大文本框并提示 `Use semicolons for batch add`，Validity Days 留空表示永久有效；列表支持 checkbox 选择和 toolbar `Delete`，确认后从当前 demo store 删除选中记录。
-- `src/pages/call-management/PriorityListManagementPage.tsx`：Call Management 下的优先名单管理配置页，用于维护排队时优先排队的客户名单；查询条件为 Channel、Priority Number；列表展示 No.、Channel、Priority Number、Remark、Created Date、Created By；支持 Add 与 Batch Add，批量添加时 Priority Number 使用大文本框并提示 `Use semicolons for batch add`；无限制策略和有效期字段；列表支持 checkbox 选择和 toolbar `Delete`，确认后从当前 demo store 删除选中记录。
-- `src/pages/call-management/BusyReasonManagementPage.tsx`：Call Management 下的示忙原因配置页，客户 UI 为英文但示忙原因名称按 BCA 截图原文保留；当前预置 20 条，前 9 条启用，后 11 条 Extension 禁用备用，只支持编辑。
+- `src/pages/call-management/VerificationRuleV2Page.tsx`：Call Management 下新增的验证规则 V2 配置页，保留旧 V1 页面不动；V2 支持在筛选工具栏右侧通过 `Question Bank` 维护问题名称，Question Bank 当前为自然高度列表弹框，仅按问题名称筛选，新增/编辑题目使用独立弹框，题库不再维护状态字段；外层列表仅保留 Channel、Skill Queue、Customer Segment、Status 显式筛选，多选筛选控件单行收敛展示；外层表格接入统一 `AdminTable`，列宽紧凑、主列表不设置纵向 body 滚动、主页面负责纵向滚动，窄屏横向滚动时 `Actions` 固定右侧，默认 10 条分页且列表数据不加粗；Status 列只读展示 `Enabled/Disabled` badge，开关只在新增/编辑弹框内；规则列表支持 Add、View、Edit、Delete，Delete 会二次确认并只删除当前 demo session 中的规则，不删除题库题目；规则按启用 Channel、启用 Skill Queue、Customer Segment 多选配置，自动计算 Correct Required，配置 Max Wrong、Failure Action、题型分组、排序、Berurut 和特殊规则模板；Max Wrong 默认无限制且无限制时不展示数字输入；题型分组不再默认全量展开，需点击 `Add Group` 添加 Mandatory / Dynamic / Static / Alternative 分类块，再通过独立选题弹框搜索勾选题库题目，确认后带入列表排序或删除；保存到前端 demo store，刷新后恢复 mock 默认值。
+- `src/pages/call-management/BlacklistManagementPage.tsx`：Call Management 下的黑名单管理配置页，覆盖按具体渠道限制号码维护；查询条件为 Channel、Restricted Number、Restriction Policy，其中查询 Channel 下拉保留 `All`，其它选项来自 `Routing Config > Channels` 中 `status === 'Active'` 的 `channelName`；Add / Batch Add 的 Channel 只允许启用具体渠道名称，不提供 `All Channels`；Add 与 Batch Add 均为右侧 primary 主操作按钮，Delete 保持 danger；列表展示 No.、Channel、Restricted Number、Restriction Policy、Validity Days、Remark、Created Date、Created By，列宽已收紧并默认不强制桌面横向滚动；批量添加时 Restricted Number 使用 8 行大文本框并提示 `Use semicolons for batch add`，Validity Days 留空表示永久有效；列表支持 checkbox 选择和 toolbar `Delete`，确认后从当前 demo store 删除选中记录。
+- `src/pages/call-management/PriorityListManagementPage.tsx`：Call Management 下的优先名单管理配置页，用于维护排队时优先排队的客户名单；查询条件为多选 Channel 和 Identifier，Channel 默认空值表示 All Channels；列表展示 No.、Channel、Identifier、Match Rule、Remark、Created Date、Created By，Channel 以多 tag 展示；Add 与 Batch Add 的 Channel 为启用渠道多选且不提供 All Channels，Identifier 旁提供示例 tooltip，批量添加时 Identifier 使用 8 行大文本框并提示 `Use semicolons for batch add`；Match Rule 由 Identifier 自动派生，普通标识为 `Exact Match`，邮箱域名为 `Email Domain Match`；保存前按 `Channel + normalized Identifier + Match Rule` 做重复预览和自动过滤，部分渠道重复时只保存非重复渠道，全部重复时不关闭弹框；列表支持 checkbox 选择和 toolbar `Delete`，确认后从当前 demo store 删除选中记录。
+- `src/pages/call-management/BusyReasonManagementPage.tsx`：Call Management 下的示忙原因配置页，客户 UI 为英文但示忙原因名称按客户原文保留；当前预置 20 条，前 9 条启用，后 11 条 Extension 禁用备用，只支持编辑；启用项 remark 已根据名称改为简短贴合含义的英文说明，禁用 Extension 项继续使用 reserved 说明。
 - `src/pages/call-management/GlobalControlConfigurationPage.tsx`：内部全局控制配置页，包含 Routing Fallback / Default Skill Queue 等 demo 配置。
-- `src/pages/routing-config/RoutingConfigCrudPage.tsx`：Routing Config 普通主数据页复用的本地 CRUD 容器，提供 Search / Add / View / Edit / Delete 弹窗表单。
-- `src/pages/routing-config/RoutingConfigDataPages.tsx`：Routing Config 主数据独立配置页，覆盖 Route Elements、VDN、Sites、Channels、Media Service Rule Plans、Business Types、Site Access Volume、Access Accounts、Working Time Plans、Skill Queues；Channels 已支持按媒体引用服务规则方案，Media Service Rule Plans 当前完整维护 Text 媒体服务规则；Working Time Plans 已改为印尼单国家自定义排班编辑器，包含 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan，Skill Queues 未选择方案时展示 `Default 24x7`。
-- `src/pages/routing-config/SkillRoutingRulesPage.tsx`：独立技能路由规则页，支持按启用路由要素多选查询、规则列表要素拆列、批量新增拆分预览、重复组合勾选覆盖、规则查看/编辑/删除。
+- `src/pages/routing-config/RoutingConfigCrudPage.tsx`：Routing Config 普通主数据页复用的本地 CRUD 容器，提供 Search / Add / View / Edit / Delete 弹窗表单；当前已接入 `AdminPage`、`AdminToolbar`、`AdminTable`、`AdminModal` 和 `AdminFormField`，Route Elements、VDN、Sites、Channels、Business Types、Access Accounts、Skill Queues 等普通菜单自动继承统一管理台规范。
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`：Routing Config 主数据独立配置页，覆盖 Route Elements、VDN、Sites、Channels、Media Service Rule Plans、Business Types、Site Access Volume、Access Accounts、Working Time Plans、Skill Queues；Business Types 已新增 `Source Business Code`，用于维护客户页面或 IVR 菜单 ID 与内部业务类型的映射；Channels 已支持按媒体引用服务规则方案，Media Service Rule Plans 当前完整维护 Text 媒体服务规则；Working Time Plans 已改为印尼单国家自定义排班编辑器，包含 Basic Info、Work Schedule、Ramadan Work Schedule、Holiday Schedule、Special Working Plan，Skill Queues 未选择方案时展示 `Default 24x7`。
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`：独立技能路由规则页，支持按启用路由要素多选查询、规则列表要素拆列、批量新增拆分预览、重复组合勾选覆盖、规则查看/编辑/删除；查询筛选可换行，Search/Reset 留在查询动作区，Batch Add 作为右侧 primary 主操作按钮自然宽度展示；1366 桌面宽度下目标布局为第一行 `Access Site / Channel / Media Type / Language Type / Business Type / Target Skill Queue`，第二行左侧 `Status / Search / Reset`，第二行右侧 `Batch Add`。
 - `src/pages/routing-config/RoutingConfigStatusBadge.tsx`：Routing Config 状态 badge 组件，避免页面组件导出非组件函数触发 Fast Refresh lint。
 - `src/pages/call-management/TextChannelSettingsPage.tsx`：数据呼叫管理下的文字渠道配置页，包含 Service Rules、Customer Timeout & Messages、Channel Queue Alerts 三组配置。
 - `src/pages/inbound/components/LiveChatCustomerList.tsx`：WhatsApp / BankApp 客户聊天列表，默认收起，支持 ALL 与渠道图标筛选、会话运行持续时间、SLA 状态、短闪提示，可收起展开；Webchat mock 暂时隐藏。
-- `src/pages/inbound/components/CustomerInformationCard.tsx`：Inbound 左栏客户信息卡容器，包含客户验证、联系信息维护、呼出申请、Call Flow、Send Email，以及右上角客户身份刷新浮层；身份刷新图标和原编辑联系方式图标必须同时显示在卡片右上角，Customer ID 浮层使用 `bottom` placement，hover 背景内图标必须居中；语音/IVR 类渠道在底部第二行以 `Menu` 短标签展示最后一级菜单，从现有 `callFlowDetail.ivrJourney` 取最后一级菜单，并在 title / aria 中保留 `Last IVR menu` 完整语义。
+- `src/pages/inbound/components/CustomerInformationCard.tsx`：Inbound 左栏客户信息卡容器，包含客户验证、联系信息维护、呼出申请、Call Flow、Send Email，以及右上角客户身份刷新浮层；身份刷新图标和原编辑联系方式图标必须同时显示在卡片右上角，Customer ID 浮层使用 `bottom` placement，hover 背景内图标必须居中；语音/IVR 类渠道在底部第二行以 `Menu` 短标签展示最后一级菜单，从现有 `callFlowDetail.ivrJourney` 取最后一级菜单，并在 title / aria 中保留 `Last IVR menu` 完整语义；`Verify` 当前打开 V2 身份验证弹框。
 - `src/pages/inbound/components/ChannelTag.tsx`：统一渠道标签，Customer Information 中可合并展示静态渠道接入耗时，例如 `PSTN · 05:23`、`BankApp · 02:11`。
-- `src/pages/DesignSystem.tsx`：设计系统展示页。
-- `src/store/appStore.ts`：workspace tab、BankApp demo tab、WhatsApp demo tab、Live Chat 聚焦/已读状态、多 `CallInteraction` 通话实例、voice/video handoff readiness、interaction timing 和 demo-only screen share 全局状态；`createLiveChat2HandoffSession()` 会保留来源 session 的 `customer.accessDuration`，不把客户卡片接入时长重置或改成服务时长；`setLiveChatTabOpen(true, { seedDefaultCurrentSessions: true })` 只在媒体签入时预设 `livechat2-001` 和客户主动挂机的 `livechat2-005` 作为 Current 演示客户。
+- `src/pages/DesignSystem.tsx`：设计系统展示页；`Admin Management Page` 示例用于展示维护页查询栏、状态 badge、查询宽度分级、Search/Reset 查询动作区、右侧 primary Add/Batch Add 主操作区、自然宽度按钮、默认 10 条分页、表格字重、页面滚动和弹框 footer 规范。
+- `src/store/appStore.ts`：workspace tab、BankApp demo tab、WhatsApp demo tab、Live Chat 聚焦/已读状态、多 `CallInteraction` 通话实例、voice/video handoff readiness、interaction timing、demo-only screen share 和 V1/V2 验证规则 demo store；`createLiveChat2HandoffSession()` 会保留来源 session 的 `customer.accessDuration`，不把客户卡片接入时长重置或改成服务时长；`setLiveChatTabOpen(true, { seedDefaultCurrentSessions: true })` 只在媒体签入时预设 `livechat2-001` 和客户主动挂机的 `livechat2-005` 作为 Current 演示客户。
 - `src/mock/blacklist.ts`：Call Management 黑名单管理默认 mock 数据，包含 Phone、WhatsApp、HaloApp 等启用渠道演示号码和限制策略。
-- `src/mock/priorityList.ts`：Call Management 优先名单管理默认 mock 数据，包含 Phone、WhatsApp、Haloapp 等启用渠道示例号码。
+- `src/mock/priorityList.ts`：Call Management 优先名单管理默认 mock 数据，按客户举例覆盖 Bankapp + Bank ID、Phone + 三个手机号、Instagram/X/Tik Tok/YouTube/Facebook + 四个社媒账号、Webchat/Email Contact/Email Priority + 邮箱地址和邮箱域名示例；每个 Identifier 一条页面记录，邮箱域名示例自动标记为 `Email Domain Match`。
 - `src/store/callManagementStore.ts`：客户分支 Call Management 前端 demo store，提供示忙原因列表给右上角 AUX 下拉和 `Busy Reason Management` 页面共用；同时保存 `Blacklist Management` 与 `Priority List Management` 页面新增/删除的名单记录；刷新后恢复 mock 默认值。
 - `src/types/blacklist.ts`：Call Management 黑名单管理类型，包含渠道、限制策略、限制号码、有效期、备注、录入日期和录入人字段；渠道字段保持字符串，以承接 Routing Config 渠道名称。
-- `src/types/priorityList.ts`：Call Management 优先名单管理类型，包含渠道、优先号码、备注、录入日期和录入人字段。
+- `src/types/priorityList.ts`：Call Management 优先名单管理类型，包含多渠道、Identifier、Match Rule、备注、录入日期和录入人字段。
 - `src/hooks/useNow.ts`：前端运行时每秒 tick hook，用于 workspace tab 和 Live Chat 列表计时刷新。
 - `src/mock/bankapp.ts`：BankApp 联系方式、业务类型、客户身份/语言驱动的技能路由和截图素材路径配置。
 - `src/mock/inbound.ts`：Inbound 演示数据；包含未识别 PSTN 初始客户、身份刷新演示 ID `00000078987` 和 `lookupCustomerIdentityRefresh()` mock 查询 helper。
-- `src/mock/routingConfiguration.ts`：路由配置页默认 mock，包含 route factor、自编码 VDN/站点/渠道/渠道媒体/业务类型/接入账号/接入入口/结构化工作时间方案/技能队列/路由规则。
-- `src/mock/busyReasons.ts`：客户分支示忙原因 mock，按 BCA 截图原文预置 `Break`、`Istirahat`、`Job Routine`、`Keagamaan`、`Keperluan Pribadi`、`Meeting/Coaching`、`Special Assignment`、`Toilet`、`Yoga` 9 条启用原因；`Extension 1-11` 禁用备用；`AUX` 与 `Aux New Updated` 不作为业务原因。
+- `src/mock/routingConfiguration.ts`：路由配置页默认 mock，包含 route factor、自编码 VDN/站点/渠道/渠道媒体/业务类型/接入账号/接入入口/结构化工作时间方案/技能队列/路由规则；Skill Queues 当前默认 12 条启用数据，名称使用 `Perbankan`、`Kartu Kredit`、`Prio Soli Perbankan`、`Prio Soli Kartu Kredit`、`Bank Bisnis`、`Personal Banker`、`Layanan Cabang`、`KlikBank Bisnis`、`KPR`、`Personal Loan`、`Merchant Solution`、`Paylater`，避免出现 BCA/Halo 类客户敏感名称。
+- `src/mock/verificationRuleV2.ts`：V2 验证题库和默认规则 mock；题库按客户 Excel 附件 `客户身份验证问题 - V1.1_中文填充-20260606-203408(2).xlsx` 的 C 列原文维护，不展示中文列；已按问题名称归一化去重为 56 条唯一题目；默认规则按附件规则覆盖 Perbankan、Kartu Kredit、Prio Soli Perbankan、Prio Soli Kartu Kredit、HBB、Personal Banker、Layanan Cabang、KlikBCA Bisnis、KPR、Personal Loan、Merchant Solution、Paylater，并包含 ATO/add-on、mbl d、Branch Combined、Organization Segment Override 和 Strict Failure Handling 等特殊条件演示。
+- `src/mock/busyReasons.ts`：客户分支示忙原因 mock，按客户原文预置 `Break`、`Istirahat`、`Job Routine`、`Keagamaan`、`Keperluan Pribadi`、`Meeting/Coaching`、`Special Assignment`、`Toilet`、`Yoga` 9 条启用原因；仅 remark 使用简短英文说明；`Extension 1-11` 禁用备用；`AUX` 与 `Aux New Updated` 不作为业务原因。
 - `src/mock/auth.ts`：demo LDAP 认证 mock，账号和密码固定为 `888888 / 888888`，返回坐席 profile、角色权限和 CRM SSO-ready metadata；错误消息模拟 LDAP 返回后由 AICC 展示。
 - `src/mock/textChannelSettings.ts`：文字渠道配置页默认 mock，包含并发人数、自动回复、Webchat 撤回、客户超时话术、渠道排队阈值和通知对象。
 - `src/types/bankapp.ts`：BankApp demo 联系方式、业务类型和步骤类型。
@@ -166,6 +236,7 @@ codex-recovered-context.md
 - `src/types/textChannelSettings.ts`：文字渠道配置页专用类型，渠道 code 为 `haloapp | webchat | whatsapp`，避免与现有 `AccessChannel` 耦合。
 - `src/utils/duration.ts`：共享持续时间解析、格式化、elapsed 计算和 Live Chat SLA 阈值工具。
 - `src/utils/agentStatus.ts`：共享 AUX / Pre-AUX 状态 helper，用于识别状态、提取 reason，并生成 `AUX - {reason}` / `Pre-AUX - {reason}`。
+- `src/utils/verificationRuleV2.ts`：V2 验证规则共享 helper，包含分组/客户级别/特殊条件 label、规则克隆、默认条件映射、V2 规则匹配和特殊规则生效计算。
 - `src/styles/index.less`：全局样式与页面样式主文件，包含 workspace tab、Live Chat 客户列表、Conversation 和 SLA 视觉状态。
 - `src/styles/tokens.less`：全局 CSS token；Live Chat SLA warning / breach 使用独立 token，当前为 `#f59e0b` / `#f04438`。
 - `.github/workflows/ci.yml`：GitHub Actions 最小 CI，PR 到 `main` 或 push 到 `main` / `codex/**` 时运行 `npm ci`、`npm run lint`、`npm run build`。
@@ -178,7 +249,8 @@ codex-recovered-context.md
 - `/` -> `BasicLayout` -> `AgentWorkspace`
 - `/design-system` -> `BasicLayout` -> `DesignSystem`
 - `/call-management` -> `BasicLayout` -> 重定向到 `/call-management/verification-rules`
-- `/call-management/verification-rules` -> `BasicLayout` -> `VerificationRulesPage`
+- `/call-management/verification-rules` -> `BasicLayout` -> `VerificationRuleV2Page`
+- `/call-management/verification-rule-v2` -> `BasicLayout` -> 重定向到 `/call-management/verification-rules`
 - `/call-management/global-control-configuration` -> `BasicLayout` -> `GlobalControlConfigurationPage`
 - `/call-management/routing-configuration` -> `BasicLayout` -> 重定向到 `/call-management/verification-rules`
 - `/call-management/text-channel-settings` -> `BasicLayout` -> 重定向到 `/call-management/verification-rules`
@@ -203,9 +275,9 @@ codex-recovered-context.md
 - `AgentWorkspace` 默认显示 Home tab。
 - 2026-06-11 17:43 后，`Call Management` 是客户可见菜单；`VITE_ENABLE_ADMIN_MENUS` 只控制 `Routing Config` 是否显示和是否允许直达。客户 Production 默认 false/unset 时隐藏 `Routing Config` 并阻止 `/routing-config/*` 直达，工程人员本地打开后可见。
 - `Call Management` 二级包含 `Verification Rules`、`Global Control Configuration`、`Blacklist Management`、`Priority List Management` 和 `Busy Reason Management`；`Text Channel Settings` 已从菜单移除，旧 URL 回到 `Verification Rules`。
-- `Call Management > Verification Rules` 是前端 demo 配置页，和坐席侧 Customer Verification Assist 读取同一份 `verificationRules` store；当前不接后端持久化，刷新后恢复 mock 默认规则。
+- `Call Management > Verification Rules` 现在是新版场景化客户验证规则演示页，和坐席侧 V2 Customer Verification 弹框读取同一份 `verificationV2Rules` / `verificationV2QuestionBank` store；当前不接后端持久化，刷新后恢复 mock 默认规则。旧 `VerificationRulesPage` 源码保留但不再作为客户菜单或路由入口。
 - `Call Management > Blacklist Management` 是前端 demo 配置页，维护按渠道限制号码；查询 Channel 下拉保留 `All` 作为不过滤渠道，Add / Batch Add 只能选择 Routing Config 中启用的具体渠道名称；限制策略为 `Prohibit Transfer to Agent` 或 `Prohibit Access`，Validity Days 留空即永久有效；当前只在配置页本地 store 生效，不接真实路由/接入服务。
-- `Call Management > Priority List Management` 是前端 demo 配置页，维护排队时优先排队客户名单；Channel 来源与黑名单新增一致，只能选择启用具体渠道名称；当前只在配置页本地 store 生效，不接真实排队优先级服务。
+- `Call Management > Priority List Management` 是前端 demo 配置页，维护排队时优先排队客户名单；Channel 来源与黑名单新增一致，但本页支持多选启用渠道并按一条配置记录展示；Identifier 可填写手机号、Bank ID、社媒账号、邮箱地址或邮箱域名，Match Rule 自动区分精确匹配和邮箱域名匹配；保存时会跳过同一 Channel、同一规范化 Identifier、同一 Match Rule 的既有重复项；当前只在配置页本地 store 生效，不接真实排队优先级服务。
 - `Call Management > Busy Reason Management` 是前端 demo 配置页，和右上角坐席 AUX 下拉读取同一份 `busyReasons` store；当前不接后端持久化，刷新后恢复 mock 默认原因。
 - 点击左侧 `Channel Simulation > BankApp` 会打开可关闭的 `BankApp Demo` tab，用于演示客户在 BankApp 内选择文字、语音或视频服务后进入 AICC；BankApp Demo tab 在切到坐席工作台时保持挂载，返回后不会重置当前步骤。
 - 点击左侧 `Channel Simulation > WhatsApp` 会打开可关闭的 `WhatsApp Demo` tab；当前使用用户提供的脱敏 WhatsApp 原图，并在第三步后切到 Live Chat 坐席工作台查看 WhatsApp 接入会话。
@@ -215,8 +287,8 @@ codex-recovered-context.md
 - `createCallInteraction(kind, source?, activate?)` 会创建独立通话实例 tab；tab key 使用稳定递增格式 `call-1`、`call-2`、`call-3`，不会覆盖旧通话弹屏。
 - PSTN 创建 `voice/pstn` 实例，tab 显示 `PSTN (mm:ss)`；BankApp Voice 创建 `voice/bankapp-voice` 实例，tab 显示 `Voice Call (mm:ss)`；BankApp Video 创建 `video/bankapp-video` 实例，tab 显示 `Video Call (mm:ss)`。
 - PSTN 电话弹屏初始显示 `Unidentified Customer`、空 Customer Journey 和空 Ticketing History；坐席点击 Customer Information 右上角身份刷新图标，点击 `Paste` 自动填入演示 ID `00000078987`，点击 `Confirm` 后假装 CRM 查询成功并刷新当前工作台左栏三张卡片。身份刷新图标与原编辑联系方式图标都在 Customer Information 右上角展示，不能相互覆盖或被裁剪；图标必须位于 hover 背景正中；Customer ID 浮层不能进入左侧菜单范围。语音/IVR 类 Customer Information 底部第一行仍展示渠道、接入时长、验证状态和 Verify；第二行展示 `Menu` 与最后一级 IVR 菜单，点击渠道图标仍打开完整 Call Flow Detail。
-- Customer Information 的 `Verify` 入口现在打开 Customer Verification Assist：默认业务类型来自当前客户/入口 mock，坐席可改本次业务类型，修改后题库和进度重置；系统按 `Verification Channel Type + Business Type` 找到 enabled 规则，Exact match 不存在时可 fallback 到 `Phone + Business Type`，但 `HaloApp Unregistered` 必须先完成 PIN。答题状态只在本次弹窗会话内累计，`Correct / Wrong / Skip` 分别计入答对、错答和跳过，`Skip` 不触发错答累计；已答题目可直接改选，最终点击 `Apply Verified` 或 `Apply Failed` 前不锁定题目操作。顶部只显示渠道、业务类型和状态 badge；规则区用 `Need N correct` 与 Mandatory / Dynamic / Static 等彩色块展示达成情况，详细 notes 放问号提示。标准答案和答案来源保留在 mock/type 中供内部讨论，但不在坐席 UI 展示。
-- BankApp/HaloApp Voice 客户接入后，验证弹窗顶部显示 `Send PIN Verification`；点击后 BankApp Demo 手机页展示 4 位 PIN 输入页，客户提交后 store 标记为 `PIN Verified`，同一坐席通话再打开验证弹窗会按 `HaloApp Registered` 规则加载题库。Demo UI 仍显示 `BankApp/BANK App`，客户讲解时说明真实客户 APP 是 `HaloApp`。
+- Customer Information 的 `Verify` 入口现在打开 V2 Customer Verification：默认从当前客户/入口 mock 识别 Channel 与 Skill Queue，Customer Segment 默认 `Layanan Reguler`；弹框顶部的 `Demo Conditions` 可模拟切换 Skill Queue、Customer Segment、ATO/add-on、Organization Segment 和 Branch Service，系统按 `Channel + Skill Queue + Customer Segment` 命中 enabled V2 规则并实时追加特殊题组。答题状态只在本次弹窗会话内累计，`Correct / Wrong / Skip` 分别计入答对、错答和跳过，`Skip` 不触发错答累计；已答题目可直接改选，最终点击 `Apply Verified` 或 `Apply Failed` 前不锁定题目操作。标准答案和答案来源不在坐席 UI 展示。
+- BankApp/HaloApp PIN 相关 store 和客户侧 demo 能力仍保留，但本次 V2 规则暂不配置“接入认证状态”字段，PIN 状态不参与 V2 规则匹配；客户讲解时如需恢复 PIN 口径，应先确认是否将认证状态加入 V2 条件。
 - `requestBankAppVoiceCall(activate?)` / `requestBankAppVideoCall(activate?)` 会通过 request id 触发 `BasicLayout` 话务状态机，并携带是否激活坐席工作台的语义；BankApp Demo 在 Voice / Video 的 `Connected -> Agent Workspace` handoff 前会读取 store 中的 `voiceVideoHandoffReadiness`，如有未挂断通话则阻止跳转并显示 `Please hang up the current call and wait until the agent is Ready before routing this interaction to Agent Workspace.`，如坐席不是 Ready 则显示 `Agent must be Ready before routing this interaction to Agent Workspace.`。
 - `bankAppVideoShareState` / `isScreenShareActive` 表示 demo-only 桌面共享状态；BankApp Video 的桌面共享入口已移到坐席侧 OpenEye 浮窗，点击 `桌面共享` 后显示选择共享程序截图，点击 `确定` 后切回 BankApp Demo 展示客户侧共享画面；Hang Up、关闭 Video Call tab、新普通视频呼叫、Reset BankApp Demo 会清理该状态。
 - `requestLiveChatWorkspace(sessionId?, activate?)` 会打开固定 Live Chat tab；旧会话 id 会映射到新版 `liveChat2*` 状态并聚焦对应客户：`live-chat-001 -> livechat2-001`、`live-chat-002 -> livechat2-002`、`live-chat-003 -> livechat2-003`，未知 id fallback 到首个非历史 livechat2 会话。`activate` 默认为 `true`，BankApp 演示可传 `false` 在后台准备文字坐席页。
@@ -236,7 +308,7 @@ codex-recovered-context.md
 - 顶部蓝色渐变 BANK 1 Header，恢复旧版主工作台视觉。
 - 可展开/收起左侧系统菜单，默认收起，`collapsedWidth` 为 `48px`，展开宽度使用 `--aicc-layout-sider-width`。
 - 左侧菜单支持 2 层级：展开态顶部显示折叠按钮与菜单搜索框，点击一级菜单在下方展开二级菜单；收起态仅显示一级图标，鼠标悬浮在一级图标时在右侧显示二级菜单浮层，鼠标移出浮层或点击菜单后浮层关闭。
-- 当前侧栏菜单使用英文企业呼叫中心文案：Channel Simulation（PSTN、BankApp、WhatsApp）、Call Management（Verification Rules、Global Control Configuration、Blacklist Management、Priority List Management、Busy Reason Management）、Agent Center（Agent Profile、Service History）、Operations（Alert KPI Management、Floor Management）、Reports。客户安全模式继续展示 `Call Management`，但不展示 `Routing Config`。
+- 当前侧栏菜单使用英文企业呼叫中心文案：Channel Simulation（PSTN、BankApp、WhatsApp）、Call Management（Verification Rules、Global Control Configuration、Blacklist Management、Priority List Management、Busy Reason Management）、Agent Center（Agent Profile、Service History）、Operations（Alert KPI Management、Floor Management）、Reports。客户安全模式继续展示 `Call Management`，但不展示 `Routing Config`；`Verification Rules` 指向新版场景化规则配置页。
 - Agent Toolbar：Answer、Hold、Mute、Transfer、Hang Up、More；电话/视频呼入时可在动作按钮最左侧展示 incoming identification；More 菜单点击打开，包含 Outbound Call 与 Settings。
 - Agent Profile Area：Signed out 时菜单显示 `Sign In` 分组与三个纯文字服务模式；Ready / Not Ready signed-in 后菜单显示当前服务模式、不可点击 `AUX` 分组标题、启用示忙原因和媒体 `Sign Out`。处于 `AUX - {reason}` 或 `Pre-AUX - {reason}` 时，下拉只显示当前状态、`Ready` 和媒体 `Sign Out`，不再展示其它 AUX reasons。媒体 `Sign Out` 与系统级红色 `Log Out` 都会先检查当前服务，存在 active service 时显示 `Active Service in Progress` 阻断提示；无当前服务时才弹出二次确认。`Confirm Log Out` 的 `Log Out` 按钮 hover/focus 样式比 AntD 默认 danger 按钮更明显。示忙原因不显示独立图标，点击原因后根据当前是否有活跃服务切换为 `Pre-AUX - {reasonName}` 或 `AUX - {reasonName}`，不再打开 `Select AUX Reason` 弹框。头像右下状态点使用 `effectiveAgentPresence`，由坐席状态和活跃客户互动共同决定。
 - Notifications 和 Internal Chat 入口。
@@ -544,7 +616,7 @@ Live Chat 当前 mock：
 - Connection 状态面板。
 - `/design-system` 统一设计系统页面。
 - `Call Management > Blacklist Management` 已新增为客户可见配置页：支持渠道、限制号码、限制策略查询；支持单个添加和批量添加限制号码；列表展示序号、渠道、限制号码、限制策略、有效期天数、备注、录入日期、录入人。
-- `Call Management > Priority List Management` 已新增为客户可见配置页：支持渠道、优先号码查询；支持单个添加和批量添加优先号码；列表展示序号、渠道、优先号码、备注、录入日期、录入人。
+- `Call Management > Priority List Management` 已新增为客户可见配置页：支持多渠道、Identifier 查询；仅保留批量添加入口，保存时按 `Channel x Identifier` 展开为逐渠道列表记录；列表展示序号、渠道、Identifier、Match Rule、备注、录入日期、录入人；默认 mock 按客户批量维护示例重建，并在新增弹框中展示重复项、保存时自动过滤重复记录。
 - 主 Workspace 旧版视觉已恢复：
   - 顶部蓝色渐变 Header。
   - 旧版浅色应用背景与白色 Workspace/card hierarchy。
@@ -555,6 +627,24 @@ Live Chat 当前 mock：
 - GitHub remote 与基础提交。
 
 ## 10. 当前开发状态
+
+截至 2026-06-16 11:29 +08:00，本轮调整 `Call Management > Priority List Management` 的批量维护、逐渠道保存、默认批量示例和重复过滤：
+
+- 页面不新增独立 Channel Type / Sub Channel 主数据，继续复用 Routing Config 中启用的 Channel Name。
+- `Priority Number` 全部改为 `Identifier`，用于覆盖手机号、Bank ID、社媒账号、邮箱地址和邮箱域名等优先排队标识。
+- 查询区 Channel 改为多选下拉，默认不选表示 `All Channels`；选择一个或多个渠道时，匹配记录中任一渠道命中的数据。
+- 页面移除单独 `Add` 入口，仅保留 `Batch Add`；Batch Add 的 Channel 为多选，必须至少选择一个启用渠道，不提供 `All Channels` 选项。
+- Batch Add 用分号拆分多个 Identifier；保存时按 `选中 Channel x Identifier` 展开为多条页面记录，每条记录只保留一个 Channel。
+- `PriorityListEntry` 当前结构为 `channel`、`identifier`、`matchRule`、`remark`、`createdAt`、`createdBy`，不再使用 `channels: string[]`。
+- 列表字段为 `No.`、`Channel`、`Identifier`、`Match Rule`、`Remark`、`Created Date`、`Created By`；Channel 列显示单个渠道文本。
+- `Match Rule` 由 Channel 与 Identifier 共同派生：仅 `Webchat`、`Email Contact`、`Email Priority` 遇到规范邮箱域名格式时显示 `Email Domain Match`，其它值和其它渠道均按 `Exact Match` 保存。
+- 邮箱域名格式要求以 `@` 开头，`@` 后至少一个点号，每段域名 label 只包含字母、数字、短横线，且不允许空段、空格或短横线开头/结尾；这不是 DNS 校验。
+- Identifier label 旁新增问号 tooltip，说明 Identifier 是用于优先排队匹配的客户标识；可填写手机号、Bank ID、社媒账号、邮箱地址或邮箱域名；批量示例按 Phone、Social Media、Email/Webchat 三行展示，并说明其它渠道配置邮箱域名类字符串会按精确匹配保存。
+- 默认 mock 已按客户举例重建：Bankapp + `BANKID00045678`；Phone + `08129876543` / `08123456789` / `08122222222`；Instagram/X/Tik Tok/YouTube/Facebook + `Bank` / `Bank_1` / `Bank_2` / `Bank_3`；Webchat/Email Contact/Email Priority + `123@gmail.com` / `@ojk.co.id` / `@bi.go.id`。
+- 新增保存前重复检查：重复定义为同一个 Channel、同一个去前后空格并小写比较的 Identifier、同一个 Match Rule 已存在；弹框下方只读展示 `Channel`、`Identifier`、`Match Rule`、`Existing No.`，并提示 `Duplicate records will be skipped automatically.`；`Existing No.` 按当前优先名单完整列表序号展示，不暴露内部记录 id。
+- 保存时会自动过滤重复记录；如果某个 Identifier 的部分 Channel 重复，则仍保存剩余非重复 Channel；如果全部输入都已重复，则不关闭弹框并提示 `All selected identifiers already exist.`。
+- 验证：`npx tsc --noEmit --pretty false`、`npm.cmd run lint`、`npm.cmd run build` 通过；`/call-management/priority-list` 与 `/call-management/blacklist` HTTP smoke 均返回 200；build 仍只有既有 Vite/Rolldown chunk size warning。
+- Browser 可调用工具本轮未暴露，未完成可视化点击验证；仍需人工复查多选、Identifier tooltip、Batch Add、重复预览、全部重复阻止保存、部分渠道重复过滤、Match Rule 和删除交互。
 
 截至 2026-06-11 20:40 +08:00，本轮新增 `Call Management > Blacklist Management`：
 
@@ -2532,7 +2622,7 @@ M src/types/inbound.ts
 - Customer Verification Assist 当前是前端 demo mock，不接真实 CRM / Card Link / CardPack / Base24 / HaloApp 登录态接口；mock 中暂时保留标准答案和候选来源作为内部讨论材料，但坐席侧 UI 默认不展示，生产环境答案来源与匹配方式仍需客户确认。
 - `Call Management > Verification Rules` 当前只保存到前端 demo store，不接真实后端持久化；坐席侧验证弹窗会读取配置页保存后的同一份规则，但刷新浏览器后恢复 mock 默认值。
 - `Call Management > Blacklist Management` 当前只保存到前端 demo store，不接真实号码黑名单服务、渠道接入网关、IVR/文字机器人或转人工拦截策略；新增号码只影响当前页面展示，刷新浏览器后恢复 mock 默认值。
-- `Call Management > Priority List Management` 当前只保存到前端 demo store，不接真实排队优先级服务、渠道排队队列或路由引擎；新增号码只影响当前页面展示，刷新浏览器后恢复 mock 默认值。
+- `Call Management > Priority List Management` 当前只保存到前端 demo store，不接真实排队优先级服务、渠道排队队列或路由引擎；新增 Identifier 只影响当前页面展示，刷新浏览器后恢复 mock 默认值；真实后端执行层未来可能需要把页面上的一条多渠道配置拆分为渠道和匹配规则明细。
 - 本轮 Codex in-app Browser 连接超时，未完成 `/`、`/design-system` 和 `/call-management/blacklist` 的可视化浏览器 smoke check；已用 lint/build 和本地 HTTP 200 检查兜底，仍需人工打开页面确认视觉和弹框交互。
 - HaloApp PIN 当前只模拟客户侧 4 位 PIN 输入和坐席侧 `PIN Verified` 状态；PIN 成功后是否等同于 `HaloApp Registered`、是否仍需要问题验证、是否对 WhatsApp / Webchat / Video 等已认证入口也减免题数，都需要客户确认。
 - 动态题库目前优先覆盖 `Phone + Perbankan`、`HaloApp Registered + Perbankan`、`Phone + Kartu Kredit`、`HaloApp Registered + Kartu Kredit`、`HaloApp Registered + Paylater`；其它渠道或业务类型会显示无规则/待确认状态，不应误认为生产规则完整。
@@ -2581,7 +2671,7 @@ P0：
 - 人工复查 Customer Verification Assist：PSTN `Verify` 默认 `Phone + Perbankan`，顶部只显示 `Channel Type`、`Business Type` 和轻量状态 badge，不显示 `Correct/Wrong/Skip/In Progress` 长统计串；规则区显示 `Need 5 correct` 与 Mandatory / Dynamic / Static 彩色达成块，`Wrong 0/3` 为弱提示；题目行不展示标准答案或来源；答对 1 mandatory + 2 dynamic + 2 static 后可 `Apply Verified`；同一次会话错答 3 次后可 `Apply Failed`；`Skip` 不增加错答；误点后可直接把同一题改为其它状态；切换业务类型后进度和题库重置。
 - 人工复查 `Call Management > Verification Rules`：左侧菜单可见 `Call Management`，二级包含 `Verification Rules`、`Global Control Configuration`、`Blacklist Management`、`Priority List Management`、`Busy Reason Management`，不显示 `Text Channel Settings`；`/call-management` 默认进入验证规则页；列表字段为 Channel Type、Business Type、Required Rule、Question Set、Max Wrong、Layering、Status、Actions；View/Edit 弹窗不展示标准答案或来源；编辑 `Phone + Perbankan` 的 required count 后，重新打开 PSTN 验证弹窗能看到新规则。
 - 人工复查 `Call Management > Blacklist Management`：`/call-management/blacklist` 正常打开；查询条件只有 Channel、Restricted Number、Restriction Policy；Channel 查询下拉包含 `All` 和 Routing Config > Channels 中启用的渠道名称；Add / Batch Add 的 Channel 不显示 `All Channels`；列表字段为 No.、Channel、Restricted Number、Restriction Policy、Validity Days、Remark、Created Date、Created By；Validity Days 空值显示 Permanent；Batch Add 弹框的 Restricted Number 是大文本框且 placeholder 为 `Use semicolons for batch add`；输入 `0811111111;0812222222` 保存后新增两条记录；列表前方有 checkbox，表头 checkbox 可全选/取消当前页，未勾选时 Delete 禁用，勾选 1 条或多条后可确认删除。
-- 人工复查 `Call Management > Priority List Management`：`/call-management/priority-list` 正常打开；查询条件只有 Channel、Priority Number；页面不显示 Restriction Policy 或 Validity Days；列表字段为 No.、Channel、Priority Number、Remark、Created Date、Created By；Add / Batch Add 的 Channel 只显示启用渠道名称；Batch Add 弹框的 Priority Number 是大文本框且 placeholder 为 `Use semicolons for batch add`；输入 `0811111111;0812222222` 保存后新增两条记录；列表前方有 checkbox，表头 checkbox 可全选/取消当前页，未勾选时 Delete 禁用，勾选 1 条或多条后可确认删除。
+- 人工复查 `Call Management > Priority List Management`：`/call-management/priority-list` 正常打开；查询条件为多选 Channel 和 Identifier，Channel 默认空值表示 All Channels；页面不显示 Restriction Policy 或 Validity Days；列表字段为 No.、Channel、Identifier、Match Rule、Remark、Created Date、Created By；Add / Batch Add 的 Channel 为启用渠道多选且不显示 `All Channels`；Identifier 旁问号 tooltip 先说明可填的客户标识范围，再说明以 `@` 开头的邮箱域名格式和匹配规则，并以 Phone、Social Media、Email/Webchat 三行展示批量示例；Batch Add 弹框的 Identifier 是大文本框且 placeholder 为 `Use semicolons for batch add`；默认 mock 展示 Bankapp、Phone、Social Media、Email/Webchat 四组客户示例；输入 `123@gmail.com;@ojk.co.id;@bi.go.id` 时邮箱地址为 `Exact Match`、邮箱域名为 `Email Domain Match`；重复项在弹框下方只读展示且 `Existing No.` 显示主列表序号，不显示 `PL009` 一类内部 id；保存时自动过滤重复 Channel；全部重复时不关闭弹框并显示 `All selected identifiers already exist.`；列表前方有 checkbox，表头 checkbox 可全选/取消当前页，未勾选时 Delete 禁用，勾选 1 条或多条后可确认删除。
 - 人工复查 BankApp/HaloApp PIN 验证：BankApp Voice 接入后验证弹窗先显示 `HaloApp Unregistered` 和 `Send PIN Verification`；发送后客户侧 BankApp Demo 出现 4 位 PIN 输入页；提交后坐席侧重新打开验证弹窗应显示 `HaloApp Registered` 并加载对应业务题库。
 - 人工复查正式 Live Chat 当前客户清空空态：Sign In 后打开 Live Chat，Current 默认显示两个客户，其中 `livechat2-005` 为客户主动挂机并显示 `Close`；关闭已挂机客户、再 End Service / Close 剩余服务中客户后，Current 计数为 0，右侧显示 `No current Live Chat customers`，不再渲染旧 Customer Information / Conversation / Assistant 客户上下文；切换 History 后仍可查看已关闭客户。
 - 人工复查正式 Live Chat Current 清空后的新 route 恢复：从 WhatsApp 或 BankApp Demo route 新文字客户后，Current 应恢复显示新客户并渲染工作台。

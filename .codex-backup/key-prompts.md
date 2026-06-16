@@ -1,6 +1,99 @@
 ﻿# Key Prompts
 
-最后更新：2026-06-10 18:17 +08:00
+最后更新：2026-06-16 14:36 +08:00
+
+## 2026-06-16 Verification Rules 正式指向 V2
+
+- 新版场景化 `VerificationRuleV2Page` 已成为客户可见正式 `Call Management > Verification Rules`。
+- 左侧菜单不再展示 `Verification Rule V2`；只展示一个 `Verification Rules`。
+- `/call-management/verification-rules` 渲染新版场景化 V2 页面。
+- `/call-management/verification-rule-v2` 仅作为兼容旧链接重定向到 `/call-management/verification-rules`。
+- 旧 `VerificationRulesPage` 源码保留用于回滚或参考，但不得再作为客户菜单或路由入口。
+- 页面标题和 Add/Edit/View/Delete 弹框标题使用 `Verification Rules` / `Verification Rule`，不再对客户显示 `V2`。
+
+## 2026-06-16 Personal Loan 与 Agent Hint 样式
+
+- `Personal Loan` 中原文 `Jika Nasabah salah menjawab 3 kali pertanyaan verifikasi maka CCO tidak bisa lanjut proses permohonan / permintaan nasabah` 同时包含系统规则和坐席处理提示。
+- 系统规则：`Max Wrong = 3`。
+- 坐席处理提示：原文放入默认 Scenario 的 `Agent Hint`，不要翻译成英文。
+- Agent Hint 视觉使用浅蓝信息条：浅蓝背景、深蓝文字、清晰蓝色边框；不要用红色，避免误认为错误/失败状态。
+- Paylater 原文表示可沿用 Perbankan 或由内部团队提供规则；当前 demo 默认沿用 Perbankan 口径，保持 `Max Wrong = 3`，独立规则待客户确认。
+
+## 2026-06-16 KlikBank Bisnis 组织客户场景
+
+- `KlikBank Bisnis` 的组织客户 `O1-O3 / O4-O5` 是同一套候选题的通过阈值差异，不是展示题目数量差异。
+- `O1-O3` 应展示完整组织客户候选题，必对数为 3。
+- `O4-O5` 应展示完整组织客户候选题，必对数为 5。
+- `Pertanyaan 1-3 wajib ditanyakan di awal` 是坐席提示语，应放入 Scenario 的 `Agent Hint`，建议英文展示为 `Please ask questions 1-3 first.`
+- 不要再把“答对 3 个问题”理解成“只展示 3 道题”；候选题集和通过阈值必须分开建模。
+
+## 2026-06-16 Customer Verification 手动失败提交
+
+- `Max Wrong` 只控制系统是否按错答次数自动进入失败态，不控制坐席是否可以提交失败。
+- `Max Wrong = No Limit` 表示不自动按错答次数失败，但坐席仍然可以手动点击 `Apply Failed`。
+- `Customer Verification` footer 固定展示 `Apply Failed` 和 `Apply Verified`。
+- 有可用 KBV 规则时，`Apply Failed` 始终可点；无可用规则时禁用，避免把配置缺失记为客户验证失败。
+- `Apply Verified` 只有满足当前 Scenario 的通过条件后才可点。
+- 有 Max Wrong 限制时达到上限仍显示失败态和红色 Wrong 提示；坐席改正误点后可恢复。
+
+## 2026-06-16 Verification Rule V2 默认条件与 Agent Hint 边界
+
+- Perbankan 默认值只用于上游未传入 Skill Queue 或客户身份时的初始条件：Skill 默认 `SQ_GENERAL_ID / Perbankan`，Customer Segment 默认 `regular / Layanan Reguler`。
+- 如果上游已经传入 Skill Queue 或 Customer Segment，但当前组合没有配置 KBV 规则，系统必须显示未配置规则，不能自动回退到 Perbankan 题库。
+- `findVerificationV2RuleMatch` 只做 `Channel + Skill Queue + Customer Segment` 精确匹配，结果只应为 `exact` 或 `none`。
+- 坐席侧 `Agent Hint` 区域只展示配置页面中当前 Scenario 维护的提示话术，不展示系统匹配、默认回退或未配置规则说明。
+- Preview 只预览当前 draft rule，不通过默认回退命中其它规则。
+
+## 2026-06-13 Verification Rule V2 特殊场景 Mode
+
+- `Verification Rule V2` 的特殊场景需要 `Mode` 字段，内部值为 `append | replace`，页面显示为 `Append / Replace`。
+- `Append`：基础题库保留，在后面追加特殊场景题；最终必对数 = 基础必对数 + 特殊场景 `Correct`。
+- `Replace`：基础题库不参与本次验证，只展示特殊场景题；最终必对数 = 特殊场景 `Correct`。
+- `Max Wrong` 和 `Failure Action` 仍沿用外层规则，不放到特殊场景内单独配置。
+- 新建特殊场景默认 `Append`；旧数据没有 `mode` 时也按 `Append` 兼容，避免历史 demo 数据丢失。
+- 默认规则口径：`ATO / add-on` 是 `Append`；`Khusus laporan mbl d` 和 `Branch Combined Verification` 是 `Replace`。
+- 坐席侧仍然只允许一次选择一个 `Special Scenario`；不实现多特殊场景叠加。
+- `Organization Segment Override` 暂时保持独立逻辑，不并入特殊场景 `Mode`。
+
+## 2026-06-13 Verification Rule V2 Max Wrong 与分行组合场景
+
+- `Edit Verification Rule V2` 中 `Max Wrong Limit` 和 `Max Wrong` 必须合并为一个 `Max Wrong` 配置项。
+- `Max Wrong` 同一行展示 `No Limit` 开关；`No Limit` 开启时表示无限制且不展示数字输入，关闭时展示数字输入。
+- `Max Wrong` 保存时仍要校验不能超过当前规则已选题目总数。
+- 问题配置块与特殊场景块头部保持紧凑：左侧是分类名或 `Scenario` 输入框，右侧是 `Questions`、`Correct`、删除操作。
+- `Questions` 是题目选择按钮文案，不使用 `+ que` 或 `Add Questions`。
+- 分行服务原文中的 `KBB / BBP / Prioritas / Solitaire / HBB` 按同一个特殊场景表达，默认名称为 `Branch Combined Verification`。
+- `Branch Combined Verification` demo 先配置为 3 个分行数据问题 + 3 个客户数据问题，`Correct = 6`。
+- 当前 V2 模型只支持特殊场景单组题目 + 单个 `Correct`；如果客户要求“分行题任选答对 3 个 + 客户题任选答对 3 个”，后续需要增加特殊场景内部子分组能力，本轮不增加。
+
+## 2026-06-13 Customer Verification V2 场景切换保留答案
+
+- `Verification Scenario` 下拉用于追加或调整 KBV 场景规则，不能无条件清空原有答题结果。
+- 切换 `Case Type`、`Organization Segment`、`Branch Service` 或其它条件时，应重新计算新有效题目集，并保留仍存在题目的 `Correct/Wrong/Skip` 状态。
+- 仅移除不再出现在新题目集中的题目状态；新增题目保持未答。
+- `Clear All` 才是清空整次验证进度的主操作。
+
+## 2026-06-13 Customer Verification V2 弹框压缩
+
+- `CustomerVerificationV2Modal` 中 `Channel` 来自当前弹屏识别条件，只读展示，不允许坐席在弹框内下拉修改。
+- 弹框不展示重复的 Channel / Skill Queue / Customer Segment 胶囊匹配行；这些信息已经在顶部场景区表达。
+- `In Progress / Passed / Failed / No Rule` 状态与 `Need N correct` 放在同一条 rule bar 中展示。
+- 问题列表操作按钮使用图标按钮，保留 aria-label，不展示 Correct / Wrong / Skip 文字；问题列表只允许纵向滚动，不应出现横向滚动条。
+
+## 2026-06-13 V2 KBV 与 PIN 认证边界
+
+- `Verification Rule V2` 只维护问题验证（Question Verification / KBV）规则，不配置 PIN 认证、不配置接入认证状态。
+- PIN 是入口认证流程，用于确认 App 登录态或入口身份；KBV 是坐席办理业务前的问题核验。不要把 PIN 当成 V2 题库规则的一部分。
+- V2 弹屏中的业务场景由坐席手动选择：`Skill Queue`、`Customer Segment`、`Case Type`、`Branch Service`、`Organization Segment`。特殊场景先按手动选择设计，不等待客户系统提供自动触发字段。
+- V2 匹配只做 `Channel + Skill Queue + Customer Segment` 精确匹配；未命中时显示未配置规则，不回退 Perbankan，也不跨渠道回退。
+- Perbankan 只是未传入 Skill Queue 时的初始默认值，不是已传值但未配置时的 fallback 题库。
+
+## 2026-06-13 V2 审计列、选题崩溃与脱敏规则
+
+- `Verification Rule V2` 新增/编辑规则时，问题排序列表依赖 Ant Design `Space`；必须保留 `Space` import，否则勾选题目带入界面后会触发运行时错误。
+- V2 外层列表字段为 `Updated By`、`Updated Time`，不再使用单独的 `Updated At` 列；保存、状态切换时写入 `updatedBy: 'Admin'` 和当前更新时间。
+- 客户可见 UI、mock 展示数据、演示话术、文档摘要和备份说明统一使用 Bank / BankApp / BANKAPP / BANK 1 脱敏口径；新增内容不得继续出现旧客户品牌词，替换后要保持英文、印尼语或中文语句通顺。
+- `src/` 下演示 UI、mock 展示数据和内部演示 code 已按上述口径统一；后续如新增渠道、题库、Live Chat 会话、验证规则或文档摘要，必须沿用同一规则。
 
 ## 项目方向
 
@@ -831,6 +924,13 @@
 - `Text Channel Settings` 已从菜单移除；旧 `/call-management/text-channel-settings` 直达 URL 回到 `/call-management/verification-rules`。
 - `TextChannelSettingsPage` 源码暂保留，不作为当前入口展示。
 
+## 2026-06-12 Skill Queues 去客户敏感名称
+
+- `Routing Config > Skill Queues` 默认启用队列名称改为：`Perbankan`、`Kartu Kredit`、`Prio Soli Perbankan`、`Prio Soli Kartu Kredit`、`Bank Bisnis`、`Personal Banker`、`Layanan Cabang`、`KlikBank Bisnis`、`KPR`、`Personal Loan`、`Merchant Solution`、`Paylater`。
+- 默认队列 code `SQ_GENERAL_ID` 不变，展示名为 `Perbankan`；Global Control 的 Default Skill Queue 仍通过 code 引用该队列。
+- 既有 `SQ_CARD_PRIORITY` 保留 code，展示名为 `Kartu Kredit`；既有 `SQ_DIGITAL_EN` 保留 code，展示名为 `KlikBank Bisnis`。
+- 避免在 Skill Queue 名称中出现 BCA/Halo 类客户敏感口径；如未来对外文档不接受缩写，优先确认 `Prio Soli` 是否要展开为完整业务名称。
+
 ## 2026-06-11 客户开放 Call Management，仅隐藏 Routing Config
 
 - 最新客户发布口径：客户侧也要显示 `Call Management`，只隐藏策略/路由配置菜单 `Routing Config`。
@@ -838,3 +938,161 @@
 - `VITE_ENABLE_ADMIN_MENUS=true` 仅用于工程人员本地或内部演示打开 `Routing Config`。
 - 当前 `Call Management` 二级菜单保持 `Verification Rules`、`Global Control Configuration`、`Busy Reason Management`；`Text Channel Settings` 继续隐藏，旧 URL 回到 Verification Rules。
 - 旧 `/call-management/routing-configuration` 不能再进入隐藏的 Routing Config，应回到 `/call-management/verification-rules`。
+
+## 2026-06-12 Verification Rule V2
+
+- 历史口径曾经是保留旧 `Call Management > Verification Rules` 并新增 `Verification Rule V2`；截至 2026-06-16 已升级为新版 V2 正式占用 `Verification Rules` 菜单和 `/call-management/verification-rules` 路由。
+- 下午客户演示时，Customer Information 的 `Verify` 改为读取 V2 规则，让客户看到“配置规则 -> 弹屏动态展示不同问题”的端到端效果。
+- V2 暂不配置“接入认证状态”字段；HaloApp / BankApp PIN 状态暂不参与 V2 规则匹配。后续如客户确认需要，再增加认证状态维度。
+- V2 基础匹配条件：启用 Channel 多选、启用 Skill Queue 单选、Customer Segment 多选。Customer Segment 包含 `Layanan Reguler`、`Layanan Prioritas`、`Solitaire`、`Organisasi/Bisnis`。
+- V2 问题库入口放在 `Verification Rule V2` 筛选工具栏右侧 `Question Bank` 按钮；题库只维护问题名称，不维护答案或答案来源。
+- V2 规则配置分组：Mandatory、Dynamic、Static、Alternative。Mandatory/Dynamic/Static 可配置题目、顺序、Berurut 和必对数量；Alternative 只配置题目和顺序，不配置必对数量，用于替代 Dynamic / Static。
+- 特殊规则采用“触发条件 + 动作”模板，不做零散 checkbox：ATO/add-on Layering 追加加强验证题组；Branch Combined 追加分行题组和客户题组；Organization Segment Override 按 O1-O3/O4-O5 覆盖答对数量并可要求前 3 题优先；失败后是否阻断继续处理统一由基础配置 `Failure Action` 控制。
+- Demo 阶段特殊触发字段在身份验证弹框顶部 `Demo Conditions` 中模拟；生产阶段应由 CRM、IVR、HaloApp 或业务系统传入。
+- 坐席弹框仍不展示标准答案和答案来源；Correct/Wrong/Skip 可直接覆盖单题结果。
+
+## 2026-06-12 Verification Rule V2 弹框简化与题库补齐
+
+- Max Wrong 默认无限制；当为无限制时，规则编辑弹框不展示数字输入，坐席验证弹框也不展示 Wrong 计数。
+- `Correct Required` 仍只读自动汇总，但弹框内不再展示 `Correct Required is calculated...` 之类说明文字。
+- `Question Configuration` 不默认展示全部 Mandatory / Dynamic / Static / Alternative 块；用户需要先添加分类块，再在块内配置题目。
+- 每个问题分类块通过独立 `Select Questions` 弹框选题，支持关键词搜索和 checkbox 勾选；点击 `Confirm` 后才写回分类块，之后可排序和删除单题。
+- V2 题库使用客户 Excel 附件中 C 列非中文原文题目；D/F 中文列只作为内部理解，不进入 demo UI。
+- 默认 V2 规则要尽量覆盖客户附件规则，包括 Perbankan、Kartu Kredit、Prio Soli Perbankan、Prio Soli Kartu Kredit、HBB、Personal Banker、Layanan Cabang、KlikBCA Bisnis、KPR、Personal Loan、Merchant Solution、Paylater，以及 ATO/add-on、mbl d、Branch Combined、Organization Segment Override 和 Failure Action 阻断处理。
+
+## 2026-06-12 Verification Rule V2 Question Bank
+
+- Question Bank 维护界面只按问题名称搜索，不再维护题目状态。
+- Question Bank 不再使用顶部内联新增/编辑表单；新增和修改使用独立 Add/Edit 弹框，保持管理台 CRUD 风格。
+- Question Bank 列表默认每页 10 条，支持切换到 20 条时表格内部滚动，弹框尺寸保持固定。
+- Question Bank 默认题库需要按问题名称归一化去重；新增/编辑时也要拦截同名问题，避免重复。
+
+## 2026-06-12 Verification Rule V2 问题分类块头部
+
+- V2 规则编辑弹框中，问题分类块只压缩配置头部，不压缩已选问题条目列表。
+- 分类块头部应单行展示分类名、`Questions N`、`Select`、`Correct`、`Order` 和删除按钮；`Alternative` 不展示 `Correct`。
+- `Berurut` 页面显示缩短为 `Order`，tooltip 解释：`Berurut means questions should be asked in the configured sequence.`
+- `Alternative` 的“仅用于替代 Dynamic / Static”说明放 tooltip，不占用常规高度。
+- 当前项目没有拖拽排序依赖，本轮不新增依赖；已选问题继续使用上下箭头排序。
+
+## 2026-06-12 Verification Rule V2 Special Rules 按需添加
+
+- `Special Rules` 不再默认铺开所有规则块，使用 `Select special rule type` + `Add Rule` 按需添加。
+- 可添加规则只保留三类：`Case Type Layering`、`Branch Combined Verification`、`Organization Segment Override`。
+- 删除特殊规则块只把该规则设为 disabled，不清空内部触发条件、题目和必对数量，重新添加后可恢复。
+- `Strict Failure Handling` 从特殊规则模型和 UI 中移除；失败后是否阻断继续处理只由基础配置 `Failure Action = Block continuation` 控制。
+- `Order (Seq / Any)` 只表示题目是否按配置顺序提问，不影响 Max Wrong、失败判断或阻断处理。
+
+## 2026-06-13 Verification Rule V2 Special Scenario 自维护
+
+- `Special Rules` 从固定枚举规则改为自维护特殊场景问题块。
+- 管理台维护人员可在规则中点击 `Add Special Scenario`，输入场景名称，并为该场景配置题目、顺序和必对数量。
+- `ATO / add-on` 可作为一个场景名称维护，`mbl d` 可作为另一个场景名称维护；分行服务类场景也由管理台自行维护名称，不再写死为固定下拉枚举。
+- 坐席弹屏 `Verification Scenario` 中只展示一个 `Special Scenario` 下拉，默认 `None`；选择场景后追加该场景题目，基础题目和已答状态继续保留。
+- `Organization Segment Override` 仍保留固定 `O1-O3 / O4-O5`，不改成自由输入场景。
+- `Edit Verification Rule V2` 中 Channel 只开放 `Phone` 和 `BankApp`，不展示其它渠道。
+- Customer Segment 展示顺序固定为：`Layanan Reguler`、`Layanan Prioritas`、`Solitaire`、`Organisasi/Bisnis`。
+- `Question Configuration` 与 `Special Rules` 合并为 `Question & Special Configuration`；基础题组通过 `Mandatory / Dynamic / Static / Alternative` 按钮直接添加，不再使用下拉 + Add。
+- 2026-06-13 17:52 起，配置区标题回到 `Question Configuration`；`Order` 开关先从配置 UI 移除，因为坐席侧尚无对应顺序显示或强制逻辑。
+- 问题配置块不展示 `Questions N` 计数；题目选择统一使用 `Questions` 按钮，并与 `Correct` 数字输入放在同一个问题控制组中。
+- 特殊场景名称输入框保持短宽度，placeholder 使用 `Scenario`，避免比普通题组块更占空间。
+- 已选题目列表不做内部滚动，跟随弹框页面整体滚动。
+- Alternative 的业务提示不能删除；应放在 `Alternative` 标题旁的小问号 tooltip 中，说明其只用于替代 Dynamic 或 Static，且不单独配置必对数量。
+
+## 2026-06-12 Verification Rule V2 外层列表
+
+- V2 外层规则列表必须按标准管理台风格展示：筛选区、Search / Reset、分页表格、可滚动。
+- 客户可见页面不展示 `Reset Demo Rules`；demo store 恢复默认值通过刷新/重新登录完成。
+- 外层列表不展示 `Question Set` 和 `Special Rules` 两列，详情放在 View/Edit 弹框。
+- 外层筛选不展示 `Keyword`，只保留 Channel、Skill Queue、Customer Segment、Status 等结构化条件。
+- Channel / Skill Queue / Customer Segment 多选筛选必须单行展示，最多显示 1 个 tag，超出用 `+N` 收敛，不允许撑高或换行打乱查询区。
+- 表格分页默认每页 10 条，支持 10 / 20 / 50，显示 `Total N items`。
+- V2 外层表格必须使用标准管理台表格行为：正常数据量下自然高度，不强制 table body 纵向滚动，不显示空滚动框。
+- 横向滚动只作为窄屏兜底；正常桌面演示宽度下不应因为列宽过大出现横向滚动条。
+- `Actions` / 操作列必须 `fixed: 'right'`，横向滚动时只滚动非操作列。
+- Question Bank 弹框可以保留内部固定高度滚动；不要把该规则套到 V2 外层规则列表。
+- V2 外层规则列表是管理台 CRUD 页面：新增按钮统一使用 `Add`，并必须提供规则级 View / Edit / Delete。Delete 必须二次确认，只删除当前 demo session 的规则，不删除 Question Bank 题目。
+- V2 外层操作按钮必须位于筛选工具栏右侧，不使用 `PageContainer extra`；字段文案统一使用 `Skill Queue`，不要在列表或弹框中出现 `Service Scenario / Skill Queue`。
+
+## 2026-06-12 Business Types Source Business Code
+
+- `Routing Config > Business Types` 新增 `Source Business Code` 字段，对应用户说的“对方业务代码”。
+- 字段用途：维护客户页面或 IVR 菜单名称对应 ID 到内部 Business Type 的映射；这里的 `Source` 表示来源侧，不写 customer。
+- 列表中 `Source Business Code` 必须放在 `Business Type ID` 后面；Add/Edit/View 弹框也同样放在 `Business Type ID` 后面。
+- Keyword 查询必须覆盖 `Business Type ID`、`Source Business Code` 和 `Business Name`。
+- 字段按必填和唯一校验处理，内部字段名为 `sourceBusinessCode`，默认 mock 先使用 `MENU_PERBANKAN`、`MENU_KARTU_KREDIT`、`MENU_LOAN_INFORMATION`。
+
+## 2026-06-15 Verification Rule V2 Scenario Model
+
+- `Verification Rule V2` 已从“基础题库 + Special Scenario Append/Replace”升级为“一条规则下多个 Verification Scenario”。
+- 外层 rule 只负责匹配条件和全局控制：`Channel`、`Skill Queue`、`Customer Segment`、`Max Wrong`、`Failure Action`、`Status`。
+- 每个 rule 至少有一个默认 scenario；scenario 内包含多个 question block，每个 block 维护 `Block Name`、`Questions`、`Correct`。
+- 管理台编辑弹框只展示 `Question Configuration`，通过 `Verification Scenario` 切换场景，支持 Add / Copy / Delete 非默认场景和 Add Block。
+- 客户可见 UI 不再展示 `Special Scenario Mode`、`Append`、`Replace` 作为维护概念；旧字段仅作为历史 mock 兼容。
+- 坐席弹屏 `Customer Verification` 中使用 `Scenario` 下拉，默认选中规则默认场景；切换场景时按底层 questionId 保留相同题目的已答状态。
+- `Layanan Cabang` 默认数据：`Default` 场景为 5 个 `Branch Data` 问题中答对 2 个；`Branch to Other Services` 场景为 5 个 `Branch Data` 问题中答对 3 个 + 6 个 `Customer Data` 问题中答对 3 个。
+- ATO/add-on 可表达为复制默认场景后新增 `Layering` block；mbl d 可表达为同一 rule 下的独立 scenario。
+- 新的 Agent 执行标准已写入 `AGENTS.md`：业务复杂度上升时先判断是否应提升为模型层概念；高影响不确定性要先向用户提出清晰问题和推荐方案，不要把不确定假设直接固化为实现。
+
+## 2026-06-15 Verification Rule V2 Scenario UX
+
+- 场景模型保留，但配置交互改为卡片式：每个场景卡片展示场景名、Correct Required 和 block 数量。
+- 新增场景必须通过小弹框完成，默认 `Copy current scenario`，也可选择 `Blank scenario`。
+- 固定问题分类恢复为显式类型：`Mandatory`、`Dynamic`、`Static`、`Alternative`。
+- 固定分类不允许手输名称；`Custom Block` 才允许自由命名，用于 `Branch Data`、`Customer Data`、`Layering` 等业务块。
+- `Alternative` 不展示 Correct 输入，并保留 tooltip：只用于替代 Dynamic / Static。
+- `O1-O3 / O4-O5` 不再通过客户可见 `Organization Segment Override` 配置；默认组织客户规则用普通 Verification Scenario 表达。
+- 坐席侧只有多个场景时才显示 Scenario 下拉；单场景规则隐藏该下拉。
+- 管理台编辑弹框提供 `Preview`，用当前未保存 draft 打开坐席侧同款验证弹框，只预览，不保存、不写客户验证状态。
+
+## 2026-06-15 Verification Rule V2 Modal Density
+
+- `Edit/Add Verification Rule V2` 必须按管理台弹框规范：弹框整体固定最大高度，头部与底部按钮固定，中间内容区滚动。
+- 基础配置字段使用统一管理台表单类；`Channel`、`Customer Segment` 等多选 Select 必须单行收敛，最多显示 1 个 tag，超出用 `+N`，不能撑高弹框。
+- `Verification Scenario` 不再用大卡片；改为一行紧凑场景条，场景摘要展示 `Scenario Name · Correct N · Blocks N`。
+- `Copy Scenario` 不在外层常驻展示；复制能力只保留在 `+ Scenario` 弹框中的 `Copy current scenario`。
+- 场景改名用笔图标触发行内输入框；默认场景不可删除，非默认场景显示删除图标。
+- 不改问题分类模型：`Mandatory / Dynamic / Static / Alternative / Custom Block` 继续保留，`Alternative` tooltip 不能删除。
+
+## 2026-06-15 Verification Rule V2 Scenario Policy
+
+- `Correct Required`、`Max Wrong`、`Failure Action` 和 `Agent Hint` 属于 `Verification Scenario`，不再作为客户可见的整体 rule 配置。
+- 整体 rule 客户可见配置只保留匹配条件：`Channel`、`Skill Queue`、`Customer Segment`、`Status`。
+- `Correct Required` 在场景内只读展示，由该场景的问题块 Correct 汇总。
+- `Max Wrong` 在场景内配置；`No Limit` 表示不按错答次数失败，坐席侧不展示 Wrong 计数。
+- `Failure Action` 只在场景 Max Wrong 有限制时生效；No Limit 时不要强调 Failure Action。
+- `Agent Hint` 是场景级坐席提示，用于表达“请先问前 3 题”等柔性规则；当前不新增强制顺序字段，不拦截坐席跳题。
+- 错答按同一次验证会话累计；坐席误点后改回 Correct / Skip，错误数随之重算并可恢复。
+- 旧 rule 级 `maxWrongAttempts` / `failureAction` 保留为兼容字段；读取旧数据时复制到各场景，保存时可同步默认场景策略回旧字段。
+
+## 2026-06-15 Verification Rule V2 Scenario Editing Details
+
+- V2 编辑弹框内 input、select、number 必须统一高度，避免同一表单行控件上下不齐。
+- 默认场景可以重命名，但不可删除；非默认场景可以重命名和删除。
+- 场景切换 tab 只展示场景名称，不展示 Correct / Wrong / Blocks 统计；策略信息放在 `Scenario Policy`。
+- `Failure Action / Action` 已从 V2 删除；`Max Wrong` 只负责把当前验证状态置为 Failed，不做继续处理阻断。
+- `Question Bank` 删除题目前必须检查规则引用。若已被引用，需要提示该问题已被引用并让用户确认，确认后才删除并从规则配置中移除。
+
+## 2026-06-15 Verification Rule V2 Preview and Agent Compact Conditions
+
+- 坐席侧 `Customer Verification` 顶部不展示 `Channel`。
+- 顶部条件区一行展示 `Customer Segment`、`Skill`、`Scenario`；单场景规则隐藏 `Scenario`。
+- `Customer Segment` 和 `Skill` 在真实坐席侧可修改，用于重新匹配 KBV 规则。
+- 管理台 Preview 复用坐席侧弹框，但 `Customer Segment` 和 `Skill` 必须只读；Preview 只允许切换当前规则内的 `Scenario`。
+
+## 2026-06-15 Verification Rule V2 Max Wrong and Rule Bar
+
+- 原始 Excel 明确无最大错答限制的规则：Personal Banker、Layanan Cabang、KPR、Merchant Solution，默认数据保持 `No Limit`。
+- 原文 `maksimal 3 kali salah jawab`、`maksimal 3 kali salah` 或 `salah menjawab 3 kali` 都表示最多答错 3 次，必须配置为 `Max Wrong = 3`，不能解释为 No Limit。
+- 只有 `tidak ada ketentuan maksimal salah jawab/salah` 才表示无最大答错次数限制。
+- Paylater 在客户未确认内部规则前，demo 默认沿用 Perbankan，`Max Wrong = 3`。
+- 旧 `groups` 规则自动生成 Verification Scenario 时必须继承外层 `rule.maxWrongAttempts`；不要把场景默认 `null` 当成 No Limit 覆盖外层 `3`。
+- Preview 必须用当前 draft 的 rule、skill、customer segment、scenario 和题目配置生成稳定 key，避免复用旧预览条件。
+- 坐席侧和 Preview 的 rule bar 不展示 `In Progress / Passed / Failed` 常驻状态，也不展示小问号按钮。
+- Rule bar 只展示 `Need N correct`、题组进度 chip、设置了上限时的 `Wrong 0/N`，以及可选 `Agent Hint`。
+
+## 2026-06-15 Verification Rule V2 Agent Hint and Question Row State
+
+- 坐席侧和 Preview 的 `Agent Hint` 必须完整展示，不做单行截断；提示可以占整行并自然换行。
+- 问题列表可以有 hover / focus 行反馈，帮助坐席扫读当前鼠标所在题目。
+- 不要在坐席点击某题后自动把下一道未答题显示成 selected / active 行效果；自动推进只能作为内部逻辑，不应造成下一行被默认选中的视觉误解。

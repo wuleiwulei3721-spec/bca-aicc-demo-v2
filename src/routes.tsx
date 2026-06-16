@@ -14,7 +14,7 @@ import {
   SiteAccessVolumePage,
   SkillQueuesPage,
   SkillRoutingRulesPage,
-  VerificationRulesPage,
+  VerificationRuleV2Page,
   VdnPage,
   WorkingTimePlansPage,
 } from './pages'
@@ -26,7 +26,11 @@ const callManagementRoutes = [
   },
   {
     path: 'call-management/verification-rules',
-    element: <VerificationRulesPage />,
+    element: <VerificationRuleV2Page />,
+  },
+  {
+    path: 'call-management/verification-rule-v2',
+    element: <Navigate replace to="/call-management/verification-rules" />,
   },
   {
     path: 'call-management/routing-configuration',

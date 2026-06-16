@@ -10,10 +10,14 @@ import {
   SettingOutlined,
   SwapOutlined,
 } from '@ant-design/icons'
-import { Input, Space } from 'antd'
+import { Input, Select, Space } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { ReactNode } from 'react'
 import {
+  AdminFilterField,
+  AdminModalFooter,
+  AdminTable,
+  AdminToolbar,
   BaseButton,
   BaseCard,
   BaseTable,
@@ -378,7 +382,74 @@ export function DesignSystem() {
           />
         </DesignSection>
 
-        <DesignSection title="9. Tabs System">
+        <DesignSection title="9. Admin Management Page">
+          <BaseCard compact title="Maintenance List Pattern">
+            <AdminToolbar
+              actions={
+                <>
+                  <BaseButton variant="primary">Search</BaseButton>
+                  <BaseButton variant="secondary">Reset</BaseButton>
+                </>
+              }
+              filters={
+                <>
+                  <AdminFilterField label="Keyword" width={240}>
+                    <Input placeholder="ID / Name / Code" />
+                  </AdminFilterField>
+                  <AdminFilterField label="Status" width={150}>
+                    <Select
+                      options={[
+                        { label: 'All', value: '' },
+                        { label: 'Enabled', value: 'enabled' },
+                        { label: 'Disabled', value: 'disabled' },
+                      ]}
+                      value=""
+                    />
+                  </AdminFilterField>
+                </>
+              }
+              primaryActions={
+                <>
+                  <BaseButton variant="primary">Batch Add</BaseButton>
+                  <BaseButton variant="primary">Add</BaseButton>
+                </>
+              }
+            />
+            <AdminTable
+              columns={tableColumns}
+              dataSource={tableData}
+              horizontalScroll={720}
+              pagination={{}}
+              rowKey="key"
+            />
+          </BaseCard>
+          <BaseCard compact title="Admin Contract">
+            <div className="design-contract-grid">
+              {[
+                '32px query controls',
+                'Search / Reset equal width',
+                'Keyword 240-260px, normal fields 200-220px, Status 150-160px',
+                'Add / Batch Add primary on toolbar right, Delete danger',
+                'Primary action buttons use natural text width',
+                'Status columns use badge labels',
+                'Header bold, data normal weight',
+                '10 rows default pagination',
+                'Page scroll for long lists',
+                'Modal table internal scroll only',
+                'Complex filters may wrap; Search / Reset stay left, primary actions stay right',
+                'Actions fixed right with horizontal scroll',
+              ].map((name) => (
+                <code key={name}>{name}</code>
+              ))}
+            </div>
+            <AdminModalFooter>
+              <BaseButton variant="secondary">Cancel</BaseButton>
+              <BaseButton variant="primary">Save</BaseButton>
+            </AdminModalFooter>
+          </BaseCard>
+        </DesignSection>
+
+        <DesignSection title="10. Tabs System">
           <div className="design-component-grid">
             <BaseCard compact title="Toolbar Tabs">
               <BaseTabs

@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-11 21:12 +08:00
+最后更新：2026-06-16 14:36 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,2252 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-16 14:36 +08:00 - 合并 V2 为正式 Verification Rules 菜单
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/routes.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-16-1436.md`
+- `.codex-backup/current-todo-2026-06-16-1436.md`
+- `.codex-backup/page-state-2026-06-16-1436.md`
+
+修改原因：
+
+- 用户确认新版场景化 `Verification Rule V2` 已成为正式方案，旧版 `Verification Rules` 不应继续作为客户菜单入口展示。
+
+修改结果：
+
+- 左侧 `Call Management` 下只保留一个 `Verification Rules` 菜单。
+- `/call-management/verification-rules` 改为渲染 `VerificationRuleV2Page`。
+- `/call-management/verification-rule-v2` 改为重定向到 `/call-management/verification-rules`。
+- 旧 `VerificationRulesPage` 源码保留，但不再由菜单或路由引用。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 已通过。
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `src/` 客户可见旧品牌敏感词扫描无匹配。
+- HTTP smoke 已通过：`/`、`/call-management`、`/call-management/verification-rules`、`/call-management/verification-rule-v2`、`/design-system` 均返回 200。
+- 源码检查确认 `src/` 客户可见文案不再包含 `Verification Rule V2`。
+- `git diff --check` 无实际 whitespace error；仅有既有 Windows LF/CRLF warning。
+
+回滚说明：
+
+- 如需回滚，恢复 `BasicLayout` 中 `Verification Rule V2` 菜单项、恢复 `/call-management/verification-rules` 指向旧 `VerificationRulesPage`，并恢复 `/call-management/verification-rule-v2` 指向 `VerificationRuleV2Page`。
+
+当前风险点：
+
+- Node 环境缺少 Playwright 模块，本轮未完成 DOM 级浏览器检查；仍建议人工确认客户演示环境中旧书签 `/call-management/verification-rule-v2` 会跳转到新版正式路径，且侧栏选中态仍正确。
+
+### 2026-06-16 14:18 +08:00 - Personal Loan 坐席提示与 Agent Hint 样式
+
+修改页面或文件：
+
+- `src/mock/verificationRuleV2.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-16-1418.md`
+- `.codex-backup/current-todo-2026-06-16-1418.md`
+- `.codex-backup/page-state-2026-06-16-1418.md`
+
+修改原因：
+
+- 用户确认 `Personal Loan` 原文中“错答 3 次后 CCO 不能继续处理申请/请求”应作为坐席备注展示，同时 `Max Wrong = 3` 继续保留为系统规则。
+- 用户希望坐席提示更明显，但不想使用红色造成错误感。
+
+修改结果：
+
+- `Personal Loan` 默认场景新增原文 `Agent Hint`：`Jika Nasabah salah menjawab 3 kali pertanyaan verifikasi maka CCO tidak bisa lanjut proses permohonan / permintaan nasabah`。
+- `Personal Loan` 仍保持 7 道候选题、必对 5、`Max Wrong = 3`。
+- V2 坐席侧和 Preview 的 Agent Hint 改为更明显的浅蓝信息条：浅蓝底、深蓝字、清晰蓝色边框。
+- Paylater 口径记录为当前 demo 先按“可沿用 Perbankan”处理，保持 `Max Wrong = 3`；独立内部规则待客户确认。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 已通过。
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `src/` 客户可见旧品牌敏感词扫描无匹配。
+- HTTP smoke 已通过：`/`、`/call-management/verification-rule-v2`、`/design-system` 均返回 200。
+- `git diff --check` 无实际 whitespace error；仅有既有 Windows LF/CRLF warning。
+
+回滚说明：
+
+- 如需回滚，移除 `Personal Loan` 默认 scenario 的 `agentHint`，并恢复 `.inbound-verification-workflow__hint` 的旧浅色样式。
+
+当前风险点：
+
+- 命令级验证已通过；仍建议人工在 Preview 中确认长原文提示换行后不挤压题目列表，且浅蓝信息条不会过度抢占视觉焦点。
+
+### 2026-06-16 14:02 +08:00 - 修正 KlikBank Bisnis 组织客户场景题库
+
+修改页面或文件：
+
+- `src/mock/verificationRuleV2.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-16-1402.md`
+- `.codex-backup/current-todo-2026-06-16-1402.md`
+- `.codex-backup/page-state-2026-06-16-1402.md`
+
+修改原因：
+
+- 用户发现 `KlikBank Bisnis` 的 `O1-O3` 只显示 3 道题，指出 `Pertanyaan 1-3 wajib ditanyakan di awal` 应是给坐席的提示语。
+- 复查后确认之前把“答对 3 个问题”误建成“只展示 3 个问题”，混淆了候选题集和通过阈值。
+
+修改结果：
+
+- `O1-O3` 与 `O4-O5` 现在展示同一套完整组织客户候选题。
+- `O1-O3` 必对数保持 3：Mandatory 1 + Dynamic 2 + Static 0。
+- `O4-O5` 必对数保持 5：Mandatory 1 + Dynamic 2 + Static 2。
+- 两个场景都新增 `Agent Hint: Please ask questions 1-3 first.`。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 已通过。
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `src/` 客户可见旧品牌敏感词扫描无匹配。
+- HTTP smoke 已通过：`/`、`/call-management/verification-rule-v2`、`/design-system` 均返回 200。
+- `git diff --check` 无实际 whitespace error；仅有既有 Windows LF/CRLF warning。
+
+回滚说明：
+
+- 如需回滚，移除 `O1-O3` 的 Static 候选题块，并删除两个场景的 Agent Hint。
+
+当前风险点：
+
+- 命令级验证已通过；仍建议人工在 V2 Preview 或坐席弹框中确认 `O1-O3` 展示完整题目列表，且规则条只要求 3 个正确。
+
+### 2026-06-16 12:02 +08:00 - V2 Customer Verification 手动失败提交
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-16-1202.md`
+- `.codex-backup/current-todo-2026-06-16-1202.md`
+- `.codex-backup/page-state-2026-06-16-1202.md`
+
+修改原因：
+
+- 用户指出 `Max Wrong = No Limit` 时系统不会自动进入失败态，导致坐席无法点击验证失败。
+- 需要将“自动失败阈值”和“坐席手动提交失败”分开，避免隐藏判断过多。
+
+修改结果：
+
+- `CustomerVerificationV2Modal` footer 固定展示 `Apply Failed` 与 `Apply Verified`。
+- 有可用 KBV 规则时，`Apply Failed` 始终可点击，用于坐席手动提交验证失败。
+- `Apply Verified` 仍只在满足当前场景通过条件时可点击。
+- 无可用规则时两个最终提交按钮均不可用，避免把配置缺失记为客户验证失败。
+- `Max Wrong = No Limit` 只表示不自动按错答次数失败，不影响手动失败提交。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 已通过。
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `src/` 客户可见旧品牌敏感词扫描无匹配。
+- HTTP smoke 已通过：`/`、`/call-management/verification-rule-v2`、`/design-system` 均返回 200。
+- `git diff --check` 无实际 whitespace error；仅有既有 Windows LF/CRLF warning。
+
+回滚说明：
+
+- 如需回滚，恢复 footer 按 `evaluation.failed` 条件切换 `Apply Failed / Apply Verified` 的旧渲染方式。
+
+当前风险点：
+
+- 命令级验证已通过；仍建议人工确认按钮并排展示在当前弹框宽度下不拥挤，且坐席不会误解 `Apply Failed` 为自动失败状态。
+
+### 2026-06-16 11:40 +08:00 - V2 默认规则与坐席提示边界修正
+
+修改页面或文件：
+
+- `src/types/verificationRuleV2.ts`
+- `src/utils/verificationRuleV2.ts`
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-16-1140.md`
+- `.codex-backup/current-todo-2026-06-16-1140.md`
+- `.codex-backup/page-state-2026-06-16-1140.md`
+
+修改原因：
+
+- 用户明确指出 `Perbankan default is used...` 误把系统回退说明放到了配置给坐席看的提示话术位置。
+- Perbankan 默认应只用于上游未传 Skill 或客户身份时的初始条件；上游已有值但未配置规则时应直接提示未配置，不应自动回退。
+
+修改结果：
+
+- `VerificationV2RuleMatchType` 简化为 `exact | none`。
+- `findVerificationV2RuleMatch` 改为只做 `Channel + Skill Queue + Customer Segment` 精确匹配。
+- `CustomerVerificationV2Modal` 删除 Perbankan fallback 提示和未配置规则提示话术区。
+- `Agent Hint` 区域现在只展示当前 Scenario 配置的坐席提示。
+- 未命中规则时仅通过 `No KBV Rule Available` 与问题列表空状态表达未配置。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 已通过。
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `src/` 客户可见旧品牌敏感词扫描无匹配。
+- HTTP smoke 已通过：`/`、`/call-management/verification-rule-v2`、`/design-system` 均返回 200。
+- `git diff --check` 无实际 whitespace error；仅有既有 Windows LF/CRLF warning。
+
+回滚说明：
+
+- 如需回滚，恢复 `perbankan-default` match type、`findVerificationV2RuleMatch` 中的默认技能回退分支，以及 `CustomerVerificationV2Modal` 的 fallback 文案渲染。
+
+当前风险点：
+
+- 命令级验证已通过；仍建议在浏览器中手动确认已传入但未配置的 Skill Queue 不再回退 Perbankan，Preview 也只显示当前规则结果。
+
+### 2026-06-16 11:34 +08:00 - V2 Prio/Soli 技能匹配修复
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/utils/verificationRuleV2.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-16-1134.md`
+- `.codex-backup/current-todo-2026-06-16-1134.md`
+- `.codex-backup/page-state-2026-06-16-1134.md`
+
+修改原因：
+
+- 用户发现 `Prio Soli Perbankan` 技能中出现 `Selected Skill Queue has no configured KBV rule. Perbankan default is used; agent can switch Skill Queue.`。
+- 根因不是 V2 规则缺失，而是坐席弹框初始 `customerSegment` 固定为 `regular`，导致 `SQ_PRIO_SOLI_PERBANKAN + priority/solitaire` 规则无法精确命中。
+
+修改结果：
+
+- `CustomerInformationCard` 新增客户资料 `customerType` 到 V2 Customer Segment 的映射，打开验证弹框时不再固定使用 `regular`。
+- `getDefaultVerificationV2SkillQueueCode` 增加 `Prio/Soli/Prioritas/Solitaire` 菜单关键词识别，优先映射 `Prio Soli Kartu Kredit`，否则映射 `Prio Soli Perbankan`。
+- `Prio Soli Perbankan` 在客户级别为 Priority 或 Solitaire 时应命中自身规则，不再错误回退到 Perbankan 默认规则。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 已通过。
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite/Rolldown chunk size warning。
+- HTTP smoke 已通过：`/`、`/call-management/verification-rule-v2`、`/design-system` 均返回 200。
+- `src/` 客户可见旧品牌敏感词扫描无匹配。
+
+回滚说明：
+
+- 如需回滚，移除 `CustomerInformationCard` 中的 customerType -> V2 segment 映射，恢复 `customerSegment: 'regular'`，并移除 `getDefaultVerificationV2SkillQueueCode` 中 Prio/Soli 关键词映射。
+
+当前风险点：
+
+- 本轮已做命令级验证，但未做截图级浏览器复查；建议手动用 Priority 或 Solitaire 客户打开 `Prio Soli Perbankan` 验证弹框确认不再显示默认回退提示。
+
+### 2026-06-16 11:29 +08:00 - Priority List 批量维护逐渠道保存
+
+修改页面或文件：
+
+- `src/pages/call-management/PriorityListManagementPage.tsx`
+- `src/types/priorityList.ts`
+- `src/mock/priorityList.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-16-1129.md`
+- `.codex-backup/current-todo-2026-06-16-1129.md`
+- `.codex-backup/page-state-2026-06-16-1129.md`
+
+修改原因：
+
+- 用户确认优先名单不需要同时保留单个新增和批量新增，页面只保留批量维护入口。
+- 多渠道一条记录会让 `Match Rule` 语义变得模糊，客户期望保存后按渠道分别查看。
+
+修改结果：
+
+- `PriorityListEntry` 从 `channels: string[]` 调整为单渠道 `channel: string`。
+- `Priority List Management` 移除 `Add` 按钮，仅保留 `Batch Add` 和 `Delete`。
+- 保存时按 `选中 Channel x Identifier` 展开为多条列表记录，每条记录只包含一个 Channel。
+- `Match Rule` 改为按 Channel 与 Identifier 共同派生：仅 `Webchat`、`Email Contact`、`Email Priority` 遇到规范邮箱域名格式时显示 `Email Domain Match`，其它组合均显示 `Exact Match`。
+- 默认 mock 按客户示例拆为逐渠道记录，社媒和 Email/Webchat 示例均按批量维护结果展开。
+- 重复过滤继续按 `Channel + normalized Identifier + Match Rule` 自动跳过，重复预览继续展示 `Existing No.`。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 已通过。
+- `npm.cmd run lint` 已通过。
+- `npm.cmd run build` 已通过；仍只有既有 Vite/Rolldown chunk size warning 和 plugin timing 提示。
+- HTTP smoke 已通过：`/call-management/priority-list` 返回 200，`/call-management/blacklist` 返回 200。
+- `git diff --check` 已通过；仅有既有 Windows LF/CRLF warning。
+
+回滚说明：
+
+- 如需回滚，恢复 `PriorityListEntry.channels` 数组模型，恢复 Priority List 页面中的 `Add` 按钮和按多渠道 tag 展示的列表列，并恢复旧 mock 数据。
+
+当前风险点：
+
+- 当前工具未提供可用 in-app Browser 操作入口，未做截图级浏览器复查。
+- Phone 等非 Email/Webchat 渠道输入邮箱域名类字符串会按精确匹配保存，这是本轮确认的非阻断策略。
+
+### 2026-06-16 11:24 +08:00 - V2 问题行 hover 背景增强
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户反馈 Customer Verification 中问题行鼠标悬浮背景色不够明显，希望恢复到之前更明显的浅蓝色。
+
+修改结果：
+
+- 将 `.inbound-verification-list__row:hover` 和 `:focus-within` 背景色从 `#f7fbff` 调整为 `#f3f8ff`。
+- 只影响 V2 坐席侧和 Preview 共用的 Customer Verification 问题列表行反馈。
+
+验证：
+
+- 本轮为单点 CSS 视觉调整，未运行完整构建。
+
+回滚说明：
+
+- 如需回滚，将该 hover/focus 背景色恢复为 `#f7fbff`。
+
+当前风险点：
+
+- 未做截图级验证；建议人工打开 Preview 或坐席侧 Verify 弹框确认 hover 视觉强度。
+
+### 2026-06-15 18:12 +08:00 - V2 最大错答继承逻辑修复
+
+修改页面或文件：
+
+- `src/utils/verificationRuleV2.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-15-1812.md`
+- `.codex-backup/current-todo-2026-06-15-1812.md`
+- `.codex-backup/page-state-2026-06-15-1812.md`
+
+修改原因：
+
+- 用户指出原文 `maksimal 3 kali salah jawab` 就是最多答错 3 次，不应显示为 No Limit。复查后确认旧 `groups` 规则生成默认场景时把外层 `maxWrongAttempts: 3` 覆盖成场景级 `null`，导致很多规则页面显示 No Limit。
+
+修改结果：
+
+- 明确规则口径：`maksimal 3 kali salah jawab` / `maksimal 3 kali salah` / `salah menjawab 3 kali` 均按 `Max Wrong = 3`；只有 `tidak ada ketentuan maksimal salah jawab/salah` 才按 `No Limit`。
+- 旧 `groups` 规则自动生成 default scenario 时继承外层 `rule.maxWrongAttempts`。
+- 旧 special scenario 从 legacy 规则生成时继承 base scenario 的 `maxWrongAttempts`。
+- 对当前 session 中可能已经被旧逻辑固化为 `null` 的 legacy default / special scenario 增加兼容迁移：如果外层 rule 是 3，场景属于 legacy 自动生成范围，则读取时按外层 3 修正。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 通过。
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `rg -n -i "halo|bca" src` 无命中。
+- `/`、`/call-management/verification-rule-v2`、`/design-system` HTTP smoke 均返回 200。
+- `git diff --check` 通过；仅有既有 Windows LF/CRLF warning。
+
+回滚说明：
+
+- 如需回滚，恢复 `buildLegacyVerificationV2Scenarios` 和 `buildScenarioFromLegacySpecialScenario` 不继承 Max Wrong，并删除 `getVerificationV2RuleScenarios` 中 legacy null 迁移逻辑。
+
+当前风险点：
+
+- 当前环境未做截图级浏览器验证；建议刷新页面后人工确认 V2 列表中除 Personal Banker、Layanan Cabang、KPR、Merchant Solution 外，相关规则 Max Wrong 显示为 3。
+
+### 2026-06-15 17:57 +08:00 - V2 坐席提示与问题行 hover 状态微调
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-15-1757.md`
+- `.codex-backup/current-todo-2026-06-15-1757.md`
+- `.codex-backup/page-state-2026-06-15-1757.md`
+
+修改原因：
+
+- 用户要求坐席侧和 Preview 中的坐席描述完整展示，不要截断；问题列表需要鼠标悬浮行效果，但点击题目操作后不应自动把下一行显示成默认选中或高亮状态。
+
+修改结果：
+
+- `Agent Hint` 改为占整行展示并允许自然换行，覆盖原通用 span 的单行省略规则。
+- 移除 `CustomerVerificationV2Modal` 中仅用于视觉自动高亮下一题的 `activeQuestionIndex` 状态。
+- 问题列表行删除自动 active 背景，改为只在 hover / focus-within 时显示轻量行底色。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 通过。
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `rg -n -i "halo|bca" src` 无命中。
+- `/`、`/call-management/verification-rule-v2`、`/design-system` HTTP smoke 均返回 200。
+- `git diff --check` 通过；仅有既有 Windows LF/CRLF warning。
+
+回滚说明：
+
+- 如需回滚，恢复 `activeQuestionIndex` 状态与 `.inbound-verification-list__row--active` 背景，并将 `Agent Hint` 恢复为单行省略。
+
+当前风险点：
+
+- 当前环境未做截图级浏览器验证；建议人工打开 V2 Preview 和坐席 `Verify` 弹框确认长 Agent Hint 与问题行 hover 效果。
+
+### 2026-06-15 17:53 +08:00 - V2 最大错答复核与验证进度条简化
+
+修改页面或文件：
+
+- `src/mock/verificationRuleV2.ts`
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-15-1753.md`
+- `.codex-backup/current-todo-2026-06-15-1753.md`
+- `.codex-backup/page-state-2026-06-15-1753.md`
+
+修改原因：
+
+- 用户要求按客户原始 Excel 复核默认规则的错误次数配置，解释为什么很多规则显示 No Limit，并优化管理台 Max Wrong 宽度、坐席侧/Preview 的答题情况行。
+
+修改结果：
+
+- 对照 Excel 确认 Personal Banker、Layanan Cabang、KPR、Merchant Solution 原文明确无最大错答限制，继续保留 `No Limit`。
+- Paylater 原文未明确 No Limit，且说明可沿用 Perbankan；demo 默认改为 `Max Wrong = 3`。
+- 管理台 `Max Wrong` 数字输入宽度调整为与问题块 `Correct` 一致，`Agent Hint` 占用更宽空间。
+- Preview 组件 key 增加当前规则、条件、场景和题目配置摘要，避免复用上次 Preview 的 Skill / Customer Segment。
+- `CustomerVerificationV2Modal` rule bar 删除状态字段和小问号按钮，仅展示 `Need N correct`、题组进度 chip、`Wrong 0/N` 和可选 `Agent Hint`。
+- 删除未使用的旧 `inbound-verification-demo-conditions` 样式和旧状态样式。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 通过。
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `rg -n -i "halo|bca" src` 无命中。
+- 旧状态、小问号、Failure Action 相关残留扫描无命中。
+- `/`、`/call-management/verification-rule-v2`、`/design-system` HTTP smoke 均返回 200。
+
+回滚说明：
+
+- 如需回滚，将 Paylater `maxWrongAttempts` 恢复为 `null`，恢复 `CustomerVerificationV2Modal` 中状态字段和信息按钮，并恢复相关 CSS。
+
+当前风险点：
+
+- 当前环境没有可用浏览器自动化或 Playwright 依赖，未做截图级 UI 验证；建议人工打开 V2 Preview 与坐席 Verify 弹框确认 rule bar 视觉密度。
+
+### 2026-06-15 17:27 +08:00 - V2 删除 Failure Action 并压缩坐席验证条件区
+
+修改页面或文件：
+
+- `src/types/verificationRuleV2.ts`
+- `src/utils/verificationRuleV2.ts`
+- `src/mock/verificationRuleV2.ts`
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-15-1727.md`
+- `.codex-backup/current-todo-2026-06-15-1727.md`
+- `.codex-backup/page-state-2026-06-15-1727.md`
+
+修改原因：
+
+- 用户确认 `Failure Action` 当前没有真实阻断流程，只是提示文案，容易误导客户；同时要求 Preview 与坐席侧一致但锁定当前规则的 Skill 和 Customer Segment，并进一步压缩坐席侧顶部条件区高度。
+
+修改结果：
+
+- 删除 V2 `Failure Action / Action` 配置、类型、mock 默认值、工具函数兼容注入和坐席侧阻断提示。
+- 场景级策略只保留 `Correct Required`、`Max Wrong` 和 `Agent Hint`。
+- 坐席侧 `Customer Verification` 顶部不再展示 `Channel`；字段合并为一行 `Customer Segment`、`Skill`、`Scenario`。
+- 单场景规则不显示 `Scenario`；多场景规则仍可切换场景。
+- Preview 继续复用坐席侧验证弹框，但通过 `readonlyConditions` 锁定 `Customer Segment` 和 `Skill`，只允许切换当前规则内的 `Scenario`。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 通过。
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `rg -n -i "halo|bca" src` 无命中。
+- `rg -n "failureAction|Failure Action|verificationV2FailureAction|block-continuation|show-failed-only|cannot continue|failure-action" src` 无命中。
+- `/`、`/call-management/verification-rule-v2`、`/design-system` HTTP smoke 均返回 200。
+
+回滚说明：
+
+- 如需回滚，需要恢复 `VerificationV2FailureAction` 类型、rule/scenario/effective rule 的 `failureAction` 字段、管理台 Action 下拉和坐席侧阻断提示。
+
+当前风险点：
+
+- 当前环境没有可用浏览器自动化或 Playwright 依赖，未做截图级 UI 验证；建议人工打开 V2 Preview 和坐席 Verify 弹框确认顶部字段排列。
+
+### 2026-06-15 16:56 +08:00 - 管理台 TextArea 高度规范修复
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-15-1656.md`
+- `.codex-backup/current-todo-2026-06-15-1656.md`
+- `.codex-backup/page-state-2026-06-15-1656.md`
+
+修改原因：
+
+- 用户打开黑名单和优先名单 Batch Add 后发现批量输入框仍是一行。
+- 根因是管理台统一 CRUD 表单规则 `.routing-config-crud-modal__field .ant-input` 把所有 `.ant-input` 都固定为 32px，而 Ant Design TextArea 也会带 `.ant-input` 类，覆盖了名单页批量框的 176px 最小高度。
+
+修改结果：
+
+- 管理台统一表单高度规则改为 `.routing-config-crud-modal__field .ant-input:not(textarea)`，只约束单行 input。
+- 新增 `.routing-config-crud-modal__field textarea.ant-input` 多行输入规范：`height: auto`、`min-height: 76px`、`resize: vertical`。
+- 黑名单和优先名单 Batch Add 文本框继续使用 `rows={8}` 和 176px 最小高度，且不再被 32px 单行规则覆盖。
+- 单行 input、Select、InputNumber 的 32px 统一高度不变。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 通过。
+- `npm.cmd run lint` 通过。
+- `npm.cmd run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `/call-management/blacklist` HTTP smoke 返回 200。
+- `/call-management/priority-list` HTTP smoke 返回 200。
+- 源码检查确认 32px 高度规则已排除 textarea，Batch Add 仍为 `rows={8}` / `min-height: 176px`。
+
+回滚说明：
+
+- 如需回滚，将 `.ant-input:not(textarea)` 恢复为 `.ant-input`，并删除 `textarea.ant-input` 多行规范；但这会再次让 TextArea 被单行高度规则覆盖。
+
+当前风险点：
+
+- 本轮未做 Browser 点击级验证；需要人工重新打开两个 Batch Add 弹框确认文本框实际高度。
+
+### 2026-06-15 16:55 +08:00 - V2 场景编辑细节与题库删除引用确认
+
+修改页面或文件：
+
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-15-1655.md`
+- `.codex-backup/current-todo-2026-06-15-1655.md`
+- `.codex-backup/page-state-2026-06-15-1655.md`
+
+修改原因：
+
+- 用户反馈 V2 编辑弹框中输入框和下拉框高度不一致、默认场景不能改名、场景 tab 统计信息重复、`Failure Action` 语义不清，以及题库删除未判断是否被规则引用。
+
+修改结果：
+
+- V2 弹框内 input、select、number 控件统一 32px 高度，多选仍按单行 `+N` 收敛。
+- 默认场景现在也可通过笔图标行内重命名，但默认场景仍不可删除。
+- 场景 tab 只展示场景名称，不再展示 Correct / Wrong / Blocks 统计。
+- 外层列表移除 `Failure Action` 列；`Failure Action` 移入 `Max Wrong` 配置行，仅在关闭 `No Limit` 并设置错误上限时展示，用于配置达到错误上限后的处理动作。
+- `Question Bank` 删除题目前会检查 V2 规则场景引用；若已被引用，先弹出引用确认，说明引用次数和规则数量，确认后才删除并同步从规则配置中移除。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 通过。
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `rg -n -i "halo|bca" src` 无命中。
+- `/`、`/call-management/verification-rule-v2`、`/design-system` HTTP smoke 均返回 200。
+
+回滚说明：
+
+- 如需回滚，恢复 `VerificationRuleV2Page.tsx` 中场景 tab、Scenario Policy 和 Question Bank 删除逻辑，并撤销 `index.less` 中 V2 modal 控件高度与 Max Wrong 行内样式调整。
+
+当前风险点：
+
+- 当前环境没有可用内置浏览器或 Playwright 依赖，未做截图级 UI 验证；需要人工打开 V2 编辑弹框确认控件对齐和题库删除确认弹框视觉表现。
+
+### 2026-06-15 16:35 +08:00 - 名单页批量输入框高度调高
+
+修改页面或文件：
+
+- `src/pages/call-management/BlacklistManagementPage.tsx`
+- `src/pages/call-management/PriorityListManagementPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-15-1635.md`
+- `.codex-backup/current-todo-2026-06-15-1635.md`
+- `.codex-backup/page-state-2026-06-15-1635.md`
+
+修改原因：
+
+- 用户反馈黑名单和优先名单的批量号码/Identifier 输入框高度偏低，希望批量录入时更方便查看。
+
+修改结果：
+
+- `Blacklist Management` 的 Batch Add Restricted Number 文本框从 `rows={6}` 调整为 `rows={8}`。
+- `Priority List Management` 的 Batch Add Identifier 文本框从 `rows={6}` 调整为 `rows={8}`。
+- 两个名单页共用的批量输入框最小高度从 `128px` 调整为 `176px`，仍保留 `resize: vertical` 支持手动拉伸。
+- 新增/保存、重复过滤、删除、查询等逻辑不变。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 通过。
+- `npm.cmd run lint` 通过。
+- `npm.cmd run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `/call-management/blacklist` HTTP smoke 返回 200。
+- `/call-management/priority-list` HTTP smoke 返回 200。
+
+回滚说明：
+
+- 如需回滚，将两个页面的批量 `Input.TextArea` 恢复为 `rows={6}`，并将 `.call-management-list__number-field--batch .ant-input` 的 `min-height` 恢复为 `128px`。
+
+当前风险点：
+
+- 本轮未做 Browser 点击级验证；需人工打开两个 Batch Add 弹框确认文本框高度和弹框滚动表现。
+
+### 2026-06-15 16:32 +08:00 - V2 验证策略下沉到场景
+
+修改页面或文件：
+
+- `src/types/verificationRuleV2.ts`
+- `src/utils/verificationRuleV2.ts`
+- `src/mock/verificationRuleV2.ts`
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-15-1632.md`
+- `.codex-backup/current-todo-2026-06-15-1632.md`
+- `.codex-backup/page-state-2026-06-15-1632.md`
+
+修改原因：
+
+- 用户判断 Correct Required、Max Wrong、Failure Action 和坐席提示更像场景级策略，而不是整体规则级配置。
+- 用户确认当前不做强制顺序控制，先用备注提示坐席，保持验证流程灵活。
+
+修改结果：
+
+- `VerificationV2Scenario` 增加 `maxWrongAttempts`、`failureAction` 和 `agentHint`。
+- 读取旧数据时，旧 rule 级 `maxWrongAttempts` / `failureAction` 会作为场景策略兼容默认值。
+- `Edit Verification Rule V2` Basic Config 移除 Correct Required、Max Wrong 和 Failure Action，只保留匹配条件与状态。
+- 当前场景下新增紧凑 Scenario Policy：Correct Required 只读、Max Wrong、Failure Action、Agent Hint。
+- 外层列表的 Max Wrong / Failure Action 按默认场景策略展示。
+- 坐席侧按当前场景策略计算错答失败，No Limit 时隐藏 Wrong 计数；配置 Agent Hint 时显示轻量提示。
+- 默认组织客户 `O1-O3 / O4-O5` 场景增加 Agent Hint：`Please ask the first three questions first.`
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 已通过。
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `rg -n -i "halo|bca" src` 无输出，敏感词扫描通过。
+- HTTP 检查 `/`、`/call-management/verification-rule-v2`、`/design-system` 均返回 200。
+- `git diff --check` 通过；仅有 Windows 换行提示。
+
+回滚说明：
+
+- 如需回滚，可移除 scenario 上的策略字段，将管理台 Scenario Policy 区域移回 Basic Config，并恢复坐席侧从 rule 级 `maxWrongAttempts` / `failureAction` 读取。
+
+当前风险点：
+
+- rule 级策略字段仍保留为兼容字段，真实后端落地时需要确认是否继续保留。
+- 当前不做顺序强制；如客户明确要求系统拦截跳题，后续需新增 Order Policy。
+
+### 2026-06-15 16:23 +08:00 - 优先名单 Identifier 提示文案润色
+
+修改页面或文件：
+
+- `src/pages/call-management/PriorityListManagementPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-15-1623.md`
+- `.codex-backup/current-todo-2026-06-15-1623.md`
+- `.codex-backup/page-state-2026-06-15-1623.md`
+
+修改原因：
+
+- 用户反馈 Identifier 旁问号提示不够友好，三段结构略乱，邮箱域名示例应更明确表达为以 `@` 开头的邮箱域名格式。
+
+修改结果：
+
+- Identifier tooltip 改为更清晰的结构：先说明 Identifier 是用于优先排队匹配的客户标识，再说明邮箱域名规则和匹配规则。
+- 邮箱域名文案明确为 must start with `@`，示例为 `@ojk.co.id` 和 `@bi.go.id`。
+- 批量示例从一段斜杠分隔文案改为三行清单：Phone、Social Media、Email/Webchat。
+- 新增 `.priority-list-management__identifier-examples` 样式，让批量示例在 tooltip 中更易扫读。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 通过。
+- `npm.cmd run lint` 通过。
+- `npm.cmd run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `/call-management/priority-list` HTTP smoke 返回 200。
+
+回滚说明：
+
+- 如需回滚，恢复 `identifierTooltip` 原三段文案，并删除 `.priority-list-management__identifier-examples` 相关样式。
+
+当前风险点：
+
+- 本轮未做 Browser hover 级验证；需人工 hover Identifier 问号确认 tooltip 内容和换行效果。
+
+### 2026-06-15 16:10 +08:00 - 优先名单重复预览显示列表序号
+
+修改页面或文件：
+
+- `src/pages/call-management/PriorityListManagementPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-15-1610.md`
+- `.codex-backup/current-todo-2026-06-15-1610.md`
+- `.codex-backup/page-state-2026-06-15-1610.md`
+
+修改原因：
+
+- 用户指出重复预览中的 `Existing Record` 展示 `PL009` 与客户在列表中看到的实际序号不一致；列表 `No.` 显示的是 `9`，不应暴露内部 id。
+
+修改结果：
+
+- 重复预览字段从 `Existing Record` 改为 `Existing No.`。
+- 重复预览值改为按当前优先名单完整列表顺序计算的序号，例如原内部 id `PL009` 对应展示 `9`。
+- 重复过滤规则和保存行为不变，仍按 `Channel + normalized Identifier + Match Rule` 判断。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 通过。
+- `npm.cmd run lint` 通过。
+- `npm.cmd run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `/call-management/priority-list` HTTP smoke 返回 200。
+
+回滚说明：
+
+- 如需回滚，把 `PriorityListDuplicateRow.existingNo` 恢复为 `existingRecord`，在重复索引中继续保存 `entry.id`，并把重复预览表头和值恢复为 `Existing Record` / `PLxxx`。
+
+当前风险点：
+
+- 本轮未做 Browser 点击级验证；需人工打开 Batch Add 重复场景确认 `Existing No.` 与列表 `No.` 一致。
+
+### 2026-06-15 16:06 +08:00 - V2 编辑弹框按管理台规范收敛
+
+修改页面或文件：
+
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-15-1606.md`
+- `.codex-backup/current-todo-2026-06-15-1606.md`
+- `.codex-backup/page-state-2026-06-15-1606.md`
+
+修改原因：
+
+- 用户指出 V2 编辑弹框场景区域高度过大，复制入口重复，常驻场景名称输入框占用主内容空间。
+- 用户指出弹框内多选 Select 会被 tag 撑高，弹框滚动行为不符合管理台规范。
+
+修改结果：
+
+- V2 编辑弹框改为固定最大高度，中间内容区滚动，底部 `Preview / Cancel / Save` 固定可见。
+- 基础配置字段接入 `AdminFormField`，`Channel` 与 `Customer Segment` 多选统一 `maxTagCount={1}` 并通过样式单行收敛。
+- `Verification Scenario` 从大卡片改为紧凑横向场景条，场景摘要一行展示名称、Correct 和 Blocks。
+- 外层 `Copy Scenario` 按钮移除，复制能力只保留在 `+ Scenario` 弹框的 `Copy current scenario`。
+- 非默认场景通过笔图标行内改名，通过删除图标删除；默认场景不可删除。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 通过。
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `rg -n -i "halo|bca" src` 无输出，敏感词扫描通过。
+- HTTP 检查 `/`、`/call-management/verification-rule-v2`、`/design-system` 均返回 200。
+- `git diff --check` 通过；仅有 Windows 换行提示。
+
+回滚说明：
+
+- 如需回滚，恢复 `VerificationRuleV2Page.tsx` 中旧的 scenario card 区域和常驻 `Scenario Name` 输入框，并还原 `index.less` 中旧的 scenario-card 样式即可；底层 V2 数据模型无需回滚。
+
+当前风险点：
+
+- 当前仍是前端 demo store 行为，未接后端持久化。
+- 当前环境未安装 Playwright，浏览器插件也未暴露可用工具，因此本轮未完成点击级截图验证；已完成命令级和 HTTP smoke 验证。
+
+### 2026-06-15 15:48 +08:00 - 优先名单批量示例与重复过滤
+
+修改页面或文件：
+
+- `src/pages/call-management/PriorityListManagementPage.tsx`
+- `src/mock/priorityList.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-15-1548.md`
+- `.codex-backup/current-todo-2026-06-15-1548.md`
+- `.codex-backup/page-state-2026-06-15-1548.md`
+
+修改原因：
+
+- 用户确认优先名单应继续保留“一条页面记录 = 一组 Channel + 一个 Identifier + 一个 Match Rule”的维护视角。
+- 用户要求默认数据按客户举例重建，并补充更真实的批量新增示例。
+- 用户指出批量输入可能混合邮箱地址与邮箱域名，需要保留 `Match Rule`，并询问同一渠道同一标识是否需要重复校验。
+
+修改结果：
+
+- 默认 mock 改为四组客户举例：Bankapp + `BANKID00045678`；Phone + 三个手机号；Instagram/X/Tik Tok/YouTube/Facebook + 四个社媒账号；Webchat/Email Contact/Email Priority + 一个邮箱地址和两个邮箱域名。
+- Identifier tooltip 保留通用说明，并补充手机号、社媒账号、Email/Webchat 三组分号批量输入示例。
+- `Match Rule` 保留并按每个 Identifier 独立派生：`123@gmail.com` 为 `Exact Match`，`@ojk.co.id` / `@bi.go.id` 为 `Email Domain Match`。
+- Add / Batch Add 保存前按 `Channel + normalized Identifier + Match Rule` 检查既有重复项；Identifier 判重时去前后空格并按小写比较，页面保留用户原输入展示值。
+- 弹框下方新增只读重复列表，字段为 `Channel`、`Identifier`、`Match Rule`、`Existing Record`，并提示 `Duplicate records will be skipped automatically.`。
+- 保存时自动过滤重复 Channel；部分渠道重复时仍保存剩余非重复渠道，全部重复时不关闭弹框并提示 `All selected identifiers already exist.`。
+- `Blacklist Management` 未修改。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 通过。
+- `npm.cmd run lint` 通过。
+- `npm.cmd run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `/call-management/priority-list` HTTP smoke 返回 200。
+- `/call-management/blacklist` HTTP smoke 返回 200，确认本次未影响黑名单路由。
+
+回滚说明：
+
+- 如需回滚，恢复 `src/mock/priorityList.ts` 的旧默认数据，移除 `PriorityListManagementPage.tsx` 中的 duplicate key、duplicateRows、saveWarning 和重复列表渲染，删除新增的 duplicate panel 样式即可；多渠道 Identifier 模型可保留。
+
+当前风险点：
+
+- 本轮 Browser 可调用工具未暴露，未完成点击级可视化验证；仍需人工复查重复预览、部分渠道重复过滤、全部重复阻止保存和列表展示。
+- 重复过滤仍是前端 demo store 行为，不接真实后端唯一约束；真实后端未来需要按 Channel + Identifier + Match Rule 执行同等约束。
+
+### 2026-06-15 15:28 +08:00 - V2 场景卡片与固定问题分类恢复
+
+修改页面或文件：
+
+- `src/types/verificationRuleV2.ts`
+- `src/utils/verificationRuleV2.ts`
+- `src/mock/verificationRuleV2.ts`
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-15-1528.md`
+- `.codex-backup/current-todo-2026-06-15-1528.md`
+- `.codex-backup/page-state-2026-06-15-1528.md`
+
+修改原因：
+
+- 用户指出上一轮把 `Mandatory / Dynamic / Static / Alternative` 弱化为自由输入 block name，会让替代题规则变隐性，也让配置人员难以理解层级。
+- 用户确认场景交互应更直观，并希望 `O1-O3 / O4-O5` 也按场景表达，同时在管理台提供坐席侧效果 Preview。
+
+修改结果：
+
+- `VerificationV2QuestionBlock` 新增 `blockType`，固定分类不再靠名称推断；旧数据读取时自动归一化。
+- 管理台场景区改为卡片式展示，卡片展示场景名、Correct Required 和 block 数量。
+- 新增场景改为小弹框，支持 `Copy current scenario` 或 `Blank scenario`，默认复制当前场景。
+- 场景内恢复固定添加按钮：`Mandatory`、`Dynamic`、`Static`、`Alternative`、`Custom Block`。
+- `Alternative` 不展示 `Correct` 输入，并保留替代 Dynamic / Static 的 tooltip。
+- `Custom Block` 才允许自由输入名称，用于分行数据、客户资料、Layering 等业务块。
+- 管理台移除客户可见的 `Organization Segment Override` 入口；默认组织客户规则改为 `O1-O3` 与 `O4-O5` 两个普通场景。
+- 坐席弹框仅在规则有多个场景时显示 Scenario 下拉；单场景时隐藏。
+- 编辑弹框新增 `Preview`，用当前未保存 draft 打开坐席侧同款验证弹框，不保存规则、不写客户验证状态。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 通过。
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `rg -n -i "halo|bca" src` 无结果。
+- HTTP 检查 `/`、`/call-management/verification-rule-v2`、`/design-system` 均返回 200。
+- `git diff --check` 通过；仅有 Windows 换行提示。
+
+回滚说明：
+
+- 如需回滚，可移除 `blockType`、恢复自由输入 `Block Name` + `Add Block` 交互，并恢复 `Organization Segment Override` UI；场景模型本身可保留。
+
+当前风险点：
+
+- Preview 是弹框内嵌坐席侧组件，已完成编译和 HTTP 验证，但本轮未做浏览器点击级截图验证。
+- 旧 `specialRules` 和 `Organization Segment` 类型仍保留用于兼容，客户可见页面不再使用。
+
+### 2026-06-15 14:47 +08:00 - 优先名单调整为多渠道 Identifier 模型
+
+修改页面或文件：
+
+- `src/pages/call-management/PriorityListManagementPage.tsx`
+- `src/types/priorityList.ts`
+- `src/mock/priorityList.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-15-1447.md`
+- `.codex-backup/current-todo-2026-06-15-1447.md`
+- `.codex-backup/page-state-2026-06-15-1447.md`
+
+修改原因：
+
+- 客户反馈 `Priority Number` 字段过于电话号化，优先名单实际需要支持手机号、Bank ID、社媒账号、邮箱地址和邮箱域名等不同标识。
+- 用户确认不新增独立 Channel Type / Sub Channel 主数据，避免与现有 Routing Config 渠道模型重复；本页只需把 Channel 改为多选，并用 tooltip 解释 Identifier 示例和域名匹配规则。
+
+修改结果：
+
+- `Priority Number` 全部改名为 `Identifier`。
+- 查询区 Channel 改为多选，默认空值表示 `All Channels`，不提供真实 `All` 选项。
+- Add / Batch Add 的 Channel 改为启用渠道多选，保存时页面保留一条多渠道配置记录。
+- Batch Add 仍按分号拆分多个 Identifier；每个 Identifier 生成一条记录，记录内保留用户选择的多个 Channel。
+- 列表新增 `Match Rule`，字段为 `Exact Match` 或 `Email Domain Match`。
+- `Match Rule` 由 Identifier 自动派生：形如 `@ojk.co.id` 的邮箱域名按域名匹配，其它输入按精确匹配。
+- Channel 列改为多 tag 展示；Identifier label 旁新增问号 tooltip，说明手机号、Bank ID、社媒账号、邮箱地址和邮箱域名示例。
+- `PriorityListEntry` 类型改为 `channels[] + identifier + matchRule`，默认 mock 覆盖 Phone、Bankapp/Webchat、Instagram/X 和 Email/Webchat 示例。
+- `Blacklist Management` 未修改。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 通过。
+- `npm.cmd run lint` 通过。
+- `npm.cmd run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `/call-management/priority-list` HTTP smoke 返回 200。
+- `/call-management/blacklist` HTTP smoke 返回 200，确认未被本次改动影响。
+- Browser 插件初始化超时，未完成点击级可视化验证。
+
+回滚说明：
+
+- 如需回滚，恢复 `PriorityListEntry` 的 `channel + priorityNumber` 结构，恢复 Priority List 页面单选 Channel、`Priority Number` 查询/表单/列表列，并移除 `Match Rule` 列和 Identifier tooltip。
+
+当前风险点：
+
+- 当前 `Match Rule` 是前端 demo 自动派生展示，不接真实队列优先级引擎。
+- 真实后端执行层未来可能需要把页面维护的一条多渠道记录拆分为渠道维度和匹配规则维度明细。
+- 本轮未完成浏览器点击级验证，仍需人工复查多选、tooltip、Batch Add、Match Rule 和删除交互。
+
+### 2026-06-15 11:47 +08:00 - V2 多 Verification Scenario 模型重构
+
+修改页面或文件：
+
+- `AGENTS.md`
+- `src/types/verificationRuleV2.ts`
+- `src/utils/verificationRuleV2.ts`
+- `src/mock/verificationRuleV2.ts`
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `src/store/appStore.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-15-1147.md`
+- `.codex-backup/current-todo-2026-06-15-1147.md`
+- `.codex-backup/page-state-2026-06-15-1147.md`
+
+修改原因：
+
+- 用户确认 `Layanan Cabang`、ATO/add-on、mbl d 等不是简单的追加/覆盖开关，而是同一规则下的不同验证场景。
+- 旧 `Special Scenario Append/Replace` 会让配置概念继续复杂化，难以表达“分行默认场景”和“分行进入其它服务场景”这种完整题库切换。
+- 用户要求将“业务复杂度上升时先判断是否应提升为模型层概念，不确定先问”固化到项目级 Agent 规则中。
+
+修改结果：
+
+- `VerificationV2Rule` 新增 `scenarios`；每个 scenario 包含 `id`、`name`、`isDefault`、`questionBlocks`。
+- 每个 question block 包含 `id`、`name`、`questionIds`、`requiredCorrect`。
+- 旧 `groups` 和 `specialRules.scenarios` 仍可被工具函数转换为 scenario，用于兼容历史 mock 与当前 demo store。
+- `VerificationRuleV2Page` 编辑弹框改为按 `Verification Scenario` 配置问题块，支持 Add Scenario、Copy Scenario、删除非默认场景、Add Block、选择题目、排序和设置 Correct。
+- 旧 `Append / Replace` 模式不再出现在客户可见 UI 中。
+- `CustomerVerificationV2Modal` 改为选择 `Scenario`，按当前 scenario 生成题目和通过条件；切换场景时用底层 questionId 保留相同题目的答题状态。
+- 默认 `Layanan Cabang` 显式配置 `Default` 和 `Branch to Other Services` 两个场景；后者按 5 个分行题中答对 3 个 + 6 个客户资料题中答对 3 个表达。
+- `AGENTS.md` 新增建模原则和高影响不确定性沟通原则。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 通过。
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `rg -n -i "halo|bca" src` 无结果。
+- HTTP 检查 `/`、`/call-management/verification-rule-v2`、`/design-system` 均返回 200。
+- `git diff --check` 通过；仅有 Windows 换行提示。
+
+回滚说明：
+
+- 如需回滚，可恢复 `VerificationV2Rule.groups + specialRules.scenarios` 作为主配置，恢复管理台 `Special Scenario` 配置块和弹屏旧下拉；保留本轮新增的兼容转换函数不会影响旧数据读取。
+
+当前风险点：
+
+- 当前仍只允许坐席一次选择一个 Verification Scenario，不支持多个场景叠加。
+- `Organization Segment Override` 仍保留在 scenario 外层，后续若客户要求组织分层也作为独立场景，可再统一进 scenario。
+- 本轮未做浏览器点击级截图验证；当前工具未暴露 browser-use 操作，只完成 HTTP、lint、build、tsc 和代码扫描验证。
+
+### 2026-06-13 18:52 +08:00 - V2 特殊场景支持 Append / Replace 模式
+
+修改页面或文件：
+
+- `src/types/verificationRuleV2.ts`
+- `src/utils/verificationRuleV2.ts`
+- `src/mock/verificationRuleV2.ts`
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-13-1852.md`
+- `.codex-backup/current-todo-2026-06-13-1852.md`
+- `.codex-backup/page-state-2026-06-13-1852.md`
+
+修改原因：
+
+- 用户确认特殊场景需要同时支持“追加题”和“覆盖基础题库”两类表达。
+- `ATO / add-on` 属于追加加强验证；`Khusus laporan mbl d` 与分行组合服务属于专用验证规则，应覆盖基础题库。
+
+修改结果：
+
+- `VerificationV2SpecialScenario` 新增 `mode: append | replace`。
+- 管理台特殊场景配置行新增 `Mode` 下拉，选项为 `Append / Replace`。
+- 新建特殊场景默认 `Append`；旧 demo 数据若没有 `mode`，读取时兼容为 `Append`。
+- 坐席弹屏计算规则支持 `Replace`：选择替换模式场景时不展示基础题，只展示该特殊场景题，必对数为场景 `Correct`。
+- 默认 `ATO / add-on` 保持 `Append`；`Khusus laporan mbl d` 和 `Branch Combined Verification` 改为 `Replace`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `rg -n -i "halo|bca" src` 无结果。
+- HTTP 检查 `/`、`/call-management/verification-rule-v2`、`/design-system` 均返回 200。
+- `git diff --check` 通过；仅有 Windows 换行提示。
+
+回滚说明：
+
+- 如需回滚，移除 `VerificationV2SpecialScenario.mode`、管理台 `Mode` 下拉和 `buildEffectiveVerificationV2Rule` 中的 replace 分支，并将默认特殊场景重新全部按追加处理。
+
+当前风险点：
+
+- 当前仍只支持单个特殊场景单选；不支持多个特殊场景叠加，也不支持特殊场景内部子分组。
+- 本轮尚未做浏览器点击级验证；需要人工确认 `Mode` 下拉在编辑弹框中的视觉密度。
+
+### 2026-06-13 18:21 +08:00 - 简化 V2 Max Wrong 并修正分行特殊场景
+
+修改页面或文件：
+
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/mock/verificationRuleV2.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-13-1821.md`
+- `.codex-backup/current-todo-2026-06-13-1821.md`
+- `.codex-backup/page-state-2026-06-13-1821.md`
+
+修改原因：
+
+- 用户要求 `Max Wrong Limit` 与 `Max Wrong` 合并为一个配置项，避免编辑弹框元素过多。
+- 用户指出 `KBB / BBP / Prioritas / Solitaire / HBB` 是同一个分行服务特殊场景，不应拆成多个特殊场景。
+- 用户要求特殊场景头部输入框适当加长，`Questions / Correct / Delete` 操作靠右展示。
+
+修改结果：
+
+- `Edit Verification Rule V2` 中只保留 `Max Wrong` 字段，同一行展示 `No Limit` 开关；开启时不展示数字输入，关闭时展示数字输入。
+- `Max Wrong` 保存校验继续限制不能超过已选题目总数。
+- 问题配置块与特殊场景块的操作区统一靠右，特殊场景名称输入框加宽但不占满整行。
+- 默认 `Layanan Cabang` 规则的特殊场景改为单个 `Branch Combined Verification`，包含 3 个分行数据问题和 3 个客户数据问题，`Correct` 为 6。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `rg -n -i "halo|bca" src` 无结果。
+- HTTP 检查 `/`、`/call-management/verification-rule-v2`、`/design-system` 均返回 200。
+- `git diff --check` 通过；仅有 Windows 换行提示。
+
+回滚说明：
+
+- 如需回滚，可恢复 `Max Wrong Limit` 开关与独立 `Max Wrong` 数字输入，并把 `Layanan Cabang` 的 scenarios 恢复为五个场景名称 map。
+
+当前风险点：
+
+- 当前模型只支持特殊场景单组题目 + 单个 `Correct`，可表达固定 6 题全答对；如果后续客户要求分行题、客户题分别从题池中任选达标，需要新增特殊场景内子分组能力。
+
+### 2026-06-13 18:00 +08:00 - 恢复 Alternative 提示说明
+
+修改页面或文件：
+
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-13-1800.md`
+- `.codex-backup/current-todo-2026-06-13-1800.md`
+- `.codex-backup/page-state-2026-06-13-1800.md`
+
+修改原因：
+
+- 用户指出上一轮简化时误删了 Alternative 的提示说明；原需求是提示放到 tooltip 中，不占常规高度。
+
+修改结果：
+
+- `Alternative` 标题旁恢复小问号 tooltip。
+- tooltip 文案说明 Alternative questions only replace Dynamic or Static questions，并且不单独配置 required count。
+- 未恢复占位式说明标签，避免重新增加配置块高度。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `rg -n -i "halo|bca" src` 无结果。
+
+回滚说明：
+
+- 如需回滚，仅移除 `QuestionCircleOutlined`、`Tooltip` 和 `.verification-rule-v2-group__title-help` 样式即可。
+
+当前风险点：
+
+- 本轮未做浏览器点击级验证；需要人工 hover Alternative 标题旁问号确认 tooltip 展示。
+
+### 2026-06-13 17:52 +08:00 - 简化 V2 问题配置块
+
+修改页面或文件：
+
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-13-1752.md`
+- `.codex-backup/current-todo-2026-06-13-1752.md`
+- `.codex-backup/page-state-2026-06-13-1752.md`
+
+修改原因：
+
+- 用户反馈 `Question & Special Configuration` 文案仍显复杂，应回到更直观的“问题配置”。
+- `Order` 当前只作为顺序指引，坐席侧没有对应展示或强制逻辑，为简化配置应先移除。
+- 配置块内 `Questions N`、重复标签和内部滚动增加了界面负担。
+
+修改结果：
+
+- 配置区标题改为 `Question Configuration`，不再展示说明文字。
+- 配置块头部移除 `Order` 开关、`Questions N` 计数和 Alternative 重复说明。
+- 基础题组和特殊场景统一用 `Questions` 按钮打开选题弹框。
+- `Questions` 按钮和 `Correct` 数字输入合并成同一个问题控制组。
+- 特殊场景名称输入框缩短，使用 `Scenario` placeholder，不再额外显示 `Scenario` label。
+- 已选题目列表移除内部最大高度和滚动，由弹框页面整体滚动承载。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `rg -n -i "halo|bca" src` 无结果。
+- HTTP 检查 `/`、`/call-management/verification-rule-v2`、`/design-system` 均返回 200。
+- `git diff --check` 通过；仅有 Windows 换行提示。
+
+回滚说明：
+
+- 如需恢复顺序配置，可重新展示 `askInOrder` 的 `Order` 开关，并补充坐席侧对应顺序提示或限制。
+- 如需恢复选中题目内部滚动，可恢复 `.verification-rule-v2-order-list` 的 `overflow` 和 `max-height`。
+
+当前风险点：
+
+- 本轮未做浏览器点击级验证；需要人工确认压缩后的配置块在目标演示分辨率下视觉足够清晰。
+
+### 2026-06-13 17:32 +08:00 - V2 编辑弹框收敛 Channel 和配置添加方式
+
+修改页面或文件：
+
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/utils/verificationRuleV2.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-13-1732.md`
+- `.codex-backup/current-todo-2026-06-13-1732.md`
+- `.codex-backup/page-state-2026-06-13-1732.md`
+
+修改原因：
+
+- 用户要求 `Edit Verification Rule V2` 中 Channel 数据只包含 `Phone` 和 `BankApp`。
+- 用户要求 Customer Segment 按 `Layanan Reguler`、`Layanan Prioritas`、`Solitaire`、`Organisasi/Bisnis` 顺序展示。
+- 用户建议 `Question Configuration` 中添加问题类型的交互改成和特殊规则一样直接点击添加，并将两块配置区域合并。
+
+修改结果：
+
+- V2 规则页面 Channel 选项过滤为启用的 `PHONE` 和 `BANKAPP`。
+- Customer Segment options 改为固定业务顺序，不再依赖对象枚举顺序。
+- `Question Configuration` 与 `Special Rules` 合并为 `Question & Special Configuration`。
+- 基础题组通过 `Mandatory`、`Dynamic`、`Static`、`Alternative` 按钮直接添加，不再使用下拉选择后再点击 `Add Group`。
+- `Add Special Scenario` 与 `Add Organization Override` 保持同一行按钮式添加交互。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `rg -n -i "halo|bca" src` 无结果。
+- HTTP 检查 `/`、`/call-management/verification-rule-v2`、`/design-system` 均返回 200。
+- `git diff --check` 通过；仅有 Windows 换行提示。
+
+回滚说明：
+
+- 如需回滚，可恢复 `questionGroupToAdd` 状态、`Select question type` 下拉和单独的 `Question Configuration` / `Special Rules` 两个 section。
+- 如需恢复所有启用渠道，移除 `verificationV2AllowedChannelCodes` 过滤即可。
+
+当前风险点：
+
+- 本轮未做浏览器点击级验证；需要人工确认合并后的按钮行在目标演示分辨率下不拥挤。
+
+### 2026-06-13 17:23 +08:00 - V2 特殊规则改为自维护场景块
+
+修改页面或文件：
+
+- `src/types/verificationRuleV2.ts`
+- `src/utils/verificationRuleV2.ts`
+- `src/mock/verificationRuleV2.ts`
+- `src/store/appStore.ts`
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-13-1723.md`
+- `.codex-backup/current-todo-2026-06-13-1723.md`
+- `.codex-backup/page-state-2026-06-13-1723.md`
+
+修改原因：
+
+- 用户确认 `ATO / add-on`、`mbl d`、分行服务等特殊情况没有稳定接口来源，应由管理台自行维护名称，并由坐席在验证弹框中手动选择。
+- 特殊情况应像 `Mandatory / Dynamic / Static / Alternative` 一样作为可配置题组，而不是固定下拉枚举。
+
+修改结果：
+
+- V2 特殊规则模型改为 `specialRules.scenarios[]`，每个特殊场景包含名称、题目、必对数量和顺序开关。
+- 管理台 `Special Rules` 区域支持 `Add Special Scenario`，每个场景可输入名称、选择题库题目、排序、删除和设置 `Correct / Order`。
+- 默认 mock 将 `ATO / add-on`、`mbl d`、`KBB`、`BBP`、`Prioritas`、`Solitaire`、`HBB` 迁移为可维护特殊场景。
+- 弹屏 `Verification Scenario` 将固定 `Case Type` 与 `Branch Service` 合并为 `Special Scenario`，选项来自当前命中规则的场景配置。
+- 选择或取消特殊场景时只追加或移除该场景题目，基础题目的 `Correct/Wrong/Skip` 状态继续保留。
+- `Organization Segment Override` 仍保留固定 `O1-O3 / O4-O5` 逻辑。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `rg -n -i "halo|bca" src` 无结果。
+- HTTP 检查 `/`、`/call-management/verification-rule-v2`、`/design-system` 均返回 200。
+- `git diff --check` 通过；仅有 Windows 换行提示。
+
+回滚说明：
+
+- 如需回滚，可将 `VerificationV2SpecialRules` 恢复为固定 `atoAddOnLayering` / `branchCombined` 结构，并恢复弹屏中的固定场景下拉。
+- 不建议只回滚 UI，不回滚类型和 mock，否则前端 demo store 会出现新旧规则 shape 不兼容。
+
+当前风险点：
+
+- 本轮未做浏览器点击级自动化；需要人工确认新增特殊场景、选择题目、保存后再打开弹屏选择该场景时，基础题答案保留且特殊题按场景追加。
+
+### 2026-06-13 16:53 +08:00 - 保留验证场景切换前的已答结果
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-13-1653.md`
+- `.codex-backup/current-todo-2026-06-13-1653.md`
+- `.codex-backup/page-state-2026-06-13-1653.md`
+
+修改原因：
+
+- 用户反馈验证场景下拉默认是 None，选择 Case Type、Branch Service、Organization Segment 后只是追加规则，不应导致原有问题及已答结果全部消失。
+
+修改结果：
+
+- `updateConditions()` 不再无条件清空 `questionStatuses`。
+- 条件变化时先计算新有效题目集，只保留新题目集中仍存在的问题状态。
+- 已不在新题目集中的问题状态会被移除，新增问题保持未答。
+- `Clear All` 仍保持清空整次验证进度。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `rg -n -i "halo|bca" src` 无结果。
+
+回滚说明：
+
+- 如需回滚，可把 `updateConditions()` 恢复为设置新条件后直接 `setQuestionStatuses({})` 和 `setActiveQuestionIndex(0)`。
+
+当前风险点：
+
+- 本轮未做点击级浏览器自动化；需要人工确认在弹框中先答基础题，再选择特殊场景时，基础题状态仍保留。
+
+### 2026-06-13 16:45 +08:00 - 压缩 Customer Verification V2 弹框布局
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-13-1645.md`
+- `.codex-backup/current-todo-2026-06-13-1645.md`
+- `.codex-backup/page-state-2026-06-13-1645.md`
+
+修改原因：
+
+- 用户反馈 Customer Verification 弹框中 Channel 应由来电弹屏自动带入，不应让坐席选择。
+- 用户反馈状态与 `Need N correct` 信息分散、重复胶囊行占高度、问题操作按钮文字冗余且列表出现不必要横向滚动。
+
+修改结果：
+
+- `Channel` 从下拉框改为只读文本，仍由当前弹屏条件自动带入。
+- 删除重复的 Channel / Skill Queue / Customer Segment 匹配胶囊行。
+- `In Progress / Passed / Failed / No Rule` 状态移动到 rule bar，与 `Need N correct` 同行展示。
+- 问题行 Correct / Wrong / Skip 改为图标按钮并保留 aria-label。
+- 问题列表改为仅纵向滚动，禁止横向滚动；操作列宽收紧为图标按钮宽度。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `rg -n -i "halo|bca" src` 无结果。
+
+回滚说明：
+
+- 如需恢复 Channel 可选择，恢复 V2 弹框 toolbar 中的 Channel `Select` 和 `channelOptions` memo。
+- 如需恢复文字按钮，给 Correct / Wrong / Skip 的 `AppButton` 重新加回 children，并恢复问题列表操作列宽。
+
+当前风险点：
+
+- 本轮未做浏览器截图验证；需要人工打开弹屏确认不同窗口宽度下无横向滚动条。
+
+### 2026-06-13 16:33 +08:00 - 调整身份验证 V2 为 KBV 手动场景与默认规则回退
+
+修改页面或文件：
+
+- `src/types/verificationRuleV2.ts`
+- `src/utils/verificationRuleV2.ts`
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-13-1633.md`
+- `.codex-backup/current-todo-2026-06-13-1633.md`
+- `.codex-backup/page-state-2026-06-13-1633.md`
+
+修改原因：
+
+- 用户根据客户回复确认 PIN 与问题验证是两个维度：PIN 属于入口认证，KBV 属于业务办理前的问题核验。
+- 特殊场景不等待外部字段自动触发，先按坐席根据客户诉求或 CRM 信息手动选择设计。
+- 未配置具体 Skill Queue 规则时，应默认回退到同渠道同客户级别的 Perbankan 规则。
+
+修改结果：
+
+- 新增 `VerificationV2RuleMatch` / `VerificationV2RuleMatchType`，并新增 `findVerificationV2RuleMatch()`：先精确匹配 `Channel + Skill Queue + Customer Segment`，未命中时回退同渠道、同客户级别的 `SQ_GENERAL_ID`，不跨渠道回退。
+- V2 弹屏标题从 `Demo Conditions` 改为 `Verification Scenario`；Case Type、Branch Service、Organization Segment 保持坐席手动选择并即时重算题目。
+- 命中默认 Perbankan 回退时，弹屏显示 `Using Perbankan default` 标签和轻量说明；仍无规则时显示 `No KBV Rule Available`。
+- 管理台特殊规则说明改为可选 KBV 场景，`Trigger case type` / `Trigger branch service` placeholder 改为 `Selectable case type` / `Selectable branch service`，不再暗示外部系统自动触发。
+- 未新增 PIN 配置字段，未新增接入认证状态字段。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning 和 plugin timing warning。
+- `rg -n -i "halo|bca" src` 无结果。
+
+回滚说明：
+
+- 如需回滚默认规则回退，可让弹屏重新调用精确匹配函数 `findMatchingVerificationV2Rule()`，并移除 `VerificationV2RuleMatch` 类型与 `findVerificationV2RuleMatch()`。
+- 如需回滚文案，将弹屏标题恢复为 `Demo Conditions`，并恢复特殊规则 placeholder 和说明文案。
+
+当前风险点：
+
+- 本轮不实现一次通话内跨技能相同题目答案复用；切换场景仍会清空当前答题进度。
+- PIN 接口流程仍待客户确认，本轮只在口径上将 PIN 排除出 V2 KBV 规则配置。
+
+### 2026-06-13 12:10 +08:00 - 修正 Skill Routing Rules 宽屏筛选空位
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-13-1210.md`
+- `.codex-backup/current-todo-2026-06-13-1210.md`
+- `.codex-backup/page-state-2026-06-13-1210.md`
+
+修改原因：
+
+- 用户指出截图右侧红框区域看起来足够容纳当前宽度的 `Status` 字段，质疑为什么 `Status` 仍被换到第二行。
+- 检查后确认原因不是 `Status` 字段宽度不够，而是 11:54 的规则页 toolbar 采用右侧主操作 grid 列，第一行筛选区在布局计算时提前扣掉了 `Batch Add` 主操作列空间。
+
+修改结果：
+
+- `Skill Routing Rules` 桌面 toolbar 改为 `position: relative` + filters 完整宽度；右侧 `Batch Add` 绝对定位到底部右侧，不再挤压第一行筛选区。
+- 新增宽屏断点：当宽度足够放下 7 个查询项时，`Search / Reset` 自动换到第二行左侧，避免与右侧 `Batch Add` 重叠。
+- 窄屏规则保留静态布局，避免移动端绝对定位。
+- 不改查询字段、表格字段、业务逻辑或数据。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Chrome CDP 自动检查通过：1366x768 下仍为第一行 6 个查询项、第二行 `Status / Search / Reset` + 右侧 `Batch Add`；1600x768 下 `Status` 进入第一行，`Search / Reset` 在第二行左侧，`Batch Add` 在第二行右侧，无重叠。
+
+回滚说明：
+
+- 如需回滚，仅恢复 `.routing-config-page__admin-toolbar--rules` 为 11:54 的 grid 两列布局，并移除 `min-width: 1400px` 的 rules inline action 断点；不涉及业务数据。
+
+当前风险点：
+
+- 如果未来启用更多 Route Factors，筛选项仍会按可用宽度自然换行；右侧主操作应继续不参与第一行宽度挤压。
+
+### 2026-06-13 11:54 +08:00 - 修正 Skill Routing Rules 查询区二行布局
+
+修改页面或文件：
+
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `src/styles/index.less`
+- `src/pages/DesignSystem.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-13-1154.md`
+- `.codex-backup/current-todo-2026-06-13-1154.md`
+- `.codex-backup/page-state-2026-06-13-1154.md`
+
+修改原因：
+
+- 用户通过截图指出 `Routing Config > Skill Routing Rules` 查询区仍不符合统一规范：`Status` 单独一行、Search/Reset 又单独下一行，右侧 Batch Add 造成大面积空白。
+- 本轮明确规范为查询动作区和右侧主操作区分离：Search/Reset 跟随查询条件，Batch Add 保持右侧 primary 主操作，宽度按文本自然撑开。
+
+修改结果：
+
+- `Skill Routing Rules` 不再把 Search/Reset 作为 AdminToolbar 独立 actions 行，而是放到 `Status` 后面的 filters flex 流中，保证第二行左侧直接显示 `Status / Search / Reset`。
+- Batch Add 继续使用 `primaryActions`，位于右侧主操作区，primary 样式且自然宽度，不使用 Search/Reset 的 82px 固定宽度。
+- 规则页专用 toolbar CSS 改为两列 grid：左侧 filters 占剩余宽度并可换行，右侧主操作列底部对齐；`/design-system` 规范文案改成“复杂筛选可换行；Search/Reset 留左，主操作留右”。
+- 不改查询字段、业务逻辑、表格数据、Batch Add 弹框流程。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `git diff --check` 通过；仅有 Windows 换行提示。
+- Chrome CDP 1366x768 自动检查通过：`Skill Routing Rules` 第一行 6 个查询条件同 y=117，`Status` 第二行 y=180，Search/Reset 按钮 y=203，Batch Add y=203 且右对齐、primary、自然宽度 104px；`Blacklist Management` 与 `Priority List Management` 的 Add/Batch Add 均为 primary、Delete 为 danger，表格 `scrollWidth === clientWidth`。
+
+回滚说明：
+
+- 如需回滚，仅恢复 `SkillRoutingRulesPage.tsx` 中 Search/Reset 回到 AdminToolbar `actions`，并移除本轮 `.routing-config-page__admin-toolbar--rules` 专用 grid 细化；不涉及 store 或 mock 数据回滚。
+
+当前风险点：
+
+- 规则页查询条件数量依赖启用路由要素；如果未来启用更多要素，左侧查询条件仍会自然换行，但 Batch Add 应继续独立右对齐。
+
+### 2026-06-13 11:42 +08:00 - 修正管理台主操作按钮权重与位置
+
+修改页面或文件：
+
+- `AGENTS.md`
+- `src/pages/DesignSystem.tsx`
+- `src/pages/call-management/BlacklistManagementPage.tsx`
+- `src/pages/call-management/PriorityListManagementPage.tsx`
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-13-1142.md`
+- `.codex-backup/current-todo-2026-06-13-1142.md`
+- `.codex-backup/page-state-2026-06-13-1142.md`
+
+修改原因：
+
+- 用户指出 `Skill Routing Rules` 的 `Batch Add` 按统一规范应靠右侧主操作区，且应和 Search 一样使用 primary 样式，按钮宽度不能因固定宽度导致文字显示不全。
+- 用户确认 `Blacklist Management` 和 `Priority List Management` 的 Add / Batch Add 也应使用和 Search 一样的 primary 样式。
+
+修改结果：
+
+- `Skill Routing Rules` 的 `Batch Add` 从查询动作区移回右侧 `primaryActions`，改为 primary 样式并按文本自然宽度展示。
+- `Blacklist Management` 的 Add / Batch Add 改为 primary 主操作按钮，Delete 保持 danger。
+- `Priority List Management` 的 Add / Batch Add 改为 primary 主操作按钮，Delete 保持 danger。
+- 移除规则页为查询动作区强制不换行的样式兜底，避免再次把长主操作按钮塞进固定宽度查询按钮组。
+- `/design-system` 和 `AGENTS.md` 同步最新规范：Search primary、Reset secondary；Add/Batch Add 位于右侧主操作区，primary 样式，自然宽度；Delete danger。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Chrome CDP 1366x768 自动检查通过：`Skill Routing Rules` 中 Batch Add 在 Search/Reset 右侧主操作区且 class 为 primary，宽度大于固定查询按钮宽度；Blacklist 与 Priority 的 Add / Batch Add class 均为 primary。
+
+回滚说明：
+
+- 如需回滚，仅恢复三个页面的按钮 `variant` 和 Skill Routing Rules 的 `primaryActions` 结构；但不建议回滚，否则会再次出现主操作按钮位置和权重不统一。
+
+当前风险点：
+
+- 本轮只改按钮位置和样式，不改业务流程、mock 或 store。
+
+### 2026-06-13 11:31 +08:00 - 管理台规范二次修正
+
+修改页面或文件：
+
+- `AGENTS.md`
+- `src/components/admin/adminTableUtils.ts`
+- `src/pages/DesignSystem.tsx`
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/pages/call-management/BlacklistManagementPage.tsx`
+- `src/pages/call-management/PriorityListManagementPage.tsx`
+- `src/pages/call-management/BusyReasonManagementPage.tsx`
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `src/mock/busyReasons.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-13-1131.md`
+- `.codex-backup/current-todo-2026-06-13-1131.md`
+- `.codex-backup/page-state-2026-06-13-1131.md`
+
+修改原因：
+
+- 用户复查管理台统一规范后指出 V2 分页不可见、状态列使用开关、Question Bank 10 条仍出现不必要滚动、Blacklist 创建按钮权重不一致且表格横向空间浪费、Busy Reason remark 不应出现敏感品牌词、Priority 查询项宽度不一致、Skill Routing Rules 操作按钮被拆开。
+- 用户进一步澄清 Busy Reason 的示忙原因名称不能改成英文，只能按现有名称生成简短说明字段。
+
+修改结果：
+
+- `AdminTable` 主列表默认页大小从 20 改为 10，页大小选项保留 `10/20/50/100`，`/design-system` 与 `AGENTS.md` 同步最新 Admin 规范。
+- `Verification Rule V2` 外层 Status 列从开关改为 `Enabled/Disabled` 文本 badge；状态开关只保留在新增/编辑弹框内；V2 多标签列单行收敛，1366x768 下默认 10 条分页首屏可见；Admin 列表卡片不再裁剪分页。
+- `Question Bank` 弹框去掉强制 390px 表格体滚动，默认 10 条自然展示，弹框接近视口高度时由弹框 body 滚动。
+- `Blacklist Management` 的 Add 与 Batch Add 改为同权重 secondary 按钮，Delete 仍为 danger；列宽收紧，1366x768 检查默认无横向溢出。
+- `Priority List Management` 的 Channel 与 Priority Number 查询项宽度统一为 220px，Add 与 Batch Add 同权重。
+- `Busy Reason Management` 保持 `busyReasonName` 原文不变，仅替换前 9 条启用原因的 `remark` 为贴合名称的简短英文说明；Extension 备用项继续使用 reserved 说明。
+- `Skill Routing Rules` 在本轮曾将 Search / Reset / Batch Add 放入同一操作组；该点已在 2026-06-13 11:42 按最新规范修正为 Search/Reset 留在查询动作区，Batch Add 回到右侧主操作区。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `src\mock\busyReasons.ts` 针对敏感品牌词的专项扫描无结果。
+- Chrome CDP 1366x768 自动检查通过：`/design-system` 含最新 Admin 规范；`/call-management/verification-rule-v2` 默认 10 行、分页 bottom 688 且可见、列表无 switch、10 个状态 badge、无 table body 纵向滚动；`Question Bank` 默认 10 行且无内部 table body；`/call-management/blacklist` 无横向溢出且 Add/Batch Add class 同为 secondary；`/call-management/priority-list` Channel 与 Priority Number 查询宽度均为 220；`/call-management/busy-reasons` 9 条启用 remark 均出现且不含敏感品牌词；`/routing-config/skill-routing-rules` Search/Reset/Batch Add top 坐标一致。
+
+回滚说明：
+
+- 如需回滚本轮二次修正，恢复上述页面和 `adminTableUtils.ts` 到 2026-06-13 11:07 状态；但不建议单独回滚某个页面，否则会再次出现管理台规范分叉。
+- Busy Reason 如需恢复旧 remark，只回滚 `src/mock/busyReasons.ts` 即可，不影响示忙原因名称和 AUX 下拉状态。
+
+当前风险点：
+
+- 本轮未改业务流程和 store 数据结构；主要风险在其它未逐页点击的自定义 Routing Config 弹框仍可能存在页面级历史样式，需要后续新增问题时继续按 Admin 组件规范收敛。
+
+### 2026-06-13 11:07 +08:00 - 修复 V2 选题崩溃、审计列与脱敏规则
+
+修改页面或文件：
+
+- `AGENTS.md`
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/types/verificationRuleV2.ts`
+- `src/utils/verificationRuleV2.ts`
+- `src/mock/verificationRuleV2.ts`
+- `src/mock/routingConfiguration.ts`
+- `src/mock/inbound.ts`
+- `src/mock/blacklist.ts`
+- `src/mock/priorityList.ts`
+- `src/mock/textChannelSettings.ts`
+- `src/mock/busyReasons.ts`
+- `src/pages/call-management/VerificationRulesPage.tsx`
+- `src/pages/inbound/*`
+- `src/types/inbound.ts`
+- `src/types/textChannelSettings.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-13-1107.md`
+- `.codex-backup/current-todo-2026-06-13-1107.md`
+- `.codex-backup/page-state-2026-06-13-1107.md`
+
+修改原因：
+
+- 用户反馈 `Verification Rule V2` 新增或编辑规则时，勾选问题后页面报 `Space is not defined`。
+- 用户要求 V2 列表不再只显示单一更新时间列，而是展示更新人与更新时间。
+- 用户要求将客户可见内容和演示数据统一使用 Bank 脱敏口径，避免旧客户品牌词继续出现在验证规则页面。
+
+修改结果：
+
+- `VerificationRuleV2Page` 补回 Ant Design `Space` 导入，修复问题排序列表渲染崩溃。
+- V2 规则列表将 `Updated At` 拆成 `Updated By` 和 `Updated Time`；新增、编辑、状态切换都会写入 `updatedBy: 'Admin'` 和当前更新时间。
+- `VerificationV2Rule` 类型和空规则创建工具新增 `updatedBy` 字段。
+- `src/` 下演示 UI、mock 展示数据和内部演示 code 已统一为 Bank / BankApp / BANKAPP 口径；V2 规则、渠道、文字渠道、Live Chat、验证弹框等相关入口同步调整。
+- `AGENTS.md` 新增项目级脱敏规则：客户可见 UI、mock 展示数据、演示话术、文档摘要和备份说明不得出现旧客户品牌词，统一使用 Bank / BankApp / BANK 1 等脱敏口径。
+
+验证：
+
+- `rg -n -i "halo|bca" src` 无结果。
+- `rg -n "鎮|锛|绻|杈|€|寰|灏|褰|瀹|鏈|涓" src\mock\routingConfiguration.ts src\mock\verificationRuleV2.ts src\utils\verificationRuleV2.ts` 无结果。
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+
+回滚说明：
+
+- 如需回滚本轮 V2 bug 修复，仅移除 `Space` 导入会重新触发运行时错误，不建议回滚。
+- 如需回滚审计列，恢复 `Updated At` 单列并移除 `updatedBy` 类型及保存逻辑。
+- 脱敏 code 已和 V2 规则匹配、渠道 mock 联动调整；不要只回滚单个 mock 文件，否则可能导致 V2 无法按渠道命中规则。
+
+当前风险点：
+
+- 历史 `PROJECT_CONTEXT.md` / `DEV_LOG.md` / `.codex-backup/key-prompts.md` 中保留早期会话恢复材料，可能仍记录旧业务口径；本轮新增规则约束后续客户可见内容和新增文档摘要不再使用旧客户品牌词。
+
+### 2026-06-12 17:51 +08:00 - 管理台统一样式规范落地
+
+修改页面或文件：
+
+- `src/components/admin/*`
+- `src/components/PageContainer.tsx`
+- `src/components/index.ts`
+- `src/pages/DesignSystem.tsx`
+- `src/pages/routing-config/RoutingConfigCrudPage.tsx`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/pages/routing-config/SkillRoutingRulesPage.tsx`
+- `src/pages/call-management/VerificationRulesPage.tsx`
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/pages/call-management/BlacklistManagementPage.tsx`
+- `src/pages/call-management/PriorityListManagementPage.tsx`
+- `src/pages/call-management/BusyReasonManagementPage.tsx`
+- `src/styles/index.less`
+- `AGENTS.md`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-12-1751.md`
+- `.codex-backup/current-todo-2026-06-12-1751.md`
+- `.codex-backup/page-state-2026-06-12-1751.md`
+
+修改原因：
+
+- 用户要求管理台查询条件、按钮、列表、分页、弹框、输入框和滚动行为形成统一规范，避免每个页面样式不一致并减少后续反复检查。
+
+修改结果：
+
+- 新增 `AdminPage`、`AdminToolbar`、`AdminFilterField`、`AdminTable`、`AdminModal`、`AdminFormField` 和分页/action helper。
+- 管理台主列表默认 20 条分页、选项 `10/20/50/100`，分页文案统一为 `x-y / total records`；主页面长列表由 AdminPage 容器滚动，弹框内长表格才使用内部纵向滚动。
+- 表头统一加粗，列表数据正常字重；通过 AdminTable 样式避免首个字段继续因历史 `<strong>` 渲染变粗。
+- Call Management 的 `Verification Rules`、`Verification Rule V2`、`Blacklist Management`、`Priority List Management`、`Busy Reason Management` 已接入 Admin 组件。
+- Routing Config 普通 CRUD 容器和自定义页 `Skill Routing Rules`、`Site Access Volume`、`Working Time Plans` 等已接入 AdminPage/AdminTable/AdminModal。
+- `/design-system` 新增 `Admin Management Page` 示例，展示查询栏、右侧主操作、分页、表格字重、滚动和弹框 footer 规范。
+- `AGENTS.md` 写入后续新增维护管理台页面必须使用 `src/components/admin/*` 的规则。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍有既有 Vite/Rolldown chunk size warning。
+- Headless Chrome CDP preview 抽查通过：`/design-system`、`/call-management/verification-rule-v2`、`/call-management/blacklist`、`/call-management/priority-list`、`/call-management/busy-reasons`、`/routing-config/business-types`、`/routing-config/skill-routing-rules` 均可加载；关键管理台页面存在 AdminPage/AdminToolbar/AdminTable，页面滚动为 `auto`，列表首列数据字重为 `400`。
+
+回滚说明：
+
+- 如需回滚本轮统一规范，可恢复上述页面为原 `PageContainer` / `BaseTable` / `BaseModal` 组合，删除 `src/components/admin/*`，并恢复 `src/styles/index.less`、`AGENTS.md`、`PROJECT_CONTEXT.md`、`DEV_LOG.md` 和本轮备份。
+- 不建议仅回滚单个页面的 Admin 组件，否则会重新出现管理台规范分叉。
+
+当前风险点：
+
+- 本轮为统一样式组件迁移，业务数据结构和 mock 语义未变；主要风险在个别自定义 Routing Config 弹框内部仍有页面级表单 class，浏览器抽查需重点确认。
+- `Global Control Configuration` 是配置表单页，不属于典型列表 CRUD；本轮未强制改成 AdminToolbar/AdminTable。
+
+### 2026-06-12 17:16 +08:00 - Business Types 字段改名为 Source Business Code
+
+修改页面或文件：
+
+- `src/types/routingConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-12-1716.md`
+- `.codex-backup/current-todo-2026-06-12-1716.md`
+- `.codex-backup/page-state-2026-06-12-1716.md`
+
+修改原因：
+
+- 用户确认 `External Business Code` 不够准确；该字段表示来源侧传入的业务代码，不应出现 customer 字样，也不应局限于 IVR，因此统一改为 `Source Business Code`。
+
+修改结果：
+
+- UI 字段名、列表列名、Keyword placeholder、校验提示均改为 `Source Business Code`。
+- `BusinessType` 字段名从 `externalBusinessCode` 改为 `sourceBusinessCode`。
+- 默认 `businessTypes` mock 字段同步改为 `sourceBusinessCode`，值保持 `MENU_PERBANKAN`、`MENU_KARTU_KREDIT`、`MENU_LOAN_INFORMATION`。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `git diff --check` 通过；仅输出既有 CRLF 工作区转换提示。
+- 源码检查确认 `src/` 下不再存在 `External Business Code` 或 `externalBusinessCode`，只保留 `Source Business Code` / `sourceBusinessCode`。
+
+回滚说明：
+
+- 如需回滚命名，恢复 UI 文案为 `External Business Code`，并把 `sourceBusinessCode` 类型、mock、页面引用改回 `externalBusinessCode`。
+
+当前风险点：
+
+- 当前字段命名已按“来源侧业务代码”口径调整；若后续客户/研发有更正式接口字段名，应以接口契约为准再统一调整。
+
+### 2026-06-12 17:05 +08:00 - Business Types 增加 External Business Code
+
+修改页面或文件：
+
+- `src/types/routingConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-12-1705.md`
+- `.codex-backup/current-todo-2026-06-12-1705.md`
+- `.codex-backup/page-state-2026-06-12-1705.md`
+
+修改原因：
+
+- 用户要求在 `Routing Config > Business Types` 中增加“对方业务代码”，用于维护客户页面或 IVR 菜单名称对应 ID 到内部业务类型的映射。
+
+修改结果：
+
+- `BusinessType` 类型新增 `externalBusinessCode`。
+- 默认 `businessTypes` mock 增加 `MENU_PERBANKAN`、`MENU_KARTU_KREDIT`、`MENU_LOAN_INFORMATION`。
+- Business Types 列表在 `Business Type ID` 后新增 `External Business Code` 列。
+- Keyword 查询支持 `Business Type ID / External Business Code / Name`。
+- Add/Edit/View 弹框在 `Business Type ID` 后新增 `External Business Code` 字段。
+- 保存时 `External Business Code` 必填、格式需符合大写字母/数字/下划线/连字符，并做唯一性校验。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `git diff --check` 通过；仅输出既有 CRLF 工作区转换提示。
+- 源码检查确认 `External Business Code` 已进入类型、mock、Business Types 列表、查询、表单和校验逻辑。
+
+回滚说明：
+
+- 如需回滚，移除 `BusinessType.externalBusinessCode`，删除默认 mock 中的该字段，并恢复 `BusinessTypesPage` 的列、草稿、表单字段、搜索字段和校验逻辑。
+
+当前风险点：
+
+- 当前字段只进入前端 demo 主数据维护，还未接真实客户页面/IVR 入参或后端路由匹配服务。
+
+### 2026-06-12 17:03 +08:00 - Verification Rule V2 管理台一致性收敛
+
+修改页面或文件：
+
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-12-1703.md`
+- `.codex-backup/current-todo-2026-06-12-1703.md`
+- `.codex-backup/page-state-2026-06-12-1703.md`
+
+修改原因：
+
+- 用户指出 V2 管理台页面仍存在基础规范问题：添加按钮位置与文案不统一，字段名 `Service Scenario / Skill Queue` 过长且与查询条件不一致，列表列宽仍偏松。
+
+修改结果：
+
+- 移除 V2 页面的 `PageContainer extra` 顶部操作区，将 `Question Bank` 和 `Add` 放入筛选工具栏右侧 `routing-config-page__add-action`。
+- `New Rule` 改为 `Add`，新建弹框标题改为 `Add Verification Rule V2`。
+- 列表表头、弹框字段、校验提示统一为 `Skill Queue`，源码中不再出现 `Service Scenario / Skill Queue`。
+- 继续压缩 V2 外层表格列宽，横向滚动兜底从 `x: 1120` 调整为 `x: 1040`，`Actions` 仍固定在右侧。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- HTTP smoke check：`/`、`/call-management/verification-rule-v2`、`/design-system` 在 5176 dev server 返回 200。
+- 源码检查确认 `src/` 下已无 `Service Scenario / Skill Queue`、`New Rule`、`New Verification Rule V2` 残留。
+- Playwright 替代视觉检查未完成：当前 runtime 的 `playwright` 包缺失 `playwright-core`，项目本身也未安装 Playwright；未为本次检查新增依赖。
+
+回滚说明：
+
+- 如需回滚，可把 V2 顶部操作按钮移回 `PageContainer extra`，恢复 `New Rule` 文案、`Service Scenario / Skill Queue` 字段名，以及表格横向兜底 `x: 1120`。
+
+当前风险点：
+
+- 本轮未完成截图级可视检查；客户演示前建议人工打开 `/call-management/verification-rule-v2`，确认 `Question Bank` / `Add` 位于筛选工具栏右侧，列表和弹框都只显示 `Skill Queue`，正常桌面宽度下无多余横向滚动条。
+
+### 2026-06-12 16:42 +08:00 - Verification Rule V2 补齐规则删除能力
+
+修改页面或文件：
+
+- `src/store/appStore.ts`
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-12-1642.md`
+- `.codex-backup/current-todo-2026-06-12-1642.md`
+- `.codex-backup/page-state-2026-06-12-1642.md`
+
+修改原因：
+
+- 用户指出 V2 规则管理存在 `New Rule` 但没有规则删除入口，不符合管理台 CRUD 规范；该异常应主动识别并确认。
+
+修改结果：
+
+- `appStore` 新增 `deleteVerificationV2Rule(ruleId)`，用于删除当前 demo session 中的 V2 规则。
+- V2 外层规则列表 Actions 从 View/Edit 扩展为 View/Edit/Delete。
+- Actions 列宽从 88 调整为 112，并继续 `fixed: 'right'`。
+- 点击 Delete 打开二次确认弹框；确认后删除当前规则，不删除 Question Bank 题目。
+- 如果当前正在查看或编辑同一条规则，确认删除后会关闭规则编辑弹框。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- HTTP smoke check：`/`、`/call-management/verification-rule-v2`、`/design-system` 在 5176 dev server 返回 200。
+- `git diff --check` 通过；仅有既有 CRLF 工作区转换提示。
+- 源码检查确认 `deleteVerificationV2Rule`、`ruleToDelete`、`Delete Verification Rule V2` 和 Actions 列宽调整已存在。
+- Codex in-app browser 连接超时，未完成截图级可视检查。
+
+回滚说明：
+
+- 如需回滚，可移除 `deleteVerificationV2Rule` store 方法、V2 列表 Delete 按钮、`ruleToDelete` 状态和删除确认弹框，并把 Actions 列宽恢复为 88。
+
+当前风险点：
+
+- 本轮未完成浏览器截图验证；客户演示前建议人工打开 `/call-management/verification-rule-v2`，确认每行 View/Edit/Delete 三个操作可见，Delete 确认弹框文案清晰，确认后规则从列表移除。
+
+### 2026-06-12 16:24 +08:00 - Verification Rule V2 表格恢复管理台标准行为
+
+修改页面或文件：
+
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-12-1624.md`
+- `.codex-backup/current-todo-2026-06-12-1624.md`
+- `.codex-backup/page-state-2026-06-12-1624.md`
+
+修改原因：
+
+- 用户指出 V2 外层表格列宽过大、正常宽度下出现不必要横向滚动条，且数据不需要纵向滚动时仍显示空滚动框；同时强调管理台表格的操作列应固定在右侧。
+
+修改结果：
+
+- 删除 V2 外层表格专用的 `.verification-rule-v2-list-card` / `.verification-rule-v2-table` 高度、flex、table body 和 pagination 固定样式。
+- 外层表格移除 `scroll.y`，恢复标准管理台自然高度和页面滚动行为，不再强制显示空的纵向滚动框。
+- 收紧 V2 外层列宽，横向滚动兜底从 `x: 1280` 改为 `x: 1120`。
+- `Actions` 列增加 `fixed: 'right'`，在窄屏横向滚动时保持操作可见。
+- 查询区已确认的结构化筛选、多选 `+N` 收敛、无 `Keyword` 行为保持不变。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- HTTP smoke check：`/`、`/call-management/verification-rule-v2`、`/design-system` 在 5176 dev server 返回 200。
+- `git diff --check` 通过；仅有既有 CRLF 工作区转换提示。
+- 源码检查确认旧的 `verification-rule-v2-list-card` / `verification-rule-v2-table`、`x: 1280` 和 V2 外层 `scroll.y` 已移除；仅 Question Bank 弹框保留内部 `scroll={{ y: 390 }}`。
+- Codex in-app browser 连接超时，未完成截图级可视检查。
+
+回滚说明：
+
+- 如需回滚，可恢复 V2 外层 `BaseCard` / `BaseTable` 的专用 class、恢复 `scroll={{ x: 1280, y: ... }}`，并恢复 `.verification-rule-v2-list-card` / `.verification-rule-v2-table` 样式；当前不建议回滚，因为该方案不符合管理台统一规范。
+
+当前风险点：
+
+- 本轮仍未完成截图级验证；客户演示前建议人工确认 `/call-management/verification-rule-v2` 在实际窗口宽度下无多余横向滚动条、无空纵向滚动框，并确认窄屏时 `Actions` 固定右侧。
+
+### 2026-06-12 16:13 +08:00 - Verification Rule V2 列表规范统一修正
+
+修改页面或文件：
+
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-12-1613.md`
+- `.codex-backup/current-todo-2026-06-12-1613.md`
+- `.codex-backup/page-state-2026-06-12-1613.md`
+
+修改原因：
+
+- 用户指出 V2 外层查询区存在重复 `Keyword`，多选筛选选多后撑乱布局，且分页在选择 20 条后仍依赖页面整体滚动，不符合管理台统一规范。
+
+修改结果：
+
+- 移除 V2 外层列表的 `Keyword` 查询条件和相关模糊过滤逻辑，只按 Channel、Skill Queue、Customer Segment、Status 显式筛选。
+- Channel / Skill Queue / Customer Segment 多选筛选统一设置 `maxTagCount={1}` 和 `+N` 收敛展示。
+- 补强通用 `.routing-config-page__filter .ant-select-multiple` 样式，强制多选筛选单行、不换行、不随选择数量撑高。
+- V2 表格新增 `verification-rule-v2-list-card` / `verification-rule-v2-table` 样式，表格 body 自身纵向滚动，分页保持在表格下方可见；移除上一版 V2 页面级 `max-height + overflow-y` 兜底。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- HTTP smoke check：`/`、`/call-management/verification-rule-v2`、`/design-system` 在 5176 dev server 返回 200。
+- `git diff --check` 通过；仅有既有 CRLF 工作区转换提示。
+- 源码检查确认 V2 外层列表已无 `Keyword`、`Reset Demo Rules`、`Question Set` 外层列、旧 `pagination={false}` 或旧 V2 页面级滚动兜底。
+- Codex in-app browser 两次连接超时，未完成可视化截图检查；项目未安装 Playwright，未做额外截图替代验证。
+
+回滚说明：
+
+- 如需回滚，可恢复 `VerificationRuleV2Page.tsx` 的 `RuleFilters.keyword`、Keyword 查询框和本地模糊过滤逻辑，并移除 `verification-rule-v2-list-card` / `verification-rule-v2-table` 相关样式。
+
+当前风险点：
+
+- 本轮已通过构建、HTTP 和源码检查，但浏览器截图仍因工具连接超时未完成；客户演示前建议人工打开 `/call-management/verification-rule-v2`，重点检查多选筛选和 20 / 50 条分页滚动效果。
+
+### 2026-06-12 15:50 +08:00 - Verification Rule V2 外层列表管理台化
+
+修改页面或文件：
+
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-12-1550.md`
+- `.codex-backup/current-todo-2026-06-12-1550.md`
+- `.codex-backup/page-state-2026-06-12-1550.md`
+
+修改原因：
+
+- 用户反馈 V2 最外层规则列表不像标准管理台，缺少搜索条件和分页，外层列信息过密，且底部数据和分页不易看到；同时确认客户页面不需要 `Reset Demo Rules`。
+
+修改结果：
+
+- V2 外层列表复用管理台 `routing-config-page__admin-toolbar` 筛选布局。
+- 新增 Keyword、Channel、Skill Queue、Customer Segment、Status 筛选，并提供 `Search` / `Reset`。
+- 移除客户可见的 `Reset Demo Rules` 按钮，页面顶部只保留 `Question Bank` 和 `New Rule`。
+- 外层表格移除 `Question Set` 和 `Special Rules` 两列，保留概要字段并新增 `Updated At`。
+- 表格启用分页，默认每页 10 条，支持 10 / 20 / 50，并显示 `Total N items`。
+- 表格启用横向滚动，V2 页面增加内部纵向滚动，降低分页被全局内容区裁剪的风险。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- 源码检查确认 V2 页面已无 `Reset Demo Rules`、`ReloadOutlined`、`pagination={false}`、外层 `Question Set` / `Special Rules` 列。
+- `git diff --check` 通过；仅有既有 CRLF 工作区转换提示。
+- HTTP smoke check：`/`、`/call-management/verification-rule-v2`、`/design-system` 在 5173 和 5175 dev server 均返回 200。
+- Codex in-app browser 连接 30 秒超时，未完成可视化截图检查。
+
+回滚说明：
+
+- 如需回滚，可恢复 `VerificationRuleV2Page.tsx` 中原 PageContainer extra 的 `Reset Demo Rules` 按钮、原 `columns` 中 `Question Set` / `Special Rules` 两列，以及表格 `pagination={false}` 的裸列表布局。
+
+当前风险点：
+
+- 浏览器截图验证因连接超时未完成；仍建议客户演示前人工打开 `/call-management/verification-rule-v2` 检查筛选区、分页和页面内滚动在实际窗口高度下是否符合预期。
+
+### 2026-06-12 15:27 +08:00 - Special Rules 改为按需添加并合并失败阻断配置
+
+修改页面或文件：
+
+- `src/types/verificationRuleV2.ts`
+- `src/mock/verificationRuleV2.ts`
+- `src/utils/verificationRuleV2.ts`
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-12-1527.md`
+- `.codex-backup/current-todo-2026-06-12-1527.md`
+- `.codex-backup/page-state-2026-06-12-1527.md`
+
+修改原因：
+
+- 用户确认 Special Rules 不应默认全部铺开，建议像题目分类一样按需添加；同时确认 `Strict Failure Handling` 与基础配置 `Failure Action` 语义重复，应合并避免误解。
+
+修改结果：
+
+- V2 规则编辑弹框的 `Special Rules` 改为 `Select special rule type` + `Add Rule`，只显示已启用的特殊规则块。
+- 可添加的特殊规则保留 `Case Type Layering`、`Branch Combined Verification`、`Organization Segment Override` 三类。
+- 删除特殊规则块时仅将该规则设为 disabled，内部触发条件、题目和必对数量配置保留，重新添加后可恢复。
+- 从类型、mock、规则计算逻辑、表格 tag 和配置 UI 中移除 `Strict Failure Handling`。
+- 失败后是否阻断继续处理统一由基础配置 `Failure Action = Block continuation` 控制；`Personal Loan` 默认规则继续保留阻断效果。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `git diff --check` 通过；仅有既有 CRLF 工作区转换提示。
+- HTTP smoke check：`/`、`/call-management/verification-rule-v2`、`/design-system` 在 5173 和 5175 dev server 均返回 200。
+- 源码检查确认 `src/` 下已无 `strictFailureHandling`、`Strict Failure Handling` 或旧说明文案引用。
+- Codex in-app browser 连接 30 秒超时，未完成可视化截图检查。
+
+回滚说明：
+
+- 如需回滚，可恢复 `VerificationV2SpecialRules.strictFailureHandling` 字段、mock 中的 strict patch、`buildEffectiveVerificationV2Rule` 中对 failureAction 的覆盖，以及配置页固定四块 Special Rules 布局。
+
+当前风险点：
+
+- 本轮浏览器截图验证因连接超时未完成；客户演示前建议人工打开 `/call-management/verification-rule-v2`，确认 Special Rules 添加/删除、保存后弹屏特殊规则命中效果符合预期。
+
+### 2026-06-12 14:50 +08:00 - 简化 V2 问题分类块头部
+
+修改页面或文件：
+
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-12-1450.md`
+- `.codex-backup/current-todo-2026-06-12-1450.md`
+- `.codex-backup/page-state-2026-06-12-1450.md`
+
+修改原因：
+
+- 用户要求只压缩 V2 问题分类块的配置头部，不再压缩已选问题条目；`Ask in order / Berurut` 文案过长，需要缩短并解释。
+
+修改结果：
+
+- V2 规则编辑弹框中每个问题分类块顶部改为单行操作栏，合并展示分类名、`Questions N`、`Select`、`Correct`、`Order` 和删除按钮。
+- `Berurut` 在页面显示为 `Order`，tooltip 解释为按配置顺序提问；开关状态显示 `Seq / Any`。
+- `Alternative` 不展示 `Correct` 输入，说明移入 tooltip，不再占用常规高度。
+- 已选问题条目列表保持原有高度和上下箭头排序；本轮未新增拖拽排序依赖。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `git diff --check` 通过；仅有既有 CRLF 工作区转换提示。
+- HTTP smoke check：`/`、`/call-management/verification-rule-v2`、`/design-system` 在 5173 和 5175 dev server 均返回 200。
+- Codex in-app browser 连接两次超时，未完成可视化截图检查。
+
+回滚说明：
+
+- 如需回滚，可恢复 `VerificationRuleV2Page.tsx` 中原 `verification-rule-v2-group__header` 与 `verification-rule-v2-group__fields` 双行布局，并移除本轮新增的 toolbar 相关样式。
+
+当前风险点：
+
+- 本轮为视觉密度调整，浏览器截图检查未完成；仍建议客户演示前人工打开 `/call-management/verification-rule-v2` 检查规则编辑弹框中分类块头部在实际数据下是否符合预期。
+
+### 2026-06-12 14:41 +08:00 - 简化 V2 Question Bank 并合并去重题目
+
+修改页面或文件：
+
+- `src/types/verificationRuleV2.ts`
+- `src/mock/verificationRuleV2.ts`
+- `src/utils/verificationRuleV2.ts`
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-12-1441.md`
+- `.codex-backup/current-todo-2026-06-12-1441.md`
+- `.codex-backup/page-state-2026-06-12-1441.md`
+
+修改原因：
+
+- 用户确认问题库可进一步简化，建议移除题库状态字段；同时询问题库是否已合并去重，并要求固定高度弹框在筛选数据时不要忽大忽小。
+
+修改结果：
+
+- V2 题库模型移除 `status` 字段，仅维护 `id` 和 `questionName`。
+- Question Bank 去掉状态筛选、Status 列和 Add/Edit 弹框中的状态开关。
+- 题库按问题名称归一化后合并去重，当前默认题库为 56 条唯一题目；重复项合并到通用题目 ID，并同步替换默认规则引用。
+- 新增/编辑题目时会校验同名问题，重复时显示错误提示并阻止保存。
+- Question Bank 表格主体和空态固定高度，筛选少量或无数据时弹框尺寸保持稳定。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- 去重检查：默认题库 `total 56 unique 56 duplicates 0`。
+
+回滚说明：
+
+- 如需恢复题库状态字段，可恢复 `VerificationV2Question.status`、mock 题目状态、Question Bank 状态筛选/列、Add/Edit 状态开关，并恢复工具函数中按 `enabled` 过滤题目的逻辑。
+
+当前风险点：
+
+- 题库不再支持禁用单题；如后续客户需要临时下线题目，需要改为从规则中移除该题或重新引入题库状态字段。
+
+### 2026-06-12 14:27 +08:00 - 优化 V2 Question Bank 维护交互
+
+修改页面或文件：
+
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-12-1427.md`
+- `.codex-backup/current-todo-2026-06-12-1427.md`
+- `.codex-backup/page-state-2026-06-12-1427.md`
+
+修改原因：
+
+- 用户反馈 V2 问题库维护缺少按问题名称/状态搜索，新增区域控件高度不齐，状态不应使用下拉选择，分页默认每页 8 条且切换 20 条时弹框布局不稳定。
+
+修改结果：
+
+- Question Bank 弹框新增按 `Question Name` 和 `Status` 的查询筛选。
+- 移除顶部内联新增/编辑表单，改为 `Add Question` / 行内 Edit 打开独立维护弹框。
+- Add/Edit 弹框中状态改为 Switch 开关，不再用下拉框。
+- Question Bank 弹框固定高度，表格区域支持内部滚动。
+- 列表分页默认每页 10 条，支持切换 20 / 50 条；切换到 20 条时通过表格 scroll 保持弹框尺寸稳定。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+
+回滚说明：
+
+- 如需回滚，可恢复 `VerificationRuleV2Page.tsx` 中 Question Bank 的内联 editor 和 `pagination={{ pageSize: 8 }}`，并移除新增的 Question Bank toolbar/editor modal 样式。
+
+当前风险点：
+
+- 本轮未完成浏览器截图验证；仍建议演示前人工打开 `/call-management/verification-rule-v2` 检查 Question Bank 弹框、Add/Edit 弹框和分页切换。
+
+### 2026-06-12 14:10 +08:00 - 优化 Verification Rule V2 配置弹框并补齐客户题库
+
+修改页面或文件：
+
+- `src/types/verificationRuleV2.ts`
+- `src/mock/verificationRuleV2.ts`
+- `src/utils/verificationRuleV2.ts`
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-12-1410.md`
+- `.codex-backup/current-todo-2026-06-12-1410.md`
+- `.codex-backup/page-state-2026-06-12-1410.md`
+
+修改原因：
+
+- 用户反馈 V2 规则编辑弹框仍然偏乱：Max Wrong 无限制时不应展示；Correct Required 不需要说明文字；问题配置不应默认铺满所有分类块，而应由用户按需添加分类块，并在弹框中搜索勾选题目后带入排序列表。
+- 用户要求 V2 题库加载客户 Excel 附件中的原文题目，并尽量按附件规则配出默认规则。
+
+修改结果：
+
+- Max Wrong 默认无限制；无限制时隐藏数字输入，表格中以 `-` 表示不限制，保存时继续校验有限制的 Max Wrong 不能超过已选题目总数。
+- 规则编辑弹框的 `Question Configuration` 去掉 Correct Required 说明文字。
+- 问题配置改为按需 `Add Group` 添加 Mandatory / Dynamic / Static / Alternative 分类块；每个分类块可删除。
+- 每个分类块通过 `Select Questions` 打开独立选题弹框，支持关键词搜索、勾选多题，点击 `Confirm` 后才写回当前规则；带入后可排序和删除单题。
+- V2 题库改为客户附件 C 列非中文原文题目，不再使用 demo 改写的 `Mohon...` 文案。
+- 默认 V2 规则扩展覆盖附件中的 Perbankan、Kartu Kredit、Prio/Soli、HBB、Personal Banker、Layanan Cabang、KlikBCA Bisnis、KPR、Personal Loan、Merchant Solution、Paylater；新增 `mbl d` demo case type，用于 Merchant Solution 特殊规则。
+- 坐席验证弹框在 Max Wrong 无限制时不再展示 Wrong 计数；Max Wrong 为 0 时不会在零错答时立即失败，只在出现错答后触发失败。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- HTTP smoke check：`/`、`/call-management/verification-rules`、`/call-management/verification-rule-v2`、`/design-system` 在 5173 dev server 均返回 200。
+- Codex in-app browser 连接 120 秒超时，未完成可视化截图检查。
+
+回滚说明：
+
+- 如需回滚本次优化，可恢复 `VerificationRuleV2Page.tsx` 中固定四类问题块和直接多选题目控件；恢复 `verificationRuleV2.ts` 的上一版 mock；恢复 `CustomerVerificationV2Modal.tsx` 中无限制 wrong 展示逻辑。
+
+当前风险点：
+
+- 默认规则是根据客户 Excel 的可读规则人工映射到 V2 demo 模型，特殊场景的真实触发字段仍需客户确认。
+- 题库题目使用客户原文，包含 BCA/mBCA/myBCA 等原始业务词；如外网脱敏演示需要另行替换。
+- 本轮仍未拿到浏览器截图，客户演示前建议人工打开 V2 页面和 Inbound `Verify` 弹框确认布局。
+
+### 2026-06-12 13:16 +08:00 - 新增 Verification Rule V2 配置与弹屏验证
+
+修改页面或文件：
+
+- `src/types/verificationRuleV2.ts`
+- `src/mock/verificationRuleV2.ts`
+- `src/utils/verificationRuleV2.ts`
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/store/appStore.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/routes.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-12-1316.md`
+- `.codex-backup/current-todo-2026-06-12-1316.md`
+- `.codex-backup/page-state-2026-06-12-1316.md`
+
+修改原因：
+
+- 用户要求保留旧 `Verification Rules` 页面不动，在下方新增 `Verification Rule V2`，并让下午演示时客户弹屏 `Verify` 读取 V2 规则，展示“配置规则 -> 弹屏动态问题”的端到端效果。
+
+修改结果：
+
+- 左侧 `Call Management` 新增 `Verification Rule V2`，路由为 `/call-management/verification-rule-v2`；`/call-management` 默认仍进入旧 `Verification Rules`。
+- 新增 V2 类型、mock 和计算工具；V2 规则按启用 Channel、启用 Skill Queue、Customer Segment 匹配，不再使用旧 Business Type。
+- V2 配置页支持 `Question Bank` 维护问题名称，规则编辑支持题型分组、排序、Berurut、Correct Required 自动汇总、Max Wrong/No Limit、Failure Action 和特殊规则模板。
+- Customer Information 的 `Verify` 弹框切换为 V2；弹框顶部显示 Channel、Skill Queue、Customer Segment 和 `Demo Conditions`，可模拟 ATO/add-on、Organization Segment、Branch Service 触发不同题组。
+- 坐席验证 UI 继续不展示标准答案和答案来源；Correct/Wrong/Skip 可直接覆盖单题结果。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `git diff --check` 通过；仅输出既有 CRLF 工作区转换提示。
+- HTTP smoke check：`/`、`/call-management/verification-rules`、`/call-management/verification-rule-v2`、`/design-system` 在 5174 dev server 均返回 200。
+- Codex in-app browser 连接连续超时；已记录为本轮浏览器可视化验证限制。
+
+回滚说明：
+
+- 如需回滚 V2，可删除新增 V2 类型、mock、工具、配置页和弹框组件；恢复 `CustomerInformationCard` 对旧 `CustomerVerificationModal` 的调用；移除 `BasicLayout` 菜单项、`routes.tsx` V2 路由和 `appStore` 中 V2 store 字段。
+
+当前风险点：
+
+- 本轮没有完成真实浏览器可视化截图检查，需在客户演示前人工打开 `/call-management/verification-rule-v2` 和 Inbound `Verify` 弹框确认布局。
+- 特殊规则的真实触发字段仍需要客户确认；demo 阶段只通过弹框顶部 `Demo Conditions` 模拟。
+
+### 2026-06-12 11:11 +08:00 - 更新 Skill Queues 默认启用队列名称
+
+修改页面或文件：
+
+- `src/mock/routingConfiguration.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/key-prompts.md`
+- `.codex-backup/context-snapshot-2026-06-12-1111.md`
+- `.codex-backup/current-todo-2026-06-12-1111.md`
+- `.codex-backup/page-state-2026-06-12-1111.md`
+
+修改原因：
+
+- 用户要求将 `Routing Config > Skill Queues` 的启用技能队列名称调整为去客户敏感化后的 12 条业务队列名称，避免出现 Halo 或 BCA 类客户敏感口径。
+
+修改结果：
+
+- 默认 `skillQueues` 从 3 条扩展为 12 条 `Active` 数据。
+- 保留既有关键 code：`SQ_GENERAL_ID`、`SQ_CARD_PRIORITY`、`SQ_DIGITAL_EN`，避免破坏 Global Control 默认技能队列和既有 Skill Routing Rules 引用。
+- `SQ_GENERAL_ID` 展示名从 `General Service - Indonesian` 改为 `Perbankan`。
+- `SQ_CARD_PRIORITY` 展示名从 `Card Emergency Priority` 改为 `Kartu Kredit`。
+- `SQ_DIGITAL_EN` 展示名从 `Digital Service - English` 改为 `KlikBank Bisnis`。
+- 新增 `Prio Soli Perbankan`、`Prio Soli Kartu Kredit`、`Bank Bisnis`、`Personal Banker`、`Layanan Cabang`、`KPR`、`Personal Loan`、`Merchant Solution`、`Paylater` 等可选启用队列。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仍只有既有 Vite/Rolldown chunk size warning。
+- `git diff --check` 通过；仅输出既有 CRLF 工作区转换提示。
+- 源码检查确认 12 个技能队列名称已按用户给定顺序写入默认 mock。
+
+回滚说明：
+
+- 如需回滚，恢复 `src/mock/routingConfiguration.ts` 中 `skillQueues` 的旧 3 条默认数据，并删除本轮新增的 `createSkillQueue` helper 与 9 条新增队列。
+
+当前风险点：
+
+- `Prio Soli` 属于缩写型命名，内部评审能理解时可保留；如对外演示需要更自然，可后续改成更完整的业务名。
 
 ### 2026-06-11 21:12 +08:00 - 名单管理增加勾选删除能力
 

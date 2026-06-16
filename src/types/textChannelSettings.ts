@@ -1,4 +1,4 @@
-export type TextChannelConfigCode = 'haloapp' | 'webchat' | 'whatsapp'
+export type TextChannelConfigCode = 'bankapp' | 'webchat' | 'whatsapp'
 
 export type TextChannelSettingsStatus = 'Draft' | 'Published'
 

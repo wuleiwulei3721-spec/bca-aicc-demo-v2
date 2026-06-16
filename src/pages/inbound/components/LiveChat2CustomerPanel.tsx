@@ -60,14 +60,14 @@ interface LiveChat2CustomerPanelProps {
 }
 
 const channelLabels: Record<LiveChat2Session['channel'], string> = {
-  Haloapps: 'BankApp',
+  BankApp: 'BankApp',
   Webchat: 'Webchat',
   WhatsApp: 'WhatsApp',
 }
 
 const liveChat2Channels: LiveChat2Channel[] = [
   'WhatsApp',
-  'Haloapps',
+  'BankApp',
   'Webchat',
 ]
 
@@ -88,8 +88,8 @@ const channelFilterOptions: Array<{
   },
   {
     icon: <MobileOutlined />,
-    label: channelLabels.Haloapps,
-    value: 'Haloapps',
+    label: channelLabels.BankApp,
+    value: 'BankApp',
   },
   {
     icon: <GlobalOutlined />,
@@ -110,7 +110,7 @@ function getChannelIcon(channel: LiveChat2Session['channel']) {
     return <WhatsAppOutlined />
   }
 
-  if (channel === 'Haloapps') {
+  if (channel === 'BankApp') {
     return <MobileOutlined />
   }
 
@@ -122,7 +122,7 @@ function getChannelClassName(channel: LiveChat2ChannelFilter) {
     return 'livechat2-channel-avatar--all'
   }
 
-  if (channel === 'Haloapps') {
+  if (channel === 'BankApp') {
     return 'livechat2-channel-avatar--bankapp'
   }
 

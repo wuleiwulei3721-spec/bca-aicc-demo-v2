@@ -2,9 +2,8 @@ export type AccessChannel =
   | 'Phone'
   | 'Video'
   | 'BankApp'
-  | 'Haloapps Voice'
-  | 'Haloapps Video'
-  | 'Haloapps'
+  | 'BankApp Voice'
+  | 'BankApp Video'
   | 'WhatsApp'
   | 'Webchat'
   | 'Webchat Voice'
@@ -58,7 +57,7 @@ export interface LiveChatConversationMessage {
 
 export interface LiveChatSession {
   id: string
-  channel: Extract<AccessChannel, 'WhatsApp' | 'Haloapps' | 'Webchat'>
+  channel: Extract<AccessChannel, 'WhatsApp' | 'BankApp' | 'Webchat'>
   customer: CustomerInformation
   conversation: LiveChatConversationMessage[]
   intent: string
@@ -103,7 +102,7 @@ export interface LiveChat2Message {
 export interface LiveChat2Session {
   id: string
   accessSequence: number
-  channel: Extract<AccessChannel, 'WhatsApp' | 'Haloapps' | 'Webchat'>
+  channel: Extract<AccessChannel, 'WhatsApp' | 'BankApp' | 'Webchat'>
   customer: CustomerInformation
   historyMessages: LiveChat2Message[]
   initialStarColor: LiveChat2StarColor
@@ -148,8 +147,8 @@ export interface CallFlowDetail {
 
 export type VerificationChannelType =
   | 'phone'
-  | 'haloapp-registered'
-  | 'haloapp-unregistered'
+  | 'bankapp-registered'
+  | 'bankapp-unregistered'
   | 'whatsapp'
   | 'webchat'
   | 'video'

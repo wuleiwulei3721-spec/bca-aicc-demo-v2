@@ -39,8 +39,8 @@ interface CustomerVerificationModalProps {
 }
 
 const channelTypeLabels: Record<VerificationChannelType, string> = {
-  'haloapp-registered': 'HaloApp Registered',
-  'haloapp-unregistered': 'HaloApp Unregistered',
+  'bankapp-registered': 'BankApp Registered',
+  'bankapp-unregistered': 'BankApp Unregistered',
   phone: 'PSTN / Phone',
   video: 'Video',
   webchat: 'Webchat',
@@ -209,15 +209,15 @@ export function CustomerVerificationModal({
   onSendPinVerification,
 }: CustomerVerificationModalProps) {
   const evaluation = evaluateRule(rule, questionStatuses)
-  const isHaloAppPinPending = channelType === 'haloapp-unregistered'
-  const isQuestionActionDisabled = !rule || isHaloAppPinPending
+  const isBankAppPinPending = channelType === 'bankapp-unregistered'
+  const isQuestionActionDisabled = !rule || isBankAppPinPending
   const wrongLimit = rule?.maxWrongAttempts ?? null
   const enabledBusinessTypes = businessTypes.filter((item) => item.enabled)
   const workflowStatus = evaluation.failed
     ? 'Failed'
     : evaluation.passed
       ? 'Passed'
-      : isHaloAppPinPending
+      : isBankAppPinPending
         ? 'PIN Required'
         : 'In Progress'
   const statusTone = evaluation.failed
@@ -232,8 +232,8 @@ export function CustomerVerificationModal({
       ? `Wrong ${evaluation.wrongCount}`
       : `Wrong ${evaluation.wrongCount}/${wrongLimit}`
     : ''
-  const emptyRuleText = isHaloAppPinPending
-    ? 'Complete HaloApp PIN to load registered verification rules.'
+  const emptyRuleText = isBankAppPinPending
+    ? 'Complete BankApp PIN to load registered verification rules.'
     : 'No verification rule configured for this combination.'
 
   return (
@@ -266,7 +266,7 @@ export function CustomerVerificationModal({
         </strong>
       </div>
 
-      {isHaloAppPinPending && (
+      {isBankAppPinPending && (
         <div className="inbound-verification-pin">
           <div>
             <strong>PIN required</strong>
@@ -409,7 +409,7 @@ export function CustomerVerificationModal({
           })
         ) : (
           <div className="inbound-verification-list__empty">
-            {isHaloAppPinPending
+            {isBankAppPinPending
               ? 'Complete PIN verification to load questions.'
               : 'No questions configured for this verification combination.'}
           </div>

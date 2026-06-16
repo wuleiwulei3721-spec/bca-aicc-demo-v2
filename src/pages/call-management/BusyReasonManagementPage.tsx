@@ -3,11 +3,14 @@ import { Alert, Input, Select, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useMemo, useState } from 'react'
 import {
+  AdminFilterField,
+  AdminModal,
+  AdminModalFooter,
+  AdminPage,
+  AdminTable,
+  AdminToolbar,
   BaseButton,
   BaseCard,
-  BaseModal,
-  BaseTable,
-  PageContainer,
   StatusBadge,
 } from '../../components'
 import { useCallManagementStore } from '../../store'
@@ -243,8 +246,7 @@ export function BusyReasonManagementPage() {
   ]
 
   return (
-    <PageContainer title="Busy Reason Management">
-      <section className="routing-config-page busy-reason-config">
+    <AdminPage className="busy-reason-config" title="Busy Reason Management">
         {notice && (
           <Alert
             showIcon
@@ -254,14 +256,20 @@ export function BusyReasonManagementPage() {
           />
         )}
         <BaseCard compact>
-          <div className="routing-config-page__admin-toolbar">
-            <div className="routing-config-page__query-group">
-              <div className="routing-config-page__filters">
-                <label
-                  className="routing-config-page__filter"
-                  style={{ width: 280 }}
-                >
-                  <span>Keyword</span>
+          <AdminToolbar
+            actions={
+              <>
+                <BaseButton variant="primary" onClick={handleSearch}>
+                  Search
+                </BaseButton>
+                <BaseButton variant="secondary" onClick={handleReset}>
+                  Reset
+                </BaseButton>
+              </>
+            }
+            filters={
+              <>
+                <AdminFilterField label="Keyword" width={260}>
                   <Input
                     placeholder="ID / Busy Reason / Remark"
                     value={filterDraft.keyword}
@@ -272,12 +280,8 @@ export function BusyReasonManagementPage() {
                       }))
                     }
                   />
-                </label>
-                <label
-                  className="routing-config-page__filter"
-                  style={{ width: 160 }}
-                >
-                  <span>Default</span>
+                </AdminFilterField>
+                <AdminFilterField label="Default" width={160}>
                   <Select
                     options={defaultOptions}
                     value={filterDraft.isDefault}
@@ -288,12 +292,8 @@ export function BusyReasonManagementPage() {
                       }))
                     }
                   />
-                </label>
-                <label
-                  className="routing-config-page__filter"
-                  style={{ width: 160 }}
-                >
-                  <span>Status</span>
+                </AdminFilterField>
+                <AdminFilterField label="Status" width={160}>
                   <Select
                     options={statusOptions}
                     value={filterDraft.status}
@@ -304,37 +304,20 @@ export function BusyReasonManagementPage() {
                       }))
                     }
                   />
-                </label>
-              </div>
-              <div className="routing-config-page__admin-actions">
-                <BaseButton variant="primary" onClick={handleSearch}>
-                  Search
-                </BaseButton>
-                <BaseButton variant="secondary" onClick={handleReset}>
-                  Reset
-                </BaseButton>
-              </div>
-            </div>
-          </div>
-          <BaseTable<BusyReason>
+                </AdminFilterField>
+              </>
+            }
+          />
+          <AdminTable<BusyReason>
             columns={columns}
             dataSource={filteredReasons}
-            pagination={{
-              defaultPageSize: 20,
-              pageSizeOptions: [10, 20, 50, 100],
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} / ${total} records`,
-            }}
+            pagination={{}}
             rowKey="busyReasonId"
-            scroll={{ x: 1130 }}
-            size="small"
+            horizontalScroll={1130}
           />
         </BaseCard>
-      </section>
-      <BaseModal
-        className="routing-config-crud-modal"
+      <AdminModal
         destroyOnClose
-        kind="detail"
         open={modalMode === 'edit' && Boolean(draft)}
         title="Edit Busy Reason"
         width={720}
@@ -416,15 +399,15 @@ export function BusyReasonManagementPage() {
             </div>
           )}
         </div>
-        <div className="routing-config-crud-modal__footer">
+        <AdminModalFooter>
           <BaseButton variant="secondary" onClick={closeModal}>
             Cancel
           </BaseButton>
           <BaseButton variant="primary" onClick={handleSave}>
             Save
           </BaseButton>
-        </div>
-      </BaseModal>
-    </PageContainer>
+        </AdminModalFooter>
+      </AdminModal>
+    </AdminPage>
   )
 }

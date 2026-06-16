@@ -1,13 +1,17 @@
-import { PlusOutlined } from '@ant-design/icons'
-import { Alert, Input, Select } from 'antd'
+import { PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons'
+import { Alert, Input, Select, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useMemo, useState } from 'react'
 import {
+  AdminFilterField,
+  AdminFormField,
+  AdminModal,
+  AdminModalFooter,
+  AdminPage,
+  AdminTable,
+  AdminToolbar,
   BaseButton,
   BaseCard,
-  BaseModal,
-  BaseTable,
-  PageContainer,
 } from '../../components'
 import {
   useAuthStore,
@@ -16,29 +20,77 @@ import {
 } from '../../store'
 import type { PriorityListEntry } from '../../types'
 
-type PriorityListModalMode = 'batch' | 'single' | null
+type PriorityListModalMode = 'batch' | null
 
 interface PriorityListFilters {
-  channel: string
-  priorityNumber: string
+  channels: string[]
+  identifier: string
 }
 
 interface PriorityListDraft {
-  channel: string
-  priorityNumbers: string
+  channels: string[]
+  identifiers: string
   remark: string
 }
 
+interface PriorityListDuplicateRow {
+  channel: string
+  existingNo: number
+  identifier: string
+  key: string
+  matchRule: PriorityListEntry['matchRule']
+}
+
 const defaultFilters: PriorityListFilters = {
-  channel: '',
-  priorityNumber: '',
+  channels: [],
+  identifier: '',
 }
 
 const defaultDraft: PriorityListDraft = {
-  channel: '',
-  priorityNumbers: '',
+  channels: [],
+  identifiers: '',
   remark: '',
 }
+
+const matchRuleLabels: Record<PriorityListEntry['matchRule'], string> = {
+  email_domain_match: 'Email Domain Match',
+  exact_match: 'Exact Match',
+}
+
+const emailDomainMatchChannels = new Set([
+  'Webchat',
+  'Email Contact',
+  'Email Priority',
+])
+const domainLabelPattern = '[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?'
+const emailDomainIdentifierPattern = new RegExp(
+  `^@(?=.{1,253}$)(?:${domainLabelPattern}\\.)+${domainLabelPattern}$`,
+)
+
+const identifierTooltip = (
+  <div className="priority-list-management__identifier-tooltip">
+    <p>
+      Enter customer identifiers for priority queue matching. Select one or
+      more channels, then separate multiple identifiers with semicolons.
+    </p>
+    <p>
+      The system saves one record per selected channel and identifier. Email
+      domains must start with @ and contain valid domain segments, such as
+      @ojk.co.id or @bi.go.id.
+    </p>
+    <p>
+      Webchat and email channels use domain match for email domains. Other
+      channel and identifier combinations are saved with exact match, such as
+      Phone + @ojk.co.id.
+    </p>
+    <div className="priority-list-management__identifier-examples">
+      <strong>Batch examples</strong>
+      <span>Phone: 08129876543;08123456789;08122222222</span>
+      <span>Social Media: Bank;Bank_1;Bank_2;Bank_3</span>
+      <span>Email/Webchat: 123@gmail.com;@ojk.co.id;@bi.go.id</span>
+    </div>
+  </div>
+)
 
 function formatSavedTime(date: Date) {
   const year = date.getFullYear()
@@ -50,11 +102,52 @@ function formatSavedTime(date: Date) {
   return `${year}-${month}-${day} ${hour}:${minute}`
 }
 
-function parsePriorityNumbers(value: string) {
+function parseIdentifiers(value: string) {
   return value
     .split(';')
     .map((item) => item.trim())
     .filter(Boolean)
+}
+
+function normalizeIdentifier(value: string) {
+  return value.trim().toLowerCase()
+}
+
+function isEmailDomainIdentifier(identifier: string) {
+  return emailDomainIdentifierPattern.test(identifier.trim())
+}
+
+function getPriorityListMatchRule(
+  channel: string,
+  identifier: string,
+): PriorityListEntry['matchRule'] {
+  return emailDomainMatchChannels.has(channel) &&
+    isEmailDomainIdentifier(identifier)
+    ? 'email_domain_match'
+    : 'exact_match'
+}
+
+function getDuplicateKey(
+  channel: string,
+  identifier: string,
+  matchRule: PriorityListEntry['matchRule'],
+) {
+  return `${channel.trim().toLowerCase()}::${normalizeIdentifier(identifier)}::${matchRule}`
+}
+
+function getUniqueIdentifiers(identifiers: string[]) {
+  const seenIdentifiers = new Set<string>()
+
+  return identifiers.filter((identifier) => {
+    const normalizedIdentifier = normalizeIdentifier(identifier)
+
+    if (seenIdentifiers.has(normalizedIdentifier)) {
+      return false
+    }
+
+    seenIdentifiers.add(normalizedIdentifier)
+    return true
+  })
 }
 
 function getNextSequence(entries: PriorityListEntry[]) {
@@ -85,10 +178,10 @@ export function PriorityListManagementPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [modalMode, setModalMode] = useState<PriorityListModalMode>(null)
   const [notice, setNotice] = useState('')
+  const [saveWarning, setSaveWarning] = useState('')
   const [selectedEntryIds, setSelectedEntryIds] = useState<string[]>([])
   const [submitAttempted, setSubmitAttempted] = useState(false)
 
-  const isBatchMode = modalMode === 'batch'
   const selectedCount = selectedEntryIds.length
   const enabledChannelOptions = useMemo(() => {
     const channelNames = new Set<string>()
@@ -109,10 +202,6 @@ export function PriorityListManagementPage() {
         value: channelName,
       }))
   }, [routingChannels])
-  const channelFilterOptions = useMemo(
-    () => [{ label: 'All', value: '' }, ...enabledChannelOptions],
-    [enabledChannelOptions],
-  )
   const channelFormOptions = useMemo(
     () => enabledChannelOptions,
     [enabledChannelOptions],
@@ -120,25 +209,74 @@ export function PriorityListManagementPage() {
   const filteredEntries = useMemo(
     () =>
       priorityListEntries.filter((entry) => {
-        const numberKeyword = appliedFilters.priorityNumber
+        const identifierKeyword = appliedFilters.identifier
           .trim()
           .toLowerCase()
-        const channelMatched = appliedFilters.channel
-          ? entry.channel === appliedFilters.channel
-          : true
-        const numberMatched = numberKeyword
-          ? entry.priorityNumber.toLowerCase().includes(numberKeyword)
+        const channelMatched =
+          appliedFilters.channels.length === 0
+            ? true
+            : appliedFilters.channels.includes(entry.channel)
+        const identifierMatched = identifierKeyword
+          ? entry.identifier.toLowerCase().includes(identifierKeyword)
           : true
 
-        return channelMatched && numberMatched
+        return channelMatched && identifierMatched
       }),
     [appliedFilters, priorityListEntries],
   )
 
-  const parsedNumbers = useMemo(
-    () => parsePriorityNumbers(draft.priorityNumbers),
-    [draft.priorityNumbers],
+  const parsedIdentifiers = useMemo(
+    () => parseIdentifiers(draft.identifiers),
+    [draft.identifiers],
   )
+
+  const existingPriorityListKeys = useMemo(() => {
+    const existingKeys = new Map<string, PriorityListDuplicateRow>()
+
+    priorityListEntries.forEach((entry, index) => {
+      const key = getDuplicateKey(
+        entry.channel,
+        entry.identifier,
+        entry.matchRule,
+      )
+
+      existingKeys.set(key, {
+        channel: entry.channel,
+        existingNo: index + 1,
+        identifier: entry.identifier,
+        key,
+        matchRule: entry.matchRule,
+      })
+    })
+
+    return existingKeys
+  }, [priorityListEntries])
+
+  const duplicateRows = useMemo(() => {
+    if (!modalMode || draft.channels.length === 0) {
+      return []
+    }
+
+    return getUniqueIdentifiers(parsedIdentifiers).flatMap((identifier) => {
+      return draft.channels.flatMap((channel) => {
+        const matchRule = getPriorityListMatchRule(channel, identifier)
+        const key = getDuplicateKey(channel, identifier, matchRule)
+        const existingRecord = existingPriorityListKeys.get(key)
+
+        return existingRecord
+          ? [
+              {
+                channel,
+                existingNo: existingRecord.existingNo,
+                identifier,
+                key,
+                matchRule,
+              },
+            ]
+          : []
+      })
+    })
+  }, [draft.channels, existingPriorityListKeys, modalMode, parsedIdentifiers])
 
   const validationErrors = useMemo(() => {
     if (!modalMode) {
@@ -147,18 +285,25 @@ export function PriorityListManagementPage() {
 
     const errors: string[] = []
 
-    if (!draft.channel) {
-      errors.push('Channel is required. Please enable a channel first.')
+    if (draft.channels.length === 0) {
+      errors.push(
+        'Channel is required. Please select at least one enabled channel.',
+      )
     }
 
-    if (!draft.priorityNumbers.trim()) {
-      errors.push('Priority Number is required.')
-    } else if (parsedNumbers.length === 0) {
-      errors.push('At least one priority number is required.')
+    if (!draft.identifiers.trim()) {
+      errors.push('Identifier is required.')
+    } else if (parsedIdentifiers.length === 0) {
+      errors.push('At least one identifier is required.')
     }
 
     return errors
-  }, [draft.channel, draft.priorityNumbers, modalMode, parsedNumbers.length])
+  }, [
+    draft.channels.length,
+    draft.identifiers,
+    modalMode,
+    parsedIdentifiers.length,
+  ])
 
   const updateDraft = <Key extends keyof PriorityListDraft>(
     key: Key,
@@ -169,11 +314,11 @@ export function PriorityListManagementPage() {
       [key]: value,
     }))
     setNotice('')
+    setSaveWarning('')
   }
 
   const createDefaultDraft = (): PriorityListDraft => ({
     ...defaultDraft,
-    channel: enabledChannelOptions[0]?.value ?? '',
   })
 
   const openCreateModal = (mode: Exclude<PriorityListModalMode, null>) => {
@@ -181,12 +326,14 @@ export function PriorityListManagementPage() {
     setModalMode(mode)
     setSubmitAttempted(false)
     setNotice('')
+    setSaveWarning('')
   }
 
   const closeModal = () => {
     setDraft(createDefaultDraft())
     setModalMode(null)
     setSubmitAttempted(false)
+    setSaveWarning('')
   }
 
   const handleSearch = () => {
@@ -207,27 +354,55 @@ export function PriorityListManagementPage() {
       return
     }
 
-    const uniqueNumbers = Array.from(new Set(parsedNumbers))
+    const uniqueIdentifiers = getUniqueIdentifiers(parsedIdentifiers)
     const baseSequence = getNextSequence(priorityListEntries)
     const createdAt = formatSavedTime(new Date())
     const createdBy = authSession?.displayName ?? 'Admin'
     const remark = draft.remark.trim()
-    const nextEntries: PriorityListEntry[] = uniqueNumbers.map(
-      (priorityNumber, index) => ({
-        channel: draft.channel,
-        createdAt,
-        createdBy,
-        id: `PL${String(baseSequence + index + 1).padStart(3, '0')}`,
-        priorityNumber,
-        remark,
-      }),
-    )
+    const nextEntries: PriorityListEntry[] = []
+
+    uniqueIdentifiers.forEach((identifier) => {
+      draft.channels.forEach((channel) => {
+        const matchRule = getPriorityListMatchRule(channel, identifier)
+        const key = getDuplicateKey(channel, identifier, matchRule)
+
+        if (existingPriorityListKeys.has(key)) {
+          return
+        }
+
+        nextEntries.push({
+          channel,
+          createdAt,
+          createdBy,
+          id: `PL${String(baseSequence + nextEntries.length + 1).padStart(
+            3,
+            '0',
+          )}`,
+          identifier,
+          matchRule,
+          remark,
+        })
+      })
+    })
+
+    if (nextEntries.length === 0) {
+      setSaveWarning('All selected identifiers already exist.')
+      return
+    }
 
     addPriorityListEntries(nextEntries)
     setNotice(
       nextEntries.length === 1
-        ? 'Priority number added.'
-        : `${nextEntries.length} priority numbers added.`,
+        ? `Priority list record added.${
+            duplicateRows.length > 0
+              ? ` ${duplicateRows.length} duplicate record(s) skipped.`
+              : ''
+          }`
+        : `${nextEntries.length} priority list records added.${
+            duplicateRows.length > 0
+              ? ` ${duplicateRows.length} duplicate record(s) skipped.`
+              : ''
+          }`,
     )
     closeModal()
   }
@@ -268,7 +443,7 @@ export function PriorityListManagementPage() {
       render: (_, record) =>
         filteredEntries.findIndex((entry) => entry.id === record.id) + 1,
       title: 'No.',
-      width: 76,
+      width: 56,
     },
     {
       dataIndex: 'channel',
@@ -276,31 +451,37 @@ export function PriorityListManagementPage() {
       width: 150,
     },
     {
-      dataIndex: 'priorityNumber',
-      title: 'Priority Number',
+      dataIndex: 'identifier',
+      title: 'Identifier',
       width: 180,
+    },
+    {
+      dataIndex: 'matchRule',
+      render: (matchRule: PriorityListEntry['matchRule']) =>
+        matchRuleLabels[matchRule],
+      title: 'Match Rule',
+      width: 150,
     },
     {
       dataIndex: 'remark',
       ellipsis: true,
       title: 'Remark',
-      width: 360,
+      width: 320,
     },
     {
       dataIndex: 'createdAt',
       title: 'Created Date',
-      width: 160,
+      width: 130,
     },
     {
       dataIndex: 'createdBy',
       title: 'Created By',
-      width: 130,
+      width: 100,
     },
   ]
 
   return (
-    <PageContainer title="Priority List Management">
-      <section className="routing-config-page priority-list-management">
+    <AdminPage className="priority-list-management" title="Priority List Management">
         {notice && (
           <Alert
             showIcon
@@ -310,84 +491,72 @@ export function PriorityListManagementPage() {
           />
         )}
         <BaseCard compact>
-          <div className="routing-config-page__admin-toolbar">
-            <div className="routing-config-page__query-group">
-              <div className="routing-config-page__filters">
-                <label
-                  className="routing-config-page__filter"
-                  style={{ width: 180 }}
-                >
-                  <span>Channel</span>
-                  <Select
-                    options={channelFilterOptions}
-                    value={filterDraft.channel}
-                    onChange={(value) =>
-                      setFilterDraft((currentDraft) => ({
-                        ...currentDraft,
-                        channel: value,
-                      }))
-                    }
-                  />
-                </label>
-                <label
-                  className="routing-config-page__filter"
-                  style={{ width: 220 }}
-                >
-                  <span>Priority Number</span>
-                  <Input
-                    placeholder="Priority number"
-                    value={filterDraft.priorityNumber}
-                    onChange={(event) =>
-                      setFilterDraft((currentDraft) => ({
-                        ...currentDraft,
-                        priorityNumber: event.target.value,
-                      }))
-                    }
-                  />
-                </label>
-              </div>
-              <div className="routing-config-page__admin-actions">
+          <AdminToolbar
+            actions={
+              <>
                 <BaseButton variant="primary" onClick={handleSearch}>
                   Search
                 </BaseButton>
                 <BaseButton variant="secondary" onClick={handleReset}>
                   Reset
                 </BaseButton>
+              </>
+            }
+            filters={
+              <>
+                <AdminFilterField label="Channel" width={220}>
+                  <Select
+                    allowClear
+                    maxTagCount="responsive"
+                    mode="multiple"
+                    options={enabledChannelOptions}
+                    placeholder="All Channels"
+                    value={filterDraft.channels}
+                    onChange={(value) =>
+                      setFilterDraft((currentDraft) => ({
+                        ...currentDraft,
+                        channels: value,
+                      }))
+                    }
+                  />
+                </AdminFilterField>
+                <AdminFilterField label="Identifier" width={220}>
+                  <Input
+                    placeholder="Identifier"
+                    value={filterDraft.identifier}
+                    onChange={(event) =>
+                      setFilterDraft((currentDraft) => ({
+                        ...currentDraft,
+                        identifier: event.target.value,
+                      }))
+                    }
+                  />
+                </AdminFilterField>
+              </>
+            }
+            primaryActions={
+              <div className="call-management-list__add-actions">
+                <BaseButton
+                  icon={<PlusOutlined />}
+                  variant="primary"
+                  onClick={() => openCreateModal('batch')}
+                >
+                  Batch Add
+                </BaseButton>
+                <BaseButton
+                  disabled={selectedCount === 0}
+                  variant="danger"
+                  onClick={openDeleteConfirm}
+                >
+                  {selectedCount > 0 ? `Delete (${selectedCount})` : 'Delete'}
+                </BaseButton>
               </div>
-            </div>
-            <div className="routing-config-page__add-action call-management-list__add-actions">
-              <BaseButton
-                icon={<PlusOutlined />}
-                variant="secondary"
-                onClick={() => openCreateModal('single')}
-              >
-                Add
-              </BaseButton>
-              <BaseButton
-                icon={<PlusOutlined />}
-                variant="primary"
-                onClick={() => openCreateModal('batch')}
-              >
-                Batch Add
-              </BaseButton>
-              <BaseButton
-                disabled={selectedCount === 0}
-                variant="danger"
-                onClick={openDeleteConfirm}
-              >
-                {selectedCount > 0 ? `Delete (${selectedCount})` : 'Delete'}
-              </BaseButton>
-            </div>
-          </div>
-          <BaseTable<PriorityListEntry>
+            }
+          />
+          <AdminTable<PriorityListEntry>
             columns={columns}
             dataSource={filteredEntries}
-            pagination={{
-              defaultPageSize: 20,
-              pageSizeOptions: [10, 20, 50, 100],
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} / ${total} records`,
-            }}
+            pagination={{}}
             rowSelection={{
               preserveSelectedRowKeys: true,
               selectedRowKeys: selectedEntryIds,
@@ -395,17 +564,12 @@ export function PriorityListManagementPage() {
                 setSelectedEntryIds(selectedRowKeys.map(String)),
             }}
             rowKey="id"
-            scroll={{ x: 1060 }}
-            size="small"
           />
         </BaseCard>
-      </section>
-      <BaseModal
-        className="routing-config-crud-modal"
+        <AdminModal
         destroyOnClose
-        kind="detail"
         open={Boolean(modalMode)}
-        title={isBatchMode ? 'Batch Add Priority List' : 'Add Priority List'}
+        title="Batch Add Priority List"
         width={720}
         onCancel={closeModal}
       >
@@ -426,69 +590,91 @@ export function PriorityListManagementPage() {
             />
           )}
           <div className="routing-config-crud-modal__form">
-            <label className="routing-config-crud-modal__field">
-              <span>Channel</span>
+            <AdminFormField label="Channel" required>
               <Select
+                maxTagCount="responsive"
+                mode="multiple"
                 options={channelFormOptions}
-                value={draft.channel}
-                onChange={(value) => updateDraft('channel', value)}
+                placeholder="Select channels"
+                value={draft.channels}
+                onChange={(value) => updateDraft('channels', value)}
               />
-            </label>
-            <label
-              className={[
-                'routing-config-crud-modal__field',
-                isBatchMode
-                  ? 'routing-config-crud-modal__field--full call-management-list__number-field--batch'
-                  : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
+            </AdminFormField>
+            <AdminFormField
+              className="routing-config-crud-modal__field--full call-management-list__number-field--batch"
+              label={
+                <span className="priority-list-management__identifier-label">
+                  Identifier
+                  <Tooltip title={identifierTooltip}>
+                    <QuestionCircleOutlined />
+                  </Tooltip>
+                </span>
+              }
+              required
             >
-              <span>
-                Priority Number <strong>*</strong>
-              </span>
-              {isBatchMode ? (
-                <Input.TextArea
-                  rows={6}
-                  placeholder="Use semicolons for batch add"
-                  value={draft.priorityNumbers}
-                  onChange={(event) =>
-                    updateDraft('priorityNumbers', event.target.value)
-                  }
-                />
-              ) : (
-                <Input
-                  placeholder="Priority number"
-                  value={draft.priorityNumbers}
-                  onChange={(event) =>
-                    updateDraft('priorityNumbers', event.target.value)
-                  }
-                />
-              )}
-            </label>
-            <label className="routing-config-crud-modal__field routing-config-crud-modal__field--full">
-              <span>Remark</span>
+              <Input.TextArea
+                rows={8}
+                placeholder="Use semicolons for batch add"
+                value={draft.identifiers}
+                onChange={(event) =>
+                  updateDraft('identifiers', event.target.value)
+                }
+              />
+            </AdminFormField>
+            <AdminFormField label="Remark" fullWidth>
               <Input.TextArea
                 rows={3}
                 value={draft.remark}
                 onChange={(event) => updateDraft('remark', event.target.value)}
               />
-            </label>
+            </AdminFormField>
           </div>
+          {saveWarning && (
+            <Alert
+              showIcon
+              className="priority-list-management__save-warning"
+              message={saveWarning}
+              type="warning"
+            />
+          )}
+          {duplicateRows.length > 0 && (
+            <div className="priority-list-management__duplicate-panel">
+              <Alert
+                showIcon
+                message="Duplicate records will be skipped automatically."
+                type="info"
+              />
+              <div className="priority-list-management__duplicate-table">
+                <strong>Channel</strong>
+                <strong>Identifier</strong>
+                <strong>Match Rule</strong>
+                <strong>Existing No.</strong>
+                {duplicateRows.map((row) => (
+                  <div
+                    className="priority-list-management__duplicate-row"
+                    key={row.key}
+                  >
+                    <span>{row.channel}</span>
+                    <span>{row.identifier}</span>
+                    <span>{matchRuleLabels[row.matchRule]}</span>
+                    <span>{row.existingNo}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-        <div className="routing-config-crud-modal__footer">
+        <AdminModalFooter>
           <BaseButton variant="secondary" onClick={closeModal}>
             Cancel
           </BaseButton>
           <BaseButton variant="primary" onClick={handleSave}>
             Save
           </BaseButton>
-        </div>
-      </BaseModal>
-      <BaseModal
-        className="routing-config-crud-modal"
+        </AdminModalFooter>
+      </AdminModal>
+      <AdminModal
         destroyOnClose
-        kind="detail"
         open={deleteConfirmOpen}
         title="Delete Priority List Records"
         width={520}
@@ -504,15 +690,15 @@ export function PriorityListManagementPage() {
             type="warning"
           />
         </div>
-        <div className="routing-config-crud-modal__footer">
+        <AdminModalFooter>
           <BaseButton variant="secondary" onClick={closeDeleteConfirm}>
             Cancel
           </BaseButton>
           <BaseButton variant="danger" onClick={handleDeleteSelected}>
             Delete
           </BaseButton>
-        </div>
-      </BaseModal>
-    </PageContainer>
+        </AdminModalFooter>
+      </AdminModal>
+    </AdminPage>
   )
 }
