@@ -1,16 +1,5 @@
 import type { PriorityListEntry } from '../types'
 
-const emailDomainMatchChannels = new Set([
-  'Webchat',
-  'Email Contact',
-  'Email Priority',
-])
-
-const domainLabelPattern = '[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?'
-const emailDomainIdentifierPattern = new RegExp(
-  `^@(?=.{1,253}$)(?:${domainLabelPattern}\\.)+${domainLabelPattern}$`,
-)
-
 interface PriorityListSeed {
   channels: string[]
   createdBy: string
@@ -45,13 +34,13 @@ const priorityListSeeds: PriorityListSeed[] = [
   },
 ]
 
-function getPriorityListMatchRule(
-  channel: string,
+const partialMatchSeedIdentifiers = new Set(['@ojk.co.id', '@bi.go.id'])
+
+function getSeedMatchRule(
   identifier: string,
 ): PriorityListEntry['matchRule'] {
-  return emailDomainMatchChannels.has(channel) &&
-    emailDomainIdentifierPattern.test(identifier.trim())
-    ? 'email_domain_match'
+  return partialMatchSeedIdentifiers.has(identifier.trim().toLowerCase())
+    ? 'partial_match'
     : 'exact_match'
 }
 
@@ -63,7 +52,7 @@ export const defaultPriorityListEntries: PriorityListEntry[] =
           channel,
           createdBy: seed.createdBy,
           identifier,
-          matchRule: getPriorityListMatchRule(channel, identifier),
+          matchRule: getSeedMatchRule(identifier),
           remark: seed.remark,
         })),
       ),

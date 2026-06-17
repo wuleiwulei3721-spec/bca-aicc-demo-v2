@@ -1,4 +1,4 @@
-export type PriorityListMatchRule = 'email_domain_match' | 'exact_match'
+export type PriorityListMatchRule = 'exact_match' | 'partial_match'
 
 export interface PriorityListEntry {
   channel: string

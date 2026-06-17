@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-16 19:20 +08:00
+最后更新：2026-06-17 18:57 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -17,6 +17,92 @@
 重要修改包括：完成页面、完成需求、修改架构、修改接口、修改 mock 数据结构、修改关键 prompt、修复关键 bug、调整部署或恢复机制。
 
 ## 日志
+
+### 2026-06-17 18:57 +08:00 - Priority List 查询匹配规则与示例数据调整
+
+修改页面或文件：
+
+- `src/pages/call-management/PriorityListManagementPage.tsx`
+- `src/mock/priorityList.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-17-1857.md`
+- `.codex-backup/current-todo-2026-06-17-1857.md`
+- `.codex-backup/page-state-2026-06-17-1857.md`
+
+修改原因：
+
+- 用户补充 `Priority List Management` 查询条件也需要支持按匹配规则筛选。
+- 用户补充示例数据中邮箱域名类的 `@` 开头配置应展示为模糊匹配，便于客户理解域名包含匹配的配置方式。
+
+修改结果：
+
+- `Priority List Management` 查询区新增 `Match Rule` 筛选条件，默认空值表示 All Match Rules。
+- 查询逻辑新增按 `entry.matchRule` 过滤，继续与 Channel、Identifier 条件组合生效。
+- 默认优先名单 mock 中 `@ojk.co.id`、`@bi.go.id` 改为 `Partial Match`；普通手机号、Bank ID、社媒账号和完整邮箱地址继续为 `Exact Match`。
+- 新增/保存逻辑不改，仍由用户在 Batch Add 弹框选择 `Exact Match` 或 `Partial Match`，不恢复自动邮箱域名判断。
+- `Blacklist Management` 未做业务调整。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 已通过。
+- 后续已运行 `npm.cmd run lint`、`npm.cmd run build` 和 HTTP smoke，结果记录在本轮最终回复。
+
+回滚说明：
+
+- 如需移除查询筛选，删除 `PriorityListFilters.matchRule`、查询区 `Match Rule` 字段和 `filteredEntries` 中的 `matchRuleMatched` 判断即可。
+- 如需让示例数据全部回到精准匹配，删除 `partialMatchSeedIdentifiers` / `getSeedMatchRule`，并把 mock 中 `matchRule` 固定为 `exact_match` 即可。
+
+当前风险点：
+
+- `Partial Match` 是包含匹配口径，真实后端匹配需要按同样语义落地；前端当前只做配置展示和 demo store。
+
+### 2026-06-17 18:50 +08:00 - Priority List Match Rule 简化
+
+修改页面或文件：
+
+- `src/pages/call-management/PriorityListManagementPage.tsx`
+- `src/types/priorityList.ts`
+- `src/mock/priorityList.ts`
+- `PROJECT_CONTEXT.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-17-1850.md`
+- `.codex-backup/current-todo-2026-06-17-1850.md`
+- `.codex-backup/page-state-2026-06-17-1850.md`
+
+修改原因：
+
+- 客户和同事反馈优先名单配置不应继续让用户理解邮箱域名等特殊自动规则，应统一为客户更容易理解的精准匹配和模糊匹配。
+- 用户确认“模糊匹配”按包含关系处理，即客户标识包含配置值即可命中。
+
+修改结果：
+
+- `PriorityListMatchRule` 简化为 `exact_match` 与 `partial_match`。
+- `Priority List Management` 的 Batch Add 弹框在 `Identifier` 后新增 `Match Rule` 下拉，默认 `Exact Match`；同一批次内所有选中 Channel 和所有 Identifier 使用同一个 Match Rule。
+- 列表继续展示 `Match Rule`，展示文案为 `Exact Match` / `Partial Match`。
+- 不再自动判断邮箱域名，不再使用或展示 `Email Domain Match`；默认 priority list mock 数据全部为 `Exact Match`。
+- 重复判断继续按 `Channel + normalized Identifier + Match Rule`，因此相同 Channel + Identifier 但不同 Match Rule 可以分别存在。
+- `Identifier` tooltip 改为解释 `Exact Match` 等于客户标识必须完全等于配置值，`Partial Match` 等于客户标识包含配置值。
+- `Blacklist Management` 未做业务调整。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 已通过。
+- `npm.cmd run lint` 已通过。
+- `npm.cmd run build` 已通过；仍只有既有 Vite/Rolldown chunk size warning。
+- HTTP smoke 已通过：`/call-management/priority-list`、`/call-management/blacklist` 均返回 200。
+- `git diff --check` 无实际 whitespace error；仅有既有 Windows LF/CRLF warning。
+- 目标文件扫描确认不再包含 `email_domain_match`、`Email Domain Match`、`getPriorityListMatchRule`、`emailDomain`。
+
+回滚说明：
+
+- 如需恢复邮箱域名自动匹配，需要把 `PriorityListMatchRule` 恢复为包含 `email_domain_match`，并恢复页面与 mock 中按渠道和 Identifier 派生规则的逻辑。
+- 如需移除用户可选匹配规则，删除 Batch Add 弹框中的 `Match Rule` 字段，并将新增记录固定写入 `exact_match` 即可。
+
+当前风险点：
+
+- 前端当前只维护 demo store 和配置展示；真实排队优先匹配需要后端执行层按同一语义实现：`Exact Match` 为等值匹配，`Partial Match` 为包含匹配。
+- `Partial Match` 对短字符串可能扩大命中范围，演示时需要提示客户谨慎配置过短的值。
 
 ### 2026-06-16 19:20 +08:00 - 移除客户卡片 Menu 并默认开放 Routing Config
 

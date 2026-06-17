@@ -25,11 +25,13 @@ type PriorityListModalMode = 'batch' | null
 interface PriorityListFilters {
   channels: string[]
   identifier: string
+  matchRule: PriorityListEntry['matchRule'] | ''
 }
 
 interface PriorityListDraft {
   channels: string[]
   identifiers: string
+  matchRule: PriorityListEntry['matchRule']
   remark: string
 }
 
@@ -44,27 +46,26 @@ interface PriorityListDuplicateRow {
 const defaultFilters: PriorityListFilters = {
   channels: [],
   identifier: '',
+  matchRule: '',
 }
 
 const defaultDraft: PriorityListDraft = {
   channels: [],
   identifiers: '',
+  matchRule: 'exact_match',
   remark: '',
 }
 
 const matchRuleLabels: Record<PriorityListEntry['matchRule'], string> = {
-  email_domain_match: 'Email Domain Match',
   exact_match: 'Exact Match',
+  partial_match: 'Partial Match',
 }
 
-const emailDomainMatchChannels = new Set([
-  'Webchat',
-  'Email Contact',
-  'Email Priority',
-])
-const domainLabelPattern = '[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?'
-const emailDomainIdentifierPattern = new RegExp(
-  `^@(?=.{1,253}$)(?:${domainLabelPattern}\\.)+${domainLabelPattern}$`,
+const matchRuleOptions = Object.entries(matchRuleLabels).map(
+  ([value, label]) => ({
+    label,
+    value,
+  }),
 )
 
 const identifierTooltip = (
@@ -74,14 +75,12 @@ const identifierTooltip = (
       more channels, then separate multiple identifiers with semicolons.
     </p>
     <p>
-      The system saves one record per selected channel and identifier. Email
-      domains must start with @ and contain valid domain segments, such as
-      @ojk.co.id or @bi.go.id.
+      The system saves one record per selected channel and identifier.
     </p>
     <p>
-      Webchat and email channels use domain match for email domains. Other
-      channel and identifier combinations are saved with exact match, such as
-      Phone + @ojk.co.id.
+      Exact Match means the customer identifier must equal the configured
+      value. Partial Match means the customer identifier contains the
+      configured value.
     </p>
     <div className="priority-list-management__identifier-examples">
       <strong>Batch examples</strong>
@@ -111,20 +110,6 @@ function parseIdentifiers(value: string) {
 
 function normalizeIdentifier(value: string) {
   return value.trim().toLowerCase()
-}
-
-function isEmailDomainIdentifier(identifier: string) {
-  return emailDomainIdentifierPattern.test(identifier.trim())
-}
-
-function getPriorityListMatchRule(
-  channel: string,
-  identifier: string,
-): PriorityListEntry['matchRule'] {
-  return emailDomainMatchChannels.has(channel) &&
-    isEmailDomainIdentifier(identifier)
-    ? 'email_domain_match'
-    : 'exact_match'
 }
 
 function getDuplicateKey(
@@ -219,8 +204,11 @@ export function PriorityListManagementPage() {
         const identifierMatched = identifierKeyword
           ? entry.identifier.toLowerCase().includes(identifierKeyword)
           : true
+        const matchRuleMatched = appliedFilters.matchRule
+          ? entry.matchRule === appliedFilters.matchRule
+          : true
 
-        return channelMatched && identifierMatched
+        return channelMatched && identifierMatched && matchRuleMatched
       }),
     [appliedFilters, priorityListEntries],
   )
@@ -259,8 +247,7 @@ export function PriorityListManagementPage() {
 
     return getUniqueIdentifiers(parsedIdentifiers).flatMap((identifier) => {
       return draft.channels.flatMap((channel) => {
-        const matchRule = getPriorityListMatchRule(channel, identifier)
-        const key = getDuplicateKey(channel, identifier, matchRule)
+        const key = getDuplicateKey(channel, identifier, draft.matchRule)
         const existingRecord = existingPriorityListKeys.get(key)
 
         return existingRecord
@@ -270,13 +257,19 @@ export function PriorityListManagementPage() {
                 existingNo: existingRecord.existingNo,
                 identifier,
                 key,
-                matchRule,
+                matchRule: draft.matchRule,
               },
             ]
           : []
       })
     })
-  }, [draft.channels, existingPriorityListKeys, modalMode, parsedIdentifiers])
+  }, [
+    draft.channels,
+    draft.matchRule,
+    existingPriorityListKeys,
+    modalMode,
+    parsedIdentifiers,
+  ])
 
   const validationErrors = useMemo(() => {
     if (!modalMode) {
@@ -363,8 +356,7 @@ export function PriorityListManagementPage() {
 
     uniqueIdentifiers.forEach((identifier) => {
       draft.channels.forEach((channel) => {
-        const matchRule = getPriorityListMatchRule(channel, identifier)
-        const key = getDuplicateKey(channel, identifier, matchRule)
+        const key = getDuplicateKey(channel, identifier, draft.matchRule)
 
         if (existingPriorityListKeys.has(key)) {
           return
@@ -379,7 +371,7 @@ export function PriorityListManagementPage() {
             '0',
           )}`,
           identifier,
-          matchRule,
+          matchRule: draft.matchRule,
           remark,
         })
       })
@@ -532,6 +524,20 @@ export function PriorityListManagementPage() {
                     }
                   />
                 </AdminFilterField>
+                <AdminFilterField label="Match Rule" width={180}>
+                  <Select
+                    allowClear
+                    options={matchRuleOptions}
+                    placeholder="All Match Rules"
+                    value={filterDraft.matchRule || undefined}
+                    onChange={(value) =>
+                      setFilterDraft((currentDraft) => ({
+                        ...currentDraft,
+                        matchRule: value ?? '',
+                      }))
+                    }
+                  />
+                </AdminFilterField>
               </>
             }
             primaryActions={
@@ -619,6 +625,13 @@ export function PriorityListManagementPage() {
                 onChange={(event) =>
                   updateDraft('identifiers', event.target.value)
                 }
+              />
+            </AdminFormField>
+            <AdminFormField label="Match Rule" required>
+              <Select
+                options={matchRuleOptions}
+                value={draft.matchRule}
+                onChange={(value) => updateDraft('matchRule', value)}
               />
             </AdminFormField>
             <AdminFormField label="Remark" fullWidth>
