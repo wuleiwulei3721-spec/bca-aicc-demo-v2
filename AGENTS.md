@@ -1,142 +1,266 @@
-﻿# BANK 1 AICC Demo V2 - 项目级 AI 开发规则
+# BANK 1 AICC Demo V2 - Codex Operating Rules
 
-适用范围：本文件位于仓库根目录，规则适用于当前项目全部目录与文件。未来所有 Codex 会话进入本项目后，必须先读取本文件，再读取 `PROJECT_CONTEXT.md` 和 `DEV_LOG.md`，然后才能开始修改。
+Last updated: 2026-06-18 15:11 +08:00
+Scope: entire repository at `D:\03projects\bca-aicc-demo-v2`
 
-本文件用于把项目开发规范固化到仓库内，避免规则只存在于 Codex sidebar、聊天历史、账号状态或 UI 缓存中。
+This file is the required entry point for future Codex sessions and maintainers. Its job is to restore project context quickly, protect confirmed product decisions, and keep the project knowledge base current without relying on chat history, sidebar memory, or a specific OpenAI account.
 
-## 1. 项目背景
+## 1. Session Startup Rules
 
-### 当前项目用途
+Every new Codex session must read `AGENTS.md` first.
 
-`bca-aicc-demo-v2` 是一个银行 AICC 前端演示系统，面向企业级客服坐席工作台场景。核心演示目标是 BANK 1 风格的 Inbound 电话来电弹屏、坐席状态机、话务工具条、CRM workspace、AI Assistant、客户资料、工单与下一步行动建议。
+Before modifying code, UI, configuration, mock data, or documentation, use this layered reading strategy.
 
-该项目不是 Vite 默认模板，而是已经多轮迭代的业务 demo。新增功能时应保持企业级银行客服系统的工作台气质：信息密度高、交互明确、视觉克制、适合演示和重复操作。
+Level 1 - required for every task:
 
-### 技术栈
+1. `PROJECT_CONTEXT.md`
+2. `CURRENT_STATUS.md`
+3. `CURRENT_TODO.md`
 
-- React `19.2.6`
-- React DOM `19.2.6`
-- TypeScript `~6.0.2`
-- Vite `8.0.12`
-- Ant Design `6.4.2`
-- `@ant-design/icons` `6.2.3`
-- React Router DOM `7.15.1`
-- Zustand `5.0.13`
-- Less `4.6.4`
-- ESLint `10.3.0`
+Level 2 - read only when relevant:
 
-常用命令：
+- UI, UX, layout, component, page design, or visual consistency task: read `DESIGN_SYSTEM.md`.
+- Business flow, state machine, customer journey, verification, call handling, routing, or admin configuration task: read `BUSINESS_RULES.md` and `DECISION_LOG.md`.
+- Debugging, regression investigation, historical recovery, rollback, or "why was this built this way" task: read the top rules and archive index in `DEV_LOG.md`, then search `DEV_LOG.md` and `docs/archive/dev-log/` by keyword.
+
+Do not read all of `DEV_LOG.md` by default. It is an active log plus archive index, not a startup manual.
+
+After the required reading, run:
 
 ```bash
-npm run dev
-npm run build
-npm run lint
-npm run preview
+git status --short --branch
 ```
 
-### 页面结构
+Only then inspect task-specific source files. Do not start implementation before this startup pass is complete.
 
-当前路由：
+## 2. Knowledge Base Map
 
-- `/` -> `BasicLayout` -> `AgentWorkspace`
-- `/design-system` -> `BasicLayout` -> `DesignSystem`
-- `*` -> 重定向到 `/`
+Use the project documents for their intended roles. Do not duplicate large sections across files.
 
-关键结构：
+- `PROJECT_CONTEXT.md`: long-term project map. Keep project goal, background, routes, main modules, technology stack, deployment notes, data boundaries, and broad risks here.
+- `CURRENT_STATUS.md`: what is currently completed. Keep it module-based and outcome-based; do not write process history here.
+- `CURRENT_TODO.md`: what is still open. Keep customer confirmations, unfinished work, demo acceptance risks, future enhancements, and blocked items here.
+- `DESIGN_SYSTEM.md`: stable UI rules. Keep layout, Header, Toolbar, Card, Modal, Tabs, button, icon, typography, spacing, color, and admin page contracts here.
+- `BUSINESS_RULES.md`: confirmed business behavior. Keep agent status, call status, transfer, outbound, internal chat, customer information, verification, journey, ticket, Live Chat, BankApp, WhatsApp, Call Management, and Routing Config rules here.
+- `DECISION_LOG.md`: long-term important decisions and why they were chosen. Do not record ordinary bug fixes, small visual tweaks, icon changes, color changes, copy edits, or temporary test data here.
+- `DEV_LOG.md`: current active development log and archive index. Use it for recent important changes, rollback clues, deployments, and links to older archived logs.
+- `docs/archive/dev-log/`: historical development log archives. Search this folder when investigating older decisions, regressions, or rollback context.
+- `.codex-backup/`: handoff and recovery snapshots. Use for account switching, major delivery, major context recovery, or explicit backup requests, not for every small change.
 
-- `src/App.tsx`：Ant Design `ConfigProvider` 与 `RouterProvider`。
-- `src/routes.tsx`：路由定义。
-- `src/layouts/BasicLayout.tsx`：全局 Header、侧栏、坐席状态、话务工具条、内部聊天入口和主内容出口。
-- `src/pages/AgentWorkspace.tsx`：Home tab 与 Inbound tab 容器。
-- `src/pages/inbound/InboundPage.tsx`：核心 Inbound 三栏工作台。
-- `src/pages/inbound/components/*`：Inbound 页面卡片、CRM、Assistant、弹窗和业务组件。
-- `src/pages/DesignSystem.tsx`：设计系统展示页。
-- `src/components/*`：基础组件与兼容组件。
-- `src/mock/*`：演示数据。
-- `src/types/*`：业务类型。
-- `src/store/appStore.ts`：workspace tab 与 inbound popup 全局状态。
-- `src/styles/index.less`、`src/styles/tokens.less`、`src/styles/theme.ts`：全局样式、设计 token 与 Ant Design 主题。
+## 3. Automatic Documentation Maintenance
 
-Inbound 当前是核心页面，采用三栏：
+Codex is responsible for deciding when the knowledge base needs updates. Do not push this judgment back to the product manager for routine factual updates.
 
-- Left：Customer Information、Customer Journey、Ticketing History、Next Best Action、Quick Action。
-- Center：CRM workspace，包含固定 CRM tab 和动态业务 tabs。
-- Right：Assistant 与 Connection 状态。
+After any real project modification, check whether these documents need updates:
 
-### 当前开发方向
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DESIGN_SYSTEM.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
 
-- 优先稳定 Inbound 工作台的演示体验。
-- 优先复用 `/design-system` 已沉淀的基础组件、设计 token 和主题能力。
-- 继续完善 CRM/Assistant 截图资源、fallback、弹窗和业务 tab 交互。
-- 继续处理英文 UI 框架与印尼语业务内容的最终语言口径。
-- 后续新增 Online Chat、Video Call、Dashboard、Admin、Supervisor 等页面时，必须基于现有设计系统扩展。
-- 项目上下文、TODO、风险和恢复线索必须持续落盘，不依赖 Codex sidebar 历史。
+Use this policy:
 
-## 2. 强制开发规则
+- Update factual documents automatically when the facts changed and the source of truth is clear.
+- Ask the product manager before recording high-impact or uncertain product/business decisions.
+- If a fact must be recorded but the conclusion is not confirmed, mark it with `【需要产品经理确认】`.
+- Do not invent product decisions, business rules, customer policies, backend behavior, or future scope.
 
-### 新会话启动规则
+Update triggers:
 
-任何新的 Codex 会话进入当前项目时，必须按顺序执行：
+- `PROJECT_CONTEXT.md`: update when project goals, module structure, route structure, technology stack, deployment model, data/persistence boundary, or broad known risks change.
+- `CURRENT_STATUS.md`: update when a page, module, main workflow, or customer-demo capability is completed.
+- `CURRENT_TODO.md`: update when a customer request is added/cancelled, a TODO is created/completed, a demo acceptance risk is found, or a product confirmation item changes.
+- `DESIGN_SYSTEM.md`: update when a stable visual rule, component contract, admin page contract, or reusable UI pattern changes.
+- `BUSINESS_RULES.md`: update when a confirmed business process, state transition, validation rule, or channel behavior changes.
+- `DECISION_LOG.md`: update only for important long-term product, architecture, business-rule, multi-channel, branding, or workflow decisions.
+- `DEV_LOG.md`: append for important features, versions, deployments, architecture changes, business-rule changes, data/model changes, critical fixes, rollback notes, or knowledge-base maintenance.
 
-1. 阅读 `AGENTS.md`。
-2. 阅读 `PROJECT_CONTEXT.md`。
-3. 阅读 `DEV_LOG.md` 中最近记录。
-4. 阅读 `.codex-backup/` 下最新一组 `context-snapshot-*`、`current-todo-*`、`page-state-*`。
-5. 执行 `git status --short --branch`，确认工作区是否已有用户或历史会话留下的改动。
-6. 再读取与当前任务相关的源码文件。
+Do not add `DECISION_LOG.md` entries for:
 
-禁止在未恢复上述上下文前，从零假设项目结构或重建业务规则。
+- ordinary bug fixes,
+- font tweaks,
+- icon changes,
+- color changes,
+- minor spacing changes,
+- copy-only edits,
+- temporary test data,
+- low-risk local cleanup.
 
-### 修改后的文档同步规则
+## 4. When To Ask The Product Manager
 
-以后每次发生以下任一实际修改，必须同步更新 `PROJECT_CONTEXT.md` 和 `DEV_LOG.md`：
+Ask before implementing or documenting if any of these are true:
 
-- 修改页面。
-- 修改组件。
-- 修改接口、类型、mock 数据结构或服务契约。
-- 修改 prompt、业务话术、演示口径或关键需求摘要。
-- 完成功能。
-- 修复 bug。
-- 修改路由、状态机、全局状态、布局、设计 token、主题或部署配置。
+- the business meaning is unclear,
+- two project documents disagree,
+- a change would create a long-term product or architecture constraint,
+- a customer-visible demo promise may change,
+- a rule affects agent status, call handling, verification, routing, or channel behavior and cannot be confirmed from current docs/code,
+- sensitive customer wording or branding is uncertain.
 
-`PROJECT_CONTEXT.md` 至少要更新：
+Do not ask for routine factual maintenance, such as:
 
-- 最后更新时间。
-- 当前开发状态。
-- 页面结构或模块职责变化。
-- 已完成模块。
-- 已知风险。
-- TODO。
+- marking a completed task done in `CURRENT_TODO.md`,
+- adding a completed feature to `CURRENT_STATUS.md`,
+- logging an implemented change in `DEV_LOG.md`,
+- updating `PROJECT_CONTEXT.md` after a route/module/deployment change that is visible in code.
 
-`DEV_LOG.md` 至少要新增：
+## 5. Project Development Principles
 
-- 修改时间。
-- 修改页面或文件。
-- 修改原因。
-- 修改结果。
-- 回滚说明。
-- 当前风险点。
+- Treat this as an enterprise banking AICC demo, not a generic web app.
+- Keep UI dense, restrained, operational, and demo-ready.
+- Do not create marketing landing pages for business workspaces.
+- Do not casually refactor global styles, tokens, route structure, stores, or shared components.
+- Do not change confirmed business logic unless the user explicitly requests it or the current task requires it.
+- Prefer existing patterns over new abstractions.
+- Prefer existing components over handwritten local UI.
+- Keep changes scoped to the user request.
+- Do not revert user changes unless explicitly asked.
+- Do not save secrets, credentials, real customer data, or sensitive customer materials.
 
-如果只是只读分析、运行命令或回答问题，没有修改项目文件，可以不更新这两个文件，但最终回答必须说明未修改文件。
+## 6. Design System Rules
 
-### 开发约束
+Before changing UI, read `DESIGN_SYSTEM.md`.
 
-- 不要覆盖或回滚用户已有改动，除非用户明确要求。
-- 业务页面优先使用现有设计系统组件和 Less token。
-- 遇到业务复杂度上升、例外规则增多或同类逻辑反复补丁时，必须先判断该概念是否应上升为数据模型、配置维度或独立流程，不要急于在现有 UI 上继续打补丁；推荐方案应优先解释模型边界和后续扩展性。
-- 遇到高影响不确定性、业务语义可能理解错误或会影响后续模型结构的问题时，必须先向用户提出清晰问题，并说明当前推荐方案与原因；在用户确认前不要把不确定假设固化成实现。
-- 新增或维护 `Call Management`、`Routing Config` 等管理台数据维护页面时，必须优先使用 `src/components/admin/*` 的 `AdminPage`、`AdminToolbar`、`AdminFilterField`、`AdminTable`、`AdminModal`、`AdminFormField`；不要在页面内重新手写查询栏、分页、表格字重、Actions 固定列、弹框 footer 或输入框高度。
-- 管理台列表默认遵循统一规范：查询控件 32px 高，Search/Reset 等高等宽；Keyword 查询宽度约 240-260px，普通 input/select 约 200-220px，Status 约 150-160px；Search 使用 primary，Reset 使用 secondary；Add/Batch Add 属于右侧主操作区，使用 primary 样式并按文本自然宽度展示，Delete 保持 danger；表头加粗但列表数据正常字重，首个字段不额外加粗；列表状态列统一用 StatusBadge 文本标签展示，状态开关只放在新增/编辑弹框内；主列表默认 10 条分页并由页面容器纵向滚动，只有弹框内长列表使用表格内部纵向滚动；复杂 toolbar 中筛选条件可换行，但 Search/Reset 留在查询动作区，Batch Add 留在右侧主操作区。
-- 新增接口或 mock 字段时，必须同步更新对应 TypeScript 类型。
-- 新增页面时，必须确认路由、布局、状态入口、样式作用域和设计系统复用关系。
-- 修改 Inbound 相关逻辑时，必须关注 `BasicLayout` 状态机、`appStore`、`AgentWorkspace`、`InboundPage` 和子组件之间的联动。
-- 修改 prompt 或业务话术时，必须同步更新 `.codex-backup/key-prompts.md` 或对应恢复摘要。
-- 客户可见 UI、mock 展示数据、演示话术、文档摘要和备份说明中不要出现旧客户品牌词等敏感字样；统一用 Bank / BankApp / BANK 1 等脱敏口径替换，替换后必须保持英文或印尼语句子通顺。内部兼容 code 如确需保留，必须避免直接展示给客户。
-- 不要在仓库、备份目录或日志中保存密钥、token、账号密码、真实客户敏感数据。
+Use these components first:
 
-## 3. 自动备份规则
+- `BaseButton`
+- `BaseCard`
+- `BaseModal`
+- `BaseTable`
+- `BaseTabs`
+- `StatusBadge`
+- `ToolbarButton`
+- `SearchInput`
+- `TimelineFlow`
+- `CustomerInformationPanel`
 
-每次重大修改后，必须在 `.codex-backup/` 下新增一组备份文件：
+For management pages, use:
+
+- `AdminPage`
+- `AdminToolbar`
+- `AdminFilterField`
+- `AdminTable`
+- `AdminModal`
+- `AdminFormField`
+- `AdminModalFooter`
+
+Do not handwrite duplicate query bars, table styles, pagination rules, modal footers, Actions columns, or input-height systems inside individual admin pages.
+
+## 7. Admin Page Rules
+
+Call Management and Routing Config pages must follow the current admin contract:
+
+- Query controls are 32px high.
+- Search uses primary.
+- Reset uses secondary.
+- Search / Reset stay in the query action group.
+- Add / Batch Add stay in the right primary-action group and use primary.
+- Delete uses danger.
+- Keyword width: about 240-260px.
+- Normal input/select width: about 200-220px.
+- Status width: about 150-160px.
+- Main list default pagination: 10 rows.
+- Table header bold, row data normal weight.
+- First data field is not automatically bold.
+- Status columns use `StatusBadge` text labels.
+- Switches are used inside add/edit modals, not list status columns.
+- Actions column should be fixed right for horizontally scrollable tables.
+- Long lists scroll at page level unless inside a modal.
+
+## 8. Business Rule Protection
+
+Before changing business behavior, read `BUSINESS_RULES.md` and `DECISION_LOG.md`.
+
+High-impact areas:
+
+- Agent state machine.
+- Sign In / Sign Out / Log Out guards.
+- Ready / Not Ready / AUX / Pre-AUX.
+- Call status machine.
+- Answer / Hold / Mute / Transfer / Outbound / Hang Up.
+- BankApp and WhatsApp handoff readiness.
+- Live Chat session lifecycle.
+- Customer Verification V2 rule model.
+- Priority List duplicate and match-rule behavior.
+- Blacklist and Busy Reason management.
+- Routing Config data model.
+
+If business complexity increases or exceptions keep accumulating, stop and model the concept properly. Do not keep patching one-off UI conditions.
+
+## 9. Inbound and Workspace Rules
+
+Inbound-related changes must consider the full chain:
+
+- `BasicLayout`
+- `AgentToolbar`
+- `AgentWorkspace`
+- `useAppStore`
+- `InteractionWorkspace`
+- `InboundPage`
+- `VideoCallPage`
+- `LiveChat2Page`
+- inbound child components
+- mock data and types
+
+Do not update one layer without checking its effect on the others.
+
+## 10. Routing and New Page Rules
+
+When adding a page, confirm:
+
+- route path,
+- side menu entry,
+- selected menu behavior,
+- auth guard behavior,
+- layout wrapper,
+- state store impact,
+- style scope,
+- design system reuse,
+- mock/type updates if needed.
+
+Future Dashboard, Supervisor, Admin, Online Chat, or Video Call extensions must reuse the current shell and design system.
+
+## 11. Type and Mock Data Rules
+
+- If adding or changing mock fields, update TypeScript types.
+- If changing a type contract, update all relevant mock and component usage.
+- Prefer structured data models over ad hoc strings for business rules.
+- Keep demo data anonymized and customer-safe.
+
+## 12. Dev Log and Archive Rules
+
+`DEV_LOG.md` should stay readable. Keep it as the current active log plus archive index.
+
+- Keep recent active records in root `DEV_LOG.md`.
+- Move older records to `docs/archive/dev-log/` by date range when the root log becomes too large.
+- Do not rewrite historical archive entries except to fix broken Markdown or restore accidentally corrupted content.
+- When investigating older context, use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/`.
+
+`DEV_LOG.md` entries should include:
+
+- modification time,
+- modified files or modules,
+- reason,
+- result,
+- rollback notes,
+- current risk.
+
+## 13. Backup Rules
+
+Do not create `.codex-backup` snapshots for every small change.
+
+Create or suggest a backup set when:
+
+- the user asks for handoff, backup, account switching, or recovery support,
+- a major page/workflow/version is delivered,
+- a large route/store/type/mock/business-rule change lands,
+- context has been recovered from sessions or archives,
+- the knowledge base itself is substantially reorganized.
+
+Backup set format:
 
 ```text
 .codex-backup/context-snapshot-YYYY-MM-DD-HHMM.md
@@ -144,78 +268,49 @@ Inbound 当前是核心页面，采用三栏：
 .codex-backup/page-state-YYYY-MM-DD-HHMM.md
 ```
 
-重大修改包括但不限于：
+## 14. Sensitive Content Rules
 
-- 完成一个页面、工作流或核心交互。
-- 大幅修改组件结构、布局、全局样式、设计 token 或主题。
-- 修改路由、状态机、store、接口类型、mock 数据结构。
-- 修改关键 prompt、演示口径、业务规则或上下文恢复机制。
-- 修复影响主流程的 bug。
-- 完成一次可交付需求。
+Customer-visible UI, mock data, docs, backup files, and demo narration must use safe wording:
 
-备份内容要求：
+- Bank
+- BankApp
+- BANK 1
 
-- `context-snapshot-*`：记录项目目标、技术栈、当前状态、关键文件、最近修改和风险。
-- `current-todo-*`：记录 P0/P1/P2 TODO，明确哪些是阻塞项。
-- `page-state-*`：记录路由、页面、核心交互、资源状态和验证状态。
+Avoid old customer brand names in visible content. Internal compatibility identifiers can remain only when needed for code continuity and must not leak into customer-facing UI.
 
-如涉及 prompt、恢复策略或关键需求变化，还必须同步更新：
+Do not commit:
 
-- `.codex-backup/key-prompts.md`
-- 或新增 `session-restore-summary-*` / `rollout-recovery-result-*`
+- keys,
+- tokens,
+- passwords beyond existing demo credentials,
+- real customer records,
+- unapproved customer screenshots,
+- sensitive production data.
 
-## 4. 会话恢复规则
+## 15. Validation Rules
 
-如果出现以下情况：
-
-- session、sidebar 或 history 丢失。
-- 更换 Codex 账号。
-- Codex UI 异常。
-- 当前聊天上下文缺失或被压缩。
-
-必须优先执行恢复流程：
-
-1. 阅读 `AGENTS.md`、`PROJECT_CONTEXT.md`、`DEV_LOG.md`。
-2. 阅读 `.codex-backup/` 最新备份。
-3. 扫描 Codex session rollout 文件，而不是重新从零分析项目。
-4. 将恢复出的有效上下文写回 `PROJECT_CONTEXT.md`。
-5. 在 `DEV_LOG.md` 记录恢复来源、恢复结果、风险和回滚说明。
-
-可优先检查的位置：
-
-```text
-$env:CODEX_HOME\sessions\
-$env:USERPROFILE\.codex\sessions\
-项目内 .codex\sessions\（如果存在）
-```
-
-恢复时优先查找与 `D:\03projects\bca-aicc-demo-v2`、`bca-aicc-demo-v2`、`BANK 1 AICC`、`Inbound`、`AgentWorkspace`、`PROJECT_CONTEXT.md`、`DEV_LOG.md` 相关的 rollout 记录。
-
-禁止在已有恢复材料可用时重新从零推断项目背景。
-
-## 5. 输出规范
-
-每次重大修改后的最终回复必须总结：
-
-- 修改内容。
-- 影响范围。
-- 风险点。
-- TODO。
-- 已运行的验证命令；如果未运行，也必须说明。
-
-如果修改了页面或前端交互，应尽量执行：
+For frontend or interaction changes, normally run:
 
 ```bash
 npm run lint
 npm run build
 ```
 
-需要浏览器验证时，应检查：
+Use browser smoke checks when UI changes affect:
 
 - `/`
 - `/design-system`
-- 受影响的页面、弹窗或交互路径。
+- affected Call Management pages,
+- affected Routing Config pages,
+- affected modals or interaction paths.
 
-如果本轮只修改文档，可以不运行前端构建，但最终回复必须说明原因。
+For documentation-only tasks, lint/build can be skipped. The final response must explicitly say they were skipped because no runtime code changed.
 
+## 16. Git Rules
+
+- Always check `git status --short --branch` before edits.
+- Do not use destructive commands such as `git reset --hard` or `git checkout --` unless the user explicitly asks.
+- Do not overwrite user changes.
+- If unrelated dirty files exist, leave them alone.
+- If the user asks for a commit, stage only the intended files.
 
