@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-06-18 11:02 +08:00
+Last updated: 2026-06-24 11:00 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -344,12 +344,12 @@ CRM panel:
 Assistant panel:
 
 - Fixed `Assistant` tab.
-- Fixed `Connection` tab.
+- Fixed `Common Links` tab.
 - Extra tabs can be added by workspace features, such as Quick Replies and Message Record.
 - Assistant screenshot path: `/screenshots/assistant-workspace.jpg`.
 - If screenshot loading fails, code fallback UI renders.
 
-Connection tab currently shows a BANK 1 official website link placeholder.
+Common Links shows website names and website URLs from `Call Management > Common Link Management`; clicking a link opens the website in a new browser tab.
 
 ## 17. Live Chat Rules
 
@@ -364,8 +364,9 @@ Customer list:
 - Supports sorting by access time or message time.
 - Active conversations show elapsed service time.
 - History conversations show ended time.
-- Star colors are local state.
+- Star colors remain local compatibility state, but the customer list star marker UI is hidden.
 - Unread count is cleared when a session is focused.
+- Active conversations show an unanswered progress bar in the customer list. The bar uses the red / breach SLA threshold as 100%, shows green before warning, switches to warning color at the warning threshold, and switches to breach color at the breach threshold.
 
 Workspace tab:
 
@@ -395,7 +396,8 @@ Quick Replies:
 - Fixed Assistant extra tab.
 - Supports My/Public phrase groups.
 - My groups and phrases can be maintained locally.
-- Public phrases are read-only.
+- Public phrases are read-only in the agent workspace.
+- Public phrases are sourced from `Call Management > Common Phrase Management`.
 - Insert places text into the active composer and focuses the cursor at the end.
 - Slash command candidates should reflect local quick reply changes.
 
@@ -403,6 +405,13 @@ Recall:
 
 - Demo rule expects WhatsApp messages not to show Recall / Re-edit.
 - BankApp and Webchat can retain recall capability for current-agent messages within demo rules.
+
+Sensitive word check:
+
+- Agent replies are checked before sending in the Live Chat workspace.
+- If the reply contains a configured sensitive word, the system blocks sending and shows the matched sensitive word and category to the agent.
+- The blocked draft remains in the composer so the agent can revise it.
+- Matching is a front-end demo contains check after trim and lowercase normalization.
 
 ## 18. BankApp Demo Rules
 
@@ -463,6 +472,9 @@ Visible customer pages:
 - Global Control Configuration.
 - Blacklist Management.
 - Priority List Management.
+- Common Phrase Management.
+- Common Link Management.
+- Sensitive Word Management.
 - Busy Reason Management.
 
 Hidden / redirected:
@@ -497,6 +509,41 @@ Hidden / redirected:
 
 - Active busy reasons appear as AUX options in the agent profile menu.
 - Updating the default reason keeps only one default busy reason.
+- Store is local front-end state.
+
+### Common Phrase Management
+
+- Common Phrase Management maintains only public quick reply phrases.
+- Agent-owned My Phrases remain local to the Live Chat workspace and are not managed by this menu.
+- Categories contain public common phrase entries.
+- `All Categories` is a view-only aggregate and cannot be used when adding a new phrase.
+- Adding a phrase requires a concrete category; when opened from `All Categories`, the add modal defaults to the first configured category and allows category selection.
+- Shortcut Code is globally unique across public common phrases after trim and lowercase normalization.
+- Category Name is unique after trim and lowercase normalization.
+- Deleting a category requires confirmation and deletes all phrases under that category.
+- Selected phrases can be moved to another category; source categories for selected rows are disabled as move targets.
+- Store is local front-end state.
+
+### Common Link Management
+
+- Common Link Management maintains frequently used website references for the current demo session.
+- Search supports Website Name and Website URL.
+- List columns include No., Website Name, Website URL, Remark, and Actions.
+- Add, Edit, and Delete are local demo actions.
+- Website Name and Website URL are unique after trim and lowercase normalization.
+- Website URL must start with `http://` or `https://`.
+- Shared voice, video, and Live Chat workspaces read Common Link Management data in the right-side `Common Links` tab.
+- Store is local front-end state.
+
+### Sensitive Word Management
+
+- Sensitive Word Management maintains sensitive words used to block Live Chat agent replies before sending.
+- Search supports Sensitive Word and Category.
+- Category is a fixed data dictionary and is not maintained in this menu.
+- Current category examples include Security Credential, Personal Data Exposure, Regulatory or Compliance Risk, Profanity / Offensive Language, and Harassment / Discriminatory Language.
+- List columns include No., Sensitive Word, Category, Remark, and Actions.
+- Add, Edit, and Delete are local demo actions.
+- Sensitive Word is unique after trim and lowercase normalization.
 - Store is local front-end state.
 
 ## 21. Routing Config Rules

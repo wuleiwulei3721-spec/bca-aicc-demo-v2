@@ -152,6 +152,18 @@ const allSideMenuItems: SideMenuItem[] = [
         label: 'Priority List Management',
       },
       {
+        key: 'call-management-common-phrases',
+        label: 'Common Phrase Management',
+      },
+      {
+        key: 'call-management-common-links',
+        label: 'Common Link Management',
+      },
+      {
+        key: 'call-management-sensitive-words',
+        label: 'Sensitive Word Management',
+      },
+      {
         key: 'call-management-busy-reasons',
         label: 'Busy Reason Management',
       },
@@ -932,6 +944,18 @@ export function BasicLayout() {
         navigate('/call-management/priority-list')
       }
 
+      if (childKey === 'call-management-common-phrases') {
+        navigate('/call-management/common-phrases')
+      }
+
+      if (childKey === 'call-management-common-links') {
+        navigate('/call-management/common-links')
+      }
+
+      if (childKey === 'call-management-sensitive-words') {
+        navigate('/call-management/sensitive-words')
+      }
+
       if (childKey === 'call-management-busy-reasons') {
         navigate('/call-management/busy-reasons')
       }
@@ -1086,6 +1110,18 @@ export function BasicLayout() {
 
     if (location.pathname.startsWith('/call-management/priority-list')) {
       return 'call-management-priority-list'
+    }
+
+    if (location.pathname.startsWith('/call-management/common-phrases')) {
+      return 'call-management-common-phrases'
+    }
+
+    if (location.pathname.startsWith('/call-management/common-links')) {
+      return 'call-management-common-links'
+    }
+
+    if (location.pathname.startsWith('/call-management/sensitive-words')) {
+      return 'call-management-sensitive-words'
     }
 
     return routingConfigMenuKeyByRoute[location.pathname] ?? null

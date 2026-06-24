@@ -1,7 +1,13 @@
 import { useState } from 'react'
-import { ApiOutlined, CloseOutlined, RobotOutlined } from '@ant-design/icons'
+import {
+  ApiOutlined,
+  CloseOutlined,
+  ExportOutlined,
+  RobotOutlined,
+} from '@ant-design/icons'
 import type { ReactNode } from 'react'
 import { BaseTabs } from '../../../components'
+import { useCallManagementStore } from '../../../store'
 
 const ASSISTANT_SCREENSHOT_SRC = '/screenshots/assistant-workspace.jpg'
 
@@ -68,21 +74,39 @@ function AssistantScreenshotArea() {
   )
 }
 
-function ConnectionSystemArea() {
+function CommonLinksArea() {
+  const commonLinks = useCallManagementStore(
+    (state) => state.commonLinkEntries,
+  )
+
   return (
     <div className="inbound-system-shot inbound-system-shot--assistant">
       <div className="inbound-system-shot__fallback inbound-system-shot__fallback--visible">
-        <div className="inbound-connection-system">
-          <a
-            className="inbound-connection-system__link"
-            href="/bank1-official-website"
-            rel="noreferrer"
-            target="_blank"
-          >
-            <strong>BANK 1 Official Website</strong>
-            <span>Open</span>
-            <em>Public service and product information</em>
-          </a>
+        <div className="inbound-common-links-system">
+          {commonLinks.length > 0 ? (
+            commonLinks.map((link) => (
+              <a
+                className="inbound-common-links-system__link"
+                href={link.websiteUrl}
+                key={link.id}
+                rel="noreferrer"
+                target="_blank"
+                title={`${link.websiteName} - ${link.websiteUrl}`}
+              >
+                <strong>{link.websiteName}</strong>
+                <span>
+                  <ExportOutlined />
+                  Open
+                </span>
+                <em>{link.websiteUrl}</em>
+              </a>
+            ))
+          ) : (
+            <div className="inbound-common-links-system__empty">
+              <strong>No common links</strong>
+              <span>Add links in Call Management.</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -171,9 +195,9 @@ export function AssistantPanel({
             label: renderAssistantTabLabel({
               icon: <ApiOutlined />,
               key: 'connection',
-              title: 'Connection',
+              title: 'Common Links',
             }),
-            children: <ConnectionSystemArea />,
+            children: <CommonLinksArea />,
           },
           ...extraTabs.map((tab) => ({
             key: tab.key,

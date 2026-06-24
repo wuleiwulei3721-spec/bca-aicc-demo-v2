@@ -18,7 +18,7 @@ import {
   SwapOutlined,
   WhatsAppOutlined,
 } from '@ant-design/icons'
-import { DatePicker, Input } from 'antd'
+import { Alert, DatePicker, Input } from 'antd'
 import type { InputRef } from 'antd'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
@@ -41,6 +41,7 @@ interface LiveChat2ConversationWorkspaceProps {
   messages: LiveChat2Message[]
   quickReplies: LiveChat2QuickReplyOption[]
   recalledMessageIds: string[]
+  sendBlockedMessage?: string | null
   session: LiveChat2SessionView
   onCloseSession: (sessionId: string) => void
   onDraftChange: (sessionId: string, message: string) => void
@@ -446,6 +447,7 @@ export function LiveChat2ConversationWorkspace({
   messages,
   quickReplies,
   recalledMessageIds,
+  sendBlockedMessage,
   session,
   onCloseSession,
   onDraftChange,
@@ -777,6 +779,15 @@ export function LiveChat2ConversationWorkspace({
 
       {canCompose && (
         <footer className="livechat2-composer">
+          {sendBlockedMessage && (
+            <Alert
+              showIcon
+              className="livechat2-composer__warning"
+              description={sendBlockedMessage}
+              message="Message blocked by sensitive word check."
+              type="warning"
+            />
+          )}
           {quoteMessage && (
             <div className="livechat2-composer__quote">
               <span>{quoteMessage}</span>

@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-06-18 11:02 +08:00
+Last updated: 2026-06-24 11:00 +08:00
 
 ## 1. Overall Status
 
@@ -94,7 +94,7 @@ This repository is still a demo application:
 - Dynamic CRM business tabs.
 - CRM screenshot with fallback.
 - Assistant screenshot with fallback.
-- Connection tab.
+- Common Links tab.
 
 ## 8. Completed Video Call Workspace
 
@@ -114,15 +114,17 @@ This repository is still a demo application:
 - All-channel toggle.
 - Customer panel collapse / expand.
 - Access-time and message-time sorting.
-- Star color state.
+- Star color state remains for compatibility, but the customer list star marker UI is hidden.
 - Unread clearing on focus.
-- SLA / unanswered state.
+- SLA / unanswered state with a horizontal unanswered progress bar in expanded and collapsed customer list states.
 - Conversation workspace.
 - Send message local state.
 - End Service / Close session behavior.
 - Customer-ended mock session handling.
 - Transfer modal from conversation.
 - Quick Replies right-side tab.
+- Public Phrases in Quick Replies are sourced from Call Management common phrase configuration.
+- Agent replies are blocked before sending when they match Call Management sensitive words.
 - Message Record right-side tab.
 - Local recall state.
 
@@ -160,6 +162,9 @@ Customer-visible pages:
 - Global Control Configuration.
 - Blacklist Management.
 - Priority List Management.
+- Common Phrase Management.
+- Common Link Management.
+- Sensitive Word Management.
 - Busy Reason Management.
 
 Implemented behaviors:
@@ -171,6 +176,13 @@ Implemented behaviors:
 - Blacklist add / batch add / delete.
 - Priority list add / batch add / delete.
 - Priority Match Rule filtering.
+- Common phrase category and phrase CRUD.
+- Common phrase batch move between categories.
+- Public phrase linkage into the Live Chat Quick Replies tab.
+- Common link CRUD for website name, website address, and remark.
+- Common Link Management feeds the shared right-side Common Links tab in voice, video, and Live Chat workspaces.
+- Sensitive word CRUD with fixed category dictionary.
+- Sensitive word detection in Live Chat agent reply sending.
 - Busy reason edit and default selection.
 - Local store state for demo changes.
 

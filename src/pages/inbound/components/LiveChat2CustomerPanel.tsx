@@ -6,8 +6,6 @@ import {
   MenuOutlined,
   MobileOutlined,
   RightOutlined,
-  StarFilled,
-  StarOutlined,
   WhatsAppOutlined,
 } from '@ant-design/icons'
 import { Badge, Dropdown } from 'antd'
@@ -19,7 +17,11 @@ import type {
   LiveChat2SortMode,
   LiveChat2StarColor,
 } from '../../../types'
-import { formatDuration, type InteractionSlaState } from '../../../utils/duration'
+import {
+  formatDuration,
+  LIVE_CHAT_SLA_BREACH_SECONDS,
+  type InteractionSlaState,
+} from '../../../utils/duration'
 
 type LiveChat2Channel = LiveChat2Session['channel']
 type LiveChat2ChannelFilter = 'all' | LiveChat2Channel
@@ -52,10 +54,6 @@ interface LiveChat2CustomerPanelProps {
   onChannelFilterChange: (channel: LiveChat2ChannelFilter) => void
   onSelectSession: (sessionId: string) => void
   onSortModeChange: (sortMode: LiveChat2SortMode) => void
-  onStarColorChange: (
-    sessionId: string,
-    starColor: LiveChat2StarColor,
-  ) => void
   onViewChange: (view: LiveChat2ListView) => void
 }
 
@@ -98,13 +96,6 @@ const channelFilterOptions: Array<{
   },
 ]
 
-const starColorLabels: Record<LiveChat2StarColor, string> = {
-  blue: 'Blue flag',
-  gray: 'No flag',
-  red: 'Red flag',
-  yellow: 'Yellow flag',
-}
-
 function getChannelIcon(channel: LiveChat2Session['channel']) {
   if (channel === 'WhatsApp') {
     return <WhatsAppOutlined />
@@ -129,40 +120,6 @@ function getChannelClassName(channel: LiveChat2ChannelFilter) {
   return `livechat2-channel-avatar--${channel.toLowerCase()}`
 }
 
-function getStarMenuItems(): MenuProps['items'] {
-  return (['gray', 'red', 'blue', 'yellow'] as LiveChat2StarColor[]).map(
-    (color) => ({
-      key: color,
-      label: (
-        <span
-          aria-label={starColorLabels[color]}
-          className="livechat2-star-menu-item"
-          title={starColorLabels[color]}
-        >
-          {color === 'gray' && (
-            <StarOutlined
-              aria-hidden="true"
-              className={[
-                'livechat2-star',
-                `livechat2-star--${color}`,
-              ].join(' ')}
-            />
-          )}
-          {color !== 'gray' && (
-            <StarFilled
-              aria-hidden="true"
-              className={[
-                'livechat2-star',
-                `livechat2-star--${color}`,
-              ].join(' ')}
-            />
-          )}
-        </span>
-      ),
-    }),
-  )
-}
-
 const sortMenuItems: MenuProps['items'] = [
   {
     key: 'access-time',
@@ -174,21 +131,23 @@ const sortMenuItems: MenuProps['items'] = [
   },
 ]
 
+function getUnansweredProgressPercent(unansweredSeconds: number) {
+  return Math.min(
+    100,
+    Math.round((unansweredSeconds / LIVE_CHAT_SLA_BREACH_SECONDS) * 100),
+  )
+}
+
 function renderSessionCard({
   activeSessionId,
   session,
   onCloseSession,
   onSelectSession,
-  onStarColorChange,
 }: {
   activeSessionId: string
   session: LiveChat2SessionView
   onCloseSession: (sessionId: string) => void
   onSelectSession: (sessionId: string) => void
-  onStarColorChange: (
-    sessionId: string,
-    starColor: LiveChat2StarColor,
-  ) => void
 }) {
   const isActive = session.id === activeSessionId
   const isEnded = session.statusDisplay === 'ended'
@@ -197,8 +156,14 @@ function renderSessionCard({
     session.unansweredSeconds === null
       ? null
       : formatDuration(session.unansweredSeconds)
-  const hasVisibleSecondRowAction =
-    isEnded || (!isHistory && session.starColor !== 'gray')
+  const hasVisibleSecondRowAction = isEnded
+  const hasUnansweredProgress =
+    session.unansweredSeconds !== null && !isHistory && !isEnded
+  const unansweredProgressPercent =
+    session.unansweredSeconds === null
+      ? 0
+      : getUnansweredProgressPercent(session.unansweredSeconds)
+  const unansweredLimitLabel = formatDuration(LIVE_CHAT_SLA_BREACH_SECONDS)
 
   return (
     <div
@@ -237,16 +202,6 @@ function renderSessionCard({
             title={channelLabels[session.channel]}
           >
             {getChannelIcon(session.channel)}
-            {!isHistory && session.starColor !== 'gray' && (
-              <StarFilled
-                aria-hidden="true"
-                className={[
-                  'livechat2-session-card__collapsed-star',
-                  'livechat2-star',
-                  `livechat2-star--${session.starColor}`,
-                ].join(' ')}
-              />
-            )}
           </span>
         </span>
       </Badge>
@@ -285,9 +240,6 @@ function renderSessionCard({
             isHistory || !hasVisibleSecondRowAction
               ? 'livechat2-session-card__message--full-row'
               : '',
-            !isHistory && !hasVisibleSecondRowAction
-              ? 'livechat2-session-card__message--floating-action'
-              : '',
           ]
             .filter(Boolean)
             .join(' ')}
@@ -301,58 +253,8 @@ function renderSessionCard({
             session.lastMessageDisplay
           )}
         </span>
-        <span
-          className={[
-            'livechat2-session-card__action-row',
-            !hasVisibleSecondRowAction
-              ? 'livechat2-session-card__action-row--floating'
-              : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-        >
-          {!isHistory && !isEnded && (
-            <Dropdown
-              menu={{
-                items: getStarMenuItems(),
-                onClick: ({ key }) =>
-                  onStarColorChange(session.id, key as LiveChat2StarColor),
-              }}
-              placement="bottomRight"
-              trigger={['hover']}
-            >
-              <span
-                aria-label={starColorLabels[session.starColor]}
-                className={[
-                  'livechat2-session-card__star-button',
-                  session.starColor === 'gray'
-                    ? 'livechat2-session-card__star-button--empty'
-                    : 'livechat2-session-card__star-button--marked',
-                ].join(' ')}
-                role="button"
-                tabIndex={0}
-                title={starColorLabels[session.starColor]}
-                onClick={(event) => event.stopPropagation()}
-              >
-                {session.starColor === 'gray' ? (
-                  <StarOutlined
-                    className={[
-                      'livechat2-star',
-                      `livechat2-star--${session.starColor}`,
-                    ].join(' ')}
-                  />
-                ) : (
-                  <StarFilled
-                    className={[
-                      'livechat2-star',
-                      `livechat2-star--${session.starColor}`,
-                    ].join(' ')}
-                  />
-                )}
-              </span>
-            </Dropdown>
-          )}
-          {isEnded && (
+        {isEnded && (
+          <span className="livechat2-session-card__action-row">
             <span
               className="livechat2-session-card__close"
               onClick={(event) => {
@@ -362,9 +264,31 @@ function renderSessionCard({
             >
               Close
             </span>
-          )}
-        </span>
+          </span>
+        )}
       </span>
+      {hasUnansweredProgress && (
+        <span
+          aria-label={`Unanswered progress ${unansweredLabel ?? '00:00'} of ${unansweredLimitLabel}`}
+          aria-valuemax={LIVE_CHAT_SLA_BREACH_SECONDS}
+          aria-valuemin={0}
+          aria-valuenow={Math.min(
+            session.unansweredSeconds ?? 0,
+            LIVE_CHAT_SLA_BREACH_SECONDS,
+          )}
+          className="livechat2-session-card__sla-progress"
+          role="meter"
+          title={`Unanswered ${unansweredLabel ?? '00:00'} / ${unansweredLimitLabel}`}
+        >
+          <span
+            className={[
+              'livechat2-session-card__sla-progress-fill',
+              `livechat2-session-card__sla-progress-fill--${session.slaState}`,
+            ].join(' ')}
+            style={{ width: `${unansweredProgressPercent}%` }}
+          />
+        </span>
+      )}
     </div>
   )
 }
@@ -382,7 +306,6 @@ export function LiveChat2CustomerPanel({
   onChannelFilterChange,
   onSelectSession,
   onSortModeChange,
-  onStarColorChange,
   onViewChange,
 }: LiveChat2CustomerPanelProps) {
   const isAllChannelsSelected = liveChat2Channels.every((channel) =>
@@ -564,7 +487,6 @@ export function LiveChat2CustomerPanel({
                 session,
                 onCloseSession,
                 onSelectSession,
-                onStarColorChange,
               }),
             )}
         </div>

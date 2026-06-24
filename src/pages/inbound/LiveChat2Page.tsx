@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { HistoryOutlined, MessageOutlined } from '@ant-design/icons'
 import { liveChat2Sessions } from '../../mock/inbound'
-import { useAppStore } from '../../store'
+import { sensitiveWordCategoryLabels } from '../../mock/sensitiveWords'
+import { useAppStore, useCallManagementStore } from '../../store'
 import type {
   LiveChat2Message,
   LiveChat2Session,
   LiveChat2SortMode,
-  LiveChat2StarColor,
 } from '../../types'
 import {
   getElapsedSeconds,
@@ -115,6 +115,10 @@ export function LiveChat2Page() {
     sessionId: string
   } | null>(null)
   const [rightPanelActiveKey, setRightPanelActiveKey] = useState('assistant')
+  const [sensitiveWordNotice, setSensitiveWordNotice] = useState<{
+    message: string
+    sessionId: string
+  } | null>(null)
   const activeLiveChat2SessionIds = useAppStore(
     (state) => state.activeLiveChat2SessionIds,
   )
@@ -161,6 +165,15 @@ export function LiveChat2Page() {
   const liveChat2UnansweredSinceBySessionId = useAppStore(
     (state) => state.liveChat2UnansweredSinceBySessionId,
   )
+  const commonPhraseCategories = useCallManagementStore(
+    (state) => state.commonPhraseCategories,
+  )
+  const commonPhraseEntries = useCallManagementStore(
+    (state) => state.commonPhraseEntries,
+  )
+  const findSensitiveWordMatches = useCallManagementStore(
+    (state) => state.findSensitiveWordMatches,
+  )
   const markLiveChat2SessionRead = useAppStore(
     (state) => state.markLiveChat2SessionRead,
   )
@@ -179,13 +192,30 @@ export function LiveChat2Page() {
   const setLiveChat2SortMode = useAppStore(
     (state) => state.setLiveChat2SortMode,
   )
-  const setLiveChat2StarColor = useAppStore(
-    (state) => state.setLiveChat2StarColor,
-  )
   const now = useNow(activeLiveChat2SessionIds.length > 0)
+  const publicQuickReplyGroups = useMemo<LiveChat2QuickReplyGroup[]>(
+    () =>
+      commonPhraseCategories.map((category) => ({
+        groupId: category.categoryId,
+        groupName: category.categoryName,
+        phrases: commonPhraseEntries
+          .filter((entry) => entry.categoryId === category.categoryId)
+          .map((entry) => ({
+            code: entry.shortcutCode,
+            id: entry.phraseId,
+            text: entry.phraseText,
+          })),
+        scope: 'public',
+      })),
+    [commonPhraseCategories, commonPhraseEntries],
+  )
+  const allQuickReplyGroups = useMemo(
+    () => [...quickReplyGroups, ...publicQuickReplyGroups],
+    [publicQuickReplyGroups, quickReplyGroups],
+  )
   const quickReplyOptions = useMemo(
-    () => flattenLiveChat2QuickReplies(quickReplyGroups),
-    [quickReplyGroups],
+    () => flattenLiveChat2QuickReplies(allQuickReplyGroups),
+    [allQuickReplyGroups],
   )
   const liveChat2SessionById = useMemo(
     () => ({
@@ -389,6 +419,36 @@ export function LiveChat2Page() {
     }))
   }
 
+  const handleSendMessage = (
+    sessionId: string,
+    message: string,
+    baseMessages: LiveChat2Message[],
+    quotedMessage?: string | null,
+  ) => {
+    const matches = findSensitiveWordMatches(message)
+
+    if (matches.length > 0) {
+      const matchedWordList = matches
+        .slice(0, 3)
+        .map(
+          (match) =>
+            `${match.word} (${sensitiveWordCategoryLabels[match.category]})`,
+        )
+        .join(', ')
+
+      setSensitiveWordNotice({
+        message: `Please revise the reply before sending. Matched sensitive word${
+          matches.length > 1 ? 's' : ''
+        }: ${matchedWordList}${matches.length > 3 ? '...' : ''}`,
+        sessionId,
+      })
+      return
+    }
+
+    setSensitiveWordNotice(null)
+    sendLiveChat2Message(sessionId, message, baseMessages, quotedMessage)
+  }
+
   const handleEndService = (
     sessionId: string,
     baseMessages: LiveChat2Message[],
@@ -411,10 +471,6 @@ export function LiveChat2Page() {
       onChannelFilterChange={handleChannelFilterChange}
       onSelectSession={handleSelectSession}
       onSortModeChange={setLiveChat2SortMode}
-      onStarColorChange={(
-        sessionId: string,
-        starColor: LiveChat2StarColor,
-      ) => setLiveChat2StarColor(sessionId, starColor)}
       onViewChange={setCustomerPanelView}
     />
   )
@@ -459,8 +515,12 @@ export function LiveChat2Page() {
     {
       children: (
         <LiveChat2QuickRepliesPanel
-          groups={quickReplyGroups}
-          onGroupsChange={setQuickReplyGroups}
+          groups={allQuickReplyGroups}
+          onGroupsChange={(nextGroups) =>
+            setQuickReplyGroups(
+              nextGroups.filter((group) => group.scope === 'my'),
+            )
+          }
           onInsertPhrase={handleInsertQuickReply}
         />
       ),
@@ -512,13 +572,18 @@ export function LiveChat2Page() {
           messages={messages}
           quickReplies={quickReplyOptions}
           recalledMessageIds={liveChat2RecalledMessageIds}
+          sendBlockedMessage={
+            sensitiveWordNotice?.sessionId === activeSession.id
+              ? sensitiveWordNotice.message
+              : null
+          }
           session={activeSession}
           onCloseSession={closeLiveChat2Session}
           onDraftChange={setLiveChat2DraftMessage}
           onEndSession={handleEndService}
           onOpenMessageRecord={handleToggleMessageRecord}
           onRecallMessage={recallLiveChat2Message}
-          onSendMessage={sendLiveChat2Message}
+          onSendMessage={handleSendMessage}
         />
       }
       conversationKey={activeSession.id}

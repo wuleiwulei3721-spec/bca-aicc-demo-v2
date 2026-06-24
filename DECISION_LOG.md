@@ -1,6 +1,6 @@
 # Decision Log
 
-Last updated: 2026-06-18
+Last updated: 2026-06-22
 
 This document records important product and system design decisions that can be confirmed from the current codebase, project documents, `DEV_LOG.md`, and readable Git history. It intentionally omits bug fixes, visual micro-adjustments, temporary test data, copy-only tweaks, and implementation details that do not affect product direction.
 
@@ -473,7 +473,7 @@ Module:
 Call Management
 
 Decision:
-Customer-visible Call Management scope currently includes Verification Rules, Global Control Configuration, Blacklist Management, Priority List Management, and Busy Reason Management; hidden/legacy Call Management routes redirect to Verification Rules.
+Customer-visible Call Management scope currently includes Verification Rules, Global Control Configuration, Blacklist Management, Priority List Management, Common Phrase Management, Common Link Management, Sensitive Word Management, and Busy Reason Management; hidden/legacy Call Management routes redirect to Verification Rules.
 
 Reason:
 The current demo exposes the management pages relevant to customer review and avoids leaving stale or unfinished configuration pages in the visible menu.
@@ -628,6 +628,75 @@ Source:
 --------------------------------------------------
 
 Decision ID:
+DEC-029
+
+Module:
+Live Chat / Call Management
+
+Decision:
+Common Phrase Management owns public Live Chat quick replies only; agent-owned My Phrases remain local to the Live Chat workspace.
+
+Reason:
+The customer request targets a shared Call Management configuration for the text popup right-side public common phrases, while the existing workspace already has a separate My Phrases area for agent personal phrases.
+
+Impact:
+Future common phrase work should keep public phrase configuration in Call Management and avoid mixing it with agent personal phrase editing unless product scope explicitly changes.
+
+Status:
+Implemented
+
+Source:
+Code: `src/pages/call-management/CommonPhraseManagementPage.tsx`, `src/store/callManagementStore.ts`, `src/pages/inbound/LiveChat2Page.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`; History: `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-031
+
+Module:
+Call Management
+
+Decision:
+Common Link Management is a lightweight Call Management menu for maintaining frequently used website references with website name, website address, and remark fields.
+
+Reason:
+The customer request adds a simple management-console list for common links and explicitly scopes the fields to website name, website address, and remark, matching the existing admin CRUD page style.
+
+Impact:
+Future common-link work should preserve this lightweight admin-page shape unless product scope adds categories, status, permissions, or workspace insertion behavior.
+
+Status:
+Implemented
+
+Source:
+Code: `src/pages/call-management/CommonLinkManagementPage.tsx`, `src/store/callManagementStore.ts`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`; History: `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-030
+
+Module:
+Live Chat / Call Management
+
+Decision:
+Sensitive Word Management owns the shared word list used to block Live Chat agent replies before sending.
+
+Reason:
+The customer request defines sensitive words as a management-console configuration and expects the system to automatically detect agent reply text, prevent sending when matched, and prompt the agent to revise the reply.
+
+Impact:
+Future text-channel send flows should reuse the same sensitive-word check before dispatch. Category maintenance remains a fixed dictionary unless product scope explicitly adds dictionary administration.
+
+Status:
+Implemented
+
+Source:
+Code: `src/pages/call-management/SensitiveWordManagementPage.tsx`, `src/store/callManagementStore.ts`, `src/pages/inbound/LiveChat2Page.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`; History: `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
 DEC-028
 
 Module:
@@ -647,4 +716,3 @@ Pending
 
 Source:
 代码: `src/mock/*`, `src/pages/*`; 文档: `PROJECT_CONTEXT.md`, `BUSINESS_RULES.md`, `CURRENT_TODO.md`, `AGENTS.md`
-

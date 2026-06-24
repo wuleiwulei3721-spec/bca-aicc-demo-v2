@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Project Context
 
-Last updated: 2026-06-18 11:02 +08:00
+Last updated: 2026-06-24 11:00 +08:00
 Repository path: `D:\03projects\bca-aicc-demo-v2`
 
 ## 1. Project Name
@@ -97,6 +97,9 @@ Current router structure:
 - `/call-management/global-control-configuration`
 - `/call-management/blacklist`
 - `/call-management/priority-list`
+- `/call-management/common-phrases`
+- `/call-management/common-links`
+- `/call-management/sensitive-words`
 - `/call-management/busy-reasons`
 - `/call-management/*` legacy or hidden routes redirect to Verification Rules.
 - `/routing-config/channels`
@@ -186,7 +189,7 @@ Inbound voice workspace uses the shared three-column layout:
 
 - Left: Customer Information, Customer Journey, Ticketing History, Next Best Action, Quick Action.
 - Center: CRM workspace, Conversation tab when applicable, dynamic business tabs.
-- Right: Assistant, Connection, and optional extra tabs.
+- Right: Assistant, Common Links, and optional extra tabs.
 
 PSTN initially shows an unidentified customer. Customer identity can be refreshed through the Customer Information card using the demo customer ID.
 
@@ -202,11 +205,13 @@ Current formal Live Chat uses `LiveChat2Page`:
 - WhatsApp, BankApp, and Webchat channel filters.
 - Customer list collapsed / expanded states.
 - Sorting by access time or message time.
-- Star color markers.
+- Star color marker UI is hidden in the customer list; compatibility state remains local.
 - Unread count aggregation on the Live Chat tab.
-- SLA / unanswered timer display.
+- SLA / unanswered timer display with a horizontal progress bar based on the breach threshold.
 - Conversation workspace.
 - Quick Replies tab.
+- Public Quick Replies are maintained through `Call Management > Common Phrase Management`.
+- Agent replies are checked against `Call Management > Sensitive Word Management` before sending.
 - Message Record tab.
 - Transfer modal.
 - End Service / Close behavior.
@@ -245,6 +250,9 @@ Customer-visible Call Management pages:
 - Global Control Configuration.
 - Blacklist Management.
 - Priority List Management.
+- Common Phrase Management.
+- Common Link Management.
+- Sensitive Word Management.
 - Busy Reason Management.
 
 Legacy or hidden routes redirect to Verification Rules.
@@ -295,11 +303,12 @@ The pages use local routing config store data and shared admin components.
 - Customer Information, verification, journey, tickets, next best actions, quick actions.
 - CRM screenshot / fallback workspace.
 - Assistant screenshot / fallback workspace.
-- Connection tab.
+- Common Links tab.
 - Transfer, Outbound Call, Internal Chat, Toolbar Settings, Call Flow Detail, Send Email, Contact Management modals.
 - Live Chat workspace with customer list, conversation, message record, quick replies, and local message state.
 - BankApp and WhatsApp customer-side simulations with screenshot assets.
 - Call Management pages listed above.
+- Sensitive word detection for Live Chat agent replies.
 - Routing Config pages listed above.
 - Admin CRUD component set.
 - Design System page.

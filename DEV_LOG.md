@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-18 15:11 +08:00
+最后更新：2026-06-24 11:00 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,234 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-06-24 11:00 +08:00 - Common Link 接入共享右侧面板
+
+修改页面或文件：
+
+- `src/pages/inbound/components/AssistantPanel.tsx`
+- `src/styles/index.less`
+- `CURRENT_STATUS.md`
+- `BUSINESS_RULES.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求来电弹屏右侧“常用链接”从 `Call Management > Common Link Management` 数据读取，展示网站名和地址，点击后浏览器新开页面打开地址。
+- 用户确认这是共享右侧组件能力，语音、视频、文字工作台都应使用。
+
+修改结果：
+
+- 共享右侧面板内置 `Connection` 占位页签改为用户可见的 `Common Links`。
+- `Common Links` 从 `callManagementStore.commonLinkEntries` 读取当前 demo session 的 Common Link 数据。
+- 每条链接仅展示 Website Name 和 Website URL，整行可点击，并通过 `target="_blank"` / `rel="noreferrer"` 新开浏览器页面。
+- 当当前 demo session 的 Common Link 全部删除时，右侧显示紧凑空态。
+- Live Chat 的 `Quick Replies` 和 `Message Record` 额外页签仍沿用原有追加逻辑。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite/Rolldown chunk size warning。
+- 使用本地 Edge headless/CDP smoke 验证通过：PSTN 工作台右侧展示 3 条默认 Common Link，点击链接会新开页面；Live Chat 右侧同样展示 Common Links 且 Quick Replies 保持存在；`Common Link Management` 新增、编辑、删除的链接会在同一 demo session 的共享右侧面板中同步反映。
+
+回滚说明：
+
+- 如需回滚，恢复 `AssistantPanel.tsx` 中硬编码的 `ConnectionSystemArea`，并将 `src/styles/index.less` 中 `inbound-common-links-system*` 样式恢复为原 `inbound-connection-system*`。
+
+当前风险点：
+
+- Common Link 数据仍是前端 demo store 行为，刷新后恢复默认 mock 数据；点击外部示例域名是否可访问取决于浏览器和网络环境。
+
+### 2026-06-23 18:19 +08:00 - 调整 Live Chat 客户列表星标与未回复进度条
+
+修改页面或文件：
+
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `BUSINESS_RULES.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户反馈 Live Chat 左侧客户列表星标功能暂时作用不大，要求隐藏。
+- 客户希望未回复 1 分钟黄色提醒、2 分钟红色提醒的状态以横向进度条方式呈现，并在收起列表状态下也能看到提醒进度。
+
+修改结果：
+
+- Live Chat 2 客户列表不再显示星标按钮、星标菜单或收起态头像角标；底层星标兼容状态暂不删除。
+- 当前会话在未回复时显示横向进度条，以红色 breach 阈值作为 100%；未到 warning 阈值为绿色，达到 warning 阈值转黄色，达到 breach 阈值转红色。
+- 收起态客户列表同样显示短进度条。
+- 旧的黄色/红色左侧竖条提醒移除，避免与新进度条重复表达。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite/Rolldown chunk size warning。
+- Browser 插件连接 in-app browser 超时；本地 Edge/CDP fallback 受环境权限限制未完成截图级 smoke。已通过代码级检查确认星标入口相关 JSX/CSS 被移除，进度条 JSX/CSS 已接入展开和收起状态。
+
+回滚说明：
+
+- 如需恢复星标 UI，回退 `LiveChat2CustomerPanel.tsx` 中星标 Dropdown / 头像角标相关 JSX 和 `src/styles/index.less` 中 star 样式。
+- 如需恢复旧 SLA 视觉，回退 `livechat2-session-card--warning / --breach` 竖条样式并移除 `livechat2-session-card__sla-progress` 相关 JSX / CSS。
+
+当前风险点：
+
+- 进度条阈值当前跟随前端常量 `LIVE_CHAT_SLA_WARNING_SECONDS` / `LIVE_CHAT_SLA_BREACH_SECONDS`；如后续要从配置页面读取阈值，需要再接入配置源。
+
+### 2026-06-22 22:05 +08:00 - 新增 Common Link Management 并修正公共常用语 Add
+
+修改页面或文件：
+
+- `src/pages/call-management/CommonPhraseManagementPage.tsx`
+- `src/pages/call-management/CommonLinkManagementPage.tsx`
+- `src/types/commonLink.ts`
+- `src/mock/commonLinks.ts`
+- `src/store/callManagementStore.ts`
+- `src/routes.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/call-management/index.ts`
+- `src/types/index.ts`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户反馈 `Common Phrase Management` 的 Add 按钮被禁用。
+- 用户要求在 `Call Management` 下新增常用链接管理菜单，采用管理台统一风格，围绕网站名称、网站地址、备注字段维护。
+
+修改结果：
+
+- `Common Phrase Management` 在 `All Categories` 视图下也可以点击 Add；新增弹窗默认选择第一个分类，并允许在弹窗中切换分类。
+- 新增 `Call Management > Common Link Management` 菜单和 `/call-management/common-links` 路由。
+- 新增常用链接类型、默认 mock 数据和 `callManagementStore` CRUD 能力。
+- 页面支持按 Website Name / Website URL 查询；列表包含 No.、Website Name、Website URL、Remark、Actions；支持 Add、Edit、Delete。
+- Website Name 和 Website URL 在当前 demo session 内按 trim + lowercase 唯一；Website URL 要求以 `http://` 或 `https://` 开头。
+
+验证：
+
+- 后续仍需在完成本轮改动后运行 `npm run lint`、`npm run build` 和页面 smoke。
+
+回滚说明：
+
+- 如需回滚 Common Link Management，移除新增页面、类型、mock、store 字段和路由菜单项。
+- 如需恢复公共常用语旧交互，回退 `CommonPhraseManagementPage.tsx` 中 Add 的默认分类逻辑和弹窗分类 Select。
+
+当前风险点：
+
+- 当前为前端 demo store 行为，不接真实后端；刷新后恢复默认常用链接数据。
+- Common Link Management 目前只维护链接清单，尚未接入 Live Chat 或其它工作区的插入/打开入口。
+
+### 2026-06-22 21:40 +08:00 - 新增 Sensitive Word Management 与发送前拦截
+
+修改页面或文件：
+
+- `src/pages/call-management/SensitiveWordManagementPage.tsx`
+- `src/types/sensitiveWord.ts`
+- `src/mock/sensitiveWords.ts`
+- `src/store/callManagementStore.ts`
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/routes.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/call-management/index.ts`
+- `src/types/index.ts`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求在 `Call Management` 中新增敏感词管理菜单，用于维护坐席回复消息发送前的自动检测词表。
+- 命中敏感词时，系统需要禁止发送并提示坐席修改。
+
+修改结果：
+
+- 新增 `Call Management > Sensitive Word Management` 菜单和 `/call-management/sensitive-words` 路由。
+- 新增敏感词类型、默认 mock 数据和 `callManagementStore` CRUD / 匹配查询能力。
+- 敏感词分类作为固定数据字典，不在菜单中维护；当前示例分类包括 Security Credential、Personal Data Exposure、Regulatory or Compliance Risk、Profanity / Offensive Language、Harassment / Discriminatory Language。
+- 页面支持按 Sensitive Word、Category 查询；列表包含 No.、Sensitive Word、Category、Remark、Actions；支持 Add、Edit、Delete。
+- Live Chat 坐席发送回复前会按 trim + lowercase 的 contains 规则检测敏感词；命中后不发送，保留草稿，并在 composer 上方显示命中词和分类提示。
+
+验证：
+
+- `npm run lint` 已通过。
+- 后续仍需在完成本轮改动后运行 `npm run build` 和页面 smoke。
+
+回滚说明：
+
+- 如需回滚本功能，移除新增页面、类型、mock、store 字段和路由菜单项，并恢复 `LiveChat2Page` 直接调用 `sendLiveChat2Message`。
+- 如只需隐藏入口，可先移除 `BasicLayout` 菜单项和 `/call-management/sensitive-words` 路由，保留底层 store/mock 以便后续恢复。
+
+当前风险点：
+
+- 当前为前端 demo store 行为，不接真实后端；刷新后恢复默认敏感词数据。
+- 敏感词匹配是简单 contains 规则，不包含分词、词形变化、多语言归一化、白名单或审核日志。
+
+### 2026-06-22 18:19 +08:00 - 新增 Common Phrase Management
+
+修改页面或文件：
+
+- `src/pages/call-management/CommonPhraseManagementPage.tsx`
+- `src/types/commonPhrase.ts`
+- `src/mock/commonPhrases.ts`
+- `src/store/callManagementStore.ts`
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/liveChat2QuickReplies.ts`
+- `src/routes.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+- `.codex-backup/context-snapshot-2026-06-22-1819.md`
+- `.codex-backup/current-todo-2026-06-22-1819.md`
+- `.codex-backup/page-state-2026-06-22-1819.md`
+
+修改原因：
+
+- 用户要求在 `Call Management` 中新增公共常用语管理菜单，用于维护文字弹屏右侧 `Quick Replies > Public Phrases` 的分类和常用语。
+- 用户确认该菜单只维护公共常用语；坐席个人 `My Phrases` 不纳入管理台。
+
+修改结果：
+
+- 新增 `Call Management > Common Phrase Management` 菜单和 `/call-management/common-phrases` 路由。
+- 新增公共常用语分类与常用语类型、默认 mock 数据和 `callManagementStore` CRUD / 移动能力。
+- 页面采用左右结构：左侧分类搜索、新增、重命名、删除；右侧按 Shortcut Code / Common Phrase 查询，支持 Add、Move to Category、行内 Edit / Delete。
+- 快捷代码在公共常用语范围内按 trim + lowercase 全局唯一；分类名称按 trim + lowercase 唯一。
+- 删除分类需要确认，确认后级联删除该分类下所有常用语。
+- `LiveChat2Page` 的 Public Phrases 改为从 `callManagementStore` 读取；My Phrases 继续使用原本的本地 state 和弹屏内编辑能力。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 已通过。
+- `npm.cmd run lint` 已通过。
+- `npm.cmd run build` 已通过；仍只有既有 Vite/Rolldown chunk size warning。
+- HTTP smoke 已通过：`/`、`/call-management/common-phrases`、`/call-management/priority-list`、`/call-management/blacklist` 均返回 200。
+- Browser 插件未暴露可调用工具，Node REPL fallback 缺少 `playwright` 模块，因此未完成截图级浏览器自动化验证。
+
+回滚说明：
+
+- 如需回滚本功能，移除新增页面、类型、mock、store 字段和路由菜单项，并恢复 `LiveChat2Page` 直接使用 `defaultLiveChat2QuickReplyGroups` 中的 public 数据。
+- 如只需隐藏入口，可先移除 `BasicLayout` 菜单项和 `/call-management/common-phrases` 路由，保留底层 store/mock 以便后续恢复。
+
+当前风险点：
+
+- 当前仍是前端 demo store 行为，不接真实后端；刷新后恢复默认公共常用语数据。
+- 需要在客户演示前人工验证管理台修改后 Live Chat 右侧 Public Phrases 同步变化。
 
 ### 2026-06-18 15:11 +08:00 - 开发日志归档与知识库维护规则优化
 

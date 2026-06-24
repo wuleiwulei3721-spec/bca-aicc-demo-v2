@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Design System
 
-Last updated: 2026-06-18 11:02 +08:00
+Last updated: 2026-06-24 11:00 +08:00
 
 This document records the current implemented visual rules. It should be treated as the design baseline for future pages and components.
 
@@ -30,7 +30,7 @@ The app shell is implemented by `BasicLayout`:
   - optional lead panel,
   - left customer context column,
   - center CRM / Conversation workspace,
-  - right Assistant / Connection panel.
+  - right Assistant / Common Links panel.
 
 The main workspace should not be turned into a landing page. The first screen after login is a working console.
 
@@ -124,7 +124,7 @@ Variants:
 
 - `toolbar`: workspace tabs, CRM tabs.
 - `modal`: modal internal tabs.
-- `assistant`: right-side Assistant / Connection / extra tabs.
+- `assistant`: right-side Assistant / Common Links / extra tabs.
 
 Rules:
 

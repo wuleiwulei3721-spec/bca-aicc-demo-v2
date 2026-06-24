@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-06-18 11:02 +08:00
+Last updated: 2026-06-23 18:19 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -80,13 +80,14 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Current / History views,
   - channel filters,
   - sorting,
-  - star colors,
+  - hidden star marker behavior,
   - unread count,
-  - SLA timer,
+  - SLA timer and unanswered progress bar,
   - Send message,
   - End Service / Close,
   - Message Record,
   - Quick Replies,
+  - Sensitive Word send blocking,
   - Transfer.
 - Verify Online Chat / text-channel story:
   - BankApp Live Chat handoff,
@@ -111,6 +112,9 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Global Control Configuration,
   - Blacklist Management,
   - Priority List Management,
+  - Common Phrase Management,
+  - Common Link Management,
+  - Sensitive Word Management,
   - Busy Reason Management.
 - Verify Routing Config:
   - Routing Config visible by default,

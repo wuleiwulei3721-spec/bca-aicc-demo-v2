@@ -5,11 +5,14 @@ import {
   AgentWorkspace,
   BlacklistManagementPage,
   BusyReasonManagementPage,
+  CommonLinkManagementPage,
+  CommonPhraseManagementPage,
   BusinessTypesPage,
   ChannelsPage,
   DesignSystem,
   GlobalControlConfigurationPage,
   PriorityListManagementPage,
+  SensitiveWordManagementPage,
   SitesPage,
   SiteAccessVolumePage,
   SkillQueuesPage,
@@ -47,6 +50,18 @@ const callManagementRoutes = [
   {
     path: 'call-management/priority-list',
     element: <PriorityListManagementPage />,
+  },
+  {
+    path: 'call-management/common-phrases',
+    element: <CommonPhraseManagementPage />,
+  },
+  {
+    path: 'call-management/common-links',
+    element: <CommonLinkManagementPage />,
+  },
+  {
+    path: 'call-management/sensitive-words',
+    element: <SensitiveWordManagementPage />,
   },
   {
     path: 'call-management/busy-reasons',

@@ -43,35 +43,6 @@ export const defaultLiveChat2QuickReplyGroups: LiveChat2QuickReplyGroup[] = [
       },
     ],
   },
-  {
-    groupId: 'public-verification',
-    groupName: 'Verification',
-    scope: 'public',
-    phrases: [
-      {
-        code: 'ab',
-        id: 'public-ab',
-        text: 'For verification, please confirm your registered mobile number and date of birth.',
-      },
-    ],
-  },
-  {
-    groupId: 'public-security',
-    groupName: 'Security',
-    scope: 'public',
-    phrases: [
-      {
-        code: 'ad',
-        id: 'public-ad',
-        text: 'For your security, never share OTP, PIN, CVV, password, or full card number in this chat.',
-      },
-      {
-        code: 'af',
-        id: 'public-af',
-        text: 'I can help with one more request before we close this conversation.',
-      },
-    ],
-  },
 ]
 
 export function flattenLiveChat2QuickReplies(
