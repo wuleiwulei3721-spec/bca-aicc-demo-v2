@@ -160,6 +160,10 @@ const allSideMenuItems: SideMenuItem[] = [
         label: 'Common Link Management',
       },
       {
+        key: 'call-management-common-numbers',
+        label: 'Common Number Management',
+      },
+      {
         key: 'call-management-sensitive-words',
         label: 'Sensitive Word Management',
       },
@@ -952,6 +956,10 @@ export function BasicLayout() {
         navigate('/call-management/common-links')
       }
 
+      if (childKey === 'call-management-common-numbers') {
+        navigate('/call-management/common-numbers')
+      }
+
       if (childKey === 'call-management-sensitive-words') {
         navigate('/call-management/sensitive-words')
       }
@@ -1118,6 +1126,10 @@ export function BasicLayout() {
 
     if (location.pathname.startsWith('/call-management/common-links')) {
       return 'call-management-common-links'
+    }
+
+    if (location.pathname.startsWith('/call-management/common-numbers')) {
+      return 'call-management-common-numbers'
     }
 
     if (location.pathname.startsWith('/call-management/sensitive-words')) {

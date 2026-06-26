@@ -147,17 +147,19 @@ Transfer is available in call and live chat contexts.
 
 Call transfer modal:
 
-- Tabs: `Transfer Agent`, `Transfer Skill`, `Transfer Number`.
+- Tabs: `Transfer Agent`, `Transfer Skill`, `Transfer Number`, `Transfer IVR`.
 - Transfer Agent supports search by name or employee ID.
 - Transfer Agent can filter by skill queue.
 - Agent row actions: `Consult`, `Transfer`, `Conference`.
 - Transfer Skill supports search by skill name.
 - Transfer Number accepts a phone number and supports `Transfer` and `Conference`.
+- Transfer IVR lists enabled entries from `Call Management > Common Number Management`.
+- Transfer IVR row action is `Transfer`.
 
 Conversation transfer modal:
 
 - Tabs: `Transfer Agent`, `Transfer Skill`.
-- No `Transfer Number` tab.
+- No `Transfer Number` or `Transfer IVR` tab.
 - Agent row actions: `Transfer`, `Conference`.
 
 Current demo behavior:
@@ -474,6 +476,7 @@ Visible customer pages:
 - Priority List Management.
 - Common Phrase Management.
 - Common Link Management.
+- Common Number Management.
 - Sensitive Word Management.
 - Busy Reason Management.
 
@@ -509,6 +512,7 @@ Hidden / redirected:
 
 - Active busy reasons appear as AUX options in the agent profile menu.
 - Updating the default reason keeps only one default busy reason.
+- Default active AUX reasons are Break, Coaching/Meeting, Prayer, Toilet, Others, Callback Finrisk, Callback Misinform, Sick/Problem Non System, Routine Job, Problem System, and Special Assignment.
 - Store is local front-end state.
 
 ### Common Phrase Management
@@ -533,6 +537,18 @@ Hidden / redirected:
 - Website Name and Website URL are unique after trim and lowercase normalization.
 - Website URL must start with `http://` or `https://`.
 - Shared voice, video, and Live Chat workspaces read Common Link Management data in the right-side `Common Links` tab.
+- Store is local front-end state.
+
+### Common Number Management
+
+- Common Number Management maintains IVR transfer targets for the current demo session.
+- Entries contain Name, Number, Status, and Remark.
+- Search supports Name, Number, and Status.
+- List columns include No., Name, Number, Status, Remark, and Actions.
+- Add, Edit, and Delete are local demo actions.
+- Name and Number are unique after trim and lowercase normalization.
+- Number is required but does not enforce strict phone format so IVR short codes and service numbers can be used.
+- Only `Active` entries appear in the call Transfer modal `Transfer IVR` tab.
 - Store is local front-end state.
 
 ### Sensitive Word Management

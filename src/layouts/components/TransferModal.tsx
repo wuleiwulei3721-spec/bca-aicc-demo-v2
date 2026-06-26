@@ -10,7 +10,13 @@ import {
   SearchInput,
 } from '../../components'
 import { transferAgents, transferSkills } from '../../mock/transfer'
-import type { TransferAgent, TransferAgentStatus, TransferSkill } from '../../types'
+import { useCallManagementStore } from '../../store'
+import type {
+  CommonNumberEntry,
+  TransferAgent,
+  TransferAgentStatus,
+  TransferSkill,
+} from '../../types'
 
 interface TransferModalProps {
   open: boolean
@@ -292,6 +298,57 @@ function TransferNumberTab({ onComplete }: { onComplete: () => void }) {
   )
 }
 
+function TransferIvrTab({ onComplete }: { onComplete: () => void }) {
+  const commonNumbers = useCallManagementStore(
+    (state) => state.commonNumberEntries,
+  )
+  const activeNumbers = useMemo(
+    () => commonNumbers.filter((entry) => entry.status === 'Active'),
+    [commonNumbers],
+  )
+  const columns: ColumnsType<CommonNumberEntry> = [
+    {
+      dataIndex: 'name',
+      ellipsis: true,
+      title: 'Name',
+      width: 180,
+    },
+    {
+      dataIndex: 'number',
+      title: 'Number',
+      width: 120,
+    },
+    {
+      dataIndex: 'remark',
+      ellipsis: true,
+      title: 'Remark',
+    },
+    {
+      key: 'action',
+      title: 'Action',
+      width: 110,
+      render: () => rowActions(['Transfer'], onComplete),
+    },
+  ]
+
+  return (
+    <div className="aicc-modal-section aicc-transfer-panel">
+      <div className="aicc-modal-toolbar aicc-transfer-search">
+        <span className="aicc-transfer-search__meta">
+          {activeNumbers.length} active IVR numbers
+        </span>
+      </div>
+      <AppTable<CommonNumberEntry>
+        columns={columns}
+        dataSource={activeNumbers}
+        pagination={{ pageSize: 10 }}
+        rowKey="id"
+        size="small"
+      />
+    </div>
+  )
+}
+
 export function TransferModal({
   open,
   variant = 'call',
@@ -314,6 +371,11 @@ export function TransferModal({
             key: 'number',
             label: 'Transfer Number',
             children: <TransferNumberTab onComplete={onClose} />,
+          },
+          {
+            key: 'ivr',
+            label: 'Transfer IVR',
+            children: <TransferIvrTab onComplete={onClose} />,
           },
         ]
       : []),

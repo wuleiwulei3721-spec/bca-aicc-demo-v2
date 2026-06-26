@@ -95,6 +95,7 @@ This repository is still a demo application:
 - CRM screenshot with fallback.
 - Assistant screenshot with fallback.
 - Common Links tab.
+- Call Transfer modal includes Transfer IVR targets from Common Number Management.
 
 ## 8. Completed Video Call Workspace
 
@@ -164,6 +165,7 @@ Customer-visible pages:
 - Priority List Management.
 - Common Phrase Management.
 - Common Link Management.
+- Common Number Management.
 - Sensitive Word Management.
 - Busy Reason Management.
 
@@ -181,6 +183,8 @@ Implemented behaviors:
 - Public phrase linkage into the Live Chat Quick Replies tab.
 - Common link CRUD for website name, website address, and remark.
 - Common Link Management feeds the shared right-side Common Links tab in voice, video, and Live Chat workspaces.
+- Common number CRUD for IVR transfer target name, number, status, and remark.
+- Enabled common numbers feed the call Transfer modal `Transfer IVR` tab.
 - Sensitive word CRUD with fixed category dictionary.
 - Sensitive word detection in Live Chat agent reply sending.
 - Busy reason edit and default selection.

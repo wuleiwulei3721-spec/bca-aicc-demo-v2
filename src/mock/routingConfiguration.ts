@@ -1300,7 +1300,7 @@ export const workingTimePlans: WorkingTimePlan[] = [
       'Chinese service window for callers who enter invalid IVR input three consecutive times.',
     holidayRules: [],
     planCode: 'WTP_3_WRONG_INPUT_ZH',
-    planName: '输入有误-中文',
+    planName: 'Input error - Chinese',
     ramadanSchedule: {
       dateFrom: '',
       dateTo: '',

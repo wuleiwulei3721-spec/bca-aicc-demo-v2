@@ -6,6 +6,7 @@ import {
   BlacklistManagementPage,
   BusyReasonManagementPage,
   CommonLinkManagementPage,
+  CommonNumberManagementPage,
   CommonPhraseManagementPage,
   BusinessTypesPage,
   ChannelsPage,
@@ -58,6 +59,10 @@ const callManagementRoutes = [
   {
     path: 'call-management/common-links',
     element: <CommonLinkManagementPage />,
+  },
+  {
+    path: 'call-management/common-numbers',
+    element: <CommonNumberManagementPage />,
   },
   {
     path: 'call-management/sensitive-words',

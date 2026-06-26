@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { defaultBlacklistEntries } from '../mock/blacklist'
 import { defaultBusyReasons } from '../mock/busyReasons'
 import { defaultCommonLinkEntries } from '../mock/commonLinks'
+import { defaultCommonNumberEntries } from '../mock/commonNumbers'
 import {
   defaultCommonPhraseCategories,
   defaultCommonPhraseEntries,
@@ -12,6 +13,7 @@ import type {
   BlacklistEntry,
   BusyReason,
   CommonLinkEntry,
+  CommonNumberEntry,
   CommonPhraseCategory,
   CommonPhraseEntry,
   PriorityListEntry,
@@ -24,17 +26,20 @@ interface CallManagementStore {
   addCommonPhraseCategory: (category: CommonPhraseCategory) => void
   addCommonPhraseEntry: (entry: CommonPhraseEntry) => void
   addCommonLinkEntry: (entry: CommonLinkEntry) => void
+  addCommonNumberEntry: (entry: CommonNumberEntry) => void
   addPriorityListEntries: (entries: PriorityListEntry[]) => void
   addSensitiveWordEntry: (entry: SensitiveWordEntry) => void
   blacklistEntries: BlacklistEntry[]
   busyReasons: BusyReason[]
   commonLinkEntries: CommonLinkEntry[]
+  commonNumberEntries: CommonNumberEntry[]
   commonPhraseCategories: CommonPhraseCategory[]
   commonPhraseEntries: CommonPhraseEntry[]
   deleteBlacklistEntries: (ids: string[]) => void
   deleteCommonPhraseCategory: (categoryId: string) => void
   deleteCommonPhraseEntries: (phraseIds: string[]) => void
   deleteCommonLinkEntries: (ids: string[]) => void
+  deleteCommonNumberEntries: (ids: string[]) => void
   deletePriorityListEntries: (ids: string[]) => void
   deleteSensitiveWordEntries: (ids: string[]) => void
   findSensitiveWordMatches: (message: string) => SensitiveWordMatch[]
@@ -43,12 +48,14 @@ interface CallManagementStore {
   resetBlacklistEntries: () => void
   resetBusyReasons: () => void
   resetCommonLinkEntries: () => void
+  resetCommonNumberEntries: () => void
   resetCommonPhrases: () => void
   resetPriorityListEntries: () => void
   resetSensitiveWordEntries: () => void
   renameCommonPhraseCategory: (categoryId: string, categoryName: string) => void
   sensitiveWordEntries: SensitiveWordEntry[]
   updateCommonLinkEntry: (entry: CommonLinkEntry) => void
+  updateCommonNumberEntry: (entry: CommonNumberEntry) => void
   updateCommonPhraseEntry: (entry: CommonPhraseEntry) => void
   updateSensitiveWordEntry: (entry: SensitiveWordEntry) => void
   upsertBusyReason: (busyReason: BusyReason) => void
@@ -68,6 +75,10 @@ function cloneCommonPhraseCategories() {
 
 function cloneCommonLinkEntries() {
   return defaultCommonLinkEntries.map((entry) => ({ ...entry }))
+}
+
+function cloneCommonNumberEntries() {
+  return defaultCommonNumberEntries.map((entry) => ({ ...entry }))
 }
 
 function cloneCommonPhraseEntries() {
@@ -109,6 +120,10 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
     set((state) => ({
       commonLinkEntries: [{ ...entry }, ...state.commonLinkEntries],
     })),
+  addCommonNumberEntry: (entry) =>
+    set((state) => ({
+      commonNumberEntries: [{ ...entry }, ...state.commonNumberEntries],
+    })),
   addPriorityListEntries: (entries) =>
     set((state) => ({
       priorityListEntries: [
@@ -123,6 +138,7 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
   blacklistEntries: cloneBlacklistEntries(),
   busyReasons: cloneBusyReasons(),
   commonLinkEntries: cloneCommonLinkEntries(),
+  commonNumberEntries: cloneCommonNumberEntries(),
   commonPhraseCategories: cloneCommonPhraseCategories(),
   commonPhraseEntries: cloneCommonPhraseEntries(),
   deleteBlacklistEntries: (ids) =>
@@ -160,6 +176,16 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
 
       return {
         commonLinkEntries: state.commonLinkEntries.filter(
+          (entry) => !idSet.has(entry.id),
+        ),
+      }
+    }),
+  deleteCommonNumberEntries: (ids) =>
+    set((state) => {
+      const idSet = new Set(ids)
+
+      return {
+        commonNumberEntries: state.commonNumberEntries.filter(
           (entry) => !idSet.has(entry.id),
         ),
       }
@@ -222,6 +248,8 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
   resetBusyReasons: () => set({ busyReasons: cloneBusyReasons() }),
   resetCommonLinkEntries: () =>
     set({ commonLinkEntries: cloneCommonLinkEntries() }),
+  resetCommonNumberEntries: () =>
+    set({ commonNumberEntries: cloneCommonNumberEntries() }),
   resetCommonPhrases: () =>
     set({
       commonPhraseCategories: cloneCommonPhraseCategories(),
@@ -243,6 +271,12 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
   updateCommonLinkEntry: (entry) =>
     set((state) => ({
       commonLinkEntries: state.commonLinkEntries.map((currentEntry) =>
+        currentEntry.id === entry.id ? { ...entry } : currentEntry,
+      ),
+    })),
+  updateCommonNumberEntry: (entry) =>
+    set((state) => ({
+      commonNumberEntries: state.commonNumberEntries.map((currentEntry) =>
         currentEntry.id === entry.id ? { ...entry } : currentEntry,
       ),
     })),

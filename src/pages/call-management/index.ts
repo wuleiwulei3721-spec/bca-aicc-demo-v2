@@ -1,6 +1,7 @@
 export * from './BlacklistManagementPage'
 export * from './BusyReasonManagementPage'
 export * from './CommonLinkManagementPage'
+export * from './CommonNumberManagementPage'
 export * from './CommonPhraseManagementPage'
 export * from './PriorityListManagementPage'
 export * from './RoutingConfigurationPage'

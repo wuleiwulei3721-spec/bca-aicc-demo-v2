@@ -473,7 +473,7 @@ Module:
 Call Management
 
 Decision:
-Customer-visible Call Management scope currently includes Verification Rules, Global Control Configuration, Blacklist Management, Priority List Management, Common Phrase Management, Common Link Management, Sensitive Word Management, and Busy Reason Management; hidden/legacy Call Management routes redirect to Verification Rules.
+Customer-visible Call Management scope currently includes Verification Rules, Global Control Configuration, Blacklist Management, Priority List Management, Common Phrase Management, Common Link Management, Common Number Management, Sensitive Word Management, and Busy Reason Management; hidden/legacy Call Management routes redirect to Verification Rules.
 
 Reason:
 The current demo exposes the management pages relevant to customer review and avoids leaving stale or unfinished configuration pages in the visible menu.
@@ -670,6 +670,29 @@ Implemented
 
 Source:
 Code: `src/pages/call-management/CommonLinkManagementPage.tsx`, `src/store/callManagementStore.ts`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`; History: `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-032
+
+Module:
+Call Management / Transfer
+
+Decision:
+Common Number Management owns enabled IVR transfer targets shown in the call Transfer modal `Transfer IVR` tab.
+
+Reason:
+The customer request defines common numbers as a management-console configuration for voice agents to transfer customers into IVR flows such as VIP hotline service. The current demo transfer behavior closes the modal without backend dispatch, so Transfer IVR follows the same demo interaction boundary.
+
+Impact:
+Future real transfer integration should map `Active` common-number entries to backend IVR transfer targets while keeping conversation transfer separate from call-only IVR transfer.
+
+Status:
+Implemented
+
+Source:
+Code: `src/pages/call-management/CommonNumberManagementPage.tsx`, `src/store/callManagementStore.ts`, `src/layouts/components/TransferModal.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`; History: `DEV_LOG.md`
 
 --------------------------------------------------
 

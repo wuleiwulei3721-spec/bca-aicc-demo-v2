@@ -99,6 +99,7 @@ Current router structure:
 - `/call-management/priority-list`
 - `/call-management/common-phrases`
 - `/call-management/common-links`
+- `/call-management/common-numbers`
 - `/call-management/sensitive-words`
 - `/call-management/busy-reasons`
 - `/call-management/*` legacy or hidden routes redirect to Verification Rules.
@@ -252,6 +253,7 @@ Customer-visible Call Management pages:
 - Priority List Management.
 - Common Phrase Management.
 - Common Link Management.
+- Common Number Management.
 - Sensitive Word Management.
 - Busy Reason Management.
 
@@ -308,6 +310,7 @@ The pages use local routing config store data and shared admin components.
 - Live Chat workspace with customer list, conversation, message record, quick replies, and local message state.
 - BankApp and WhatsApp customer-side simulations with screenshot assets.
 - Call Management pages listed above.
+- Common Number Management feeds enabled IVR transfer targets in the call Transfer modal.
 - Sensitive word detection for Live Chat agent replies.
 - Routing Config pages listed above.
 - Admin CRUD component set.

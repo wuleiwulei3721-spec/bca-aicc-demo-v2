@@ -49,6 +49,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Answer works,
   - Hold and Mute are mutually exclusive,
   - Transfer opens call transfer modal,
+  - Transfer IVR shows enabled Common Number Management entries only,
   - Hang Up enters After Call Work then Ready.
 - Verify toolbar call context:
   - PSTN shows IVR and Skill,
@@ -114,6 +115,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Priority List Management,
   - Common Phrase Management,
   - Common Link Management,
+  - Common Number Management,
   - Sensitive Word Management,
   - Busy Reason Management.
 - Verify Routing Config:

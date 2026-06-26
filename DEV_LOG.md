@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-24 11:00 +08:00
+最后更新：2026-06-25 16:40 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,119 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-06-25 16:40 +08:00 - Busy Reason 默认启用 AUX 列表调整
+
+修改页面或文件：
+
+- `src/mock/busyReasons.ts`
+- `BUSINESS_RULES.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求将 Busy Reason Management 中启用数据配置为指定 AUX List。
+
+修改结果：
+
+- BR001-BR011 已按顺序配置为 Break、Coaching/Meeting、Prayer、Toilet、Others、Callback Finrisk、Callback Misinform、Sick/Problem Non System、Routine Job、Problem System、Special Assignment。
+- 这些记录均保持 `Active`，会出现在坐席头像菜单的 AUX 选项中。
+- BR012 及之后扩展项保持 `Disabled`，不影响 AUX 菜单。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留 Vite chunk size 提示。
+
+回滚说明：
+
+- 如需回滚，可恢复 `src/mock/busyReasons.ts` 中 BR001-BR011 的默认名称、备注、状态和更新时间。
+
+当前风险点：
+
+- Busy Reason store 为本地前端状态；刷新页面会回到当前 mock 默认列表。
+
+### 2026-06-25 10:12 +08:00 - 新增 Common Number Management 与 Transfer IVR
+
+修改页面或文件：
+
+- `src/pages/call-management/CommonNumberManagementPage.tsx`
+- `src/types/commonNumber.ts`
+- `src/mock/commonNumbers.ts`
+- `src/store/callManagementStore.ts`
+- `src/layouts/components/TransferModal.tsx`
+- `src/routes.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/call-management/index.ts`
+- `src/types/index.ts`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求在 `Call Management` 下新增常用号码管理菜单，用于维护坐席语音服务中可转接的 IVR 号码。
+- 用户要求在语音呼叫转接弹窗的 `Transfer Number` 后新增 `Transfer IVR`，仅展示启用状态的常用号码并提供转移按钮。
+
+修改结果：
+
+- 新增 `Call Management > Common Number Management` 菜单和 `/call-management/common-numbers` 路由。
+- 新增 Common Number 类型、默认 mock 数据和 `callManagementStore` CRUD 能力。
+- 管理页支持按 Name / Number / Status 查询；列表包含 No.、Name、Number、Status、Remark、Actions；支持 Add、Edit、Delete。
+- Name 和 Number 在当前 demo session 内按 trim + lowercase 唯一；Number 仅必填，不做严格电话格式限制。
+- Call Transfer modal 在 call variant 下新增 `Transfer IVR` 页签，只展示 `Active` 常用号码，列表包含 Name、Number、Remark、Action。
+- Conversation transfer variant 不显示 `Transfer Number` 或 `Transfer IVR`。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留 Vite chunk size 提示。
+- HTTP smoke 已通过：`/call-management/common-numbers`、`/call-management/common-phrases`、`/` 均返回 200。
+- UI smoke 已尝试；本地浏览器 / CDP 调试端口连接失败，未能完成新增 / 编辑 / 删除和 Transfer modal 交互验证。
+
+回滚说明：
+
+- 如需回滚本功能，移除新增页面、类型、mock、store 字段和路由菜单项，并恢复 `TransferModal.tsx` 的 call variant 页签为 `Transfer Agent` / `Transfer Skill` / `Transfer Number`。
+
+当前风险点：
+
+- 当前为前端 demo store 行为，不接真实后端；刷新后恢复默认常用号码数据。
+- `Transfer IVR` 点击 Transfer 仍沿用当前 transfer demo 行为，仅关闭弹窗，不发送真实 IVR 转接事件。
+
+### 2026-06-25 09:36 +08:00 - Working Time Plan 英文展示名修正
+
+修改页面或文件：
+
+- `src/mock/routingConfiguration.ts`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户反馈 `Routing Config > Channels` 中 Phone Business Config 的 `Exception Working Time Plan` 下拉仍显示中文 `输入有误-中文`，需要改为英文。
+- 该字段通过 `exceptionWorkTimePlanCode` 引用 `Working Time Plans` 数据源，因此应从工作时间计划源数据同步修正。
+
+修改结果：
+
+- 将 `WTP_3_WRONG_INPUT_ZH` 的 `planName` 从 `输入有误-中文` 改为 `Input error - Chinese`。
+- `Channels` 页面仍按同一 plan code 引用该计划，工作时间管理列表和渠道业务配置下拉会显示同一英文名称。
+
+验证：
+
+- `rg` 已确认相关源码中不再保留 `输入有误` 展示值。
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite/Rolldown chunk size warning。
+- HTTP smoke 已确认本地 `/routing-config/working-time-plans` 返回 200；Browser 插件连接超时，未完成截图级可视化 smoke。
+
+回滚说明：
+
+- 如需回滚，将 `src/mock/routingConfiguration.ts` 中 `WTP_3_WRONG_INPUT_ZH.planName` 恢复为 `输入有误-中文`。
+
+当前风险点：
+
+- 当前修改仅影响默认 mock / store 初始数据；如果浏览器中已有旧 demo session 状态，需要刷新或重置 Routing Config store 才会看到最新默认值。
 
 ### 2026-06-24 11:00 +08:00 - Common Link 接入共享右侧面板
 
