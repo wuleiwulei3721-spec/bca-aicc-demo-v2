@@ -18,9 +18,12 @@ import { AssistantPanel } from './components/AssistantPanel'
 import type { AssistantPanelExtraTab } from './components/AssistantPanel'
 import { CONVERSATION_TAB_KEY, CrmPanel } from './components/CrmPanel'
 import type { ConversationWorkspaceConfig } from './components/ConversationWorkspace'
+import type { CustomerVerificationPanelConfig } from './components/CustomerInformationCard'
+import { CustomerVerificationV2Panel } from './components/CustomerVerificationV2Modal'
 import { LeftColumn } from './components/LeftColumn'
 
 const CRM_TAB_KEY = 'crm'
+const VERIFICATION_TAB_KEY = 'verification'
 
 interface InteractionWorkspaceProps {
   accessMenuLabel?: string
@@ -63,6 +66,10 @@ export function InteractionWorkspace({
   showIvrJourney,
   showTransferHistory,
 }: InteractionWorkspaceProps) {
+  const [internalAssistantActiveKey, setInternalAssistantActiveKey] =
+    useState('assistant')
+  const [verificationPanelConfig, setVerificationPanelConfig] =
+    useState<CustomerVerificationPanelConfig | null>(null)
   const [crmWorkspace, setCrmWorkspace] = useState<{
     activeKey: string
     tabs: CrmWorkspaceTab[]
@@ -140,6 +147,11 @@ export function InteractionWorkspace({
     }),
     [customer.accessChannel, customer.accessDuration, identityData.customer],
   )
+  const displayCustomerKey = [
+    displayCustomer.accessChannel,
+    displayCustomer.profile.cisNumber,
+    displayCustomer.profile.phoneNumber,
+  ].join(':')
 
   const openCrmWorkspaceTab = useCallback((tab: CrmWorkspaceTab) => {
     setCrmWorkspace((current) => ({
@@ -194,6 +206,35 @@ export function InteractionWorkspace({
     },
     [customer.accessChannel, customer.accessDuration, sourceCustomerKey],
   )
+  const handleAssistantActiveKeyChange = useCallback(
+    (activeKey: string) => {
+      setInternalAssistantActiveKey(activeKey)
+      onAssistantActiveKeyChange?.(activeKey)
+    },
+    [onAssistantActiveKeyChange],
+  )
+  const openVerificationPanel = useCallback(
+    (config: CustomerVerificationPanelConfig) => {
+      setVerificationPanelConfig(config)
+      handleAssistantActiveKeyChange(VERIFICATION_TAB_KEY)
+    },
+    [handleAssistantActiveKeyChange],
+  )
+  const closeVerificationPanel = useCallback(() => {
+    setVerificationPanelConfig(null)
+    handleAssistantActiveKeyChange('assistant')
+  }, [handleAssistantActiveKeyChange])
+  const currentVerificationPanelConfig =
+    verificationPanelConfig?.customerKey === displayCustomerKey
+      ? verificationPanelConfig
+      : null
+  const requestedAssistantActiveKey =
+    assistantActiveKey ?? internalAssistantActiveKey
+  const currentAssistantActiveKey =
+    requestedAssistantActiveKey === VERIFICATION_TAB_KEY &&
+    !currentVerificationPanelConfig
+      ? 'assistant'
+      : requestedAssistantActiveKey
 
   return (
     <>
@@ -215,6 +256,7 @@ export function InteractionWorkspace({
           showTransferHistory={showTransferHistory}
           onCustomerIdentityRefresh={refreshCustomerIdentity}
           onOpenCrm={openCrmWorkspaceTab}
+          onOpenVerification={openVerificationPanel}
         />
         <CrmPanel
           activeKey={crmWorkspace.activeKey}
@@ -228,9 +270,23 @@ export function InteractionWorkspace({
           onCloseTab={closeCrmWorkspaceTab}
         />
         <AssistantPanel
-          activeKey={assistantActiveKey}
+          activeKey={currentAssistantActiveKey}
           extraTabs={assistantExtraTabs}
-          onActiveKeyChange={onAssistantActiveKeyChange}
+          verificationTab={
+            currentVerificationPanelConfig ? (
+              <CustomerVerificationV2Panel
+                initialConditions={
+                  currentVerificationPanelConfig.initialConditions
+                }
+                questionBank={currentVerificationPanelConfig.questionBank}
+                rules={currentVerificationPanelConfig.rules}
+                variant="compact"
+                onFinish={currentVerificationPanelConfig.onFinish}
+              />
+            ) : undefined
+          }
+          onCloseVerificationTab={closeVerificationPanel}
+          onActiveKeyChange={handleAssistantActiveKeyChange}
           onCloseExtraTab={onAssistantCloseExtraTab}
         />
       </section>

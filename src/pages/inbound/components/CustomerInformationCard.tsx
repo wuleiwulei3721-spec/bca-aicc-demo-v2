@@ -6,7 +6,6 @@ import {
 import { Input, Popover } from 'antd'
 import {
   BaseButton,
-  BaseModal,
   CustomerInformationPanel,
   type CustomerOutboundRequestStatus,
 } from '../../../components'
@@ -24,7 +23,6 @@ import {
 } from '../../../utils/verificationRuleV2'
 import { CallFlowDetailModal } from './CallFlowDetailModal'
 import { ChannelTag } from './ChannelTag'
-import { CustomerVerificationV2Modal } from './CustomerVerificationV2Modal'
 import { ContactManagementModal } from './ContactManagementModal'
 import {
   CONTACT_TYPES,
@@ -40,8 +38,17 @@ interface CustomerInformationCardProps {
   customer: CustomerInformation
   identityRefreshPasteValue: string
   onCustomerIdentityRefresh: (customerId: string) => boolean
+  onOpenVerification: (config: CustomerVerificationPanelConfig) => void
   showIvrJourney?: boolean
   showTransferHistory?: boolean
+}
+
+export interface CustomerVerificationPanelConfig {
+  customerKey: string
+  initialConditions: VerificationV2DemoConditions
+  questionBank: ReturnType<typeof useAppStore.getState>['verificationV2QuestionBank']
+  rules: ReturnType<typeof useAppStore.getState>['verificationV2Rules']
+  onFinish: (status: VerificationStatus) => void
 }
 
 function createContactRecord(type: ContactType, value: string): ContactRecord {
@@ -111,6 +118,7 @@ export function CustomerInformationCard({
   customer,
   identityRefreshPasteValue,
   onCustomerIdentityRefresh,
+  onOpenVerification,
   showIvrJourney,
   showTransferHistory,
 }: CustomerInformationCardProps) {
@@ -136,7 +144,6 @@ export function CustomerInformationCard({
     customerKey,
     status: customer.verificationStatus,
   }))
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const [isCallFlowOpen, setIsCallFlowOpen] = useState(false)
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
   const defaultContacts = useMemo(
@@ -202,7 +209,13 @@ export function CustomerInformationCard({
   )
 
   const openVerification = () => {
-    setIsModalOpen(true)
+    onOpenVerification({
+      customerKey,
+      initialConditions: initialVerificationV2Conditions,
+      questionBank: verificationV2QuestionBank,
+      rules: verificationV2Rules,
+      onFinish: finishVerification,
+    })
   }
 
   const finishVerification = (status: VerificationStatus) => {
@@ -210,7 +223,6 @@ export function CustomerInformationCard({
       customerKey,
       status,
     })
-    setIsModalOpen(false)
   }
 
   const handleIdentityRefreshOpenChange = (open: boolean) => {
@@ -364,22 +376,6 @@ export function CustomerInformationCard({
         onVerify={openVerification}
       />
 
-      <BaseModal
-        className="inbound-verification-modal"
-        destroyOnHidden
-        kind="verification"
-        open={isModalOpen}
-        title="Customer Verification"
-        width={980}
-        onCancel={() => setIsModalOpen(false)}
-      >
-        <CustomerVerificationV2Modal
-          initialConditions={initialVerificationV2Conditions}
-          questionBank={verificationV2QuestionBank}
-          rules={verificationV2Rules}
-          onFinish={finishVerification}
-        />
-      </BaseModal>
       <CallFlowDetailModal
         accessMenuLabel={accessMenuLabel}
         accessMenuName={accessMenuName}

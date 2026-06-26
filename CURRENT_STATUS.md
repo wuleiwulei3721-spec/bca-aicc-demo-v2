@@ -82,7 +82,7 @@ This repository is still a demo application:
 - Unidentified PSTN customer initial state.
 - Customer identity refresh demo.
 - Customer Information card.
-- Customer Verification V2 modal.
+- Customer Verification V2 right-side tab.
 - Call Flow Detail modal.
 - Send Email modal.
 - Contact Management modal.
@@ -95,6 +95,7 @@ This repository is still a demo application:
 - CRM screenshot with fallback.
 - Assistant screenshot with fallback.
 - Common Links tab.
+- Verification tab for side-by-side CRM comparison.
 - Call Transfer modal includes Transfer IVR targets from Common Number Management.
 
 ## 8. Completed Video Call Workspace

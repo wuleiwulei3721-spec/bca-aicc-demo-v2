@@ -231,7 +231,8 @@ Contact Management:
 
 Verification:
 
-- Opens Customer Verification V2 modal.
+- Opens Customer Verification V2 in the right-side Verification tab.
+- The CRM center workspace remains visible while the agent asks questions and marks Correct, Wrong, or Skip.
 - Verification result updates customer verification status locally.
 
 Call Flow Detail:
@@ -248,7 +249,7 @@ Rule matching:
 
 - Rules match by enabled channel code, skill queue, and customer segment.
 - Customer segment is inferred from profile but can be adjusted in the agent modal.
-- Skill can be adjusted in the agent modal.
+- Skill can be adjusted in the agent verification tab or management preview modal.
 - Scenario selector is shown only when the matched rule has multiple scenarios.
 
 Rule model:

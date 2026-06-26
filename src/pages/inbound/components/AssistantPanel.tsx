@@ -3,6 +3,7 @@ import {
   ApiOutlined,
   CloseOutlined,
   ExportOutlined,
+  SafetyCertificateOutlined,
   RobotOutlined,
 } from '@ant-design/icons'
 import type { ReactNode } from 'react'
@@ -116,6 +117,8 @@ function CommonLinksArea() {
 interface AssistantPanelProps {
   activeKey?: string
   extraTabs?: AssistantPanelExtraTab[]
+  verificationTab?: ReactNode
+  onCloseVerificationTab?: () => void
   onActiveKeyChange?: (activeKey: string) => void
   onCloseExtraTab?: (targetKey: string) => void
 }
@@ -165,6 +168,8 @@ function renderAssistantTabLabel({
 export function AssistantPanel({
   activeKey,
   extraTabs = [],
+  verificationTab,
+  onCloseVerificationTab,
   onActiveKeyChange,
   onCloseExtraTab,
 }: AssistantPanelProps) {
@@ -199,6 +204,21 @@ export function AssistantPanel({
             }),
             children: <CommonLinksArea />,
           },
+          ...(verificationTab
+            ? [
+                {
+                  key: 'verification',
+                  label: renderAssistantTabLabel({
+                    closable: true,
+                    icon: <SafetyCertificateOutlined />,
+                    key: 'verification',
+                    title: 'Verification',
+                    onClose: () => onCloseVerificationTab?.(),
+                  }),
+                  children: verificationTab,
+                },
+              ]
+            : []),
           ...extraTabs.map((tab) => ({
             key: tab.key,
             label: renderAssistantTabLabel({

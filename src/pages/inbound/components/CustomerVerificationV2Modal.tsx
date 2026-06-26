@@ -40,6 +40,11 @@ interface CustomerVerificationV2ModalProps {
   onFinish: (status: VerificationStatus) => void
 }
 
+interface CustomerVerificationV2PanelProps
+  extends CustomerVerificationV2ModalProps {
+  variant?: 'compact' | 'modal'
+}
+
 interface RequirementItem {
   altUsed: number
   currentCount: number
@@ -47,6 +52,14 @@ interface RequirementItem {
   label: string
   requiredCount: number
   tone: 'empty' | 'met' | 'progress'
+}
+
+interface QuestionBlockGroup {
+  group: VerificationV2QuestionGroup
+  id: string
+  label: string
+  questions: VerificationV2EffectiveQuestion[]
+  requirement: RequirementItem | null
 }
 
 function getCounts(
@@ -180,13 +193,50 @@ function getActionClass(
     .join(' ')
 }
 
-export function CustomerVerificationV2Modal({
+function getQuestionBlockGroups(
+  effectiveRule: VerificationV2EffectiveRule | null,
+  requirementItems: RequirementItem[],
+): QuestionBlockGroup[] {
+  if (!effectiveRule) {
+    return []
+  }
+
+  const requirementByBlock = new Map(
+    requirementItems.map((item) => [item.id, item]),
+  )
+
+  return effectiveRule.questions.reduce<QuestionBlockGroup[]>(
+    (groups, question) => {
+      const existingGroup = groups.find((group) => group.id === question.blockId)
+
+      if (existingGroup) {
+        existingGroup.questions.push(question)
+        return groups
+      }
+
+      groups.push({
+        group: question.group,
+        id: question.blockId,
+        label:
+          question.groupLabel ?? verificationV2QuestionGroupLabels[question.group],
+        questions: [question],
+        requirement: requirementByBlock.get(question.blockId) ?? null,
+      })
+
+      return groups
+    },
+    [],
+  )
+}
+
+export function CustomerVerificationV2Panel({
   initialConditions,
   questionBank,
   readonlyConditions = false,
   rules,
+  variant = 'modal',
   onFinish,
-}: CustomerVerificationV2ModalProps) {
+}: CustomerVerificationV2PanelProps) {
   const skillQueues = useRoutingConfigStore((state) => state.skillQueues)
   const [conditions, setConditions] =
     useState<VerificationV2DemoConditions>(initialConditions)
@@ -258,6 +308,17 @@ export function CustomerVerificationV2Modal({
     effectiveRule && wrongLimit !== null
       ? `Wrong ${evaluation.wrongCount}/${wrongLimit}`
       : ''
+  const applyFailedLabel =
+    effectiveRule && wrongLimit !== null
+      ? `Apply Failed ${evaluation.wrongCount}/${wrongLimit}`
+      : 'Apply Failed'
+  const applyVerifiedLabel = effectiveRule
+    ? `Apply Verified ${evaluation.correctCount}/${effectiveRule.correctRequired}`
+    : 'Apply Verified'
+  const questionBlockGroups = getQuestionBlockGroups(
+    effectiveRule,
+    evaluation.requirementItems,
+  )
 
   const updateConditions = (patch: Partial<VerificationV2DemoConditions>) => {
     const nextConditions = {
@@ -300,71 +361,229 @@ export function CustomerVerificationV2Modal({
     setQuestionStatuses({})
   }
 
-  return (
-    <div className="inbound-verification-workflow inbound-verification-workflow--v2">
-      <div className="inbound-verification-workflow__toolbar inbound-verification-workflow__toolbar--v2">
-        <label className="inbound-verification-workflow__business">
-          <span>Customer Segment</span>
-          {readonlyConditions ? (
-            <strong className="inbound-verification-workflow__readonly">
-              {verificationV2CustomerSegmentOptions.find(
-                (option) => option.value === conditions.customerSegment,
-              )?.label ?? conditions.customerSegment}
-            </strong>
-          ) : (
-            <Select
-              className="inbound-verification-workflow__business-select"
-              options={verificationV2CustomerSegmentOptions}
-              popupMatchSelectWidth={false}
-              size="small"
-              value={conditions.customerSegment}
-              onChange={(customerSegment) =>
-                updateConditions({
-                  customerSegment:
-                    customerSegment as VerificationV2CustomerSegment,
-                })
-              }
-            />
-          )}
-        </label>
-        <label className="inbound-verification-workflow__business">
-          <span>Skill</span>
-          {readonlyConditions ? (
-            <strong className="inbound-verification-workflow__readonly">
-              {skillQueueNameByCode[conditions.skillQueueCode] ??
-                conditions.skillQueueCode}
-            </strong>
-          ) : (
-            <Select
-              className="inbound-verification-workflow__business-select"
-              options={skillQueueOptions}
-              popupMatchSelectWidth={false}
-              size="small"
-              value={conditions.skillQueueCode}
-              onChange={(skillQueueCode) =>
-                updateConditions({ skillQueueCode })
-              }
-            />
-          )}
-        </label>
-        {shouldShowScenarioSelector && (
-          <label className="inbound-verification-workflow__business">
-            <span>Scenario</span>
-            <Select
-              className="inbound-verification-workflow__business-select"
-              options={verificationScenarioOptions}
-              popupMatchSelectWidth={false}
-              size="small"
-              value={selectedVerificationScenarioId}
-              onChange={(scenarioId) =>
-                updateConditions({
-                  scenarioId:
-                    scenarioId as VerificationV2DemoConditions['scenarioId'],
-                })
-              }
-            />
-          </label>
+  const renderQuestionActions = (question: VerificationV2EffectiveQuestion) => {
+    const status = questionStatuses[question.id]
+
+    return (
+      <Space
+        className="inbound-verification-list__actions"
+        size={5}
+        wrap={false}
+      >
+        <AppButton
+          aria-label="Mark correct"
+          className={getActionClass('correct', status === 'correct')}
+          disabled={false}
+          icon={<CheckOutlined />}
+          size="small"
+          onClick={() => handleQuestionAction(question, 'correct')}
+        />
+        <AppButton
+          aria-label="Mark wrong"
+          className={getActionClass('wrong', status === 'wrong')}
+          danger
+          disabled={false}
+          icon={<CloseOutlined />}
+          size="small"
+          onClick={() => handleQuestionAction(question, 'wrong')}
+        />
+        <AppButton
+          aria-label="Skip question"
+          className={getActionClass('skipped', status === 'skipped')}
+          disabled={false}
+          icon={<MinusOutlined />}
+          size="small"
+          onClick={() => handleQuestionAction(question, 'skipped')}
+        />
+      </Space>
+    )
+  }
+
+  const renderConditionControls = () => (
+    <>
+      <label className="inbound-verification-workflow__business">
+        <span>{variant === 'compact' ? 'Segment' : 'Customer Segment'}</span>
+        {readonlyConditions ? (
+          <strong className="inbound-verification-workflow__readonly">
+            {verificationV2CustomerSegmentOptions.find(
+              (option) => option.value === conditions.customerSegment,
+            )?.label ?? conditions.customerSegment}
+          </strong>
+        ) : (
+          <Select
+            className="inbound-verification-workflow__business-select"
+            options={verificationV2CustomerSegmentOptions}
+            popupMatchSelectWidth={false}
+            size="small"
+            value={conditions.customerSegment}
+            onChange={(customerSegment) =>
+              updateConditions({
+                customerSegment:
+                  customerSegment as VerificationV2CustomerSegment,
+              })
+            }
+          />
         )}
+      </label>
+      <label className="inbound-verification-workflow__business">
+        <span>Skill</span>
+        {readonlyConditions ? (
+          <strong className="inbound-verification-workflow__readonly">
+            {skillQueueNameByCode[conditions.skillQueueCode] ??
+              conditions.skillQueueCode}
+          </strong>
+        ) : (
+          <Select
+            className="inbound-verification-workflow__business-select"
+            options={skillQueueOptions}
+            popupMatchSelectWidth={false}
+            size="small"
+            value={conditions.skillQueueCode}
+            onChange={(skillQueueCode) =>
+              updateConditions({ skillQueueCode })
+            }
+          />
+        )}
+      </label>
+      {shouldShowScenarioSelector && (
+        <label className="inbound-verification-workflow__business">
+          <span>Scenario</span>
+          <Select
+            className="inbound-verification-workflow__business-select"
+            options={verificationScenarioOptions}
+            popupMatchSelectWidth={false}
+            size="small"
+            value={selectedVerificationScenarioId}
+            onChange={(scenarioId) =>
+              updateConditions({
+                scenarioId:
+                  scenarioId as VerificationV2DemoConditions['scenarioId'],
+              })
+            }
+          />
+        </label>
+      )}
+    </>
+  )
+
+  if (variant === 'compact') {
+    return (
+      <div className="inbound-verification-workflow inbound-verification-workflow--v2 inbound-verification-workflow--compact">
+        <div className="inbound-verification-workflow__toolbar inbound-verification-workflow__toolbar--v2 inbound-verification-workflow__toolbar--compact">
+          {renderConditionControls()}
+        </div>
+
+        {effectiveRule?.agentHint && (
+          <div className="inbound-verification-workflow__rulecopy inbound-verification-workflow__rulecopy--compact">
+            <span className="inbound-verification-workflow__hint">
+              {effectiveRule.agentHint}
+            </span>
+          </div>
+        )}
+
+        <div className="inbound-verification-list inbound-verification-list--grouped">
+          {effectiveRule ? (
+            questionBlockGroups.map((group) => {
+              const requirement = group.requirement
+
+              return (
+                <section
+                  className="inbound-verification-question-group"
+                  key={group.id}
+                >
+                  <header className="inbound-verification-question-group__header">
+                    <span
+                      className={`inbound-verification-list__group inbound-verification-list__group--${group.group}`}
+                    >
+                      {group.label}
+                      {requirement && (
+                        <em
+                          className={`inbound-verification-question-group__count inbound-verification-question-group__count--${requirement.tone}`}
+                        >
+                          ({requirement.currentCount}/{requirement.requiredCount}
+                          {requirement.altUsed > 0
+                            ? ` ALT +${requirement.altUsed}`
+                            : ''}
+                          )
+                        </em>
+                      )}
+                    </span>
+                  </header>
+                  <div className="inbound-verification-question-group__body">
+                    {group.questions.map((question, index) => (
+                      <div
+                        className="inbound-verification-list__row"
+                        key={question.id}
+                      >
+                        <span>{String(index + 1).padStart(2, '0')}</span>
+                        <div className="inbound-verification-list__content">
+                          <strong>{question.questionName}</strong>
+                        </div>
+                        {renderQuestionActions(question)}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )
+            })
+          ) : (
+            <div className="inbound-verification-list__empty">
+              No questions configured for this KBV scenario.
+            </div>
+          )}
+        </div>
+
+        <div className="aicc-modal-footer inbound-verification-modal__footer inbound-verification-modal__footer--compact">
+          <div className="inbound-verification-compact-actions">
+            <AppButton size="small" onClick={resetProgress}>
+              Clear All
+            </AppButton>
+            <AppButton
+              danger
+              disabled={!effectiveRule}
+              size="small"
+              onClick={() => onFinish('Verification Failed')}
+            >
+              {applyFailedLabel}
+            </AppButton>
+            <AppButton
+              disabled={!evaluation.passed}
+              size="small"
+              type="primary"
+              onClick={() => onFinish('Verified')}
+            >
+              {applyVerifiedLabel}
+            </AppButton>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className={[
+        'inbound-verification-workflow',
+        'inbound-verification-workflow--v2',
+        variant === 'compact'
+          ? 'inbound-verification-workflow--compact'
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <div
+        className={[
+          'inbound-verification-workflow__toolbar',
+          'inbound-verification-workflow__toolbar--v2',
+          variant === 'compact'
+            ? 'inbound-verification-workflow__toolbar--compact'
+            : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        {renderConditionControls()}
       </div>
 
       <div className="inbound-verification-workflow__rulebar">
@@ -411,8 +630,6 @@ export function CustomerVerificationV2Modal({
       <div className="inbound-verification-list">
         {effectiveRule ? (
           effectiveRule.questions.map((question, index) => {
-            const status = questionStatuses[question.id]
-
             return (
               <div
                 className="inbound-verification-list__row"
@@ -428,36 +645,7 @@ export function CustomerVerificationV2Modal({
                 <div className="inbound-verification-list__content">
                   <strong>{question.questionName}</strong>
                 </div>
-                <Space size={5} wrap={false}>
-                  <AppButton
-                    aria-label="Mark correct"
-                    className={getActionClass('correct', status === 'correct')}
-                    disabled={false}
-                    icon={<CheckOutlined />}
-                    size="small"
-                    onClick={() => handleQuestionAction(question, 'correct')}
-                  />
-                  <AppButton
-                    aria-label="Mark wrong"
-                    className={getActionClass('wrong', status === 'wrong')}
-                    danger
-                    disabled={false}
-                    icon={<CloseOutlined />}
-                    size="small"
-                    onClick={() => handleQuestionAction(question, 'wrong')}
-                  />
-                  <AppButton
-                    aria-label="Skip question"
-                    className={getActionClass(
-                      'skipped',
-                      status === 'skipped',
-                    )}
-                    disabled={false}
-                    icon={<MinusOutlined />}
-                    size="small"
-                    onClick={() => handleQuestionAction(question, 'skipped')}
-                  />
-                </Space>
+                {renderQuestionActions(question)}
               </div>
             )
           })
@@ -491,4 +679,10 @@ export function CustomerVerificationV2Modal({
       </div>
     </div>
   )
+}
+
+export function CustomerVerificationV2Modal(
+  props: CustomerVerificationV2ModalProps,
+) {
+  return <CustomerVerificationV2Panel {...props} variant="modal" />
 }

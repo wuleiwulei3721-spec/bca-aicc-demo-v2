@@ -7,6 +7,7 @@ import type {
   TicketHistoryItem,
 } from '../../../types'
 import { CustomerInformationCard } from './CustomerInformationCard'
+import type { CustomerVerificationPanelConfig } from './CustomerInformationCard'
 import { CustomerJourneyCard } from './CustomerJourneyCard'
 import { NextBestActionCard } from './NextBestActionCard'
 import { QuickActionCard } from './QuickActionCard'
@@ -23,6 +24,7 @@ interface LeftColumnProps {
   quickActions: QuickActionItem[]
   onCustomerIdentityRefresh: (customerId: string) => boolean
   onOpenCrm: (tab: CrmWorkspaceTab) => void
+  onOpenVerification: (config: CustomerVerificationPanelConfig) => void
   showIvrJourney?: boolean
   showTransferHistory?: boolean
 }
@@ -38,6 +40,7 @@ export function LeftColumn({
   quickActions,
   onCustomerIdentityRefresh,
   onOpenCrm,
+  onOpenVerification,
   showIvrJourney,
   showTransferHistory,
 }: LeftColumnProps) {
@@ -52,6 +55,7 @@ export function LeftColumn({
           showIvrJourney={showIvrJourney}
           showTransferHistory={showTransferHistory}
           onCustomerIdentityRefresh={onCustomerIdentityRefresh}
+          onOpenVerification={onOpenVerification}
         />
       </div>
       <div className="inbound-left-column__scroll">

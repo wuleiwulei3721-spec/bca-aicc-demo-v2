@@ -29,6 +29,206 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
 
+### 2026-06-26 00:00 +08:00 - Customer Verification 改为右侧窄版 Tab
+
+修改页面或文件：
+
+- `src/pages/inbound/InteractionWorkspace.tsx`
+- `src/pages/inbound/components/AssistantPanel.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `src/pages/inbound/components/LeftColumn.tsx`
+- `src/styles/index.less`
+- `CURRENT_STATUS.md`
+- `BUSINESS_RULES.md`
+- `DESIGN_SYSTEM.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户反馈原 Customer Verification 居中弹框会覆盖 CRM，真实通话场景中坐席需要一边查看 CRM 资料，一边询问客户并在验证界面标记结果。
+
+修改结果：
+
+- Customer Information 的 Verify 入口现在打开右侧固定 `Verification` tab，与 `Assistant`、`Common Links` 同级。
+- Verification tab 使用窄版纵向布局，保留 Customer Segment、Skill、Scenario、Need correct、Wrong count、问题列表、Correct/Wrong/Skip 和 Apply Verified/Failed。
+- 中心 CRM workspace 不再被验证界面遮挡；管理页的 Customer Verification Preview 继续使用原 modal 形态。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留 Vite chunk size 提示。
+- 本地 dev server `http://127.0.0.1:5173` 可访问；Codex in-app browser 自动化连接连续超时，未完成截图式 smoke check。
+
+回滚说明：
+
+- 如需回滚，可恢复 `CustomerInformationCard` 中的 `BaseModal` 验证入口，并移除 `InteractionWorkspace` 与 `AssistantPanel` 的 Verification tab wiring 以及 compact 样式。
+
+当前风险点：
+
+- 右侧窄版可用性仍建议在客户演示分辨率下人工复核，尤其是长问题、多 scenario 和 Live Chat 四栏布局。
+
+### 2026-06-26 00:00 +08:00 - Customer Verification 右侧 Tab 二次压缩优化
+
+修改页面或文件：
+
+- `src/pages/inbound/InteractionWorkspace.tsx`
+- `src/pages/inbound/components/AssistantPanel.tsx`
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `src/styles/index.less`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户确认右侧 Verification tab 已可见，但反馈条件区、回答进度和问题列表仍占用过多高度，需要更贴合右侧窄面板的坐席操作台布局。
+
+修改结果：
+
+- Verification tab 现在可关闭，关闭后回到 `Assistant`。
+- 条件区默认收起为一行摘要，可展开编辑 Customer Segment、Skill、Scenario。
+- 问题按 block/group 分组展示，同类名称只出现一次；问题文本可换行，Correct/Wrong/Skip 操作按钮固定在问题右侧。
+- Need correct、Correct count、Wrong count、分组进度和 Apply 操作移到底部 sticky 区域，便于与 CRM 对照时保持操作可见。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留 Vite chunk size 提示。
+
+回滚说明：
+
+- 如需回滚，可恢复 compact 模式中按单题平铺的列表结构，并移除 Verification tab close 回调。
+
+当前风险点：
+
+- 右侧条件展开后三个 select 会根据宽度自动换行；仍建议在客户演示屏幕下人工确认长 Skill / Scenario 名称是否足够清晰。
+
+### 2026-06-26 00:00 +08:00 - Customer Verification 右侧 Tab Clean 版精简
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `src/styles/index.less`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户反馈右侧 Verification tab 已明显改善，但条件折叠、分类胶囊色、分组卡片边框和底部总数字样仍显复杂，希望在有限空间内进一步清晰、简洁、便于阅读操作。
+
+修改结果：
+
+- 条件区改为固定常驻紧凑 select，不再使用展开/收起和外层边框。
+- 分类标题去掉彩色胶囊和背景，仅用主题深色文字显示。
+- 问题分类去卡片化，改为轻量分组标题、浅分隔线和问题行列表。
+- 底部状态去掉 `Need X correct` 和 `Correct X` 总述，仅保留每类要求进度和总错误数量。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留 Vite chunk size 提示。
+
+回滚说明：
+
+- 如需回滚，可恢复 compact 条件折叠区域、分组卡片样式和底部完整进度文案。
+
+当前风险点：
+
+- 条件区常驻显示后若 Skill / Scenario 文本很长，会依靠 Select 自身截断和自动换行；仍建议在客户演示数据下人工检查。
+
+### 2026-06-26 00:00 +08:00 - Customer Verification 底部操作按钮进度合并
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `src/styles/index.less`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户提出每类正确数已在分类标题右侧展示，底部可进一步省空间，将正确总数和错误上限进度合并到操作按钮文案中。
+
+修改结果：
+
+- 底部独立进度行已移除。
+- `Apply Failed` 在存在 Max Wrong 时显示为 `Apply Failed x/y`；无错误上限时保持 `Apply Failed`，避免误解为错 1 个即失败。
+- `Apply Verified` 显示为 `Apply Verified correct/required`。
+- 按钮启用和验证业务逻辑保持不变。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留 Vite chunk size 提示。
+
+回滚说明：
+
+- 如需回滚，可恢复 compact footer 中独立进度行和原按钮文案。
+
+当前风险点：
+
+- 右侧宽度较窄时按钮文案可能自动换行；建议在客户演示分辨率下确认按钮行可读性。
+
+### 2026-06-26 00:00 +08:00 - Customer Verification 分组统计口径优化
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `src/styles/index.less`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户指出分组标题右侧统计应表达业务要求进度，而不是已答数量/总题数；否则容易与 Correct 按钮状态或替代题计入口径产生误解。同时希望查询条件和问题列表之间保持清晰但轻量的分隔。
+
+修改结果：
+
+- 分组标题统计改为 `当前计入正确数 / 要求正确数`。
+- 替代题计入被替代分组时显示 `ALT +n` 标识。
+- 分组统计默认灰色，进行中使用主题色，达标后显示绿色。
+- 顶部条件区与问题区之间增加轻量分隔线，不增加额外外框。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留 Vite chunk size 提示。
+
+回滚说明：
+
+- 如需回滚，可恢复分组标题按正确题数/组内题数显示，并移除 compact 条件区下方分隔线。
+
+当前风险点：
+
+- 替代题标识依赖当前 V2 requirement evaluation 的 altUsed 计算；后续如客户调整 Alternative 计入规则，需要同步更新标题统计。
+
+### 2026-06-26 00:00 +08:00 - Customer Verification Clean 版视觉细化
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `src/styles/index.less`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户反馈查询条件与问题区的横线较硬，希望改成浅背景块；分类统计与分类名称距离过近且视觉权重偏高。
+
+修改结果：
+
+- 查询条件区改为浅蓝背景块，不再使用横线分隔。
+- 分类统计改为括号形式，例如 `STATIC (1/2 ALT +1)`。
+- 分类统计默认灰色、不加粗、不变蓝；仅满足要求后变绿色。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留 Vite chunk size 提示。
+
+回滚说明：
+
+- 如需回滚，可恢复条件区横线分隔和原统计强调样式。
+
+当前风险点：
+
+- 浅背景块与下方问题区的分隔依赖留白和背景差异；仍建议在客户演示分辨率下人工确认层次感。
+
 ### 2026-06-25 16:40 +08:00 - Busy Reason 默认启用 AUX 列表调整
 
 修改页面或文件：

@@ -12214,6 +12214,206 @@ button.inbound-list-row .inbound-list-row__title {
   gap: 8px;
 }
 
+.inbound-verification-workflow--compact {
+  height: 100%;
+  min-height: 0;
+  gap: 8px;
+}
+
+.inbound-verification-workflow__toolbar--compact {
+  flex: 0 0 auto;
+  min-height: 0;
+  padding: 6px;
+  border: 0;
+  border-radius: var(--aicc-radius);
+  background: #f8fbff;
+  gap: 6px;
+  grid-template-columns: repeat(auto-fit, minmax(86px, 1fr));
+}
+
+.inbound-verification-workflow--compact
+  .inbound-verification-workflow__business {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.inbound-verification-workflow--compact
+  .inbound-verification-workflow__business
+  span {
+  color: var(--aicc-text-tertiary);
+  font-size: 10px;
+  line-height: 13px;
+}
+
+.inbound-verification-workflow--compact
+  .inbound-verification-workflow__business-select {
+  width: 100%;
+  min-width: 0;
+}
+
+.inbound-verification-workflow--compact
+  .inbound-verification-requirement-track {
+  width: 100%;
+  gap: 4px;
+}
+
+.inbound-verification-workflow--compact
+  .inbound-verification-requirement {
+  min-height: 21px;
+  padding: 2px 6px;
+  font-size: 10px;
+  line-height: 14px;
+}
+
+.inbound-verification-workflow--compact
+  .inbound-verification-workflow__wrong {
+  margin-left: 0;
+}
+
+.inbound-verification-workflow__rulecopy--compact {
+  flex: 0 0 auto;
+}
+
+.inbound-verification-workflow--compact .inbound-verification-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.inbound-verification-workflow--compact .inbound-verification-list__row {
+  align-items: center;
+  min-height: 0;
+  grid-template-columns: 22px minmax(0, 1fr) 82px;
+  gap: 6px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(237, 242, 248, 0.86);
+  background: transparent;
+}
+
+.inbound-verification-workflow--compact
+  .inbound-verification-list__row
+  > span:first-child {
+  align-self: center;
+}
+
+.inbound-verification-workflow--compact .inbound-verification-list__group {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  max-width: 100%;
+  min-height: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--aicc-primary-strong);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 16px;
+  text-transform: uppercase;
+  gap: 5px;
+}
+
+.inbound-verification-workflow--compact
+  .inbound-verification-list__content {
+  align-items: center;
+  grid-column: auto;
+}
+
+.inbound-verification-workflow--compact
+  .inbound-verification-list__row
+  strong {
+  line-height: 15px;
+}
+
+.inbound-verification-list__actions {
+  justify-content: flex-end;
+}
+
+.inbound-verification-workflow--compact
+  .inbound-verification-list__actions {
+  grid-column: auto;
+  justify-content: flex-end;
+  padding-top: 0;
+}
+
+.inbound-verification-list--grouped {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inbound-verification-question-group {
+  overflow: visible;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.inbound-verification-question-group__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 20px;
+  padding: 0 0 3px;
+  border-bottom: 1px solid rgba(221, 230, 242, 0.9);
+  background: transparent;
+  gap: 8px;
+}
+
+.inbound-verification-question-group__count {
+  color: var(--aicc-text-tertiary);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 650;
+  line-height: 16px;
+  white-space: nowrap;
+  text-transform: none;
+}
+
+.inbound-verification-question-group__count--progress {
+  color: var(--aicc-text-tertiary);
+}
+
+.inbound-verification-question-group__count--met {
+  color: #067647;
+}
+
+.inbound-verification-question-group__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.inbound-verification-question-group__body
+  .inbound-verification-list__row:last-child {
+  border-bottom: 0;
+}
+
+.inbound-verification-workflow--compact
+  .inbound-verification-modal__footer {
+  position: sticky;
+  z-index: 2;
+  bottom: 0;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 6px 0 0;
+  border-top: 1px solid #e8eef7;
+  background: #ffffff;
+  gap: 6px;
+}
+
+.inbound-verification-compact-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .aicc-empty-state {
   display: grid;
   min-height: calc(100vh - 172px);

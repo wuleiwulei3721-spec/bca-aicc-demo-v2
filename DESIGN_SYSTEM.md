@@ -134,6 +134,7 @@ Rules:
 - CRM base tab is not closable.
 - Conversation tab is not closable.
 - Dynamic CRM business tabs are closable.
+- The agent-side Customer Verification workflow opens as a fixed right-side Assistant tab so CRM can stay visible for answer comparison.
 - Assistant extra tabs can be closable unless the feature requires fixed presence, such as Quick Replies.
 
 ## 8. Button Design Principles
