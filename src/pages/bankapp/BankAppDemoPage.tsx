@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   AudioOutlined,
   CheckCircleOutlined,
@@ -597,6 +597,49 @@ export function BankAppDemoPage({
     language,
     effectiveContactMethod,
   )
+
+  useEffect(() => {
+    const preloadSources =
+      variant === 'webchat'
+        ? Object.values(webchatScreenshotSources)
+        : variant === 'whatsapp'
+          ? Object.values(whatsAppScreenshotSources)
+          : [
+              bankAppScreenshotSources.channel,
+              bankAppScreenshotSources.pinInput,
+              bankAppScreenshotSources.serviceClosed,
+              bankAppScreenshotSources.businessConfirm[effectiveContactMethod],
+              bankAppScreenshotSources.businessSelection[
+                effectiveContactMethod
+              ],
+              effectiveContactMethod === 'livechat'
+                ? bankAppScreenshotSources.textLogin
+                : bankAppScreenshotSources.voicePhoneNumber,
+              effectiveContactMethod === 'livechat'
+                ? bankAppScreenshotSources.textQueue
+                : effectiveContactMethod === 'voice'
+                  ? bankAppScreenshotSources.voiceCalling
+                  : bankAppScreenshotSources.videoQueue,
+              effectiveContactMethod === 'livechat'
+                ? bankAppScreenshotSources.agentTextConnected
+                : effectiveContactMethod === 'voice'
+                  ? bankAppScreenshotSources.voiceConnected
+                  : bankAppScreenshotSources.videoConnected,
+              effectiveContactMethod === 'livechat'
+                ? bankAppScreenshotSources.textAgentConnected
+                : bankAppScreenshotSources.videoScreenSharing,
+              effectiveContactMethod === 'livechat'
+                ? bankAppScreenshotSources.textChat
+                : bankAppScreenshotSources.videoScreenShareViewer,
+            ]
+
+    Array.from(new Set(preloadSources)).forEach((source) => {
+      const image = new Image()
+      image.decoding = 'async'
+      image.src = source
+    })
+  }, [effectiveContactMethod, variant])
+
   const handoffWarningMessage =
     handoffWarningReason === 'active-call'
       ? 'Please hang up the current call and wait until the agent is Ready before routing this interaction to Agent Workspace.'
@@ -762,9 +805,8 @@ export function BankAppDemoPage({
 
   const renderChannelScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--channel">
-      <img
+      <DemoScreenshot
         alt={`${config.channelLabel} service channel`}
-        className="bankapp-phone-screen__reference"
         src={
           variant === 'webchat'
             ? webchatScreenshotSources.entry
@@ -792,9 +834,8 @@ export function BankAppDemoPage({
 
   const renderPhoneNumberScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--number">
-      <img
+      <DemoScreenshot
         alt={`${config.channelLabel} guest phone number input`}
-        className="bankapp-phone-screen__reference"
         src={bankAppScreenshotSources.voicePhoneNumber}
       />
     </div>
@@ -802,9 +843,8 @@ export function BankAppDemoPage({
 
   const renderPersonalInfoScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--personal">
-      <img
+      <DemoScreenshot
         alt={`${config.channelLabel} customer information input`}
-        className="bankapp-phone-screen__reference"
         src={bankAppScreenshotSources.textLogin}
       />
     </div>
@@ -812,11 +852,10 @@ export function BankAppDemoPage({
 
   const renderBusinessScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--business">
-      <img
+      <DemoScreenshot
         alt={`${config.channelLabel} ${getMethodLabel(
           effectiveContactMethod,
         )} business selection`}
-        className="bankapp-phone-screen__reference"
         src={
           variant === 'whatsapp'
             ? whatsAppScreenshotSources.businessSelection
@@ -868,7 +907,7 @@ export function BankAppDemoPage({
 
     return (
     <div className="bankapp-phone-screen bankapp-phone-screen--confirm">
-      <img
+      <DemoScreenshot
         alt={
           isTextContactConfirm
             ? `${config.channelLabel} confirm contact customer service`
@@ -876,7 +915,6 @@ export function BankAppDemoPage({
                 effectiveContactMethod,
               )} business confirmation`
         }
-        className="bankapp-phone-screen__reference"
         src={bankAppScreenshotSources.businessConfirm[effectiveContactMethod]}
       />
       <div
@@ -918,9 +956,8 @@ export function BankAppDemoPage({
     if (effectiveContactMethod === 'livechat') {
       return (
         <div className="bankapp-phone-screen bankapp-phone-screen--livechat-queue">
-          <img
+          <DemoScreenshot
             alt={`${config.channelLabel} Live Chat queue`}
-            className="bankapp-phone-screen__reference"
             src={
               variant === 'webchat'
                 ? webchatScreenshotSources.queue
@@ -934,9 +971,8 @@ export function BankAppDemoPage({
     if (effectiveContactMethod === 'voice') {
       return (
         <div className="bankapp-phone-screen bankapp-phone-screen--voice-calling">
-          <img
+          <DemoScreenshot
             alt={`${config.channelLabel} Voice Call calling agent`}
-            className="bankapp-phone-screen__reference"
             src={bankAppScreenshotSources.voiceCalling}
           />
         </div>
@@ -946,9 +982,8 @@ export function BankAppDemoPage({
     if (effectiveContactMethod === 'video') {
       return (
         <div className="bankapp-phone-screen bankapp-phone-screen--video-calling">
-          <img
+          <DemoScreenshot
             alt={`${config.channelLabel} Video Call calling agent`}
-            className="bankapp-phone-screen__reference"
             src={bankAppScreenshotSources.videoQueue}
           />
         </div>
@@ -979,9 +1014,8 @@ export function BankAppDemoPage({
     if (effectiveContactMethod === 'livechat') {
       return (
         <div className="bankapp-phone-screen bankapp-phone-screen--livechat-chat">
-          <img
+          <DemoScreenshot
             alt={`${config.channelLabel} Live Chat agent workspace`}
-            className="bankapp-phone-screen__reference"
             src={
               variant === 'webchat'
                 ? webchatScreenshotSources.agentChat
@@ -995,9 +1029,8 @@ export function BankAppDemoPage({
     if (effectiveContactMethod === 'video') {
       return (
         <div className="bankapp-phone-screen bankapp-phone-screen--video-connected">
-          <img
+          <DemoScreenshot
             alt={`${config.channelLabel} connected video call`}
-            className="bankapp-phone-screen__reference"
             src={bankAppScreenshotSources.videoConnected}
           />
           <button
@@ -1014,9 +1047,8 @@ export function BankAppDemoPage({
     if (effectiveContactMethod === 'voice') {
       return (
         <div className="bankapp-phone-screen bankapp-phone-screen--voice-connected">
-          <img
+          <DemoScreenshot
             alt={`${config.channelLabel} Voice Call connected`}
-            className="bankapp-phone-screen__reference"
             src={bankAppScreenshotSources.voiceConnected}
           />
         </div>
@@ -1041,9 +1073,8 @@ export function BankAppDemoPage({
 
   const renderScreenSharingScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--video-screen-sharing">
-      <img
+      <DemoScreenshot
         alt={`${config.channelLabel} customer screen sharing`}
-        className="bankapp-phone-screen__reference"
         src={bankAppScreenshotSources.videoScreenSharing}
       />
       <button
@@ -1057,11 +1088,7 @@ export function BankAppDemoPage({
 
   const renderPinVerificationScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--pin">
-      <img
-        alt="Haloapp PIN verification page"
-        className="bankapp-phone-screen__reference"
-        src={bankAppScreenshotSources.pinInput}
-      />
+      <DemoScreenshot alt="Haloapp PIN verification page" src={bankAppScreenshotSources.pinInput} />
       <button
         aria-label="Simulate failed PIN result"
         className="bankapp-pin-hotspot bankapp-pin-hotspot--failed"
@@ -1081,9 +1108,8 @@ export function BankAppDemoPage({
 
   const renderChatScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--livechat-chat">
-      <img
+      <DemoScreenshot
         alt={`${config.channelLabel} Live Chat conversation`}
-        className="bankapp-phone-screen__reference"
         src={
           variant === 'webchat'
             ? webchatScreenshotSources.customerMessage
@@ -1097,9 +1123,8 @@ export function BankAppDemoPage({
 
   const renderTextAgentConnectedScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--livechat-connected">
-      <img
+      <DemoScreenshot
         alt={`${config.channelLabel} Live Chat agent connected`}
-        className="bankapp-phone-screen__reference"
         src={
           variant === 'webchat'
             ? webchatScreenshotSources.agentChat
@@ -1111,9 +1136,8 @@ export function BankAppDemoPage({
 
   const renderClosedScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--service-closed">
-      <img
+      <DemoScreenshot
         alt={`${config.channelLabel} satisfaction evaluation`}
-        className="bankapp-phone-screen__reference"
         src={
           variant === 'webchat'
             ? webchatScreenshotSources.satisfactionRating
@@ -1461,6 +1485,41 @@ function SegmentedControl({
         ))}
       </div>
     </div>
+  )
+}
+
+function DemoScreenshot({
+  alt,
+  src,
+}: {
+  alt: string
+  src: string
+}) {
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)
+  const hasError = failedSrc === src
+
+  if (hasError) {
+    return (
+      <div
+        aria-label={alt}
+        className="bankapp-phone-screen__image-fallback"
+        role="img"
+      >
+        <strong>Image loading failed</strong>
+        <span>{alt}</span>
+      </div>
+    )
+  }
+
+  return (
+    <img
+      alt={alt}
+      className="bankapp-phone-screen__reference"
+      decoding="async"
+      loading="eager"
+      src={src}
+      onError={() => setFailedSrc(src)}
+    />
   )
 }
 

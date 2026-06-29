@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import type { BankAppVideoShareState } from '../../../store'
 
-const OPEN_EYE_CLIENT_SRC = '/screenshots/haloapp-v18/openeye-video-call.png'
-const HALOAPP_SHARE_VIEW_SRC = '/screenshots/haloapp-v18/openeye-screen-share-view.png'
+const OPEN_EYE_CLIENT_SRC =
+  '/screenshots/haloapp-v18/openeye-video-call-optimized.jpg'
+const HALOAPP_SHARE_VIEW_SRC =
+  '/screenshots/haloapp-v18/openeye-screen-share-view-optimized.jpg'
 const VIDEO_WINDOW_WIDTH = 340
 const SHARE_WINDOW_WIDTH = 760
 const WINDOW_MARGIN = 24

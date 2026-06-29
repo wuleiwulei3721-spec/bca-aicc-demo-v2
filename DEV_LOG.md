@@ -1762,3 +1762,43 @@ Historical entries are preserved in archive files without content rewrites. Use 
 当前风险点：
 
 - `Guest-06290001` 编号目前是前端固定演示编号；如果客户要求真实排队序号或当天递增，需要后续接入统一编号规则。
+
+### 2026-06-29 21:17 +08:00 - 客户侧 Demo 图片压缩与裂图防护
+
+修改页面或文件：
+
+- `public/screenshots/haloapp-v18/*`
+- `public/screenshots/webchat/*`
+- `src/mock/bankapp.ts`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/pages/inbound/components/OpenEyeVideoWindow.tsx`
+- `src/styles/index.less`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 发布后客户侧 Demo 图片首次加载较慢，并出现过图片裂图。
+- 新增 Haloapp / Webchat 脱敏截图原图总量约 5.7MB，部分单图接近 800KB，且实际展示尺寸远小于原图。
+
+修改结果：
+
+- 为 Haloapp / Webchat 客户侧截图生成 `-optimized.jpg` 轻量版本。
+- 公开发布资源中移除原始大图，相关截图总量降至约 1.56MB。
+- BankApp / Webchat Demo 引用改为 optimized 资源。
+- OpenEye 浮窗截图引用同步改为 optimized 资源。
+- 客户侧 Demo 图片增加预加载，减少步骤切换时的等待。
+- 客户侧 Demo 图片增加加载失败 fallback，避免浏览器默认裂图图标占满手机框。
+
+验证：
+
+- 已确认源码引用的 32 个 screenshot 路径均存在。
+- `npx tsc --noEmit` 已通过。
+- `npm run lint` / `npm run build` 待本轮最终验证。
+
+回滚说明：
+
+- 如需回滚，可恢复 `src/mock/bankapp.ts` 与 `OpenEyeVideoWindow.tsx` 中的原始 PNG/JPEG 引用，并恢复被删除的原始截图资源。
+
+当前风险点：
+
+- 轻量 JPEG 已按当前 Demo 展示尺寸压缩；如果客户需要放大检查截图细节，可临时恢复单张原始图或按该截图单独提高输出质量。
