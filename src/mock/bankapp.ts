@@ -63,25 +63,32 @@ export const bankAppBusinessOptions: BankAppBusinessOption[] = [
 
 export const bankAppScreenshotSources = {
   businessConfirm: {
-    livechat: '/screenshots/bankapp/livechat-business-confirm-sanitized.png',
-    video: '/screenshots/bankapp/video-business-confirm-sanitized.png',
-    voice: '/screenshots/bankapp/voice-business-confirm-sanitized.png',
+    livechat: '/screenshots/haloapp-v18/text-self-service-confirm.png',
+    video: '/screenshots/haloapp-v18/voice-video-business-menu.png',
+    voice: '/screenshots/haloapp-v18/voice-video-business-menu.png',
   } satisfies Record<BankAppContactMethod, string>,
   businessSelection: {
-    livechat: '/screenshots/bankapp/livechat-business-selection-sanitized.png',
-    video: '/screenshots/bankapp/video-business-selection-sanitized.png',
-    voice: '/screenshots/bankapp/voice-business-selection-sanitized.png',
+    livechat: '/screenshots/haloapp-v18/text-self-service-confirm.png',
+    video: '/screenshots/haloapp-v18/voice-video-business-menu.png',
+    voice: '/screenshots/haloapp-v18/voice-video-business-menu.png',
   } satisfies Record<BankAppContactMethod, string>,
-  channel: '/screenshots/bankapp/channel-selection-sanitized.png',
-  serviceClosed: '/screenshots/bankapp/service-closed.png',
-  textChat: '/screenshots/bankapp/livechat-chat.png',
-  textLogin: '/screenshots/bankapp/text-login-sanitized.png',
-  textQueue: '/screenshots/bankapp/livechat-queue.png',
-  videoConnected: '/screenshots/bankapp/video-connected-new.png',
-  videoScreenSharing: '/screenshots/bankapp/video-screen-sharing.png',
-  voiceCalling: '/screenshots/bankapp/voice-calling.png',
-  voiceConnected: '/screenshots/bankapp/voice-connected.png',
-  voicePhoneNumber: '/screenshots/bankapp/voice-phone-number-sanitized.png',
+  agentTextConnected: '/screenshots/haloapp-v18/agent-text-connected.png',
+  agentVideoConnected: '/screenshots/haloapp-v18/agent-video-connected.png',
+  channel: '/screenshots/haloapp-v18/channel-selection.png',
+  pinInput: '/screenshots/haloapp-v18/pin-input-client.png',
+  serviceClosed: '/screenshots/haloapp-v18/satisfaction-rating.png',
+  textAgentConnected: '/screenshots/haloapp-v18/text-agent-connected-client.png',
+  textChat: '/screenshots/haloapp-v18/text-chat-client.png',
+  textLogin: '/screenshots/haloapp-v18/text-guest-contact.png',
+  textQueue: '/screenshots/haloapp-v18/text-queue.png',
+  videoConnected: '/screenshots/haloapp-v18/video-call.png',
+  videoQueue: '/screenshots/haloapp-v18/video-queue.png',
+  videoScreenSharing: '/screenshots/haloapp-v18/video-client-share-start.png',
+  videoScreenShareViewer: '/screenshots/haloapp-v18/openeye-screen-share-view.png',
+  voiceCalling: '/screenshots/haloapp-v18/voice-queue.png',
+  voiceConnected: '/screenshots/haloapp-v18/voice-call.png',
+  voiceQuestionVerification: '/screenshots/haloapp-v18/voice-question-verification.png',
+  voicePhoneNumber: '/screenshots/haloapp-v18/voice-video-guest-info.png',
 }
 
 export const whatsAppScreenshotSources = {
@@ -89,4 +96,12 @@ export const whatsAppScreenshotSources = {
   businessSelection: '/screenshots/whatsapp/business-selection.png',
   chatRequest: '/screenshots/whatsapp/chat-request.png',
   satisfactionRating: '/screenshots/whatsapp/satisfaction-rating.png',
+}
+
+export const webchatScreenshotSources = {
+  agentChat: '/screenshots/webchat/text-agent-chat.png',
+  customerMessage: '/screenshots/webchat/text-customer-message.png',
+  entry: '/screenshots/webchat/text-login-business.png',
+  queue: '/screenshots/webchat/text-queue.png',
+  satisfactionRating: '/screenshots/webchat/satisfaction-rating.png',
 }

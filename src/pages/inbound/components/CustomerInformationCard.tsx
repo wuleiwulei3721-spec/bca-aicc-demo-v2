@@ -112,6 +112,24 @@ function getCustomerSegmentFromProfile(
   return 'regular'
 }
 
+function getVerificationAction(customer: CustomerInformation) {
+  if (
+    customer.accessChannel === 'Phone' ||
+    customer.accessChannel.includes('Voice')
+  ) {
+    return 'kbv'
+  }
+
+  if (
+    customer.accessChannel === 'BankApp' &&
+    customer.bankAppLoginStatus === 'registered'
+  ) {
+    return 'pin'
+  }
+
+  return 'none'
+}
+
 export function CustomerInformationCard({
   accessMenuLabel = 'Access Menu',
   accessMenuName,
@@ -124,6 +142,15 @@ export function CustomerInformationCard({
 }: CustomerInformationCardProps) {
   const requestCustomerOutboundCall = useAppStore(
     (state) => state.requestCustomerOutboundCall,
+  )
+  const requestBankAppPinVerification = useAppStore(
+    (state) => state.requestBankAppPinVerification,
+  )
+  const bankAppPinVerificationAttempts = useAppStore(
+    (state) => state.bankAppPinVerificationAttempts,
+  )
+  const bankAppPinVerificationStatus = useAppStore(
+    (state) => state.bankAppPinVerificationStatus,
   )
   const verificationV2QuestionBank = useAppStore(
     (state) => state.verificationV2QuestionBank,
@@ -167,6 +194,27 @@ export function CustomerInformationCard({
     verificationState.customerKey === customerKey
       ? verificationState.status
       : customer.verificationStatus
+  const verificationAction = getVerificationAction(customer)
+  const pinAttemptsRemaining = Math.max(0, 3 - bankAppPinVerificationAttempts)
+  const pinButtonDisabled =
+    bankAppPinVerificationStatus === 'sent' ||
+    bankAppPinVerificationStatus === 'verified' ||
+    bankAppPinVerificationStatus === 'locked' ||
+    bankAppPinVerificationAttempts >= 3
+  const pinVerificationStatus =
+    bankAppPinVerificationStatus === 'sent'
+      ? 'Verifying'
+      : bankAppPinVerificationStatus === 'verified'
+        ? 'Verified'
+        : bankAppPinVerificationStatus === 'locked'
+          ? 'Verification Failed'
+          : bankAppPinVerificationStatus === 'failed'
+            ? 'Verification Failed'
+            : verificationStatus === 'Verifying'
+              ? 'Unverified'
+              : verificationStatus
+  const effectiveVerificationStatus =
+    verificationAction === 'pin' ? pinVerificationStatus : verificationStatus
   const contacts =
     contactsState.customerKey === customerKey
       ? contactsState.contacts
@@ -209,6 +257,15 @@ export function CustomerInformationCard({
   )
 
   const openVerification = () => {
+    if (verificationAction === 'pin') {
+      requestBankAppPinVerification('bankapp')
+      setVerificationState({
+        customerKey,
+        status: 'Verifying',
+      })
+      return
+    }
+
     onOpenVerification({
       customerKey,
       initialConditions: initialVerificationV2Conditions,
@@ -217,6 +274,21 @@ export function CustomerInformationCard({
       onFinish: finishVerification,
     })
   }
+
+  const verifyButtonLabel =
+    verificationAction === 'pin'
+      ? 'PIN'
+      : verificationAction === 'kbv'
+        ? 'KBV'
+        : undefined
+  const verifyButtonTitle =
+    verificationAction === 'pin'
+      ? pinAttemptsRemaining > 0
+        ? `Send PIN verification to customer app. ${pinAttemptsRemaining} attempt${pinAttemptsRemaining === 1 ? '' : 's'} remaining.`
+        : 'PIN verification limit reached.'
+      : verificationAction === 'kbv'
+        ? 'Open knowledge-based verification'
+        : undefined
 
   const finishVerification = (status: VerificationStatus) => {
     setVerificationState({
@@ -368,12 +440,17 @@ export function CustomerInformationCard({
           </div>
         }
         outboundRequestStatus={outboundRequestStatus}
-        verificationStatus={verificationStatus}
+        verificationStatus={effectiveVerificationStatus}
+        verifyButtonDisabled={
+          verificationAction === 'pin' ? pinButtonDisabled : false
+        }
+        verifyButtonLabel={verifyButtonLabel}
+        verifyButtonTitle={verifyButtonTitle}
         onOpenCallFlow={() => setIsCallFlowOpen(true)}
         onRequestOutbound={requestOutboundApproval}
         onSendEmail={() => setIsEmailModalOpen(true)}
         onStartOutbound={startApprovedOutboundCall}
-        onVerify={openVerification}
+        onVerify={verificationAction === 'none' ? undefined : openVerification}
       />
 
       <CallFlowDetailModal

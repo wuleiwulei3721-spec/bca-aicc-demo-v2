@@ -18,6 +18,7 @@ import {
   bankAppBusinessOptions,
   bankAppContactMethods,
   bankAppScreenshotSources,
+  webchatScreenshotSources,
   whatsAppScreenshotSources,
 } from '../../mock/bankapp'
 import {
@@ -36,13 +37,14 @@ import type {
 } from '../../types'
 
 const BANKAPP_LIVE_CHAT_SESSION_ID = 'live-chat-002'
+const WEBCHAT_LIVE_CHAT_SESSION_ID = 'live-chat-003'
 const WHATSAPP_LIVE_CHAT_SESSION_ID = 'live-chat-001'
 type HandoffWarningReason = Exclude<
   VoiceVideoHandoffReadiness,
   'available'
 > | Exclude<DigitalHandoffReadiness, 'available'>
 
-type CustomerAppDemoVariant = 'bankapp' | 'whatsapp'
+type CustomerAppDemoVariant = 'bankapp' | 'webchat' | 'whatsapp'
 
 interface CustomerAppDemoConfig {
   ariaLabel: string
@@ -70,36 +72,59 @@ const demoConfigs: Record<CustomerAppDemoVariant, CustomerAppDemoConfig> = {
     liveChatSessionId: WHATSAPP_LIVE_CHAT_SESSION_ID,
     phoneTitle: 'Customer WhatsApp',
   },
+  webchat: {
+    ariaLabel: 'Webchat customer demo',
+    channelLabel: 'Webchat',
+    contactMethods: ['livechat'],
+    defaultContactMethod: 'livechat',
+    liveChatSessionId: WEBCHAT_LIVE_CHAT_SESSION_ID,
+    phoneTitle: 'Customer Webchat',
+  },
 }
 
 const stepLabels: Record<BankAppDemoStep, string> = {
   'agent-workspace': 'Agent Workspace',
-  business: 'Select Business',
-  calling: 'Calling Agent',
-  channel: 'Choose Channel',
-  chat: 'Chat Page',
+  business: 'Select Inquiry Topic',
+  calling: 'Queue Routing',
+  channel: 'Choose Contact Method',
+  chat: 'Text Chat',
   closed: 'Service Closed',
-  confirm: 'Confirm Business',
-  connected: 'Connected',
+  confirm: 'Confirm Request',
+  connected: 'Connected Call',
   'personal-info': 'Personal Information',
-  'phone-number': 'Input Phone Number',
-  'screen-sharing': 'View Agent Screen Sharing',
-  'share-select': 'Select Sharing Program',
+  'phone-number': 'Guest Information',
+  'pin-input': 'Customer PIN Result',
+  'pin-request': 'PIN Verification',
+  'question-verification': 'Question Verification',
+  'screen-sharing': 'Screen Sharing',
+  'share-view': 'View Shared Screen',
 }
 
 const whatsAppStepLabels: Partial<Record<BankAppDemoStep, string>> = {
-  'agent-workspace': 'View Agent Workspace',
+  'agent-workspace': 'Agent Workspace',
   business: 'Business Selection',
   channel: 'Request Human Agent',
   chat: 'Queue & Agent Chat',
   closed: 'Satisfaction Rating',
 }
 
+const webchatStepLabels: Partial<Record<BankAppDemoStep, string>> = {
+  calling: 'Queue Routing',
+  channel: 'Guest Information',
+  chat: 'Text Chat',
+  closed: 'Satisfaction Rating',
+}
+
 const bankOwnedSteps = new Set<BankAppDemoStep>([
+  'business',
   'channel',
   'closed',
+  'confirm',
   'personal-info',
+  'pin-input',
   'phone-number',
+  'question-verification',
+  'screen-sharing',
 ])
 
 const whatsAppStepSequence: BankAppDemoStep[] = [
@@ -107,6 +132,21 @@ const whatsAppStepSequence: BankAppDemoStep[] = [
   'business',
   'chat',
   'agent-workspace',
+  'closed',
+]
+
+const webchatRegisteredStepSequence: BankAppDemoStep[] = [
+  'calling',
+  'agent-workspace',
+  'chat',
+  'closed',
+]
+
+const webchatGuestStepSequence: BankAppDemoStep[] = [
+  'channel',
+  'calling',
+  'agent-workspace',
+  'chat',
   'closed',
 ]
 
@@ -126,37 +166,54 @@ function getStepSequence(
     return whatsAppStepSequence
   }
 
+  if (variant === 'webchat') {
+    return customerType === 'registered'
+      ? webchatRegisteredStepSequence
+      : webchatGuestStepSequence
+  }
+
   const phoneStep: BankAppDemoStep[] =
     customerType === 'guest' ? ['phone-number'] : []
 
   if (contactMethod === 'livechat') {
     const personalInfoStep: BankAppDemoStep[] =
       customerType === 'guest' ? ['personal-info'] : []
+    const pinSteps: BankAppDemoStep[] =
+      customerType === 'registered' ? ['pin-request', 'pin-input'] : []
 
     return [
       'channel',
       ...personalInfoStep,
-      'business',
       'confirm',
       'calling',
-      'chat',
       'agent-workspace',
+      'chat',
+      ...pinSteps,
       'closed',
     ]
   }
 
-  const desktopShareSteps: BankAppDemoStep[] =
-    contactMethod === 'video' ? ['share-select', 'screen-sharing'] : []
+  if (contactMethod === 'voice') {
+    return [
+      'channel',
+      ...phoneStep,
+      'business',
+      'calling',
+      'agent-workspace',
+      'connected',
+      'question-verification',
+      'closed',
+    ]
+  }
 
   return [
     'channel',
     ...phoneStep,
     'business',
-    'confirm',
     'calling',
-    'connected',
     'agent-workspace',
-    ...desktopShareSteps,
+    'connected',
+    'share-view',
     'closed',
   ]
 }
@@ -175,9 +232,33 @@ function getMethodLabel(method: BankAppContactMethod) {
   )
 }
 
-function getStepLabel(step: BankAppDemoStep, variant: CustomerAppDemoVariant) {
+function getStepLabel(
+  step: BankAppDemoStep,
+  variant: CustomerAppDemoVariant,
+  contactMethod?: BankAppContactMethod,
+) {
   if (variant === 'whatsapp') {
     return whatsAppStepLabels[step] ?? stepLabels[step]
+  }
+
+  if (variant === 'webchat') {
+    return webchatStepLabels[step] ?? stepLabels[step]
+  }
+
+  if (
+    variant === 'bankapp' &&
+    contactMethod === 'livechat' &&
+    step === 'confirm'
+  ) {
+    return 'Confirm Contact CS'
+  }
+
+  if (
+    variant === 'bankapp' &&
+    contactMethod === 'video' &&
+    step === 'connected'
+  ) {
+    return 'Video Call & Start Screen Share'
   }
 
   return stepLabels[step]
@@ -192,7 +273,65 @@ function getStepOwner(step: BankAppDemoStep, variant: CustomerAppDemoVariant) {
     return 'Bank1'
   }
 
+  if (variant === 'webchat') {
+    return step === 'agent-workspace' || step === 'pin-request'
+      ? 'Netinfo'
+      : 'BANK'
+  }
+
   return bankOwnedSteps.has(step) ? 'BANK1' : 'Netinfo'
+}
+
+function getLiveChatStepOwner(step: BankAppDemoStep) {
+  const owners: Partial<Record<BankAppDemoStep, string>> = {
+    'agent-workspace': 'Netinfo',
+    calling: 'BANK',
+    channel: 'BANK',
+    chat: 'BANK',
+    closed: 'BANK',
+    confirm: 'BANK',
+    'personal-info': 'BANK',
+    'pin-input': 'BANK',
+    'pin-request': 'Netinfo',
+  }
+
+  return owners[step] ?? getStepOwner(step, 'bankapp')
+}
+
+function getDisplayStepOwner(
+  step: BankAppDemoStep,
+  variant: CustomerAppDemoVariant,
+  contactMethod: BankAppContactMethod,
+) {
+  if (variant === 'bankapp' && contactMethod === 'livechat') {
+    return getLiveChatStepOwner(step)
+  }
+
+  if (
+    variant === 'bankapp' &&
+    (contactMethod === 'voice' || contactMethod === 'video')
+  ) {
+    const netinfoSteps = new Set<BankAppDemoStep>([
+      'agent-workspace',
+      'calling',
+      'connected',
+      'question-verification',
+      'screen-sharing',
+      'share-view',
+    ])
+
+    return netinfoSteps.has(step) ? 'Netinfo' : 'BANK'
+  }
+
+  return getStepOwner(step, variant)
+}
+
+function getStepOwnerClassName(owner: string) {
+  if (owner.includes('BANK') || owner.includes('Bank')) {
+    return 'bank1'
+  }
+
+  return 'netinfo'
 }
 
 function getRoutedSkill(
@@ -223,6 +362,8 @@ function getProcessDescription(
   step: BankAppDemoStep,
   channelLabel: string,
   variant: CustomerAppDemoVariant,
+  contactMethod: BankAppContactMethod,
+  customerType: BankAppCustomerType,
 ) {
   if (variant === 'whatsapp') {
     const descriptions: Partial<Record<BankAppDemoStep, string>> = {
@@ -236,19 +377,78 @@ function getProcessDescription(
     return descriptions[step] ?? ''
   }
 
+  if (variant === 'webchat') {
+    const descriptions: Partial<Record<BankAppDemoStep, string>> = {
+      'agent-workspace':
+        'Agent receives a new Webchat customer in the Live Chat workspace.',
+      calling:
+        customerType === 'registered'
+          ? 'Logged-in Webchat customer is routed directly to the text queue without information input or menu selection.'
+          : 'Guest Webchat customer submits contact information and the request is routed to the text queue.',
+      channel:
+        'Guest Webchat customer enters contact information and selects the request topic. Registered customers skip this step.',
+      chat: 'Customer and agent exchange Webchat text messages.',
+      closed: 'Customer receives the Webchat satisfaction rating page.',
+    }
+
+    return descriptions[step] ?? ''
+  }
+
+  if (contactMethod === 'livechat') {
+    const descriptions: Record<BankAppDemoStep, string> = {
+      'agent-workspace':
+        'Agent is connected in the Live Chat workspace.',
+      business:
+        'Customer reaches the BCA-provided self-service page before choosing to contact customer service.',
+      calling:
+        'Customer identity and request context are sent to the skill queue; queue position is shown on the BANK page.',
+      channel: `Customer opens ${channelLabel} and chooses Live Chat.`,
+      chat: 'Customer and agent exchange text messages.',
+      closed:
+        'Service ends and the satisfaction rating is shown on the BANK page.',
+      confirm: 'Customer confirms Contact CS on the BCA-provided text page.',
+      connected:
+        'Agent starts PIN verification from the Live Chat workspace.',
+      'personal-info':
+        customerType === 'guest'
+          ? 'Guest customer enters name, phone number, and email.'
+          : 'Registered BankApp customers skip guest information input because login context is already available.',
+      'phone-number':
+        'Text channel does not use the guest phone-number page in this demo.',
+      'pin-input': 'Customer enters PIN and BANK returns the result.',
+      'pin-request':
+        'Agent starts PIN verification from the Live Chat workspace.',
+      'screen-sharing': 'Customer enters PIN and BANK returns the result.',
+    }
+
+    return descriptions[step]
+  }
+
   const descriptions: Record<BankAppDemoStep, string> = {
-    'agent-workspace': 'Agent reviews the customer conversation in the workspace.',
-    business: 'AICC displays skills from customer identity, language, and channel.',
-    calling: 'AICC queues the request and starts agent routing.',
-    channel: `Customer chooses a ${channelLabel} contact method.`,
-    chat: `Customer and agent are connected in ${channelLabel} chat.`,
-    closed: 'Customer receives reference number and rating prompt.',
-    confirm: 'AICC confirms intent, language, and target skill.',
-    connected: 'Customer sees the connected call timer before agent desktop opens.',
-    'personal-info': `${channelLabel} passes customer profile context to AICC.`,
-    'phone-number': 'Guest customer provides a callback phone number.',
-    'screen-sharing': 'Customer views the agent desktop share inside the BankApp video call.',
-    'share-select': 'Agent selects the desktop source from the OpenEye sharing dialog.',
+    'agent-workspace': 'Agent is connected and customer information is shown.',
+    business: 'Customer selects the inquiry topic and confirms the request.',
+    calling:
+      contactMethod === 'video'
+        ? 'AICC queues and routes the video call.'
+        : 'AICC queues and routes the voice call.',
+    channel: `Customer opens ${channelLabel} and chooses ${getMethodLabel(contactMethod)}.`,
+    chat:
+      'BANK provides the customer chat page; BANK Communication Backend and Netinfo exchange customer and agent messages.',
+    closed: 'Service ends and the satisfaction rating is shown on the BANK page.',
+    confirm: 'Customer confirms contacting Bank customer service.',
+    connected:
+      contactMethod === 'video'
+        ? 'Video call is connected and the customer starts screen sharing.'
+        : 'Voice call is connected.',
+    'personal-info': `BANK collects guest contact details on the ${channelLabel} client page.`,
+    'phone-number': 'Guest customer enters name, phone number, and email.',
+    'pin-input': 'Customer enters PIN and BANK returns the result.',
+    'pin-request': 'Agent starts PIN verification from the Live Chat workspace.',
+    'question-verification':
+      'Agent asks verification questions during the voice call.',
+    'screen-sharing':
+      'Customer starts desktop sharing from the video call page.',
+    'share-view': 'Agent views the customer shared screen in OpenEye.',
   }
 
   return descriptions[step]
@@ -273,19 +473,23 @@ function getVisibleDemoStep({
     return demoStep
   }
 
-  if (bankAppVideoShareState === 'selecting-program') {
-    return 'share-select'
-  }
-
-  if (bankAppVideoShareState === 'sharing') {
-    return 'screen-sharing'
-  }
-
-  if (demoStep === 'share-select' || demoStep === 'screen-sharing') {
-    return 'agent-workspace'
+  if (
+    bankAppVideoShareState === 'sharing' &&
+    (demoStep === 'agent-workspace' || demoStep === 'connected')
+  ) {
+    return 'connected'
   }
 
   return demoStep
+}
+
+function getInitialDemoStep(
+  variant: CustomerAppDemoVariant,
+  customerType: BankAppCustomerType,
+) {
+  return variant === 'webchat' && customerType === 'registered'
+    ? 'calling'
+    : 'channel'
 }
 
 export function BankAppDemoPage({
@@ -303,6 +507,21 @@ export function BankAppDemoPage({
   const requestLiveChatWorkspace = useAppStore(
     (state) => state.requestLiveChatWorkspace,
   )
+  const activeLiveChat2SessionIds = useAppStore(
+    (state) => state.activeLiveChat2SessionIds,
+  )
+  const liveChat2FocusSessionId = useAppStore(
+    (state) => state.liveChat2FocusSessionId,
+  )
+  const setActiveWorkspaceTabKey = useAppStore(
+    (state) => state.setActiveWorkspaceTabKey,
+  )
+  const currentCallInteractionId = useAppStore(
+    (state) => state.currentCallInteractionId,
+  )
+  const setLiveChat2FocusedSession = useAppStore(
+    (state) => state.setLiveChat2FocusedSession,
+  )
   const voiceVideoHandoffReadiness = useAppStore(
     (state) => state.voiceVideoHandoffReadiness,
   )
@@ -315,11 +534,17 @@ export function BankAppDemoPage({
   const bankAppPinVerificationStatus = useAppStore(
     (state) => state.bankAppPinVerificationStatus,
   )
+  const bankAppPinVerificationAttempts = useAppStore(
+    (state) => state.bankAppPinVerificationAttempts,
+  )
   const completeBankAppPinVerification = useAppStore(
     (state) => state.completeBankAppPinVerification,
   )
   const resetBankAppVideoDesktopShare = useAppStore(
     (state) => state.resetBankAppVideoDesktopShare,
+  )
+  const startBankAppVideoScreenShare = useAppStore(
+    (state) => state.startBankAppVideoScreenShare,
   )
   const resetBankAppPinVerification = useAppStore(
     (state) => state.resetBankAppPinVerification,
@@ -331,9 +556,21 @@ export function BankAppDemoPage({
     useState<BankAppContactMethod>(config.defaultContactMethod)
   const [businessType, setBusinessType] =
     useState<BankAppBusinessType>('mobile-login')
-  const [demoStep, setDemoStep] = useState<BankAppDemoStep>('channel')
+  const [demoStep, setDemoStep] = useState<BankAppDemoStep>(() =>
+    getInitialDemoStep(variant, 'registered'),
+  )
   const [handoffWarningReason, setHandoffWarningReason] =
     useState<HandoffWarningReason | null>(null)
+  const isPinVerificationOpen =
+    (variant === 'bankapp' || variant === 'webchat') &&
+    bankAppPinVerificationStatus !== 'idle' &&
+    demoStep !== 'closed'
+  const effectiveContactMethod = isPinVerificationOpen
+    ? 'livechat'
+    : contactMethod
+  const effectiveCustomerType = isPinVerificationOpen
+    ? 'registered'
+    : customerType
 
   const selectedBusiness = useMemo(
     () =>
@@ -342,22 +579,23 @@ export function BankAppDemoPage({
     [businessType],
   )
   const currentSequence = useMemo(
-    () => getStepSequence(contactMethod, customerType, variant),
-    [contactMethod, customerType, variant],
+    () => getStepSequence(effectiveContactMethod, effectiveCustomerType, variant),
+    [effectiveContactMethod, effectiveCustomerType, variant],
   )
+
   const visibleDemoStep = getVisibleDemoStep({
     bankAppVideoShareState,
-    contactMethod,
-    demoStep,
+    contactMethod: effectiveContactMethod,
+    demoStep: isPinVerificationOpen ? 'pin-input' : demoStep,
     variant,
   })
   const currentStepIndex = Math.max(0, currentSequence.indexOf(visibleDemoStep))
   const isFlowComplete = currentStepIndex === currentSequence.length - 1
   const routedSkill = getRoutedSkill(
     selectedBusiness,
-    customerType,
+    effectiveCustomerType,
     language,
-    contactMethod,
+    effectiveContactMethod,
   )
   const handoffWarningMessage =
     handoffWarningReason === 'active-call'
@@ -366,17 +604,23 @@ export function BankAppDemoPage({
         ? 'Current sign-in mode is Digital only. Sign in with Voice or Voice + Digital before routing this voice or video interaction.'
         : handoffWarningReason === 'digital-skill-unavailable'
           ? 'Current sign-in mode is Voice only. Sign in with Digital or Voice + Digital before routing this chat interaction.'
-          : 'Agent must be Ready before routing this interaction to Agent Workspace.'
+        : 'Agent must be Ready before routing this interaction to Agent Workspace.'
 
   const triggerAgentWorkspace = (activateWorkspace = false) => {
-    if (contactMethod === 'livechat') {
+    if (effectiveContactMethod === 'livechat') {
       if (digitalHandoffReadiness !== 'available') {
         setHandoffWarningReason(digitalHandoffReadiness)
         return false
       }
 
       setHandoffWarningReason(null)
-      requestLiveChatWorkspace(config.liveChatSessionId, activateWorkspace)
+      requestLiveChatWorkspace(
+        config.liveChatSessionId,
+        activateWorkspace,
+        variant === 'bankapp' || variant === 'webchat'
+          ? customerType
+          : undefined,
+      )
       return true
     }
 
@@ -385,29 +629,71 @@ export function BankAppDemoPage({
       return false
     }
 
-    if (contactMethod === 'voice') {
+    if (effectiveContactMethod === 'voice') {
       setHandoffWarningReason(null)
-      requestBankAppVoiceCall(activateWorkspace)
+      requestBankAppVoiceCall(activateWorkspace, customerType)
       return true
     }
 
     setHandoffWarningReason(null)
-    requestBankAppVideoCall(activateWorkspace)
+    requestBankAppVideoCall(activateWorkspace, customerType)
     return true
+  }
+
+  const focusExistingLiveChatWorkspace = () => {
+    if (digitalHandoffReadiness !== 'available') {
+      setHandoffWarningReason(digitalHandoffReadiness)
+      return false
+    }
+
+    setHandoffWarningReason(null)
+    setActiveWorkspaceTabKey('live-chat')
+    setLiveChat2FocusedSession(
+      liveChat2FocusSessionId ??
+        activeLiveChat2SessionIds[activeLiveChat2SessionIds.length - 1] ??
+        null,
+    )
+    return true
+  }
+
+  const focusExistingCallWorkspace = () => {
+    if (currentCallInteractionId) {
+      setHandoffWarningReason(null)
+      setActiveWorkspaceTabKey(currentCallInteractionId)
+      return true
+    }
+
+    if (voiceVideoHandoffReadiness !== 'available') {
+      setHandoffWarningReason(voiceVideoHandoffReadiness)
+      return false
+    }
+
+    return triggerAgentWorkspace(true)
   }
 
   const goToStep = (nextStep: BankAppDemoStep) => {
     setDemoStep(nextStep)
   }
 
+  const startVideoScreenShareFromCustomer = () => {
+    startBankAppVideoScreenShare()
+    focusExistingCallWorkspace()
+    setDemoStep('connected')
+  }
+
   const handleNextStep = () => {
     const isAgentHandoffStep =
-      (contactMethod === 'livechat' && visibleDemoStep === 'chat') ||
-      (contactMethod !== 'livechat' && visibleDemoStep === 'connected')
+      (effectiveContactMethod === 'livechat' &&
+        visibleDemoStep === 'calling') ||
+      (effectiveContactMethod !== 'livechat' && visibleDemoStep === 'calling')
 
     if (isAgentHandoffStep) {
       if (triggerAgentWorkspace(true)) {
-        goToStep('agent-workspace')
+        goToStep(
+          effectiveContactMethod === 'livechat'
+            ? 'agent-workspace'
+            : 'connected',
+        )
       }
       return
     }
@@ -417,6 +703,27 @@ export function BankAppDemoPage({
         Math.min(currentStepIndex + 1, currentSequence.length - 1)
       ]
 
+    if (nextStep === 'pin-request') {
+      focusExistingLiveChatWorkspace()
+    }
+
+    if (variant === 'whatsapp' && nextStep === 'agent-workspace') {
+      if (!triggerAgentWorkspace(true)) {
+        return
+      }
+    }
+
+    if (nextStep === 'question-verification') {
+      focusExistingCallWorkspace()
+    }
+
+    if (nextStep === 'share-view') {
+      if (effectiveContactMethod === 'video') {
+        startBankAppVideoScreenShare()
+      }
+      focusExistingCallWorkspace()
+    }
+
     goToStep(nextStep)
   }
 
@@ -425,7 +732,7 @@ export function BankAppDemoPage({
     resetBankAppPinVerification()
     setHandoffWarningReason(null)
     setCustomerType(nextCustomerType)
-    setDemoStep('channel')
+    setDemoStep(getInitialDemoStep(variant, nextCustomerType))
   }
 
   const handleMethodChange = (nextMethod: BankAppContactMethod) => {
@@ -433,14 +740,11 @@ export function BankAppDemoPage({
     resetBankAppPinVerification()
     setHandoffWarningReason(null)
     setContactMethod(nextMethod)
-    setDemoStep('channel')
+    setDemoStep(getInitialDemoStep(variant, customerType))
   }
 
   const handleReset = () => {
-    setCustomerType('registered')
-    setContactMethod(config.defaultContactMethod)
-    setBusinessType('mobile-login')
-    setDemoStep('channel')
+    setDemoStep(getInitialDemoStep(variant, customerType))
     setHandoffWarningReason(null)
     resetBankAppPinVerification()
     resetBankAppVideoDesktopShare()
@@ -462,7 +766,9 @@ export function BankAppDemoPage({
         alt={`${config.channelLabel} service channel`}
         className="bankapp-phone-screen__reference"
         src={
-          variant === 'whatsapp'
+          variant === 'webchat'
+            ? webchatScreenshotSources.entry
+            : variant === 'whatsapp'
             ? whatsAppScreenshotSources.chatRequest
             : bankAppScreenshotSources.channel
         }
@@ -480,36 +786,7 @@ export function BankAppDemoPage({
             onClick={() => goToStep('business')}
           />
         </div>
-      ) : (
-        <div
-          className="bankapp-channel-hotspots"
-          aria-label="Choose service channel"
-        >
-          {bankAppContactMethods
-            .filter((method) => config.contactMethods.includes(method.id))
-            .map((method) => (
-              <button
-                aria-label={method.label}
-                className={`bankapp-channel-hotspot bankapp-channel-hotspot--${method.id}`}
-                key={method.id}
-                title={method.label}
-                type="button"
-                onClick={() => {
-                  handleMethodChange(method.id)
-                  goToStep(
-                    method.id === 'livechat'
-                      ? customerType === 'guest'
-                        ? 'personal-info'
-                        : 'business'
-                      : customerType === 'guest'
-                        ? 'phone-number'
-                        : 'business',
-                  )
-                }}
-              />
-            ))}
-        </div>
-      )}
+      ) : null}
     </div>
   )
 
@@ -537,13 +814,13 @@ export function BankAppDemoPage({
     <div className="bankapp-phone-screen bankapp-phone-screen--business">
       <img
         alt={`${config.channelLabel} ${getMethodLabel(
-          contactMethod,
+          effectiveContactMethod,
         )} business selection`}
         className="bankapp-phone-screen__reference"
         src={
           variant === 'whatsapp'
             ? whatsAppScreenshotSources.businessSelection
-            : bankAppScreenshotSources.businessSelection[contactMethod]
+            : bankAppScreenshotSources.businessSelection[effectiveContactMethod]
         }
       />
       {variant === 'whatsapp' ? (
@@ -575,7 +852,9 @@ export function BankAppDemoPage({
               type="button"
               onClick={() => {
                 setBusinessType(optionId)
-                goToStep('confirm')
+                goToStep(
+                  effectiveContactMethod === 'livechat' ? 'confirm' : 'calling',
+                )
               }}
             />
           ))}
@@ -584,48 +863,75 @@ export function BankAppDemoPage({
     </div>
   )
 
-  const renderConfirmScreen = () => (
+  const renderConfirmScreen = () => {
+    const isTextContactConfirm = effectiveContactMethod === 'livechat'
+
+    return (
     <div className="bankapp-phone-screen bankapp-phone-screen--confirm">
       <img
-        alt={`${config.channelLabel} ${getMethodLabel(
-          contactMethod,
-        )} business confirmation`}
+        alt={
+          isTextContactConfirm
+            ? `${config.channelLabel} confirm contact customer service`
+            : `${config.channelLabel} ${getMethodLabel(
+                effectiveContactMethod,
+              )} business confirmation`
+        }
         className="bankapp-phone-screen__reference"
-        src={bankAppScreenshotSources.businessConfirm[contactMethod]}
+        src={bankAppScreenshotSources.businessConfirm[effectiveContactMethod]}
       />
-      <div className="bankapp-confirm-hotspots" aria-label="Confirm business">
+      <div
+        className="bankapp-confirm-hotspots"
+        aria-label={
+          isTextContactConfirm
+            ? 'Confirm contact customer service'
+            : 'Confirm business'
+        }
+      >
         <button
-          aria-label="Back to business selection"
+          aria-label={
+            isTextContactConfirm
+              ? 'Back to text self service'
+              : 'Back to business selection'
+          }
           className="bankapp-confirm-hotspot bankapp-confirm-hotspot--back"
           title="Back"
           type="button"
           onClick={() => goToStep('business')}
         />
         <button
-          aria-label="Confirm selected business"
+          aria-label={
+            isTextContactConfirm
+              ? 'Confirm contact customer service'
+              : 'Confirm selected business'
+          }
           className="bankapp-confirm-hotspot bankapp-confirm-hotspot--confirm"
-          title="Confirm"
+          title={isTextContactConfirm ? 'Contact CS' : 'Confirm'}
           type="button"
           onClick={() => goToStep('calling')}
         />
       </div>
     </div>
   )
+  }
 
   const renderCallingScreen = () => {
-    if (contactMethod === 'livechat') {
+    if (effectiveContactMethod === 'livechat') {
       return (
         <div className="bankapp-phone-screen bankapp-phone-screen--livechat-queue">
           <img
             alt={`${config.channelLabel} Live Chat queue`}
             className="bankapp-phone-screen__reference"
-            src={bankAppScreenshotSources.textQueue}
+            src={
+              variant === 'webchat'
+                ? webchatScreenshotSources.queue
+                : bankAppScreenshotSources.textQueue
+            }
           />
         </div>
       )
     }
 
-    if (contactMethod === 'voice') {
+    if (effectiveContactMethod === 'voice') {
       return (
         <div className="bankapp-phone-screen bankapp-phone-screen--voice-calling">
           <img
@@ -637,13 +943,13 @@ export function BankAppDemoPage({
       )
     }
 
-    if (contactMethod === 'video') {
+    if (effectiveContactMethod === 'video') {
       return (
         <div className="bankapp-phone-screen bankapp-phone-screen--video-calling">
           <img
             alt={`${config.channelLabel} Video Call calling agent`}
             className="bankapp-phone-screen__reference"
-            src={bankAppScreenshotSources.voiceCalling}
+            src={bankAppScreenshotSources.videoQueue}
           />
         </div>
       )
@@ -664,13 +970,29 @@ export function BankAppDemoPage({
               : 'You are being connected to banking service'}
           </p>
         </div>
-        <CallControls mode={contactMethod} />
+        <CallControls mode={effectiveContactMethod} />
       </div>
     )
   }
 
   const renderConnectedScreen = () => {
-    if (contactMethod === 'video') {
+    if (effectiveContactMethod === 'livechat') {
+      return (
+        <div className="bankapp-phone-screen bankapp-phone-screen--livechat-chat">
+          <img
+            alt={`${config.channelLabel} Live Chat agent workspace`}
+            className="bankapp-phone-screen__reference"
+            src={
+              variant === 'webchat'
+                ? webchatScreenshotSources.agentChat
+                : bankAppScreenshotSources.agentTextConnected
+            }
+          />
+        </div>
+      )
+    }
+
+    if (effectiveContactMethod === 'video') {
       return (
         <div className="bankapp-phone-screen bankapp-phone-screen--video-connected">
           <img
@@ -678,11 +1000,18 @@ export function BankAppDemoPage({
             className="bankapp-phone-screen__reference"
             src={bankAppScreenshotSources.videoConnected}
           />
+          <button
+            aria-label="Start desktop sharing from customer video call"
+            className="bankapp-video-share-hotspot"
+            title="Desktop Share"
+            type="button"
+            onClick={startVideoScreenShareFromCustomer}
+          />
         </div>
       )
     }
 
-    if (contactMethod === 'voice') {
+    if (effectiveContactMethod === 'voice') {
       return (
         <div className="bankapp-phone-screen bankapp-phone-screen--voice-connected">
           <img
@@ -713,38 +1042,40 @@ export function BankAppDemoPage({
   const renderScreenSharingScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--video-screen-sharing">
       <img
-        alt={`${config.channelLabel} agent screen sharing`}
+        alt={`${config.channelLabel} customer screen sharing`}
         className="bankapp-phone-screen__reference"
         src={bankAppScreenshotSources.videoScreenSharing}
+      />
+      <button
+        aria-hidden="true"
+        className="bankapp-video-share-hotspot bankapp-video-share-hotspot--stop"
+        tabIndex={-1}
+        type="button"
       />
     </div>
   )
 
   const renderPinVerificationScreen = () => (
-    <div className="bankapp-pin-screen">
-      <div className="bankapp-pin-screen__header">
-        <LockOutlined />
-        <span>BANK App Secure PIN</span>
-      </div>
-      <div className="bankapp-pin-screen__content">
-        <strong>Enter 4-digit PIN</strong>
-        <p>
-          This secure page was pushed by the agent to verify the logged-in
-          customer.
-        </p>
-        <div aria-label="Demo PIN value 1234" className="bankapp-pin-screen__pin">
-          {['1', '2', '3', '4'].map((digit) => (
-            <span key={digit}>{digit}</span>
-          ))}
-        </div>
-        <BaseButton
-          size="small"
-          type="primary"
-          onClick={completeBankAppPinVerification}
-        >
-          Submit PIN
-        </BaseButton>
-      </div>
+    <div className="bankapp-phone-screen bankapp-phone-screen--pin">
+      <img
+        alt="Haloapp PIN verification page"
+        className="bankapp-phone-screen__reference"
+        src={bankAppScreenshotSources.pinInput}
+      />
+      <button
+        aria-label="Simulate failed PIN result"
+        className="bankapp-pin-hotspot bankapp-pin-hotspot--failed"
+        title="Simulate Failed"
+        type="button"
+        onClick={() => completeBankAppPinVerification('failed')}
+      />
+      <button
+        aria-label="Submit successful PIN result"
+        className="bankapp-pin-hotspot bankapp-pin-hotspot--accept"
+        title="Accept"
+        type="button"
+        onClick={() => completeBankAppPinVerification('verified')}
+      />
     </div>
   )
 
@@ -754,9 +1085,25 @@ export function BankAppDemoPage({
         alt={`${config.channelLabel} Live Chat conversation`}
         className="bankapp-phone-screen__reference"
         src={
-          variant === 'whatsapp'
+          variant === 'webchat'
+            ? webchatScreenshotSources.customerMessage
+            : variant === 'whatsapp'
             ? whatsAppScreenshotSources.agentChat
             : bankAppScreenshotSources.textChat
+        }
+      />
+    </div>
+  )
+
+  const renderTextAgentConnectedScreen = () => (
+    <div className="bankapp-phone-screen bankapp-phone-screen--livechat-connected">
+      <img
+        alt={`${config.channelLabel} Live Chat agent connected`}
+        className="bankapp-phone-screen__reference"
+        src={
+          variant === 'webchat'
+            ? webchatScreenshotSources.agentChat
+            : bankAppScreenshotSources.textAgentConnected
         }
       />
     </div>
@@ -768,7 +1115,9 @@ export function BankAppDemoPage({
         alt={`${config.channelLabel} satisfaction evaluation`}
         className="bankapp-phone-screen__reference"
         src={
-          variant === 'whatsapp'
+          variant === 'webchat'
+            ? webchatScreenshotSources.satisfactionRating
+            : variant === 'whatsapp'
             ? whatsAppScreenshotSources.satisfactionRating
             : bankAppScreenshotSources.serviceClosed
         }
@@ -777,7 +1126,7 @@ export function BankAppDemoPage({
   )
 
   const renderPhoneContent = () => {
-    if (variant === 'bankapp' && bankAppPinVerificationStatus === 'sent') {
+    if (isPinVerificationOpen) {
       return renderPinVerificationScreen()
     }
 
@@ -809,19 +1158,34 @@ export function BankAppDemoPage({
       return renderConnectedScreen()
     }
 
+    if (visibleDemoStep === 'pin-request') {
+      return renderChatScreen()
+    }
+
+    if (visibleDemoStep === 'pin-input') {
+      return renderPinVerificationScreen()
+    }
+
+    if (visibleDemoStep === 'question-verification') {
+      return renderConnectedScreen()
+    }
+
+    if (visibleDemoStep === 'share-view') {
+      return renderScreenSharingScreen()
+    }
+
     if (visibleDemoStep === 'chat') {
       return renderChatScreen()
     }
 
-    if (visibleDemoStep === 'agent-workspace' && contactMethod === 'livechat') {
-      return renderChatScreen()
+    if (
+      visibleDemoStep === 'agent-workspace' &&
+      effectiveContactMethod === 'livechat'
+    ) {
+      return renderTextAgentConnectedScreen()
     }
 
     if (visibleDemoStep === 'agent-workspace') {
-      return renderConnectedScreen()
-    }
-
-    if (visibleDemoStep === 'share-select') {
       return renderConnectedScreen()
     }
 
@@ -847,22 +1211,27 @@ export function BankAppDemoPage({
   }
   const isScreenshotStep =
     visibleDemoStep === 'channel' ||
+    visibleDemoStep === 'business' ||
+    visibleDemoStep === 'confirm' ||
     visibleDemoStep === 'phone-number' ||
     visibleDemoStep === 'personal-info' ||
+    visibleDemoStep === 'pin-input' ||
+    visibleDemoStep === 'pin-request' ||
+    visibleDemoStep === 'question-verification' ||
     visibleDemoStep === 'screen-sharing' ||
-    visibleDemoStep === 'share-select' ||
+    visibleDemoStep === 'share-view' ||
     visibleDemoStep === 'closed' ||
     variant === 'whatsapp' ||
-    (visibleDemoStep === 'agent-workspace' && contactMethod !== 'voice') ||
-    (contactMethod === 'livechat' &&
+    (visibleDemoStep === 'agent-workspace' && effectiveContactMethod !== 'voice') ||
+    (effectiveContactMethod === 'livechat' &&
       (visibleDemoStep === 'calling' || visibleDemoStep === 'chat')) ||
-    (contactMethod === 'voice' &&
+    (effectiveContactMethod === 'voice' &&
       (visibleDemoStep === 'calling' ||
         visibleDemoStep === 'connected' ||
         visibleDemoStep === 'agent-workspace')) ||
-    (contactMethod === 'video' && visibleDemoStep === 'calling') ||
-    (contactMethod === 'video' && visibleDemoStep === 'connected')
-  const visibleProcessSteps = currentSequence.slice(0, currentStepIndex + 1)
+    (effectiveContactMethod === 'video' && visibleDemoStep === 'calling') ||
+    (effectiveContactMethod === 'video' && visibleDemoStep === 'connected')
+  const visibleProcessSteps = currentSequence
 
   return (
     <section
@@ -875,7 +1244,13 @@ export function BankAppDemoPage({
             <MobileOutlined />
             <strong>{config.phoneTitle}</strong>
           </div>
-          <div className="bankapp-phone">
+          <div
+            className={
+              variant === 'webchat'
+                ? 'bankapp-phone bankapp-webchat-browser'
+                : 'bankapp-phone'
+            }
+          >
             {isScreenshotStep ? null : renderPhoneStatus()}
             {renderPhoneContent()}
           </div>
@@ -902,13 +1277,13 @@ export function BankAppDemoPage({
             {variant === 'bankapp' ? (
               <>
                 <SegmentedControl
-                  label="Channel"
+                  label="Media"
                   options={[
                     ['voice', 'Voice'],
                     ['video', 'Video'],
                     ['livechat', 'Chat'],
                   ]}
-                  value={contactMethod}
+                  value={effectiveContactMethod}
                   onChange={(value) =>
                     handleMethodChange(value as BankAppContactMethod)
                   }
@@ -919,7 +1294,25 @@ export function BankAppDemoPage({
                     ['registered', 'Registered'],
                     ['guest', 'Guest'],
                   ]}
-                  value={customerType}
+                  value={effectiveCustomerType}
+                  onChange={(value) =>
+                    handleCustomerTypeChange(value as BankAppCustomerType)
+                  }
+                />
+              </>
+            ) : variant === 'webchat' ? (
+              <>
+                <div className="bankapp-process__readonly-control">
+                  <span>Media</span>
+                  <strong>chat</strong>
+                </div>
+                <SegmentedControl
+                  label="Customer Type"
+                  options={[
+                    ['registered', 'Registered'],
+                    ['guest', 'Guest'],
+                  ]}
+                  value={effectiveCustomerType}
                   onChange={(value) =>
                     handleCustomerTypeChange(value as BankAppCustomerType)
                   }
@@ -927,7 +1320,7 @@ export function BankAppDemoPage({
               </>
             ) : (
               <div className="bankapp-process__readonly-control">
-                <span>Channel</span>
+                <span>Media</span>
                 <strong>chat</strong>
               </div>
             )}
@@ -967,7 +1360,7 @@ export function BankAppDemoPage({
                 <span>{handoffWarningMessage}</span>
               </div>
             )}
-            {variant === 'bankapp' &&
+            {(variant === 'bankapp' || variant === 'webchat') &&
               bankAppPinVerificationStatus !== 'idle' && (
                 <div
                   aria-live="polite"
@@ -977,8 +1370,12 @@ export function BankAppDemoPage({
                   <LockOutlined />
                   <span>
                     {bankAppPinVerificationStatus === 'verified'
-                      ? 'Customer PIN verified in BANK App.'
-                      : 'PIN verification page is open in BANK App.'}
+                      ? 'Customer PIN verified in Haloapp.'
+                      : bankAppPinVerificationStatus === 'locked'
+                        ? 'PIN verification failed after 3 attempts.'
+                        : bankAppPinVerificationStatus === 'failed'
+                          ? `PIN verification failed. Attempt ${bankAppPinVerificationAttempts}/3 used.`
+                          : `Haloapp PIN page is open. Attempt ${bankAppPinVerificationAttempts}/3.`}
                   </span>
                 </div>
               )}
@@ -987,6 +1384,12 @@ export function BankAppDemoPage({
           <ol className="bankapp-process__rail">
             {visibleProcessSteps.map((step, stepIndex) => {
               const status = renderRailStatus(step)
+              const stepOwner = getDisplayStepOwner(
+                step,
+                variant,
+                effectiveContactMethod,
+              )
+              const stepOwnerClassName = getStepOwnerClassName(stepOwner)
 
               return (
                 <li
@@ -1001,14 +1404,11 @@ export function BankAppDemoPage({
                   </span>
                   <div>
                     <strong className="bankapp-process__step-title">
-                      {getStepLabel(step, variant)}
+                      {getStepLabel(step, variant, effectiveContactMethod)}
                       <span
-                        className={`bankapp-step-owner bankapp-step-owner--${getStepOwner(
-                          step,
-                          variant,
-                        ).toLowerCase()}`}
+                        className={`bankapp-step-owner bankapp-step-owner--${stepOwnerClassName}`}
                       >
-                        {getStepOwner(step, variant)}
+                        {stepOwner}
                       </span>
                     </strong>
                     <p>
@@ -1016,6 +1416,8 @@ export function BankAppDemoPage({
                         step,
                         config.channelLabel,
                         variant,
+                        effectiveContactMethod,
+                        effectiveCustomerType,
                       )}
                     </p>
                   </div>

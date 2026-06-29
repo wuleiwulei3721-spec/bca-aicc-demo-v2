@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-06-24 11:00 +08:00
+Last updated: 2026-06-27 11:28 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -155,6 +155,7 @@ Call transfer modal:
 - Transfer Number accepts a phone number and supports `Transfer` and `Conference`.
 - Transfer IVR lists enabled entries from `Call Management > Common Number Management`.
 - Transfer IVR row action is `Transfer`.
+- Video calls do not expose the call Transfer action in the header toolbar.
 
 Conversation transfer modal:
 
@@ -224,6 +225,13 @@ Customer identity refresh:
 - Confirm loads mock customer profile, journey, and ticket history if the ID matches.
 - Invalid or empty ID shows an inline error.
 
+Guest customer information:
+
+- Text-channel guests, including BankApp Live Chat and Webchat, keep the customer-entered name, phone number, and email, but show customer ID / CIS as `-`.
+- BankApp voice and video guests only provide a phone number on the customer side. The agent workspace shows a generated `Guest-06290001`-style name, keeps the entered phone number, and shows `-` for email and customer ID / CIS.
+- Registered customers continue to show the full mock customer profile.
+- Unavailable customer information should be represented as `-` in the current demo instead of blank values.
+
 Contact Management:
 
 - Contact types include Phone, WhatsApp, Email, and other configured groups.
@@ -231,8 +239,15 @@ Contact Management:
 
 Verification:
 
-- Opens Customer Verification V2 in the right-side Verification tab.
-- The CRM center workspace remains visible while the agent asks questions and marks Correct, Wrong, or Skip.
+- Voice channels show a compact `KBV` action, which opens Customer Verification V2 in the right-side Verification tab.
+- BankApp Voice / VoIP uses `KBV` for both logged-in and guest customers.
+- BankApp text / Live Chat for logged-in BankApp customers shows a compact `PIN` action on the Customer Information card.
+- BankApp text / Live Chat guest customers do not show a verification action in the current demo.
+- BankApp PIN verification sets the card status to `Verifying`, opens the mock secure PIN page in the BankApp customer demo, and updates the card to `Verified` or `Verification Failed` from the simulated callback result.
+- The PIN page represents a BCA-provided client page. In the demo, Netinfo initiates the PIN verification request and BCA returns the result to Netinfo.
+- PIN can be requested up to 3 times. While waiting, after success, and after the third failed attempt, the `PIN` action is disabled.
+- WhatsApp, BankApp video, Webchat, and unsupported channels do not show a verification action in the current demo.
+- For KBV, the CRM center workspace remains visible while the agent asks questions and marks Correct, Wrong, or Skip.
 - Verification result updates customer verification status locally.
 
 Call Flow Detail:
@@ -376,6 +391,7 @@ Workspace tab:
 - Fixed tab label is `Live Chat`.
 - Shows longest active service duration when there are active service sessions.
 - Aggregates unread count for active, unread, non-ended sessions.
+- Aggregates active, non-ended unanswered sessions by SLA state on the tab: warning count uses the orange badge and breach count uses the red badge.
 - Unread count caps at `99+`.
 - New handoff sessions can flash the tab.
 
@@ -424,6 +440,12 @@ BankApp demo variants:
 - Video.
 - Live Chat.
 
+Client page ownership:
+
+- Haloapp / BankApp text, voice, video, PIN, desktop-share, and satisfaction pages are BCA-owned client pages.
+- Netinfo demo behavior starts at SDK/API handoff, routing, agent workspace, message exchange, verification request/result, and call popup behavior.
+- The customer-side demo uses the approved V1.8 flow screenshots as read-only client references and should not imply Netinfo builds those pages.
+
 Customer type:
 
 - Registered.
@@ -438,7 +460,7 @@ Flow:
 - Calling / queue step.
 - Connected or chat step.
 - Agent Workspace handoff.
-- Optional video share-selection and screen-sharing steps.
+- Optional customer-initiated video screen-sharing step.
 - Service Closed.
 
 Handoff rules:
@@ -450,10 +472,41 @@ Handoff rules:
 PIN:
 
 - BankApp PIN verification is a mock customer-side secure PIN page.
-- It sets a local `verified` state only.
-- Whether PIN reduces or replaces KBV is still a customer policy question.
+- It is triggered from the agent Customer Information card for logged-in BankApp text / Live Chat customers.
+- The agent-side card shows `Verifying` while the customer PIN page is open.
+- The customer demo page can submit success or simulate failure; success marks the customer `Verified`, while three failed attempts mark verification failed and disable further PIN requests.
+- PIN verification is separate from KBV question rules. In the current demo, KBV is used for voice channels and PIN is used for logged-in BankApp text verification.
+- Webchat PIN verification is temporarily hidden pending customer confirmation.
 
-## 19. WhatsApp Demo Rules
+Video desktop sharing:
+
+- Video client UI has no keypad and no transfer action.
+- Customer starts desktop sharing from the Haloapp video call page; the client button changes from `Desktop Share` to `Stop Sharing`.
+- The agent side only views the customer-shared screen in the floating video window.
+- The demo does not show sensitive-word masking or desensitization during video desktop sharing.
+
+## 19. Webchat Demo Rules
+
+Webchat demo variants:
+
+- Text only in the current implementation.
+- Registered.
+- Guest.
+
+Flow:
+
+- Registered customer starts directly in queue without media selection, customer information input, or menu selection.
+- Guest customer first sees contact information / business selection, then enters the queue.
+- Queue / routing.
+- Agent receives a new Webchat customer in Live Chat.
+- Customer and agent exchange Webchat text messages.
+- Service closed / satisfaction rating.
+
+Current scope:
+
+- Webchat voice and video are acknowledged as possible media but are not implemented yet.
+
+## 20. WhatsApp Demo Rules
 
 WhatsApp demo uses the BankApp demo framework with a WhatsApp variant.
 

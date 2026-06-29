@@ -91,6 +91,7 @@ export function InteractionWorkspace({
     () => ({
       accessChannel: customer.accessChannel,
       accessDuration: '',
+      bankAppLoginStatus: customer.bankAppLoginStatus,
       profile: {
         avatarInitials: customer.profile.avatarInitials,
         avatarUrl: customer.profile.avatarUrl,
@@ -104,6 +105,7 @@ export function InteractionWorkspace({
     }),
     [
       customer.accessChannel,
+      customer.bankAppLoginStatus,
       customer.profile.avatarInitials,
       customer.profile.avatarUrl,
       customer.profile.cisNumber,
@@ -144,8 +146,14 @@ export function InteractionWorkspace({
       ...identityData.customer,
       accessChannel: customer.accessChannel,
       accessDuration: customer.accessDuration,
+      bankAppLoginStatus: customer.bankAppLoginStatus,
     }),
-    [customer.accessChannel, customer.accessDuration, identityData.customer],
+    [
+      customer.accessChannel,
+      customer.accessDuration,
+      customer.bankAppLoginStatus,
+      identityData.customer,
+    ],
   )
   const displayCustomerKey = [
     displayCustomer.accessChannel,
@@ -195,6 +203,7 @@ export function InteractionWorkspace({
             ...refreshResult.customer,
             accessChannel: customer.accessChannel,
             accessDuration: customer.accessDuration,
+            bankAppLoginStatus: customer.bankAppLoginStatus,
           },
           journey: refreshResult.journey,
           tickets: refreshResult.tickets,
@@ -204,7 +213,12 @@ export function InteractionWorkspace({
 
       return true
     },
-    [customer.accessChannel, customer.accessDuration, sourceCustomerKey],
+    [
+      customer.accessChannel,
+      customer.accessDuration,
+      customer.bankAppLoginStatus,
+      sourceCustomerKey,
+    ],
   )
   const handleAssistantActiveKeyChange = useCallback(
     (activeKey: string) => {

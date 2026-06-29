@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Design System
 
-Last updated: 2026-06-24 11:00 +08:00
+Last updated: 2026-06-27 11:28 +08:00
 
 This document records the current implemented visual rules. It should be treated as the design baseline for future pages and components.
 
@@ -51,19 +51,20 @@ Agent profile area:
 - Shows team and selected service mode.
 - Status dot reflects offline, ready, away, or busy.
 - Sign In / Sign Out / AUX actions are accessed from the profile menu.
+- Agent Settings sits below a divider at the bottom of the profile menu. Current setting: system prompt sound on/off; future agent-owned preferences can be added in this modal.
 
 ## 4. Toolbar Design Principles
 
 The toolbar is operational and compact:
 
-- Use icon + text mode by default unless settings choose icon-only.
+- Use icon + text mode by default.
 - Use familiar call icons for Answer, Hold, Mute, Transfer, Hang Up, Ready / Not Ready.
 - Do not replace call actions with decorative text buttons.
 - Answer flashes only for incoming calls.
 - Hang Up uses danger styling.
 - Ready uses success / ready styling.
 - Hold and Mute use selected / active styling.
-- More actions are behind an ellipsis menu.
+- More actions are behind an ellipsis menu; Settings is temporarily hidden from the toolbar More menu.
 
 Call context display:
 
@@ -130,6 +131,7 @@ Rules:
 
 - Workspace tabs can be editable-card style.
 - Home and Live Chat fixed tabs are not closable.
+- Live Chat workspace tab may show compact status badges after the longest service duration: orange for unanswered SLA warning count and red for unanswered SLA breach count.
 - Active call tabs are not closable; ended call tabs are closable.
 - CRM base tab is not closable.
 - Conversation tab is not closable.

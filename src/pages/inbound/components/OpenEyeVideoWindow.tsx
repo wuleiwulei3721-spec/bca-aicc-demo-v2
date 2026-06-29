@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import type { BankAppVideoShareState } from '../../../store'
 
-const OPEN_EYE_CLIENT_SRC = '/screenshots/openeye-video-call.png'
-const OPEN_EYE_SHARE_SELECTION_SRC = '/screenshots/openeye-share-selection.png'
-const WINDOW_WIDTH = 340
+const OPEN_EYE_CLIENT_SRC = '/screenshots/haloapp-v18/openeye-video-call.png'
+const HALOAPP_SHARE_VIEW_SRC = '/screenshots/haloapp-v18/openeye-screen-share-view.png'
+const VIDEO_WINDOW_WIDTH = 340
+const SHARE_WINDOW_WIDTH = 760
 const WINDOW_MARGIN = 24
 const WINDOW_TOP = 92
 
@@ -13,7 +14,21 @@ interface DragState {
   offsetY: number
 }
 
-function getInitialPosition() {
+function getInitialPosition(width: number, offsetY = 0) {
+  if (typeof window === 'undefined') {
+    return {
+      x: WINDOW_MARGIN,
+      y: WINDOW_TOP + offsetY,
+    }
+  }
+
+  return {
+    x: Math.max(WINDOW_MARGIN, window.innerWidth - width - WINDOW_MARGIN),
+    y: WINDOW_TOP + offsetY,
+  }
+}
+
+function getCenteredInitialPosition(width: number) {
   if (typeof window === 'undefined') {
     return {
       x: WINDOW_MARGIN,
@@ -22,12 +37,12 @@ function getInitialPosition() {
   }
 
   return {
-    x: Math.max(WINDOW_MARGIN, window.innerWidth - WINDOW_WIDTH - WINDOW_MARGIN),
-    y: WINDOW_TOP,
+    x: Math.max(WINDOW_MARGIN, (window.innerWidth - width) / 2),
+    y: Math.max(WINDOW_MARGIN, (window.innerHeight - width * 0.68) / 2),
   }
 }
 
-function clampPosition(x: number, y: number) {
+function clampPosition(x: number, y: number, width: number) {
   if (typeof window === 'undefined') {
     return { x, y }
   }
@@ -35,29 +50,33 @@ function clampPosition(x: number, y: number) {
   return {
     x: Math.min(
       Math.max(WINDOW_MARGIN, x),
-      Math.max(WINDOW_MARGIN, window.innerWidth - WINDOW_WIDTH - WINDOW_MARGIN),
+      Math.max(WINDOW_MARGIN, window.innerWidth - width - WINDOW_MARGIN),
     ),
     y: Math.min(Math.max(WINDOW_MARGIN, y), window.innerHeight - WINDOW_MARGIN),
   }
 }
 
-export function OpenEyeVideoWindow({
-  bankAppVideoShareState = 'idle',
-  isBankAppVideo = false,
-  isScreenShareActive = false,
-  onConfirmScreenShare,
-  onStartScreenShare,
+function DraggableOpenEyeWindow({
+  alt,
+  className,
+  offsetY,
+  placement = 'right',
+  src,
+  width,
 }: {
-  bankAppVideoShareState?: BankAppVideoShareState
-  isBankAppVideo?: boolean
-  isScreenShareActive?: boolean
-  onConfirmScreenShare?: () => void
-  onStartScreenShare?: () => void
+  alt: string
+  className?: string
+  offsetY?: number
+  placement?: 'center' | 'right'
+  src: string
+  width: number
 }) {
-  const [position, setPosition] = useState(getInitialPosition)
+  const [position, setPosition] = useState(() =>
+    placement === 'center'
+      ? getCenteredInitialPosition(width)
+      : getInitialPosition(width, offsetY),
+  )
   const [dragState, setDragState] = useState<DragState | null>(null)
-  const isSelectingShareProgram =
-    isBankAppVideo && bankAppVideoShareState === 'selecting-program'
 
   useEffect(() => {
     if (!dragState) {
@@ -73,6 +92,7 @@ export function OpenEyeVideoWindow({
         clampPosition(
           event.clientX - dragState.offsetX,
           event.clientY - dragState.offsetY,
+          width,
         ),
       )
     }
@@ -92,14 +112,18 @@ export function OpenEyeVideoWindow({
       window.removeEventListener('pointerup', stopDragging)
       window.removeEventListener('pointercancel', stopDragging)
     }
-  }, [dragState])
+  }, [dragState, width])
 
   return (
     <div
-      aria-label="OpenEye standalone video client"
-      className={`openeye-video-window ${
-        dragState ? 'openeye-video-window--dragging' : ''
-      }`}
+      aria-label={alt}
+      className={[
+        'openeye-video-window',
+        className ?? '',
+        dragState ? 'openeye-video-window--dragging' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       role="dialog"
       style={{
         transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
@@ -120,50 +144,38 @@ export function OpenEyeVideoWindow({
       }}
     >
       <div className="openeye-video-window__media">
-        <img
-          alt="OpenEye video call client"
-          draggable={false}
-          src={
-            isSelectingShareProgram
-              ? OPEN_EYE_SHARE_SELECTION_SRC
-              : OPEN_EYE_CLIENT_SRC
-          }
-        />
-        {isBankAppVideo && bankAppVideoShareState === 'idle' ? (
-          <button
-            aria-label="Start desktop sharing"
-            className="openeye-video-window__share-button"
-            type="button"
-            onClick={onStartScreenShare}
-          >
-            Desktop Share
-          </button>
-        ) : null}
-        {isSelectingShareProgram ? (
-          <button
-            aria-label="Confirm selected sharing program"
-            className="openeye-video-window__share-confirm-hotspot"
-            type="button"
-            onClick={onConfirmScreenShare}
-          />
-        ) : null}
-        {isScreenShareActive && !isBankAppVideo ? (
-          <div
-            aria-label="Customer desktop share preview"
-            className="openeye-video-window__screen-share"
-          >
-            <div className="openeye-video-window__desktop">
-              <div className="openeye-video-window__desktop-sidebar" />
-              <div className="openeye-video-window__desktop-content">
-                <span />
-                <span />
-                <span />
-              </div>
-            </div>
-            <strong>Screen Share Active</strong>
-          </div>
-        ) : null}
+        <img alt={alt} draggable={false} src={src} />
       </div>
     </div>
+  )
+}
+
+export function OpenEyeVideoWindow({
+  bankAppVideoShareState = 'idle',
+  isBankAppVideo = false,
+}: {
+  bankAppVideoShareState?: BankAppVideoShareState
+  isBankAppVideo?: boolean
+}) {
+  const isBankAppShareActive =
+    isBankAppVideo && bankAppVideoShareState === 'sharing'
+
+  return (
+    <>
+      <DraggableOpenEyeWindow
+        alt="OpenEye video call client"
+        src={OPEN_EYE_CLIENT_SRC}
+        width={VIDEO_WINDOW_WIDTH}
+      />
+      {isBankAppShareActive ? (
+        <DraggableOpenEyeWindow
+          alt="Customer desktop share viewed by agent"
+          className="openeye-video-window--share-view"
+          placement="center"
+          src={HALOAPP_SHARE_VIEW_SRC}
+          width={SHARE_WINDOW_WIDTH}
+        />
+      ) : null}
+    </>
   )
 }

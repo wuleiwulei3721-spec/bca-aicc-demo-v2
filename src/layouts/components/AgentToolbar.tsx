@@ -5,7 +5,6 @@ import {
   DisconnectOutlined,
   EllipsisOutlined,
   PauseCircleOutlined,
-  SettingOutlined,
   SwapOutlined,
 } from '@ant-design/icons'
 import { Dropdown } from 'antd'
@@ -15,7 +14,6 @@ import { PhoneIcon, ToolbarButton } from '../../components'
 import type { AgentStatus, CallStatus } from '../../types'
 import { formatDuration } from '../../utils/duration'
 import { OutboundCallModal } from './OutboundCallModal'
-import { ToolbarSettingsModal } from './ToolbarSettingsModal'
 import { TransferModal } from './TransferModal'
 
 export type ToolbarDisplayMode = 'icon' | 'text'
@@ -31,6 +29,7 @@ interface AgentToolbarProps {
   callIdentification?: CallIdentification | null
   callSkillDisplayName?: string | null
   callStatus: CallStatus
+  canTransfer?: boolean
   timerLabel: string
   timerStartedAt: number
   toolbarDisplayMode: ToolbarDisplayMode
@@ -39,7 +38,6 @@ interface AgentToolbarProps {
   onHoldToggle: () => void
   onMuteToggle: () => void
   onReadyToggle: () => void
-  onToolbarDisplayModeChange: (displayMode: ToolbarDisplayMode) => void
 }
 
 export function AgentToolbar({
@@ -48,6 +46,7 @@ export function AgentToolbar({
   callIdentification,
   callSkillDisplayName,
   callStatus,
+  canTransfer = true,
   timerLabel,
   timerStartedAt,
   toolbarDisplayMode,
@@ -56,13 +55,9 @@ export function AgentToolbar({
   onHoldToggle,
   onMuteToggle,
   onReadyToggle,
-  onToolbarDisplayModeChange,
 }: AgentToolbarProps) {
   const [now, setNow] = useState(() => Date.now())
-  const [draftToolbarDisplayMode, setDraftToolbarDisplayMode] =
-    useState<ToolbarDisplayMode>(toolbarDisplayMode)
   const [isOutboundOpen, setIsOutboundOpen] = useState(false)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isTransferOpen, setIsTransferOpen] = useState(false)
 
   useEffect(() => {
@@ -87,21 +82,11 @@ export function AgentToolbar({
       icon: <PhoneIcon />,
       label: 'Outbound Call',
     },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: 'Settings',
-    },
   ]
 
   const handleMoreMenuClick: MenuProps['onClick'] = ({ key }) => {
     if (key === 'outbound-call') {
       setIsOutboundOpen(true)
-    }
-
-    if (key === 'settings') {
-      setDraftToolbarDisplayMode(toolbarDisplayMode)
-      setIsSettingsOpen(true)
     }
   }
   const callContextTitle = [
@@ -185,15 +170,17 @@ export function AgentToolbar({
             >
               {showButtonText ? 'Mute' : undefined}
             </ToolbarButton>
-            <ToolbarButton
-              active={isTransferOpen}
-              aria-label="Transfer"
-              icon={<SwapOutlined />}
-              title="Transfer"
-              onClick={() => setIsTransferOpen(true)}
-            >
-              {showButtonText ? 'Transfer' : undefined}
-            </ToolbarButton>
+            {canTransfer && (
+              <ToolbarButton
+                active={isTransferOpen}
+                aria-label="Transfer"
+                icon={<SwapOutlined />}
+                title="Transfer"
+                onClick={() => setIsTransferOpen(true)}
+              >
+                {showButtonText ? 'Transfer' : undefined}
+              </ToolbarButton>
+            )}
             <ToolbarButton
               aria-label="Hang Up"
               icon={<DisconnectOutlined />}
@@ -244,23 +231,15 @@ export function AgentToolbar({
         </Dropdown>
       </div>
 
-      <TransferModal
-        open={isTransferOpen}
-        onClose={() => setIsTransferOpen(false)}
-      />
+      {canTransfer && (
+        <TransferModal
+          open={isTransferOpen}
+          onClose={() => setIsTransferOpen(false)}
+        />
+      )}
       <OutboundCallModal
         open={isOutboundOpen}
         onClose={() => setIsOutboundOpen(false)}
-      />
-      <ToolbarSettingsModal
-        displayMode={draftToolbarDisplayMode}
-        open={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        onConfirm={() => {
-          onToolbarDisplayModeChange(draftToolbarDisplayMode)
-          setIsSettingsOpen(false)
-        }}
-        onDisplayModeChange={setDraftToolbarDisplayMode}
       />
     </>
   )

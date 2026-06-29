@@ -1,12 +1,13 @@
 import { DownOutlined } from '@ant-design/icons'
 import { Avatar, Dropdown, Modal } from 'antd'
 import type { MenuProps } from 'antd'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { agentServiceModeOptions } from '../../mock/auth'
 import { headerAgentProfile } from '../../mock/agent'
 import { useCallManagementStore } from '../../store'
 import type { AgentServiceMode, AgentStatus } from '../../types'
 import { createAuxStatus, isAuxLikeStatus } from '../../utils/agentStatus'
+import { AgentSettingsModal } from './AgentSettingsModal'
 
 export type AgentPresence = 'away' | 'busy' | 'offline' | 'ready'
 
@@ -44,6 +45,8 @@ export function AgentProfileArea({
 }: AgentProfileAreaProps) {
   const isSignedIn = status !== 'Unsigned'
   const isAuxLike = isAuxLikeStatus(status)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [systemSoundEnabled, setSystemSoundEnabled] = useState(false)
   const busyReasons = useCallManagementStore((state) => state.busyReasons)
   const serviceModeLabel = serviceMode
     ? (agentServiceModeOptions.find((option) => option.value === serviceMode)
@@ -94,6 +97,14 @@ export function AgentProfileArea({
           key: 'sign-out',
           label: 'Sign Out',
         },
+        {
+          key: 'divider-agent-settings',
+          type: 'divider',
+        },
+        {
+          key: 'agent-settings',
+          label: 'Settings',
+        },
       ]
     : [
         {
@@ -133,6 +144,14 @@ export function AgentProfileArea({
           key: 'sign-out',
           label: 'Sign Out',
         },
+        {
+          key: 'divider-agent-settings',
+          type: 'divider',
+        },
+        {
+          key: 'agent-settings',
+          label: 'Settings',
+        },
       ]
 
   const actionItems: MenuProps['items'] = isSignedIn
@@ -143,6 +162,14 @@ export function AgentProfileArea({
           label: 'Sign In',
           type: 'group',
           children: signInItems,
+        },
+        {
+          key: 'divider-agent-settings',
+          type: 'divider',
+        },
+        {
+          key: 'agent-settings',
+          label: 'Settings',
         },
       ]
 
@@ -179,6 +206,11 @@ export function AgentProfileArea({
       return
     }
 
+    if (key === 'agent-settings') {
+      setIsSettingsOpen(true)
+      return
+    }
+
     const selectedReason = enabledBusyReasons.find(
       (reason) => key === `aux-reason-${reason.busyReasonId}`,
     )
@@ -189,49 +221,57 @@ export function AgentProfileArea({
   }
 
   return (
-    <div className="aicc-agent-profile">
-      <span className="aicc-agent-profile__avatar-wrap">
-        <Avatar
-          className="aicc-agent-profile__avatar"
-          size={34}
-          src={headerAgentProfile.avatarUrl}
-        >
-          BK
-        </Avatar>
-        <span
-          className={[
-            'aicc-agent-profile__status-dot',
-            presenceClassName[presence],
-          ]
-            .filter(Boolean)
-            .join(' ')}
-        />
-      </span>
-
-      <span className="aicc-agent-profile__meta">
-        <span className="aicc-agent-profile__name">
-          {roleName} - {agentName}
+    <>
+      <div className="aicc-agent-profile">
+        <span className="aicc-agent-profile__avatar-wrap">
+          <Avatar
+            className="aicc-agent-profile__avatar"
+            size={34}
+            src={headerAgentProfile.avatarUrl}
+          >
+            BK
+          </Avatar>
+          <span
+            className={[
+              'aicc-agent-profile__status-dot',
+              presenceClassName[presence],
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          />
         </span>
-        <span className="aicc-agent-profile__team">
-          {teamName}
-          {serviceModeLabel ? ` | ${serviceModeLabel}` : ''}
-        </span>
-      </span>
 
-      <Dropdown
-        classNames={{ root: 'aicc-agent-status-menu' }}
-        menu={{ items: actionItems, onClick: handleActionClick }}
-        placement="bottomRight"
-        trigger={['click']}
-      >
-        <button
-          aria-label="Agent status menu"
-          className="aicc-agent-profile__action"
-          type="button"
+        <span className="aicc-agent-profile__meta">
+          <span className="aicc-agent-profile__name">
+            {roleName} - {agentName}
+          </span>
+          <span className="aicc-agent-profile__team">
+            {teamName}
+            {serviceModeLabel ? ` | ${serviceModeLabel}` : ''}
+          </span>
+        </span>
+
+        <Dropdown
+          classNames={{ root: 'aicc-agent-status-menu' }}
+          menu={{ items: actionItems, onClick: handleActionClick }}
+          placement="bottomRight"
+          trigger={['click']}
         >
-          <DownOutlined />
-        </button>
-      </Dropdown>
-    </div>
+          <button
+            aria-label="Agent status menu"
+            className="aicc-agent-profile__action"
+            type="button"
+          >
+            <DownOutlined />
+          </button>
+        </Dropdown>
+      </div>
+      <AgentSettingsModal
+        open={isSettingsOpen}
+        systemSoundEnabled={systemSoundEnabled}
+        onClose={() => setIsSettingsOpen(false)}
+        onSystemSoundEnabledChange={setSystemSoundEnabled}
+      />
+    </>
   )
 }

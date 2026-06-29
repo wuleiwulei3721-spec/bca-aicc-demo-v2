@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-25 16:40 +08:00
+最后更新：2026-06-29 16:25 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,156 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-06-29 16:25 +08:00 - 坐席个人设置入口与提示音开关
+
+修改页面或文件：
+
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/layouts/components/AgentProfileArea.tsx`
+- `src/layouts/components/AgentSettingsModal.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `DESIGN_SYSTEM.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户要求暂时隐藏话务条 More 菜单中的 Settings 入口。
+- 客户要求在签入 / 签出菜单下方增加独立 Settings 区域，当前用于坐席自行开关系统提示声音，后续可继续扩展坐席个人配置。
+
+修改结果：
+
+- 话务条 More 菜单当前只保留 Outbound Call，原 Toolbar Settings 入口不再展示。
+- Agent Profile 下拉菜单在签入 / 签出 / AUX 操作下方增加 divider 和 Settings 入口。
+- 新增 Agent Settings 弹框，当前包含 `System prompt sound` 开关，状态保存在当前前端会话组件 state 中。
+- 更新项目上下文、当前状态、设计系统文档中的相关描述。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite chunk size warning。
+- 本地 dev server `http://127.0.0.1:5173/` HTTP 检查返回 200；Codex in-app browser 自动化连接超时，未完成截图式 smoke check。
+
+回滚说明：
+
+- 如需恢复旧入口，可在 `AgentToolbar.tsx` More 菜单重新加入 Settings 菜单项并接回 `ToolbarSettingsModal`。
+- 如需移除新入口，可从 `AgentProfileArea.tsx` 删除 `agent-settings` 菜单项和 `AgentSettingsModal` 挂载。
+
+当前风险点：
+
+- 系统提示音开关当前仅完成坐席侧偏好 UI，不绑定真实声音播放逻辑；后续如接入真实音频提醒，需要将该偏好传入实际提示音触发点或持久化到后端。
+
+### 2026-06-29 09:54 +08:00 - Haloapp Demo 文字渠道流程与截图展示修正
+
+修改页面或文件：
+
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/mock/bankapp.ts`
+- `src/types/bankapp.ts`
+- `src/styles/index.less`
+- `public/screenshots/haloapp-v18/*`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 继续修正 Haloapp demo 图片清晰度和流程顺序问题，优先处理 BankApp 文字渠道右侧步骤内容。
+- 客户提供 `D:\03projects\BCA AICC\需求文档\Haloapps\Haloapps截图\脱敏（新）` 下的文字媒体清晰脱敏截图，需要替换旧的 Word 嵌入低清图。
+- 文字媒体流程需按登录用户 / 游客区分，客户可见描述统一使用 `BANK` 脱敏，不再出现 BCA。
+
+修改结果：
+
+- BankApp Live Chat / 文字渠道右侧流程改为完整展示全部步骤，并用 pending / active / complete 状态区分流程顺序。
+- 登录用户文字流程为：选择 Live Chat、确认联系 Bank 客服、传递客户身份并排队、坐席接入成功、文字聊天、坐席发起 PIN、客户输入 PIN 并返回结果、服务结束与满意度评价。
+- 游客文字流程为：选择 Live Chat、输入姓名 / 电话 / 邮箱、确认联系 Bank 客服、传递游客信息并排队、坐席接入成功、文字聊天、服务结束与满意度评价；游客不显示 PIN 步骤。
+- 文字渠道新增 `pin-request` / `pin-input` 专用 demo step，避免继续复用视频 `screen-sharing` step 表达 PIN 流程。
+- 文字渠道使用简短脱敏步骤文案，步骤 owner 标签仅表示当前步骤展示的图片 / 页面提供方；文字客户端页标 `BANK`，坐席弹屏标 `Netinfo`，保留原有两套标签样式。
+- 文字客户端图替换为清晰脱敏版：联系方式选择、游客信息、确认联系客服、排队分配、文字聊天、PIN 输入、满意度评价。
+- 文字客户端清晰图恢复填满手机屏显示，避免顶部 / 底部留白导致视觉忽大忽小。
+- `Reset` 仅把当前流程回到第一步，不再重置 Channel 和 Customer Type。
+- 登录用户 PIN 发起步骤会切回 Live Chat 坐席弹屏；PIN 输入页底部 `Simulate Failed` / `Accept` 使用透明热区分别模拟失败和成功。
+- BankApp 联系方式选择页移除不准确透明热区，改为仅通过右侧 Channel 控件切换，避免截图按钮位置与热区错位。
+- 登录用户第 6 步 PIN 发起改为激活既有 Live Chat 当前客户会话，不再在左侧手机区域显示坐席页面，也不再创建新的客户接入。
+- 新增客户提供的 `4文字-转坐席成功.png` 脱敏截图，并用于文字渠道“坐席接入成功 / 跳转 Live Chat 弹屏”步骤的左侧客户端画面；后续文字聊天步骤仍使用聊天截图。
+- 登录用户第 6 步进入 PIN Verification 时立即切到既有 Live Chat 客户；坐席点击 PIN 后自动切回 BankApp Demo，并让左侧流程与手机画面进入第 7 步 PIN 输入 / 返回结果，避免返回 demo 后仍停留在上一步。
+- 语音 / 视频渠道接入客户新增脱敏清晰图：游客信息、菜单选择、语音排队、语音通话、视频排队、视频通话、视频结束共享、坐席侧 OpenEye 通话与共享画面。
+- 语音 / 视频渠道右侧流程说明简化为步骤描述，owner 标签沿用文字渠道规则：客户端截图标 `BANK`，坐席工作区 / OpenEye 弹屏标 `Netinfo`，说明文字不重复写 owner。
+- 重新按需求文档 `1.1.整体接入流程（改）` 纠偏语音 / 视频步骤：语音补充问题验证步骤，视频拆分客户发起屏幕共享与坐席查看共享画面；语音 / 视频坐席接入触发点从接通后改为排队后。
+- 修正语音 / 视频截图未撑满问题：菜单确认、业务菜单、问题验证、共享查看等截图步骤纳入全屏截图渲染，不再额外叠加手机状态栏占用高度。
+- 语音渠道体验修正：业务步骤改为“选择咨询业务”，去掉单独确认菜单步骤；排队转坐席成功后直接进入通话中并打开已有语音坐席弹屏；进入问题验证步骤时聚焦已有语音通话弹屏，不再重新发起接入。
+- 修复语音问题验证步骤被 active-call readiness 拦截的问题：优先聚焦已有通话 tab，只有不存在当前通话时才走新接入兜底。
+- 视频渠道同步规避语音同类问题：去掉单独确认菜单步骤；排队转坐席成功后直接进入视频通话并打开已有视频坐席弹屏；进入坐席查看共享画面时聚焦已有视频通话弹屏，不触发新进线。
+- 视频屏幕共享细化：客户侧视频通话图改为透明热区覆盖第一排第三个共享按钮，Next Step 进入共享时也同步触发共享并聚焦已有视频弹屏；坐席侧保留原视频 OpenEye，同时额外弹出更大的共享画面 OpenEye。
+- 视频共享流程进一步合并：视频通话已连接与客户发起屏幕共享合并为同一步，通过客户侧透明热区或 Next Step 触发共享后直接进入坐席查看共享画面；客户侧结束共享仅展示状态不再可点击；共享 OpenEye 窗口放大到 760px 以匹配视频 OpenEye 标题栏视觉高度。
+- 视频共享合并步骤文案修正为“Video Call & Start Screen Share”，说明明确客户在该步发起屏幕共享；共享 OpenEye 初始位置改为居中，避免遮挡右上角视频通话 OpenEye。
+- 修复 WhatsApp 转坐席被语音 / 视频通用跳转逻辑误伤的问题：WhatsApp 从 `chat` 进入 `agent-workspace` 时重新触发已有 Live Chat 工作区打开。
+
+验证：
+
+- `npx tsc --noEmit` 已通过。
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite chunk size warning。
+- 本地 dev server `http://127.0.0.1:5173/` 可访问；Codex in-app browser 自动化连接超时，未完成截图式 smoke check。
+
+回滚说明：
+
+- 如需回滚，可恢复 `BankAppDemoPage.tsx` 中 `visibleProcessSteps` 为当前步骤切片，并移除文字渠道专用 `getProcessDescription` 分支。
+- 文字客户端清晰图可回滚到旧的 `public/screenshots/haloapp-v18/` 文件版本；`pin-request` / `pin-input` 可从 `BankAppDemoStep` 中移除并恢复旧 sequence。
+
+当前风险点：
+
+- 文字媒体已按 1.1 章节梳理并替换清晰图；仍建议客户演示前人工点通一次 Registered / Guest 两条流程确认截图热点位置与流程说明。
+- 语音 / 视频流程尚未按新粒度重新梳理，本轮仅保证不主动重排语音 / 视频步骤。
+
+### 2026-06-27 19:20 +08:00 - Haloapp V1.8 客户端职责边界与视频共享方向调整
+
+修改页面或文件：
+
+- `public/screenshots/haloapp-v18/*`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/mock/bankapp.ts`
+- `src/types/bankapp.ts`
+- `src/pages/inbound/VideoCallPage.tsx`
+- `src/pages/inbound/components/OpenEyeVideoWindow.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/store/appStore.ts`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_TODO.md`
+- `DECISION_LOG.md`
+
+修改原因：
+
+- 客户确认 Haloapp 文字客户端页面由 BCA 提供，Netinfo 只对接收发消息和坐席侧处理。
+- 语音客户端需保留 Keypad，用于客户被转至 IVR 后输入按键。
+- 视频客户端无 Keypad、无转移；桌面共享由客户在视频界面发起，坐席端仅查看。
+
+修改结果：
+
+- 从 `Haloapp及视频弹屏需求说明书V1.8.docx` 的“整体接入流程（改）”表格提取新图，落到 `public/screenshots/haloapp-v18/`。
+- BankApp Demo 改用 V1.8 新截图；文字和 PIN 客户端页面标记为 BCA-owned read-only client reference。
+- PIN 仍由坐席从 Customer Information 发起，但客户侧页面表现为 BCA 提供并返回验证结果给 Netinfo。
+- 视频共享移除坐席端 OpenEye 发起/选择程序流程，改为客户侧 `Desktop Share` / `Stop Sharing` 触发，坐席浮窗只查看共享画面。
+- 视频通话期间 header toolbar 不再显示 Transfer；语音通话仍保留 Transfer / Transfer IVR 和客户侧 Keypad。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite chunk size warning。
+
+回滚说明：
+
+- 如需回滚，可恢复 `src/mock/bankapp.ts` 旧截图路径、`BankAppDemoPage` 的旧 screen-share/select flow、`OpenEyeVideoWindow` 的 Desktop Share 按钮，以及 `AgentToolbar` 的无条件 Transfer 显示。
+
+当前风险点：
+
+- 新截图来自 V1.8 Word 文档嵌入图，仍建议客户演示前人工确认图像清晰度和步骤命名。
+- 当前仍是前端 demo；SDK、消息、PIN、视频和满意度评价均未接真实后端。
 
 ### 2026-06-26 00:00 +08:00 - Customer Verification 改为右侧窄版 Tab
 
@@ -1190,6 +1340,43 @@ Historical entries are preserved in archive files without content rewrites. Use 
 
 - 本轮已做命令级验证，但未做截图级浏览器复查；建议手动用 Priority 或 Solitaire 客户打开 `Prio Soli Perbankan` 验证弹框确认不再显示默认回退提示。
 
+### 2026-06-27 11:28 +08:00 - Live Chat tab 未回复 SLA 聚合提醒
+
+修改页面或文件：
+
+- `src/pages/AgentWorkspace.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `DESIGN_SYSTEM.md`
+- `BUSINESS_RULES.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户希望坐席切换到其他弹屏或菜单时，仍能在 Live Chat 页签上看到有多少客户处于坐席未回复提醒状态。
+
+修改结果：
+
+- Live Chat 页签继续显示当前服务客户中的最长服务时长和未读消息数量。
+- 页签新增未回复 SLA 聚合 badge：橙色显示 warning 客户数，红色显示 breach 客户数。
+- 聚合口径为 active、非历史、未结束且存在 unansweredSince 的 Live Chat 会话；坐席发送回复或结束服务后不再计入。
+- badge 使用 `99+` 封顶，并通过 title 展示 warning / breach 数量说明。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite/Rolldown chunk size warning。
+- 本地 dev server `http://127.0.0.1:5173/` HTTP 检查返回 200。
+
+回滚说明：
+
+- 如需回滚，移除 `AgentWorkspace` 中 `liveChatUnansweredAlertCounts` 聚合和 `WorkspaceTabLabel` 的 SLA badge 渲染，并删除对应 `.workspace-tab-label__sla-alert*` 样式。
+
+当前风险点：
+
+- in-app browser 控制连续超时，尚未完成截图级复查；建议打开数字坐席工作台观察 Live Chat tab 在 warning / breach 计数变化时的宽度和视觉效果。
+
 ### 2026-06-16 11:29 +08:00 - Priority List 批量维护逐渠道保存
 
 修改页面或文件：
@@ -1262,3 +1449,316 @@ Historical entries are preserved in archive files without content rewrites. Use 
 当前风险点：
 
 - 未做截图级验证；建议人工打开 Preview 或坐席侧 Verify 弹框确认 hover 视觉强度。
+
+### 2026-06-27 18:30 +08:00 - 客户卡片验证入口按渠道区分 KBV / PIN
+
+修改页面或文件：
+
+- `src/components/CustomerInformationPanel.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/store/appStore.ts`
+- `src/types/inbound.ts`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DECISION_LOG.md`
+
+修改原因：
+
+- 客户确认验证方式需按渠道区分：语音使用问题验证，按钮短名使用 `KBV`；已登录 BankApp 文字场景使用 `PIN`；WhatsApp、BankApp 视频等不显示验证按钮。
+- PIN 验证无需占用右侧 Verification 面板，应直接通过客户卡片状态显示等待与结果，并联动客户侧 BankApp PIN 页面。
+
+修改结果：
+
+- Customer Information 卡片改为按渠道显示验证动作：语音显示 `KBV`，BankApp text / Live Chat 显示 `PIN`，其他渠道隐藏验证按钮。
+- `PIN` 点击后触发现有 BankApp Demo 客户侧 secure PIN 页面，客户卡片状态显示 `Verifying`。
+- BankApp PIN mock 支持提交成功或模拟失败；失败后可重新发起，最多 3 次，第三次失败后按钮禁用并显示失败状态。
+- KBV 仍使用当前 Customer Verification V2 右侧 tab；PIN 不再打开右侧验证面板。
+- Webchat PIN 暂不实现，等待独立 Webchat 客户侧 demo 后再接入。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite / Rolldown large chunk warning。
+
+回滚说明：
+
+- 如需回滚，移除 Customer Information 的渠道判断和 PIN attempt 状态，恢复单一 `Verify` 按钮与 BankApp PIN mock 的全局 sent / verified 状态。
+
+当前风险点：
+
+- PIN attempt 状态当前为 BankApp demo 全局状态；如未来同时处理多个 BankApp text 会话，需要改为按 customer/session key 存储。
+
+### 2026-06-27 18:45 +08:00 - PIN 失败状态与 BankApp 客户端场景修正
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户测试 HaloApp Voice call 客户端 PIN 验证失败后，坐席侧仍显示未验证，容易误解失败结果没有回传。
+- PIN 验证应表达为已登录 BankApp text / Live Chat 场景，不应让客户侧停留在 Voice call 画面。
+
+修改结果：
+
+- PIN mock 返回失败后，坐席客户卡片显示 `Failed`；未满 3 次时 `PIN` 按钮仍可再次发起，第三次失败后禁用。
+- BankApp 客户端收到 PIN 请求时，渲染层临时展示为 registered Live Chat 场景并显示 secure PIN 页，避免 Voice call 画面与 PIN 验证混在一起。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite / Rolldown large chunk warning。
+
+回滚说明：
+
+- 如需回滚，将 PIN failed 状态映射回 `Unverified`，并移除 BankApp Demo 中 PIN 请求时的 effective Chat 场景覆盖。
+
+当前风险点：
+
+- 该修正仍沿用全局 BankApp PIN mock 状态；多会话 PIN 需要后续按会话隔离。
+
+### 2026-06-27 19:05 +08:00 - BankApp Voice / Video 渠道与 PIN 场景隔离
+
+修改页面或文件：
+
+- `src/mock/inbound.ts`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户确认场景矩阵：HaloApp / BankApp Voice 无论已登录还是未登录都走 KBV；PIN 只用于已登录 BankApp text / Live Chat。
+- 原 mock 中 BankApp Voice / Video 的 `accessChannel` 都写成 `BankApp`，导致客户卡片把 Voice / Video 误判为 text PIN 场景。
+
+修改结果：
+
+- BankApp Voice mock customer 的 `accessChannel` 改为 `BankApp Voice`，坐席侧显示 `KBV`。
+- BankApp Video mock customer 的 `accessChannel` 改为 `BankApp Video`，坐席侧不显示验证按钮。
+- BankApp 客户端收到 PIN 请求时，控制栏也显示为 Chat / Registered，避免 Voice 选择状态与 PIN 页混在一起。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite / Rolldown large chunk warning。
+
+回滚说明：
+
+- 如需回滚，将两个 mock customer 的 `accessChannel` 恢复为 `BankApp`，并恢复 BankApp Demo 控制栏使用原始 contact/customer type。
+
+当前风险点：
+
+- Webchat PIN 仍按确认结果暂不实现。
+
+### 2026-06-27 19:25 +08:00 - BankApp Text Registered / Guest PIN 隔离
+
+修改页面或文件：
+
+- `src/types/inbound.ts`
+- `src/store/appStore.ts`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/mock/inbound.ts`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户发现 BankApp Demo 选择 Chat Guest 后，坐席侧仍可发送 PIN，并且客户侧 PIN 请求会跳转显示为 Registered。
+- 根因是 Live Chat handoff 固定使用 registered BankApp mock session，坐席客户卡只按 `accessChannel === BankApp` 判断 PIN，没有区分 registered / guest。
+
+修改结果：
+
+- LiveChat2 session 增加 `bankAppLoginStatus`，BankApp Demo handoff 时传入当前 `registered` / `guest`。
+- Guest BankApp text handoff 会覆盖客户资料为 Guest，并把 login status 传到 Customer Information。
+- Customer Information 只有 BankApp text 且 `bankAppLoginStatus === registered` 时显示 `PIN`；guest 不显示验证按钮。
+- 现有默认 BankApp text mock session 标记为 registered，保持原有可演示 PIN 的默认会话。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite / Rolldown large chunk warning。
+
+回滚说明：
+
+- 如需回滚，移除 `bankAppLoginStatus` 字段和 handoff 参数，恢复 Customer Information 仅按 `BankApp` accessChannel 显示 PIN。
+
+当前风险点：
+
+- PIN attempt 状态仍是全局 BankApp mock 状态；如后续允许多个 registered BankApp text 会话并行发 PIN，应继续按 session key 隔离 attempts。
+
+### 2026-06-27 19:35 +08:00 - BankApp Login Status 透传修正
+
+修改页面或文件：
+
+- `src/pages/inbound/InteractionWorkspace.tsx`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户发现 BankApp Chat registered / guest 都不显示 PIN。
+- 根因是 `LiveChat2Page` 已将 `bankAppLoginStatus` 放到 customer 上，但 `InteractionWorkspace` 重新组装 `sourceCustomer` / `displayCustomer` 时漏掉该字段，导致 Customer Information 无法识别 registered。
+
+修改结果：
+
+- `InteractionWorkspace` 在 source customer、display customer、identity refresh 后客户资料中保留 `bankAppLoginStatus`。
+- BankApp Chat registered 可显示 PIN；guest 仍不显示验证按钮。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite / Rolldown large chunk warning。
+
+回滚说明：
+
+- 如需回滚，移除 `InteractionWorkspace` 中 `bankAppLoginStatus` 的透传。
+
+当前风险点：
+
+- 仍建议浏览器手工点一次 BankApp Demo 的 Chat Registered / Guest handoff，确认坐席卡片按钮分别为 `PIN` / 无验证按钮。
+
+### 2026-06-29 17:55 +08:00 - Webchat Text 客户侧 Demo 与 PIN 接入
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/AgentWorkspace.tsx`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/pages/webchat/WebchatDemoPage.tsx`
+- `src/pages/webchat/index.ts`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/store/appStore.ts`
+- `src/mock/bankapp.ts`
+- `src/mock/inbound.ts`
+- `public/screenshots/webchat/*`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求在 BankApp 菜单下方新增 Webchat 介入 demo。
+- Webchat 当前只实现文字媒体；客户仍区分 Registered / Guest。
+- Registered Webchat 客户应直接排队，不选择媒体、不填写信息、不选择菜单。
+- Guest Webchat 客户先展示联系方式 / 业务选择截图，再进入排队。
+- 转坐席后必须作为新的 Webchat 客户进入 Live Chat，不能误用 BankApp 或 WhatsApp。
+- Webchat PIN 演示默认客户 BankApp 已登录，流程文案需标明 `(customer BankApp is logged in)`，并继续打开 Haloapp PIN 输入页。
+
+修改结果：
+
+- Channel Simulation 菜单在 BankApp 下方新增 Webchat。
+- Agent Workspace 新增 `Webchat Demo` tab，复用 BankApp demo 框架的 `webchat` variant。
+- Webchat Registered 流程从 queue 起步；Guest 流程包含 Webchat contact/business screenshot、queue、agent chat、PIN、satisfaction。
+- Webchat handoff 使用 `live-chat-003` / `livechat2-003`，坐席侧显示 Webchat 新客户并打开 Live Chat。
+- Customer Information 对 Webchat text session 显示 `PIN`；点击后打开 Webchat Demo 中的 Haloapp PIN 输入页。
+- Webchat 脱敏截图复制到 `public/screenshots/webchat/` 并接入页面。
+- 知识库同步更新 Webchat Demo 状态、业务规则、待验证清单和长期决策。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npx tsc --noEmit` 已通过。
+- `npm run build` 已通过；仍只有既有 Vite / Rolldown large chunk warning。
+- 本地 dev server `http://127.0.0.1:5173/` 返回 HTTP 200。
+- in-app browser 自动化连接连续超时；项目未安装 Playwright，因此未完成浏览器点击级烟测。
+
+回滚说明：
+
+- 如需回滚，移除 Webchat menu/tab/store 状态、新 `src/pages/webchat/*` 文件、`webchatScreenshotSources`、Webchat PIN 分支，并删除 `public/screenshots/webchat/`。
+
+当前风险点：
+
+- PIN attempt 状态仍沿用全局 BankApp / Haloapp mock 状态；如果后续并行多个 text session 发 PIN，需要按 session key 隔离。
+- Webchat voice / video 当前未实现，只记录为未来扩展。
+- 仍建议客户演示前手工点一次 Webchat Registered / Guest 到 Live Chat 和 PIN 页面。
+
+### 2026-06-29 18:25 +08:00 - Webchat Handoff 步骤与 PIN 暂隐藏
+
+修改页面或文件：
+
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/store/appStore.ts`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户确认 Webchat PIN 暂不展示；转坐席步骤仍应保留以表达坐席接入。
+- Webchat PIN 规则仍需再向客户确认，当前 demo 先隐藏客户侧 PIN 步骤和坐席侧 PIN 按钮。
+
+修改结果：
+
+- Webchat Registered 流程保留为 `Queue Routing -> Agent Workspace -> Text Chat -> Satisfaction Rating`。
+- Webchat Guest 流程保留为 `Guest Information -> Queue Routing -> Agent Workspace -> Text Chat -> Satisfaction Rating`。
+- Webchat queue handoff 打开 Live Chat 并接入新的 Webchat 客户。
+- Customer Information 对 Webchat 不再显示 `PIN`。
+- Webchat handoff 不再写入 `bankAppLoginStatus: registered`。
+- 知识库同步改回 Webchat PIN 暂隐藏 / 待客户确认。
+
+验证：
+
+- 待本轮最终验证命令。
+
+回滚说明：
+
+- 如客户确认 Webchat PIN 需要展示，可恢复 Webchat step sequence 中的 `pin-request` / `pin-input`，恢复 Customer Information 的 Webchat PIN 判断，并在 handoff 时重新设置 Webchat 的登录上下文。
+
+当前风险点：
+
+- Webchat PIN 是否最终需要展示仍待客户确认。
+
+### 2026-06-29 20:53 +08:00 - 多渠道游客客户信息展示规则
+
+修改页面或文件：
+
+- `src/mock/inbound.ts`
+- `src/store/appStore.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/pages/inbound/InboundPage.tsx`
+- `src/pages/inbound/VideoCallPage.tsx`
+- `CURRENT_STATUS.md`
+- `BUSINESS_RULES.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户确认游客客户信息应按客户侧输入来源区分。
+- BankApp / Webchat 文字游客会输入姓名、电话、邮箱，因此坐席侧应保留这三项，但客户 ID / CIS 显示 `-`。
+- BankApp voice / video 游客只输入号码，因此坐席侧应生成 `Guest-06290001` 类名称，保留号码，其余不可用字段显示 `-`。
+
+修改结果：
+
+- Live Chat handoff 对 BankApp / Webchat 文字游客生成游客资料，保留姓名、电话、邮箱，CIS 为 `-`。
+- BankApp voice / video handoff 现在会透传 Registered / Guest 类型到 call interaction。
+- Inbound Voice / Video workspace 按 call interaction 的 customer type 选择 registered 或 guest mock customer。
+- BankApp voice guest 使用 `Guest-06290001`，BankApp video guest 使用 `Guest-06290002`，邮箱与 CIS 均为 `-`。
+- 文档补充游客客户信息展示规则，并修正 Webchat PIN 暂隐藏后的 Customer Information 状态说明。
+
+验证：
+
+- `npx tsc --noEmit` 已通过。
+- `npm run lint` / `npm run build` 待本轮最终验证。
+
+回滚说明：
+
+- 如需回滚，可移除 `bankAppCustomerType` 在 call interaction 中的透传，删除 voice/video guest mock，并恢复 Live Chat handoff 的 BankApp guest profile 覆盖逻辑。
+
+当前风险点：
+
+- `Guest-06290001` 编号目前是前端固定演示编号；如果客户要求真实排队序号或当天递增，需要后续接入统一编号规则。

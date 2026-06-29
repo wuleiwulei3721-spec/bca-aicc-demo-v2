@@ -1,4 +1,5 @@
 import {
+  bankAppVoiceGuestCustomer,
   bankAppVoiceCustomer,
   unidentifiedCustomerJourney,
   unidentifiedInboundCustomer,
@@ -14,7 +15,9 @@ interface InboundPageProps {
 export function InboundPage({ interaction }: InboundPageProps) {
   const isBankAppVoice = interaction.source === 'bankapp-voice'
   const customer = isBankAppVoice
-    ? bankAppVoiceCustomer
+    ? interaction.bankAppCustomerType === 'guest'
+      ? bankAppVoiceGuestCustomer
+      : bankAppVoiceCustomer
     : unidentifiedInboundCustomer
 
   return (

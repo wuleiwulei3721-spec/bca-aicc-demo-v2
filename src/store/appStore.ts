@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type {
   AgentServiceMode,
+  BankAppCustomerType,
   LiveChat2EndReason,
   LiveChat2Message,
   LiveChat2Session,
@@ -25,8 +26,13 @@ import {
 
 export type InboundPopupSource = 'pstn' | 'bankapp-voice'
 export type VideoCallPopupSource = 'standard' | 'bankapp-video'
-export type BankAppPinVerificationStatus = 'idle' | 'sent' | 'verified'
-export type BankAppVideoShareState = 'idle' | 'selecting-program' | 'sharing'
+export type BankAppPinVerificationStatus =
+  | 'failed'
+  | 'idle'
+  | 'locked'
+  | 'sent'
+  | 'verified'
+export type BankAppVideoShareState = 'idle' | 'sharing'
 export type CallInteractionKind = 'voice' | 'video'
 export type CallInteractionPhase = 'incoming' | 'active' | 'ended'
 export type CallInteractionSource = InboundPopupSource | VideoCallPopupSource
@@ -59,6 +65,7 @@ export interface LiveChat2SessionSummaryOverride {
 }
 
 export interface CallInteraction {
+  bankAppCustomerType?: BankAppCustomerType
   endedAt: number | null
   flashUntil: number
   id: string
@@ -218,6 +225,7 @@ function createLiveChat2HandoffSession(
   nextSessionId: string,
   accessSequence: number,
   now: number,
+  bankAppCustomerType?: BankAppCustomerType,
 ): LiveChat2Session {
   const time = formatLiveChat2Time(new Date(now))
   const sourceMessages = [
@@ -233,14 +241,55 @@ function createLiveChat2HandoffSession(
     ]),
   )
 
+  const isTextGuest =
+    (sourceSession.channel === 'BankApp' ||
+      sourceSession.channel === 'Webchat') &&
+    bankAppCustomerType === 'guest'
+  const textGuestProfile =
+    sourceSession.channel === 'Webchat'
+      ? {
+          avatarInitials: 'MS',
+          email: 'maya.santoso@example.com',
+          name: 'Maya Santoso',
+          phoneNumber: '081298760421',
+        }
+      : {
+          avatarInitials: 'AP',
+          email: 'ayu.pratama@example.com',
+          name: 'Ayu Pratama',
+          phoneNumber: '081234560219',
+        }
+  const customerProfile = isTextGuest
+    ? {
+        ...sourceSession.customer.profile,
+        ...textGuestProfile,
+        cisNumber: '-',
+        customerType: 'Guest',
+      }
+    : {
+        ...sourceSession.customer.profile,
+        customerType:
+          (sourceSession.channel === 'BankApp' ||
+            sourceSession.channel === 'Webchat') &&
+          bankAppCustomerType === 'registered'
+            ? 'Regular Customer'
+            : sourceSession.customer.profile.customerType,
+      }
+
   return {
     ...sourceSession,
     accessSequence,
+    bankAppLoginStatus:
+      sourceSession.channel === 'BankApp'
+        ? bankAppCustomerType ?? sourceSession.bankAppLoginStatus ?? 'registered'
+        : sourceSession.bankAppLoginStatus,
     customer: {
       ...sourceSession.customer,
-      profile: {
-        ...sourceSession.customer.profile,
-      },
+      bankAppLoginStatus:
+        sourceSession.channel === 'BankApp'
+          ? bankAppCustomerType ?? sourceSession.bankAppLoginStatus ?? 'registered'
+          : sourceSession.customer.bankAppLoginStatus,
+      profile: customerProfile,
     },
     historyMessages: sourceSession.historyMessages.map((message) =>
       cloneLiveChat2MessageForSession(
@@ -288,11 +337,14 @@ interface AppState {
   activeLiveChat2SessionIds: string[]
   bankAppVideoCallActivateWorkspace: boolean
   bankAppVideoCallRequestId: number
+  bankAppVideoCustomerType: BankAppCustomerType
+  bankAppPinVerificationAttempts: number
   bankAppPinVerificationRequestId: number
   bankAppPinVerificationStatus: BankAppPinVerificationStatus
   bankAppVideoShareState: BankAppVideoShareState
   bankAppVoiceCallActivateWorkspace: boolean
   bankAppVoiceCallRequestId: number
+  bankAppVoiceCustomerType: BankAppCustomerType
   callInteractionOrder: string[]
   callInteractionSeq: number
   callInteractions: Record<string, CallInteraction>
@@ -305,6 +357,7 @@ interface AppState {
   isLiveChatTabOpen: boolean
   isOpenEyeVideoWindowVisible: boolean
   isScreenShareActive: boolean
+  isWebchatDemoTabOpen: boolean
   isWhatsAppDemoTabOpen: boolean
   liveChat2ClosedSessionIds: string[]
   liveChat2DraftMessages: Record<string, string>
@@ -334,13 +387,15 @@ interface AppState {
   closeBankAppDemoTab: () => void
   closeCallInteractionTab: (interactionId: string) => void
   closeLiveChatSession: (sessionId: string) => void
+  closeWebchatDemoTab: () => void
   closeWhatsAppDemoTab: () => void
-  completeBankAppPinVerification: () => void
+  completeBankAppPinVerification: (result?: 'failed' | 'verified') => void
   confirmBankAppVideoScreenShare: () => void
   createCallInteraction: (
     kind: CallInteractionKind,
     source?: CallInteractionSource,
     activate?: boolean,
+    bankAppCustomerType?: BankAppCustomerType,
   ) => string
   markCallInteractionActive: (interactionId: string) => void
   markCallInteractionEnded: (interactionId: string, endedAt?: number) => void
@@ -348,9 +403,15 @@ interface AppState {
   markLiveChatSessionRead: (sessionId: string) => void
   clearCurrentCallInteraction: () => void
   requestBankAppDemoWorkspace: () => void
-  requestBankAppPinVerification: () => void
-  requestBankAppVideoCall: (activate?: boolean) => void
-  requestBankAppVoiceCall: (activate?: boolean) => void
+  requestBankAppPinVerification: (target?: 'bankapp' | 'webchat') => void
+  requestBankAppVideoCall: (
+    activate?: boolean,
+    customerType?: BankAppCustomerType,
+  ) => void
+  requestBankAppVoiceCall: (
+    activate?: boolean,
+    customerType?: BankAppCustomerType,
+  ) => void
   requestLiveChat2Workspace: (
     sessionIds: string[],
     options?: {
@@ -361,8 +422,13 @@ interface AppState {
       activate?: boolean
     },
   ) => void
-  requestLiveChatWorkspace: (sessionId?: string, activate?: boolean) => void
+  requestLiveChatWorkspace: (
+    sessionId?: string,
+    activate?: boolean,
+    bankAppCustomerType?: BankAppCustomerType,
+  ) => void
   requestCustomerOutboundCall: () => void
+  requestWebchatDemoWorkspace: () => void
   requestWhatsAppDemoWorkspace: () => void
   resetVerificationRules: () => void
   resetVerificationRuleV2: () => void
@@ -393,7 +459,8 @@ interface AppState {
   upsertVerificationV2Rule: (rule: VerificationV2Rule) => void
   deleteVerificationV2Rule: (ruleId: string) => void
   deleteVerificationV2Question: (questionId: string) => void
-  startBankAppVideoShareSelection: () => void
+  startBankAppVideoScreenShare: () => void
+  stopBankAppVideoScreenShare: () => void
   resetBankAppPinVerification: () => void
   resetBankAppVideoDesktopShare: () => void
   closeLiveChat2Session: (sessionId: string) => void
@@ -420,11 +487,14 @@ export const useAppStore = create<AppState>((set) => ({
   activeLiveChat2SessionIds: [],
   bankAppVideoCallActivateWorkspace: false,
   bankAppVideoCallRequestId: 0,
+  bankAppVideoCustomerType: 'registered',
+  bankAppPinVerificationAttempts: 0,
   bankAppPinVerificationRequestId: 0,
   bankAppPinVerificationStatus: 'idle',
   bankAppVideoShareState: 'idle',
   bankAppVoiceCallActivateWorkspace: false,
   bankAppVoiceCallRequestId: 0,
+  bankAppVoiceCustomerType: 'registered',
   callInteractionOrder: [],
   callInteractionSeq: 0,
   callInteractions: {},
@@ -437,6 +507,7 @@ export const useAppStore = create<AppState>((set) => ({
   isLiveChatTabOpen: false,
   isOpenEyeVideoWindowVisible: false,
   isScreenShareActive: false,
+  isWebchatDemoTabOpen: false,
   isWhatsAppDemoTabOpen: false,
   liveChat2ClosedSessionIds: [],
   liveChat2DraftMessages: {},
@@ -488,6 +559,7 @@ export const useAppStore = create<AppState>((set) => ({
         state.activeWorkspaceTabKey === 'bankapp-demo'
           ? 'home'
           : state.activeWorkspaceTabKey,
+      bankAppPinVerificationAttempts: 0,
       bankAppPinVerificationStatus: 'idle',
       isBankAppDemoTabOpen: false,
     })),
@@ -549,6 +621,16 @@ export const useAppStore = create<AppState>((set) => ({
             : state.liveChatFocusSessionId,
       }
     }),
+  closeWebchatDemoTab: () =>
+    set((state) => ({
+      activeWorkspaceTabKey:
+        state.activeWorkspaceTabKey === 'webchat-demo'
+          ? 'home'
+          : state.activeWorkspaceTabKey,
+      bankAppPinVerificationAttempts: 0,
+      bankAppPinVerificationStatus: 'idle',
+      isWebchatDemoTabOpen: false,
+    })),
   closeWhatsAppDemoTab: () =>
     set((state) => ({
       activeWorkspaceTabKey:
@@ -557,10 +639,15 @@ export const useAppStore = create<AppState>((set) => ({
           : state.activeWorkspaceTabKey,
       isWhatsAppDemoTabOpen: false,
     })),
-  completeBankAppPinVerification: () =>
-    set({
-      bankAppPinVerificationStatus: 'verified',
-    }),
+  completeBankAppPinVerification: (result = 'verified') =>
+    set((state) => ({
+      bankAppPinVerificationStatus:
+        result === 'verified'
+          ? 'verified'
+          : state.bankAppPinVerificationAttempts >= 3
+            ? 'locked'
+            : 'failed',
+    })),
   confirmBankAppVideoScreenShare: () =>
     set({
       activeWorkspaceTabKey: 'bankapp-demo',
@@ -568,7 +655,12 @@ export const useAppStore = create<AppState>((set) => ({
       isBankAppDemoTabOpen: true,
       isScreenShareActive: true,
     }),
-  createCallInteraction: (kind, rawSource, activate = true) => {
+  createCallInteraction: (
+    kind,
+    rawSource,
+    activate = true,
+    bankAppCustomerType,
+  ) => {
     let createdId = ''
 
     set((state) => {
@@ -579,6 +671,10 @@ export const useAppStore = create<AppState>((set) => ({
         rawSource ??
         (kind === 'voice' ? 'pstn' : 'standard')
       const interaction: CallInteraction = {
+        bankAppCustomerType:
+          source === 'bankapp-voice' || source === 'bankapp-video'
+            ? bankAppCustomerType ?? 'registered'
+            : undefined,
         endedAt: null,
         flashUntil: now + INTERACTION_FLASH_MS,
         id,
@@ -712,13 +808,35 @@ export const useAppStore = create<AppState>((set) => ({
       activeWorkspaceTabKey: 'bankapp-demo',
       isBankAppDemoTabOpen: true,
     }),
-  requestBankAppPinVerification: () =>
-    set((state) => ({
-      bankAppPinVerificationRequestId:
-        state.bankAppPinVerificationRequestId + 1,
-      bankAppPinVerificationStatus: 'sent',
-      isBankAppDemoTabOpen: true,
-    })),
+  requestBankAppPinVerification: (target = 'bankapp') =>
+    set((state) => {
+      if (
+        state.bankAppPinVerificationStatus === 'sent' ||
+        state.bankAppPinVerificationStatus === 'verified' ||
+        state.bankAppPinVerificationAttempts >= 3
+      ) {
+        return {}
+      }
+
+      return {
+        activeWorkspaceTabKey:
+          target === 'webchat' ? 'webchat-demo' : 'bankapp-demo',
+        bankAppPinVerificationAttempts:
+          state.bankAppPinVerificationAttempts + 1,
+        bankAppPinVerificationRequestId:
+          state.bankAppPinVerificationRequestId + 1,
+        bankAppPinVerificationStatus: 'sent',
+        isBankAppDemoTabOpen:
+          target === 'webchat' ? state.isBankAppDemoTabOpen : true,
+        isWebchatDemoTabOpen:
+          target === 'webchat' ? true : state.isWebchatDemoTabOpen,
+      }
+    }),
+  requestWebchatDemoWorkspace: () =>
+    set({
+      activeWorkspaceTabKey: 'webchat-demo',
+      isWebchatDemoTabOpen: true,
+    }),
   requestWhatsAppDemoWorkspace: () =>
     set({
       activeWorkspaceTabKey: 'whatsapp-demo',
@@ -729,14 +847,16 @@ export const useAppStore = create<AppState>((set) => ({
       verificationRules: cloneVerificationRules(),
     }),
   resetVerificationRuleV2: () => set(cloneVerificationRuleV2State()),
-  requestBankAppVideoCall: (activate = false) =>
+  requestBankAppVideoCall: (activate = false, customerType = 'registered') =>
     set((state) => ({
       bankAppVideoCallActivateWorkspace: activate,
+      bankAppVideoCustomerType: customerType,
       bankAppVideoCallRequestId: state.bankAppVideoCallRequestId + 1,
     })),
-  requestBankAppVoiceCall: (activate = false) =>
+  requestBankAppVoiceCall: (activate = false, customerType = 'registered') =>
     set((state) => ({
       bankAppVoiceCallActivateWorkspace: activate,
+      bankAppVoiceCustomerType: customerType,
       bankAppVoiceCallRequestId: state.bankAppVoiceCallRequestId + 1,
     })),
   requestLiveChat2Workspace: (sessionIds, options) =>
@@ -828,7 +948,7 @@ export const useAppStore = create<AppState>((set) => ({
         liveChat2UnansweredSinceBySessionId: nextUnanswered,
       }
     }),
-  requestLiveChatWorkspace: (sessionId, activate = true) =>
+  requestLiveChatWorkspace: (sessionId, activate = true, bankAppCustomerType) =>
     set((state) => {
       const liveChat2SessionId = getLiveChat2ReplacementSessionId(sessionId)
       const sourceSession = liveChat2SessionId
@@ -847,6 +967,7 @@ export const useAppStore = create<AppState>((set) => ({
               handoffSessionId,
               1000 + nextHandoffSeq,
               now,
+              bankAppCustomerType,
             )
           : null
       let nextActiveSessionIds = state.activeLiveChat2SessionIds
@@ -1193,13 +1314,21 @@ export const useAppStore = create<AppState>((set) => ({
         }
       }),
     })),
-  startBankAppVideoShareSelection: () =>
+  startBankAppVideoScreenShare: () =>
     set({
-      bankAppVideoShareState: 'selecting-program',
+      activeWorkspaceTabKey: 'bankapp-demo',
+      bankAppVideoShareState: 'sharing',
+      isBankAppDemoTabOpen: true,
+      isScreenShareActive: true,
+    }),
+  stopBankAppVideoScreenShare: () =>
+    set({
+      bankAppVideoShareState: 'idle',
       isScreenShareActive: false,
     }),
   resetBankAppPinVerification: () =>
     set({
+      bankAppPinVerificationAttempts: 0,
       bankAppPinVerificationStatus: 'idle',
     }),
   resetBankAppVideoDesktopShare: () =>

@@ -257,6 +257,10 @@ export function LiveChat2Page() {
 
       return {
         ...session,
+        customer: {
+          ...session.customer,
+          bankAppLoginStatus: session.bankAppLoginStatus,
+        },
         draftMessage: liveChat2DraftMessages[session.id] ?? '',
         elapsedSeconds,
         endReason,

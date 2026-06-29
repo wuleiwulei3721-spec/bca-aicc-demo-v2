@@ -29,6 +29,9 @@ export interface CustomerInformationPanelProps {
   onStartOutbound?: () => void
   onVerify?: () => void
   outboundRequestStatus?: CustomerOutboundRequestStatus
+  verifyButtonDisabled?: boolean
+  verifyButtonLabel?: string
+  verifyButtonTitle?: string
   verificationStatus?: VerificationStatus
 }
 
@@ -39,6 +42,10 @@ function verificationBadge(status: VerificationStatus) {
 
   if (status === 'Verification Failed') {
     return { label: 'Failed', status: 'failed' as const }
+  }
+
+  if (status === 'Verifying') {
+    return { label: 'Verifying', status: 'warning' as const }
   }
 
   return { label: 'Unverified', status: 'warning' as const }
@@ -68,6 +75,9 @@ export function CustomerInformationPanel({
   onStartOutbound,
   onVerify,
   outboundRequestStatus = 'idle',
+  verifyButtonDisabled = false,
+  verifyButtonLabel = 'Verify',
+  verifyButtonTitle,
   verificationStatus,
 }: CustomerInformationPanelProps) {
   const [internalVerificationStatus] = useState(customer.verificationStatus)
@@ -194,9 +204,17 @@ export function CustomerInformationPanel({
             size="small"
             status={badge.status}
           />
-          <BaseButton size="small" type="primary" onClick={onVerify}>
-            Verify
-          </BaseButton>
+          {onVerify && (
+            <BaseButton
+              disabled={verifyButtonDisabled}
+              size="small"
+              title={verifyButtonTitle}
+              type="primary"
+              onClick={onVerify}
+            >
+              {verifyButtonLabel}
+            </BaseButton>
+          )}
         </div>
         {accessRouteHintNode && (
           <div className="aicc-customer-info__route-hint">

@@ -10,6 +10,7 @@ export type AccessChannel =
 
 export type VerificationStatus =
   | 'Verified'
+  | 'Verifying'
   | 'Unverified'
   | 'Verification Failed'
 
@@ -35,6 +36,7 @@ export interface CustomerProfile {
 export interface CustomerInformation {
   accessChannel: AccessChannel
   accessDuration: string
+  bankAppLoginStatus?: 'guest' | 'registered'
   profile: CustomerProfile
   verificationStatus: VerificationStatus
 }
@@ -102,6 +104,7 @@ export interface LiveChat2Message {
 export interface LiveChat2Session {
   id: string
   accessSequence: number
+  bankAppLoginStatus?: 'guest' | 'registered'
   channel: Extract<AccessChannel, 'WhatsApp' | 'BankApp' | 'Webchat'>
   customer: CustomerInformation
   historyMessages: LiveChat2Message[]

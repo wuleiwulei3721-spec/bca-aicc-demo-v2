@@ -20,8 +20,11 @@ export type BankAppDemoStep =
   | 'connected'
   | 'chat'
   | 'agent-workspace'
-  | 'share-select'
+  | 'pin-request'
+  | 'pin-input'
+  | 'question-verification'
   | 'screen-sharing'
+  | 'share-view'
   | 'closed'
 
 export interface BankAppBusinessOption {

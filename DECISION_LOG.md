@@ -59,7 +59,7 @@ Module:
 Workspace Tabs
 
 Decision:
-The main agent workspace uses a tab model with fixed Home / BankApp Demo / WhatsApp Demo / Live Chat entries and dynamic PSTN / Voice Call / Video Call interaction tabs.
+The main agent workspace uses a tab model with fixed Home / BankApp Demo / Webchat Demo / WhatsApp Demo / Live Chat entries and dynamic PSTN / Voice Call / Video Call interaction tabs.
 
 Reason:
 This preserves multiple demo contexts in one workbench while allowing inbound calls and channel simulations to open without navigating away from the agent desktop.
@@ -335,16 +335,16 @@ Module:
 BankApp PIN and KBV
 
 Decision:
-BankApp PIN verification and KBV question verification are treated as separate dimensions: PIN is entry authentication, KBV is business-service verification before handling.
+BankApp PIN verification and KBV question verification are separate verification modes by channel: KBV applies to voice channels, while PIN applies to logged-in BankApp text / Live Chat verification in the current demo.
 
 Reason:
-`DEV_LOG.md` records this as customer-confirmed direction, and current code keeps PIN state in the BankApp demo flow while Verification Rules V2 remains a KBV configuration model.
+Customer research clarified that question verification is for voice channels, while PIN verification is used when the customer is logged in to the BankApp text scenario. Current code keeps PIN state in the BankApp demo flow while Verification Rules V2 remains a KBV configuration model.
 
 Impact:
-Do not merge PIN settings into Verification Rule V2 unless customer policy changes. Whether PIN success reduces or replaces KBV questions remains unresolved. 【需要产品经理确认】
+Do not merge PIN settings into Verification Rule V2 unless customer policy changes. Webchat PIN remains hidden pending customer confirmation.
 
 Status:
-Implemented for separation; replacement/reduction policy Pending
+Implemented
 
 Source:
 代码: `src/store/appStore.ts`, `src/pages/bankapp/BankAppDemoPage.tsx`, `src/pages/inbound/components/CustomerVerificationModal.tsx`; 历史记录: `DEV_LOG.md`; 文档: `BUSINESS_RULES.md`, `CURRENT_TODO.md`
@@ -424,10 +424,10 @@ Decision ID:
 DEC-019
 
 Module:
-BankApp and WhatsApp Simulations
+BankApp, Webchat, and WhatsApp Simulations
 
 Decision:
-BankApp and WhatsApp are implemented as customer-side demo tabs that feed the agent workspace, not as real external channel integrations.
+BankApp, Webchat, and WhatsApp are implemented as customer-side demo tabs that feed the agent workspace, not as real external channel integrations.
 
 Reason:
 The current project is a front-end demo without real BankApp, WhatsApp, Webchat, IVR, queue, OpenEye, or CRM backends.
@@ -693,6 +693,29 @@ Implemented
 
 Source:
 Code: `src/pages/call-management/CommonNumberManagementPage.tsx`, `src/store/callManagementStore.ts`, `src/layouts/components/TransferModal.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`; History: `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-033
+
+Module:
+Haloapp / BankApp Client Boundary
+
+Decision:
+Haloapp client pages for text, voice, video, PIN verification, desktop sharing, and satisfaction rating are BCA-owned. Netinfo demo behavior should show SDK/API handoff, routing, agent workspace handling, message exchange, PIN request/result, and call popup behavior, not ownership of the client pages.
+
+Reason:
+Customer clarification after the V1.8 flow update confirmed that text media client pages are provided by BCA, voice client must retain keypad for IVR input, video has no keypad or transfer, and video desktop sharing is initiated by the client while the agent only views it.
+
+Impact:
+Future Haloapp demo changes must use customer-provided flow screenshots for client pages, avoid inventing client UI, keep voice keypad visible, hide video transfer, and model desktop sharing as customer-initiated/view-only for the agent.
+
+Status:
+Implemented
+
+Source:
+Customer clarification on 2026-06-27; document `Haloapp及视频弹屏需求说明书V1.8.docx`; code: `src/pages/bankapp/BankAppDemoPage.tsx`, `src/pages/inbound/components/OpenEyeVideoWindow.tsx`, `src/layouts/components/AgentToolbar.tsx`
 
 --------------------------------------------------
 

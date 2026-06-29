@@ -18,13 +18,16 @@ import type { InteractionSlaState } from '../utils/duration'
 import {
   formatDuration,
   getElapsedSeconds,
+  getLiveChatSlaState,
 } from '../utils/duration'
 import { BankAppDemoPage } from './bankapp'
 import { InboundPage, LiveChat2Page, VideoCallPage } from './inbound'
+import { WebchatDemoPage } from './webchat'
 import { WhatsAppDemoPage } from './whatsapp'
 
 const HOME_TAB_KEY = 'home'
 const BANKAPP_DEMO_TAB_KEY = 'bankapp-demo'
+const WEBCHAT_DEMO_TAB_KEY = 'webchat-demo'
 const WHATSAPP_DEMO_TAB_KEY = 'whatsapp-demo'
 const LIVE_CHAT_TAB_KEY = 'live-chat'
 const staticLiveChat2SessionById = Object.fromEntries(
@@ -41,6 +44,8 @@ interface WorkspaceTabLabelProps {
   now: number
   slaState?: InteractionSlaState
   unreadCount?: number
+  unansweredBreachCount?: number
+  unansweredWarningCount?: number
 }
 
 interface WorkspaceDurationTiming extends InteractionTiming {
@@ -106,6 +111,8 @@ function WorkspaceTabLabel({
   now,
   slaState = 'normal',
   unreadCount = 0,
+  unansweredBreachCount = 0,
+  unansweredWarningCount = 0,
 }: WorkspaceTabLabelProps) {
   const elapsedSeconds =
     durationStartedAt === null || durationStartedAt === undefined
@@ -139,6 +146,23 @@ function WorkspaceTabLabel({
           {unreadCount > 99 ? '99+' : unreadCount}
         </span>
       )}
+      {(unansweredWarningCount > 0 || unansweredBreachCount > 0) && (
+        <span
+          className="workspace-tab-label__sla-alerts"
+          title={`Unanswered warning ${unansweredWarningCount}, breach ${unansweredBreachCount}`}
+        >
+          {unansweredWarningCount > 0 && (
+            <span className="workspace-tab-label__sla-alert workspace-tab-label__sla-alert--warning">
+              {unansweredWarningCount > 99 ? '99+' : unansweredWarningCount}
+            </span>
+          )}
+          {unansweredBreachCount > 0 && (
+            <span className="workspace-tab-label__sla-alert workspace-tab-label__sla-alert--breach">
+              {unansweredBreachCount > 99 ? '99+' : unansweredBreachCount}
+            </span>
+          )}
+        </span>
+      )}
     </span>
   )
 }
@@ -153,6 +177,9 @@ export function AgentWorkspace() {
   )
   const hasWhatsAppDemoTab = useAppStore(
     (state) => state.isWhatsAppDemoTabOpen,
+  )
+  const hasWebchatDemoTab = useAppStore(
+    (state) => state.isWebchatDemoTabOpen,
   )
   const hasLiveChatTab = useAppStore((state) => state.isLiveChatTabOpen)
   const callInteractionOrder = useAppStore(
@@ -177,11 +204,17 @@ export function AgentWorkspace() {
   const liveChat2SessionTimings = useAppStore(
     (state) => state.liveChat2SessionTimings,
   )
+  const liveChat2UnansweredSinceBySessionId = useAppStore(
+    (state) => state.liveChat2UnansweredSinceBySessionId,
+  )
   const closeBankAppDemoTab = useAppStore(
     (state) => state.closeBankAppDemoTab,
   )
   const closeWhatsAppDemoTab = useAppStore(
     (state) => state.closeWhatsAppDemoTab,
+  )
+  const closeWebchatDemoTab = useAppStore(
+    (state) => state.closeWebchatDemoTab,
   )
   const closeCallInteractionTab = useAppStore(
     (state) => state.closeCallInteractionTab,
@@ -264,6 +297,54 @@ export function AgentWorkspace() {
       liveChat2SessionStatuses,
     ],
   )
+  const liveChatUnansweredAlertCounts = useMemo(
+    () =>
+      activeLiveChat2SessionIds.reduce(
+        (counts, sessionId) => {
+          const session = liveChat2SessionById[sessionId]
+          const status =
+            liveChat2SessionStatuses[sessionId]?.status ?? session?.status
+          const unansweredSince =
+            liveChat2UnansweredSinceBySessionId[sessionId]
+
+          if (
+            !session ||
+            session.isInitialHistory ||
+            status === 'ended' ||
+            !unansweredSince
+          ) {
+            return counts
+          }
+
+          const elapsedSeconds = getElapsedSeconds(unansweredSince, now)
+          const unansweredState = getLiveChatSlaState(elapsedSeconds)
+
+          if (unansweredState === 'warning') {
+            return {
+              ...counts,
+              warning: counts.warning + 1,
+            }
+          }
+
+          if (unansweredState === 'breach') {
+            return {
+              ...counts,
+              breach: counts.breach + 1,
+            }
+          }
+
+          return counts
+        },
+        { breach: 0, warning: 0 },
+      ),
+    [
+      activeLiveChat2SessionIds,
+      liveChat2SessionById,
+      liveChat2SessionStatuses,
+      liveChat2UnansweredSinceBySessionId,
+      now,
+    ],
+  )
 
   const tabItems = useMemo<TabsProps['items']>(() => {
     const items: TabsProps['items'] = [
@@ -317,6 +398,21 @@ export function AgentWorkspace() {
       })
     }
 
+    if (hasWebchatDemoTab) {
+      items.push({
+        key: WEBCHAT_DEMO_TAB_KEY,
+        closable: true,
+        label: (
+          <WorkspaceTabLabel
+            icon={<MessageOutlined />}
+            label="Webchat Demo"
+            now={now}
+          />
+        ),
+        children: <WebchatDemoPage />,
+      })
+    }
+
     if (hasLiveChatTab) {
       items.push({
         key: LIVE_CHAT_TAB_KEY,
@@ -330,6 +426,8 @@ export function AgentWorkspace() {
             isFlashing={latestLiveChat2FlashUntil > now}
             label="Live Chat"
             now={now}
+            unansweredBreachCount={liveChatUnansweredAlertCounts.breach}
+            unansweredWarningCount={liveChatUnansweredAlertCounts.warning}
             unreadCount={liveChatUnreadCount}
           />
         ),
@@ -386,8 +484,10 @@ export function AgentWorkspace() {
     currentCallInteractionId,
     hasBankAppDemoTab,
     hasLiveChatTab,
+    hasWebchatDemoTab,
     hasWhatsAppDemoTab,
     liveChat2DurationTiming,
+    liveChatUnansweredAlertCounts,
     liveChatUnreadCount,
     latestLiveChat2FlashUntil,
     now,
@@ -400,6 +500,10 @@ export function AgentWorkspace() {
 
     if (action === 'remove' && targetKey === WHATSAPP_DEMO_TAB_KEY) {
       closeWhatsAppDemoTab()
+    }
+
+    if (action === 'remove' && targetKey === WEBCHAT_DEMO_TAB_KEY) {
+      closeWebchatDemoTab()
     }
 
     if (action === 'remove' && typeof targetKey === 'string') {

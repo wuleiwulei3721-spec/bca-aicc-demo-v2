@@ -1,4 +1,8 @@
-import { bankAppVideoCustomer, inboundCustomer } from '../../mock/inbound'
+import {
+  bankAppVideoGuestCustomer,
+  bankAppVideoCustomer,
+  inboundCustomer,
+} from '../../mock/inbound'
 import { useAppStore } from '../../store'
 import type { CallInteraction } from '../../store'
 import type { CustomerInformation } from '../../types'
@@ -22,20 +26,15 @@ export function VideoCallPage({
   const showOpenEyeVideoWindow = useAppStore(
     (state) => state.isOpenEyeVideoWindowVisible,
   )
-  const isScreenShareActive = useAppStore(
-    (state) => state.isScreenShareActive,
-  )
   const bankAppVideoShareState = useAppStore(
     (state) => state.bankAppVideoShareState,
   )
-  const startBankAppVideoShareSelection = useAppStore(
-    (state) => state.startBankAppVideoShareSelection,
-  )
-  const confirmBankAppVideoScreenShare = useAppStore(
-    (state) => state.confirmBankAppVideoScreenShare,
-  )
   const isBankAppVideo = interaction.source === 'bankapp-video'
-  const customer = isBankAppVideo ? bankAppVideoCustomer : videoCallCustomer
+  const customer = isBankAppVideo
+    ? interaction.bankAppCustomerType === 'guest'
+      ? bankAppVideoGuestCustomer
+      : bankAppVideoCustomer
+    : videoCallCustomer
 
   return (
     <InteractionWorkspace
@@ -46,9 +45,6 @@ export function VideoCallPage({
           <OpenEyeVideoWindow
             bankAppVideoShareState={bankAppVideoShareState}
             isBankAppVideo={isBankAppVideo}
-            isScreenShareActive={isScreenShareActive}
-            onConfirmScreenShare={confirmBankAppVideoScreenShare}
-            onStartScreenShare={startBankAppVideoShareSelection}
           />
         ) : null
       }

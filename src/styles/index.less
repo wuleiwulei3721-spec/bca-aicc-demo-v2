@@ -881,6 +881,30 @@ a {
   padding-top: 10px;
 }
 
+.aicc-agent-settings {
+  display: grid;
+  gap: 10px;
+}
+
+.aicc-agent-settings__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+  gap: 14px;
+}
+
+.aicc-agent-settings__row > span {
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 18px;
+}
+
+.aicc-agent-settings__footer {
+  padding-top: 2px;
+}
+
 .aicc-agent-status-menu .ant-dropdown-menu {
   min-width: 190px;
   padding: 3px;
@@ -6664,7 +6688,7 @@ a {
 .agent-workspace-tabs .ant-tabs-tab-btn > .workspace-tab-label {
   display: inline-flex;
   position: relative;
-  max-width: 180px;
+  max-width: 220px;
   align-items: center;
   gap: 4px;
   border-radius: 4px;
@@ -6715,6 +6739,48 @@ a {
   line-height: 14px;
   pointer-events: none;
   z-index: 2;
+}
+
+.agent-workspace-tabs
+  .ant-tabs-tab-btn
+  .workspace-tab-label__sla-alerts {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 3px;
+}
+
+.agent-workspace-tabs
+  .ant-tabs-tab-btn
+  .workspace-tab-label__sla-alert {
+  display: inline-flex;
+  min-width: 18px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+  line-height: 14px;
+}
+
+.agent-workspace-tabs
+  .ant-tabs-tab-btn
+  .workspace-tab-label__sla-alert--warning {
+  border-color: rgba(var(--aicc-livechat-sla-warning-rgb), 0.36);
+  background: rgba(var(--aicc-livechat-sla-warning-rgb), 0.12);
+  color: var(--aicc-livechat-sla-warning);
+}
+
+.agent-workspace-tabs
+  .ant-tabs-tab-btn
+  .workspace-tab-label__sla-alert--breach {
+  border-color: rgba(var(--aicc-livechat-sla-breach-rgb), 0.34);
+  background: rgba(var(--aicc-livechat-sla-breach-rgb), 0.1);
+  color: var(--aicc-livechat-sla-breach);
 }
 
 .agent-workspace-tabs
@@ -7264,6 +7330,10 @@ a {
   cursor: grab;
   touch-action: none;
   user-select: none;
+}
+
+.openeye-video-window--share-view {
+  width: min(760px, calc(100vw - 32px));
 }
 
 .openeye-video-window--dragging {
@@ -13411,6 +13481,50 @@ button.inbound-list-row .inbound-list-row__title {
   aspect-ratio: 720 / 1625;
 }
 
+.bankapp-demo--webchat .bankapp-demo__stage {
+  grid-template-columns: minmax(620px, 760px) minmax(360px, 1fr);
+}
+
+.bankapp-demo--webchat .bankapp-demo__phone-panel {
+  align-items: center;
+}
+
+.bankapp-webchat-browser {
+  width: min(100%, 720px);
+  height: auto;
+  max-width: 720px;
+  max-height: calc(100% - 42px);
+  margin: auto auto;
+  aspect-ratio: 720 / 443;
+  border: 1px solid #c8d6e8;
+  border-radius: 8px;
+  background: #f8fbff;
+  box-shadow: 0 18px 34px rgba(15, 42, 72, 0.14);
+}
+
+.bankapp-webchat-browser::before {
+  display: flex;
+  height: 30px;
+  flex: 0 0 30px;
+  align-items: center;
+  padding: 0 12px;
+  border-bottom: 1px solid #dde6f2;
+  background:
+    radial-gradient(circle at 14px 50%, #d64545 0 4px, transparent 5px),
+    radial-gradient(circle at 30px 50%, #d9822b 0 4px, transparent 5px),
+    radial-gradient(circle at 46px 50%, #1f9d67 0 4px, transparent 5px),
+    #eef4fb;
+  content: '';
+}
+
+.bankapp-webchat-browser .bankapp-phone-screen {
+  background: #ffffff;
+}
+
+.bankapp-webchat-browser .bankapp-phone-screen__reference {
+  object-fit: cover;
+}
+
 .bankapp-phone__status {
   display: flex;
   z-index: 2;
@@ -13535,6 +13649,8 @@ button.inbound-list-row .inbound-list-row__title {
   inset: 0;
   width: 100%;
   height: 100%;
+  background: #ffffff;
+  image-rendering: auto;
   object-fit: cover;
 }
 
@@ -13597,44 +13713,6 @@ button.inbound-list-row .inbound-list-row__title {
   color: var(--aicc-primary-strong);
   font-size: 18px;
   font-weight: 850;
-}
-
-.bankapp-channel-hotspots {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-}
-
-.bankapp-channel-hotspot {
-  position: absolute;
-  left: 4.2%;
-  width: 91.6%;
-  border: 0;
-  border-radius: 16px;
-  background: transparent;
-  cursor: pointer;
-}
-
-.bankapp-channel-hotspot:hover,
-.bankapp-channel-hotspot:focus-visible {
-  outline: 2px solid rgba(23, 105, 224, 0.78);
-  outline-offset: -2px;
-  background: rgba(23, 105, 224, 0.08);
-}
-
-.bankapp-channel-hotspot--voice {
-  top: 27.3%;
-  height: 8.8%;
-}
-
-.bankapp-channel-hotspot--video {
-  top: 35.7%;
-  height: 8.8%;
-}
-
-.bankapp-channel-hotspot--livechat {
-  top: 44.1%;
-  height: 8.8%;
 }
 
 .bankapp-business-hotspots,
@@ -13749,6 +13827,70 @@ button.inbound-list-row .inbound-list-row__title {
   color: var(--aicc-text-secondary);
   font-size: 11px;
   line-height: 16px;
+}
+
+.bankapp-phone-screen__overlay--pin {
+  bottom: 22px;
+  border-color: rgba(23, 105, 224, 0.28);
+  border-radius: 12px;
+}
+
+.bankapp-phone-screen__overlay-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bankapp-video-share-hotspot {
+  position: absolute;
+  z-index: 2;
+  right: 24.7%;
+  bottom: 10.8%;
+  width: 14.8%;
+  height: 6.8%;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.bankapp-video-share-hotspot:hover,
+.bankapp-video-share-hotspot:focus-visible {
+  outline: 2px solid rgba(23, 105, 224, 0.78);
+  outline-offset: -2px;
+  background: rgba(23, 105, 224, 0.08);
+}
+
+.bankapp-video-share-hotspot--stop {
+  right: 24.7%;
+  bottom: 10.8%;
+}
+
+.bankapp-pin-hotspot {
+  position: absolute;
+  z-index: 2;
+  bottom: 3.4%;
+  width: 43.5%;
+  height: 7.2%;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.bankapp-pin-hotspot:hover,
+.bankapp-pin-hotspot:focus-visible {
+  outline: 2px solid rgba(23, 105, 224, 0.78);
+  outline-offset: -2px;
+  background: rgba(23, 105, 224, 0.08);
+}
+
+.bankapp-pin-hotspot--failed {
+  left: 5%;
+}
+
+.bankapp-pin-hotspot--accept {
+  right: 5%;
 }
 
 .bankapp-phone-methods {
@@ -14420,6 +14562,21 @@ button.inbound-list-row .inbound-list-row__title {
   border-color: var(--aicc-border-strong);
   background: var(--aicc-surface-l4);
   color: var(--aicc-text-secondary);
+}
+
+.bankapp-process__step--pending {
+  opacity: 0.72;
+}
+
+.bankapp-process__step--pending .bankapp-process__marker {
+  border-color: var(--aicc-border);
+  background: #ffffff;
+  color: var(--aicc-text-tertiary);
+}
+
+.bankapp-process__step--pending strong,
+.bankapp-process__step--pending p {
+  color: var(--aicc-text-tertiary);
 }
 
 .bankapp-process__step--active .bankapp-process__marker {

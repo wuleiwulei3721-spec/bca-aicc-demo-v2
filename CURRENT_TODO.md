@@ -6,8 +6,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 
 ## P0 - Customer Confirmation and Demo Acceptance
 
-- Confirm final KBV / Customer Verification V2 policy:
-  - whether PIN success reduces or replaces question verification,
+- Confirm remaining KBV / Customer Verification V2 policy:
   - whether authenticated channels need fewer questions,
   - whether `Berurut` must be strictly enforced,
   - whether agents can modify Skill / Customer Segment,
@@ -73,9 +72,10 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Verify Video Popup Workspace:
   - BankApp Video opens Video Call tab,
   - OpenEye floating window appears only during connected active video,
-  - screen-share selection and BankApp screen-sharing demo work,
+  - customer-initiated desktop sharing changes the client button to Stop Sharing and the agent only views the shared screen,
   - Hang Up hides OpenEye.
 - Verify whether closing a Video Call tab without Hang Up is acceptable for demos.
+- Verify Haloapp V1.8 screenshots with the product/customer team, especially text client, voice keypad, video no-keypad, PIN, desktop-share, and satisfaction pages.
 - Verify Live Chat workspace:
   - fixed Live Chat tab opens after digital-capable sign-in,
   - Current / History views,
@@ -93,8 +93,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Verify Online Chat / text-channel story:
   - BankApp Live Chat handoff,
   - WhatsApp Demo handoff,
-  - Webchat mock session in Live Chat,
-  - decide whether a standalone Webchat customer simulation is required.
+  - Webchat Demo handoff.
 - Verify BankApp Demo:
   - Voice,
   - Video,
@@ -107,6 +106,14 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - business selection,
   - agent chat,
   - handoff,
+  - satisfaction rating.
+- Verify Webchat Demo:
+  - menu entry under BankApp,
+  - Registered starts from queue with no media selection or customer input,
+  - Guest shows contact information / business selection then queue,
+  - handoff opens a new Webchat customer in Live Chat,
+  - handoff success shows Agent Workspace before Text Chat,
+  - PIN action remains hidden pending customer confirmation,
   - satisfaction rating.
 - Verify Call Management:
   - Verification Rules,
@@ -151,7 +158,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 
 ## P2 - Future Features
 
-- Add standalone Webchat customer simulation if customer requires it.
+- Add Webchat voice and video customer simulation if customer requires it.
 - Add Dashboard page if demo scope expands.
 - Add Supervisor page if demo scope expands.
 - Add Admin dashboard if demo scope expands beyond current management pages.

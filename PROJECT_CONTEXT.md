@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Project Context
 
-Last updated: 2026-06-24 11:00 +08:00
+Last updated: 2026-06-27 11:28 +08:00
 Repository path: `D:\03projects\bca-aicc-demo-v2`
 
 ## 1. Project Name
@@ -121,8 +121,8 @@ All business routes under `/` require an authenticated demo session.
 - `src/App.tsx`: Ant Design `ConfigProvider` and router provider.
 - `src/routes.tsx`: route definitions and feature-flagged Routing Config routes.
 - `src/layouts/BasicLayout.tsx`: global shell, header, side menu, agent status, call toolbar, handoff readiness, sign out / logout guards, internal chat entry.
-- `src/layouts/components/*`: toolbar, profile area, Transfer, Outbound, Internal Chat, Toolbar Settings.
-- `src/pages/AgentWorkspace.tsx`: workspace tab container for Home, BankApp Demo, WhatsApp Demo, Live Chat, PSTN, Voice Call, and Video Call.
+- `src/layouts/components/*`: toolbar, profile area, agent settings, Transfer, Outbound, Internal Chat, Toolbar Settings.
+- `src/pages/AgentWorkspace.tsx`: workspace tab container for Home, BankApp Demo, Webchat Demo, WhatsApp Demo, Live Chat, PSTN, Voice Call, and Video Call.
 - `src/pages/inbound/InteractionWorkspace.tsx`: shared three-column workspace foundation.
 - `src/pages/inbound/InboundPage.tsx`: voice / PSTN and BankApp voice workspace.
 - `src/pages/inbound/VideoCallPage.tsx`: video call workspace and OpenEye floating client overlay.
@@ -156,6 +156,7 @@ The shell contains:
 - Central call toolbar.
 - Notification and Internal Chat buttons.
 - Agent profile, service mode, status, sign in / sign out menu.
+- Agent Settings entry separated at the bottom of the profile menu; current setting controls system prompt sound on/off.
 - Collapsible side menu with search.
 - Route-aware selected menu state.
 
@@ -168,7 +169,7 @@ The toolbar supports:
 - Hang Up.
 - Ready / Not Ready toggle.
 - Timer display.
-- More menu for Outbound Call and Settings.
+- More menu for Outbound Call; toolbar Settings is temporarily hidden.
 - Call identification display: `IVR` / `BankID`.
 - Skill display during active call lifecycle.
 
@@ -178,6 +179,7 @@ Workspace tabs include:
 
 - Home.
 - BankApp Demo.
+- Webchat Demo.
 - WhatsApp Demo.
 - Live Chat.
 - Dynamic call tabs for PSTN / Voice Call / Video Call.
@@ -196,7 +198,7 @@ PSTN initially shows an unidentified customer. Customer identity can be refreshe
 
 ### Video Call Workspace
 
-Video call uses the same interaction workspace and adds an OpenEye floating video window when the current active interaction is connected. BankApp video also supports a desktop-share demo flow with OpenEye share-selection and BankApp screen-sharing images.
+Video call uses the same interaction workspace and adds an OpenEye floating video window when the current active interaction is connected. BankApp video desktop sharing is initiated from the BCA-owned Haloapp client screenshot; the agent-side floating window only views the customer-shared screen.
 
 ### Live Chat Workspace
 
@@ -208,6 +210,7 @@ Current formal Live Chat uses `LiveChat2Page`:
 - Sorting by access time or message time.
 - Star color marker UI is hidden in the customer list; compatibility state remains local.
 - Unread count aggregation on the Live Chat tab.
+- Unanswered SLA warning / breach count aggregation on the Live Chat tab.
 - SLA / unanswered timer display with a horizontal progress bar based on the breach threshold.
 - Conversation workspace.
 - Quick Replies tab.
@@ -220,7 +223,7 @@ Current formal Live Chat uses `LiveChat2Page`:
 
 This is still a front-end simulation, not a real message gateway integration.
 
-### BankApp and WhatsApp Demo
+### BankApp, Webchat, and WhatsApp Demo
 
 BankApp supports:
 
@@ -228,12 +231,21 @@ BankApp supports:
 - Video.
 - Live Chat.
 - Registered / Guest customer type.
-- Customer-side screenshot flow.
+- Customer-side screenshot flow using BCA-owned Haloapp V1.8 reference screens.
 - Business selection and confirmation.
 - Voice/video handoff to Agent Workspace.
 - Live chat handoff to Live Chat.
 - PIN verification mock.
-- Video desktop-share mock.
+- Customer-initiated video desktop-share mock with agent-side view-only behavior.
+
+Webchat supports:
+
+- Text-only customer-side simulation in the current scope.
+- Registered / Guest customer type.
+- Registered customer flow starts directly in queue without media selection, information input, or menu selection.
+- Guest customer flow shows contact information / business selection before queue.
+- Handoff to Live Chat as a new Webchat customer.
+- Satisfaction rating / closed flow.
 
 WhatsApp supports:
 
@@ -306,9 +318,9 @@ The pages use local routing config store data and shared admin components.
 - CRM screenshot / fallback workspace.
 - Assistant screenshot / fallback workspace.
 - Common Links tab.
-- Transfer, Outbound Call, Internal Chat, Toolbar Settings, Call Flow Detail, Send Email, Contact Management modals.
+- Transfer, Outbound Call, Internal Chat, Agent Settings, Toolbar Settings, Call Flow Detail, Send Email, Contact Management modals.
 - Live Chat workspace with customer list, conversation, message record, quick replies, and local message state.
-- BankApp and WhatsApp customer-side simulations with screenshot assets.
+- BankApp, Webchat, and WhatsApp customer-side simulations with screenshot assets.
 - Call Management pages listed above.
 - Common Number Management feeds enabled IVR transfer targets in the call Transfer modal.
 - Sensitive word detection for Live Chat agent replies.
@@ -324,7 +336,7 @@ The pages use local routing config store data and shared admin components.
 - No real AICC, IVR, CRM, OpenEye, BankApp, WhatsApp, Webchat, LDAP, queue, or routing engine integration.
 - Video Call is a visual demo, not real audio/video.
 - Live Chat is a front-end mock, not a real channel gateway.
-- Webchat customer-side simulation is not implemented as a standalone customer demo entry.
+- Webchat customer-side simulation currently covers text only; voice and video Webchat media are future scope.
 - Dashboard, Admin dashboard, Supervisor pages, and reporting pages are not fully implemented workspaces.
 - CRM and Assistant screenshots exist, but may still need final customer-approved images and quality checks.
 - Localization is mixed: framework UI is mostly English; business content is a mix of English and Indonesian.
@@ -340,6 +352,7 @@ Current `public/screenshots/` contains:
 - `login-illustration.svg`
 - OpenEye images.
 - BankApp channel, business selection, confirmation, queue, chat, voice/video, screen-share, and service-closed images.
+- Webchat text entry, queue, agent chat, and satisfaction rating images.
 - WhatsApp chat request, business selection, agent chat, and satisfaction rating images.
 
 CRM and Assistant components keep code-based fallback UI if image loading fails.

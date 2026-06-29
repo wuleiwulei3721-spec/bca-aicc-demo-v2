@@ -1,10 +1,10 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-06-24 11:00 +08:00
+Last updated: 2026-06-27 11:28 +08:00
 
 ## 1. Overall Status
 
-The project is a mature front-end demo for BANK 1 AICC. It includes authentication, global shell, agent status and call toolbar, inbound voice workspace, BankApp and WhatsApp customer simulations, video demo, live chat workspace, call management configuration, routing configuration, and a design system page.
+The project is a mature front-end demo for BANK 1 AICC. It includes authentication, global shell, agent status and call toolbar, inbound voice workspace, BankApp, Webchat, and WhatsApp customer simulations, video demo, live chat workspace, call management configuration, routing configuration, and a design system page.
 
 This repository is still a demo application:
 
@@ -48,6 +48,7 @@ This repository is still a demo application:
 - Service mode sign-in.
 - Sign out confirmation and active-service block.
 - AUX reason menu from Busy Reason Management.
+- Agent Settings entry separated at the bottom of the profile menu with system prompt sound on/off control.
 
 ## 5. Completed Agent and Call Toolbar
 
@@ -57,7 +58,7 @@ This repository is still a demo application:
 - Answer, Hold, Mute, Transfer, Hang Up.
 - Ready / Not Ready toggle.
 - Timer display.
-- Toolbar display settings.
+- Toolbar More menu currently exposes Outbound Call; toolbar display settings are hidden from the More menu.
 - Outbound Call modal entry.
 - Call identification and Skill display during call lifecycle.
 - Active-call and incompatible-service-mode handoff warnings.
@@ -66,13 +67,14 @@ This repository is still a demo application:
 
 - Home tab.
 - BankApp Demo tab.
+- Webchat Demo tab.
 - WhatsApp Demo tab.
 - Fixed Live Chat tab.
 - Dynamic PSTN / Voice Call tabs.
 - Dynamic Video Call tabs.
 - Ended call tab close behavior.
 - Active call tab close protection.
-- Live Chat unread and duration display.
+- Live Chat unread, duration, and unanswered SLA alert display.
 
 ## 7. Completed Inbound Voice Workspace
 
@@ -82,7 +84,9 @@ This repository is still a demo application:
 - Unidentified PSTN customer initial state.
 - Customer identity refresh demo.
 - Customer Information card.
-- Customer Verification V2 right-side tab.
+- Customer Information verification action is channel-aware: PSTN and BankApp Voice use compact `KBV`; logged-in BankApp text uses compact `PIN`; BankApp text guest, Webchat text, and unsupported channels hide the action.
+- Guest customer information is channel-aware: text-channel guests keep the entered name / phone / email with customer ID shown as `-`, while BankApp voice / video guests show generated `Guest-06290001`-style names, the entered phone number, and `-` for unavailable fields.
+- Customer Verification V2 right-side tab for KBV.
 - Call Flow Detail modal.
 - Send Email modal.
 - Contact Management modal.
@@ -104,8 +108,9 @@ This repository is still a demo application:
 - BankApp video customer profile.
 - OpenEye floating client overlay.
 - OpenEye screenshot rendering.
-- BankApp video desktop-share selection state.
-- BankApp screen-sharing demo image.
+- BankApp video desktop sharing is customer-initiated from the BCA-owned Haloapp client screenshot.
+- Agent-side video floating window only views the customer-shared screen.
+- Video calls hide the toolbar Transfer action.
 - Hang Up hides OpenEye overlay and resets share state.
 
 ## 9. Completed Live Chat Workspace
@@ -119,6 +124,7 @@ This repository is still a demo application:
 - Star color state remains for compatibility, but the customer list star marker UI is hidden.
 - Unread clearing on focus.
 - SLA / unanswered state with a horizontal unanswered progress bar in expanded and collapsed customer list states.
+- Live Chat workspace tab aggregates unanswered warning and breach customer counts with compact colored badges.
 - Conversation workspace.
 - Send message local state.
 - End Service / Close session behavior.
@@ -135,16 +141,14 @@ This repository is still a demo application:
 - Customer-side BankApp stage.
 - Voice / Video / Live Chat channel selection.
 - Registered / Guest customer type.
-- Channel screenshots.
-- Business selection screenshots.
-- Business confirmation screenshots.
-- Queue / calling / connected screenshots.
+- V1.8 Haloapp flow screenshots extracted from the customer requirements document for channel, guest input, queue, connected, PIN, sharing, and satisfaction states.
+- Customer-side text pages are presented as BCA-owned read-only screenshots; Netinfo behavior is shown as SDK/API handoff and agent workspace handling.
 - Service closed screenshot.
 - Voice handoff to Agent Workspace.
 - Video handoff to Agent Workspace.
 - Live Chat handoff to Live Chat workspace.
-- PIN verification mock page.
-- Video desktop sharing demo state.
+- PIN verification can be opened from the agent Customer Information card for logged-in BankApp text customers; the displayed PIN page is marked as BCA-owned and returns success / failed results to Netinfo.
+- Voice client screenshots retain keypad capability for IVR transfer scenarios.
 
 ## 11. Completed WhatsApp Demo
 
@@ -156,7 +160,17 @@ This repository is still a demo application:
 - Satisfaction rating screenshot.
 - Reuses BankApp demo framework with WhatsApp-specific steps.
 
-## 12. Completed Call Management
+## 12. Completed Webchat Demo
+
+- Customer-side Webchat simulation is available from Channel Simulation below BankApp.
+- Current scope is text only; voice and video media are not yet implemented.
+- Registered customers queue directly without media selection, customer information input, or business menu selection.
+- Guest customers show contact information / business selection before queue.
+- Webchat handoff opens Live Chat with a new Webchat customer session.
+- Webchat PIN verification is temporarily hidden pending customer confirmation.
+- Webchat queue, agent chat, and satisfaction rating use the latest desensitized screenshots from the customer Webchat folder.
+
+## 13. Completed Call Management
 
 Customer-visible pages:
 
@@ -191,7 +205,7 @@ Implemented behaviors:
 - Busy reason edit and default selection.
 - Local store state for demo changes.
 
-## 13. Completed Routing Config
+## 14. Completed Routing Config
 
 Routing Config is visible by default.
 
@@ -218,7 +232,7 @@ Implemented behaviors:
 - Skill Routing Rules batch behavior and duplicate handling.
 - Local store state for demo changes.
 
-## 14. Completed Design System
+## 15. Completed Design System
 
 `/design-system` currently demonstrates:
 
@@ -237,7 +251,7 @@ Implemented behaviors:
 - Toolbar system.
 - Reusable component contracts.
 
-## 15. Completed Assets
+## 16. Completed Assets
 
 Current public assets include:
 
@@ -247,11 +261,12 @@ Current public assets include:
 - OpenEye video call screenshot.
 - OpenEye share-selection screenshot.
 - BankApp customer-side screenshots.
+- Webchat customer-side screenshots.
 - WhatsApp customer-side screenshots.
 - WhatsApp customer avatar.
 - Icons and favicon.
 
-## 16. Current Validation Baseline
+## 17. Current Validation Baseline
 
 Latest recorded validation before this documentation task:
 
@@ -262,7 +277,7 @@ Latest recorded validation before this documentation task:
 
 This documentation task intentionally does not change runtime code.
 
-## 17. Known Demo Boundaries
+## 18. Known Demo Boundaries
 
 - No backend API integration.
 - No real CRM SSO handoff.
@@ -273,7 +288,7 @@ This documentation task intentionally does not change runtime code.
 - No production persistence.
 - No automated Playwright test suite.
 
-## 18. Current Branch State at Handoff
+## 19. Current Branch State at Handoff
 
 - Expected branch: `main`.
 - Expected remote: `origin/main`.

@@ -26,7 +26,12 @@ import type {
   VideoCallPopupSource,
   VoiceVideoHandoffReadiness,
 } from '../store'
-import type { AgentServiceMode, AgentStatus, CallStatus } from '../types'
+import type {
+  AgentServiceMode,
+  AgentStatus,
+  BankAppCustomerType,
+  CallStatus,
+} from '../types'
 import {
   createAuxStatus,
   createPreAuxStatus,
@@ -123,6 +128,10 @@ const allSideMenuItems: SideMenuItem[] = [
       {
         key: 'customer-bankapp',
         label: 'BankApp',
+      },
+      {
+        key: 'customer-webchat',
+        label: 'Webchat',
       },
       {
         key: 'customer-whatsapp',
@@ -299,11 +308,17 @@ export function BasicLayout() {
   const bankAppVideoCallRequestId = useAppStore(
     (state) => state.bankAppVideoCallRequestId,
   )
+  const bankAppVideoCustomerType = useAppStore(
+    (state) => state.bankAppVideoCustomerType,
+  )
   const bankAppVoiceCallActivateWorkspace = useAppStore(
     (state) => state.bankAppVoiceCallActivateWorkspace,
   )
   const bankAppVoiceCallRequestId = useAppStore(
     (state) => state.bankAppVoiceCallRequestId,
+  )
+  const bankAppVoiceCustomerType = useAppStore(
+    (state) => state.bankAppVoiceCustomerType,
   )
   const setCollapsed = useAppStore((state) => state.setCollapsed)
   const setAgentServiceMode = useAppStore(
@@ -317,6 +332,9 @@ export function BasicLayout() {
   )
   const requestWhatsAppDemoWorkspace = useAppStore(
     (state) => state.requestWhatsAppDemoWorkspace,
+  )
+  const requestWebchatDemoWorkspace = useAppStore(
+    (state) => state.requestWebchatDemoWorkspace,
   )
   const setLiveChatTabOpen = useAppStore(
     (state) => state.setLiveChatTabOpen,
@@ -346,9 +364,7 @@ export function BasicLayout() {
   const [activeCallChannel, setActiveCallChannel] =
     useState<ActiveCallChannel>(null)
   const [autoAnswerSeconds] = useState(3)
-  const [toolbarDisplayMode, setToolbarDisplayMode] = useState<
-    'icon' | 'text'
-  >('text')
+  const [toolbarDisplayMode] = useState<'icon' | 'text'>('text')
   const [isInternalChatOpen, setIsInternalChatOpen] = useState(false)
   const [isAfterCallWork, setIsAfterCallWork] = useState(false)
   const [callHandoffNotice, setCallHandoffNotice] = useState<{
@@ -648,7 +664,11 @@ export function BasicLayout() {
   }, [agentStatus, updateAgentStatus])
 
   const triggerVoiceInboundCall = useCallback(
-    (source?: InboundPopupSource, activateWorkspace = true) => {
+    (
+      source?: InboundPopupSource,
+      activateWorkspace = true,
+      bankAppCustomerType?: BankAppCustomerType,
+    ) => {
       if (voiceVideoHandoffReadiness !== 'available') {
         showCallHandoffNotice(voiceVideoHandoffReadiness)
         return
@@ -660,7 +680,12 @@ export function BasicLayout() {
       setIsAfterCallWork(false)
       setOpenEyeVideoWindowVisible(false)
       resetBankAppVideoDesktopShare()
-      createCallInteraction('voice', source ?? 'pstn', activateWorkspace)
+      createCallInteraction(
+        'voice',
+        source ?? 'pstn',
+        activateWorkspace,
+        bankAppCustomerType,
+      )
       updateCallStatus('Incoming')
     },
     [
@@ -675,7 +700,11 @@ export function BasicLayout() {
   )
 
   const triggerVideoInboundCall = useCallback(
-    (source?: VideoCallPopupSource, activateWorkspace = true) => {
+    (
+      source?: VideoCallPopupSource,
+      activateWorkspace = true,
+      bankAppCustomerType?: BankAppCustomerType,
+    ) => {
       if (voiceVideoHandoffReadiness !== 'available') {
         showCallHandoffNotice(voiceVideoHandoffReadiness)
         return
@@ -689,7 +718,12 @@ export function BasicLayout() {
       if (source !== 'bankapp-video') {
         resetBankAppVideoDesktopShare()
       }
-      createCallInteraction('video', source ?? 'standard', activateWorkspace)
+      createCallInteraction(
+        'video',
+        source ?? 'standard',
+        activateWorkspace,
+        bankAppCustomerType,
+      )
       updateCallStatus('Incoming')
     },
     [
@@ -772,10 +806,12 @@ export function BasicLayout() {
     triggerVoiceInboundCall(
       'bankapp-voice',
       bankAppVoiceCallActivateWorkspace,
+      bankAppVoiceCustomerType,
     )
   }, [
     bankAppVoiceCallActivateWorkspace,
     bankAppVoiceCallRequestId,
+    bankAppVoiceCustomerType,
     triggerVoiceInboundCall,
   ])
 
@@ -791,10 +827,12 @@ export function BasicLayout() {
     triggerVideoInboundCall(
       'bankapp-video',
       bankAppVideoCallActivateWorkspace,
+      bankAppVideoCustomerType,
     )
   }, [
     bankAppVideoCallActivateWorkspace,
     bankAppVideoCallRequestId,
+    bankAppVideoCustomerType,
     triggerVideoInboundCall,
   ])
 
@@ -932,6 +970,11 @@ export function BasicLayout() {
         requestWhatsAppDemoWorkspace()
       }
 
+      if (childKey === 'customer-webchat') {
+        navigate('/')
+        requestWebchatDemoWorkspace()
+      }
+
       if (childKey === 'call-management-verification-rules') {
         navigate('/call-management/verification-rules')
       }
@@ -977,6 +1020,7 @@ export function BasicLayout() {
     [
       navigate,
       requestBankAppDemoWorkspace,
+      requestWebchatDemoWorkspace,
       requestWhatsAppDemoWorkspace,
       triggerVoiceInboundCall,
     ],
@@ -1169,6 +1213,7 @@ export function BasicLayout() {
           <AgentToolbar
             agentStatus={agentStatus}
             callStatus={callStatus}
+            canTransfer={activeCallChannel !== 'video'}
             callIdentification={callIdentification}
             callSkillDisplayName={callSkillDisplayName}
             baseElapsedSeconds={timerState.elapsedSeconds}
@@ -1180,7 +1225,6 @@ export function BasicLayout() {
             onHoldToggle={handleHoldToggle}
             onMuteToggle={handleMuteToggle}
             onReadyToggle={handleReadyToggle}
-            onToolbarDisplayModeChange={setToolbarDisplayMode}
           />
         )}
         <div className="aicc-header__actions">

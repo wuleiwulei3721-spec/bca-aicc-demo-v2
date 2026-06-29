@@ -52,7 +52,7 @@ export const unidentifiedCustomerJourney: CustomerJourneyItem[] = []
 export const unidentifiedTicketingHistory: TicketHistoryItem[] = []
 
 export const bankAppVoiceCustomer: CustomerInformation = {
-  accessChannel: 'BankApp',
+  accessChannel: 'BankApp Voice',
   accessDuration: '00:12',
   profile: {
     avatarInitials: 'SA',
@@ -66,8 +66,23 @@ export const bankAppVoiceCustomer: CustomerInformation = {
   verificationStatus: 'Unverified',
 }
 
+export const bankAppVoiceGuestCustomer: CustomerInformation = {
+  accessChannel: 'BankApp Voice',
+  accessDuration: '00:12',
+  profile: {
+    avatarInitials: 'GU',
+    avatarUrl: '',
+    name: 'Guest-06290001',
+    phoneNumber: '081234560118',
+    email: '-',
+    cisNumber: '-',
+    customerType: 'Guest',
+  },
+  verificationStatus: 'Unverified',
+}
+
 export const bankAppVideoCustomer: CustomerInformation = {
-  accessChannel: 'BankApp',
+  accessChannel: 'BankApp Video',
   accessDuration: '00:12',
   profile: {
     avatarInitials: 'SA',
@@ -77,6 +92,21 @@ export const bankAppVideoCustomer: CustomerInformation = {
     email: 'sari.amelia@example.com',
     cisNumber: '00000056231',
     customerType: 'Regular Customer',
+  },
+  verificationStatus: 'Unverified',
+}
+
+export const bankAppVideoGuestCustomer: CustomerInformation = {
+  accessChannel: 'BankApp Video',
+  accessDuration: '00:12',
+  profile: {
+    avatarInitials: 'GU',
+    avatarUrl: '',
+    name: 'Guest-06290002',
+    phoneNumber: '081234560119',
+    email: '-',
+    cisNumber: '-',
+    customerType: 'Guest',
   },
   verificationStatus: 'Unverified',
 }
@@ -376,6 +406,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
   {
     id: 'livechat2-002',
     accessSequence: 2,
+    bankAppLoginStatus: 'registered',
     channel: 'BankApp',
     customer: {
       accessChannel: 'BankApp',
@@ -467,13 +498,13 @@ export const liveChat2Sessions: LiveChat2Session[] = [
       accessChannel: 'Webchat',
       accessDuration: '02:06',
       profile: {
-        avatarInitials: 'GF',
+        avatarInitials: 'RF',
         avatarUrl: '',
-        name: 'Guest-20418',
-        phoneNumber: '-',
-        email: 'guest20418@example.com',
-        cisNumber: '-',
-        customerType: 'Guest',
+        name: 'Rafi Firmansyah',
+        phoneNumber: '082187650041',
+        email: 'rafi.firmansyah@example.com',
+        cisNumber: '00000073452',
+        customerType: 'Regular Customer',
       },
       verificationStatus: 'Unverified',
     },
@@ -482,7 +513,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         id: 'livechat2-003-history-1',
         kind: 'text',
         message:
-          'Guest opened the priority banking appointment page before starting webchat.',
+          'Customer started Webchat from the BANK 1 website after logging in.',
         sender: 'system',
         senderName: 'System',
         time: '14:05',
@@ -490,10 +521,10 @@ export const liveChat2Sessions: LiveChat2Session[] = [
       },
     ],
     initialStarColor: 'gray',
-    initialUnansweredSeconds: 132,
-    intent: 'Priority branch appointment',
+    initialUnansweredSeconds: 0,
+    intent: 'Webchat credit card inquiry',
     lastMessage:
-      'Can I book an appointment at the nearest priority branch this week?',
+      'Hello, I need help checking my credit card billing.',
     lastMessageAt: '2026-05-27T14:35:00+08:00',
     lastMessageTime: '14:35',
     messages: [
@@ -502,7 +533,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         kind: 'text',
         message: 'Hello, I am browsing from the BANK 1 website.',
         sender: 'customer',
-        senderName: 'Guest-20418',
+        senderName: 'Rafi Firmansyah',
         time: '14:31',
         timestamp: '2026-05-27T14:31:00+08:00',
       },
@@ -511,25 +542,24 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         kind: 'image',
         message: 'Uploaded product screenshot',
         sender: 'customer',
-        senderName: 'Guest-20418',
+        senderName: 'Rafi Firmansyah',
         time: '14:33',
         timestamp: '2026-05-27T14:33:00+08:00',
       },
       {
         id: 'livechat2-003-message-3',
         kind: 'text',
-        message:
-          'Can I book an appointment at the nearest priority branch this week?',
+        message: 'Hello, I need help checking my credit card billing.',
         sender: 'customer',
-        senderName: 'Guest-20418',
+        senderName: 'Rafi Firmansyah',
         time: '14:35',
         timestamp: '2026-05-27T14:35:00+08:00',
       },
     ],
-    queueName: 'Branch Appointment',
+    queueName: 'Webchat Card Service',
     serviceStartedAt: '14:31',
     status: 'active',
-    unreadCount: 99,
+    unreadCount: 1,
   },
   {
     id: 'livechat2-004',
@@ -607,6 +637,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
   {
     id: 'livechat2-005',
     accessSequence: 5,
+    bankAppLoginStatus: 'registered',
     channel: 'BankApp',
     customer: {
       accessChannel: 'BankApp',
@@ -683,6 +714,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
   {
     id: 'livechat2-history-001',
     accessSequence: 99,
+    bankAppLoginStatus: 'registered',
     channel: 'BankApp',
     customer: {
       accessChannel: 'BankApp',
