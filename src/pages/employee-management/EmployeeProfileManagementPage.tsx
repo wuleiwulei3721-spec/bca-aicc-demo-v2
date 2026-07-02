@@ -604,8 +604,8 @@ export function EmployeeProfileManagementPage() {
             <KeyOutlined />
           </button>
           <button
-            aria-label={`Skill Settings ${record.employeeName}`}
-            title="Skill Settings"
+            aria-label={`Capacity Settings ${record.employeeName}`}
+            title="Capacity Settings"
             type="button"
             onClick={() => openSkillSettings(record)}
           >
@@ -995,7 +995,9 @@ export function EmployeeProfileManagementPage() {
       <AdminModal
         destroyOnClose
         open={Boolean(skillSettingsTarget)}
-        title={`Skill Settings - ${skillSettingsTarget?.employeeName ?? ''}`}
+        title={`Agent Capacity Settings - ${
+          skillSettingsTarget?.employeeName ?? ''
+        }`}
         width={980}
         onCancel={closeSkillSettings}
       >

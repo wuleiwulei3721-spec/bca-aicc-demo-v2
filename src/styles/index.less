@@ -6347,6 +6347,45 @@ a {
   box-shadow: 0 4px 12px rgba(24, 74, 138, 0.14);
 }
 
+.aicc-customer-info__special-handling {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 82px;
+  min-height: 20px;
+  padding: 1px 3px;
+  border: 1px solid #a9ccff;
+  border-radius: var(--aicc-radius-sm);
+  background: #eef6ff;
+  color: var(--aicc-primary-strong);
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 750;
+  line-height: 14px;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    color 0.16s ease;
+}
+
+.aicc-customer-info__special-handling:hover,
+.aicc-customer-info__special-handling:focus-visible {
+  border-color: var(--aicc-primary);
+  background: #dfeeff;
+  color: var(--aicc-primary-strong);
+  box-shadow: 0 2px 7px rgba(23, 105, 224, 0.14);
+}
+
+.aicc-customer-info__special-handling:focus-visible {
+  outline: 2px solid rgba(30, 111, 214, 0.22);
+  outline-offset: 1px;
+}
+
 .aicc-customer-info__main {
   min-width: 0;
 }
@@ -11821,6 +11860,7 @@ button.inbound-list-row .inbound-list-row__title {
 .inbound-call-flow-modal .ant-modal-content,
 .inbound-contact-management-modal .ant-modal-content,
 .inbound-send-email-modal .ant-modal-content,
+.inbound-special-handling-modal .ant-modal-content,
 .inbound-verification-modal .ant-modal-content {
   border-radius: var(--aicc-radius);
 }
@@ -11828,6 +11868,7 @@ button.inbound-list-row .inbound-list-row__title {
 .inbound-call-flow-modal .ant-modal-header,
 .inbound-contact-management-modal .ant-modal-header,
 .inbound-send-email-modal .ant-modal-header,
+.inbound-special-handling-modal .ant-modal-header,
 .inbound-verification-modal .ant-modal-header {
   margin-bottom: var(--aicc-modal-body-gap);
 }
@@ -11835,9 +11876,66 @@ button.inbound-list-row .inbound-list-row__title {
 .inbound-call-flow-modal .ant-modal-title,
 .inbound-contact-management-modal .ant-modal-title,
 .inbound-send-email-modal .ant-modal-title,
+.inbound-special-handling-modal .ant-modal-title,
 .inbound-verification-modal .ant-modal-title {
   font-size: var(--aicc-modal-title-size);
   font-weight: 700;
+}
+
+.inbound-special-handling {
+  display: grid;
+  gap: 14px;
+}
+
+.inbound-special-handling__table {
+  width: 100%;
+  table-layout: fixed;
+  overflow: hidden;
+  border: 1px solid #d3dfec;
+  border-collapse: separate;
+  border-radius: var(--aicc-radius-sm);
+  border-spacing: 0;
+  background: #ffffff;
+}
+
+.inbound-special-handling__table th,
+.inbound-special-handling__table td {
+  padding: 8px 10px;
+  border-right: 1px solid #dce8f5;
+  border-bottom: 1px solid #e8eff7;
+  color: var(--aicc-text);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+.inbound-special-handling__table th {
+  background:
+    linear-gradient(180deg, #eef8ff 0%, #dff0ff 100%),
+    #e8f4ff;
+  color: var(--aicc-text);
+  font-weight: 750;
+}
+
+.inbound-special-handling__table th:last-child,
+.inbound-special-handling__table td:last-child {
+  border-right: 0;
+}
+
+.inbound-special-handling__table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.inbound-special-handling__footer {
+  display: flex;
+  justify-content: center;
+}
+
+.inbound-special-handling__footer .aicc-button {
+  min-width: 112px;
+  height: var(--aicc-control-height-sm);
 }
 
 .inbound-call-flow {

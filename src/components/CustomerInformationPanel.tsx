@@ -24,6 +24,7 @@ export interface CustomerInformationPanelProps {
   customer: CustomerInformation
   headerExtra?: ReactNode
   onOpenCallFlow?: () => void
+  onOpenSpecialHandling?: () => void
   onRequestOutbound?: () => void
   onSendEmail?: () => void
   onStartOutbound?: () => void
@@ -70,6 +71,7 @@ export function CustomerInformationPanel({
   customer,
   headerExtra,
   onOpenCallFlow,
+  onOpenSpecialHandling,
   onRequestOutbound,
   onSendEmail,
   onStartOutbound,
@@ -126,6 +128,16 @@ export function CustomerInformationPanel({
             </Avatar>
             {levelLabel && (
               <StatusBadge label={levelLabel} size="small" status="selected" />
+            )}
+            {onOpenSpecialHandling && (
+              <button
+                className="aicc-customer-info__special-handling"
+                title="View special handling information"
+                type="button"
+                onClick={onOpenSpecialHandling}
+              >
+                Special Handling
+              </button>
             )}
           </div>
 

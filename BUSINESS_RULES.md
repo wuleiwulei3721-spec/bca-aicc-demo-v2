@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-06-27 11:28 +08:00
+Last updated: 2026-07-02 18:24 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -215,7 +215,14 @@ Customer Information shows:
 - verification entry,
 - call flow detail,
 - email action,
-- outbound action.
+- outbound action,
+- read-only Special Handling demo information.
+
+Special Handling:
+
+- All Customer Information cards show `Special Handling`.
+- Clicking it opens a read-only modal with static demo handling information: `Customer Profile` = `Orang Kaya`, `Handling` = `Jangan ditanya dulunya`.
+- The current demo does not call a customer API, edit the data, or persist changes.
 
 Customer identity refresh:
 

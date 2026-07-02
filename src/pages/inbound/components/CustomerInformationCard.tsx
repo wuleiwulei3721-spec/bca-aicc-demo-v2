@@ -6,6 +6,7 @@ import {
 import { Input, Popover } from 'antd'
 import {
   BaseButton,
+  BaseModal,
   CustomerInformationPanel,
   type CustomerOutboundRequestStatus,
 } from '../../../components'
@@ -223,6 +224,7 @@ export function CustomerInformationCard({
     Record<string, CustomerOutboundRequestStatus>
   >({})
   const outboundApprovalTimerRefs = useRef<Record<string, number>>({})
+  const [isSpecialHandlingOpen, setIsSpecialHandlingOpen] = useState(false)
   const outboundRequestStatus =
     outboundRequestStatuses[customerKey] ?? 'idle'
   const shouldShowIvrJourney =
@@ -447,11 +449,46 @@ export function CustomerInformationCard({
         verifyButtonLabel={verifyButtonLabel}
         verifyButtonTitle={verifyButtonTitle}
         onOpenCallFlow={() => setIsCallFlowOpen(true)}
+        onOpenSpecialHandling={() => setIsSpecialHandlingOpen(true)}
         onRequestOutbound={requestOutboundApproval}
         onSendEmail={() => setIsEmailModalOpen(true)}
         onStartOutbound={startApprovedOutboundCall}
         onVerify={verificationAction === 'none' ? undefined : openVerification}
       />
+      <BaseModal
+        centered
+        className="inbound-special-handling-modal"
+        kind="detail"
+        open={isSpecialHandlingOpen}
+        title="Special handling information"
+        width={520}
+        onCancel={() => setIsSpecialHandlingOpen(false)}
+      >
+        <div className="inbound-special-handling">
+          <table className="inbound-special-handling__table">
+            <thead>
+              <tr>
+                <th scope="col">Customer Profile</th>
+                <th scope="col">Handling</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Orang Kaya</td>
+                <td>Jangan ditanya dulunya</td>
+              </tr>
+            </tbody>
+          </table>
+          <div className="inbound-special-handling__footer">
+            <BaseButton
+              type="primary"
+              onClick={() => setIsSpecialHandlingOpen(false)}
+            >
+              Close
+            </BaseButton>
+          </div>
+        </div>
+      </BaseModal>
 
       <CallFlowDetailModal
         accessMenuLabel={accessMenuLabel}

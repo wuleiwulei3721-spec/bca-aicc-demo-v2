@@ -65,6 +65,7 @@ Historical entries are preserved in archive files without content rewrites. Use 
 - `VITE_APP_VISIBILITY_PROFILE=local` 时显示 Employee Management 和 Design System。
 - Customer/default profile 下隐藏 Employee Management 菜单，并拦截 `/employee-management/*` 直达路由返回 `/`。
 - 恢复 Employee Profile Management 页面、员工 mock、store、type 和 admin 样式。
+- Employee Profile Management mock employee profiles expanded to 10 records, with employee skill settings aligned to existing Routing Config `SQ_*` skill queue codes.
 - 本地 `.env.local` 保持 `VITE_APP_VISIBILITY_PROFILE=local`，该文件已由 `.gitignore` 排除，不会提交给客户环境。
 
 验证：
@@ -2159,3 +2160,39 @@ Historical entries are preserved in archive files without content rewrites. Use 
 当前风险点：
 
 - 当前为前端 demo 配置项，不连接真实工作时间、排队队列或路由引擎；如后续接入后端，需要定义字段映射和实际触发点。
+
+### 2026-07-02 18:24 +08:00 - Customer Information Special Handling 弹框
+
+修改页面或文件：
+
+- `src/components/CustomerInformationPanel.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/styles/index.less`
+- `CURRENT_STATUS.md`
+- `BUSINESS_RULES.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 同事附件要求在客户卡片客户类型下方增加 `Special Handling` 按钮，点击后查看特殊处理信息弹框。
+
+修改结果：
+
+- 所有 Customer Information 卡片头像/客户类型区域下方显示 `Special Handling`。
+- 点击按钮打开只读 `Special handling information` 弹框。
+- 弹框按附件示例展示 `Customer Profile` / `Handling` 表格，数据为 `Orang Kaya` / `Jangan ditanya dulunya`。
+- 当前为静态前端 demo，不调用真实客户 API，不支持编辑或保存。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+- 用户在页面查看后确认功能可见，并反馈按钮换行与表头文字层级问题；已调整按钮为单行小字号，表头文字改为普通深色。
+
+回滚说明：
+
+- 如需回滚，移除 `CustomerInformationPanel` 的 Special Handling 入口、`CustomerInformationCard` 中的弹框状态和 `BaseModal` 内容，并删除对应样式。
+
+当前风险点：
+
+- 后续如接真实客户 API，需要在当前弹框入口后替换静态表格数据，并补充加载、失败和空状态策略。

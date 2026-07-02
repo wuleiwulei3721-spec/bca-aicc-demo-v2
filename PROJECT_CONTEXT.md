@@ -317,7 +317,7 @@ Current behaviors:
 - Add / Edit employee profile modal with English UI fields.
 - Employee profile table with status badges and row actions.
 - Password Reset action is a placeholder button with no backend effect.
-- Skill Settings modal supports Skill Configuration and Other Configuration tabs.
+- Agent Capacity Settings modal supports Skill Configuration and Other Configuration tabs.
 - Skill Configuration selects Routing Config skill queues and stores Agent Weight / Skill Weight per selected skill.
 - Other Configuration stores Live Chat Max Services per employee.
 - All employee management data is local mock state; it is not connected to LDAP, HR, permission, or workforce management backends.

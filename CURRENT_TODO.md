@@ -135,7 +135,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Verify local-only Employee Management:
   - `VITE_APP_VISIBILITY_PROFILE=customer` or unset hides Employee Management and redirects direct routes,
   - `VITE_APP_VISIBILITY_PROFILE=local` shows Employee Management,
-  - Employee Profile Management add/edit and Skill Settings modal remain English-only,
+  - Employee Profile Management add/edit and Agent Capacity Settings modal remain English-only,
   - customer deployment environment does not set `VITE_APP_VISIBILITY_PROFILE=local`.
 - Verify `/design-system` still loads and reflects current component rules.
 

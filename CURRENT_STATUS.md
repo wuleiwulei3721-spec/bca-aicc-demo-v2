@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-07-02 17:56 +08:00
+Last updated: 2026-07-02 18:24 +08:00
 
 ## 1. Overall Status
 
@@ -85,6 +85,7 @@ This repository is still a demo application:
 - Unidentified PSTN customer initial state.
 - Customer identity refresh demo.
 - Customer Information card.
+- Customer Information card includes a compact `Special Handling` action that opens a read-only static demo modal.
 - Customer Information verification action is channel-aware: PSTN and BankApp Voice use compact `KBV`; logged-in BankApp text uses compact `PIN`; BankApp text guest, Webchat text, and unsupported channels hide the action.
 - Guest customer information is channel-aware: text-channel guests keep the entered name / phone / email with customer ID shown as `-`, while BankApp voice / video guests show generated `Guest-06290001`-style names, the entered phone number, and `-` for unavailable fields.
 - Customer Verification V2 right-side tab for KBV.
@@ -254,10 +255,10 @@ Implemented behaviors:
 - Add / Edit employee profile modal with English UI fields and optional Alias field.
 - Employee profile table with status badges and row actions.
 - Password Reset action is displayed as a placeholder button with no click effect.
-- Skill Settings modal with Skill Configuration and Other Configuration tabs.
+- Agent Capacity Settings modal with Skill Configuration and Other Configuration tabs.
 - Skill Configuration selects Routing Config Skill Queues first, then stores Agent Weight / Skill Weight for selected skills per employee.
 - Other Configuration stores Live Chat Max Services per employee.
-- Local mock store state for demo changes.
+- Local mock store state for demo changes, seeded with 10 employee profiles.
 
 ## 16. Completed Design System
 
