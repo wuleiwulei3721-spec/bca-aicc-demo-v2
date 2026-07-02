@@ -400,6 +400,9 @@ Conversation:
 - Header shows channel icon, customer name, and service duration.
 - Active session actions: `Transfer`, `End Service`.
 - Customer-ended session action: `Close`.
+- Active Webchat sessions show a static floating `Customer is typing` indicator above the agent composer in the current demo.
+- The typing indicator does not participate in the composer height, so typing state changes should not resize the agent input area.
+- Webchat typing is not connected to customer-side Webchat Demo input events or screenshots.
 - Sending a message appends a current-agent message in local state.
 - End Service adds a system message, marks session ended, then moves it to History.
 - Close removes the active session and adds it to closed history.
@@ -634,8 +637,18 @@ Implemented customer-review pages:
 Important rules:
 
 - Channels has Phone account management disabled.
+- Routing Config media types include Voice, Video, Text, and Non-DM.
+- Non-DM represents social non-direct-message scenarios such as comments, replies, mentions, and app-store reviews.
+- Instagram, LinkedIn, Facebook, X, Tik Tok, and YouTube support Text plus Non-DM media.
+- AppStore and PlayStore support Non-DM only.
+- Channels Edit Channel media type selector shows all configured media types; the current channel's selected media types determine which Business Config tabs are shown.
+- Channels Text Business Config shows `Queue Configuration` immediately after `Access Configuration`.
+- `Queue Configuration` contains `Outside Service Hours Message`, `Queue Waiting Message`, and `Queue Timeout Message`.
+- `Queue Waiting Message` does not support estimated-wait dynamic parameters in the current demo.
+- Channels Non-DM Business Config shows a tab but no configuration content in the current demo.
 - Webchat Text Business Config shows `Webchat Message Recall Limit (sec)`.
 - Non-Webchat text channels do not show that Webchat-specific field.
+- Channels Business Config `Agent Service Configuration` keeps the existing `Agent No Reply Warning (sec)` and `Agent No Reply Breach (sec)` labels, and uses colored dots matching Live Chat SLA warning and breach colors to clarify the threshold severity.
 - Business Types include `Source Business Code`.
 - Skill Routing Rules use configured route elements and target skill queues.
 - Site Access Volume ratios should total 100% for the same channel + media combination.
@@ -643,7 +656,18 @@ Important rules:
 
 All Routing Config changes are front-end demo state only.
 
-## 22. Localization Rules
+## 22. Local-Only Module Visibility Rules
+
+`main` is the customer release integration line. Local-only modules can live in `main`, but must be hidden from customer builds through `VITE_APP_VISIBILITY_PROFILE`.
+
+- Default / customer profile is `customer`.
+- `customer` hides local-only menu entries and redirects direct local-only routes back to `/`.
+- `local` shows local-only modules for local maintainer use.
+- Current local-only modules are Employee Management and Design System.
+- Employee Management is front-end mock state only and does not connect to LDAP, HR, permission, workforce management, or employee skill backends.
+- Customer deployment environments must not set `VITE_APP_VISIBILITY_PROFILE=local`.
+
+## 23. Localization Rules
 
 Current implemented language mix:
 

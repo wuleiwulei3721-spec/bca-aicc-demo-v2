@@ -637,11 +637,47 @@ const defaultChannelBusinessConfigByMedia: Record<
     customerNoReplyTimeoutMinutes: 5,
     customerTimeoutNotice:
       'We did not receive your reply. The service has been closed automatically. Please contact us again if you need help.',
+    exceptionWorkTimePlanCode: '',
     maxConcurrentAccess: 50,
     minScanIntervalSeconds: 30,
+    outsideServiceHoursMessage:
+      'Sorry, we are currently outside service hours.',
     preTimeoutReminderMessage:
       'We have not received your reply. This conversation will close in {reminderMinutes} minute(s).',
     preTimeoutReminderMinutes: 1,
+    queueTimeoutMessage:
+      'All agents are currently busy. Please try again later.',
+    queueWaitingMessage: 'All agents are currently busy. Please wait.',
+    webchatRecallLimitSeconds: 120,
+  },
+  NON_DM: {
+    accessSuccessWelcomeMessage:
+      'Hello, BANK 1 social service assistant is ready to help you.',
+    agentEndReminder:
+      'Thank you for contacting BANK 1. We are glad to assist you.',
+    agentNoReplyAutoResponseMessage:
+      'Please hold on. We are still processing your request.',
+    agentNoReplyBreachSeconds: 120,
+    agentNoReplyTimeoutSeconds: 120,
+    agentNoReplyWarningSeconds: 60,
+    agentTimeoutNotice:
+      'The customer did not reply within the configured timeout. The conversation has been closed automatically.',
+    assignedAgentGreeting:
+      'Hello {customerName}, {agentName} will assist you. If you do not reply within {timeoutMinutes} minutes, the conversation will be closed automatically.',
+    customerNoReplyTimeoutMinutes: 5,
+    customerTimeoutNotice:
+      'We did not receive your reply. The service has been closed automatically. Please contact us again if you need help.',
+    exceptionWorkTimePlanCode: '',
+    maxConcurrentAccess: 50,
+    minScanIntervalSeconds: 30,
+    outsideServiceHoursMessage:
+      'Sorry, we are currently outside service hours.',
+    preTimeoutReminderMessage:
+      'We have not received your reply. This conversation will close in {reminderMinutes} minute(s).',
+    preTimeoutReminderMinutes: 1,
+    queueTimeoutMessage:
+      'All agents are currently busy. Please try again later.',
+    queueWaitingMessage: 'All agents are currently busy. Please wait.',
     webchatRecallLimitSeconds: 120,
   },
   VIDEO: {
@@ -661,11 +697,17 @@ const defaultChannelBusinessConfigByMedia: Record<
     customerNoReplyTimeoutMinutes: 5,
     customerTimeoutNotice:
       'We did not receive your reply. The service has been closed automatically. Please contact us again if you need help.',
+    exceptionWorkTimePlanCode: '',
     maxConcurrentAccess: 50,
     minScanIntervalSeconds: 30,
+    outsideServiceHoursMessage:
+      'Sorry, we are currently outside service hours.',
     preTimeoutReminderMessage:
       'We have not received your reply. This conversation will close in {reminderMinutes} minute(s).',
     preTimeoutReminderMinutes: 1,
+    queueTimeoutMessage:
+      'All agents are currently busy. Please try again later.',
+    queueWaitingMessage: 'All agents are currently busy. Please wait.',
     webchatRecallLimitSeconds: 120,
   },
   VOICE: {
@@ -685,11 +727,17 @@ const defaultChannelBusinessConfigByMedia: Record<
     customerNoReplyTimeoutMinutes: 5,
     customerTimeoutNotice:
       'We did not receive your reply. The service has been closed automatically. Please contact us again if you need help.',
+    exceptionWorkTimePlanCode: '',
     maxConcurrentAccess: 50,
     minScanIntervalSeconds: 30,
+    outsideServiceHoursMessage:
+      'Sorry, we are currently outside service hours.',
     preTimeoutReminderMessage:
       'We have not received your reply. This conversation will close in {reminderMinutes} minute(s).',
     preTimeoutReminderMinutes: 1,
+    queueTimeoutMessage:
+      'All agents are currently busy. Please try again later.',
+    queueWaitingMessage: 'All agents are currently busy. Please wait.',
     webchatRecallLimitSeconds: 120,
   },
 }
@@ -1080,18 +1128,6 @@ export function ChannelsPage() {
       errors.push('Media Type is required.')
     }
 
-    if (modalMode === 'edit') {
-      const channelType = channelTypeByCode.get(draft.channelTypeCode)
-      const unsupportedMediaTypes = draft.mediaTypes.filter(
-        (mediaType) => !channelType?.supportedMediaTypes.includes(mediaType),
-      )
-
-      if (unsupportedMediaTypes.length > 0) {
-        errors.push('Media Type must be supported by the Channel Type.')
-      }
-
-    }
-
     if (modalMode === 'business') {
       const channelType = channelTypeByCode.get(draft.channelTypeCode)
       const usesSocialAccessCapacity = channelType?.category === 'social'
@@ -1101,6 +1137,10 @@ export function ChannelsPage() {
           draft.businessConfig[mediaCode] ??
           createDefaultChannelBusinessConfig(mediaCode)
         const mediaLabel = mediaLabelByValue.get(mediaCode) ?? mediaCode
+
+        if (mediaCode === 'NON_DM') {
+          return
+        }
 
         if (usesSocialAccessCapacity) {
           if (config.maxConcurrentAccess <= 0) {
@@ -1155,6 +1195,12 @@ export function ChannelsPage() {
               'Agent No Reply Auto Response',
               config.agentNoReplyAutoResponseMessage,
             ],
+            [
+              'Outside Service Hours Message',
+              config.outsideServiceHoursMessage,
+            ],
+            ['Queue Waiting Message', config.queueWaitingMessage],
+            ['Queue Timeout Message', config.queueTimeoutMessage],
           ].forEach(([label, value]) => {
             if (!String(value).trim()) {
               errors.push(`Text ${label} is required.`)
@@ -1353,6 +1399,7 @@ export function ChannelsPage() {
     field: keyof ChannelMediaBusinessConfig,
     label: string,
     min = 1,
+    severity?: 'breach' | 'warning',
   ) => {
     const config =
       draft.businessConfig[mediaCode] ??
@@ -1360,7 +1407,21 @@ export function ChannelsPage() {
 
     return (
       <label className="routing-config-crud-modal__field">
-        <span>{label}</span>
+        <span
+          className={
+            severity
+              ? `routing-config-channel-business__sla-label routing-config-channel-business__sla-label--${severity}`
+              : undefined
+          }
+        >
+          {severity && (
+            <i
+              aria-hidden="true"
+              className="routing-config-channel-business__sla-dot"
+            />
+          )}
+          <span>{label}</span>
+        </span>
         <InputNumber
           min={min}
           value={Number(config[field] ?? 0)}
@@ -1582,6 +1643,7 @@ export function ChannelsPage() {
   }
   const renderBusinessMediaForm = (mediaCode: MediaTypeCode) => {
     const isText = mediaCode === 'TEXT'
+    const isNonDm = mediaCode === 'NON_DM'
     const isWebchatText = draft.channelCode === 'WEBCHAT' && isText
     const isPhoneVoice =
       draft.channelTypeCode === 'PHONE' && mediaCode === 'VOICE'
@@ -1589,6 +1651,10 @@ export function ChannelsPage() {
     const usesSocialAccessCapacity = channelType?.category === 'social'
     const hasAccessConfiguration =
       usesSocialAccessCapacity || isPhoneVoice || isText
+
+    if (isNonDm) {
+      return <div className="routing-config-channel-business" />
+    }
 
     if (!hasAccessConfiguration && !isText) {
       return (
@@ -1636,6 +1702,34 @@ export function ChannelsPage() {
         )}
         {isText && (
           <>
+            <section className="routing-config-media-rule-modal__section">
+              <header>
+                <strong>Queue Configuration</strong>
+              </header>
+              <div className="routing-config-crud-modal__section-grid">
+                {renderBusinessMessageField(
+                  mediaCode,
+                  'outsideServiceHoursMessage',
+                  'Outside Service Hours Message',
+                  2,
+                  true,
+                )}
+                {renderBusinessMessageField(
+                  mediaCode,
+                  'queueWaitingMessage',
+                  'Queue Waiting Message',
+                  2,
+                  true,
+                )}
+                {renderBusinessMessageField(
+                  mediaCode,
+                  'queueTimeoutMessage',
+                  'Queue Timeout Message',
+                  2,
+                  true,
+                )}
+              </div>
+            </section>
             <section className="routing-config-media-rule-modal__section">
               <header>
                 <strong>Agent Opening / Ending Configuration</strong>
@@ -1729,11 +1823,15 @@ export function ChannelsPage() {
                   mediaCode,
                   'agentNoReplyWarningSeconds',
                   'Agent No Reply Warning (sec)',
+                  1,
+                  'warning',
                 )}
                 {renderBusinessNumberField(
                   mediaCode,
                   'agentNoReplyBreachSeconds',
                   'Agent No Reply Breach (sec)',
+                  1,
+                  'breach',
                 )}
               </div>
             </section>
@@ -2060,13 +2158,7 @@ export function ChannelsPage() {
                     </span>
                     <Select
                       mode="multiple"
-                      options={(channelTypeByCode
-                        .get(draft.channelTypeCode)
-                        ?.supportedMediaTypes ?? []
-                      ).map((mediaType) => ({
-                        label: mediaLabelByValue.get(mediaType) ?? mediaType,
-                        value: mediaType,
-                      }))}
+                      options={mediaOptions}
                       value={draft.mediaTypes}
                       onChange={(value) =>
                         updateMediaTypes(value as MediaTypeCode[])
@@ -2333,15 +2425,17 @@ const mediaServiceModalMediaOptions: Array<{
   label: string
   value: MediaTypeCode
 }> = [
-  { label: '����ý��', value: 'TEXT' },
-  { label: '����ý��', value: 'VOICE' },
-  { label: '��Ƶý��', value: 'VIDEO' },
+  { label: 'Voice', value: 'VOICE' },
+  { label: 'Video', value: 'VIDEO' },
+  { label: 'Text', value: 'TEXT' },
+  { label: 'Non-DM', value: 'NON_DM' },
 ]
 
 const mediaServiceAccessWelcomeMessageByMedia: Record<MediaTypeCode, string> = {
-  TEXT: '���ã�����С����Ϊ���ṩ����',
-  VIDEO: '���ã���Ƶ����С����Ϊ���ṩ����',
-  VOICE: '���ã���������С����Ϊ���ṩ����',
+  TEXT: 'Hello, BANK 1 digital assistant is ready to help you.',
+  VIDEO: 'Hello, BANK 1 video assistant is ready to help you.',
+  VOICE: 'Hello, BANK 1 voice assistant is ready to help you.',
+  NON_DM: 'Hello, BANK 1 social service assistant is ready to help you.',
 }
 
 function createDefaultMediaServiceRulePlan(
@@ -2471,7 +2565,7 @@ export function MediaServiceRulePlansPage() {
     setDraft((currentDraft) => {
       const shouldReplaceGeneratedPlanCode =
         !currentDraft.planCode.trim() ||
-        /^MSRP_(TEXT|VOICE|VIDEO)_\d+$/.test(currentDraft.planCode)
+        /^MSRP_(TEXT|VOICE|VIDEO|NON_DM)_\d+$/.test(currentDraft.planCode)
       const previousDefaultWelcome =
         mediaServiceAccessWelcomeMessageByMedia[currentDraft.mediaCode]
       const shouldReplaceWelcome =

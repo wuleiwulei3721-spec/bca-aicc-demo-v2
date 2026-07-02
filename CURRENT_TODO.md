@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-06-23 18:19 +08:00
+Last updated: 2026-07-02 17:56 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -132,6 +132,11 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Skill Routing Rules batch behavior,
   - Site Access Volume ratio validation,
   - Working Time Plans layout.
+- Verify local-only Employee Management:
+  - `VITE_APP_VISIBILITY_PROFILE=customer` or unset hides Employee Management and redirects direct routes,
+  - `VITE_APP_VISIBILITY_PROFILE=local` shows Employee Management,
+  - Employee Profile Management add/edit and Skill Settings modal remain English-only,
+  - customer deployment environment does not set `VITE_APP_VISIBILITY_PROFILE=local`.
 - Verify `/design-system` still loads and reflects current component rules.
 
 ## P1 - UI and Content Refinement
@@ -155,6 +160,8 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - keep Indonesian KBV questions and business cases readable.
 - Routing Config content review:
   - align channel names, business type names, skill queues, and routing examples with customer narration.
+- Routing Config Non-DM follow-up:
+  - define the future Business Config content for Non-DM social comments, replies, mentions, and app-store reviews.
 
 ## P2 - Future Features
 

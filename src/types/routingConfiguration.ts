@@ -34,7 +34,7 @@ export type ChannelCategory =
   | 'social'
   | 'app-store'
 
-export type MediaTypeCode = 'VOICE' | 'VIDEO' | 'TEXT'
+export type MediaTypeCode = 'VOICE' | 'VIDEO' | 'TEXT' | 'NON_DM'
 
 export type ChannelScanMode = 'webhook' | 'polling' | 'manual'
 
@@ -72,8 +72,11 @@ export interface ChannelMediaBusinessConfig {
   exceptionWorkTimePlanCode: string
   maxConcurrentAccess: number
   minScanIntervalSeconds: number
+  outsideServiceHoursMessage: string
   preTimeoutReminderMessage: string
   preTimeoutReminderMinutes: number
+  queueTimeoutMessage: string
+  queueWaitingMessage: string
   webchatRecallLimitSeconds: number
 }
 

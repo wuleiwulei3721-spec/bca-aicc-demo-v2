@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Project Context
 
-Last updated: 2026-06-27 11:28 +08:00
+Last updated: 2026-07-02 17:56 +08:00
 Repository path: `D:\03projects\bca-aicc-demo-v2`
 
 ## 1. Project Name
@@ -86,13 +86,20 @@ Deployment is configured as a Vite SPA:
 - To hide Routing Config: set `VITE_ENABLE_ADMIN_MENUS=false`.
 - `.env.example` documents this behavior.
 
+`VITE_APP_VISIBILITY_PROFILE` controls customer-visible versus local-only modules:
+
+- Default / customer deployment behavior: `customer`, which hides local-only modules.
+- Local maintainer behavior: set `VITE_APP_VISIBILITY_PROFILE=local` in `.env.local` to show local-only modules.
+- Current local-only modules: `/design-system` and `/employee-management/*`.
+- Customer deployments should leave this variable unset or set it to `customer`.
+
 ## 7. Application Routes
 
 Current router structure:
 
 - `/login` -> public login page.
 - `/` -> authenticated `BasicLayout` -> `AgentWorkspace`.
-- `/design-system` -> authenticated `BasicLayout` -> `DesignSystem`.
+- `/design-system` -> authenticated `BasicLayout` -> `DesignSystem`; local-only when `VITE_APP_VISIBILITY_PROFILE=local`.
 - `/call-management/verification-rules` -> current Verification Rule V2 page.
 - `/call-management/global-control-configuration`
 - `/call-management/blacklist`
@@ -112,6 +119,8 @@ Current router structure:
 - `/routing-config/skill-routing-rules`
 - `/routing-config/working-time-plans`
 - `/routing-config/*` redirects depending on feature flag.
+- `/employee-management/employee-profiles` -> local-only Employee Profile Management page when `VITE_APP_VISIBILITY_PROFILE=local`.
+- `/employee-management/*` redirects depending on visibility profile.
 - `*` under authenticated routes redirects to `/`.
 
 All business routes under `/` require an authenticated demo session.
@@ -119,7 +128,8 @@ All business routes under `/` require an authenticated demo session.
 ## 8. Major Source Areas
 
 - `src/App.tsx`: Ant Design `ConfigProvider` and router provider.
-- `src/routes.tsx`: route definitions and feature-flagged Routing Config routes.
+- `src/routes.tsx`: route definitions, feature-flagged Routing Config routes, and local-only module guards.
+- `src/config/moduleVisibility.ts`: unified customer/local module visibility profile.
 - `src/layouts/BasicLayout.tsx`: global shell, header, side menu, agent status, call toolbar, handoff readiness, sign out / logout guards, internal chat entry.
 - `src/layouts/components/*`: toolbar, profile area, agent settings, Transfer, Outbound, Internal Chat, Toolbar Settings.
 - `src/pages/AgentWorkspace.tsx`: workspace tab container for Home, BankApp Demo, Webchat Demo, WhatsApp Demo, Live Chat, PSTN, Voice Call, and Video Call.
@@ -131,11 +141,13 @@ All business routes under `/` require an authenticated demo session.
 - `src/pages/whatsapp/WhatsAppDemoPage.tsx`: WhatsApp simulation using the BankApp demo framework.
 - `src/pages/call-management/*`: customer-visible call management configuration pages.
 - `src/pages/routing-config/*`: routing configuration data maintenance pages.
+- `src/pages/employee-management/*`: local-only employee profile management pages.
 - `src/components/*`: base UI components and compatibility components.
 - `src/components/admin/*`: unified admin CRUD layout, toolbar, table, modal, and form field components.
 - `src/mock/*`: demo data.
 - `src/types/*`: shared business and config types.
-- `src/store/*`: Zustand stores for auth, app interaction state, call management, and routing config.
+- `src/store/*`: Zustand stores for auth, app interaction state, call
+  management, routing config, and local-only employee management.
 - `src/styles/index.less`, `src/styles/tokens.less`, `src/styles/theme.ts`: global style rules, tokens, and Ant Design theme.
 
 ## 9. Main Modules
@@ -286,9 +298,33 @@ Routing Config is visible by default and includes:
 
 The pages use local routing config store data and shared admin components.
 
+Routing Config media types currently include Voice, Video, Text, and Non-DM.
+Non-DM is used for social channel comments, replies, mentions, and app-store
+reviews. Instagram, LinkedIn, Facebook, X, Tik Tok, and YouTube support Text
+and Non-DM media; AppStore and PlayStore support Non-DM only.
+
+### Employee Management
+
+Employee Management is implemented in `main` but is local-only and hidden from customer profile builds. It is visible only when `VITE_APP_VISIBILITY_PROFILE=local`.
+
+Current local-only page:
+
+- Employee Profile Management.
+
+Current behaviors:
+
+- Admin-style filters for employee ID, employee name, AICC ID, organization unit, position type, employee status, and employee role.
+- Add / Edit employee profile modal with English UI fields.
+- Employee profile table with status badges and row actions.
+- Password Reset action is a placeholder button with no backend effect.
+- Skill Settings modal supports Skill Configuration and Other Configuration tabs.
+- Skill Configuration selects Routing Config skill queues and stores Agent Weight / Skill Weight per selected skill.
+- Other Configuration stores Live Chat Max Services per employee.
+- All employee management data is local mock state; it is not connected to LDAP, HR, permission, or workforce management backends.
+
 ### Design System
 
-`/design-system` documents and demonstrates the current component contracts:
+`/design-system` documents and demonstrates the current component contracts. It is local-only when `VITE_APP_VISIBILITY_PROFILE=local`.
 
 - BaseButton.
 - BaseCard.

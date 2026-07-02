@@ -1,10 +1,10 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-06-27 11:28 +08:00
+Last updated: 2026-07-02 17:56 +08:00
 
 ## 1. Overall Status
 
-The project is a mature front-end demo for BANK 1 AICC. It includes authentication, global shell, agent status and call toolbar, inbound voice workspace, BankApp, Webchat, and WhatsApp customer simulations, video demo, live chat workspace, call management configuration, routing configuration, and a design system page.
+The project is a mature front-end demo for BANK 1 AICC. It includes authentication, global shell, agent status and call toolbar, inbound voice workspace, BankApp, Webchat, and WhatsApp customer simulations, video demo, live chat workspace, call management configuration, routing configuration, local-only employee management, and a local-only design system page.
 
 This repository is still a demo application:
 
@@ -42,6 +42,7 @@ This repository is still a demo application:
 - Collapsible side menu.
 - Menu search in expanded side menu.
 - Route-aware menu selection.
+- Unified customer/local visibility profile for local-only menus and guarded routes.
 - Header notification button.
 - Header Internal Chat entry.
 - Agent profile area.
@@ -126,6 +127,7 @@ This repository is still a demo application:
 - SLA / unanswered state with a horizontal unanswered progress bar in expanded and collapsed customer list states.
 - Live Chat workspace tab aggregates unanswered warning and breach customer counts with compact colored badges.
 - Conversation workspace.
+- Webchat active conversations show a static floating `Customer is typing` indicator above the agent composer for demo purposes.
 - Send message local state.
 - End Service / Close session behavior.
 - Customer-ended mock session handling.
@@ -226,15 +228,40 @@ Implemented behaviors:
 - Add / Edit / View / Delete modal patterns where applicable.
 - Status badge display.
 - Channel media business config.
+- Routing Config media type options include Voice, Video, Text, and Non-DM.
+- Instagram, LinkedIn, Facebook, X, Tik Tok, and YouTube support Text plus Non-DM; AppStore and PlayStore support Non-DM only.
+- Channels Edit Channel media type selector shows all configured media types, while selected values drive the Business Config tabs.
+- Text channel Business Config includes Queue Configuration for outside-service-hours, queue waiting, and queue timeout messages.
+- Non-DM appears as a Business Config media tab with no configuration content in the current demo.
+- Channels Business Config Agent Service warning and breach threshold labels include colored status dots that reuse Live Chat SLA warning and breach colors.
 - Webchat-specific recall field.
 - Phone account management disabled.
 - Business Types `Source Business Code`.
 - Skill Routing Rules batch behavior and duplicate handling.
 - Local store state for demo changes.
 
-## 15. Completed Design System
+## 15. Completed Local-Only Employee Management
 
-`/design-system` currently demonstrates:
+Employee Management is implemented in `main` but is visible only when `VITE_APP_VISIBILITY_PROFILE=local`; customer/default profile hides the menu and redirects direct routes.
+
+Implemented page:
+
+- Employee Profile Management.
+
+Implemented behaviors:
+
+- Admin-style query toolbar with Employee ID, Employee Name, AICC ID, Organization Unit, Position Type, Employee Status, and Employee Role filters.
+- Add / Edit employee profile modal with English UI fields and optional Alias field.
+- Employee profile table with status badges and row actions.
+- Password Reset action is displayed as a placeholder button with no click effect.
+- Skill Settings modal with Skill Configuration and Other Configuration tabs.
+- Skill Configuration selects Routing Config Skill Queues first, then stores Agent Weight / Skill Weight for selected skills per employee.
+- Other Configuration stores Live Chat Max Services per employee.
+- Local mock store state for demo changes.
+
+## 16. Completed Design System
+
+`/design-system` currently demonstrates the design system when `VITE_APP_VISIBILITY_PROFILE=local`:
 
 - Color system.
 - Typography.
@@ -251,7 +278,7 @@ Implemented behaviors:
 - Toolbar system.
 - Reusable component contracts.
 
-## 16. Completed Assets
+## 17. Completed Assets
 
 Current public assets include:
 
@@ -266,7 +293,7 @@ Current public assets include:
 - WhatsApp customer avatar.
 - Icons and favicon.
 
-## 17. Current Validation Baseline
+## 18. Current Validation Baseline
 
 Latest recorded validation before this documentation task:
 
@@ -277,7 +304,7 @@ Latest recorded validation before this documentation task:
 
 This documentation task intentionally does not change runtime code.
 
-## 18. Known Demo Boundaries
+## 19. Known Demo Boundaries
 
 - No backend API integration.
 - No real CRM SSO handoff.
@@ -287,8 +314,9 @@ This documentation task intentionally does not change runtime code.
 - No real routing engine.
 - No production persistence.
 - No automated Playwright test suite.
+- Employee Management is local-only mock data and does not connect to real LDAP, HR, workforce management, permission, or employee skill backends.
 
-## 19. Current Branch State at Handoff
+## 20. Current Branch State at Handoff
 
 - Expected branch: `main`.
 - Expected remote: `origin/main`.

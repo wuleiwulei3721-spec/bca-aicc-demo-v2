@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Design System
 
-Last updated: 2026-06-27 11:28 +08:00
+Last updated: 2026-07-02 17:56 +08:00
 
 This document records the current implemented visual rules. It should be treated as the design baseline for future pages and components.
 
@@ -132,6 +132,7 @@ Rules:
 - Workspace tabs can be editable-card style.
 - Home and Live Chat fixed tabs are not closable.
 - Live Chat workspace tab may show compact status badges after the longest service duration: orange for unanswered SLA warning count and red for unanswered SLA breach count.
+- Routing Config Channels Business Config uses the same Live Chat SLA warning and breach colors for Agent Service threshold status dots.
 - Active call tabs are not closable; ended call tabs are closable.
 - CRM base tab is not closable.
 - Conversation tab is not closable.
@@ -240,7 +241,7 @@ Rules:
 
 ## 13. Admin Management Page Contract
 
-For Call Management, Routing Config, or future maintenance pages, use:
+For Call Management, Routing Config, Employee Management, or future maintenance pages, use:
 
 - `AdminPage`
 - `AdminToolbar`
@@ -269,6 +270,7 @@ Admin list rules:
 - Internal table vertical scroll is only for long tables inside modals.
 - Actions column should be fixed right when horizontal scroll is needed.
 - Complex filters may wrap, but Search / Reset stay in the query action group and Batch Add / Add stay in the right primary-action group.
+- Local-only management modules such as Employee Management must still use English UI text and the same admin layout contract as customer-visible management pages.
 
 ## 14. Responsive and Demo Quality Rules
 

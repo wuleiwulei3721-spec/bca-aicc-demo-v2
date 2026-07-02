@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { PublicLoginRoute, RequireAuth } from './components/AuthRouteGuards'
-import { featureFlags } from './config/featureFlags'
+import { isModuleVisible } from './config/moduleVisibility'
 import {
   AgentWorkspace,
   BlacklistManagementPage,
@@ -11,6 +11,7 @@ import {
   BusinessTypesPage,
   ChannelsPage,
   DesignSystem,
+  EmployeeProfileManagementPage,
   GlobalControlConfigurationPage,
   PriorityListManagementPage,
   SensitiveWordManagementPage,
@@ -82,7 +83,7 @@ const callManagementRoutes = [
   },
 ]
 
-const routingConfigRoutes = featureFlags.enableRoutingConfigMenus
+const routingConfigRoutes = isModuleVisible('routing-config')
   ? [
       {
         path: 'routing-config',
@@ -148,6 +149,50 @@ const routingConfigRoutes = featureFlags.enableRoutingConfigMenus
       },
     ]
 
+const designSystemRoute = isModuleVisible('design-system')
+  ? [
+      {
+        path: 'design-system',
+        element: <DesignSystem />,
+      },
+    ]
+  : [
+      {
+        path: 'design-system',
+        element: <Navigate replace to="/" />,
+      },
+    ]
+
+const employeeManagementRoutes = isModuleVisible('employee-management')
+  ? [
+      {
+        path: 'employee-management',
+        element: (
+          <Navigate replace to="/employee-management/employee-profiles" />
+        ),
+      },
+      {
+        path: 'employee-management/employee-profiles',
+        element: <EmployeeProfileManagementPage />,
+      },
+      {
+        path: 'employee-management/*',
+        element: (
+          <Navigate replace to="/employee-management/employee-profiles" />
+        ),
+      },
+    ]
+  : [
+      {
+        path: 'employee-management',
+        element: <Navigate replace to="/" />,
+      },
+      {
+        path: 'employee-management/*',
+        element: <Navigate replace to="/" />,
+      },
+    ]
+
 export const router = createBrowserRouter([
   {
     path: '/login',
@@ -161,12 +206,10 @@ export const router = createBrowserRouter([
         index: true,
         element: <AgentWorkspace />,
       },
-      {
-        path: 'design-system',
-        element: <DesignSystem />,
-      },
+      ...designSystemRoute,
       ...callManagementRoutes,
       ...routingConfigRoutes,
+      ...employeeManagementRoutes,
       {
         path: '*',
         element: <Navigate replace to="/" />,

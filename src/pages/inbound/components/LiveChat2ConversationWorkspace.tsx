@@ -468,6 +468,7 @@ export function LiveChat2ConversationWorkspace({
   const readOnly = session.statusDisplay === 'history'
   const isEnded = session.statusDisplay === 'ended'
   const canCompose = !readOnly && !isEnded
+  const shouldShowTypingIndicator = session.channel === 'Webchat' && canCompose
   const canRecallMessages =
     session.channel === 'BankApp' || session.channel === 'Webchat'
   const trimmedDraft = draftMessage.trim()
@@ -774,95 +775,113 @@ export function LiveChat2ConversationWorkspace({
             )
           })}
         </section>
-
       </div>
 
       {canCompose && (
-        <footer className="livechat2-composer">
-          {sendBlockedMessage && (
-            <Alert
-              showIcon
-              className="livechat2-composer__warning"
-              description={sendBlockedMessage}
-              message="Message blocked by sensitive word check."
-              type="warning"
-            />
-          )}
-          {quoteMessage && (
-            <div className="livechat2-composer__quote">
-              <span>{quoteMessage}</span>
-              <button
-                aria-label="Remove quote"
-                type="button"
-                onClick={() => setQuoteMessage(null)}
-              >
-                <CloseOutlined />
-              </button>
-            </div>
-          )}
-          <textarea
-            aria-label={`Message ${session.customer.profile.name}`}
-            placeholder="Type / for quick replies"
-            ref={composerRef}
-            value={draftMessage}
-            onChange={(event) => onDraftChange(session.id, event.target.value)}
-            onKeyDown={handleComposerKeyDown}
-          />
-          {filteredQuickReplies.length > 0 && (
-            <div className="livechat2-quick-replies" role="listbox">
-              {filteredQuickReplies.map((reply, index) => (
-                <button
-                  aria-selected={index === selectedQuickReplyIndex}
-                  className={
-                    index === selectedQuickReplyIndex ? 'is-selected' : ''
-                  }
-                  key={reply.id}
-                  role="option"
-                  type="button"
-                  onMouseEnter={() =>
-                    setQuickReplySelection({
-                      index,
-                      listKey: quickReplyListKey,
-                    })
-                  }
-                  onClick={() => handleQuickReplySelect(reply)}
-                >
-                  <strong>{reply.code}</strong>
-                  <span>{reply.text}</span>
-                  <em>{reply.source}</em>
-                </button>
-              ))}
-            </div>
-          )}
-          <div className="livechat2-composer__toolbar">
-            <div className="livechat2-composer__tools">
-              <button title="Emoji" type="button">
-                <SmileOutlined />
-              </button>
-              <button title="File" type="button">
-                <FolderOpenOutlined />
-              </button>
-              <button
-                aria-label="Message record"
-                className={isMessageRecordOpen ? 'is-active' : ''}
-                title="Message record"
-                type="button"
-                onClick={onOpenMessageRecord}
-              >
-                <HistoryOutlined />
-              </button>
-            </div>
-            <BaseButton
-              icon={<SendOutlined />}
-              size="small"
-              type="primary"
-              variant="primary"
-              onClick={handleSend}
+        <div className="livechat2-composer-shell">
+          {shouldShowTypingIndicator && (
+            <div
+              aria-label="Customer is typing"
+              className="livechat2-typing-indicator"
+              role="status"
             >
-              Send
-            </BaseButton>
-          </div>
-        </footer>
+              <span>Customer is typing</span>
+              <span aria-hidden="true" className="livechat2-typing-dots">
+                <span>.</span>
+                <span>.</span>
+                <span>.</span>
+              </span>
+            </div>
+          )}
+
+          <footer className="livechat2-composer">
+            {sendBlockedMessage && (
+              <Alert
+                showIcon
+                className="livechat2-composer__warning"
+                description={sendBlockedMessage}
+                message="Message blocked by sensitive word check."
+                type="warning"
+              />
+            )}
+            {quoteMessage && (
+              <div className="livechat2-composer__quote">
+                <span>{quoteMessage}</span>
+                <button
+                  aria-label="Remove quote"
+                  type="button"
+                  onClick={() => setQuoteMessage(null)}
+                >
+                  <CloseOutlined />
+                </button>
+              </div>
+            )}
+            <textarea
+              aria-label={`Message ${session.customer.profile.name}`}
+              placeholder="Type / for quick replies"
+              ref={composerRef}
+              value={draftMessage}
+              onChange={(event) =>
+                onDraftChange(session.id, event.target.value)
+              }
+              onKeyDown={handleComposerKeyDown}
+            />
+            {filteredQuickReplies.length > 0 && (
+              <div className="livechat2-quick-replies" role="listbox">
+                {filteredQuickReplies.map((reply, index) => (
+                  <button
+                    aria-selected={index === selectedQuickReplyIndex}
+                    className={
+                      index === selectedQuickReplyIndex ? 'is-selected' : ''
+                    }
+                    key={reply.id}
+                    role="option"
+                    type="button"
+                    onMouseEnter={() =>
+                      setQuickReplySelection({
+                        index,
+                        listKey: quickReplyListKey,
+                      })
+                    }
+                    onClick={() => handleQuickReplySelect(reply)}
+                  >
+                    <strong>{reply.code}</strong>
+                    <span>{reply.text}</span>
+                    <em>{reply.source}</em>
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="livechat2-composer__toolbar">
+              <div className="livechat2-composer__tools">
+                <button title="Emoji" type="button">
+                  <SmileOutlined />
+                </button>
+                <button title="File" type="button">
+                  <FolderOpenOutlined />
+                </button>
+                <button
+                  aria-label="Message record"
+                  className={isMessageRecordOpen ? 'is-active' : ''}
+                  title="Message record"
+                  type="button"
+                  onClick={onOpenMessageRecord}
+                >
+                  <HistoryOutlined />
+                </button>
+              </div>
+              <BaseButton
+                icon={<SendOutlined />}
+                size="small"
+                type="primary"
+                variant="primary"
+                onClick={handleSend}
+              >
+                Send
+              </BaseButton>
+            </div>
+          </footer>
+        </div>
       )}
 
       {readOnly && (

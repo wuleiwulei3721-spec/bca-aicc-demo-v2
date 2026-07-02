@@ -180,9 +180,12 @@ const textBusinessConfig: ChannelMediaBusinessConfig = {
   exceptionWorkTimePlanCode: '',
   maxConcurrentAccess: 50,
   minScanIntervalSeconds: 30,
+  outsideServiceHoursMessage: 'Sorry, we are currently outside service hours.',
   preTimeoutReminderMessage:
     'We have not received your reply. This conversation will close in {reminderMinutes} minute(s).',
   preTimeoutReminderMinutes: 1,
+  queueTimeoutMessage: 'All agents are currently busy. Please try again later.',
+  queueWaitingMessage: 'All agents are currently busy. Please wait.',
   webchatRecallLimitSeconds: 120,
 }
 
@@ -198,6 +201,12 @@ const videoBusinessConfig: ChannelMediaBusinessConfig = {
     'Hello, BANK 1 video assistant is ready to help you.',
 }
 
+const nonDmBusinessConfig: ChannelMediaBusinessConfig = {
+  ...textBusinessConfig,
+  accessSuccessWelcomeMessage:
+    'Hello, BANK 1 social service assistant is ready to help you.',
+}
+
 const buildBusinessConfig = (
   mediaTypes: MediaTypeCode[],
 ): ChannelBusinessConfig =>
@@ -208,7 +217,9 @@ const buildBusinessConfig = (
           ? voiceBusinessConfig
           : mediaCode === 'VIDEO'
             ? videoBusinessConfig
-            : textBusinessConfig
+            : mediaCode === 'NON_DM'
+              ? nonDmBusinessConfig
+              : textBusinessConfig
 
       return [mediaCode, { ...config }]
     }),
@@ -312,7 +323,7 @@ export const channelTypes: ChannelType[] = [
     channelTypeName: 'Instagram',
     licenseStatus: 'Licensed',
     status: 'Active',
-    supportedMediaTypes: ['TEXT'],
+    supportedMediaTypes: ['TEXT', 'NON_DM'],
   },
   {
     accessParameterFields: [
@@ -326,7 +337,7 @@ export const channelTypes: ChannelType[] = [
     channelTypeName: 'LinkedIn',
     licenseStatus: 'Licensed',
     status: 'Active',
-    supportedMediaTypes: ['TEXT'],
+    supportedMediaTypes: ['TEXT', 'NON_DM'],
   },
   {
     accessParameterFields: [
@@ -343,7 +354,7 @@ export const channelTypes: ChannelType[] = [
     channelTypeName: 'Facebook',
     licenseStatus: 'Licensed',
     status: 'Active',
-    supportedMediaTypes: ['TEXT'],
+    supportedMediaTypes: ['TEXT', 'NON_DM'],
   },
   {
     accessParameterFields: [
@@ -357,7 +368,7 @@ export const channelTypes: ChannelType[] = [
     channelTypeName: 'X',
     licenseStatus: 'Licensed',
     status: 'Active',
-    supportedMediaTypes: ['TEXT'],
+    supportedMediaTypes: ['TEXT', 'NON_DM'],
   },
   {
     accessParameterFields: [
@@ -371,7 +382,7 @@ export const channelTypes: ChannelType[] = [
     channelTypeName: 'Tik Tok',
     licenseStatus: 'Licensed',
     status: 'Active',
-    supportedMediaTypes: ['TEXT'],
+    supportedMediaTypes: ['TEXT', 'NON_DM'],
   },
   {
     accessParameterFields: [
@@ -384,7 +395,7 @@ export const channelTypes: ChannelType[] = [
     channelTypeName: 'YouTube',
     licenseStatus: 'Licensed',
     status: 'Active',
-    supportedMediaTypes: ['TEXT'],
+    supportedMediaTypes: ['TEXT', 'NON_DM'],
   },
   {
     accessParameterFields: [
@@ -402,7 +413,7 @@ export const channelTypes: ChannelType[] = [
     channelTypeName: 'AppStore',
     licenseStatus: 'Licensed',
     status: 'Active',
-    supportedMediaTypes: ['TEXT'],
+    supportedMediaTypes: ['NON_DM'],
   },
   {
     accessParameterFields: [
@@ -424,7 +435,7 @@ export const channelTypes: ChannelType[] = [
     channelTypeName: 'PlayStore',
     licenseStatus: 'Licensed',
     status: 'Active',
-    supportedMediaTypes: ['TEXT'],
+    supportedMediaTypes: ['NON_DM'],
   },
 ]
 
@@ -535,12 +546,12 @@ export const channels: Channel[] = [
       metaAppId: 'meta-bank1-service',
       webhookVerifyTokenRef: 'secret://aicc/instagram/verify-token',
     },
-    businessConfig: buildBusinessConfig(['TEXT']),
+    businessConfig: buildBusinessConfig(['TEXT', 'NON_DM']),
     channelCode: 'INSTAGRAM',
     channelId: '501',
     channelName: 'Instagram',
     channelTypeCode: 'INSTAGRAM',
-    mediaTypes: ['TEXT'],
+    mediaTypes: ['TEXT', 'NON_DM'],
     status: 'Active',
   },
   {
@@ -550,12 +561,12 @@ export const channels: Channel[] = [
       oauthSecretRef: 'secret://aicc/linkedin/oauth',
       organizationId: '100001',
     },
-    businessConfig: buildBusinessConfig(['TEXT']),
+    businessConfig: buildBusinessConfig(['TEXT', 'NON_DM']),
     channelCode: 'LINKEDIN',
     channelId: '502',
     channelName: 'LinkedIn',
     channelTypeCode: 'LINKEDIN',
-    mediaTypes: ['TEXT'],
+    mediaTypes: ['TEXT', 'NON_DM'],
     status: 'Active',
   },
   {
@@ -564,12 +575,12 @@ export const channels: Channel[] = [
       pageAccessTokenRef: 'secret://aicc/facebook/page-token',
       webhookVerifyTokenRef: 'secret://aicc/facebook/verify-token',
     },
-    businessConfig: buildBusinessConfig(['TEXT']),
+    businessConfig: buildBusinessConfig(['TEXT', 'NON_DM']),
     channelCode: 'FACEBOOK',
     channelId: '503',
     channelName: 'Facebook',
     channelTypeCode: 'FACEBOOK',
-    mediaTypes: ['TEXT'],
+    mediaTypes: ['TEXT', 'NON_DM'],
     status: 'Active',
   },
   {
@@ -579,12 +590,12 @@ export const channels: Channel[] = [
       oauthSecretRef: 'secret://aicc/x/oauth',
       webhookEnvironment: 'prod',
     },
-    businessConfig: buildBusinessConfig(['TEXT']),
+    businessConfig: buildBusinessConfig(['TEXT', 'NON_DM']),
     channelCode: 'X',
     channelId: '504',
     channelName: 'X',
     channelTypeCode: 'X',
-    mediaTypes: ['TEXT'],
+    mediaTypes: ['TEXT', 'NON_DM'],
     status: 'Active',
   },
   {
@@ -594,12 +605,12 @@ export const channels: Channel[] = [
       oauthSecretRef: 'secret://aicc/tiktok/oauth',
       webhookUrl: 'https://aicc.bank1.example/hooks/tiktok',
     },
-    businessConfig: buildBusinessConfig(['TEXT']),
+    businessConfig: buildBusinessConfig(['TEXT', 'NON_DM']),
     channelCode: 'TIKTOK',
     channelId: '505',
     channelName: 'Tik Tok',
     channelTypeCode: 'TIKTOK',
-    mediaTypes: ['TEXT'],
+    mediaTypes: ['TEXT', 'NON_DM'],
     status: 'Active',
   },
   {
@@ -608,12 +619,12 @@ export const channels: Channel[] = [
       oauthClientId: 'youtube-client-bank1',
       oauthSecretRef: 'secret://aicc/youtube/oauth',
     },
-    businessConfig: buildBusinessConfig(['TEXT']),
+    businessConfig: buildBusinessConfig(['TEXT', 'NON_DM']),
     channelCode: 'YOUTUBE',
     channelId: '506',
     channelName: 'YouTube',
     channelTypeCode: 'YOUTUBE',
-    mediaTypes: ['TEXT'],
+    mediaTypes: ['TEXT', 'NON_DM'],
     status: 'Active',
   },
   {
@@ -623,12 +634,12 @@ export const channels: Channel[] = [
       keyId: 'key-bank1-appstore',
       privateKeySecretRef: 'secret://aicc/appstore/private-key',
     },
-    businessConfig: buildBusinessConfig(['TEXT']),
+    businessConfig: buildBusinessConfig(['NON_DM']),
     channelCode: 'APPSTORE',
     channelId: '601',
     channelName: 'AppStore',
     channelTypeCode: 'APPSTORE',
-    mediaTypes: ['TEXT'],
+    mediaTypes: ['NON_DM'],
     status: 'Active',
   },
   {
@@ -638,12 +649,12 @@ export const channels: Channel[] = [
       serviceAccountEmail: 'aicc-playstore@bank1-aicc.iam.gserviceaccount.com',
       serviceAccountSecretRef: 'secret://aicc/playstore/service-account',
     },
-    businessConfig: buildBusinessConfig(['TEXT']),
+    businessConfig: buildBusinessConfig(['NON_DM']),
     channelCode: 'PLAYSTORE',
     channelId: '602',
     channelName: 'PlayStore',
     channelTypeCode: 'PLAYSTORE',
-    mediaTypes: ['TEXT'],
+    mediaTypes: ['NON_DM'],
     status: 'Active',
   },
 ]
@@ -662,6 +673,11 @@ export const mediaTypes: MediaType[] = [
   {
     mediaCode: 'TEXT',
     mediaName: 'Text',
+    status: 'Active',
+  },
+  {
+    mediaCode: 'NON_DM',
+    mediaName: 'Non-DM',
     status: 'Active',
   },
 ]
@@ -748,21 +764,81 @@ export const channelMediaSettings: ChannelMedia[] = [
     status: 'Active',
   },
   {
+    channelCode: 'INSTAGRAM',
+    channelMediaCode: 'INSTAGRAM_NON_DM',
+    extensionConfig: 'Comments, replies, and mentions',
+    maxConcurrency: 50,
+    mediaCode: 'NON_DM',
+    minScanIntervalSeconds: null,
+    scanMode: 'webhook',
+    status: 'Active',
+  },
+  {
+    channelCode: 'LINKEDIN',
+    channelMediaCode: 'LINKEDIN_NON_DM',
+    extensionConfig: 'Comments, replies, and mentions',
+    maxConcurrency: 50,
+    mediaCode: 'NON_DM',
+    minScanIntervalSeconds: null,
+    scanMode: 'webhook',
+    status: 'Active',
+  },
+  {
+    channelCode: 'FACEBOOK',
+    channelMediaCode: 'FACEBOOK_NON_DM',
+    extensionConfig: 'Comments, replies, and mentions',
+    maxConcurrency: 50,
+    mediaCode: 'NON_DM',
+    minScanIntervalSeconds: null,
+    scanMode: 'webhook',
+    status: 'Active',
+  },
+  {
+    channelCode: 'X',
+    channelMediaCode: 'X_NON_DM',
+    extensionConfig: 'Replies and mentions',
+    maxConcurrency: 50,
+    mediaCode: 'NON_DM',
+    minScanIntervalSeconds: null,
+    scanMode: 'webhook',
+    status: 'Active',
+  },
+  {
+    channelCode: 'TIKTOK',
+    channelMediaCode: 'TIKTOK_NON_DM',
+    extensionConfig: 'Comments, replies, and mentions',
+    maxConcurrency: 50,
+    mediaCode: 'NON_DM',
+    minScanIntervalSeconds: null,
+    scanMode: 'webhook',
+    status: 'Active',
+  },
+  {
+    channelCode: 'YOUTUBE',
+    channelMediaCode: 'YOUTUBE_NON_DM',
+    extensionConfig: 'Comments, replies, and mentions',
+    maxConcurrency: 50,
+    mediaCode: 'NON_DM',
+    minScanIntervalSeconds: null,
+    scanMode: 'webhook',
+    status: 'Active',
+  },
+  {
     channelCode: 'APPSTORE',
-    channelMediaCode: 'APPSTORE_TEXT',
+    channelMediaCode: 'APPSTORE_NON_DM',
     extensionConfig: 'Review import and reply workflow',
     maxConcurrency: 50,
-    mediaCode: 'TEXT',
+    mediaCode: 'NON_DM',
     minScanIntervalSeconds: 30,
     scanMode: 'polling',
     status: 'Active',
   },
   {
     channelCode: 'PLAYSTORE',
-    channelMediaCode: 'PLAYSTORE_TEXT',
+    channelMediaCode: 'PLAYSTORE_NON_DM',
     extensionConfig: 'Review import and reply workflow',
     maxConcurrency: 50,
-    mediaCode: 'TEXT',
+    mediaCode: 'NON_DM',
     minScanIntervalSeconds: 30,
     scanMode: 'polling',
     status: 'Active',
@@ -907,20 +983,64 @@ export const mediaServiceRulePlans: MediaServiceRulePlan[] = [
     updatedBy: 'Admin',
     webchatRecallLimitSeconds: 120,
   },
+  {
+    accessSuccessWelcomeMessage:
+      'Hello, BANK 1 social service assistant is ready to help you.',
+    agentNoReplyAutoResponseMessage:
+      'Please hold on. We are still processing your request.',
+    agentNoReplyBreachSeconds: 120,
+    agentNoReplyTimeoutSeconds: 120,
+    agentNoReplyWarningSeconds: 60,
+    agentEndReminder:
+      'Thank you for contacting BANK 1. We are glad to assist you.',
+    assignedAgentGreeting:
+      'Hello {customerName}, {agentName} will assist you. If you do not reply within {timeoutMinutes} minutes, the conversation will be closed automatically.',
+    agentTimeoutNotice:
+      'The customer did not reply within the configured timeout. The conversation has been closed automatically.',
+    customerNoReplyTimeoutMinutes: 5,
+    customerTimeoutNotice:
+      'We did not receive your reply. The service has been closed automatically. Please contact us again if you need help.',
+    description:
+      'Standard non-DM service for social comments, replies, mentions, and app reviews.',
+    maxConcurrentAccess: 50,
+    maxQueueCustomers: 20,
+    mediaCode: 'NON_DM',
+    minScanIntervalSeconds: 30,
+    nonWorkingTimeMessage:
+      'Sorry, we are currently outside service hours.',
+    planCode: 'MSRP_NON_DM_STANDARD',
+    planName: 'Standard Non-DM Service',
+    preTimeoutReminderMessage:
+      'We have not received your reply. This conversation will close in {reminderMinutes} minute(s).',
+    preTimeoutReminderMinutes: 1,
+    queueTimeoutMessage:
+      'All agents are currently busy. Please try again later.',
+    queueTimeoutMinutes: 10,
+    queueWaitingMessage: 'All agents are currently busy. Please wait.',
+    status: 'Active',
+    updatedAt: '2026-07-02',
+    updatedBy: 'Admin',
+    webchatRecallLimitSeconds: 120,
+  },
 ]
 
 export const channelMediaRuleBindings: ChannelMediaRuleBinding[] = channels
-  .filter((channel) => channel.mediaTypes.includes('TEXT'))
-  .map((channel) => ({
-    bindingCode: `${channel.channelCode}_TEXT`,
-    channelCode: channel.channelCode,
-    mediaCode: 'TEXT',
-    rulePlanCode:
-      channel.channelCode === 'BANKAPP'
-        ? 'MSRP_TEXT_PRIORITY'
-        : 'MSRP_TEXT_STANDARD',
-    status: 'Active',
-  }))
+  .flatMap((channel) =>
+    channel.mediaTypes
+      .filter((mediaCode) => mediaCode === 'TEXT' || mediaCode === 'NON_DM')
+      .map((mediaCode) => ({
+        bindingCode: `${channel.channelCode}_${mediaCode}`,
+        channelCode: channel.channelCode,
+        mediaCode,
+        rulePlanCode:
+          mediaCode === 'NON_DM'
+            ? 'MSRP_NON_DM_STANDARD'
+            : channel.channelCode === 'BANKAPP'
+              ? 'MSRP_TEXT_PRIORITY'
+              : 'MSRP_TEXT_STANDARD',
+        status: 'Active',
+      })),
+  )
 
 export const languageTypes: LanguageType[] = [
   {

@@ -5,6 +5,7 @@ import {
   BranchesOutlined,
   CustomerServiceOutlined,
   ExclamationCircleOutlined,
+  IdcardOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   MessageOutlined,
@@ -17,7 +18,10 @@ import { Badge, Layout, Modal } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { featureFlags } from '../config/featureFlags'
+import {
+  isModuleVisible,
+  type ModuleVisibilityKey,
+} from '../config/moduleVisibility'
 import { headerAgentProfile } from '../mock/agent'
 import { useAppStore, useAuthStore } from '../store'
 import type {
@@ -59,6 +63,7 @@ interface SideMenuItem {
   icon: ReactNode
   label: string
   children?: SideMenuChildItem[]
+  moduleKey: ModuleVisibilityKey
 }
 
 interface CallTiming {
@@ -113,13 +118,12 @@ const routingConfigMenuKeyByRoute = Object.fromEntries(
   ]),
 ) as Record<string, string>
 
-const routingConfigMenuKeys = new Set(['routing-config'])
-
 const allSideMenuItems: SideMenuItem[] = [
   {
     key: 'test-menu',
     icon: <AppstoreOutlined />,
     label: 'Channel Simulation',
+    moduleKey: 'channel-simulation',
     children: [
       {
         key: 'test-pstn-voice',
@@ -143,6 +147,7 @@ const allSideMenuItems: SideMenuItem[] = [
     key: 'call-management',
     icon: <CustomerServiceOutlined />,
     label: 'Call Management',
+    moduleKey: 'call-management',
     children: [
       {
         key: 'call-management-verification-rules',
@@ -186,6 +191,7 @@ const allSideMenuItems: SideMenuItem[] = [
     key: 'routing-config',
     icon: <BranchesOutlined />,
     label: 'Routing Config',
+    moduleKey: 'routing-config',
     children: [
       {
         key: 'routing-vdn',
@@ -222,9 +228,28 @@ const allSideMenuItems: SideMenuItem[] = [
     ],
   },
   {
+    key: 'employee-management',
+    icon: <IdcardOutlined />,
+    label: 'Employee Management',
+    moduleKey: 'employee-management',
+    children: [
+      {
+        key: 'employee-profile-management',
+        label: 'Employee Profile Management',
+      },
+    ],
+  },
+  {
+    key: 'design-system',
+    icon: <SettingOutlined />,
+    label: 'Design System',
+    moduleKey: 'design-system',
+  },
+  {
     key: 'profile',
     icon: <UserOutlined />,
     label: 'Agent Center',
+    moduleKey: 'channel-simulation',
     children: [
       {
         key: 'profile-info',
@@ -240,6 +265,7 @@ const allSideMenuItems: SideMenuItem[] = [
     key: 'operations',
     icon: <SettingOutlined />,
     label: 'Operations',
+    moduleKey: 'channel-simulation',
     children: [
       {
         key: 'operations-warning-metrics',
@@ -255,13 +281,12 @@ const allSideMenuItems: SideMenuItem[] = [
     key: 'reports',
     icon: <BarChartOutlined />,
     label: 'Reports',
+    moduleKey: 'channel-simulation',
   },
 ]
 
-const sideMenuItems = allSideMenuItems.filter(
-  (item) =>
-    featureFlags.enableRoutingConfigMenus ||
-    !routingConfigMenuKeys.has(item.key),
+const sideMenuItems = allSideMenuItems.filter((item) =>
+  isModuleVisible(item.moduleKey),
 )
 
 export function BasicLayout() {
@@ -931,6 +956,9 @@ export function BasicLayout() {
 
         if (!item.children?.length) {
           setSelectedMenuKey(item.key)
+          if (item.key === 'design-system') {
+            navigate('/design-system')
+          }
         }
 
         return
@@ -946,8 +974,11 @@ export function BasicLayout() {
       }
 
       setSelectedMenuKey(item.key)
+      if (item.key === 'design-system') {
+        navigate('/design-system')
+      }
     },
-    [collapsed],
+    [collapsed, navigate],
   )
 
   const handleChildMenuClick = useCallback(
@@ -1009,6 +1040,10 @@ export function BasicLayout() {
 
       if (childKey === 'call-management-busy-reasons') {
         navigate('/call-management/busy-reasons')
+      }
+
+      if (childKey === 'employee-profile-management') {
+        navigate('/employee-management/employee-profiles')
       }
 
       const routingConfigPath = routingConfigRoutesByMenuKey[childKey]
@@ -1180,6 +1215,14 @@ export function BasicLayout() {
       return 'call-management-sensitive-words'
     }
 
+    if (location.pathname.startsWith('/employee-management/employee-profiles')) {
+      return 'employee-profile-management'
+    }
+
+    if (location.pathname.startsWith('/design-system')) {
+      return 'design-system'
+    }
+
     return routingConfigMenuKeyByRoute[location.pathname] ?? null
   }, [location.pathname])
   const effectiveSelectedMenuKey = routeMenuKey ?? selectedMenuKey
@@ -1198,6 +1241,14 @@ export function BasicLayout() {
       !openMenuKeys.includes('call-management')
     ) {
       return [...openMenuKeys, 'call-management']
+    }
+
+    if (
+      !collapsed &&
+      routeMenuKey?.startsWith('employee-') &&
+      !openMenuKeys.includes('employee-management')
+    ) {
+      return [...openMenuKeys, 'employee-management']
     }
 
     return openMenuKeys

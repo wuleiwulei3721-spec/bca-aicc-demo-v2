@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-06-29 16:25 +08:00
+最后更新：2026-07-02 17:56 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,181 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-07-02 17:56 +08:00 - main 恢复本地 Employee Management 并默认隐藏
+
+修改页面或文件：
+
+- `.env.example`
+- `src/config/moduleVisibility.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/routes.tsx`
+- `src/pages/employee-management/*`
+- `src/mock/employeeManagement.ts`
+- `src/store/employeeManagementStore.ts`
+- `src/types/employeeManagement.ts`
+- `src/pages/index.ts`
+- `src/store/index.ts`
+- `src/types/index.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DESIGN_SYSTEM.md`
+- `BUSINESS_RULES.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户确认不再通过单独员工管理分支隔离功能，而是统一放在 `main`，客户发布仍以 `main` 为准。
+- Employee Management 暂时只给本地维护查看，不能在客户发布环境显示。
+- 之前本地 `codex/employee-management` 分支容易造成误切和误解，需要删除并把可见性控制落到代码里。
+
+修改结果：
+
+- 删除本地 `codex/employee-management` 分支，当前工作统一回到 `main`。
+- 新增 `VITE_APP_VISIBILITY_PROFILE=customer|local`；默认 customer，客户构建隐藏 local-only 模块。
+- `VITE_APP_VISIBILITY_PROFILE=local` 时显示 Employee Management 和 Design System。
+- Customer/default profile 下隐藏 Employee Management 菜单，并拦截 `/employee-management/*` 直达路由返回 `/`。
+- 恢复 Employee Profile Management 页面、员工 mock、store、type 和 admin 样式。
+- 本地 `.env.local` 保持 `VITE_APP_VISIBILITY_PROFILE=local`，该文件已由 `.gitignore` 排除，不会提交给客户环境。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npx tsc --noEmit` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+- Chrome CDP 冒烟已通过：`VITE_APP_VISIBILITY_PROFILE=customer` 时菜单不显示 Employee Management / Design System，直达 `/employee-management/employee-profiles` 重定向到 `/`。
+- Chrome CDP 冒烟已通过：本地 `VITE_APP_VISIBILITY_PROFILE=local` 时菜单显示 Employee Management / Design System，`/employee-management/employee-profiles` 可打开 Employee Profile Management。
+
+回滚说明：
+
+- 如需完全移除 Employee Management，可删除 `src/pages/employee-management/*`、employee mock/store/type 文件，并移除 `moduleVisibility`、路由、菜单、导出入口和样式中的相关引用。
+- 如只需隐藏，无需回滚代码，保持客户环境 `VITE_APP_VISIBILITY_PROFILE=customer` 或不设置该变量即可。
+
+当前风险点：
+
+- Employee Management 当前是本地前端 mock 数据，不连接真实 LDAP / HR / 权限 / 坐席技能后端。
+- 统一 visibility profile 当前覆盖模块级入口；如后续要按子菜单精细控制，需要继续拆分配置粒度。
+
+### 2026-07-02 15:23 +08:00 - Channels Agent Service 阈值颜色圆点
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `DESIGN_SYSTEM.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户确认在 Channels Business Config 的 `Agent Service Configuration` 中，为 `Agent No Reply Warning (sec)` 和 `Agent No Reply Breach (sec)` 增加颜色圆点，帮助客户区分预警和超时阈值。
+- 颜色需要与 Live Chat 中的 SLA warning / breach 颜色值保持一致。
+
+修改结果：
+
+- 保留既有字段名不变：`Agent No Reply Warning (sec)`、`Agent No Reply Breach (sec)`。
+- 两个字段 label 前新增状态圆点：warning 使用 `--aicc-livechat-sla-warning`，breach 使用 `--aicc-livechat-sla-breach`。
+- 同步记录 Routing Config 业务规则、当前状态和设计系统颜色复用规则。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+- Chrome CDP 冒烟已通过：WhatsApp Business Config 中 `Agent No Reply Warning (sec)` 和 `Agent No Reply Breach (sec)` 字段名保持不变；warning 圆点颜色为 `rgb(245, 158, 11)`，breach 圆点颜色为 `rgb(240, 68, 56)`，均与 Live Chat SLA 颜色变量解析值一致。
+
+回滚说明：
+
+- 如需回滚，可移除 `renderBusinessNumberField` 的 severity 圆点渲染和对应 `.routing-config-channel-business__sla-*` 样式。
+
+当前风险点：
+
+- 该调整仅改变视觉标识，不改变业务字段、默认值或配置保存结构。
+
+### 2026-07-02 15:14 +08:00 - Channels 媒体类型编辑下拉显示全量选项
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户指出 Channels > Edit Channel 弹框中的 `Media Type` 下拉应显示全部四个媒体类型，而不是只显示当前 Channel Type 的已支持媒体列表。
+- 当前渠道已选媒体类型才是默认值，并用于决定 Business Config 弹框中显示哪些媒体页签。
+
+修改结果：
+
+- Edit Channel 的 `Media Type` 多选下拉改为使用全局 `mediaOptions`，显示 Voice、Video、Text、Non-DM。
+- 移除保存时“Media Type must be supported by the Channel Type.” 的限制校验。
+- 仍保留当前渠道 `mediaTypes` 作为默认已选值；选择变化后继续通过 `normalizeChannelBusinessConfig` 生成对应 Business Config tab。
+- 同步记录 Routing Config 业务规则和当前状态。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+- Chrome CDP 冒烟已通过：X 渠道 Edit Channel 默认已选 Text / Non-DM，Media Type 下拉显示 Voice、Video、Text、Non-DM 四个选项。
+
+回滚说明：
+
+- 如需回滚，可将 Edit Channel `Media Type` options 改回 Channel Type 的 `supportedMediaTypes`，并恢复 unsupported media validation。
+
+当前风险点：
+
+- Channel Type 的 `supportedMediaTypes` 仍保留在 mock 数据中用于类型默认能力说明；当前编辑弹框不再把它作为强限制。
+
+### 2026-07-02 14:59 +08:00 - Routing Config 新增 Non-DM 媒体类型并清理 main 分支污染
+
+修改页面或文件：
+
+- `src/types/routingConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `BUSINESS_RULES.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户要求在现有 Voice、Video、Text 之后新增 Non-DM 媒体类型，用于社媒评论、回复、提及和应用商店评论场景。
+- Routing Config 中所有依赖媒体类型数据源的选项需要同步包含 Non-DM。
+- AppStore / PlayStore 只应保留 Non-DM 媒体。
+- 当前 main 工作区曾误带入本地 Employee Management 变更，需要清理并保留恢复备份。
+
+修改结果：
+
+- `MediaTypeCode` 扩展为 `VOICE | VIDEO | TEXT | NON_DM`，媒体类型 mock 增加 `Non-DM`。
+- Instagram、LinkedIn、Facebook、X、Tik Tok、YouTube 支持 `TEXT + NON_DM`。
+- AppStore、PlayStore 改为仅支持 `NON_DM`。
+- 新增社媒和应用商店 `*_NON_DM` channel media settings。
+- 新增 `MSRP_NON_DM_STANDARD` 媒体服务规则计划，并让渠道媒体规则绑定自动生成 Text / Non-DM 绑定。
+- Channels Business Config 弹框中 Non-DM 作为媒体页签展示，但当前不放配置内容。
+- Media Service Rule Plans 的媒体类型选项增加 Non-DM，并使用英文媒体标签。
+- main 工作区中的 Employee Management / visibility profile 相关代码、入口和知识库残留已清理；恢复包位于 `.codex-backup/employee-management-rescue-2026-07-02-144414/`。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+- Chrome CDP 冒烟已通过：Channels 表格和媒体筛选包含 Non-DM；Instagram Business Config 显示 Text / Non-DM 页签，Text 页签中 `Queue Configuration` 位于 `Access Configuration` 后，Non-DM 页签为空；Phone Voice Business Config 不显示 `Queue Configuration`。
+- 数据级验证已通过：社媒渠道为 `TEXT + NON_DM`，AppStore / PlayStore 为 only `NON_DM`，旧 `APPSTORE_TEXT` / `PLAYSTORE_TEXT` 不再存在。
+
+回滚说明：
+
+- 如需移除 Non-DM，可从 `MediaTypeCode`、`mediaTypes`、社媒/AppStore/PlayStore mock 数据、channel media settings、media service rule plan 和 Business Config 空页签逻辑中移除 `NON_DM`。
+- 如需恢复误入 main 的 Employee Management 内容，可参考 `.codex-backup/employee-management-rescue-2026-07-02-144414/` 中的备份 diff 和文件副本。
+
+当前风险点：
+
+- Non-DM Business Config 目前按客户要求仅提供空页签；后续配置字段待产品确认。
+- 社媒 Text + Non-DM 与 AppStore / PlayStore only Non-DM 目前是前端 mock 数据，没有真实渠道后端约束。
 
 ### 2026-06-29 16:25 +08:00 - 坐席个人设置入口与提示音开关
 
@@ -1712,7 +1887,9 @@ Historical entries are preserved in archive files without content rewrites. Use 
 
 验证：
 
-- 待本轮最终验证命令。
+- `npm run lint` 已通过。
+- `npx tsc --noEmit` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
 
 回滚说明：
 
@@ -1802,3 +1979,183 @@ Historical entries are preserved in archive files without content rewrites. Use 
 当前风险点：
 
 - 轻量 JPEG 已按当前 Demo 展示尺寸压缩；如果客户需要放大检查截图细节，可临时恢复单张原始图或按该截图单独提高输出质量。
+
+### 2026-06-30 11:39 +08:00 - Webchat 坐席侧 Typing 状态展示
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `CURRENT_STATUS.md`
+- `BUSINESS_RULES.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户要求 Webchat 接入后，坐席能看到客户正在输入 typing 状态。
+- 当前 Webchat Demo 客户侧为截图流程，不做真实输入事件联动；按 demo 目标改为坐席侧静态状态展示。
+
+修改结果：
+
+- Live Chat 当前 Webchat 会话在坐席输入框上方显示 `Customer is typing` 状态和动态三点。
+- BankApp / WhatsApp 会话不显示 typing。
+- History / Ended / read-only 会话不显示 typing。
+- 该状态不连接 Webchat Demo 图片或客户侧真实输入事件。
+- 知识库同步记录 typing 展示规则。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npx tsc --noEmit` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+- Headless Chrome 冒烟已通过：Webchat 当前会话显示 `Customer is typing`，切到 BankApp 会话不显示，Webchat End Service 后不显示。
+
+回滚说明：
+
+- 如需回滚，移除 `LiveChat2ConversationWorkspace` 中 `shouldShowTypingIndicator` 和 typing indicator 节点，并删除对应 `.livechat2-typing-*` 样式。
+
+当前风险点：
+
+- typing 当前为静态 demo 状态；如后续客户要求真实输入事件，需要接入 Webchat channel gateway 或 mock event source。
+
+### 2026-06-30 12:38 +08:00 - Webchat Typing 悬浮展示优化
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `CURRENT_STATUS.md`
+- `BUSINESS_RULES.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 当前 typing indicator 放在 composer 内部，会撑高坐席输入区。
+- 用户指出未来真实 typing 出现 / 消失时会造成输入框区域跳动，需要改成更稳定的展示方式。
+
+修改结果：
+
+- Webchat typing indicator 移到 composer shell 的绝对定位浮层中，贴在输入框上方显示。
+- composer 高度不再因为 typing 状态变化而变化。
+- 消息区底部增加安全留白，避免悬浮提示遮挡最后一条消息。
+- BankApp / WhatsApp / History / Ended 的显示条件不变。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npx tsc --noEmit` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+- Headless Chrome 冒烟已通过：Webchat 当前会话显示浮层 typing，BankApp 会话不显示，Webchat End Service 后不显示。
+- Headless Chrome 尺寸检查已通过：typing 显示、Quick Replies 打开、切换 BankApp、End Service 后 composer 高度均保持 116px。
+
+回滚说明：
+
+- 如需回滚，可将 typing indicator 放回 `.livechat2-composer` 内部，并移除 `.livechat2-composer-shell` 与消息区底部留白调整。
+
+当前风险点：
+
+- typing 当前仍是静态 demo 状态；如果后续接入真实 typing 事件，需要复测浮层出现 / 消失和 Quick Replies 弹层同时出现时的层级。
+
+### 2026-06-30 12:52 +08:00 - Webchat Typing 点号动画简化
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户希望 typing 动效更简洁，不使用三个小点上下跳动的波浪动画。
+
+修改结果：
+
+- Webchat typing indicator 的动效改为文本点号宽度循环，按 `.` / `..` / `...` 节奏展示。
+- 悬浮位置和不撑高 composer 的规则保持不变。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npx tsc --noEmit` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+- Headless Chrome 冒烟已通过：typing 文案为 `Customer is typing...`，点号使用 `livechat2-typing-dots` 动画，composer 高度保持 116px。
+
+回滚说明：
+
+- 如需回滚，可恢复三个 `<i />` 小圆点及原 `livechat2-typing-dot` keyframes。
+
+当前风险点：
+
+- 当前点号使用宽度裁切动画；如需完全无动画，可改为静态 `...`。
+
+### 2026-06-30 13:02 +08:00 - Webchat Typing 固定点位循环
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户反馈宽度裁切动画实际观感只明显看到 2 个点 / 3 个点，且浮层宽度不应变化。
+
+修改结果：
+
+- typing 点号改为 3 个固定点位，容器宽度固定为 `3ch`。
+- 点号按 0 / 1 / 2 / 3 个可见状态循环，浮层宽度不再随动画变化。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npx tsc --noEmit` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+- Headless Chrome 冒烟已通过：点号 DOM 为 3 个固定 span，点号区域宽度固定，composer 高度保持 116px。
+
+回滚说明：
+
+- 如需回滚，可恢复为单个文本 `...` 和宽度裁切动画。
+
+当前风险点：
+
+- 当前为 CSS 显隐动画；如果客户希望节奏更快或更慢，只需调整动画时长。
+
+### 2026-07-01 00:00 +08:00 - 渠道管理文字渠道排队配置
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/types/routingConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `CURRENT_STATUS.md`
+- `BUSINESS_RULES.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户要求在 Routing Config > Channels > Business Config 中，仅针对文字媒体增加进入人工前的排队话术配置。
+- 客户确认 demo 系统 UI 与默认配置内容使用英文，排队提示语不支持预计等待时长动态参数。
+
+修改结果：
+
+- Text Business Config 在 `Access Configuration` 后新增 `Queue Configuration` 区块。
+- 新增 `Outside Service Hours Message`、`Queue Waiting Message`、`Queue Timeout Message` 三个英文配置项。
+- 默认值分别为 `Sorry, we are currently outside service hours.`、`All agents are currently busy. Please wait.`、`All agents are currently busy. Please try again later.`。
+- Queue Waiting Message 不提供 `{estimatedWaitMinutes}` 变量插入。
+- Voice / Video Business Config 不展示该配置块。
+- 同步更新 Routing Config 类型、mock 默认值和知识库记录。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+- `http://127.0.0.1:5173/routing-config/channels` HTTP 检查返回 200。
+- Headless Chrome CDP 冒烟已通过：WhatsApp Text Business Config 显示 `Queue Configuration` 且位于 `Access Configuration` 和 `Agent Opening / Ending Configuration` 之间；三个默认英文值均写入 textarea；Queue Configuration 内没有变量插入下拉；BankApp Voice / Video tab 不显示该区块，Text tab 显示该区块。
+
+回滚说明：
+
+- 如需回滚，移除 `ChannelMediaBusinessConfig` 中三个 queue 字段、渠道默认配置和 mock 默认值，并删除 Channels Business Config 中的 `Queue Configuration` 渲染块。
+
+当前风险点：
+
+- 当前为前端 demo 配置项，不连接真实工作时间、排队队列或路由引擎；如后续接入后端，需要定义字段映射和实际触发点。
