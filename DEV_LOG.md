@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-07-02 17:56 +08:00
+最后更新：2026-07-06 17:15 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,38 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-07-06 17:15 +08:00 - Routing Config 媒体类型 Text 展示文案改为 DM
+
+修改页面或文件：
+
+- `src/mock/routingConfiguration.ts`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/pages/call-management/GlobalControlConfigurationPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `BUSINESS_RULES.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求媒体类型四个选项改为 Voice、Video、DM、Non-DM，原 Text 改成 DM，使其与 Non-DM 对照更清晰。
+
+修改结果：
+
+- Routing Config 媒体类型 `Text` 展示名改为 `DM`。
+- Channels、Skill Routing Rules、Site Access Volume、Media Service Rule Plans 等依赖媒体类型数据源的查询条件、表格、选择器、业务配置页签同步显示 `DM`。
+- 少数手写提示文案同步从 `Text` 改为 `DM`，包括 Media Service Rule Plans 校验提示和 Global Control Configuration 的 DM media capacity 文案。
+- 项目事实文档已同步记录 Routing Config 媒体类型展示口径为 Voice / Video / DM / Non-DM。
+
+回滚说明：
+
+- 如需恢复旧展示名，将本次 `DM` 展示文案改回 `Text` 即可。
+
+当前风险：
+
+- 需浏览器检查 Routing Config 相关页面，确认媒体类型查询条件、表格、配置页签均显示为 `DM` / `Non-DM`。
 
 ### 2026-07-02 17:56 +08:00 - main 恢复本地 Employee Management 并默认隐藏
 

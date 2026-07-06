@@ -1166,13 +1166,13 @@ export function ChannelsPage() {
             config.customerNoReplyTimeoutMinutes
           ) {
             errors.push(
-              'Text Pre-timeout Reminder Time must be less than Customer No Reply Timeout.',
+              'DM Pre-timeout Reminder Time must be less than Customer No Reply Timeout.',
             )
           }
 
           if (config.agentNoReplyWarningSeconds > config.agentNoReplyBreachSeconds) {
             errors.push(
-              'Text Agent No Reply Warning must be less than or equal to Breach.',
+              'DM Agent No Reply Warning must be less than or equal to Breach.',
             )
           }
 
@@ -1181,7 +1181,7 @@ export function ChannelsPage() {
             config.agentNoReplyTimeoutSeconds
           ) {
             errors.push(
-              'Text Agent No Reply Breach must be less than or equal to Agent No Reply Timeout.',
+              'DM Agent No Reply Breach must be less than or equal to Agent No Reply Timeout.',
             )
           }
 
@@ -1203,7 +1203,7 @@ export function ChannelsPage() {
             ['Queue Timeout Message', config.queueTimeoutMessage],
           ].forEach(([label, value]) => {
             if (!String(value).trim()) {
-              errors.push(`Text ${label} is required.`)
+              errors.push(`DM ${label} is required.`)
             }
           })
         }
@@ -2427,7 +2427,7 @@ const mediaServiceModalMediaOptions: Array<{
 }> = [
   { label: 'Voice', value: 'VOICE' },
   { label: 'Video', value: 'VIDEO' },
-  { label: 'Text', value: 'TEXT' },
+  { label: 'DM', value: 'TEXT' },
   { label: 'Non-DM', value: 'NON_DM' },
 ]
 

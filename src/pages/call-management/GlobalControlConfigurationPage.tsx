@@ -163,7 +163,7 @@ export function GlobalControlConfigurationPage() {
     }
 
     if (config.maxTextMediaServices <= 0) {
-      errors.push('Max Text Media Services must be greater than 0.')
+      errors.push('Max DM Media Services must be greater than 0.')
     }
 
     if (!config.defaultSkillQueueCode) {
@@ -300,10 +300,10 @@ export function GlobalControlConfigurationPage() {
             </div>
           </BaseCard>
 
-          <BaseCard compact title="Text Media Capacity">
+          <BaseCard compact title="DM Media Capacity">
             <div className="global-control-config__row global-control-config__row--single">
               <NumberField
-                label="Max Text Media Services"
+                label="Max DM Media Services"
                 unit="items"
                 value={config.maxTextMediaServices}
                 onChange={(value) =>

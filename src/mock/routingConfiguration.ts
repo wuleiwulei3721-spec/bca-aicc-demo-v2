@@ -672,7 +672,7 @@ export const mediaTypes: MediaType[] = [
   },
   {
     mediaCode: 'TEXT',
-    mediaName: 'Text',
+    mediaName: 'DM',
     status: 'Active',
   },
   {
@@ -867,7 +867,7 @@ export const mediaServiceRulePlans: MediaServiceRulePlan[] = [
     nonWorkingTimeMessage:
       '抱歉，工作时间为{workTime}，请在此时间联系我们。',
     planCode: 'MSRP_TEXT_STANDARD',
-    planName: 'Standard Text Service',
+    planName: 'Standard DM Service',
     preTimeoutReminderMessage:
       '系统未收到回复，将在{reminderMinutes}分钟后结束会话。',
     preTimeoutReminderMinutes: 1,
@@ -902,7 +902,7 @@ export const mediaServiceRulePlans: MediaServiceRulePlan[] = [
     nonWorkingTimeMessage:
       '抱歉，优先服务工作时间为{workTime}，请在此时间联系我们。',
     planCode: 'MSRP_TEXT_PRIORITY',
-    planName: 'Priority Text Service',
+    planName: 'Priority DM Service',
     preTimeoutReminderMessage:
       '系统未收到回复，将在{reminderMinutes}分钟后结束优先服务会话。',
     preTimeoutReminderMinutes: 1,

@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-07-02 18:24 +08:00
+Last updated: 2026-07-06 17:15 +08:00
 
 ## 1. Overall Status
 
@@ -229,10 +229,10 @@ Implemented behaviors:
 - Add / Edit / View / Delete modal patterns where applicable.
 - Status badge display.
 - Channel media business config.
-- Routing Config media type options include Voice, Video, Text, and Non-DM.
-- Instagram, LinkedIn, Facebook, X, Tik Tok, and YouTube support Text plus Non-DM; AppStore and PlayStore support Non-DM only.
+- Routing Config media type options include Voice, Video, DM, and Non-DM.
+- Instagram, LinkedIn, Facebook, X, Tik Tok, and YouTube support DM plus Non-DM; AppStore and PlayStore support Non-DM only.
 - Channels Edit Channel media type selector shows all configured media types, while selected values drive the Business Config tabs.
-- Text channel Business Config includes Queue Configuration for outside-service-hours, queue waiting, and queue timeout messages.
+- DM channel Business Config includes Queue Configuration for outside-service-hours, queue waiting, and queue timeout messages.
 - Non-DM appears as a Business Config media tab with no configuration content in the current demo.
 - Channels Business Config Agent Service warning and breach threshold labels include colored status dots that reuse Live Chat SLA warning and breach colors.
 - Webchat-specific recall field.

@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-07-02 18:24 +08:00
+Last updated: 2026-07-06 17:15 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -644,16 +644,16 @@ Implemented customer-review pages:
 Important rules:
 
 - Channels has Phone account management disabled.
-- Routing Config media types include Voice, Video, Text, and Non-DM.
+- Routing Config media types include Voice, Video, DM, and Non-DM.
 - Non-DM represents social non-direct-message scenarios such as comments, replies, mentions, and app-store reviews.
-- Instagram, LinkedIn, Facebook, X, Tik Tok, and YouTube support Text plus Non-DM media.
+- Instagram, LinkedIn, Facebook, X, Tik Tok, and YouTube support DM plus Non-DM media.
 - AppStore and PlayStore support Non-DM only.
 - Channels Edit Channel media type selector shows all configured media types; the current channel's selected media types determine which Business Config tabs are shown.
-- Channels Text Business Config shows `Queue Configuration` immediately after `Access Configuration`.
+- Channels DM Business Config shows `Queue Configuration` immediately after `Access Configuration`.
 - `Queue Configuration` contains `Outside Service Hours Message`, `Queue Waiting Message`, and `Queue Timeout Message`.
 - `Queue Waiting Message` does not support estimated-wait dynamic parameters in the current demo.
 - Channels Non-DM Business Config shows a tab but no configuration content in the current demo.
-- Webchat Text Business Config shows `Webchat Message Recall Limit (sec)`.
+- Webchat DM Business Config shows `Webchat Message Recall Limit (sec)`.
 - Non-Webchat text channels do not show that Webchat-specific field.
 - Channels Business Config `Agent Service Configuration` keeps the existing `Agent No Reply Warning (sec)` and `Agent No Reply Breach (sec)` labels, and uses colored dots matching Live Chat SLA warning and breach colors to clarify the threshold severity.
 - Business Types include `Source Business Code`.

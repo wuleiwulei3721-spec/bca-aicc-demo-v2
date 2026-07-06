@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Project Context
 
-Last updated: 2026-07-02 17:56 +08:00
+Last updated: 2026-07-06 17:15 +08:00
 Repository path: `D:\03projects\bca-aicc-demo-v2`
 
 ## 1. Project Name
@@ -298,9 +298,9 @@ Routing Config is visible by default and includes:
 
 The pages use local routing config store data and shared admin components.
 
-Routing Config media types currently include Voice, Video, Text, and Non-DM.
+Routing Config media types currently include Voice, Video, DM, and Non-DM.
 Non-DM is used for social channel comments, replies, mentions, and app-store
-reviews. Instagram, LinkedIn, Facebook, X, Tik Tok, and YouTube support Text
+reviews. Instagram, LinkedIn, Facebook, X, Tik Tok, and YouTube support DM
 and Non-DM media; AppStore and PlayStore support Non-DM only.
 
 ### Employee Management
