@@ -16,6 +16,7 @@ import type {
   LiveChat2Session,
   LiveChat2SortMode,
   LiveChat2StarColor,
+  ServiceEndedBy,
 } from '../../../types'
 import {
   formatDuration,
@@ -30,7 +31,9 @@ type LiveChat2ListView = 'current' | 'history'
 export interface LiveChat2SessionView extends LiveChat2Session {
   draftMessage: string
   elapsedSeconds: number
+  endedBy: ServiceEndedBy | null
   endReason: LiveChat2EndReason | null
+  endReasonName: string | null
   endTimeDisplay: string | null
   isFlashing: boolean
   lastMessageDisplay: string

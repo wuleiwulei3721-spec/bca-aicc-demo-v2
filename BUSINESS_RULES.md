@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-07-06 17:15 +08:00
+Last updated: 2026-07-07 18:44 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -117,7 +117,9 @@ Only one voice/video call can be active at a time.
 
 ### Hang Up
 
-- Hang Up marks the current call interaction ended.
+- Hang Up main action marks the current call interaction ended normally.
+- Hang Up caret opens `Abnormal End Reason` and lists only active abnormal reasons applicable to the current Voice or Video media type.
+- Selecting an abnormal Hang Up reason ends the call immediately without another confirmation.
 - It sets call status to `Idle`.
 - It clears call timing and active call channel.
 - It hides OpenEye video and resets desktop-share state.
@@ -411,6 +413,9 @@ Conversation:
 - The typing indicator does not participate in the composer height, so typing state changes should not resize the agent input area.
 - Webchat typing is not connected to customer-side Webchat Demo input events or screenshots.
 - Sending a message appends a current-agent message in local state.
+- End Service main action keeps the confirmation modal, then records a normal agent end after confirmation.
+- End Service caret opens `Abnormal End Reason` and lists only active abnormal reasons applicable to DM.
+- Selecting an abnormal End Service reason ends the session immediately without another confirmation.
 - End Service adds a system message, marks session ended, then moves it to History.
 - Close removes the active session and adds it to closed history.
 
@@ -543,6 +548,8 @@ Visible customer pages:
 - Common Number Management.
 - Sensitive Word Management.
 - Busy Reason Management.
+- Session End Reason Management.
+- Call Record Query.
 
 Hidden / redirected:
 
@@ -577,6 +584,29 @@ Hidden / redirected:
 - Active busy reasons appear as AUX options in the agent profile menu.
 - Updating the default reason keeps only one default busy reason.
 - Default active AUX reasons are Break, Coaching/Meeting, Prayer, Toilet, Others, Callback Finrisk, Callback Misinform, Sick/Problem Non System, Routine Job, Problem System, and Special Assignment.
+- Store is local front-end state.
+
+### Session End Reason Management
+
+- Session End Reason Management maintains abnormal service end reasons for Voice, Video, and DM media.
+- Social Media / Non-DM service ending is not included in the current scope.
+- The customer attachment explicitly lists Voice Calls and Digital Channels; Video is included in the current demo as a synchronous-call extension of Voice and should be removed from default reason applicability if the customer later rejects that interpretation.
+- `Normal` is the system default normal end reason and is not shown in the abnormal reason management list.
+- Entries contain Reason Name, Applicable Media, Status, and Remark.
+- Applicable Media supports Voice, Video, and DM.
+- Search supports Keyword, Applicable Media, and Status.
+- Add, Edit, and Delete are local demo actions.
+- Reason Name is unique after trim and lowercase normalization.
+- Only `Active` reasons appear in agent-side abnormal end reason menus.
+- Default abnormal reasons are:
+  - `Hening & Tidak Ada Respons`: Voice and Video.
+  - `Problem Teknis`: Voice, Video, and DM.
+  - `Nasabah Tidak Ada Respons Lebih Lanjut`: DM.
+- Agent normal end records `endedBy = Agent` and `endReasonName = Normal`.
+- Agent abnormal end records `endedBy = Agent` and `endReasonName` as the selected abnormal reason.
+- Customer-ended sessions record `endedBy = Customer` and `endReasonName = Normal`.
+- System timeout sessions record `endedBy = System` and `endReasonName = Customer Timeout`.
+- System abnormal disconnects should use `endedBy = System` with a specific reason such as `Connection Lost`, `System Error`, or `Channel Gateway Error`; they should not be mixed with customer timeout.
 - Store is local front-end state.
 
 ### Common Phrase Management
@@ -624,6 +654,29 @@ Hidden / redirected:
 - List columns include No., Sensitive Word, Category, Remark, and Actions.
 - Add, Edit, and Delete are local demo actions.
 - Sensitive Word is unique after trim and lowercase normalization.
+- Store is local front-end state.
+
+### Call Record Query
+
+- Call Record Query is the current demo's 通话记录查询 page under Call Management.
+- Current scope includes Phone voice, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp service records.
+- Current scope excludes Email and Social Media records. Email流水查询 and Social Media查询 are separate future scopes and are not exposed in the current menu.
+- Production permission intent is: agents see their own records, TL sees their own group, and SPV sees groups under managed TLs. The current demo has no permission system, so records are seeded as the current agent view only.
+- Search supports keyword, Channel, Media Type, Ended By, End Reason, and Date Range. Default date range is the last 7 days.
+- The list uses `Contact` for the customer-side contact identifier: phone and WhatsApp show the number, logged-in BankApp/Webchat show BankID, and guest Webchat shows a guest ID such as `guest-7118`.
+- The list shows `Queue`; missing queue values render as `-`.
+- The list shows `Service Time` as `start time - end time`.
+- End lifecycle fields are split into `Ended By` and `End Reason`.
+- `Ended By` values are `Agent`, `Customer`, or `System`.
+- Normal agent and customer endings both use `End Reason = Normal`; channel/media context is already shown by Channel and Media Type.
+- Agent abnormal endings use the selected Session End Reason value. System endings use specific system reasons such as `Customer Timeout`, `Connection Lost`, `System Error`, or `Channel Gateway Error`.
+- Voice records show a compact audio playback control without waveform display, plus system-generated transcript.
+- Video records show an OpenEye-style vertical replay with two video panes and a playback bar, plus system-generated transcript. The replay should not include the live-call buttons, labels, or icons from the OpenEye call screen.
+- DM records show conversation-style bubbles with speaker, avatar, and time.
+- Detail modal does not add a CRM or customer-detail card in the current scope; customer and service metadata stay in the list-level fields.
+- Detail modal right side shows CWU Registration with Ticket No., multi-select Business Type, and Summary description only.
+- CWU Registration summary is mandatory in the current demo, so the list and filters do not expose Summary Status or Summary Time.
+- Records ended within the last 24 hours can edit CWU Registration through the Edit CWU action. The View action is read-only. Older records are read-only.
 - Store is local front-end state.
 
 ## 21. Routing Config Rules

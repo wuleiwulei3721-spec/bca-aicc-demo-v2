@@ -1,6 +1,7 @@
 import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AimOutlined,
+  CaretDownOutlined,
   CloseOutlined,
   ClockCircleOutlined,
   ExclamationCircleOutlined,
@@ -18,13 +19,13 @@ import {
   SwapOutlined,
   WhatsAppOutlined,
 } from '@ant-design/icons'
-import { Alert, DatePicker, Input } from 'antd'
-import type { InputRef } from 'antd'
+import { Alert, DatePicker, Dropdown, Input } from 'antd'
+import type { InputRef, MenuProps } from 'antd'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { BaseButton, BaseModal } from '../../../components'
 import { TransferModal } from '../../../layouts/components/TransferModal'
-import type { LiveChat2Message } from '../../../types'
+import type { LiveChat2Message, SessionEndReasonEntry } from '../../../types'
 import { formatDuration } from '../../../utils/duration'
 import type { LiveChat2SessionView } from './LiveChat2CustomerPanel'
 import {
@@ -43,9 +44,14 @@ interface LiveChat2ConversationWorkspaceProps {
   recalledMessageIds: string[]
   sendBlockedMessage?: string | null
   session: LiveChat2SessionView
+  sessionEndReasons?: SessionEndReasonEntry[]
   onCloseSession: (sessionId: string) => void
   onDraftChange: (sessionId: string, message: string) => void
-  onEndSession: (sessionId: string, baseMessages: LiveChat2Message[]) => void
+  onEndSession: (
+    sessionId: string,
+    baseMessages: LiveChat2Message[],
+    endReasonName?: string,
+  ) => void
   onOpenMessageRecord: () => void
   onRecallMessage: (messageId: string) => void
   onSendMessage: (
@@ -449,6 +455,7 @@ export function LiveChat2ConversationWorkspace({
   recalledMessageIds,
   sendBlockedMessage,
   session,
+  sessionEndReasons = [],
   onCloseSession,
   onDraftChange,
   onEndSession,
@@ -608,6 +615,35 @@ export function LiveChat2ConversationWorkspace({
     onDraftChange(session.id, message.message)
     window.setTimeout(() => composerRef.current?.focus(), 0)
   }
+  const abnormalEndReasonItems: MenuProps['items'] =
+    sessionEndReasons.length > 0
+      ? [
+          {
+            key: 'abnormal-end-reason-title',
+            label: 'Abnormal End Reason',
+            type: 'group',
+            children: sessionEndReasons.map((reason) => ({
+              key: reason.id,
+              label: reason.reasonName,
+            })),
+          },
+        ]
+      : [
+          {
+            key: 'no-abnormal-end-reason',
+            disabled: true,
+            label: 'No abnormal end reason',
+          },
+        ]
+  const handleAbnormalEndReasonClick: MenuProps['onClick'] = ({ key }) => {
+    const selectedReason = sessionEndReasons.find((reason) => reason.id === key)
+
+    if (!selectedReason) {
+      return
+    }
+
+    onEndSession(session.id, messages, selectedReason.reasonName)
+  }
 
   return (
     <div
@@ -678,15 +714,36 @@ export function LiveChat2ConversationWorkspace({
                   <SwapOutlined />
                   Transfer
                 </button>
-                <button
-                  className="livechat2-conversation__end-action"
-                  title="End service"
-                  type="button"
-                  onClick={() => setIsConfirmOpen(true)}
-                >
-                  <CloseOutlined />
-                  End Service
-                </button>
+                <span className="livechat2-conversation__split-action">
+                  <button
+                    className="livechat2-conversation__end-action livechat2-conversation__split-main"
+                    title="End service"
+                    type="button"
+                    onClick={() => setIsConfirmOpen(true)}
+                  >
+                    <CloseOutlined />
+                    End Service
+                  </button>
+                  <Dropdown
+                    classNames={{ root: 'aicc-agent-status-menu' }}
+                    menu={{
+                      items: abnormalEndReasonItems,
+                      onClick: handleAbnormalEndReasonClick,
+                    }}
+                    placement="bottomRight"
+                    trigger={['click']}
+                  >
+                    <button
+                      aria-label="Select abnormal end reason"
+                      className="livechat2-conversation__end-caret"
+                      title="Abnormal End Reason"
+                      type="button"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <CaretDownOutlined />
+                    </button>
+                  </Dropdown>
+                </span>
               </>
             )}
           </div>

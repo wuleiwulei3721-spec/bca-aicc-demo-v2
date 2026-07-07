@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { defaultBlacklistEntries } from '../mock/blacklist'
 import { defaultBusyReasons } from '../mock/busyReasons'
+import { createDefaultCallRecords } from '../mock/callRecords'
 import { defaultCommonLinkEntries } from '../mock/commonLinks'
 import { defaultCommonNumberEntries } from '../mock/commonNumbers'
 import {
@@ -9,9 +10,12 @@ import {
 } from '../mock/commonPhrases'
 import { defaultPriorityListEntries } from '../mock/priorityList'
 import { defaultSensitiveWordEntries } from '../mock/sensitiveWords'
+import { defaultSessionEndReasonEntries } from '../mock/sessionEndReasons'
 import type {
   BlacklistEntry,
   BusyReason,
+  CallRecord,
+  CallRecordSummary,
   CommonLinkEntry,
   CommonNumberEntry,
   CommonPhraseCategory,
@@ -19,6 +23,8 @@ import type {
   PriorityListEntry,
   SensitiveWordEntry,
   SensitiveWordMatch,
+  SessionEndMediaType,
+  SessionEndReasonEntry,
 } from '../types'
 
 interface CallManagementStore {
@@ -29,8 +35,10 @@ interface CallManagementStore {
   addCommonNumberEntry: (entry: CommonNumberEntry) => void
   addPriorityListEntries: (entries: PriorityListEntry[]) => void
   addSensitiveWordEntry: (entry: SensitiveWordEntry) => void
+  addSessionEndReasonEntry: (entry: SessionEndReasonEntry) => void
   blacklistEntries: BlacklistEntry[]
   busyReasons: BusyReason[]
+  callRecords: CallRecord[]
   commonLinkEntries: CommonLinkEntry[]
   commonNumberEntries: CommonNumberEntry[]
   commonPhraseCategories: CommonPhraseCategory[]
@@ -42,7 +50,11 @@ interface CallManagementStore {
   deleteCommonNumberEntries: (ids: string[]) => void
   deletePriorityListEntries: (ids: string[]) => void
   deleteSensitiveWordEntries: (ids: string[]) => void
+  deleteSessionEndReasonEntries: (ids: string[]) => void
   findSensitiveWordMatches: (message: string) => SensitiveWordMatch[]
+  getActiveSessionEndReasonsByMedia: (
+    mediaType: SessionEndMediaType,
+  ) => SessionEndReasonEntry[]
   moveCommonPhraseEntries: (phraseIds: string[], categoryId: string) => void
   priorityListEntries: PriorityListEntry[]
   resetBlacklistEntries: () => void
@@ -52,12 +64,16 @@ interface CallManagementStore {
   resetCommonPhrases: () => void
   resetPriorityListEntries: () => void
   resetSensitiveWordEntries: () => void
+  resetSessionEndReasonEntries: () => void
   renameCommonPhraseCategory: (categoryId: string, categoryName: string) => void
   sensitiveWordEntries: SensitiveWordEntry[]
+  sessionEndReasonEntries: SessionEndReasonEntry[]
+  updateCallRecordSummary: (recordId: string, summary: CallRecordSummary) => void
   updateCommonLinkEntry: (entry: CommonLinkEntry) => void
   updateCommonNumberEntry: (entry: CommonNumberEntry) => void
   updateCommonPhraseEntry: (entry: CommonPhraseEntry) => void
   updateSensitiveWordEntry: (entry: SensitiveWordEntry) => void
+  updateSessionEndReasonEntry: (entry: SessionEndReasonEntry) => void
   upsertBusyReason: (busyReason: BusyReason) => void
 }
 
@@ -67,6 +83,17 @@ function cloneBlacklistEntries() {
 
 function cloneBusyReasons() {
   return defaultBusyReasons.map((reason) => ({ ...reason }))
+}
+
+function cloneCallRecords() {
+  return createDefaultCallRecords().map((record) => ({
+    ...record,
+    summary: {
+      ...record.summary,
+      businessTypes: [...record.summary.businessTypes],
+    },
+    transcript: record.transcript.map((line) => ({ ...line })),
+  }))
 }
 
 function cloneCommonPhraseCategories() {
@@ -91,6 +118,13 @@ function clonePriorityListEntries() {
 
 function cloneSensitiveWordEntries() {
   return defaultSensitiveWordEntries.map((entry) => ({ ...entry }))
+}
+
+function cloneSessionEndReasonEntries() {
+  return defaultSessionEndReasonEntries.map((entry) => ({
+    ...entry,
+    mediaTypes: [...entry.mediaTypes],
+  }))
 }
 
 function normalizeMatchValue(value: string) {
@@ -135,8 +169,16 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
     set((state) => ({
       sensitiveWordEntries: [{ ...entry }, ...state.sensitiveWordEntries],
     })),
+  addSessionEndReasonEntry: (entry) =>
+    set((state) => ({
+      sessionEndReasonEntries: [
+        { ...entry, mediaTypes: [...entry.mediaTypes] },
+        ...state.sessionEndReasonEntries,
+      ],
+    })),
   blacklistEntries: cloneBlacklistEntries(),
   busyReasons: cloneBusyReasons(),
+  callRecords: cloneCallRecords(),
   commonLinkEntries: cloneCommonLinkEntries(),
   commonNumberEntries: cloneCommonNumberEntries(),
   commonPhraseCategories: cloneCommonPhraseCategories(),
@@ -210,6 +252,16 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
         ),
       }
     }),
+  deleteSessionEndReasonEntries: (ids) =>
+    set((state) => {
+      const idSet = new Set(ids)
+
+      return {
+        sessionEndReasonEntries: state.sessionEndReasonEntries.filter(
+          (entry) => !idSet.has(entry.id),
+        ),
+      }
+    }),
   findSensitiveWordMatches: (message) => {
     const normalizedMessage = normalizeMatchValue(message)
 
@@ -232,6 +284,13 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
         word: entry.word,
       }))
   },
+  getActiveSessionEndReasonsByMedia: (mediaType) =>
+    useCallManagementStore
+      .getState()
+      .sessionEndReasonEntries.filter(
+        (entry) =>
+          entry.status === 'Active' && entry.mediaTypes.includes(mediaType),
+      ),
   moveCommonPhraseEntries: (phraseIds, categoryId) =>
     set((state) => {
       const idSet = new Set(phraseIds)
@@ -259,6 +318,8 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
     set({ priorityListEntries: clonePriorityListEntries() }),
   resetSensitiveWordEntries: () =>
     set({ sensitiveWordEntries: cloneSensitiveWordEntries() }),
+  resetSessionEndReasonEntries: () =>
+    set({ sessionEndReasonEntries: cloneSessionEndReasonEntries() }),
   renameCommonPhraseCategory: (categoryId, categoryName) =>
     set((state) => ({
       commonPhraseCategories: state.commonPhraseCategories.map((category) =>
@@ -268,6 +329,21 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
       ),
     })),
   sensitiveWordEntries: cloneSensitiveWordEntries(),
+  sessionEndReasonEntries: cloneSessionEndReasonEntries(),
+  updateCallRecordSummary: (recordId, summary) =>
+    set((state) => ({
+      callRecords: state.callRecords.map((record) =>
+        record.id === recordId
+          ? {
+              ...record,
+              summary: {
+                ...summary,
+                businessTypes: [...summary.businessTypes],
+              },
+            }
+          : record,
+      ),
+    })),
   updateCommonLinkEntry: (entry) =>
     set((state) => ({
       commonLinkEntries: state.commonLinkEntries.map((currentEntry) =>
@@ -292,6 +368,15 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
     set((state) => ({
       sensitiveWordEntries: state.sensitiveWordEntries.map((currentEntry) =>
         currentEntry.id === entry.id ? { ...entry } : currentEntry,
+      ),
+    })),
+  updateSessionEndReasonEntry: (entry) =>
+    set((state) => ({
+      sessionEndReasonEntries: state.sessionEndReasonEntries.map(
+        (currentEntry) =>
+          currentEntry.id === entry.id
+            ? { ...entry, mediaTypes: [...entry.mediaTypes] }
+            : currentEntry,
       ),
     })),
   upsertBusyReason: (busyReason) =>

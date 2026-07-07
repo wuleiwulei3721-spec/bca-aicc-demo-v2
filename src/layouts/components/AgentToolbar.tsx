@@ -1,5 +1,6 @@
 import {
   AudioMutedOutlined,
+  CaretDownOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
   DisconnectOutlined,
@@ -11,7 +12,7 @@ import { Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
 import { useEffect, useState } from 'react'
 import { PhoneIcon, ToolbarButton } from '../../components'
-import type { AgentStatus, CallStatus } from '../../types'
+import type { AgentStatus, CallStatus, SessionEndReasonEntry } from '../../types'
 import { formatDuration } from '../../utils/duration'
 import { OutboundCallModal } from './OutboundCallModal'
 import { TransferModal } from './TransferModal'
@@ -30,11 +31,12 @@ interface AgentToolbarProps {
   callSkillDisplayName?: string | null
   callStatus: CallStatus
   canTransfer?: boolean
+  sessionEndReasons?: SessionEndReasonEntry[]
   timerLabel: string
   timerStartedAt: number
   toolbarDisplayMode: ToolbarDisplayMode
   onAnswer: () => void
-  onHangUp: () => void
+  onHangUp: (endReasonName?: string) => void
   onHoldToggle: () => void
   onMuteToggle: () => void
   onReadyToggle: () => void
@@ -47,6 +49,7 @@ export function AgentToolbar({
   callSkillDisplayName,
   callStatus,
   canTransfer = true,
+  sessionEndReasons = [],
   timerLabel,
   timerStartedAt,
   toolbarDisplayMode,
@@ -88,6 +91,35 @@ export function AgentToolbar({
     if (key === 'outbound-call') {
       setIsOutboundOpen(true)
     }
+  }
+  const endReasonItems: MenuProps['items'] =
+    sessionEndReasons.length > 0
+      ? [
+          {
+            key: 'abnormal-end-reason-title',
+            label: 'Abnormal End Reason',
+            type: 'group',
+            children: sessionEndReasons.map((reason) => ({
+              key: reason.id,
+              label: reason.reasonName,
+            })),
+          },
+        ]
+      : [
+          {
+            key: 'no-abnormal-end-reason',
+            disabled: true,
+            label: 'No abnormal end reason',
+          },
+        ]
+  const handleEndReasonMenuClick: MenuProps['onClick'] = ({ key }) => {
+    const selectedReason = sessionEndReasons.find((reason) => reason.id === key)
+
+    if (!selectedReason) {
+      return
+    }
+
+    onHangUp(selectedReason.reasonName)
   }
   const callContextTitle = [
     callIdentification
@@ -181,15 +213,37 @@ export function AgentToolbar({
                 {showButtonText ? 'Transfer' : undefined}
               </ToolbarButton>
             )}
-            <ToolbarButton
-              aria-label="Hang Up"
-              icon={<DisconnectOutlined />}
-              title="Hang Up"
-              tone="danger"
-              onClick={onHangUp}
-            >
-              {showButtonText ? 'Hang Up' : undefined}
-            </ToolbarButton>
+            <span className="aicc-agent-toolbar__split-action">
+              <ToolbarButton
+                aria-label="Hang Up"
+                className="aicc-agent-toolbar__split-main"
+                icon={<DisconnectOutlined />}
+                title="Hang Up"
+                tone="danger"
+                onClick={() => onHangUp()}
+              >
+                {showButtonText ? 'Hang Up' : undefined}
+              </ToolbarButton>
+              <Dropdown
+                classNames={{ root: 'aicc-agent-status-menu' }}
+                menu={{
+                  items: endReasonItems,
+                  onClick: handleEndReasonMenuClick,
+                }}
+                placement="bottomRight"
+                trigger={['click']}
+              >
+                <button
+                  aria-label="Select abnormal end reason"
+                  className="aicc-agent-toolbar__split-caret"
+                  title="Abnormal End Reason"
+                  type="button"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <CaretDownOutlined />
+                </button>
+              </Dropdown>
+            </span>
           </>
         )}
 

@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Project Context
 
-Last updated: 2026-07-06 17:15 +08:00
+Last updated: 2026-07-07 18:44 +08:00
 Repository path: `D:\03projects\bca-aicc-demo-v2`
 
 ## 1. Project Name
@@ -109,6 +109,8 @@ Current router structure:
 - `/call-management/common-numbers`
 - `/call-management/sensitive-words`
 - `/call-management/busy-reasons`
+- `/call-management/session-end-reasons`
+- `/call-management/call-record-query`
 - `/call-management/*` legacy or hidden routes redirect to Verification Rules.
 - `/routing-config/channels`
 - `/routing-config/vdn`
@@ -179,6 +181,7 @@ The toolbar supports:
 - Mute.
 - Transfer.
 - Hang Up.
+- Split-button abnormal end reason selection for active voice/video calls.
 - Ready / Not Ready toggle.
 - Timer display.
 - More menu for Outbound Call; toolbar Settings is temporarily hidden.
@@ -280,8 +283,29 @@ Customer-visible Call Management pages:
 - Common Number Management.
 - Sensitive Word Management.
 - Busy Reason Management.
+- Session End Reason Management.
+- Call Record Query.
 
 Legacy or hidden routes redirect to Verification Rules.
+
+Call Record Query is scoped to the current agent's Phone, BankApp Voice,
+BankApp Video, BankApp DM, Webchat, and WhatsApp records. It uses Contact /
+Queue / Service Time / Ended By / End Reason to show the customer-side
+identifier, queue context, start-end service time, and service ending metadata.
+Its detail modal keeps the left side focused on playback or conversation
+content and the right side focused on CWU Registration; it does not add a CRM
+or customer detail card in the current scope. Voice details use a compact
+playback bar without waveform display. Video details use an OpenEye-style
+vertical replay with two video panes and a playback bar, without call-control
+buttons, labels, or icons. It intentionally excludes Email and Social Media
+records; Email流水查询 and Social Media查询 are separate future scopes.
+
+Session End Reason Management maintains agent-selectable abnormal end reasons
+for Voice, Video, and DM service endings. `Normal` is the system default normal
+end reason and is not listed as a maintainable abnormal reason. The source
+attachment explicitly names Voice and Digital; Video is included in the current
+demo as a synchronous-call extension of Voice, not as a separate customer-stated
+row.
 
 ### Routing Config
 
@@ -358,6 +382,8 @@ Current behaviors:
 - Live Chat workspace with customer list, conversation, message record, quick replies, and local message state.
 - BankApp, Webchat, and WhatsApp customer-side simulations with screenshot assets.
 - Call Management pages listed above.
+- Session End Reason Management for abnormal Voice / Video / DM service end reasons.
+- Call Record Query for current-agent Phone, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp history, with mock playback/transcript details, Contact, Queue, Service Time, Ended By, End Reason, mandatory CWU Registration summary, and 24-hour CWU editing.
 - Common Number Management feeds enabled IVR transfer targets in the call Transfer modal.
 - Sensitive word detection for Live Chat agent replies.
 - Routing Config pages listed above.
@@ -397,9 +423,9 @@ CRM and Assistant components keep code-based fallback UI if image loading fails.
 
 Important demo boundary:
 
-- `useAppStore`: workspace tabs, call interactions, live chat sessions, BankApp flow flags, verification rules.
+- `useAppStore`: workspace tabs, call interactions, call/session end metadata, live chat sessions, BankApp flow flags, verification rules.
 - `useAuthStore`: demo session.
-- `useCallManagementStore`: blacklist, priority list, busy reasons.
+- `useCallManagementStore`: blacklist, priority list, busy reasons, session end reasons.
 - `useRoutingConfigStore`: routing configuration collections.
 
 These are front-end stores. They are not connected to production APIs. Most changes reset after refresh or new session.

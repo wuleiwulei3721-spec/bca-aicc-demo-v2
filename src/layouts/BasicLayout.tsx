@@ -23,7 +23,7 @@ import {
   type ModuleVisibilityKey,
 } from '../config/moduleVisibility'
 import { headerAgentProfile } from '../mock/agent'
-import { useAppStore, useAuthStore } from '../store'
+import { useAppStore, useAuthStore, useCallManagementStore } from '../store'
 import type {
   DigitalHandoffReadiness,
   InboundPopupSource,
@@ -35,6 +35,7 @@ import type {
   AgentStatus,
   BankAppCustomerType,
   CallStatus,
+  SessionEndMediaType,
 } from '../types'
 import {
   createAuxStatus,
@@ -185,6 +186,14 @@ const allSideMenuItems: SideMenuItem[] = [
         key: 'call-management-busy-reasons',
         label: 'Busy Reason Management',
       },
+      {
+        key: 'call-management-session-end-reasons',
+        label: 'Session End Reason Management',
+      },
+      {
+        key: 'call-management-call-record-query',
+        label: 'Call Record Query',
+      },
     ],
   },
   {
@@ -294,6 +303,9 @@ export function BasicLayout() {
   const location = useLocation()
   const authSession = useAuthStore((state) => state.session)
   const logout = useAuthStore((state) => state.logout)
+  const sessionEndReasonEntries = useCallManagementStore(
+    (state) => state.sessionEndReasonEntries,
+  )
   const collapsed = useAppStore((state) => state.collapsed)
   const agentServiceMode = useAppStore((state) => state.agentServiceMode)
   const activeLiveChatSessionIds = useAppStore(
@@ -921,11 +933,15 @@ export function BasicLayout() {
     updateCallStatus('Mute')
   }, [callStatus, updateCallStatus])
 
-  const handleHangUp = useCallback(() => {
+  const handleHangUp = useCallback((endReasonName = 'Normal') => {
     const shouldKeepPreAux = isPreAuxStatus(agentStatus)
 
     if (currentCallInteractionId) {
-      markCallInteractionEnded(currentCallInteractionId)
+      markCallInteractionEnded(
+        currentCallInteractionId,
+        Date.now(),
+        endReasonName,
+      )
     }
 
     updateCallStatus('Idle')
@@ -1040,6 +1056,14 @@ export function BasicLayout() {
 
       if (childKey === 'call-management-busy-reasons') {
         navigate('/call-management/busy-reasons')
+      }
+
+      if (childKey === 'call-management-session-end-reasons') {
+        navigate('/call-management/session-end-reasons')
+      }
+
+      if (childKey === 'call-management-call-record-query') {
+        navigate('/call-management/call-record-query')
       }
 
       if (childKey === 'employee-profile-management') {
@@ -1174,6 +1198,23 @@ export function BasicLayout() {
     callStatus === 'Idle' || !currentCallInteraction
       ? null
       : currentCallInteraction.skillDisplayName
+  const activeSessionEndMediaType: SessionEndMediaType | null =
+    currentCallInteraction?.kind === 'voice'
+      ? 'Voice'
+      : currentCallInteraction?.kind === 'video'
+        ? 'Video'
+        : null
+  const activeCallSessionEndReasons = useMemo(
+    () =>
+      activeSessionEndMediaType
+        ? sessionEndReasonEntries.filter(
+            (entry) =>
+              entry.status === 'Active' &&
+              entry.mediaTypes.includes(activeSessionEndMediaType),
+          )
+        : [],
+    [activeSessionEndMediaType, sessionEndReasonEntries],
+  )
   const routeMenuKey = useMemo(() => {
     if (location.pathname.startsWith('/call-management/verification-rules')) {
       return 'call-management-verification-rules'
@@ -1189,6 +1230,10 @@ export function BasicLayout() {
 
     if (location.pathname.startsWith('/call-management/busy-reasons')) {
       return 'call-management-busy-reasons'
+    }
+
+    if (location.pathname.startsWith('/call-management/session-end-reasons')) {
+      return 'call-management-session-end-reasons'
     }
 
     if (location.pathname.startsWith('/call-management/blacklist')) {
@@ -1213,6 +1258,10 @@ export function BasicLayout() {
 
     if (location.pathname.startsWith('/call-management/sensitive-words')) {
       return 'call-management-sensitive-words'
+    }
+
+    if (location.pathname.startsWith('/call-management/call-record-query')) {
+      return 'call-management-call-record-query'
     }
 
     if (location.pathname.startsWith('/employee-management/employee-profiles')) {
@@ -1271,6 +1320,7 @@ export function BasicLayout() {
             timerLabel={timerState.label}
             timerStartedAt={timerState.startedAt}
             toolbarDisplayMode={toolbarDisplayMode}
+            sessionEndReasons={activeCallSessionEndReasons}
             onAnswer={handleAnswer}
             onHangUp={handleHangUp}
             onHoldToggle={handleHoldToggle}

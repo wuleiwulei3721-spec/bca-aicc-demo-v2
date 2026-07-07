@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Design System
 
-Last updated: 2026-07-02 17:56 +08:00
+Last updated: 2026-07-07 17:22 +08:00
 
 This document records the current implemented visual rules. It should be treated as the design baseline for future pages and components.
 
@@ -62,6 +62,7 @@ The toolbar is operational and compact:
 - Do not replace call actions with decorative text buttons.
 - Answer flashes only for incoming calls.
 - Hang Up uses danger styling.
+- Hang Up can use a compact split-button: the main danger action stays on the left, and the right caret opens abnormal end reasons.
 - Ready uses success / ready styling.
 - Hold and Mute use selected / active styling.
 - More actions are behind an ellipsis menu; Settings is temporarily hidden from the toolbar More menu.
@@ -160,6 +161,13 @@ Admin buttons:
 - Delete uses danger.
 - Search / Reset should be equal height and usually equal width.
 - Add / Batch Add should use natural text width.
+
+Split action buttons:
+
+- Use split buttons only when the main action has a clear default and the caret exposes related alternatives.
+- Keep the main button and caret at the same height with no layout shift.
+- The caret segment should be icon-only with an accessible label and tooltip/title.
+- End-service split buttons must preserve the existing main action behavior; abnormal alternatives live only under the caret menu.
 
 ## 9. Icon Usage Principles
 
@@ -270,6 +278,7 @@ Admin list rules:
 - Internal table vertical scroll is only for long tables inside modals.
 - Actions column should be fixed right when horizontal scroll is needed.
 - Complex filters may wrap, but Search / Reset stay in the query action group and Batch Add / Add stay in the right primary-action group.
+- Admin filter controls must use the shared 32px alignment for Input, Select, and Date/RangePicker controls; placeholders and selected values should be vertically centered.
 - Local-only management modules such as Employee Management must still use English UI text and the same admin layout contract as customer-visible management pages.
 
 ## 14. Responsive and Demo Quality Rules

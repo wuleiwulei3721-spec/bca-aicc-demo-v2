@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-07-06 17:15 +08:00
+Last updated: 2026-07-07 17:49 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -39,6 +39,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - all Indonesian,
   - English framework UI with Indonesian business content.
 - Confirm whether screenshots are approved for customer demos and public deployment.
+- Confirm whether Session End Reason abnormal reason applicability should keep Video as a synchronous-call extension, since the customer attachment explicitly lists Voice Calls and Digital Channels but does not separately name Video.
 
 ## P1 - Manual Verification Before Customer Demo
 
@@ -49,7 +50,8 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Hold and Mute are mutually exclusive,
   - Transfer opens call transfer modal,
   - Transfer IVR shows enabled Common Number Management entries only,
-  - Hang Up enters After Call Work then Ready.
+  - Hang Up main action enters After Call Work then Ready,
+  - Hang Up caret shows active Voice/Video abnormal end reasons and ends without a second confirmation.
 - Verify toolbar call context:
   - PSTN shows IVR and Skill,
   - BankApp voice/video shows BankID and Skill,
@@ -86,6 +88,8 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - SLA timer and unanswered progress bar,
   - Send message,
   - End Service / Close,
+  - End Service main action keeps the confirmation modal,
+  - End Service caret shows active DM abnormal end reasons and ends without a second confirmation,
   - Message Record,
   - Quick Replies,
   - Sensitive Word send blocking,
@@ -124,7 +128,8 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Common Link Management,
   - Common Number Management,
   - Sensitive Word Management,
-  - Busy Reason Management.
+  - Busy Reason Management,
+  - Session End Reason Management query, add, edit, disable, and delete.
 - Verify Routing Config:
   - Routing Config visible by default,
   - Channels Phone Accounts disabled,
@@ -188,6 +193,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - priority list,
   - busy reasons,
   - live chat sessions,
+  - session end reasons and ended-by/end-reason record fields,
   - CRM and assistant integration.
 
 ## Not Currently Planned Without Confirmation

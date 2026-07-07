@@ -9,6 +9,7 @@ import type {
   LiveChat2SessionStatus,
   LiveChat2SortMode,
   LiveChat2StarColor,
+  ServiceEndedBy,
   VerificationRule,
   VerificationV2Question,
   VerificationV2Rule,
@@ -52,8 +53,10 @@ export interface InteractionTiming {
 }
 
 export interface LiveChat2SessionStatusState {
+  endedBy: ServiceEndedBy | null
   endedAt: number | null
   endReason: LiveChat2EndReason | null
+  endReasonName: string | null
   status: LiveChat2SessionStatus
 }
 
@@ -66,7 +69,9 @@ export interface LiveChat2SessionSummaryOverride {
 
 export interface CallInteraction {
   bankAppCustomerType?: BankAppCustomerType
+  endedBy: ServiceEndedBy | null
   endedAt: number | null
+  endReasonName: string | null
   flashUntil: number
   id: string
   kind: CallInteractionKind
@@ -134,10 +139,30 @@ function formatCurrentLiveChat2Time() {
 function createLiveChat2Status(
   status: LiveChat2SessionStatus,
   endReason: LiveChat2EndReason | null = null,
+  endReasonName: string | null = null,
 ): LiveChat2SessionStatusState {
+  const endedBy =
+    status === 'ended'
+      ? endReason === 'customer'
+        ? 'Customer'
+        : endReason === 'timeout'
+          ? 'System'
+          : 'Agent'
+      : null
+
   return {
+    endedBy,
     endedAt: status === 'ended' ? Date.now() : null,
     endReason,
+    endReasonName:
+      status === 'ended'
+        ? endReasonName ??
+          (endedBy === 'System'
+            ? 'Customer Timeout'
+            : endedBy
+              ? 'Normal'
+              : null)
+        : null,
     status,
   }
 }
@@ -398,7 +423,11 @@ interface AppState {
     bankAppCustomerType?: BankAppCustomerType,
   ) => string
   markCallInteractionActive: (interactionId: string) => void
-  markCallInteractionEnded: (interactionId: string, endedAt?: number) => void
+  markCallInteractionEnded: (
+    interactionId: string,
+    endedAt?: number,
+    endReasonName?: string,
+  ) => void
   markLiveChat2SessionRead: (sessionId: string) => void
   markLiveChatSessionRead: (sessionId: string) => void
   clearCurrentCallInteraction: () => void
@@ -468,6 +497,7 @@ interface AppState {
     sessionId: string,
     endReason?: LiveChat2EndReason,
     baseMessages?: LiveChat2Message[],
+    endReasonName?: string,
   ) => void
   recallLiveChat2Message: (messageId: string) => void
   sendLiveChat2Message: (
@@ -675,7 +705,9 @@ export const useAppStore = create<AppState>((set) => ({
           source === 'bankapp-voice' || source === 'bankapp-video'
             ? bankAppCustomerType ?? 'registered'
             : undefined,
+        endedBy: null,
         endedAt: null,
+        endReasonName: null,
         flashUntil: now + INTERACTION_FLASH_MS,
         id,
         kind,
@@ -736,7 +768,11 @@ export const useAppStore = create<AppState>((set) => ({
         },
       }
     }),
-  markCallInteractionEnded: (interactionId, endedAt = Date.now()) =>
+  markCallInteractionEnded: (
+    interactionId,
+    endedAt = Date.now(),
+    endReasonName = 'Normal',
+  ) =>
     set((state) => {
       const interaction = state.callInteractions[interactionId]
 
@@ -751,7 +787,9 @@ export const useAppStore = create<AppState>((set) => ({
           ...state.callInteractions,
           [interactionId]: {
             ...interaction,
+            endedBy: 'Agent',
             endedAt,
+            endReasonName,
             phase: 'ended',
           },
         },
@@ -1366,7 +1404,12 @@ export const useAppStore = create<AppState>((set) => ({
         liveChat2UnansweredSinceBySessionId: nextUnanswered,
       }
     }),
-  endLiveChat2Session: (sessionId, endReason = 'agent', baseMessages = []) =>
+  endLiveChat2Session: (
+    sessionId,
+    endReason = 'agent',
+    baseMessages = [],
+    endReasonName = 'Normal',
+  ) =>
     set((state) => {
       const now = Date.now()
       const time = formatCurrentLiveChat2Time()
@@ -1376,7 +1419,9 @@ export const useAppStore = create<AppState>((set) => ({
         kind: 'system',
         message:
           endReason === 'agent'
-            ? 'Agent ended this service conversation.'
+            ? endReasonName === 'Normal'
+              ? 'Agent ended this service conversation.'
+              : `Agent ended this service conversation. Reason: ${endReasonName}.`
             : endReason === 'customer'
               ? 'This user has ended the session.'
               : 'This session was closed due to customer timeout.',
@@ -1416,8 +1461,16 @@ export const useAppStore = create<AppState>((set) => ({
         liveChat2SessionStatuses: {
           ...state.liveChat2SessionStatuses,
           [sessionId]: {
+            endedBy:
+              endReason === 'customer'
+                ? 'Customer'
+                : endReason === 'timeout'
+                  ? 'System'
+                  : 'Agent',
             endedAt: now,
             endReason,
+            endReasonName:
+              endReason === 'timeout' ? 'Customer Timeout' : endReasonName,
             status: 'ended',
           },
         },

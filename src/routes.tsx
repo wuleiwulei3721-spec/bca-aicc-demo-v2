@@ -5,6 +5,7 @@ import {
   AgentWorkspace,
   BlacklistManagementPage,
   BusyReasonManagementPage,
+  CallRecordQueryPage,
   CommonLinkManagementPage,
   CommonNumberManagementPage,
   CommonPhraseManagementPage,
@@ -15,6 +16,7 @@ import {
   GlobalControlConfigurationPage,
   PriorityListManagementPage,
   SensitiveWordManagementPage,
+  SessionEndReasonManagementPage,
   SitesPage,
   SiteAccessVolumePage,
   SkillQueuesPage,
@@ -72,6 +74,14 @@ const callManagementRoutes = [
   {
     path: 'call-management/busy-reasons',
     element: <BusyReasonManagementPage />,
+  },
+  {
+    path: 'call-management/session-end-reasons',
+    element: <SessionEndReasonManagementPage />,
+  },
+  {
+    path: 'call-management/call-record-query',
+    element: <CallRecordQueryPage />,
   },
   {
     path: 'call-management/text-channel-settings',

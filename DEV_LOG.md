@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-07-06 17:15 +08:00
+最后更新：2026-07-07 19:20 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,531 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-07-07 19:20 +08:00 - Call Record Query CWU 编辑框只读工单号
+
+修改页面或文件：
+
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `src/styles/index.less`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户确认 CWU 编辑弹框不需要显示客户名称。
+- 用户确认 Ticket No. / 工单编号应为只读，不允许编辑。
+
+修改结果：
+
+- 移除 CWU 编辑弹框顶部客户名称 meta。
+- Ticket No. 改为只读展示样式。
+- 保存 CWU 时保留原 Ticket No.，只更新 Business Type 和 Summary。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+
+回滚说明：
+
+- 如需恢复可编辑工单编号，可把只读展示改回 Input，并恢复保存逻辑读取草稿 ticketNo。
+
+当前风险：
+
+- 当前仍为本地 demo 保存，不连接真实 CWU 工单系统。
+
+### 2026-07-07 19:18 +08:00 - Call Record Query 列表横向宽度收紧
+
+修改页面或文件：
+
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户指出列表字段空白较多，横向滚动条不应被过大的总宽度拉长。
+- 用户确认不是硬去掉横向滚动，而是收紧列宽；内容多展示不下时横向滚动仍正常。
+- 用户确认不能影响操作列固定规则。
+
+修改结果：
+
+- `Record No.` 不再固定左侧。
+- 多个列表列宽收紧，`horizontalScroll` 从 2252 调整为 1860。
+- `Actions` 保持固定右侧。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+
+回滚说明：
+
+- 如需恢复原宽度，可将列宽和 `horizontalScroll` 调回此前配置。
+
+当前风险：
+
+- 不同浏览器宽度下仍需人工查看列表横向滚动体感是否合适。
+
+### 2026-07-07 19:12 +08:00 - Call Record Query 使用产品提供的视频回放图
+
+修改页面或文件：
+
+- `public/screenshots/haloapp-v18/openeye-video-replay.png`
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `src/styles/index.less`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户明确要求直接使用产品提供的 `openeye-video-replay.png`，不再由代码裁切、遮罩或生成图片。
+- 用户要求右侧小结标题显示为 `CWU`，与左侧 `Video Replay` 标题对齐，标题下使用横线区分内容。
+- 用户要求 CWU 下方三个字段之间不要再加横线，业务类型标签不要加粗。
+
+修改结果：
+
+- 从 `D:\03projects\BCA AICC\需求文档\Haloapps\Haloapps截图\脱敏（新）\openeye-video-replay.png` 复制图片到项目 public 资产目录。
+- Call Record Query 视频回放直接引用 `/screenshots/haloapp-v18/openeye-video-replay.png`。
+- 删除通话记录视频回放区域的 CSS 遮罩和图片位移处理。
+- 右侧 summary 面板新增 `CWU` 标题，标题下有分隔线，字段区取消字段间分隔线。
+- Business Type 标签改为普通字重。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+
+回滚说明：
+
+- 如需回滚，可恢复上一版 `OPEN_EYE_REPLAY_SRC` 路径及 `call-record-query__openeye-replay` 遮罩样式。
+
+当前风险：
+
+- 当前视频回放图片是静态 demo 资产，不连接真实 OpenEye 回放文件。
+
+### 2026-07-07 19:02 +08:00 - Call Record Query 详情视觉纠偏
+
+修改页面或文件：
+
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `src/styles/index.less`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户指出视频截图仍露出顶部通话信息和底部通话按钮，不符合“只保留两个视频画面”的要求。
+- 用户指出视频回放底部没有和转写框对齐，整体高度不协调。
+- 用户指出右侧 CWU Registration 标题和 24 小时说明不需要，字段字号过大且不符合系统规范。
+
+修改结果：
+
+- 视频回放继续使用 OpenEye 截图资产，但通过遮罩隐藏顶部号码 / 信号 / 时长和底部通话按钮，只保留双视频画面。
+- 视频列宽调整为 300px，并让播放器区域填满内容高度，使视频底部与右侧转写框对齐。
+- 右侧 CWU 删除标题和 24 小时说明，只保留 Ticket No.、Business Type、Summary 三个字段。
+- CWU 字段样式恢复到系统尺度：12px label、14px 内容、细分隔线和 13px 业务类型标签。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+
+回滚说明：
+
+- 如需回滚，可恢复 18:54 版本的 OpenEye 截图裁切和 CWU 大字号样式。
+
+当前风险：
+
+- 当前仍为前端视觉模拟，未连接真实 OpenEye 回放文件。
+
+### 2026-07-07 18:54 +08:00 - Call Record Query 视频回放对齐和截图替换
+
+修改页面或文件：
+
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `src/styles/index.less`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求详情内容区去掉渠道 / 媒体小字。
+- 用户要求 `Video Replay` 和 `Auto Transcript` 作为左右两列标题横向对齐，视频画面和转写内容框也顶部对齐。
+- 用户要求视频回放使用附件所示 OpenEye 截图效果，不再使用 CSS 生成的人像画面。
+
+修改结果：
+
+- Video 详情移除上方独立渠道 / 媒体说明，改为左右两列标题与内容对齐。
+- Video 回放改为使用 `/screenshots/haloapp-v18/openeye-video-call-optimized.jpg`，通过 CSS 裁切隐藏蓝色标题栏和底部通话按钮，仅展示双视频画面。
+- Voice / DM 详情保留主标题，但去掉渠道 / 媒体副标题。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+
+回滚说明：
+
+- 如需回滚，可恢复 `call-record-query__openeye-pane` CSS 生成画面，并恢复内容区顶部渠道 / 媒体副标题。
+
+当前风险：
+
+- 当前回放仍为前端截图裁切模拟，不连接真实 OpenEye 回放文件。
+
+### 2026-07-07 18:44 +08:00 - Call Record Query 媒体回放样式二次调整
+
+修改页面或文件：
+
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户确认语音详情不需要波形区域，只保留播放/暂停、进度条和时长。
+- 用户确认视频详情应使用 OpenEye 风格竖向回放画面，但只展示两个视频画面，不展示通话按钮、文字或图标。
+- 用户要求去掉 `Generated from service recording` 说明文字。
+- 用户要求 CWU Registration 保持 Ticket No.、Business Type、Summary 三个字段，并强化标题与内容层级。
+
+修改结果：
+
+- Voice 详情移除波形块，仅保留紧凑播放控制条和转写内容。
+- Video 详情改为左侧 OpenEye 风格竖向双画面回放、右侧转写内容的左右布局，回放底部保留播放控制条。
+- 转写标题只保留 `Auto Transcript`。
+- CWU Registration 字段标题、字段值和业务类型标签字号/间距调整为更清晰的层级。
+- 知识库中 Call Record Query 视频回放口径从“中性回放”更新为“OpenEye 风格竖屏双画面回放”。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+
+回滚说明：
+
+- 如需恢复上一版，可重新加入 `call-record-query__audio-waveform` 语音波形结构，并把视频回放布局改回单列中性画面。
+
+当前风险：
+
+- 当前视频回放仍是前端视觉模拟，不连接真实 OpenEye 回放或媒体文件。
+
+### 2026-07-07 18:31 +08:00 - Call Record Query 详情页和 CWU 展示调整
+
+修改页面或文件：
+
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `src/types/callRecord.ts`
+- `src/mock/callRecords.ts`
+- `src/store/callManagementStore.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户确认列表需要补 `Queue`，无队列值显示 `-`。
+- 用户确认列表时间改为 `Service Time`，展示开始时间和结束时间。
+- 用户确认详情页暂不加入 CRM 或客户详情卡片。
+- 用户确认视频回放不能套用 OpenEye 蓝色画面，语音/视频只需要最简单的播放、暂停、进度和时长效果。
+- 用户确认右侧小结按 CWU Registration 设计，只保留 Ticket No.、Business Type 多选和 Summary。
+
+修改结果：
+
+- Call Record Query 列表新增 `Queue`，并将时间列调整为 `Service Time`。
+- 详情左侧改为媒体内容区：语音显示音频波形和播放条，视频显示中性黑灰回放画面和播放条，DM / 转写内容使用聊天气泡展示。
+- 详情右侧移除客户/服务信息宫格，仅展示 CWU Registration。
+- CWU 编辑弹框改为 Ticket No.、Business Type 多选、Summary 描述，并在本地保存到 mock store。
+- mock 数据新增 CWU summary 结构，并保留一个空 Queue 样例用于展示 `-`。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+- `http://127.0.0.1:5174/call-management/call-record-query` 返回 200。
+- in-app Browser 插件两次连接超时，未完成浏览器截图烟测。
+
+回滚说明：
+
+- 如需恢复旧详情，需要还原 `CallRecordQueryPage` 的服务信息宫格、旧票据小结字段和对应样式，并把 `CallRecordSummary` 改回旧字段。
+
+当前风险：
+
+- 当前语音/视频仍为前端 demo 播放控件，不连接真实录音、视频文件或媒体服务。
+
+### 2026-07-07 18:02 +08:00 - Call Record Query 小结字段和结束人筛选收敛
+
+修改页面或文件：
+
+- `src/types/callRecord.ts`
+- `src/mock/callRecords.ts`
+- `src/store/callManagementStore.ts`
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `BUSINESS_RULES.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户确认查询条件需要在 End Reason 前增加 `Ended By`。
+- 用户确认列表中的 `Ended By` 和 `End Reason` 使用普通文字，不用状态标签。
+- 用户确认通话小结默认必填，不需要 Summary Status 和 Summary Time。
+- 用户确认员工 ID 不需要 `EMP-` 前缀。
+
+修改结果：
+
+- Call Record Query 查询条件新增 `Ended By`。
+- 列表移除 Summary Status 和 Summary Time，`Ended By` / `End Reason` 改为普通文本列。
+- 详情弹框和编辑弹框去掉小结状态、提交时间、最近提交时间展示。
+- `CallRecord` 类型和 mock 删除 `summaryStatus`、`summarySubmittedAt` 字段。
+- 保存通话小结时只更新 summary 内容，不再写小结状态或时间。
+- 通话记录 mock 的 Agent ID 从 `EMP-10027` 改为 `10027`。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+- 静态搜索确认 `CallRecordQueryPage`、`callRecords` mock、`callRecord` 类型和 call management store 中不再包含 `summaryStatus`、`summarySubmittedAt`、`CallRecordSummaryStatus` 或 `EMP-`。
+
+回滚说明：
+
+- 如需恢复小结状态，需重新在 `CallRecord` 类型、mock、store 和页面筛选/列表/详情中加入 `summaryStatus` 和 `summarySubmittedAt`。
+
+当前风险：
+
+- 当前仍为前端 demo 规则；真实后台如果强制返回小结提交状态，需要后续映射但不建议直接暴露到当前列表。
+
+### 2026-07-07 17:49 +08:00 - Call Record Query 接入 Ended By / Contact 字段口径
+
+修改页面或文件：
+
+- `src/types/callRecord.ts`
+- `src/mock/callRecords.ts`
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `src/store/appStore.ts`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户确认 `Counterparty` 对客服记录不够准确，应改为客户侧联系标识。
+- 用户确认客户侧正常结束不需要按渠道区分 hang up / ended session，列表已有 Channel / Media 字段。
+- 用户确认结束生命周期应拆成 `Ended By` 和 `End Reason`，系统异常断联也应作为 System ended 的具体原因，而不是混入客户超时。
+
+修改结果：
+
+- Call Record Query 类型和 mock 将 `counterparty` 改为 `contact`，新增 `endedBy`。
+- 列表和详情展示 `Contact`、`Ended By`、`End Reason`。
+- `End Reason` 从旧的 `Completed / Transferred / Customer Ended` 改为 `Normal`、坐席异常原因和系统原因。
+- Phone / WhatsApp 的 Contact 使用号码，BankApp 和登录 Webchat 使用 BankID，Guest Webchat 使用 `guest-7118` 这类访客 ID。
+- 客户正常结束和坐席正常结束都使用 `End Reason = Normal`；系统超时使用 `Customer Timeout`，系统异常可用 `Connection Lost`、`System Error`、`Channel Gateway Error`。
+- Live Chat 本地结束状态同步补齐客户正常结束和系统超时的 `endReasonName`，便于后续记录查询或真实数据接入复用。
+- 修复 Call Record Query 详情弹框只读 View 误依赖编辑草稿状态，以及未定义 `canEditSelectedRecord` 的回归。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+- 本地 dev server 使用 `http://127.0.0.1:5174/`。
+- HTTP 检查 `/call-management/call-record-query` 返回 200。
+- 静态源码检查确认页面包含 `Contact` / `Ended By`，且通话记录页面和 mock 不再包含旧 `Counterparty` / `counterparty` 字段。
+- Codex in-app Browser 连接超时，未完成可视化点击烟测；需在浏览器中手工确认页面视觉和弹框交互。
+
+回滚说明：
+
+- 如需回滚本次字段口径，恢复 `CallRecord` 的 `counterparty` 字段、旧 `CallRecordEndReason` 枚举和页面列定义，并撤回 `appStore` 中客户/系统结束的 `endReasonName` 补齐。
+
+当前风险：
+
+- 仍为前端 mock 记录；真实系统需后续明确后台记录表的 `endedBy`、`endReason`、`contact` 字段来源。
+
+### 2026-07-07 17:35 +08:00 - Session End Reason 媒体标签样式和 Video 口径澄清
+
+修改页面或文件：
+
+- `src/pages/call-management/SessionEndReasonManagementPage.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_TODO.md`
+- `DECISION_LOG.md`
+
+修改原因：
+
+- 用户反馈 Session End Reason Management 的 Applicable Media 标签在表格里挨得太近并出现视觉重叠。
+- 用户指出客户附件只明确写了 Voice Calls 和 Digital Channels，没有单独写 Video，需要澄清当前 demo 保留 Video 的依据。
+
+修改结果：
+
+- Applicable Media 从 Ant Design `Tag` 改为本页专用 inline-flex 标签，固定高度、内边距和间距，避免表格中重叠。
+- 文档澄清：Video 当前作为同步通话对 Voice 的 demo 扩展保留，不是客户附件单独明示项；后续需要客户确认是否保留。
+
+验证：
+
+- 待本次小修后运行 lint/build。
+
+回滚说明：
+
+- 如客户确认 Video 不需要，移除默认异常原因中的 `Video` 适用媒体，并调整文档中 Video 扩展说明。
+
+### 2026-07-07 17:22 +08:00 - 新增 Session End Reason Management 和坐席侧异常结束原因
+
+修改页面或文件：
+
+- `src/types/sessionEndReason.ts`
+- `src/mock/sessionEndReasons.ts`
+- `src/store/callManagementStore.ts`
+- `src/store/appStore.ts`
+- `src/pages/call-management/SessionEndReasonManagementPage.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `src/routes.tsx`
+- `src/pages/call-management/index.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DESIGN_SYSTEM.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户确认坐席侧 Hang Up / End Service 需要支持选择异常结束原因，Voice / Video / DM 纳入当前范围，Social Media / Non-DM 暂不做。
+- 正常结束继续走原主按钮行为；文字 End Service 正常结束保留二次确认，异常原因从小三角选择后直接结束。
+
+修改结果：
+
+- 新增 `SessionEndMediaType`、`SessionEndReasonEntry`、`ServiceEndedBy` 等类型和默认异常原因 mock。
+- 新增 `/call-management/session-end-reasons` 页面，菜单位于 Busy Reason Management 后、Call Record Query 前，支持 Keyword / Applicable Media / Status 查询，以及 Add / Edit / Delete。
+- AgentToolbar 的 Hang Up 改为 split button：主按钮正常挂机，小三角展示当前 Voice / Video 可用 Active 异常原因并直接挂机。
+- Live Chat 2 的 End Service 改为 split button：主按钮保留确认弹框，小三角展示 DM 可用 Active 异常原因并直接结束进入 History。
+- `useAppStore` 记录坐席结束元数据：正常结束 `endReasonName = Normal`，异常结束记录所选原因；客户结束和系统超时记录 `endedBy` 来源。
+- Call Record Query 本次未接入新 endedBy / endReasonName 字段，按用户计划等待当前 WIP 稳定后单独处理。后续已在 2026-07-07 17:49 记录中完成接入。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+- 本地 dev server 使用 `http://127.0.0.1:5174/`；5173 当时已有服务占用。
+- Codex in-app Browser 连接超时，改用本机 Chrome + Playwright 脚本完成 smoke。
+- Smoke 覆盖：Session End Reason Management 路由、默认数据、新增；PSTN 通话 Hang Up 异常原因菜单；Live Chat End Service 正常确认弹框和异常原因菜单。
+
+回滚说明：
+
+- 如需回滚，移除 `SessionEndReasonManagementPage`、`sessionEndReasons` mock/type、call management store 中的 session end reason state/actions、路由/菜单项、AgentToolbar 与 LiveChat2 split button 改动，并恢复 `markCallInteractionEnded` / `endLiveChat2Session` 的旧签名。
+
+当前风险：
+
+- 结束原因是前端 demo 本地状态，刷新后恢复默认 mock。
+- Call Record Query 后续还需单独接入 `endedBy` 和具体 `endReasonName`，详情页布局不应被本次规则影响。后续已在 2026-07-07 17:49 记录中完成接入。
+
+### 2026-07-07 16:53 +08:00 - Call Record Query 字段口径和管理台控件对齐
+
+修改页面或文件：
+
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `src/types/callRecord.ts`
+- `src/mock/callRecords.ts`
+- `src/store/callManagementStore.ts`
+- `src/styles/index.less`
+- `DESIGN_SYSTEM.md`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户指出 Call Record Query 的 Keyword / Date Range 控件对齐、媒体类型、状态字段、小结字段、列表字段拆分、媒体图标和 View/Edit Summary 交互不符合已确认规范或不够清晰。
+
+修改结果：
+
+- 管理台查询控件统一样式补齐 Input、Select、RangePicker 的 32px 高度和垂直居中规则。
+- Call Record Query 媒体类型显示从 `Text` 调整为 `DM`，与 Routing Config 已确认展示口径一致。
+- `Service Status` 调整为 `End Reason`，用于表达本次服务结束原因。
+- 小结口径调整为 `Summary Status`（Submitted / Not Submitted）和 `Summary Time`（首次提交或最后更新时间）。
+- 列表去掉 Media 图标，保持管理台表格风格统一。
+- Customer / Agent 双行单元格拆分为 Customer Name / Customer ID / Agent Name / Agent ID 独立列。
+- View 操作改为只读详情；Edit Summary 改为独立小结编辑弹框。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+
+回滚说明：
+
+- 如需回滚，恢复 `CallRecordQueryPage` 的旧列定义、旧 summary status 字段和旧详情内编辑入口，并移除本次管理台 RangePicker 统一样式补充。
+
+当前风险：
+
+- 仍需在可用浏览器环境手工检查视觉对齐和弹框交互；当前本机浏览器自动化环境此前存在 CDP / in-app Browser 连接限制。
+
+### 2026-07-07 15:57 +08:00 - Call Management 新增 Call Record Query
+
+修改页面或文件：
+
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `src/mock/callRecords.ts`
+- `src/types/callRecord.ts`
+- `src/store/callManagementStore.ts`
+- `src/routes.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求在 Call Management 最下方新增“通话记录查询”，前端菜单显示 `Call Record Query`。
+- 本次范围只包含电话、语音、视频、普通文字会话；不包含 Email 和 Social Media。
+- 当前 demo 没有权限体系，先按当前坐席视角展示记录。
+
+修改结果：
+
+- 新增 `/call-management/call-record-query` 页面和侧边栏菜单项。
+- 新增当前坐席的 Phone、BankApp Voice、BankApp Video、BankApp、Webchat、WhatsApp mock 记录。
+- 最近几条 mock 记录按运行时相对时间生成，保证演示时存在 24 小时内可编辑小结的数据。
+- 页面支持 Keyword、Channel、Media Type、End Reason、Summary Status、Date Range 查询，默认最近 7 天。
+- 列表展示核心服务记录字段，避免引入旧系统截图中的质检、复核、机器人、录音文件名、挂断方等废字段。
+- 详情弹框采用左侧服务内容、右侧客户/服务信息和 Ticket Summary 的布局。
+- Voice / Video 记录展示 mock 回放和系统转写；DM 记录展示对话记录。
+- 24 小时内记录可本地编辑 Ticket Summary，超过 24 小时只读。
+- 知识库同步记录 Email流水查询 和 Social Media查询 是独立未来范围，不并入本次 Call Record Query。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 Vite/Rolldown chunk size warning。
+- HTTP 检查 `/call-management/call-record-query` 返回 200。
+- 静态范围检查确认 `CallRecordQueryPage` 和 `callRecords` mock 未引入 Email / Social Media 数据。
+- 浏览器交互烟测未完成：Codex in-app Browser 初始化超时，本机 Chrome / Edge 独立 CDP 会话启动受环境限制。
+
+回滚说明：
+
+- 如需回滚，移除 `CallRecordQueryPage`、`callRecords` mock/type、store 中的 `callRecords` 和 `updateCallRecordSummary`，并删除路由、菜单和样式中的 `call-record-query` 引用。
+
+当前风险：
+
+- 当前仅为前端 mock 数据，不连接真实通话、录音、视频、转写、工单或权限后端。
+- 真实权限规则、Email流水查询、Social Media查询需要后续独立设计和实现。
+- 仍需在可用浏览器环境手工检查菜单展开、筛选、详情弹框和 24 小时小结编辑交互。
 
 ### 2026-07-06 17:15 +08:00 - Routing Config 媒体类型 Text 展示文案改为 DM
 

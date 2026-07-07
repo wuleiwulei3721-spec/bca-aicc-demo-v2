@@ -174,6 +174,9 @@ export function LiveChat2Page() {
   const findSensitiveWordMatches = useCallManagementStore(
     (state) => state.findSensitiveWordMatches,
   )
+  const sessionEndReasonEntries = useCallManagementStore(
+    (state) => state.sessionEndReasonEntries,
+  )
   const markLiveChat2SessionRead = useAppStore(
     (state) => state.markLiveChat2SessionRead,
   )
@@ -235,8 +238,10 @@ export function LiveChat2Page() {
         session.isInitialHistory || isClosedHistory
           ? 'history'
           : statusState?.status ?? session.status
+      const endedBy = statusState?.endedBy ?? null
       const endedAt = statusState?.endedAt ?? null
       const endReason = statusState?.endReason ?? session.endReason ?? null
+      const endReasonName = statusState?.endReasonName ?? null
       const endTimeDisplay =
         statusDisplay === 'history'
           ? formatHistoryEndTime(
@@ -263,7 +268,9 @@ export function LiveChat2Page() {
         },
         draftMessage: liveChat2DraftMessages[session.id] ?? '',
         elapsedSeconds,
+        endedBy,
         endReason,
+        endReasonName,
         endTimeDisplay,
         isFlashing:
           statusDisplay === 'active' && timing
@@ -346,6 +353,13 @@ export function LiveChat2Page() {
   const messages = activeSession
     ? liveChat2MessagesBySessionId[activeSession.id] ?? activeSession.messages
     : []
+  const activeDmSessionEndReasons = useMemo(
+    () =>
+      sessionEndReasonEntries.filter(
+        (entry) => entry.status === 'Active' && entry.mediaTypes.includes('DM'),
+      ),
+    [sessionEndReasonEntries],
+  )
 
   useEffect(() => {
     if (
@@ -456,8 +470,9 @@ export function LiveChat2Page() {
   const handleEndService = (
     sessionId: string,
     baseMessages: LiveChat2Message[],
+    endReasonName = 'Normal',
   ) => {
-    endLiveChat2Session(sessionId, 'agent', baseMessages)
+    endLiveChat2Session(sessionId, 'agent', baseMessages, endReasonName)
     closeLiveChat2Session(sessionId)
   }
 
@@ -582,6 +597,7 @@ export function LiveChat2Page() {
               : null
           }
           session={activeSession}
+          sessionEndReasons={activeDmSessionEndReasons}
           onCloseSession={closeLiveChat2Session}
           onDraftChange={setLiveChat2DraftMessage}
           onEndSession={handleEndService}

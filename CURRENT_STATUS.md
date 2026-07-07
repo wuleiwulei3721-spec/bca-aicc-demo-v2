@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-07-06 17:15 +08:00
+Last updated: 2026-07-07 18:44 +08:00
 
 ## 1. Overall Status
 
@@ -57,6 +57,7 @@ This repository is still a demo application:
 - Service modes: Voice only, Digital only, Voice + Digital.
 - Call statuses: Idle, Incoming, Talking, Hold, Mute.
 - Answer, Hold, Mute, Transfer, Hang Up.
+- Hang Up uses a split-button: the main action performs normal end, and the caret selects an abnormal end reason.
 - Ready / Not Ready toggle.
 - Timer display.
 - Toolbar More menu currently exposes Outbound Call; toolbar display settings are hidden from the More menu.
@@ -131,6 +132,7 @@ This repository is still a demo application:
 - Webchat active conversations show a static floating `Customer is typing` indicator above the agent composer for demo purposes.
 - Send message local state.
 - End Service / Close session behavior.
+- End Service uses a split-button: the main action keeps the normal confirmation modal, and the caret selects an abnormal end reason without a second confirmation.
 - Customer-ended mock session handling.
 - Transfer modal from conversation.
 - Quick Replies right-side tab.
@@ -186,6 +188,8 @@ Customer-visible pages:
 - Common Number Management.
 - Sensitive Word Management.
 - Busy Reason Management.
+- Session End Reason Management.
+- Call Record Query.
 
 Implemented behaviors:
 
@@ -206,6 +210,16 @@ Implemented behaviors:
 - Sensitive word CRUD with fixed category dictionary.
 - Sensitive word detection in Live Chat agent reply sending.
 - Busy reason edit and default selection.
+- Session End Reason Management CRUD for abnormal Voice, Video, and DM service end reasons.
+- Session End Reason Management filters by Keyword, Applicable Media, and Status.
+- Call Record Query for current-agent Phone, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp records.
+- Call Record Query filters by keyword, channel, media type, ended by, end reason, and date range.
+- Call Record Query details show compact voice playback, OpenEye-style vertical video replay, or DM conversation bubbles on the left, plus CWU Registration on the right.
+- Call Record Query allows local CWU Registration editing only for records ended within the last 24 hours.
+- Call Record Query list separates Customer Name / Customer ID and Agent Name / Agent ID, shows Contact, Queue, Service Time, Ended By, and End Reason.
+- Call Record Query treats CWU Registration summary as mandatory, so Summary Status and Summary Time are not exposed in the filter, list, or detail summary header.
+- Call Record Query uses `Contact` for the customer-side identifier: phone and WhatsApp numbers, BankID for logged-in BankApp/Webchat, and guest IDs for guest Webchat.
+- Email and Social Media records are intentionally excluded from Call Record Query in the current scope.
 - Local store state for demo changes.
 
 ## 14. Completed Routing Config

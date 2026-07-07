@@ -1,6 +1,6 @@
 # Decision Log
 
-Last updated: 2026-06-22
+Last updated: 2026-07-07
 
 This document records important product and system design decisions that can be confirmed from the current codebase, project documents, `DEV_LOG.md`, and readable Git history. It intentionally omits bug fixes, visual micro-adjustments, temporary test data, copy-only tweaks, and implementation details that do not affect product direction.
 
@@ -739,6 +739,52 @@ Implemented
 
 Source:
 Code: `src/pages/call-management/SensitiveWordManagementPage.tsx`, `src/store/callManagementStore.ts`, `src/pages/inbound/LiveChat2Page.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`; History: `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-034
+
+Module:
+Call Management / Record Query
+
+Decision:
+Call Record Query covers only current-agent Phone voice, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp records in the current demo. Email流水查询 and Social Media查询 are separate future scopes and are not added as menus or placeholders in this delivery.
+
+Reason:
+Email has an independent 邮件流水查询 requirement with AICC-owned email satisfaction behavior, while Social Media has distinct DM / Comment / Mention / Review query and detail models. Combining them into one Call Record Query list would force unrelated fields and details into a single table and reduce demo clarity.
+
+Impact:
+Future Email or Social Media record work should be added as independent modules or explicitly designed parent/tab structures, not silently folded into the current Call Record Query table. Call Record Query should follow the confirmed media display label `DM` instead of exposing internal Text/TEXT wording. The list uses `Contact` for customer-side identifiers rather than `Counterparty`. The list includes `Queue` and `Service Time`; missing Queue values render as `-`. The detail modal does not add a CRM/customer-detail card in the current scope, keeps playback/conversation content on the left, and uses a CWU Registration panel with Ticket No., multi-select Business Type, and Summary description on the right. Voice details use a compact playback bar without waveform display. Video details use an OpenEye-style vertical replay with two video panes and a playback bar, without live-call buttons, labels, or icons.
+
+Status:
+Implemented
+
+Source:
+Customer clarification on 2026-07-07; Code: `src/pages/call-management/CallRecordQueryPage.tsx`, `src/mock/callRecords.ts`, `src/store/callManagementStore.ts`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `PROJECT_CONTEXT.md`; History: `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-035
+
+Module:
+Call Management / Service End Lifecycle
+
+Decision:
+Abnormal agent-side service end reasons are maintained in `Call Management > Session End Reason Management` for Voice, Video, and DM. `Normal` remains a system default reason and is not maintained in the abnormal reason list.
+
+Reason:
+The customer requirement separates normal service completion from exceptional agent-selected ending causes, and Social Media / Non-DM is out of current scope. The source attachment explicitly names Voice Calls and Digital Channels; Video is included in this demo as a synchronous-call extension of Voice, while BankApp text, Webchat, and WhatsApp use the DM abnormal reason set.
+
+Impact:
+Voice/video Hang Up and Live Chat End Service should preserve the default normal action while exposing abnormal reasons through a caret menu. Abnormal reason selection ends immediately without a second confirmation. Service records split `Ended By` from `End Reason`: agent/customer normal ends use `Normal`, agent abnormal ends use the selected configured reason, and system ends use specific system reasons such as `Customer Timeout`, `Connection Lost`, `System Error`, or `Channel Gateway Error`. Do not add Social Media / Non-DM values unless that scope is explicitly added.
+
+Status:
+Implemented
+
+Source:
+Customer-provided requirement screenshot and plan on 2026-07-07; Code: `src/pages/call-management/SessionEndReasonManagementPage.tsx`, `src/layouts/components/AgentToolbar.tsx`, `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`, `src/store/appStore.ts`, `src/store/callManagementStore.ts`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `PROJECT_CONTEXT.md`
 
 --------------------------------------------------
 
