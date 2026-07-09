@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-07-09 11:48 +08:00
+最后更新：2026-07-09 12:43 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,35 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-07-09 12:43 +08:00 - Monitoring Home 默认项调整为 Home-Agent
+
+修改页面或文件：
+
+- `src/mock/monitoring.ts`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求将 `Home-OM` 菜单显示名称改为 `Home-Agent`，放在 `Home-TL` 上方，并作为登录后默认 Home 页签展示内容。
+
+修改结果：
+
+- `Home-Agent` 菜单项现在位于 Monitoring 子菜单 Home 组最前面。
+- 默认 Home 页签展示 `Home-Agent` 对应截图。
+- 内部图片文件和 view key 保持 `home-om`，避免不必要的资产重命名；客户可见文案已改为 `Home-Agent`。
+- 相关项目事实文档和手工验收项已同步更新。
+
+回滚说明：
+
+- 如需回滚，将 `defaultMonitoringHomeViewKey` 改回 `home-tl`，并把 `home-om` 的 label / alt 改回 `Home-OM`。
+
+当前风险：
+
+- 需浏览器检查 Monitoring 子菜单顺序和默认 Home 截图。
 
 ### 2026-07-09 11:48 +08:00 - 删除左侧占位菜单
 

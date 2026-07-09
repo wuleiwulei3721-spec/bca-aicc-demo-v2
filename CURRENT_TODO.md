@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-07-09 11:24 +08:00
+Last updated: 2026-07-09 12:43 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -45,8 +45,8 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 
 - Verify `/` login, Sign In, service mode selection, Ready / Not Ready, AUX, Sign Out, and Log Out guards.
 - Verify Monitoring screenshot tabs:
-  - default `/` Home tab shows `Home-TL`,
-  - `Monitoring > Home-TL`, `Home-SPV`, and `Home-OM` keep the Home tab active and swap the screenshot,
+  - default `/` Home tab shows `Home-Agent`,
+  - `Monitoring > Home-Agent`, `Home-TL`, and `Home-SPV` keep the Home tab active and swap the screenshot,
   - `Monitoring > Monitor-TL` and `Monitor-OM` open or reuse the closable Monitor tab,
   - closing Monitor and reopening it from the menu works,
   - cropped screenshots do not show the original customer top header, left menu, or outer workspace tab bar,

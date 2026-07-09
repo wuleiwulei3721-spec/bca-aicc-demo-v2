@@ -26,12 +26,19 @@ export type MonitoringScreenshotView =
   | MonitoringHomeScreenshotView
   | MonitoringMonitorScreenshotView
 
-export const defaultMonitoringHomeViewKey: MonitoringHomeViewKey = 'home-tl'
+export const defaultMonitoringHomeViewKey: MonitoringHomeViewKey = 'home-om'
 
 export const defaultMonitoringMonitorViewKey: MonitoringMonitorViewKey =
   'monitor-tl'
 
 export const monitoringScreenshotViews: MonitoringScreenshotView[] = [
+  {
+    alt: 'Home Agent monitoring dashboard',
+    imageSrc: '/screenshots/monitoring/home-om.png',
+    key: 'home-om',
+    kind: 'home',
+    label: 'Home-Agent',
+  },
   {
     alt: 'Home TL monitoring dashboard',
     imageSrc: '/screenshots/monitoring/home-tl.png',
@@ -45,13 +52,6 @@ export const monitoringScreenshotViews: MonitoringScreenshotView[] = [
     key: 'home-spv',
     kind: 'home',
     label: 'Home-SPV',
-  },
-  {
-    alt: 'Home OM monitoring dashboard',
-    imageSrc: '/screenshots/monitoring/home-om.png',
-    key: 'home-om',
-    kind: 'home',
-    label: 'Home-OM',
   },
   {
     alt: 'Monitor TL agent monitoring dashboard',

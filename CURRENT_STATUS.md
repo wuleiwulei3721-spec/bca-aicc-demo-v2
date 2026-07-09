@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-07-09 11:24 +08:00
+Last updated: 2026-07-09 12:43 +08:00
 
 ## 1. Overall Status
 
@@ -69,7 +69,7 @@ This repository is still a demo application:
 ## 6. Completed Workspace Tabs
 
 - Home tab.
-- Home tab displays the selected static monitoring Home screenshot, defaulting to `Home-TL`.
+- Home tab displays the selected static monitoring Home screenshot, defaulting to `Home-Agent`.
 - Closable Monitor tab opens from Monitoring menu items and displays the selected static Monitor screenshot.
 - BankApp Demo tab.
 - Webchat Demo tab.
@@ -309,7 +309,7 @@ Current public assets include:
 - BankApp customer-side screenshots.
 - Webchat customer-side screenshots.
 - WhatsApp customer-side screenshots.
-- Monitoring screenshots for `Home-TL`, `Home-SPV`, `Home-OM`, `Monitor-TL`, and `Monitor-OM`.
+- Monitoring screenshots for `Home-Agent`, `Home-TL`, `Home-SPV`, `Monitor-TL`, and `Monitor-OM`.
 - WhatsApp customer avatar.
 - Icons and favicon.
 

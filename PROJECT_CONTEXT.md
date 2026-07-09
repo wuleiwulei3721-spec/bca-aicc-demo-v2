@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Project Context
 
-Last updated: 2026-07-09 11:24 +08:00
+Last updated: 2026-07-09 12:43 +08:00
 Repository path: `D:\03projects\bca-aicc-demo-v2`
 
 ## 1. Project Name
@@ -206,7 +206,7 @@ Active calls cannot be closed from the tab. Ended call tabs can be closed.
 The Home and Monitor tabs can display customer-provided static monitoring
 screenshots from the `Monitoring` side menu:
 
-- `Home-TL`, `Home-SPV`, and `Home-OM` replace the fixed Home tab image.
+- `Home-Agent`, `Home-TL`, and `Home-SPV` replace the fixed Home tab image.
 - `Monitor-TL` and `Monitor-OM` open or reuse the closable Monitor tab.
 - This is a static screenshot demo only. It does not add TL / SPV / OM login
   roles, permissions, live reporting data, or monitoring interactions.
@@ -429,7 +429,7 @@ Current `public/screenshots/` contains:
 - BankApp channel, business selection, confirmation, queue, chat, voice/video, screen-share, and service-closed images.
 - Webchat text entry, queue, agent chat, and satisfaction rating images.
 - WhatsApp chat request, business selection, agent chat, and satisfaction rating images.
-- Monitoring dashboard images under `public/screenshots/monitoring/` for `Home-TL`, `Home-SPV`, `Home-OM`, `Monitor-TL`, and `Monitor-OM`.
+- Monitoring dashboard images under `public/screenshots/monitoring/` for `Home-Agent`, `Home-TL`, `Home-SPV`, `Monitor-TL`, and `Monitor-OM`.
 
 CRM and Assistant components keep code-based fallback UI if image loading fails.
 
