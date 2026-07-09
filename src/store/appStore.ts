@@ -16,6 +16,12 @@ import type {
 } from '../types'
 import { liveChat2Sessions, verificationRules } from '../mock/inbound'
 import {
+  defaultMonitoringHomeViewKey,
+  defaultMonitoringMonitorViewKey,
+  type MonitoringHomeViewKey,
+  type MonitoringMonitorViewKey,
+} from '../mock/monitoring'
+import {
   verificationV2QuestionBank,
   verificationV2Rules,
 } from '../mock/verificationRuleV2'
@@ -91,6 +97,7 @@ const INTERACTION_FLASH_MS = 5000
 const DEFAULT_INBOUND_SKILL_DISPLAY_NAME = 'Credit card activation'
 const LIVE_CHAT_TAB_KEY = 'live-chat'
 const LEGACY_LIVECHAT2_TAB_KEY = 'livechat2'
+const MONITORING_MONITOR_TAB_KEY = 'monitor'
 const DEFAULT_LIVECHAT2_CURRENT_SESSION_IDS = [
   'livechat2-001',
   'livechat2-005',
@@ -375,11 +382,14 @@ interface AppState {
   callInteractions: Record<string, CallInteraction>
   collapsed: boolean
   currentCallInteractionId: string | null
+  currentMonitoringHomeViewKey: MonitoringHomeViewKey
+  currentMonitoringMonitorViewKey: MonitoringMonitorViewKey
   customerOutboundCallRequestId: number
   digitalHandoffReadiness: DigitalHandoffReadiness
   isBankAppDemoTabOpen: boolean
   isLiveChat2TabOpen: boolean
   isLiveChatTabOpen: boolean
+  isMonitoringMonitorTabOpen: boolean
   isOpenEyeVideoWindowVisible: boolean
   isScreenShareActive: boolean
   isWebchatDemoTabOpen: boolean
@@ -412,6 +422,7 @@ interface AppState {
   closeBankAppDemoTab: () => void
   closeCallInteractionTab: (interactionId: string) => void
   closeLiveChatSession: (sessionId: string) => void
+  closeMonitoringMonitorTab: () => void
   closeWebchatDemoTab: () => void
   closeWhatsAppDemoTab: () => void
   completeBankAppPinVerification: (result?: 'failed' | 'verified') => void
@@ -457,10 +468,15 @@ interface AppState {
     bankAppCustomerType?: BankAppCustomerType,
   ) => void
   requestCustomerOutboundCall: () => void
+  requestMonitoringMonitorWorkspace: (
+    viewKey?: MonitoringMonitorViewKey,
+  ) => void
   requestWebchatDemoWorkspace: () => void
   requestWhatsAppDemoWorkspace: () => void
+  resetMonitoringViews: () => void
   resetVerificationRules: () => void
   resetVerificationRuleV2: () => void
+  selectMonitoringHomeView: (viewKey: MonitoringHomeViewKey) => void
   setActiveWorkspaceTabKey: (tabKey: string) => void
   setAgentServiceMode: (mode: AgentServiceMode) => void
   setCollapsed: (collapsed: boolean) => void
@@ -530,11 +546,14 @@ export const useAppStore = create<AppState>((set) => ({
   callInteractions: {},
   collapsed: true,
   currentCallInteractionId: null,
+  currentMonitoringHomeViewKey: defaultMonitoringHomeViewKey,
+  currentMonitoringMonitorViewKey: defaultMonitoringMonitorViewKey,
   customerOutboundCallRequestId: 0,
   digitalHandoffReadiness: 'not-ready',
   isBankAppDemoTabOpen: false,
   isLiveChat2TabOpen: false,
   isLiveChatTabOpen: false,
+  isMonitoringMonitorTabOpen: false,
   isOpenEyeVideoWindowVisible: false,
   isScreenShareActive: false,
   isWebchatDemoTabOpen: false,
@@ -651,6 +670,14 @@ export const useAppStore = create<AppState>((set) => ({
             : state.liveChatFocusSessionId,
       }
     }),
+  closeMonitoringMonitorTab: () =>
+    set((state) => ({
+      activeWorkspaceTabKey:
+        state.activeWorkspaceTabKey === MONITORING_MONITOR_TAB_KEY
+          ? 'home'
+          : state.activeWorkspaceTabKey,
+      isMonitoringMonitorTabOpen: false,
+    })),
   closeWebchatDemoTab: () =>
     set((state) => ({
       activeWorkspaceTabKey:
@@ -1114,6 +1141,29 @@ export const useAppStore = create<AppState>((set) => ({
       customerOutboundCallRequestId:
         state.customerOutboundCallRequestId + 1,
     })),
+  requestMonitoringMonitorWorkspace: (
+    viewKey = defaultMonitoringMonitorViewKey,
+  ) =>
+    set({
+      activeWorkspaceTabKey: MONITORING_MONITOR_TAB_KEY,
+      currentMonitoringMonitorViewKey: viewKey,
+      isMonitoringMonitorTabOpen: true,
+    }),
+  resetMonitoringViews: () =>
+    set((state) => ({
+      activeWorkspaceTabKey:
+        state.activeWorkspaceTabKey === MONITORING_MONITOR_TAB_KEY
+          ? 'home'
+          : state.activeWorkspaceTabKey,
+      currentMonitoringHomeViewKey: defaultMonitoringHomeViewKey,
+      currentMonitoringMonitorViewKey: defaultMonitoringMonitorViewKey,
+      isMonitoringMonitorTabOpen: false,
+    })),
+  selectMonitoringHomeView: (viewKey) =>
+    set({
+      activeWorkspaceTabKey: 'home',
+      currentMonitoringHomeViewKey: viewKey,
+    }),
   setActiveWorkspaceTabKey: (tabKey) =>
     set({
       activeWorkspaceTabKey: tabKey,

@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Project Context
 
-Last updated: 2026-07-08 11:30 +08:00
+Last updated: 2026-07-09 11:24 +08:00
 Repository path: `D:\03projects\bca-aicc-demo-v2`
 
 ## 1. Project Name
@@ -99,6 +99,7 @@ Current router structure:
 
 - `/login` -> public login page.
 - `/` -> authenticated `BasicLayout` -> `AgentWorkspace`.
+- Monitoring screenshot menu items also open `/` and switch the Home or Monitor workspace tab image; there are no standalone Monitoring routes in the current scope.
 - `/design-system` -> authenticated `BasicLayout` -> `DesignSystem`; local-only when `VITE_APP_VISIBILITY_PROFILE=local`.
 - `/call-management/verification-rules` -> current Verification Rule V2 page.
 - `/call-management/global-control-configuration`
@@ -134,7 +135,7 @@ All business routes under `/` require an authenticated demo session.
 - `src/config/moduleVisibility.ts`: unified customer/local module visibility profile.
 - `src/layouts/BasicLayout.tsx`: global shell, header, side menu, agent status, call toolbar, handoff readiness, sign out / logout guards, internal chat entry.
 - `src/layouts/components/*`: toolbar, profile area, agent settings, Transfer, Outbound, Internal Chat, Toolbar Settings.
-- `src/pages/AgentWorkspace.tsx`: workspace tab container for Home, BankApp Demo, Webchat Demo, WhatsApp Demo, Live Chat, PSTN, Voice Call, and Video Call.
+- `src/pages/AgentWorkspace.tsx`: workspace tab container for Home, Monitor, BankApp Demo, Webchat Demo, WhatsApp Demo, Live Chat, PSTN, Voice Call, and Video Call.
 - `src/pages/inbound/InteractionWorkspace.tsx`: shared three-column workspace foundation.
 - `src/pages/inbound/InboundPage.tsx`: voice / PSTN and BankApp voice workspace.
 - `src/pages/inbound/VideoCallPage.tsx`: video call workspace and OpenEye floating client overlay.
@@ -193,6 +194,7 @@ The toolbar supports:
 Workspace tabs include:
 
 - Home.
+- Monitor, opened from Monitoring menu items.
 - BankApp Demo.
 - Webchat Demo.
 - WhatsApp Demo.
@@ -200,6 +202,14 @@ Workspace tabs include:
 - Dynamic call tabs for PSTN / Voice Call / Video Call.
 
 Active calls cannot be closed from the tab. Ended call tabs can be closed.
+
+The Home and Monitor tabs can display customer-provided static monitoring
+screenshots from the `Monitoring` side menu:
+
+- `Home-TL`, `Home-SPV`, and `Home-OM` replace the fixed Home tab image.
+- `Monitor-TL` and `Monitor-OM` open or reuse the closable Monitor tab.
+- This is a static screenshot demo only. It does not add TL / SPV / OM login
+  roles, permissions, live reporting data, or monitoring interactions.
 
 ### Inbound / Voice Workspace
 
@@ -382,6 +392,7 @@ Current behaviors:
 - Common Links tab.
 - Transfer, Outbound Call, Internal Chat, Agent Settings, Toolbar Settings, Call Flow Detail, Send Email, Contact Management modals.
 - Live Chat workspace with customer list, conversation, message record, quick replies, and local message state.
+- Monitoring side menu with static Home / Monitor dashboard screenshot switching.
 - BankApp, Webchat, and WhatsApp customer-side simulations with screenshot assets.
 - Call Management pages listed above.
 - Session End Reason Management for abnormal Voice / Video / DM service end reasons.
@@ -418,6 +429,7 @@ Current `public/screenshots/` contains:
 - BankApp channel, business selection, confirmation, queue, chat, voice/video, screen-share, and service-closed images.
 - Webchat text entry, queue, agent chat, and satisfaction rating images.
 - WhatsApp chat request, business selection, agent chat, and satisfaction rating images.
+- Monitoring dashboard images under `public/screenshots/monitoring/` for `Home-TL`, `Home-SPV`, `Home-OM`, `Monitor-TL`, and `Monitor-OM`.
 
 CRM and Assistant components keep code-based fallback UI if image loading fails.
 

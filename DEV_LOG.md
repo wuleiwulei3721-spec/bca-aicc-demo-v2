@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-07-08 11:30 +08:00
+最后更新：2026-07-09 11:48 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,67 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-07-09 11:48 +08:00 - 删除左侧占位菜单
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户确认 `Agent Center`、`Operations`、`Reports` 是早期左侧空菜单时放置的示意菜单；现在已有实际业务菜单，应直接删除，不做隐藏保留。
+
+修改结果：
+
+- 左侧菜单移除 `Agent Center`、`Operations`、`Reports` 三个占位入口。
+- 未修改登录权限、路由守卫、真实业务模块或 Monitoring 菜单。
+
+回滚说明：
+
+- 如需恢复，可在 `allSideMenuItems` 中重新加入对应占位菜单对象并恢复相关 icon import。
+
+当前风险：
+
+- 需浏览器检查左侧菜单展开态和收起态没有残留占位入口。
+
+### 2026-07-09 11:24 +08:00 - 新增 Monitoring 静态截图页签
+
+修改页面或文件：
+
+- `src/mock/monitoring.ts`
+- `src/store/appStore.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/AgentWorkspace.tsx`
+- `src/styles/index.less`
+- `public/screenshots/monitoring/*`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户提供 Home / Monitor 相关 UI 图，希望放入现有 demo 中展示。
+- 用户确认这些图作为静态截图 demo，不新增 TL / SPV / OM 真实角色权限或监控交互。
+
+修改结果：
+
+- 从客户原图裁剪生成 `Home-TL`、`Home-SPV`、`Home-OM`、`Monitor-TL`、`Monitor-OM` 五张内容图。
+- 左侧菜单新增与 `Channel Simulation` 平级的 `Monitoring` 模块。
+- `Monitoring > Home-*` 会切回固定 Home 页签并替换截图。
+- `Monitoring > Monitor-*` 会打开或复用可关闭的 Monitor 页签并替换截图。
+- Home 图中的渠道 tab 和 Monitor-TL 图中的 Prompt 弹框按用户确认保留为截图主体内容。
+- 相关项目事实文档和手工验收项已同步更新。
+
+回滚说明：
+
+- 如需回滚，删除 `public/screenshots/monitoring/`、`src/mock/monitoring.ts`，移除 store 中 Monitoring 状态/action、BasicLayout Monitoring 菜单、AgentWorkspace Monitor 页签/截图渲染和本次样式/文档记录即可。
+
+当前风险：
+
+- 需浏览器检查不同菜单项切换、Monitor 页签关闭后重开、长图滚动和 5 张裁剪图在 demo 分辨率下的清晰度。
 
 ### 2026-07-08 11:30 +08:00 - Routing Config Skill Queues 增加 Access Code
 

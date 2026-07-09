@@ -6,6 +6,7 @@ export type ModuleVisibilityKey =
   | 'channel-simulation'
   | 'design-system'
   | 'employee-management'
+  | 'monitoring'
   | 'routing-config'
 
 const rawVisibilityProfile = String(

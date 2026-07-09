@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 import {
+  BarChartOutlined,
   CustomerServiceOutlined,
   HomeOutlined,
   MessageOutlined,
@@ -11,6 +12,10 @@ import type { TabsProps } from 'antd'
 import { BaseTabs, PageContainer } from '../components'
 import { useNow } from '../hooks/useNow'
 import { liveChat2Sessions } from '../mock/inbound'
+import {
+  monitoringScreenshotViewByKey,
+  type MonitoringScreenshotView,
+} from '../mock/monitoring'
 import { useAppStore } from '../store'
 import type { CallInteraction, InteractionTiming } from '../store'
 import type { LiveChat2Session } from '../types'
@@ -26,6 +31,7 @@ import { WebchatDemoPage } from './webchat'
 import { WhatsAppDemoPage } from './whatsapp'
 
 const HOME_TAB_KEY = 'home'
+const MONITORING_MONITOR_TAB_KEY = 'monitor'
 const BANKAPP_DEMO_TAB_KEY = 'bankapp-demo'
 const WEBCHAT_DEMO_TAB_KEY = 'webchat-demo'
 const WHATSAPP_DEMO_TAB_KEY = 'whatsapp-demo'
@@ -167,8 +173,36 @@ function WorkspaceTabLabel({
   )
 }
 
+function MonitoringScreenshotWorkspace({
+  view,
+}: {
+  view: MonitoringScreenshotView
+}) {
+  return (
+    <section
+      aria-label={`${view.label} screenshot`}
+      className="monitoring-screenshot-workspace"
+    >
+      <div className="monitoring-screenshot-workspace__viewport">
+        <img
+          alt={view.alt}
+          className="monitoring-screenshot-workspace__image"
+          draggable={false}
+          src={view.imageSrc}
+        />
+      </div>
+    </section>
+  )
+}
+
 export function AgentWorkspace() {
   const activeKey = useAppStore((state) => state.activeWorkspaceTabKey)
+  const currentMonitoringHomeViewKey = useAppStore(
+    (state) => state.currentMonitoringHomeViewKey,
+  )
+  const currentMonitoringMonitorViewKey = useAppStore(
+    (state) => state.currentMonitoringMonitorViewKey,
+  )
   const activeLiveChat2SessionIds = useAppStore(
     (state) => state.activeLiveChat2SessionIds,
   )
@@ -182,6 +216,9 @@ export function AgentWorkspace() {
     (state) => state.isWebchatDemoTabOpen,
   )
   const hasLiveChatTab = useAppStore((state) => state.isLiveChatTabOpen)
+  const hasMonitoringMonitorTab = useAppStore(
+    (state) => state.isMonitoringMonitorTabOpen,
+  )
   const callInteractionOrder = useAppStore(
     (state) => state.callInteractionOrder,
   )
@@ -215,6 +252,9 @@ export function AgentWorkspace() {
   )
   const closeWebchatDemoTab = useAppStore(
     (state) => state.closeWebchatDemoTab,
+  )
+  const closeMonitoringMonitorTab = useAppStore(
+    (state) => state.closeMonitoringMonitorTab,
   )
   const closeCallInteractionTab = useAppStore(
     (state) => state.closeCallInteractionTab,
@@ -347,6 +387,10 @@ export function AgentWorkspace() {
   )
 
   const tabItems = useMemo<TabsProps['items']>(() => {
+    const currentHomeScreenshot =
+      monitoringScreenshotViewByKey[currentMonitoringHomeViewKey]
+    const currentMonitorScreenshot =
+      monitoringScreenshotViewByKey[currentMonitoringMonitorViewKey]
     const items: TabsProps['items'] = [
       {
         key: HOME_TAB_KEY,
@@ -355,18 +399,27 @@ export function AgentWorkspace() {
           <WorkspaceTabLabel icon={<HomeOutlined />} label="Home" now={now} />
         ),
         children: (
-          <section className="home-workspace">
-            <div className="home-workspace__panel">
-              <div className="home-workspace__mark">AICC</div>
-              <h2>Agent Desktop Ready</h2>
-              <p>
-                The console is standing by for an inbound voice interaction.
-              </p>
-            </div>
-          </section>
+          <MonitoringScreenshotWorkspace view={currentHomeScreenshot} />
         ),
       },
     ]
+
+    if (hasMonitoringMonitorTab) {
+      items.push({
+        key: MONITORING_MONITOR_TAB_KEY,
+        closable: true,
+        label: (
+          <WorkspaceTabLabel
+            icon={<BarChartOutlined />}
+            label="Monitor"
+            now={now}
+          />
+        ),
+        children: (
+          <MonitoringScreenshotWorkspace view={currentMonitorScreenshot} />
+        ),
+      })
+    }
 
     if (hasBankAppDemoTab) {
       items.push({
@@ -481,9 +534,12 @@ export function AgentWorkspace() {
     activeKey,
     callInteractionOrder,
     callInteractions,
+    currentMonitoringHomeViewKey,
+    currentMonitoringMonitorViewKey,
     currentCallInteractionId,
     hasBankAppDemoTab,
     hasLiveChatTab,
+    hasMonitoringMonitorTab,
     hasWebchatDemoTab,
     hasWhatsAppDemoTab,
     liveChat2DurationTiming,
@@ -504,6 +560,10 @@ export function AgentWorkspace() {
 
     if (action === 'remove' && targetKey === WEBCHAT_DEMO_TAB_KEY) {
       closeWebchatDemoTab()
+    }
+
+    if (action === 'remove' && targetKey === MONITORING_MONITOR_TAB_KEY) {
+      closeMonitoringMonitorTab()
     }
 
     if (action === 'remove' && typeof targetKey === 'string') {

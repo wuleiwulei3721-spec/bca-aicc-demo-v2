@@ -1,10 +1,10 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-07-08 11:30 +08:00
+Last updated: 2026-07-09 11:24 +08:00
 
 ## 1. Overall Status
 
-The project is a mature front-end demo for BANK 1 AICC. It includes authentication, global shell, agent status and call toolbar, inbound voice workspace, BankApp, Webchat, and WhatsApp customer simulations, video demo, live chat workspace, call management configuration, routing configuration, local-only employee management, and a local-only design system page.
+The project is a mature front-end demo for BANK 1 AICC. It includes authentication, global shell, agent status and call toolbar, inbound voice workspace, BankApp, Webchat, and WhatsApp customer simulations, video demo, live chat workspace, static Monitoring screenshots, call management configuration, routing configuration, local-only employee management, and a local-only design system page.
 
 This repository is still a demo application:
 
@@ -41,6 +41,7 @@ This repository is still a demo application:
 - BANK 1 branded header.
 - Collapsible side menu.
 - Menu search in expanded side menu.
+- Customer-visible Monitoring menu for static Home / Monitor dashboard screenshot switching.
 - Route-aware menu selection.
 - Unified customer/local visibility profile for local-only menus and guarded routes.
 - Header notification button.
@@ -68,6 +69,8 @@ This repository is still a demo application:
 ## 6. Completed Workspace Tabs
 
 - Home tab.
+- Home tab displays the selected static monitoring Home screenshot, defaulting to `Home-TL`.
+- Closable Monitor tab opens from Monitoring menu items and displays the selected static Monitor screenshot.
 - BankApp Demo tab.
 - Webchat Demo tab.
 - WhatsApp Demo tab.
@@ -306,6 +309,7 @@ Current public assets include:
 - BankApp customer-side screenshots.
 - Webchat customer-side screenshots.
 - WhatsApp customer-side screenshots.
+- Monitoring screenshots for `Home-TL`, `Home-SPV`, `Home-OM`, `Monitor-TL`, and `Monitor-OM`.
 - WhatsApp customer avatar.
 - Icons and favicon.
 

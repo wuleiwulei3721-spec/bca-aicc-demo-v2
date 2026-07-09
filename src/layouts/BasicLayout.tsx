@@ -12,7 +12,6 @@ import {
   PoweroffOutlined,
   SearchOutlined,
   SettingOutlined,
-  UserOutlined,
 } from '@ant-design/icons'
 import { Badge, Layout, Modal } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -23,6 +22,10 @@ import {
   type ModuleVisibilityKey,
 } from '../config/moduleVisibility'
 import { headerAgentProfile } from '../mock/agent'
+import {
+  monitoringScreenshotViews,
+  type MonitoringScreenshotView,
+} from '../mock/monitoring'
 import { useAppStore, useAuthStore, useCallManagementStore } from '../store'
 import type {
   DigitalHandoffReadiness,
@@ -119,6 +122,19 @@ const routingConfigMenuKeyByRoute = Object.fromEntries(
   ]),
 ) as Record<string, string>
 
+const monitoringMenuKeyPrefix = 'monitoring-'
+const monitoringViewByMenuKey = Object.fromEntries(
+  monitoringScreenshotViews.map((view) => [
+    `${monitoringMenuKeyPrefix}${view.key}`,
+    view,
+  ]),
+) as Record<string, MonitoringScreenshotView>
+const monitoringMenuChildren: SideMenuChildItem[] =
+  monitoringScreenshotViews.map((view) => ({
+    key: `${monitoringMenuKeyPrefix}${view.key}`,
+    label: view.label,
+  }))
+
 const allSideMenuItems: SideMenuItem[] = [
   {
     key: 'test-menu',
@@ -143,6 +159,13 @@ const allSideMenuItems: SideMenuItem[] = [
         label: 'WhatsApp',
       },
     ],
+  },
+  {
+    key: 'monitoring',
+    icon: <BarChartOutlined />,
+    label: 'Monitoring',
+    moduleKey: 'monitoring',
+    children: monitoringMenuChildren,
   },
   {
     key: 'call-management',
@@ -254,44 +277,6 @@ const allSideMenuItems: SideMenuItem[] = [
     label: 'Design System',
     moduleKey: 'design-system',
   },
-  {
-    key: 'profile',
-    icon: <UserOutlined />,
-    label: 'Agent Center',
-    moduleKey: 'channel-simulation',
-    children: [
-      {
-        key: 'profile-info',
-        label: 'Agent Profile',
-      },
-      {
-        key: 'profile-service-records',
-        label: 'Service History',
-      },
-    ],
-  },
-  {
-    key: 'operations',
-    icon: <SettingOutlined />,
-    label: 'Operations',
-    moduleKey: 'channel-simulation',
-    children: [
-      {
-        key: 'operations-warning-metrics',
-        label: 'Alert KPI Management',
-      },
-      {
-        key: 'operations-site-management',
-        label: 'Floor Management',
-      },
-    ],
-  },
-  {
-    key: 'reports',
-    icon: <BarChartOutlined />,
-    label: 'Reports',
-    moduleKey: 'channel-simulation',
-  },
 ]
 
 const sideMenuItems = allSideMenuItems.filter((item) =>
@@ -372,6 +357,12 @@ export function BasicLayout() {
   )
   const requestWebchatDemoWorkspace = useAppStore(
     (state) => state.requestWebchatDemoWorkspace,
+  )
+  const selectMonitoringHomeView = useAppStore(
+    (state) => state.selectMonitoringHomeView,
+  )
+  const requestMonitoringMonitorWorkspace = useAppStore(
+    (state) => state.requestMonitoringMonitorWorkspace,
   )
   const setLiveChatTabOpen = useAppStore(
     (state) => state.setLiveChatTabOpen,
@@ -1022,6 +1013,18 @@ export function BasicLayout() {
         requestWebchatDemoWorkspace()
       }
 
+      const monitoringView = monitoringViewByMenuKey[childKey]
+
+      if (monitoringView) {
+        navigate('/')
+
+        if (monitoringView.kind === 'home') {
+          selectMonitoringHomeView(monitoringView.key)
+        } else {
+          requestMonitoringMonitorWorkspace(monitoringView.key)
+        }
+      }
+
       if (childKey === 'call-management-verification-rules') {
         navigate('/call-management/verification-rules')
       }
@@ -1079,8 +1082,10 @@ export function BasicLayout() {
     [
       navigate,
       requestBankAppDemoWorkspace,
+      requestMonitoringMonitorWorkspace,
       requestWebchatDemoWorkspace,
       requestWhatsAppDemoWorkspace,
+      selectMonitoringHomeView,
       triggerVoiceInboundCall,
     ],
   )
@@ -1276,6 +1281,14 @@ export function BasicLayout() {
   }, [location.pathname])
   const effectiveSelectedMenuKey = routeMenuKey ?? selectedMenuKey
   const effectiveOpenMenuKeys = useMemo(() => {
+    if (
+      !collapsed &&
+      routeMenuKey?.startsWith('monitoring-') &&
+      !openMenuKeys.includes('monitoring')
+    ) {
+      return [...openMenuKeys, 'monitoring']
+    }
+
     if (
       !collapsed &&
       routeMenuKey?.startsWith('routing-') &&

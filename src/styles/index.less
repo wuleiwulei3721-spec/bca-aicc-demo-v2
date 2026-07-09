@@ -7515,46 +7515,28 @@ a {
   animation: aicc-interaction-tab-flash 1.2s ease-in-out 4;
 }
 
-.home-workspace {
-  display: grid;
-  min-height: calc(100vh - 158px);
-  place-items: center;
-  border: 1px dashed var(--aicc-border-strong);
-  border-radius: var(--aicc-radius-lg);
-  background:
-    linear-gradient(135deg, rgba(232, 241, 255, 0.72), rgba(255, 255, 255, 0)),
-    var(--aicc-bg-elevated);
+.monitoring-screenshot-workspace {
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius-md);
+  background: #f2f2f2;
 }
 
-.home-workspace__panel {
-  max-width: 460px;
-  padding: 32px;
-  text-align: center;
+.monitoring-screenshot-workspace__viewport {
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
 }
 
-.home-workspace__mark {
-  display: inline-grid;
-  width: 58px;
-  height: 58px;
-  margin-bottom: 18px;
-  place-items: center;
-  border: 1px solid rgba(23, 105, 224, 0.16);
-  border-radius: var(--aicc-radius-lg);
-  background: var(--aicc-primary-soft);
-  color: var(--aicc-primary);
-  font-weight: 700;
-}
-
-.home-workspace h2 {
-  margin: 0;
-  color: var(--aicc-text);
-  font-size: 20px;
-  line-height: 28px;
-}
-
-.home-workspace p {
-  margin: 8px 0 0;
-  color: var(--aicc-text-secondary);
+.monitoring-screenshot-workspace__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
 }
 
 .inbound-page {
@@ -15731,10 +15713,6 @@ button.inbound-list-row .inbound-list-row__title {
   .aicc-empty-state {
     min-height: calc(100vh - 188px);
     padding: 48px 16px;
-  }
-
-  .home-workspace {
-    min-height: calc(100vh - 168px);
   }
 
   .bankapp-demo {
