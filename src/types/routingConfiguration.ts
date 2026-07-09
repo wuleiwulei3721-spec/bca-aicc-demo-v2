@@ -281,6 +281,7 @@ export interface SkillQueuePrompt {
 }
 
 export interface SkillQueue {
+  accessCode: string
   assignedAgentCount: number
   maxQueueCustomers: number
   nonWorkingTimeMessage: string

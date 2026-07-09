@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-07-07 17:49 +08:00
+Last updated: 2026-07-08 11:30 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -134,6 +134,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Routing Config visible by default,
   - Channels Phone Accounts disabled,
   - Webchat recall field only on Webchat DM business config,
+  - Skill Queues Access Code appears after VDN in list columns and Add / Edit / View forms, Keyword can search Access Code, and required validation works,
   - Skill Routing Rules batch behavior,
   - Site Access Volume ratio validation,
   - Working Time Plans layout.

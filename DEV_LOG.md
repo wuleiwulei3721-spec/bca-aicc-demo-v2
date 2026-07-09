@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-07-07 19:20 +08:00
+最后更新：2026-07-08 11:30 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,41 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-07-08 11:30 +08:00 - Routing Config Skill Queues 增加 Access Code
+
+修改页面或文件：
+
+- `src/types/routingConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `BUSINESS_RULES.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求在 Routing Config > Skill Queues 中，在 VDN 后增加必填字段 `Access Code`。
+
+修改结果：
+
+- `SkillQueue` 数据模型增加 `accessCode`。
+- Skill Queues mock 数据为现有技能队列生成示例 Access Code。
+- Skill Queues Keyword 查询支持 `Access Code`；不单独提供 `Access Code` 查询项。
+- Skill Queues 列表在 `VDN` 后增加 `Access Code` 列。
+- Skill Queues Add / Edit / View 表单在 `VDN` 后增加必填 `Access Code` 字段，并加入 required 校验。
+- 相关项目事实文档已同步更新。
+- `CURRENT_TODO.md` 已补充对应手工验证项。
+
+回滚说明：
+
+- 如需回滚，移除 `SkillQueue.accessCode`、mock 默认值、Skill Queues 页面 Keyword 匹配/列/表单/校验和本次文档记录即可。
+
+当前风险：
+
+- 需浏览器检查 `/routing-config/skill-queues` 的 Keyword 查询、列表、Add / Edit / View 弹框字段顺序和必填校验。
 
 ### 2026-07-07 19:20 +08:00 - Call Record Query CWU 编辑框只读工单号
 

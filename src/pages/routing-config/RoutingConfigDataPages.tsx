@@ -5923,6 +5923,7 @@ export function SkillQueuesPage() {
           width: 150,
           render: (value: string) => vdnLabelMap.get(value) ?? value,
         },
+        { dataIndex: 'accessCode', title: 'Access Code', width: 130 },
         {
           dataIndex: 'workTimePlanCode',
           title: 'Work Time Plan',
@@ -5933,6 +5934,7 @@ export function SkillQueuesPage() {
         { dataIndex: 'assignedAgentCount', title: 'Agents', width: 72 },
       ]}
       createDraft={() => ({
+        accessCode: '',
         assignedAgentCount: 0,
         maxQueueCustomers: 60,
         nonWorkingTimeMessage:
@@ -5953,6 +5955,7 @@ export function SkillQueuesPage() {
       })}
       data={skillQueues}
       draftToRecord={(draft) => ({
+        accessCode: stringValue(draft.accessCode),
         assignedAgentCount: numberValue(draft.assignedAgentCount),
         maxQueueCustomers: numberValue(draft.maxQueueCustomers),
         nonWorkingTimeMessage: stringValue(draft.nonWorkingTimeMessage),
@@ -5980,9 +5983,10 @@ export function SkillQueuesPage() {
               record.skillQueueCode,
               record.platformSkillId,
               record.skillQueueName,
+              record.accessCode,
             ].some((item) => item.toLowerCase().includes(keyword))
           },
-          placeholder: 'Skill ID / Platform Skill ID / Skill Name',
+          placeholder: 'Skill ID / Platform Skill ID / Skill Name / Access Code',
           type: 'text',
           width: 300,
         },
@@ -6004,6 +6008,7 @@ export function SkillQueuesPage() {
       idField="skillQueueCode"
       modalWidth={820}
       recordToDraft={(record) => ({
+        accessCode: record.accessCode,
         assignedAgentCount: record.assignedAgentCount,
         maxQueueCustomers: record.maxQueueCustomers,
         nonWorkingTimeMessage: record.nonWorkingTimeMessage,
@@ -6172,6 +6177,9 @@ export function SkillQueuesPage() {
                   required: true,
                 })}
                 {renderSelectField('vdnCode', 'VDN', vdnOptions, true)}
+                {renderTextField('accessCode', 'Access Code', {
+                  required: true,
+                })}
                 {renderWorkTimePlanField()}
                 {renderNumberField('assignedAgentCount', 'Assigned Agents', 'agents', {
                   readOnly: true,
@@ -6181,7 +6189,13 @@ export function SkillQueuesPage() {
           </div>
         )
       }}
-      searchFields={['skillQueueCode', 'platformSkillId', 'skillQueueName', 'vdnCode']}
+      searchFields={[
+        'skillQueueCode',
+        'platformSkillId',
+        'skillQueueName',
+        'vdnCode',
+        'accessCode',
+      ]}
       title="Skill Queues"
       validateDraft={(draft, currentRecord) => [
         ...validateCode(stringValue(draft.skillQueueCode), 'Skill ID'),
@@ -6195,6 +6209,7 @@ export function SkillQueuesPage() {
         ...fieldRequired(draft, 'platformSkillId', 'Platform Skill ID'),
         ...fieldRequired(draft, 'skillQueueName', 'Skill Name'),
         ...fieldRequired(draft, 'vdnCode', 'VDN'),
+        ...fieldRequired(draft, 'accessCode', 'Access Code'),
       ]}
       onDelete={(record) =>
         deleteEntity('skillQueues', 'skillQueueCode', record.skillQueueCode)

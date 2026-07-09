@@ -1447,6 +1447,7 @@ export const workingTimePlans: WorkingTimePlan[] = [
 ]
 
 const createSkillQueue = ({
+  accessCode,
   assignedAgentCount,
   maxQueueCustomers = 100,
   platformSkillId,
@@ -1456,6 +1457,7 @@ const createSkillQueue = ({
   vdnCode = 'VDN_RETAIL_IN',
   workTimePlanCode = '',
 }: {
+  accessCode?: string
   assignedAgentCount: number
   maxQueueCustomers?: number
   platformSkillId: string
@@ -1465,6 +1467,7 @@ const createSkillQueue = ({
   vdnCode?: string
   workTimePlanCode?: string
 }): SkillQueue => ({
+  accessCode: accessCode ?? platformSkillId.replace(/^GX-SK-/, '8'),
   assignedAgentCount,
   maxQueueCustomers,
   nonWorkingTimeMessage:

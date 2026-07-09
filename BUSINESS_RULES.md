@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-07-07 18:44 +08:00
+Last updated: 2026-07-08 11:30 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -710,6 +710,7 @@ Important rules:
 - Non-Webchat text channels do not show that Webchat-specific field.
 - Channels Business Config `Agent Service Configuration` keeps the existing `Agent No Reply Warning (sec)` and `Agent No Reply Breach (sec)` labels, and uses colored dots matching Live Chat SLA warning and breach colors to clarify the threshold severity.
 - Business Types include `Source Business Code`.
+- Skill Queues require `Access Code`; it appears after `VDN` in list columns and Add / Edit / View forms. Keyword search includes Access Code.
 - Skill Routing Rules use configured route elements and target skill queues.
 - Site Access Volume ratios should total 100% for the same channel + media combination.
 - Working Time Plans support work schedule, Ramadan schedule, holiday schedule, and special working plans.

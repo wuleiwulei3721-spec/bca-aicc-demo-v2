@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-07-07 18:44 +08:00
+Last updated: 2026-07-08 11:30 +08:00
 
 ## 1. Overall Status
 
@@ -252,6 +252,7 @@ Implemented behaviors:
 - Webchat-specific recall field.
 - Phone account management disabled.
 - Business Types `Source Business Code`.
+- Skill Queues include required `Access Code` after `VDN` in list columns and Add / Edit / View forms; Keyword search includes Access Code.
 - Skill Routing Rules batch behavior and duplicate handling.
 - Local store state for demo changes.
 
