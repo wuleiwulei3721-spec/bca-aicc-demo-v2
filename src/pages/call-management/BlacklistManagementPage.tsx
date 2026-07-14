@@ -353,7 +353,7 @@ export function BlacklistManagementPage() {
   ]
 
   return (
-    <AdminPage className="blacklist-management" title="Blacklist Management">
+    <AdminPage className="blacklist-management" title="Blacklist">
         {notice && (
           <Alert
             showIcon

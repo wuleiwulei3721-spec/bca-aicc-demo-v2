@@ -347,7 +347,7 @@ export function SessionEndReasonManagementPage() {
   return (
     <AdminPage
       className="session-end-reason-management"
-      title="Session End Reason Management"
+      title="Abnormal End Reasons"
     >
       {notice && (
         <Alert

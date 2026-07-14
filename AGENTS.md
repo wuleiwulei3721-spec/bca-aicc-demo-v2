@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Codex Operating Rules
 
-Last updated: 2026-06-18 15:11 +08:00
+Last updated: 2026-07-14 09:48 +08:00
 Scope: entire repository at `D:\03projects\bca-aicc-demo-v2`
 
 This file is the required entry point for future Codex sessions and maintainers. Its job is to restore project context quickly, protect confirmed product decisions, and keep the project knowledge base current without relying on chat history, sidebar memory, or a specific OpenAI account.
@@ -314,3 +314,17 @@ For documentation-only tasks, lint/build can be skipped. The final response must
 - If unrelated dirty files exist, leave them alone.
 - If the user asks for a commit, stage only the intended files.
 
+## 17. Production Deployment Rules
+
+These rules are mandatory for Vercel or any other production / customer-visible deployment.
+
+- Default release flow is: inspect `git status --short --branch`, run required validation, commit intended changes, push to the remote branch, then deploy the committed revision.
+- Do not deploy a dirty working tree to production by default.
+- If `git status --short --branch` shows uncommitted or untracked files before a production deployment, stop and ask the user whether to:
+  - commit and push first,
+  - deploy the dirty local workspace anyway,
+  - or cancel the deployment.
+- Treat "publish", "release", "deploy", "发布", and similar wording as requiring the default committed release flow unless the user explicitly says to deploy uncommitted local changes.
+- Do not interpret a plan assumption such as "use current workspace" as permission to skip commit / push. If the user's requested release flow is unusual, risky, or ambiguous, ask for confirmation before deploying.
+- Production deployments must explicitly use customer-safe environment settings when applicable, especially `VITE_APP_VISIBILITY_PROFILE=customer` so local-only modules such as Employee Management and Design System stay hidden.
+- After deployment, record the production URL, deployment command, environment profile, validation results, and any rollback notes in `DEV_LOG.md`.

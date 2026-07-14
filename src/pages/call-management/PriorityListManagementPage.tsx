@@ -473,7 +473,7 @@ export function PriorityListManagementPage() {
   ]
 
   return (
-    <AdminPage className="priority-list-management" title="Priority List Management">
+    <AdminPage className="priority-list-management" title="Priority List">
         {notice && (
           <Alert
             showIcon

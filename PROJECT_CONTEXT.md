@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Project Context
 
-Last updated: 2026-07-09 12:43 +08:00
+Last updated: 2026-07-10 16:10 +08:00
 Repository path: `D:\03projects\bca-aicc-demo-v2`
 
 ## 1. Project Name
@@ -100,8 +100,9 @@ Current router structure:
 - `/login` -> public login page.
 - `/` -> authenticated `BasicLayout` -> `AgentWorkspace`.
 - Monitoring screenshot menu items also open `/` and switch the Home or Monitor workspace tab image; there are no standalone Monitoring routes in the current scope.
-- `/design-system` -> authenticated `BasicLayout` -> `DesignSystem`; local-only when `VITE_APP_VISIBILITY_PROFILE=local`.
-- `/call-management/verification-rules` -> current Verification Rule V2 page.
+- `AI` is a side-menu group with external child links for `Quality Manage` and `AI Assist Config`; these open new browser tabs and do not change the current workspace.
+- `/design-system` -> local-only compatibility entry that opens the Design System workspace tab and returns to `/` when `VITE_APP_VISIBILITY_PROFILE=local`.
+- `/call-management/verification-rules` -> compatibility entry that opens the current Verification Rule V2 workspace tab and returns to `/`.
 - `/call-management/global-control-configuration`
 - `/call-management/blacklist`
 - `/call-management/priority-list`
@@ -122,7 +123,7 @@ Current router structure:
 - `/routing-config/skill-routing-rules`
 - `/routing-config/working-time-plans`
 - `/routing-config/*` redirects depending on feature flag.
-- `/employee-management/employee-profiles` -> local-only Employee Profile Management page when `VITE_APP_VISIBILITY_PROFILE=local`.
+- `/employee-management/employee-profiles` -> local-only compatibility entry that opens the Employee Profile workspace tab and returns to `/` when `VITE_APP_VISIBILITY_PROFILE=local`.
 - `/employee-management/*` redirects depending on visibility profile.
 - `*` under authenticated routes redirects to `/`.
 
@@ -131,11 +132,13 @@ All business routes under `/` require an authenticated demo session.
 ## 8. Major Source Areas
 
 - `src/App.tsx`: Ant Design `ConfigProvider` and router provider.
-- `src/routes.tsx`: route definitions, feature-flagged Routing Config routes, and local-only module guards.
+- `src/routes.tsx`: route definitions, workspace page tab route bridges, feature-flagged Routing Config redirects, and local-only module guards.
+- `src/config/workspacePageTabs.tsx`: registry for menu-driven workspace page tabs, including menu key, route path, label, icon, module visibility key, and page component.
+- `src/components/WorkspacePageRouteOpener.tsx`: compatibility route bridge that opens a registered workspace page tab and returns the URL to `/`.
 - `src/config/moduleVisibility.ts`: unified customer/local module visibility profile.
 - `src/layouts/BasicLayout.tsx`: global shell, header, side menu, agent status, call toolbar, handoff readiness, sign out / logout guards, internal chat entry.
 - `src/layouts/components/*`: toolbar, profile area, agent settings, Transfer, Outbound, Internal Chat, Toolbar Settings.
-- `src/pages/AgentWorkspace.tsx`: workspace tab container for Home, Monitor, BankApp Demo, Webchat Demo, WhatsApp Demo, Live Chat, PSTN, Voice Call, and Video Call.
+- `src/pages/AgentWorkspace.tsx`: workspace tab container for Home, Monitor, BankApp Demo, Webchat Demo, WhatsApp Demo, Live Chat, PSTN, Voice Call, Video Call, and registered management page tabs.
 - `src/pages/inbound/InteractionWorkspace.tsx`: shared three-column workspace foundation.
 - `src/pages/inbound/InboundPage.tsx`: voice / PSTN and BankApp voice workspace.
 - `src/pages/inbound/VideoCallPage.tsx`: video call workspace and OpenEye floating client overlay.
@@ -174,6 +177,7 @@ The shell contains:
 - Agent Settings entry separated at the bottom of the profile menu; current setting controls system prompt sound on/off.
 - Collapsible side menu with search.
 - Route-aware selected menu state.
+- `AI` external-link group below Monitoring, with `Quality Manage` and `AI Assist Config`.
 
 The toolbar supports:
 
@@ -200,8 +204,16 @@ Workspace tabs include:
 - WhatsApp Demo.
 - Live Chat.
 - Dynamic call tabs for PSTN / Voice Call / Video Call.
+- Closable management page tabs opened from the left menu, including Call Management, Routing Config, and local-only Employee Management / Design System entries when visible.
 
 Active calls cannot be closed from the tab. Ended call tabs can be closed.
+Only the Home workspace tab keeps an icon; other top workspace tabs are text-first to keep the tab bar compact.
+
+Visible management pages open inside `AgentWorkspace` as closable tabs instead
+of replacing the workbench. Clicking the same left-menu management item reuses
+the existing page tab. Direct visits to registered management URLs are kept as
+compatibility entries: the route opens the matching page tab and navigates back
+to `/` so active customer service tabs remain available.
 
 The Home and Monitor tabs can display customer-provided static monitoring
 screenshots from the `Monitoring` side menu:
@@ -239,8 +251,8 @@ Current formal Live Chat uses `LiveChat2Page`:
 - SLA / unanswered timer display with a horizontal progress bar based on the breach threshold.
 - Conversation workspace.
 - Quick Replies tab.
-- Public Quick Replies are maintained through `Call Management > Common Phrase Management`.
-- Agent replies are checked against `Call Management > Sensitive Word Management` before sending.
+- Public Quick Replies are maintained through `Call Management > Common Phrase`.
+- Agent replies are checked against `Call Management > Sensitive Word` before sending.
 - Message Record tab.
 - Transfer modal.
 - End Service / Close behavior.
@@ -286,31 +298,35 @@ Customer-visible Call Management pages:
 
 - Verification Rules: current V2 KBV rule management.
 - Global Control Configuration.
-- Blacklist Management.
-- Priority List Management.
-- Common Phrase Management.
-- Common Link Management.
-- Common Number Management.
-- Sensitive Word Management.
-- Busy Reason Management.
-- Session End Reason Management.
-- Call Record Query.
+- Blacklist.
+- Priority List.
+- Common Phrase.
+- Common Link.
+- Common Number.
+- Sensitive Word.
+- Busy Reason.
+- Abnormal End Reasons.
+- Interaction Log.
 
 Legacy or hidden routes redirect to Verification Rules.
 
-Call Record Query is scoped to the current agent's Phone, BankApp Voice,
+Interaction Log is implemented at `/call-management/call-record-query` and is
+scoped to the current agent's Phone, BankApp Voice,
 BankApp Video, BankApp DM, Webchat, and WhatsApp records. It uses Contact /
-Queue / Service Time / Ended By / End Reason to show the customer-side
-identifier, queue context, start-end service time, and service ending metadata.
-Its detail modal keeps the left side focused on playback or conversation
-content and the right side focused on CWU Registration; it does not add a CRM
-or customer detail card in the current scope. Voice details use a compact
-playback bar without waveform display. Video details use an OpenEye-style
-vertical replay with two video panes and a playback bar, without call-control
-buttons, labels, or icons. It intentionally excludes Email and Social Media
+Queue / Service Time / Ended By / End Reason / QM Score to show the
+customer-side identifier, queue context, start-end service time, service ending
+metadata, and quality score.
+Its detail modal keeps the main area focused on playback or conversation
+content and the right side focused on read-only CWU; it does not add a CRM
+or customer detail card in the current scope. Voice and Video details use
+left media playback, middle transcript, and right CWU columns; DM details use
+conversation plus right CWU without an empty media column. Voice media stacks
+Voice Recording Playback above the PSTN active-call Screen Recording Playback.
+Video media uses an OpenEye-style vertical replay with two video panes and a
+playback bar, without call-control buttons, labels, or icons. It intentionally excludes Email and Social Media
 records; Email流水查询 and Social Media查询 are separate future scopes.
 
-Session End Reason Management maintains agent-selectable abnormal end reasons
+Abnormal End Reasons maintains agent-selectable abnormal end reasons
 for Voice, Video, and DM service endings. `Normal` is the system default normal
 end reason and is not listed as a maintainable abnormal reason. The source
 attachment explicitly names Voice and Digital; Video is included in the current
@@ -345,7 +361,7 @@ Employee Management is implemented in `main` but is local-only and hidden from c
 
 Current local-only page:
 
-- Employee Profile Management.
+- Employee Profile.
 
 Current behaviors:
 
@@ -393,11 +409,12 @@ Current behaviors:
 - Transfer, Outbound Call, Internal Chat, Agent Settings, Toolbar Settings, Call Flow Detail, Send Email, Contact Management modals.
 - Live Chat workspace with customer list, conversation, message record, quick replies, and local message state.
 - Monitoring side menu with static Home / Monitor dashboard screenshot switching.
+- AI external side-menu group for Quality Manage and AI Assist Config.
 - BankApp, Webchat, and WhatsApp customer-side simulations with screenshot assets.
 - Call Management pages listed above.
-- Session End Reason Management for abnormal Voice / Video / DM service end reasons.
-- Call Record Query for current-agent Phone, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp history, with mock playback/transcript details, Contact, Queue, Service Time, Ended By, End Reason, mandatory CWU Registration summary, and 24-hour CWU editing.
-- Common Number Management feeds enabled IVR transfer targets in the call Transfer modal.
+- Abnormal End Reasons for abnormal Voice / Video / DM service end reasons.
+- Interaction Log for current-agent Phone, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp history, with 30 mock records, Contact, Queue, Service Time, Ended By, End Reason, QM Score, playback/transcript details, and read-only mandatory CWU summary.
+- Common Number feeds enabled IVR transfer targets in the call Transfer modal.
 - Sensitive word detection for Live Chat agent replies.
 - Routing Config pages listed above.
 - Admin CRUD component set.

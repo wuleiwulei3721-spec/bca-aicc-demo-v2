@@ -265,7 +265,7 @@ export function SensitiveWordManagementPage() {
   return (
     <AdminPage
       className="sensitive-word-management"
-      title="Sensitive Word Management"
+      title="Sensitive Word"
     >
       {notice && (
         <Alert

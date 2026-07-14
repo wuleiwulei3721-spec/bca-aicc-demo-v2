@@ -1,39 +1,21 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { PublicLoginRoute, RequireAuth } from './components/AuthRouteGuards'
+import { WorkspacePageRouteOpener } from './components/WorkspacePageRouteOpener'
 import { isModuleVisible } from './config/moduleVisibility'
-import {
-  AgentWorkspace,
-  BlacklistManagementPage,
-  BusyReasonManagementPage,
-  CallRecordQueryPage,
-  CommonLinkManagementPage,
-  CommonNumberManagementPage,
-  CommonPhraseManagementPage,
-  BusinessTypesPage,
-  ChannelsPage,
-  DesignSystem,
-  EmployeeProfileManagementPage,
-  GlobalControlConfigurationPage,
-  PriorityListManagementPage,
-  SensitiveWordManagementPage,
-  SessionEndReasonManagementPage,
-  SitesPage,
-  SiteAccessVolumePage,
-  SkillQueuesPage,
-  SkillRoutingRulesPage,
-  VerificationRuleV2Page,
-  VdnPage,
-  WorkingTimePlansPage,
-} from './pages'
+import { workspacePageTabDefinitions } from './config/workspacePageTabs'
+import { AgentWorkspace } from './pages'
 
-const callManagementRoutes = [
+const workspacePageRoutes = workspacePageTabDefinitions
+  .filter((definition) => isModuleVisible(definition.moduleKey))
+  .map((definition) => ({
+    path: definition.routePath.replace(/^\//, ''),
+    element: <WorkspacePageRouteOpener tabKey={definition.tabKey} />,
+  }))
+
+const callManagementFallbackRoutes = [
   {
     path: 'call-management',
     element: <Navigate replace to="/call-management/verification-rules" />,
-  },
-  {
-    path: 'call-management/verification-rules',
-    element: <VerificationRuleV2Page />,
   },
   {
     path: 'call-management/verification-rule-v2',
@@ -42,46 +24,6 @@ const callManagementRoutes = [
   {
     path: 'call-management/routing-configuration',
     element: <Navigate replace to="/call-management/verification-rules" />,
-  },
-  {
-    path: 'call-management/global-control-configuration',
-    element: <GlobalControlConfigurationPage />,
-  },
-  {
-    path: 'call-management/blacklist',
-    element: <BlacklistManagementPage />,
-  },
-  {
-    path: 'call-management/priority-list',
-    element: <PriorityListManagementPage />,
-  },
-  {
-    path: 'call-management/common-phrases',
-    element: <CommonPhraseManagementPage />,
-  },
-  {
-    path: 'call-management/common-links',
-    element: <CommonLinkManagementPage />,
-  },
-  {
-    path: 'call-management/common-numbers',
-    element: <CommonNumberManagementPage />,
-  },
-  {
-    path: 'call-management/sensitive-words',
-    element: <SensitiveWordManagementPage />,
-  },
-  {
-    path: 'call-management/busy-reasons',
-    element: <BusyReasonManagementPage />,
-  },
-  {
-    path: 'call-management/session-end-reasons',
-    element: <SessionEndReasonManagementPage />,
-  },
-  {
-    path: 'call-management/call-record-query',
-    element: <CallRecordQueryPage />,
   },
   {
     path: 'call-management/text-channel-settings',
@@ -93,7 +35,7 @@ const callManagementRoutes = [
   },
 ]
 
-const routingConfigRoutes = isModuleVisible('routing-config')
+const routingConfigFallbackRoutes = isModuleVisible('routing-config')
   ? [
       {
         path: 'routing-config',
@@ -104,48 +46,16 @@ const routingConfigRoutes = isModuleVisible('routing-config')
         element: <Navigate replace to="/routing-config/channels" />,
       },
       {
-        path: 'routing-config/vdn',
-        element: <VdnPage />,
-      },
-      {
-        path: 'routing-config/sites',
-        element: <SitesPage />,
-      },
-      {
         path: 'routing-config/channel-types',
         element: <Navigate replace to="/routing-config/channels" />,
-      },
-      {
-        path: 'routing-config/channels',
-        element: <ChannelsPage />,
       },
       {
         path: 'routing-config/media-service-rule-plans',
         element: <Navigate replace to="/routing-config/channels" />,
       },
       {
-        path: 'routing-config/business-types',
-        element: <BusinessTypesPage />,
-      },
-      {
-        path: 'routing-config/skill-queues',
-        element: <SkillQueuesPage />,
-      },
-      {
         path: 'routing-config/access-accounts',
         element: <Navigate replace to="/routing-config/channels" />,
-      },
-      {
-        path: 'routing-config/site-access-volume',
-        element: <SiteAccessVolumePage />,
-      },
-      {
-        path: 'routing-config/skill-routing-rules',
-        element: <SkillRoutingRulesPage />,
-      },
-      {
-        path: 'routing-config/working-time-plans',
-        element: <WorkingTimePlansPage />,
       },
     ]
   : [
@@ -159,31 +69,13 @@ const routingConfigRoutes = isModuleVisible('routing-config')
       },
     ]
 
-const designSystemRoute = isModuleVisible('design-system')
-  ? [
-      {
-        path: 'design-system',
-        element: <DesignSystem />,
-      },
-    ]
-  : [
-      {
-        path: 'design-system',
-        element: <Navigate replace to="/" />,
-      },
-    ]
-
-const employeeManagementRoutes = isModuleVisible('employee-management')
+const employeeManagementFallbackRoutes = isModuleVisible('employee-management')
   ? [
       {
         path: 'employee-management',
         element: (
           <Navigate replace to="/employee-management/employee-profiles" />
         ),
-      },
-      {
-        path: 'employee-management/employee-profiles',
-        element: <EmployeeProfileManagementPage />,
       },
       {
         path: 'employee-management/*',
@@ -216,10 +108,10 @@ export const router = createBrowserRouter([
         index: true,
         element: <AgentWorkspace />,
       },
-      ...designSystemRoute,
-      ...callManagementRoutes,
-      ...routingConfigRoutes,
-      ...employeeManagementRoutes,
+      ...workspacePageRoutes,
+      ...callManagementFallbackRoutes,
+      ...routingConfigFallbackRoutes,
+      ...employeeManagementFallbackRoutes,
       {
         path: '*',
         element: <Navigate replace to="/" />,

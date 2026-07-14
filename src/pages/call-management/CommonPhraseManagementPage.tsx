@@ -492,7 +492,7 @@ export function CommonPhraseManagementPage() {
   return (
     <AdminPage
       className="common-phrase-management"
-      title="Common Phrase Management"
+      title="Common Phrase"
     >
       {notice && (
         <Alert

@@ -666,7 +666,7 @@ export function EmployeeProfileManagementPage() {
   return (
     <AdminPage
       className="employee-profile-management"
-      title="Employee Profile Management"
+      title="Employee Profile"
     >
       {notice && (
         <Alert

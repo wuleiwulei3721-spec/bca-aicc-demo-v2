@@ -42,6 +42,7 @@ export interface CallRecord {
   endedAt: string
   endReason: CallRecordEndReason
   mediaType: CallRecordMediaType
+  qmScore: number | null
   queueName: string
   recordNo: string
   startedAt: string

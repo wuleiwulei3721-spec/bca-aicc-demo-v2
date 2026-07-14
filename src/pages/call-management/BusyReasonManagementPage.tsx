@@ -246,7 +246,7 @@ export function BusyReasonManagementPage() {
   ]
 
   return (
-    <AdminPage className="busy-reason-config" title="Busy Reason Management">
+    <AdminPage className="busy-reason-config" title="Busy Reason">
         {notice && (
           <Alert
             showIcon

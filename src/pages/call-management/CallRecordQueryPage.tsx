@@ -1,16 +1,14 @@
 import {
-  EditOutlined,
   EyeOutlined,
   PauseCircleOutlined,
   PlayCircleOutlined,
 } from '@ant-design/icons'
-import { Checkbox, DatePicker, Input, Select } from 'antd'
+import { DatePicker, Input, Select } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useEffect, useMemo, useState } from 'react'
 import {
   AdminFilterField,
-  AdminFormField,
   AdminModal,
   AdminModalFooter,
   AdminPage,
@@ -25,15 +23,17 @@ import type {
   CallRecordChannel,
   CallRecordEndReason,
   CallRecordMediaType,
-  CallRecordSummary,
   ServiceEndedBy,
 } from '../../types'
 
 const { RangePicker } = DatePicker
 const OPEN_EYE_REPLAY_SRC =
   '/screenshots/haloapp-v18/openeye-video-replay.png'
+const SCREEN_RECORDING_REPLAY_SRC =
+  '/screenshots/interaction-log/pstn-active-call-screen.png'
 
 type CallRecordDateRange = [Dayjs, Dayjs]
+type CallRecordPlaybackSource = 'screen' | 'video' | 'voice'
 
 interface CallRecordFilters {
   channel: 'All' | CallRecordChannel
@@ -72,20 +72,6 @@ const endedByOptions: Array<{
   { label: 'System', value: 'System' },
 ]
 
-const cwuBusinessTypeOptions = [
-  'Credit Card',
-  'Debit Card',
-  'Mobile Banking',
-  'Account Service',
-  'Investment',
-  'Wealth Management',
-  'Loan',
-  'Paylater',
-  'Dispute',
-  'Branch Service',
-  'Others',
-]
-
 const endReasonOptions: Array<{
   label: string
   value: CallRecordFilters['endReason']
@@ -107,7 +93,7 @@ const endReasonOptions: Array<{
 function createDefaultFilters(): CallRecordFilters {
   return {
     channel: 'All',
-    dateRange: [dayjs().subtract(7, 'day').startOf('day'), dayjs().endOf('day')],
+    dateRange: [dayjs().startOf('day'), dayjs().endOf('day')],
     endedBy: 'All',
     endReason: 'All',
     keyword: '',
@@ -148,10 +134,6 @@ function formatServiceTime(record: CallRecord) {
   return `${formatDateTime(record.startedAt)} - ${formatDateTime(record.endedAt)}`
 }
 
-function isEditableRecord(record: CallRecord) {
-  return dayjs().diff(dayjs(record.endedAt), 'hour', true) <= 24
-}
-
 function createSearchText(record: CallRecord) {
   return [
     record.recordNo,
@@ -188,13 +170,6 @@ function recordMatchesFilters(record: CallRecord, filters: CallRecordFilters) {
     (!rangeStart || startedAt.isSame(rangeStart, 'second') || startedAt.isAfter(rangeStart)) &&
     (!rangeEnd || startedAt.isSame(rangeEnd, 'second') || startedAt.isBefore(rangeEnd))
   )
-}
-
-function cloneSummary(summary: CallRecordSummary): CallRecordSummary {
-  return {
-    ...summary,
-    businessTypes: [...summary.businessTypes],
-  }
 }
 
 function getPlaybackProgressPercent(record: CallRecord, playbackSeconds: number) {
@@ -263,20 +238,18 @@ function renderTranscriptLine(record: CallRecord, line: CallRecord['transcript']
 
 export function CallRecordQueryPage() {
   const callRecords = useCallManagementStore((state) => state.callRecords)
-  const updateCallRecordSummary = useCallManagementStore(
-    (state) => state.updateCallRecordSummary,
-  )
   const [appliedFilters, setAppliedFilters] = useState<CallRecordFilters>(() =>
     createDefaultFilters(),
   )
   const [draftFilters, setDraftFilters] = useState<CallRecordFilters>(() =>
     createDefaultFilters(),
   )
-  const [editRecordId, setEditRecordId] = useState<string | null>(null)
   const [playbackRecordId, setPlaybackRecordId] = useState<string | null>(null)
+  const [playbackSource, setPlaybackSource] =
+    useState<CallRecordPlaybackSource | null>(null)
+  const [isPlaybackRunning, setIsPlaybackRunning] = useState(false)
   const [playbackSeconds, setPlaybackSeconds] = useState(0)
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null)
-  const [summaryDraft, setSummaryDraft] = useState<CallRecordSummary | null>(null)
 
   const selectedRecord = useMemo(
     () =>
@@ -284,14 +257,6 @@ export function CallRecordQueryPage() {
         ? callRecords.find((record) => record.id === selectedRecordId) ?? null
         : null,
     [callRecords, selectedRecordId],
-  )
-
-  const editRecord = useMemo(
-    () =>
-      editRecordId
-        ? callRecords.find((record) => record.id === editRecordId) ?? null
-        : null,
-    [callRecords, editRecordId],
   )
 
   const filteredRecords = useMemo(
@@ -303,7 +268,10 @@ export function CallRecordQueryPage() {
   )
 
   const isPlaybackPlaying =
-    Boolean(selectedRecord) && playbackRecordId === selectedRecord?.id
+    Boolean(selectedRecord) &&
+    playbackRecordId === selectedRecord?.id &&
+    Boolean(playbackSource) &&
+    isPlaybackRunning
 
   useEffect(() => {
     if (!selectedRecord || !isPlaybackPlaying) {
@@ -314,7 +282,7 @@ export function CallRecordQueryPage() {
       setPlaybackSeconds((currentSeconds) => {
         if (currentSeconds >= selectedRecord.durationSeconds) {
           window.clearInterval(timer)
-          setPlaybackRecordId(null)
+          setIsPlaybackRunning(false)
           return selectedRecord.durationSeconds
         }
 
@@ -327,24 +295,18 @@ export function CallRecordQueryPage() {
 
   const openDetail = (record: CallRecord) => {
     setPlaybackRecordId(null)
+    setPlaybackSource(null)
+    setIsPlaybackRunning(false)
     setPlaybackSeconds(0)
     setSelectedRecordId(record.id)
   }
 
   const closeDetail = () => {
     setPlaybackRecordId(null)
+    setPlaybackSource(null)
+    setIsPlaybackRunning(false)
     setPlaybackSeconds(0)
     setSelectedRecordId(null)
-  }
-
-  const openSummaryEditor = (record: CallRecord) => {
-    setEditRecordId(record.id)
-    setSummaryDraft(cloneSummary(record.summary))
-  }
-
-  const closeSummaryEditor = () => {
-    setEditRecordId(null)
-    setSummaryDraft(null)
   }
 
   const handleSearch = () => {
@@ -358,71 +320,69 @@ export function CallRecordQueryPage() {
     setAppliedFilters(nextFilters)
   }
 
-  const updateSummaryDraft = <Key extends keyof CallRecordSummary>(
-    key: Key,
-    value: CallRecordSummary[Key],
-  ) => {
-    setSummaryDraft((currentDraft) =>
-      currentDraft ? { ...currentDraft, [key]: value } : currentDraft,
-    )
-  }
+  const togglePlayback = (record: CallRecord, source: CallRecordPlaybackSource) => {
+    if (playbackRecordId === record.id && playbackSource === source) {
+      if (isPlaybackRunning) {
+        setIsPlaybackRunning(false)
+        return
+      }
 
-  const handleSaveSummary = () => {
+      if (playbackSeconds >= record.durationSeconds) {
+        setPlaybackSeconds(0)
+      }
+
+      setIsPlaybackRunning(true)
+      return
+    }
+
     if (
-      !editRecord ||
-      !summaryDraft ||
-      !isEditableRecord(editRecord) ||
-      summaryDraft.businessTypes.length === 0 ||
-      !summaryDraft.description.trim()
+      playbackRecordId !== record.id ||
+      playbackSource !== source ||
+      playbackSeconds >= record.durationSeconds
     ) {
-      return
-    }
-
-    const nextSummary = {
-      businessTypes: summaryDraft.businessTypes,
-      description: summaryDraft.description.trim(),
-      ticketNo: editRecord.summary.ticketNo,
-    }
-
-    updateCallRecordSummary(editRecord.id, nextSummary)
-    closeSummaryEditor()
-  }
-
-  const togglePlayback = (record: CallRecord) => {
-    if (playbackRecordId === record.id) {
-      setPlaybackRecordId(null)
-      return
-    }
-
-    if (playbackSeconds >= record.durationSeconds) {
       setPlaybackSeconds(0)
     }
 
     setPlaybackRecordId(record.id)
+    setPlaybackSource(source)
+    setIsPlaybackRunning(true)
   }
 
-  const renderPlayerControls = (record: CallRecord) => (
-    <div className="call-record-query__player-controls">
-      <button
-        aria-label={isPlaybackPlaying ? 'Pause playback' : 'Play playback'}
-        type="button"
-        onClick={() => togglePlayback(record)}
-      >
-        {isPlaybackPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
-      </button>
-      <div className="call-record-query__player-progress">
-        <span
-          style={{
-            width: `${getPlaybackProgressPercent(record, playbackSeconds)}%`,
-          }}
-        />
+  const renderPlayerControls = (
+    record: CallRecord,
+    source: CallRecordPlaybackSource,
+  ) => {
+    const isCurrentPlayerPlaying =
+      playbackRecordId === record.id &&
+      playbackSource === source &&
+      isPlaybackRunning
+    const isCurrentPlayer =
+      playbackRecordId === record.id && playbackSource === source
+    const currentSeconds = isCurrentPlayer ? playbackSeconds : 0
+
+    return (
+      <div className="call-record-query__player-controls">
+        <button
+          aria-label={isCurrentPlayerPlaying ? 'Pause playback' : 'Play playback'}
+          type="button"
+          onClick={() => togglePlayback(record, source)}
+        >
+          {isCurrentPlayerPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+        </button>
+        <div className="call-record-query__player-progress">
+          <span
+            style={{
+              width: `${getPlaybackProgressPercent(record, currentSeconds)}%`,
+            }}
+          />
+        </div>
+        <strong>
+          {formatPlaybackClock(currentSeconds)} /{' '}
+          {formatPlaybackClock(record.durationSeconds)}
+        </strong>
       </div>
-      <strong>
-        {formatPlaybackClock(playbackSeconds)} /{' '}
-        {formatPlaybackClock(record.durationSeconds)}
-      </strong>
-    </div>
-  )
+    )
+  }
 
   const renderTranscriptLog = (
     record: CallRecord,
@@ -444,122 +404,163 @@ export function CallRecordQueryPage() {
     {
       dataIndex: 'recordNo',
       title: 'Record No.',
-      width: 138,
+      width: 132,
     },
     {
       dataIndex: 'channel',
       title: 'Channel',
-      width: 96,
+      width: 92,
     },
     {
       dataIndex: 'mediaType',
       title: 'Media',
-      width: 82,
+      width: 78,
     },
     {
       dataIndex: 'customerName',
       ellipsis: true,
       title: 'Customer Name',
-      width: 142,
+      width: 126,
     },
     {
       dataIndex: 'customerId',
       title: 'Customer ID',
-      width: 118,
+      width: 104,
     },
     {
       dataIndex: 'contact',
       ellipsis: true,
       title: 'Contact',
-      width: 158,
+      width: 142,
     },
     {
       dataIndex: 'agentName',
       ellipsis: true,
       title: 'Agent Name',
-      width: 132,
+      width: 126,
     },
     {
       dataIndex: 'agentId',
       title: 'Agent ID',
-      width: 92,
+      width: 84,
     },
     {
       dataIndex: 'queueName',
       ellipsis: true,
       render: (value: string) => formatQueueName(value),
       title: 'Queue',
-      width: 156,
+      width: 148,
     },
     {
       key: 'serviceTime',
       render: (_, record) => formatServiceTime(record),
       title: 'Service Time',
-      width: 282,
+      width: 268,
     },
     {
       dataIndex: 'durationSeconds',
       render: (value: number) => formatDuration(value),
       title: 'Duration',
-      width: 96,
+      width: 92,
     },
     {
       dataIndex: 'endedBy',
       title: 'Ended By',
-      width: 104,
+      width: 96,
     },
     {
       dataIndex: 'endReason',
       ellipsis: true,
       title: 'End Reason',
-      width: 168,
+      width: 150,
+    },
+    {
+      dataIndex: 'qmScore',
+      render: (value: CallRecord['qmScore']) => value ?? '-',
+      title: 'QM Score',
+      width: 86,
     },
     {
       fixed: 'right',
-      render: (_, record) => {
-        const editable = isEditableRecord(record)
-
-        return (
-          <div className="routing-config-crud__row-actions call-record-query__row-actions">
-            <button
-              aria-label={`View ${record.recordNo}`}
-              title="View"
-              type="button"
-              onClick={() => openDetail(record)}
-            >
-              <EyeOutlined />
-            </button>
-            {editable && (
-              <button
-                aria-label={`Edit CWU ${record.recordNo}`}
-                title="Edit CWU"
-                type="button"
-                onClick={() => openSummaryEditor(record)}
-              >
-                <EditOutlined />
-              </button>
-            )}
-          </div>
-        )
-      },
+      render: (_, record) => (
+        <div className="routing-config-crud__row-actions call-record-query__row-actions">
+          <button
+            aria-label={`View ${record.recordNo}`}
+            title="View"
+            type="button"
+            onClick={() => openDetail(record)}
+          >
+            <EyeOutlined />
+          </button>
+        </div>
+      ),
       title: 'Actions',
-      width: 96,
+      width: 74,
     },
   ]
 
-  const canEditRecord = editRecord ? isEditableRecord(editRecord) : false
-  const canSaveSummary = Boolean(
-    canEditRecord &&
-      summaryDraft &&
-      summaryDraft.businessTypes.length > 0 &&
-      summaryDraft.description.trim(),
+  const renderCwuPanel = (record: CallRecord) => (
+    <section className="call-record-query__summary-panel">
+      <div className="call-record-query__column-title call-record-query__cwu-title">
+        CWU
+      </div>
+      <div className="call-record-query__summary-card call-record-query__cwu-card">
+        <div className="call-record-query__cwu-fields">
+          <div>
+            <span>Ticket No.</span>
+            <strong>{record.summary.ticketNo}</strong>
+          </div>
+          <div>
+            <span>Business Type</span>
+            <div className="call-record-query__business-tags">
+              {record.summary.businessTypes.length > 0 ? (
+                record.summary.businessTypes.map((businessType) => (
+                  <span
+                    className="call-record-query__business-tag"
+                    key={businessType}
+                  >
+                    {businessType}
+                  </span>
+                ))
+              ) : (
+                <strong>-</strong>
+              )}
+            </div>
+          </div>
+          <div>
+            <span>Summary</span>
+            <p>{record.summary.description}</p>
+          </div>
+        </div>
+      </div>
+    </section>
   )
+  const detailModalWidth =
+    selectedRecord?.mediaType === 'Voice'
+      ? 1320
+      : selectedRecord?.mediaType === 'Video'
+        ? 1180
+        : 960
+  const detailClassName = [
+    'call-record-query__detail',
+    selectedRecord?.mediaType === 'Voice'
+      ? 'call-record-query__detail--voice'
+      : '',
+    selectedRecord?.mediaType === 'Video'
+      ? 'call-record-query__detail--video'
+      : '',
+    selectedRecord?.mediaType === 'DM'
+      ? 'call-record-query__detail--dm'
+      : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   return (
     <AdminPage
       className="call-record-query"
-      title="Call Record Query"
-      description="Current agent view for Phone, BankApp Voice, BankApp Video, BankApp, Webchat, and WhatsApp records."
+      title="Interaction Log"
+      description="Current agent view for Phone, BankApp Voice, BankApp Video, BankApp, Webchat, and WhatsApp interaction records."
     >
       <BaseCard compact>
         <AdminToolbar
@@ -659,7 +660,7 @@ export function CallRecordQueryPage() {
         <AdminTable<CallRecord>
           columns={columns}
           dataSource={filteredRecords}
-          horizontalScroll={1860}
+          horizontalScroll={1798}
           pagination={{}}
           rowKey="id"
         />
@@ -670,161 +671,93 @@ export function CallRecordQueryPage() {
         open={Boolean(selectedRecord)}
         title={
           selectedRecord
-            ? `Call Record Detail - ${selectedRecord.recordNo}`
-            : 'Call Record Detail'
+            ? `Interaction Log Detail - ${selectedRecord.recordNo}`
+            : 'Interaction Log Detail'
         }
-        width={1120}
+        width={detailModalWidth}
         onCancel={closeDetail}
       >
         {selectedRecord && (
-          <div className="call-record-query__detail">
-            <section className="call-record-query__content-panel">
-              {selectedRecord.mediaType !== 'Video' && (
-                <div className="call-record-query__panel-header">
-                  <div>
-                    <strong>
-                      {selectedRecord.mediaType === 'DM'
-                        ? 'Conversation'
-                        : 'Recording Playback'}
-                    </strong>
-                  </div>
-                </div>
-              )}
-              {selectedRecord.mediaType === 'Video' ? (
-                <div className="call-record-query__video-detail">
-                  <section className="call-record-query__video-column">
+          <div className={detailClassName}>
+            {selectedRecord.mediaType === 'Voice' ? (
+              <>
+                <section className="call-record-query__media-panel call-record-query__media-panel--voice">
+                  <section className="call-record-query__playback-section">
                     <div className="call-record-query__column-title">
-                      Video Replay
+                      Voice Recording Playback
                     </div>
-                    <div className="call-record-query__media-player call-record-query__media-player--video">
-                      <div className="call-record-query__openeye-replay">
+                    <div className="call-record-query__media-player call-record-query__media-player--voice">
+                      {renderPlayerControls(selectedRecord, 'voice')}
+                    </div>
+                  </section>
+                  <section className="call-record-query__playback-section call-record-query__playback-section--screen">
+                    <div className="call-record-query__column-title">
+                      Screen Recording Playback
+                    </div>
+                    <div className="call-record-query__media-player call-record-query__media-player--screen">
+                      <div className="call-record-query__screen-replay">
                         <img
-                          alt="OpenEye video replay"
+                          alt="Agent screen recording replay"
                           draggable={false}
-                          src={OPEN_EYE_REPLAY_SRC}
+                          src={SCREEN_RECORDING_REPLAY_SRC}
                         />
                       </div>
-                      {renderPlayerControls(selectedRecord)}
+                      {renderPlayerControls(selectedRecord, 'screen')}
                     </div>
                   </section>
-                  <section className="call-record-query__video-transcript">
-                    <div className="call-record-query__column-title">
-                      Auto Transcript
-                    </div>
-                    {renderTranscriptLog(selectedRecord)}
-                  </section>
-                </div>
-              ) : selectedRecord.mediaType === 'Voice' ? (
-                <>
-                  <div className="call-record-query__media-player call-record-query__media-player--voice">
-                    {renderPlayerControls(selectedRecord)}
-                  </div>
-                  <div className="call-record-query__chat-heading">
-                    <strong>Auto Transcript</strong>
+                </section>
+                <section className="call-record-query__content-panel">
+                  <div className="call-record-query__column-title">
+                    Auto Transcript
                   </div>
                   {renderTranscriptLog(selectedRecord)}
-                </>
-              ) : (
-                renderTranscriptLog(
-                  selectedRecord,
-                  'call-record-query__chat-log--dm',
-                )
-              )}
-            </section>
-            <section className="call-record-query__summary-panel">
-              <div className="call-record-query__column-title call-record-query__cwu-title">
-                CWU
-              </div>
-              <div className="call-record-query__summary-card call-record-query__cwu-card">
-                <div className="call-record-query__cwu-fields">
-                  <div>
-                    <span>Ticket No.</span>
-                    <strong>{selectedRecord.summary.ticketNo}</strong>
+                </section>
+                {renderCwuPanel(selectedRecord)}
+              </>
+            ) : selectedRecord.mediaType === 'Video' ? (
+              <>
+                <section className="call-record-query__media-panel call-record-query__media-panel--video">
+                  <div className="call-record-query__column-title">
+                    Video Recording Playback
                   </div>
-                  <div>
-                    <span>Business Type</span>
-                    <div className="call-record-query__business-tags">
-                      {selectedRecord.summary.businessTypes.length > 0 ? (
-                        selectedRecord.summary.businessTypes.map((businessType) => (
-                          <span
-                            className="call-record-query__business-tag"
-                            key={businessType}
-                          >
-                            {businessType}
-                          </span>
-                        ))
-                      ) : (
-                        <strong>-</strong>
-                      )}
+                  <div className="call-record-query__media-player call-record-query__media-player--video">
+                    <div className="call-record-query__openeye-replay">
+                      <img
+                        alt="OpenEye video replay"
+                        draggable={false}
+                        src={OPEN_EYE_REPLAY_SRC}
+                      />
                     </div>
+                    {renderPlayerControls(selectedRecord, 'video')}
                   </div>
-                  <div>
-                    <span>Summary</span>
-                    <p>{selectedRecord.summary.description}</p>
+                </section>
+                <section className="call-record-query__content-panel">
+                  <div className="call-record-query__column-title">
+                    Auto Transcript
                   </div>
-                </div>
-              </div>
-            </section>
+                  {renderTranscriptLog(selectedRecord)}
+                </section>
+                {renderCwuPanel(selectedRecord)}
+              </>
+            ) : (
+              <>
+                <section className="call-record-query__content-panel">
+                  <div className="call-record-query__column-title">
+                    Conversation
+                  </div>
+                  {renderTranscriptLog(
+                    selectedRecord,
+                    'call-record-query__chat-log--dm',
+                  )}
+                </section>
+                {renderCwuPanel(selectedRecord)}
+              </>
+            )}
           </div>
         )}
         <AdminModalFooter>
           <BaseButton variant="secondary" onClick={closeDetail}>
             Close
-          </BaseButton>
-        </AdminModalFooter>
-      </AdminModal>
-      <AdminModal
-        destroyOnClose
-        className="call-record-query__summary-modal"
-        open={Boolean(editRecord)}
-        title={
-          editRecord ? `Edit CWU - ${editRecord.recordNo}` : 'Edit CWU'
-        }
-        width={680}
-        onCancel={closeSummaryEditor}
-      >
-        {editRecord && summaryDraft && (
-          <div className="call-record-query__summary-form">
-            <AdminFormField label="Ticket No." fullWidth>
-              <div className="call-record-query__readonly-field">
-                {summaryDraft.ticketNo}
-              </div>
-            </AdminFormField>
-            <AdminFormField label="Business Type" fullWidth>
-              <Checkbox.Group
-                className="call-record-query__business-type-options"
-                options={cwuBusinessTypeOptions}
-                value={summaryDraft.businessTypes}
-                onChange={(checkedValues) =>
-                  updateSummaryDraft(
-                    'businessTypes',
-                    checkedValues.map((value) => String(value)),
-                  )
-                }
-              />
-            </AdminFormField>
-            <AdminFormField label="Summary" fullWidth>
-              <Input.TextArea
-                className="call-record-query__summary-textarea"
-                rows={7}
-                value={summaryDraft.description}
-                onChange={(event) =>
-                  updateSummaryDraft('description', event.target.value)
-                }
-              />
-            </AdminFormField>
-          </div>
-        )}
-        <AdminModalFooter>
-          <BaseButton variant="secondary" onClick={closeSummaryEditor}>
-            Cancel
-          </BaseButton>
-          <BaseButton
-            disabled={!canSaveSummary}
-            variant="primary"
-            onClick={handleSaveSummary}
-          >
-            Save
           </BaseButton>
         </AdminModalFooter>
       </AdminModal>

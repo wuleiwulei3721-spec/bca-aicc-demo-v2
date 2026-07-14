@@ -1,15 +1,12 @@
 import { useMemo } from 'react'
 import type { ReactNode } from 'react'
-import {
-  BarChartOutlined,
-  CustomerServiceOutlined,
-  HomeOutlined,
-  MessageOutlined,
-  MobileOutlined,
-  VideoCameraOutlined,
-} from '@ant-design/icons'
+import { HomeOutlined } from '@ant-design/icons'
 import type { TabsProps } from 'antd'
 import { BaseTabs, PageContainer } from '../components'
+import {
+  isWorkspacePageTabKey,
+  workspacePageTabByTabKey,
+} from '../config/workspacePageTabs'
 import { useNow } from '../hooks/useNow'
 import { liveChat2Sessions } from '../mock/inbound'
 import {
@@ -17,7 +14,7 @@ import {
   type MonitoringScreenshotView,
 } from '../mock/monitoring'
 import { useAppStore } from '../store'
-import type { CallInteraction, InteractionTiming } from '../store'
+import type { InteractionTiming } from '../store'
 import type { LiveChat2Session } from '../types'
 import type { InteractionSlaState } from '../utils/duration'
 import {
@@ -44,7 +41,7 @@ interface WorkspaceTabLabelProps {
   durationEndedAt?: number | null
   durationStartedAt?: number | null
   flashScope?: 'label' | 'tab'
-  icon: ReactNode
+  icon?: ReactNode
   isFlashing?: boolean
   label: string
   now: number
@@ -99,14 +96,6 @@ function getLongestDurationTiming(
   })
 }
 
-function getCallInteractionIcon(interaction: CallInteraction) {
-  return interaction.kind === 'video' ? (
-    <VideoCameraOutlined />
-  ) : (
-    <CustomerServiceOutlined />
-  )
-}
-
 function WorkspaceTabLabel({
   durationEndedAt,
   durationStartedAt,
@@ -140,7 +129,7 @@ function WorkspaceTabLabel({
         .filter(Boolean)
         .join(' ')}
     >
-      <span className="workspace-tab-label__icon">{icon}</span>
+      {icon && <span className="workspace-tab-label__icon">{icon}</span>}
       <span className="workspace-tab-label__text">{label}</span>
       {elapsedSeconds !== null && (
         <span className="workspace-tab-label__duration">
@@ -195,6 +184,23 @@ function MonitoringScreenshotWorkspace({
   )
 }
 
+function getFallbackTabKey(
+  items: TabsProps['items'],
+  targetKey: string,
+) {
+  const tabKeys =
+    items
+      ?.map((item) => (typeof item?.key === 'string' ? item.key : null))
+      .filter((item): item is string => Boolean(item)) ?? []
+  const targetIndex = tabKeys.indexOf(targetKey)
+
+  if (targetIndex > 0) {
+    return tabKeys[targetIndex - 1]
+  }
+
+  return tabKeys[targetIndex + 1] ?? HOME_TAB_KEY
+}
+
 export function AgentWorkspace() {
   const activeKey = useAppStore((state) => state.activeWorkspaceTabKey)
   const currentMonitoringHomeViewKey = useAppStore(
@@ -218,6 +224,9 @@ export function AgentWorkspace() {
   const hasLiveChatTab = useAppStore((state) => state.isLiveChatTabOpen)
   const hasMonitoringMonitorTab = useAppStore(
     (state) => state.isMonitoringMonitorTabOpen,
+  )
+  const workspacePageTabOrder = useAppStore(
+    (state) => state.workspacePageTabOrder,
   )
   const callInteractionOrder = useAppStore(
     (state) => state.callInteractionOrder,
@@ -255,6 +264,9 @@ export function AgentWorkspace() {
   )
   const closeMonitoringMonitorTab = useAppStore(
     (state) => state.closeMonitoringMonitorTab,
+  )
+  const closeWorkspacePageTab = useAppStore(
+    (state) => state.closeWorkspacePageTab,
   )
   const closeCallInteractionTab = useAppStore(
     (state) => state.closeCallInteractionTab,
@@ -410,7 +422,6 @@ export function AgentWorkspace() {
         closable: true,
         label: (
           <WorkspaceTabLabel
-            icon={<BarChartOutlined />}
             label="Monitor"
             now={now}
           />
@@ -427,7 +438,6 @@ export function AgentWorkspace() {
         closable: true,
         label: (
           <WorkspaceTabLabel
-            icon={<MobileOutlined />}
             label="BankApp Demo"
             now={now}
           />
@@ -442,7 +452,6 @@ export function AgentWorkspace() {
         closable: true,
         label: (
           <WorkspaceTabLabel
-            icon={<MessageOutlined />}
             label="WhatsApp Demo"
             now={now}
           />
@@ -457,7 +466,6 @@ export function AgentWorkspace() {
         closable: true,
         label: (
           <WorkspaceTabLabel
-            icon={<MessageOutlined />}
             label="Webchat Demo"
             now={now}
           />
@@ -475,7 +483,6 @@ export function AgentWorkspace() {
             durationEndedAt={liveChat2DurationTiming?.endedAt}
             durationStartedAt={liveChat2DurationTiming?.startedAt}
             flashScope="tab"
-            icon={<MessageOutlined />}
             isFlashing={latestLiveChat2FlashUntil > now}
             label="Live Chat"
             now={now}
@@ -507,7 +514,6 @@ export function AgentWorkspace() {
           <WorkspaceTabLabel
             durationEndedAt={interaction.endedAt}
             durationStartedAt={interaction.startedAt}
-            icon={getCallInteractionIcon(interaction)}
             isFlashing={
               activeKey !== interaction.tabKey &&
               interaction.phase !== 'ended' &&
@@ -525,7 +531,27 @@ export function AgentWorkspace() {
             />
           ) : (
             <InboundPage interaction={interaction} />
-          ),
+        ),
+      })
+    })
+
+    workspacePageTabOrder.forEach((tabKey) => {
+      const definition = workspacePageTabByTabKey[tabKey]
+
+      if (!definition) {
+        return
+      }
+
+      items.push({
+        key: definition.tabKey,
+        closable: true,
+        label: (
+          <WorkspaceTabLabel
+            label={definition.label}
+            now={now}
+          />
+        ),
+        children: definition.element,
       })
     })
 
@@ -542,6 +568,7 @@ export function AgentWorkspace() {
     hasMonitoringMonitorTab,
     hasWebchatDemoTab,
     hasWhatsAppDemoTab,
+    workspacePageTabOrder,
     liveChat2DurationTiming,
     liveChatUnansweredAlertCounts,
     liveChatUnreadCount,
@@ -564,6 +591,15 @@ export function AgentWorkspace() {
 
     if (action === 'remove' && targetKey === MONITORING_MONITOR_TAB_KEY) {
       closeMonitoringMonitorTab()
+    }
+
+    if (
+      action === 'remove' &&
+      typeof targetKey === 'string' &&
+      isWorkspacePageTabKey(targetKey)
+    ) {
+      closeWorkspacePageTab(targetKey, getFallbackTabKey(tabItems, targetKey))
+      return
     }
 
     if (action === 'remove' && typeof targetKey === 'string') {

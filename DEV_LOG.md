@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-07-09 12:43 +08:00
+最后更新：2026-07-14 09:48 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,366 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-07-14 09:48 +08:00 - 生产发布流程保护规则
+
+修改页面或文件：
+
+- `AGENTS.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 生产发布应默认走提交后的正式发布流程，避免 Vercel 生产环境发布了本地未提交快照，但 Git 仓库没有对应 commit 的情况。
+- 用户明确要求把该规则写入项目文件，保证后续 Codex 升级、重装或新会话后仍按同一发布纪律执行。
+
+修改结果：
+
+- `AGENTS.md` 新增 `Production Deployment Rules`。
+- 规则明确：生产发布默认流程为检查 Git 状态、验证、commit、push，再部署已提交版本。
+- 规则明确：如果发布前存在未提交或未跟踪文件，必须先停止并询问用户是先 commit/push、仍然发布 dirty workspace，还是取消发布。
+- 规则明确：不能把 `use current workspace` 之类的计划假设解释为跳过 commit / push 的授权。
+- 规则保留 customer profile 发布要求，避免 `Employee Management` 和 `Design System` 进入客户生产环境。
+
+回滚说明：
+
+- 如需调整发布流程，可修改 `AGENTS.md` 第 17 节；不涉及运行时代码回滚。
+
+当前风险：
+
+- 当前工作区仍存在此前已发布但未提交的功能改动，需要后续单独整理 commit / push，使 Git 与生产环境重新一致。
+
+### 2026-07-10 16:25 +08:00 - Vercel 生产发布 customer profile
+
+修改页面或文件：
+
+- `.gitignore`
+- `.vercel/project.json`（本地生成，已被 `.gitignore` 忽略）
+- `CURRENT_STATUS.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求将当前工作区发布到现有 Vercel 生产项目，并确保发布版隐藏 `Employee Management` 和 `Design System`。
+
+修改结果：
+
+- 通过 `vercel link --yes --project netinfo-aicc-demo-v2 --scope wl-demo-s-projects` 链接现有 Vercel 项目。
+- 通过 `vercel --prod --yes --scope wl-demo-s-projects --build-env VITE_APP_VISIBILITY_PROFILE=customer --build-env VITE_ENABLE_ADMIN_MENUS=true` 完成生产发布。
+- 生产 URL 已 alias 到 `https://netinfo-aicc-demo-v2.vercel.app`。
+- Vercel inspect URL: `https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/2Nh4VRRBcG9t4A7N9YqfGhdT95qP`。
+- 发布前 `npm run lint`、`npm run build` 通过；build 仍只有既有 large chunk warning。
+- 发布后 smoke 通过：生产菜单显示 `AI`、`Call Management`、`Routing Config`；隐藏 `Employee Management`、`Design System`；`/employee-management/employee-profiles` 和 `/design-system` 均回到 `/`；`AI > Quality Manage` 和 `AI > AI Assist Config` 外链参数正确；`Call Management > Blacklist` 可打开 workspace tab。
+
+回滚说明：
+
+- 如需回滚线上版本，可在 Vercel 控制台或 CLI 中将 production alias 切回上一版 deployment。
+- 如需重新发布，保持 `VITE_APP_VISIBILITY_PROFILE=customer`，避免 local-only 菜单进入客户环境。
+
+当前风险：
+
+- `Quality Manage` 和 `AI Assist Config` 仍是示例占位外链；当前只保证新开标签和 URL 参数正确。
+
+### 2026-07-10 16:10 +08:00 - AI 菜单分组和外链子菜单
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DESIGN_SYSTEM.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户确认 `Quality Manage` 应是 `AI` 一级菜单下的二级菜单，不应作为独立顶级菜单。
+- 用户要求 `AI` 使用 AI 图标，并在同组下增加 `AI Assist Config` 外链入口。
+
+修改结果：
+
+- 移除顶级 `Quality Manage` 菜单，新增 `AI` 顶级菜单，位置保持在 `Monitoring` 和 `Call Management` 之间。
+- `AI` 使用 `RobotOutlined` 图标。
+- `AI` 下新增两个二级外链菜单：`Quality Manage` 打开 `https://www.QualityManage.example/`，`AI Assist Config` 打开 `https://www.AIAssistConfig.example/`。
+- 子菜单外链复用现有 `window.open(..., '_blank', 'noopener,noreferrer')` 行为，不创建路由或 workspace tab，不改变当前工作台 URL。
+- 知识库同步记录 AI 外链分组的当前事实。
+
+回滚说明：
+
+- 如需回滚，可移除 `aiMenuChildren`、`AI` side menu item、`RobotOutlined` import 和 child-level external URL 处理，并恢复顶级 `Quality Manage` 外链菜单。
+
+当前风险：
+
+- 两个外链地址都是示例占位域名，当前只验证点击参数和新开标签行为，不验证目标站点可访问性。
+
+### 2026-07-10 15:37 +08:00 - Workspace Tab 去图标与 Quality Manage 外链入口
+
+修改页面或文件：
+
+- `src/pages/AgentWorkspace.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/config/workspacePageTabs.tsx`
+- `src/pages/call-management/*ManagementPage.tsx`
+- `src/pages/employee-management/EmployeeProfileManagementPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DESIGN_SYSTEM.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户希望顶部 workspace tab 更简洁，只保留 `Home` 图标，其余 tab 不再显示图标。
+- 用户确认管理页命名去掉 `Management`，并将 `Session End Reason Management` 改为 `Abnormal End Reasons`。
+- 用户要求在 `Monitoring` 下方新增同级菜单 `Quality Manage`，点击新开浏览器到 `https://www.QualityManage.example/`。
+
+修改结果：
+
+- `WorkspaceTabLabel` 支持无图标渲染；除 Home 外的 Monitor、渠道模拟、Live Chat、通话和管理页 tab 都只显示文本、时长、badge 和关闭按钮。
+- Call Management、Employee Management 相关 workspace tab、左侧菜单和 `AdminPage` 标题同步采用短名称：Blacklist、Priority List、Common Phrase、Common Link、Common Number、Sensitive Word、Busy Reason、Abnormal End Reasons、Employee Profile。
+- `BasicLayout` 在 `Monitoring` 与 `Call Management` 之间新增 `Quality Manage` 顶级外链菜单，使用 `AuditOutlined`，点击后 `window.open` 新浏览器标签，不创建路由或 workspace tab。
+- 知识库同步记录当前菜单命名、外链入口和 workspace tab 图标规则。
+
+回滚说明：
+
+- 如需回滚 tab 图标，恢复 `AgentWorkspace` 中非 Home tab 的 icon 传入和对应 icon imports。
+- 如需恢复长名称，将 `workspacePageTabs` labels、各管理页 `AdminPage` title 和文档口径改回 `* Management`。
+- 如需移除 Quality Manage，删除 `BasicLayout` 中的 `quality-manage` side menu item、`AuditOutlined` import 和外链处理逻辑。
+
+当前风险：
+
+- `Quality Manage` 是外部占位 URL，当前只负责打开新浏览器标签，不检查目标站点是否可访问。
+- 细节弹窗文案如 `Add Session End Reason` / `Edit Session End Reason` 按本次计划暂未同步改名。
+
+### 2026-07-10 15:10 +08:00 - 管理台页面改为工作台 Tab 打开
+
+修改页面或文件：
+
+- `src/config/workspacePageTabs.tsx`
+- `src/components/WorkspacePageRouteOpener.tsx`
+- `src/store/appStore.ts`
+- `src/pages/AgentWorkspace.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/routes.tsx`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `DESIGN_SYSTEM.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户确认管理台页面不应替换整个 `AgentWorkspace`，否则坐席打开配置页后无法切回弹屏、通话或 Live Chat tab。
+- 需要让左侧菜单中的管理页面对齐 Monitor 类工作台 tab 行为，同时保留直达 URL 兼容入口和 local-only 可见性规则。
+
+修改结果：
+
+- 新增统一 workspace page tab registry，集中维护菜单 key、tab key、路由、图标、可见性和页面组件。
+- `useAppStore` 增加 `workspacePageTabOrder`、`openWorkspacePageTab`、`closeWorkspacePageTab`，用稳定 `page:*` key 防止重复打开。
+- `AgentWorkspace` 渲染 Call Management、Routing Config、local-only Employee Management、local-only Design System 页面 tab；tab 可关闭，关闭当前页后回退到相邻 tab 或 Home。
+- `BasicLayout` 左侧管理菜单点击改为打开或复用 workspace page tab，并导航回 `/`，不再让管理页长期占满 `Outlet`。
+- `routes.tsx` 保留注册管理页 URL：直达 `/call-management/*`、`/routing-config/*`、local-only `/employee-management/*` 和 `/design-system` 时打开对应 tab 后回到 `/`；不可见模块继续按 visibility profile 隐藏和拦截。
+- 已运行 `npm run lint`、`npm run build`。本地浏览器冒烟验证通过：管理页 tab 打开/复用/关闭、直达 URL 桥接、PSTN tab 与管理页 tab 共存切换、customer/local visibility profile 行为。
+
+回滚说明：
+
+- 如需回滚，可移除 `workspacePageTabs` registry 和 `WorkspacePageRouteOpener`，恢复 `BasicLayout` 通过路由直接导航管理页，恢复 `routes.tsx` 中管理页直接 element 配置，并删除 store / `AgentWorkspace` 的 `workspacePageTabOrder` 相关状态与渲染。
+
+当前风险：
+
+- 管理页 tab 关闭会卸载页面局部 UI 状态；已保存到 store 的 mock 数据仍保留。后续新增管理页必须注册到 workspace page tab registry，避免重新出现全页替换工作台。
+
+### 2026-07-10 14:53 +08:00 - Interaction Log QM Score 和详情布局统一
+
+修改页面或文件：
+
+- `src/types/callRecord.ts`
+- `src/mock/callRecords.ts`
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户确认列表评分应显示为 `QM Score`，且字段名也要改为 `qmScore`。
+- 用户确认三类详情框采用统一信息架构：右侧为 CWU，中间为对话/转写；只有语音和视频有左侧媒体回放区。
+
+修改结果：
+
+- Interaction Log 列表表头改为 `QM Score`，类型和 mock 数据字段改为 `qmScore`。
+- Voice 详情改为左侧媒体栏上方 `Voice Recording Playback`、下方 `Screen Recording Playback`，中间 `Auto Transcript`，右侧 CWU。
+- Video 详情改为左侧 `Video Recording Playback`，中间 `Auto Transcript`，右侧 CWU。
+- DM 详情保留两栏：左侧 `Conversation`，右侧 CWU，不展示空媒体列。
+- 详情面板标题和 CWU 标题统一为同一层级和分隔线样式。
+
+回滚说明：
+
+- 如需回滚，恢复旧评分字段名和旧评分表头，并将 Voice / Video / DM 详情 JSX 与样式还原到本次修改前的分支布局。
+
+当前风险：
+
+- 需浏览器检查 Voice / Video / DM 三种详情在目标演示分辨率下的列宽、滚动高度和 CWU 可读性。
+
+### 2026-07-10 14:08 +08:00 - 当前路由父菜单允许手动收起
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `DESIGN_SYSTEM.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户发现打开 `Blacklist Management` 等子页面后，其所属的 `Call Management` 父菜单无法收起；原因是当前路由父菜单在每次渲染时被强制加入展开列表。
+
+修改结果：
+
+- 当前路由进入时仍会自动打开对应父菜单，保留直接访问路由后的菜单定位能力。
+- 父菜单展开状态不再在渲染阶段强制覆盖；用户手动点击当前父菜单后可以正常收起。
+- 设计系统同步记录“路由进入可自动展开，但当前父菜单可手动收起”的 Shell 交互规则。
+
+回滚说明：
+
+- 如需恢复旧行为，可移除 `routeParentMenuKey` 路由进入 effect，并恢复 `effectiveOpenMenuKeys` 在渲染阶段按当前 route 强制补齐父菜单的逻辑。
+
+当前风险：
+
+- 需浏览器检查直接进入管理页、点击父菜单收起、切换到其他管理页后父菜单自动展开的组合行为。
+
+### 2026-07-10 11:49 +08:00 - Interaction Log Voice 录屏静态帧修正
+
+修改页面或文件：
+
+- `public/screenshots/interaction-log/pstn-active-call-screen.png`
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户指出 Voice 详情 `Screen Recording Playback` 的截图截错，应展示 PSTN 正在通话的来电弹屏界面，而不是文字会话坐席截图。
+
+修改结果：
+
+- 使用本地 demo 登录、签入 `Voice + Digital`、触发 PSTN 并等待进入 Talking 状态后截取 1440×826 坐席工作台静态帧。
+- Voice `Screen Recording Playback` 改为引用 `public/screenshots/interaction-log/pstn-active-call-screen.png`。
+- 知识库同步将 Voice 录屏说明明确为 PSTN active-call agent desktop frame。
+
+回滚说明：
+
+- 如需回滚，可将 `SCREEN_RECORDING_REPLAY_SRC` 恢复为旧截图路径，并删除新增 `public/screenshots/interaction-log/pstn-active-call-screen.png`。
+
+当前风险：
+
+- 仍建议在目标演示分辨率下人工打开 Interaction Log Voice 详情确认录屏图片缩放和三栏比例。
+
+### 2026-07-10 11:21 +08:00 - Interaction Log 数据和 Voice 详情二次调整
+
+修改页面或文件：
+
+- `src/mock/callRecords.ts`
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户反馈 Interaction Log 数据偏少，Voice 的 `Screen Recording Playback` 应为坐席屏幕录屏而不是音频条，并要求视频标题从 `Video Replay` 改为 `Video Recording Playback`。
+
+修改结果：
+
+- Interaction Log mock 记录扩充到 30 条，其中 12 条使用当天动态时间，覆盖 Voice / Video / DM / WhatsApp，并包含不同结束人、结束原因、Queue 空值和 QM Score 空值。
+- Voice 详情改为三栏：左侧宽屏坐席屏幕录屏画面和播放条，中间语音回放与 Auto Transcript，右侧窄版只读 CWU。
+- Screen Recording 使用现有 1440×826 坐席工作台截图资源，不生成新图，不展示客户视频画面。
+- Video 详情标题改为 `Video Recording Playback`，继续使用既有 OpenEye 回放图，不新增录屏区。
+- 知识库同步记录 30 条数据、Voice 三栏录屏布局和视频标题口径。
+
+回滚说明：
+
+- 如需回滚，删除新增 call records，恢复 Voice 详情为单内容列布局，移除 `SCREEN_RECORDING_REPLAY_SRC` 和 screen replay 样式，并将视频标题改回 `Video Replay`。
+
+当前风险：
+
+- 需浏览器检查 1320px 详情弹框在目标演示分辨率下的三栏比例、录屏截图裁切和 CWU 窄列可读性。
+
+### 2026-07-10 11:13 +08:00 - 左侧菜单滚动范围修复
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `DESIGN_SYSTEM.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 菜单项增多后，左侧菜单高度撑开了整体页面，导致浏览器页面滚动；用户确认应仅左侧菜单列表滚动，左侧顶部折叠按钮和菜单搜索固定。
+
+修改结果：
+
+- 认证后的 `BasicLayout` 外壳固定在一屏工作台高度，`aicc-body` 阻止菜单溢出带动页面滚动。
+- Sider 子容器改为纵向 flex，高度继承父容器；展开态菜单列表成为独立纵向滚动区。
+- 折叠按钮和 `Search menu` 保持在左侧顶部固定区域；收起态 flyout 仍保留可见溢出行为。
+- 设计系统同步记录左侧菜单滚动归属规则。
+
+回滚说明：
+
+- 如需回滚，移除 `aicc-app-shell` / `aicc-body` 的视口锁定和展开态 `.aicc-sider__menu` 的内部滚动规则，并恢复 Sider children 为非 flex 布局。
+
+当前风险：
+
+- 需浏览器检查展开多个菜单分组、搜索结果和收起态 flyout，确认滚动归属和弹出菜单不被裁剪。
+
+### 2026-07-10 10:03 +08:00 - Interaction Log 客户标注调整
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `src/types/callRecord.ts`
+- `src/mock/callRecords.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户确认按客户标注将 `Call Record Query` 显示名称改为 `Interaction Log`，默认查询当天，新增列表 `QM Score`，删除 CWU 编辑入口，并为语音记录增加坐席屏幕录屏回放区。
+
+修改结果：
+
+- 左侧菜单、页面标题和详情弹框标题显示 `Interaction Log`；路由仍保持 `/call-management/call-record-query`。
+- Date Range 默认值和 Reset 后范围改为当天 `00:00:00 - 23:59:59`。
+- 列表新增普通文本 `QM Score`，Actions 只保留 View，Actions 列仍固定右侧，列表横向宽度按新增列重新收紧。
+- 语音详情显示 `Voice Recording Playback`、`Screen Recording Playback`、`Auto Transcript`；视频详情继续使用既有 OpenEye 回放图且不新增录屏区；DM 仍使用对话气泡。
+- CWU 在详情中只读展示 Ticket No.、Business Type、Summary，不再显示 Edit CWU 弹框入口。
+- 知识库同步记录 Interaction Log 当前范围、默认日期、QM Score、语音录屏回放和只读 CWU 规则。
+
+回滚说明：
+
+- 如需恢复旧编辑行为，需要还原 `CallRecordQueryPage` 的编辑 state / handler / modal、Actions 铅笔按钮和对应样式，并把 Date Range 默认值改回最近 7 天。
+
+当前风险：
+
+- 仍需浏览器检查客户标注项的视觉对齐和详情弹框布局，尤其是宽屏下列表横向滚动长度与 Actions 固定列表现。
 
 ### 2026-07-09 12:43 +08:00 - Monitoring Home 默认项调整为 Home-Agent
 

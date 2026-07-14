@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-07-09 12:43 +08:00
+Last updated: 2026-07-10 16:10 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -49,6 +49,8 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - `Monitoring > Home-Agent`, `Home-TL`, and `Home-SPV` keep the Home tab active and swap the screenshot,
   - `Monitoring > Monitor-TL` and `Monitor-OM` open or reuse the closable Monitor tab,
   - closing Monitor and reopening it from the menu works,
+  - `AI > Quality Manage` opens `https://www.QualityManage.example/` in a new browser tab and keeps the current workspace unchanged,
+  - `AI > AI Assist Config` opens `https://www.AIAssistConfig.example/` in a new browser tab and keeps the current workspace unchanged,
   - cropped screenshots do not show the original customer top header, left menu, or outer workspace tab bar,
   - Home channel tabs and Monitor-TL prompt popup remain visible because they are part of the provided static screenshot demo.
 - Verify PSTN flow:
@@ -56,7 +58,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Answer works,
   - Hold and Mute are mutually exclusive,
   - Transfer opens call transfer modal,
-  - Transfer IVR shows enabled Common Number Management entries only,
+  - Transfer IVR shows enabled Common Number entries only,
   - Hang Up main action enters After Call Work then Ready,
   - Hang Up caret shows active Voice/Video abnormal end reasons and ends without a second confirmation.
 - Verify toolbar call context:
@@ -129,14 +131,15 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Verify Call Management:
   - Verification Rules,
   - Global Control Configuration,
-  - Blacklist Management,
-  - Priority List Management,
-  - Common Phrase Management,
-  - Common Link Management,
-  - Common Number Management,
-  - Sensitive Word Management,
-  - Busy Reason Management,
-  - Session End Reason Management query, add, edit, disable, and delete.
+  - Blacklist,
+  - Priority List,
+  - Common Phrase,
+  - Common Link,
+  - Common Number,
+  - Sensitive Word,
+  - Busy Reason,
+  - Abnormal End Reasons query, add, edit, disable, and delete,
+  - Interaction Log 30 mock records, default current-day Date Range paging, QM Score column, View-only Actions, Voice left media playback / middle transcript / right CWU detail, Video left replay / middle transcript / right CWU detail, DM conversation / right CWU detail, and read-only CWU detail.
 - Verify Routing Config:
   - Routing Config visible by default,
   - Channels Phone Accounts disabled,
@@ -148,7 +151,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Verify local-only Employee Management:
   - `VITE_APP_VISIBILITY_PROFILE=customer` or unset hides Employee Management and redirects direct routes,
   - `VITE_APP_VISIBILITY_PROFILE=local` shows Employee Management,
-  - Employee Profile Management add/edit and Agent Capacity Settings modal remain English-only,
+  - Employee Profile add/edit and Agent Capacity Settings modal remain English-only,
   - customer deployment environment does not set `VITE_APP_VISIBILITY_PROFILE=local`.
 - Verify `/design-system` still loads and reflects current component rules.
 

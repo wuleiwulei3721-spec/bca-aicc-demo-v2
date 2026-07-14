@@ -304,7 +304,7 @@ export function CommonNumberManagementPage() {
   return (
     <AdminPage
       className="common-number-management"
-      title="Common Number Management"
+      title="Common Number"
     >
       {notice && (
         <Alert

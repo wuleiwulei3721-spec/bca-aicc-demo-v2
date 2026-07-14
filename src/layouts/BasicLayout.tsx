@@ -10,6 +10,7 @@ import {
   MenuUnfoldOutlined,
   MessageOutlined,
   PoweroffOutlined,
+  RobotOutlined,
   SearchOutlined,
   SettingOutlined,
 } from '@ant-design/icons'
@@ -21,6 +22,12 @@ import {
   isModuleVisible,
   type ModuleVisibilityKey,
 } from '../config/moduleVisibility'
+import {
+  getWorkspacePageTabByPathname,
+  workspacePageTabByMenuKey,
+  workspacePageTabByTabKey,
+  workspacePageTabDefinitions,
+} from '../config/workspacePageTabs'
 import { headerAgentProfile } from '../mock/agent'
 import {
   monitoringScreenshotViews,
@@ -58,12 +65,14 @@ import { InternalChatModal } from './components/InternalChatModal'
 const { Header, Sider, Content } = Layout
 
 interface SideMenuChildItem {
+  externalUrl?: string
   key: string
   label: string
 }
 
 interface SideMenuItem {
   key: string
+  externalUrl?: string
   icon: ReactNode
   label: string
   children?: SideMenuChildItem[]
@@ -104,24 +113,6 @@ function canHandleVoiceVideo(mode: AgentServiceMode | null) {
   return mode === 'voice' || mode === 'voice-digital'
 }
 
-const routingConfigRoutesByMenuKey: Record<string, string> = {
-  'routing-vdn': '/routing-config/vdn',
-  'routing-sites': '/routing-config/sites',
-  'routing-channels': '/routing-config/channels',
-  'routing-business-types': '/routing-config/business-types',
-  'routing-skill-queues': '/routing-config/skill-queues',
-  'routing-site-access-volume': '/routing-config/site-access-volume',
-  'routing-skill-routing-rules': '/routing-config/skill-routing-rules',
-  'routing-working-time-plans': '/routing-config/working-time-plans',
-}
-
-const routingConfigMenuKeyByRoute = Object.fromEntries(
-  Object.entries(routingConfigRoutesByMenuKey).map(([menuKey, path]) => [
-    path,
-    menuKey,
-  ]),
-) as Record<string, string>
-
 const monitoringMenuKeyPrefix = 'monitoring-'
 const monitoringViewByMenuKey = Object.fromEntries(
   monitoringScreenshotViews.map((view) => [
@@ -134,6 +125,36 @@ const monitoringMenuChildren: SideMenuChildItem[] =
     key: `${monitoringMenuKeyPrefix}${view.key}`,
     label: view.label,
   }))
+const qualityManageUrl = 'https://www.QualityManage.example/'
+const aiAssistConfigUrl = 'https://www.AIAssistConfig.example/'
+const aiMenuChildren: SideMenuChildItem[] = [
+  {
+    externalUrl: qualityManageUrl,
+    key: 'ai-quality-manage',
+    label: 'Quality Manage',
+  },
+  {
+    externalUrl: aiAssistConfigUrl,
+    key: 'ai-assist-config',
+    label: 'AI Assist Config',
+  },
+]
+
+function openExternalMenuUrl(url: string) {
+  const openedWindow = window.open(url, '_blank', 'noopener,noreferrer')
+  if (openedWindow) {
+    openedWindow.opener = null
+  }
+}
+
+function getWorkspacePageMenuChildren(moduleKey: ModuleVisibilityKey) {
+  return workspacePageTabDefinitions
+    .filter((definition) => definition.moduleKey === moduleKey)
+    .map((definition) => ({
+      key: definition.menuKey,
+      label: definition.label,
+    }))
+}
 
 const allSideMenuItems: SideMenuItem[] = [
   {
@@ -168,108 +189,32 @@ const allSideMenuItems: SideMenuItem[] = [
     children: monitoringMenuChildren,
   },
   {
+    key: 'ai',
+    icon: <RobotOutlined />,
+    label: 'AI',
+    moduleKey: 'monitoring',
+    children: aiMenuChildren,
+  },
+  {
     key: 'call-management',
     icon: <CustomerServiceOutlined />,
     label: 'Call Management',
     moduleKey: 'call-management',
-    children: [
-      {
-        key: 'call-management-verification-rules',
-        label: 'Verification Rules',
-      },
-      {
-        key: 'call-management-global-control-configuration',
-        label: 'Global Control Configuration',
-      },
-      {
-        key: 'call-management-blacklist',
-        label: 'Blacklist Management',
-      },
-      {
-        key: 'call-management-priority-list',
-        label: 'Priority List Management',
-      },
-      {
-        key: 'call-management-common-phrases',
-        label: 'Common Phrase Management',
-      },
-      {
-        key: 'call-management-common-links',
-        label: 'Common Link Management',
-      },
-      {
-        key: 'call-management-common-numbers',
-        label: 'Common Number Management',
-      },
-      {
-        key: 'call-management-sensitive-words',
-        label: 'Sensitive Word Management',
-      },
-      {
-        key: 'call-management-busy-reasons',
-        label: 'Busy Reason Management',
-      },
-      {
-        key: 'call-management-session-end-reasons',
-        label: 'Session End Reason Management',
-      },
-      {
-        key: 'call-management-call-record-query',
-        label: 'Call Record Query',
-      },
-    ],
+    children: getWorkspacePageMenuChildren('call-management'),
   },
   {
     key: 'routing-config',
     icon: <BranchesOutlined />,
     label: 'Routing Config',
     moduleKey: 'routing-config',
-    children: [
-      {
-        key: 'routing-vdn',
-        label: 'VDN',
-      },
-      {
-        key: 'routing-sites',
-        label: 'Access Sites',
-      },
-      {
-        key: 'routing-channels',
-        label: 'Channels',
-      },
-      {
-        key: 'routing-business-types',
-        label: 'Business Types',
-      },
-      {
-        key: 'routing-skill-queues',
-        label: 'Skill Queues',
-      },
-      {
-        key: 'routing-site-access-volume',
-        label: 'Site Access Volume',
-      },
-      {
-        key: 'routing-skill-routing-rules',
-        label: 'Skill Routing Rules',
-      },
-      {
-        key: 'routing-working-time-plans',
-        label: 'Working Time Plans',
-      },
-    ],
+    children: getWorkspacePageMenuChildren('routing-config'),
   },
   {
     key: 'employee-management',
     icon: <IdcardOutlined />,
     label: 'Employee Management',
     moduleKey: 'employee-management',
-    children: [
-      {
-        key: 'employee-profile-management',
-        label: 'Employee Profile Management',
-      },
-    ],
+    children: getWorkspacePageMenuChildren('employee-management'),
   },
   {
     key: 'design-system',
@@ -282,6 +227,41 @@ const allSideMenuItems: SideMenuItem[] = [
 const sideMenuItems = allSideMenuItems.filter((item) =>
   isModuleVisible(item.moduleKey),
 )
+const externalChildMenuUrlByKey = Object.fromEntries(
+  allSideMenuItems.flatMap((item) =>
+    (item.children ?? [])
+      .filter((childItem) => childItem.externalUrl)
+      .map((childItem) => [childItem.key, childItem.externalUrl]),
+  ),
+) as Record<string, string | undefined>
+
+function getRouteMenuKeyByPathname(pathname: string) {
+  return getWorkspacePageTabByPathname(pathname)?.menuKey ?? null
+}
+
+function getRouteParentMenuKey(routeMenuKey: string | null) {
+  if (!routeMenuKey) {
+    return null
+  }
+
+  if (routeMenuKey.startsWith('monitoring-')) {
+    return 'monitoring'
+  }
+
+  if (routeMenuKey.startsWith('routing-')) {
+    return 'routing-config'
+  }
+
+  if (routeMenuKey.startsWith('call-management')) {
+    return 'call-management'
+  }
+
+  if (routeMenuKey.startsWith('employee-')) {
+    return 'employee-management'
+  }
+
+  return null
+}
 
 export function BasicLayout() {
   const navigate = useNavigate()
@@ -292,6 +272,9 @@ export function BasicLayout() {
     (state) => state.sessionEndReasonEntries,
   )
   const collapsed = useAppStore((state) => state.collapsed)
+  const activeWorkspaceTabKey = useAppStore(
+    (state) => state.activeWorkspaceTabKey,
+  )
   const agentServiceMode = useAppStore((state) => state.agentServiceMode)
   const activeLiveChatSessionIds = useAppStore(
     (state) => state.activeLiveChatSessionIds,
@@ -364,6 +347,9 @@ export function BasicLayout() {
   const requestMonitoringMonitorWorkspace = useAppStore(
     (state) => state.requestMonitoringMonitorWorkspace,
   )
+  const openWorkspacePageTab = useAppStore(
+    (state) => state.openWorkspacePageTab,
+  )
   const setLiveChatTabOpen = useAppStore(
     (state) => state.setLiveChatTabOpen,
   )
@@ -404,7 +390,13 @@ export function BasicLayout() {
   })
   const [closedFlyoutKey, setClosedFlyoutKey] = useState<string | null>(null)
   const [menuSearchQuery, setMenuSearchQuery] = useState('')
-  const [openMenuKeys, setOpenMenuKeys] = useState<string[]>([])
+  const [openMenuKeys, setOpenMenuKeys] = useState<string[]>(() => {
+    const routeParentMenuKey = getRouteParentMenuKey(
+      getRouteMenuKeyByPathname(location.pathname),
+    )
+
+    return routeParentMenuKey ? [routeParentMenuKey] : []
+  })
   const [selectedMenuKey, setSelectedMenuKey] = useState('test-pstn-voice')
   const handledBankAppVideoCallRequestIdRef = useRef(0)
   const handledBankAppVoiceCallRequestIdRef = useRef(0)
@@ -956,6 +948,21 @@ export function BasicLayout() {
     updateCallStatus,
   ])
 
+  const openWorkspacePageFromMenu = useCallback(
+    (menuKey: string) => {
+      const workspacePageTab = workspacePageTabByMenuKey[menuKey]
+
+      if (!workspacePageTab) {
+        return false
+      }
+
+      openWorkspacePageTab(workspacePageTab.tabKey)
+      navigate('/')
+      return true
+    },
+    [navigate, openWorkspacePageTab],
+  )
+
   const handlePrimaryMenuClick = useCallback(
     (item: SideMenuItem) => {
       if (collapsed) {
@@ -963,9 +970,11 @@ export function BasicLayout() {
 
         if (!item.children?.length) {
           setSelectedMenuKey(item.key)
-          if (item.key === 'design-system') {
-            navigate('/design-system')
+          if (item.externalUrl) {
+            openExternalMenuUrl(item.externalUrl)
+            return
           }
+          openWorkspacePageFromMenu(item.key)
         }
 
         return
@@ -981,17 +990,32 @@ export function BasicLayout() {
       }
 
       setSelectedMenuKey(item.key)
-      if (item.key === 'design-system') {
-        navigate('/design-system')
+      if (item.externalUrl) {
+        openExternalMenuUrl(item.externalUrl)
+        return
       }
+      openWorkspacePageFromMenu(item.key)
     },
-    [collapsed, navigate],
+    [collapsed, openWorkspacePageFromMenu],
   )
 
   const handleChildMenuClick = useCallback(
     (childKey: string, parentKey?: string) => {
       setSelectedMenuKey(childKey)
       setClosedFlyoutKey(parentKey ?? null)
+
+      if (parentKey) {
+        setOpenMenuKeys((current) =>
+          current.includes(parentKey) ? current : [...current, parentKey],
+        )
+      }
+
+      const externalUrl = externalChildMenuUrlByKey[childKey]
+
+      if (externalUrl) {
+        openExternalMenuUrl(externalUrl)
+        return
+      }
 
       if (childKey === 'test-pstn-voice') {
         navigate('/')
@@ -1025,62 +1049,13 @@ export function BasicLayout() {
         }
       }
 
-      if (childKey === 'call-management-verification-rules') {
-        navigate('/call-management/verification-rules')
-      }
-
-      if (childKey === 'call-management-global-control-configuration') {
-        navigate('/call-management/global-control-configuration')
-      }
-
-      if (childKey === 'call-management-blacklist') {
-        navigate('/call-management/blacklist')
-      }
-
-      if (childKey === 'call-management-priority-list') {
-        navigate('/call-management/priority-list')
-      }
-
-      if (childKey === 'call-management-common-phrases') {
-        navigate('/call-management/common-phrases')
-      }
-
-      if (childKey === 'call-management-common-links') {
-        navigate('/call-management/common-links')
-      }
-
-      if (childKey === 'call-management-common-numbers') {
-        navigate('/call-management/common-numbers')
-      }
-
-      if (childKey === 'call-management-sensitive-words') {
-        navigate('/call-management/sensitive-words')
-      }
-
-      if (childKey === 'call-management-busy-reasons') {
-        navigate('/call-management/busy-reasons')
-      }
-
-      if (childKey === 'call-management-session-end-reasons') {
-        navigate('/call-management/session-end-reasons')
-      }
-
-      if (childKey === 'call-management-call-record-query') {
-        navigate('/call-management/call-record-query')
-      }
-
-      if (childKey === 'employee-profile-management') {
-        navigate('/employee-management/employee-profiles')
-      }
-
-      const routingConfigPath = routingConfigRoutesByMenuKey[childKey]
-
-      if (routingConfigPath) {
-        navigate(routingConfigPath)
+      if (openWorkspacePageFromMenu(childKey)) {
+        return
       }
     },
     [
       navigate,
+      openWorkspacePageFromMenu,
       requestBankAppDemoWorkspace,
       requestMonitoringMonitorWorkspace,
       requestWebchatDemoWorkspace,
@@ -1220,101 +1195,15 @@ export function BasicLayout() {
         : [],
     [activeSessionEndMediaType, sessionEndReasonEntries],
   )
-  const routeMenuKey = useMemo(() => {
-    if (location.pathname.startsWith('/call-management/verification-rules')) {
-      return 'call-management-verification-rules'
-    }
-
-    if (
-      location.pathname.startsWith(
-        '/call-management/global-control-configuration',
-      )
-    ) {
-      return 'call-management-global-control-configuration'
-    }
-
-    if (location.pathname.startsWith('/call-management/busy-reasons')) {
-      return 'call-management-busy-reasons'
-    }
-
-    if (location.pathname.startsWith('/call-management/session-end-reasons')) {
-      return 'call-management-session-end-reasons'
-    }
-
-    if (location.pathname.startsWith('/call-management/blacklist')) {
-      return 'call-management-blacklist'
-    }
-
-    if (location.pathname.startsWith('/call-management/priority-list')) {
-      return 'call-management-priority-list'
-    }
-
-    if (location.pathname.startsWith('/call-management/common-phrases')) {
-      return 'call-management-common-phrases'
-    }
-
-    if (location.pathname.startsWith('/call-management/common-links')) {
-      return 'call-management-common-links'
-    }
-
-    if (location.pathname.startsWith('/call-management/common-numbers')) {
-      return 'call-management-common-numbers'
-    }
-
-    if (location.pathname.startsWith('/call-management/sensitive-words')) {
-      return 'call-management-sensitive-words'
-    }
-
-    if (location.pathname.startsWith('/call-management/call-record-query')) {
-      return 'call-management-call-record-query'
-    }
-
-    if (location.pathname.startsWith('/employee-management/employee-profiles')) {
-      return 'employee-profile-management'
-    }
-
-    if (location.pathname.startsWith('/design-system')) {
-      return 'design-system'
-    }
-
-    return routingConfigMenuKeyByRoute[location.pathname] ?? null
-  }, [location.pathname])
-  const effectiveSelectedMenuKey = routeMenuKey ?? selectedMenuKey
-  const effectiveOpenMenuKeys = useMemo(() => {
-    if (
-      !collapsed &&
-      routeMenuKey?.startsWith('monitoring-') &&
-      !openMenuKeys.includes('monitoring')
-    ) {
-      return [...openMenuKeys, 'monitoring']
-    }
-
-    if (
-      !collapsed &&
-      routeMenuKey?.startsWith('routing-') &&
-      !openMenuKeys.includes('routing-config')
-    ) {
-      return [...openMenuKeys, 'routing-config']
-    }
-
-    if (
-      !collapsed &&
-      routeMenuKey?.startsWith('call-management') &&
-      !openMenuKeys.includes('call-management')
-    ) {
-      return [...openMenuKeys, 'call-management']
-    }
-
-    if (
-      !collapsed &&
-      routeMenuKey?.startsWith('employee-') &&
-      !openMenuKeys.includes('employee-management')
-    ) {
-      return [...openMenuKeys, 'employee-management']
-    }
-
-    return openMenuKeys
-  }, [collapsed, openMenuKeys, routeMenuKey])
+  const routeMenuKey = useMemo(
+    () => getRouteMenuKeyByPathname(location.pathname),
+    [location.pathname],
+  )
+  const activeWorkspacePageMenuKey =
+    workspacePageTabByTabKey[activeWorkspaceTabKey]?.menuKey ?? null
+  const effectiveSelectedMenuKey =
+    routeMenuKey ?? activeWorkspacePageMenuKey ?? selectedMenuKey
+  const effectiveOpenMenuKeys = openMenuKeys
 
   return (
     <Layout className="aicc-app-shell">

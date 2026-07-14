@@ -280,7 +280,7 @@ export function CommonLinkManagementPage() {
   ]
 
   return (
-    <AdminPage className="common-link-management" title="Common Link Management">
+    <AdminPage className="common-link-management" title="Common Link">
       {notice && (
         <Alert
           showIcon

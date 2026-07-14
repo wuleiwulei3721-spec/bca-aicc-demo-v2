@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-07-08 11:30 +08:00
+Last updated: 2026-07-10 14:53 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -65,7 +65,7 @@ Implemented status model:
 
 ### AUX
 
-- AUX reasons are loaded from `Busy Reason Management`.
+- AUX reasons are loaded from `Busy Reason`.
 - Only active busy reasons appear in the profile menu.
 - If the agent selects AUX while active service exists, the status becomes `Pre-AUX - {reason}`.
 - When active service ends, `Pre-AUX` immediately becomes `AUX`.
@@ -155,7 +155,7 @@ Call transfer modal:
 - Agent row actions: `Consult`, `Transfer`, `Conference`.
 - Transfer Skill supports search by skill name.
 - Transfer Number accepts a phone number and supports `Transfer` and `Conference`.
-- Transfer IVR lists enabled entries from `Call Management > Common Number Management`.
+- Transfer IVR lists enabled entries from `Call Management > Common Number`.
 - Transfer IVR row action is `Transfer`.
 - Video calls do not expose the call Transfer action in the header toolbar.
 
@@ -376,7 +376,7 @@ Assistant panel:
 - Assistant screenshot path: `/screenshots/assistant-workspace.jpg`.
 - If screenshot loading fails, code fallback UI renders.
 
-Common Links shows website names and website URLs from `Call Management > Common Link Management`; clicking a link opens the website in a new browser tab.
+Common Links shows website names and website URLs from `Call Management > Common Link`; clicking a link opens the website in a new browser tab.
 
 ## 17. Live Chat Rules
 
@@ -431,7 +431,7 @@ Quick Replies:
 - Supports My/Public phrase groups.
 - My groups and phrases can be maintained locally.
 - Public phrases are read-only in the agent workspace.
-- Public phrases are sourced from `Call Management > Common Phrase Management`.
+- Public phrases are sourced from `Call Management > Common Phrase`.
 - Insert places text into the active composer and focuses the cursor at the end.
 - Slash command candidates should reflect local quick reply changes.
 
@@ -541,22 +541,22 @@ Visible customer pages:
 
 - Verification Rules.
 - Global Control Configuration.
-- Blacklist Management.
-- Priority List Management.
-- Common Phrase Management.
-- Common Link Management.
-- Common Number Management.
-- Sensitive Word Management.
-- Busy Reason Management.
-- Session End Reason Management.
-- Call Record Query.
+- Blacklist.
+- Priority List.
+- Common Phrase.
+- Common Link.
+- Common Number.
+- Sensitive Word.
+- Busy Reason.
+- Abnormal End Reasons.
+- Interaction Log.
 
 Hidden / redirected:
 
 - Text Channel Settings is not shown as a customer menu entry.
 - Old routing-configuration route redirects.
 
-### Blacklist Management
+### Blacklist
 
 - Entries contain Channel, Restricted Number, Restriction Policy, Validity Days, Remark, Created Date, Created By.
 - Restriction policies:
@@ -566,7 +566,7 @@ Hidden / redirected:
 - Delete supports selected rows and confirmation.
 - Store is local front-end state.
 
-### Priority List Management
+### Priority List
 
 - Entries contain Channel, Identifier, Match Rule, Remark, Created Date, Created By.
 - Match rules:
@@ -579,16 +579,16 @@ Hidden / redirected:
 - Exact and Partial rules for the same identifier can coexist.
 - Store is local front-end state.
 
-### Busy Reason Management
+### Busy Reason
 
 - Active busy reasons appear as AUX options in the agent profile menu.
 - Updating the default reason keeps only one default busy reason.
 - Default active AUX reasons are Break, Coaching/Meeting, Prayer, Toilet, Others, Callback Finrisk, Callback Misinform, Sick/Problem Non System, Routine Job, Problem System, and Special Assignment.
 - Store is local front-end state.
 
-### Session End Reason Management
+### Abnormal End Reasons
 
-- Session End Reason Management maintains abnormal service end reasons for Voice, Video, and DM media.
+- Abnormal End Reasons maintains abnormal service end reasons for Voice, Video, and DM media.
 - Social Media / Non-DM service ending is not included in the current scope.
 - The customer attachment explicitly lists Voice Calls and Digital Channels; Video is included in the current demo as a synchronous-call extension of Voice and should be removed from default reason applicability if the customer later rejects that interpretation.
 - `Normal` is the system default normal end reason and is not shown in the abnormal reason management list.
@@ -609,9 +609,9 @@ Hidden / redirected:
 - System abnormal disconnects should use `endedBy = System` with a specific reason such as `Connection Lost`, `System Error`, or `Channel Gateway Error`; they should not be mixed with customer timeout.
 - Store is local front-end state.
 
-### Common Phrase Management
+### Common Phrase
 
-- Common Phrase Management maintains only public quick reply phrases.
+- Common Phrase maintains only public quick reply phrases.
 - Agent-owned My Phrases remain local to the Live Chat workspace and are not managed by this menu.
 - Categories contain public common phrase entries.
 - `All Categories` is a view-only aggregate and cannot be used when adding a new phrase.
@@ -622,20 +622,20 @@ Hidden / redirected:
 - Selected phrases can be moved to another category; source categories for selected rows are disabled as move targets.
 - Store is local front-end state.
 
-### Common Link Management
+### Common Link
 
-- Common Link Management maintains frequently used website references for the current demo session.
+- Common Link maintains frequently used website references for the current demo session.
 - Search supports Website Name and Website URL.
 - List columns include No., Website Name, Website URL, Remark, and Actions.
 - Add, Edit, and Delete are local demo actions.
 - Website Name and Website URL are unique after trim and lowercase normalization.
 - Website URL must start with `http://` or `https://`.
-- Shared voice, video, and Live Chat workspaces read Common Link Management data in the right-side `Common Links` tab.
+- Shared voice, video, and Live Chat workspaces read Common Link data in the right-side `Common Links` tab.
 - Store is local front-end state.
 
-### Common Number Management
+### Common Number
 
-- Common Number Management maintains IVR transfer targets for the current demo session.
+- Common Number maintains IVR transfer targets for the current demo session.
 - Entries contain Name, Number, Status, and Remark.
 - Search supports Name, Number, and Status.
 - List columns include No., Name, Number, Status, Remark, and Actions.
@@ -645,9 +645,9 @@ Hidden / redirected:
 - Only `Active` entries appear in the call Transfer modal `Transfer IVR` tab.
 - Store is local front-end state.
 
-### Sensitive Word Management
+### Sensitive Word
 
-- Sensitive Word Management maintains sensitive words used to block Live Chat agent replies before sending.
+- Sensitive Word maintains sensitive words used to block Live Chat agent replies before sending.
 - Search supports Sensitive Word and Category.
 - Category is a fixed data dictionary and is not maintained in this menu.
 - Current category examples include Security Credential, Personal Data Exposure, Regulatory or Compliance Risk, Profanity / Offensive Language, and Harassment / Discriminatory Language.
@@ -656,27 +656,29 @@ Hidden / redirected:
 - Sensitive Word is unique after trim and lowercase normalization.
 - Store is local front-end state.
 
-### Call Record Query
+### Interaction Log
 
-- Call Record Query is the current demo's 通话记录查询 page under Call Management.
+- Interaction Log is the current demo's 通话记录查询 / interaction history page under Call Management. Its route remains `/call-management/call-record-query`.
 - Current scope includes Phone voice, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp service records.
+- The current demo seeds 30 mock records; at least 12 records are dynamically placed within the current day so the default Date Range has enough data for paging.
 - Current scope excludes Email and Social Media records. Email流水查询 and Social Media查询 are separate future scopes and are not exposed in the current menu.
 - Production permission intent is: agents see their own records, TL sees their own group, and SPV sees groups under managed TLs. The current demo has no permission system, so records are seeded as the current agent view only.
-- Search supports keyword, Channel, Media Type, Ended By, End Reason, and Date Range. Default date range is the last 7 days.
+- Search supports keyword, Channel, Media Type, Ended By, End Reason, and Date Range. Default date range is the current day from `00:00:00` to `23:59:59`.
 - The list uses `Contact` for the customer-side contact identifier: phone and WhatsApp show the number, logged-in BankApp/Webchat show BankID, and guest Webchat shows a guest ID such as `guest-7118`.
 - The list shows `Queue`; missing queue values render as `-`.
 - The list shows `Service Time` as `start time - end time`.
+- The list shows `QM Score` as plain text or `-`; QM Score is not a search filter in the current demo.
 - End lifecycle fields are split into `Ended By` and `End Reason`.
 - `Ended By` values are `Agent`, `Customer`, or `System`.
 - Normal agent and customer endings both use `End Reason = Normal`; channel/media context is already shown by Channel and Media Type.
 - Agent abnormal endings use the selected Session End Reason value. System endings use specific system reasons such as `Customer Timeout`, `Connection Lost`, `System Error`, or `Channel Gateway Error`.
-- Voice records show a compact audio playback control without waveform display, plus system-generated transcript.
-- Video records show an OpenEye-style vertical replay with two video panes and a playback bar, plus system-generated transcript. The replay should not include the live-call buttons, labels, or icons from the OpenEye call screen.
-- DM records show conversation-style bubbles with speaker, avatar, and time.
+- Voice records use a three-column detail layout: left media playback, middle `Auto Transcript`, and right read-only CWU. The left media column stacks `Voice Recording Playback` above `Screen Recording Playback`; the screen recording uses a PSTN active-call agent desktop recording frame and is not a customer video surface.
+- Video records use a three-column detail layout: left `Video Recording Playback`, middle `Auto Transcript`, and right read-only CWU. The replay is an OpenEye-style vertical replay with two video panes and a playback bar; it should not include the live-call buttons, labels, or icons from the OpenEye call screen.
+- DM records use a two-column detail layout: conversation-style bubbles with speaker, avatar, and time on the left, and read-only CWU on the right. DM details do not show an empty media column.
 - Detail modal does not add a CRM or customer-detail card in the current scope; customer and service metadata stay in the list-level fields.
-- Detail modal right side shows CWU Registration with Ticket No., multi-select Business Type, and Summary description only.
+- Detail modal right side shows read-only CWU with Ticket No., multi-select Business Type, and Summary description only.
 - CWU Registration summary is mandatory in the current demo, so the list and filters do not expose Summary Status or Summary Time.
-- Records ended within the last 24 hours can edit CWU Registration through the Edit CWU action. The View action is read-only. Older records are read-only.
+- Interaction Log exposes only the View action. CWU edit entry points and the Edit CWU modal are not shown in the current demo.
 - Store is local front-end state.
 
 ## 21. Routing Config Rules

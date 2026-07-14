@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Design System
 
-Last updated: 2026-07-07 17:22 +08:00
+Last updated: 2026-07-10 16:10 +08:00
 
 This document records the current implemented visual rules. It should be treated as the design baseline for future pages and components.
 
@@ -24,8 +24,14 @@ The app shell is implemented by `BasicLayout`:
 - Header height: `60px`.
 - Left sider expanded width: `220px`.
 - Left sider collapsed width: `48px`.
+- The authenticated shell stays within one viewport; menu length must not make the browser page scroll.
+- In expanded left sider mode, only the menu list scrolls vertically; the collapse button and menu search remain fixed at the top.
+- Route entry may open the matching parent menu, but users can manually collapse the current parent group afterward.
 - Main content uses a full workbench canvas.
 - Workspace content is tab-driven through `AgentWorkspace`.
+- Visible management pages open inside `AgentWorkspace` as closable workspace tabs; they should not replace the workbench canvas or hide active popup, call, or Live Chat tabs.
+- Registered management-page URLs are compatibility entries: they may open the matching workspace tab, then return the URL to `/` so the workspace remains the stable shell.
+- `AI` is an external-link side-menu group below Monitoring; `Quality Manage` and `AI Assist Config` open new browser tabs and must not navigate or reset the current workspace.
 - Interaction workspaces use a high-density layout:
   - optional lead panel,
   - left customer context column,
@@ -131,10 +137,13 @@ Variants:
 Rules:
 
 - Workspace tabs can be editable-card style.
+- In the top workspace tab bar, only Home keeps an icon; Monitor, channel simulation, Live Chat, call, and management page tabs are text-first.
 - Home and Live Chat fixed tabs are not closable.
 - Live Chat workspace tab may show compact status badges after the longest service duration: orange for unanswered SLA warning count and red for unanswered SLA breach count.
 - Routing Config Channels Business Config uses the same Live Chat SLA warning and breach colors for Agent Service threshold status dots.
 - Active call tabs are not closable; ended call tabs are closable.
+- Management page tabs use stable `page:*` keys, are closable, and reuse an existing tab when the same left-menu item is clicked again.
+- Closing a management page tab should fall back to a neighboring workspace tab when available, otherwise Home.
 - CRM base tab is not closable.
 - Conversation tab is not closable.
 - Dynamic CRM business tabs are closable.
@@ -274,7 +283,7 @@ Admin list rules:
 - First data field should not be artificially bold unless the design system says so.
 - Status columns use text badges, not switches.
 - Switches belong in add/edit modals.
-- Page container scrolls vertically for long lists.
+- Admin page content may scroll vertically inside the workspace for long lists; the browser page and left sider top search/collapse area must remain fixed.
 - Internal table vertical scroll is only for long tables inside modals.
 - Actions column should be fixed right when horizontal scroll is needed.
 - Complex filters may wrap, but Search / Reset stay in the query action group and Batch Add / Add stay in the right primary-action group.

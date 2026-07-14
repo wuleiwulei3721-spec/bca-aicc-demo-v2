@@ -1,6 +1,6 @@
 # Decision Log
 
-Last updated: 2026-07-07
+Last updated: 2026-07-10
 
 This document records important product and system design decisions that can be confirmed from the current codebase, project documents, `DEV_LOG.md`, and readable Git history. It intentionally omits bug fixes, visual micro-adjustments, temporary test data, copy-only tweaks, and implementation details that do not affect product direction.
 
@@ -72,6 +72,29 @@ Implemented
 
 Source:
 代码: `src/pages/AgentWorkspace.tsx`, `src/store/appStore.ts`; 文档: `PROJECT_CONTEXT.md`, `CURRENT_STATUS.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-036
+
+Module:
+Workspace Tabs / Management Navigation
+
+Decision:
+Visible management pages open or reuse closable `AgentWorkspace` page tabs instead of replacing the whole workspace route. Direct visits to registered management URLs are compatibility entries that open the matching tab and return to `/`. Local-only Employee Management and Design System keep the existing `VITE_APP_VISIBILITY_PROFILE=local` visibility rule.
+
+Reason:
+Agents need to keep active popup, call, PSTN, Live Chat, and channel simulation tabs available while reviewing or changing configuration. Full-page management routes made it impossible to switch back to the active service workspace without losing the workbench context.
+
+Impact:
+Future management-style pages should be registered in the workspace page tab registry with a stable `page:*` tab key, menu key, route path, label, icon, visibility key, and component. New admin pages should not bypass the workspace tab model unless a product-level exception is confirmed.
+
+Status:
+Implemented
+
+Source:
+代码: `src/config/workspacePageTabs.tsx`, `src/components/WorkspacePageRouteOpener.tsx`, `src/pages/AgentWorkspace.tsx`, `src/layouts/BasicLayout.tsx`, `src/routes.tsx`, `src/store/appStore.ts`; 文档: `PROJECT_CONTEXT.md`, `CURRENT_STATUS.md`, `DESIGN_SYSTEM.md`; 历史记录: `DEV_LOG.md`
 
 --------------------------------------------------
 
@@ -473,7 +496,7 @@ Module:
 Call Management
 
 Decision:
-Customer-visible Call Management scope currently includes Verification Rules, Global Control Configuration, Blacklist Management, Priority List Management, Common Phrase Management, Common Link Management, Common Number Management, Sensitive Word Management, and Busy Reason Management; hidden/legacy Call Management routes redirect to Verification Rules.
+Customer-visible Call Management scope currently includes Verification Rules, Global Control Configuration, Blacklist, Priority List, Common Phrase, Common Link, Common Number, Sensitive Word, Busy Reason, Abnormal End Reasons, and Interaction Log; hidden/legacy Call Management routes redirect to Verification Rules.
 
 Reason:
 The current demo exposes the management pages relevant to customer review and avoids leaving stale or unfinished configuration pages in the visible menu.
@@ -634,7 +657,7 @@ Module:
 Live Chat / Call Management
 
 Decision:
-Common Phrase Management owns public Live Chat quick replies only; agent-owned My Phrases remain local to the Live Chat workspace.
+Common Phrase owns public Live Chat quick replies only; agent-owned My Phrases remain local to the Live Chat workspace.
 
 Reason:
 The customer request targets a shared Call Management configuration for the text popup right-side public common phrases, while the existing workspace already has a separate My Phrases area for agent personal phrases.
@@ -657,7 +680,7 @@ Module:
 Call Management
 
 Decision:
-Common Link Management is a lightweight Call Management menu for maintaining frequently used website references with website name, website address, and remark fields.
+Common Link is a lightweight Call Management menu for maintaining frequently used website references with website name, website address, and remark fields.
 
 Reason:
 The customer request adds a simple management-console list for common links and explicitly scopes the fields to website name, website address, and remark, matching the existing admin CRUD page style.
@@ -680,7 +703,7 @@ Module:
 Call Management / Transfer
 
 Decision:
-Common Number Management owns enabled IVR transfer targets shown in the call Transfer modal `Transfer IVR` tab.
+Common Number owns enabled IVR transfer targets shown in the call Transfer modal `Transfer IVR` tab.
 
 Reason:
 The customer request defines common numbers as a management-console configuration for voice agents to transfer customers into IVR flows such as VIP hotline service. The current demo transfer behavior closes the modal without backend dispatch, so Transfer IVR follows the same demo interaction boundary.
@@ -726,7 +749,7 @@ Module:
 Live Chat / Call Management
 
 Decision:
-Sensitive Word Management owns the shared word list used to block Live Chat agent replies before sending.
+Sensitive Word owns the shared word list used to block Live Chat agent replies before sending.
 
 Reason:
 The customer request defines sensitive words as a management-console configuration and expects the system to automatically detect agent reply text, prevent sending when matched, and prompt the agent to revise the reply.
@@ -749,19 +772,24 @@ Module:
 Call Management / Record Query
 
 Decision:
+2026-07-10 update: the visible Call Management menu and page title are now `Interaction Log`; the route remains `/call-management/call-record-query`.
 Call Record Query covers only current-agent Phone voice, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp records in the current demo. Email流水查询 and Social Media查询 are separate future scopes and are not added as menus or placeholders in this delivery.
 
 Reason:
 Email has an independent 邮件流水查询 requirement with AICC-owned email satisfaction behavior, while Social Media has distinct DM / Comment / Mention / Review query and detail models. Combining them into one Call Record Query list would force unrelated fields and details into a single table and reduce demo clarity.
 
 Impact:
-Future Email or Social Media record work should be added as independent modules or explicitly designed parent/tab structures, not silently folded into the current Call Record Query table. Call Record Query should follow the confirmed media display label `DM` instead of exposing internal Text/TEXT wording. The list uses `Contact` for customer-side identifiers rather than `Counterparty`. The list includes `Queue` and `Service Time`; missing Queue values render as `-`. The detail modal does not add a CRM/customer-detail card in the current scope, keeps playback/conversation content on the left, and uses a CWU Registration panel with Ticket No., multi-select Business Type, and Summary description on the right. Voice details use a compact playback bar without waveform display. Video details use an OpenEye-style vertical replay with two video panes and a playback bar, without live-call buttons, labels, or icons.
+2026-07-10 update: Interaction Log defaults Date Range to the current day, adds plain-text `QM Score`, exposes only `View` in the Actions column, keeps CWU read-only, and shows Voice Recording Playback plus Screen Recording Playback for voice records.
+2026-07-10 11:21 update: Interaction Log seeds 30 mock records. Voice details use a three-column layout with widescreen agent screen recording on the left, voice playback/transcript in the middle, and narrow CWU on the right. Video details label the replay section `Video Recording Playback`.
+2026-07-10 11:49 update: Voice `Screen Recording Playback` uses a PSTN active-call agent desktop screenshot instead of the earlier Live Chat agent screenshot.
+2026-07-10 14:53 update: the score field contract is renamed to `qmScore` / `QM Score`. Detail modals now share the same information architecture: Voice and Video use left media playback, middle transcript, and right CWU; DM uses conversation plus right CWU without a media column.
+Future Email or Social Media record work should be added as independent modules or explicitly designed parent/tab structures, not silently folded into the current Call Record Query table. Call Record Query should follow the confirmed media display label `DM` instead of exposing internal Text/TEXT wording. The list uses `Contact` for customer-side identifiers rather than `Counterparty`. The list includes `Queue` and `Service Time`; missing Queue values render as `-`. The detail modal does not add a CRM/customer-detail card in the current scope, keeps media playback or conversation content separated from read-only CWU, and uses a CWU panel with Ticket No., multi-select Business Type, and Summary description on the right. Voice details use a compact playback bar without waveform display. Video details use an OpenEye-style vertical replay with two video panes and a playback bar, without live-call buttons, labels, or icons.
 
 Status:
 Implemented
 
 Source:
-Customer clarification on 2026-07-07; Code: `src/pages/call-management/CallRecordQueryPage.tsx`, `src/mock/callRecords.ts`, `src/store/callManagementStore.ts`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `PROJECT_CONTEXT.md`; History: `DEV_LOG.md`
+Customer clarification on 2026-07-07 and 2026-07-10; Code: `src/pages/call-management/CallRecordQueryPage.tsx`, `src/mock/callRecords.ts`, `src/store/callManagementStore.ts`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `PROJECT_CONTEXT.md`; History: `DEV_LOG.md`
 
 --------------------------------------------------
 
@@ -772,7 +800,7 @@ Module:
 Call Management / Service End Lifecycle
 
 Decision:
-Abnormal agent-side service end reasons are maintained in `Call Management > Session End Reason Management` for Voice, Video, and DM. `Normal` remains a system default reason and is not maintained in the abnormal reason list.
+Abnormal agent-side service end reasons are maintained in `Call Management > Abnormal End Reasons` for Voice, Video, and DM. `Normal` remains a system default reason and is not maintained in the abnormal reason list.
 
 Reason:
 The customer requirement separates normal service completion from exceptional agent-selected ending causes, and Social Media / Non-DM is out of current scope. The source attachment explicitly names Voice Calls and Digital Channels; Video is included in this demo as a synchronous-call extension of Voice, while BankApp text, Webchat, and WhatsApp use the DM abnormal reason set.

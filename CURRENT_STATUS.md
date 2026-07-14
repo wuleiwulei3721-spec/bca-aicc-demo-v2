@@ -1,10 +1,10 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-07-09 12:43 +08:00
+Last updated: 2026-07-10 16:25 +08:00
 
 ## 1. Overall Status
 
-The project is a mature front-end demo for BANK 1 AICC. It includes authentication, global shell, agent status and call toolbar, inbound voice workspace, BankApp, Webchat, and WhatsApp customer simulations, video demo, live chat workspace, static Monitoring screenshots, call management configuration, routing configuration, local-only employee management, and a local-only design system page.
+The project is a mature front-end demo for BANK 1 AICC. It includes authentication, global shell, agent status and call toolbar, inbound voice workspace, BankApp, Webchat, and WhatsApp customer simulations, video demo, live chat workspace, static Monitoring screenshots, call management configuration, routing configuration, local-only employee management, and a local-only design system page. Visible management pages now open as closable workspace tabs so agents can switch back to active call, popup, and Live Chat tabs.
 
 This repository is still a demo application:
 
@@ -42,14 +42,17 @@ This repository is still a demo application:
 - Collapsible side menu.
 - Menu search in expanded side menu.
 - Customer-visible Monitoring menu for static Home / Monitor dashboard screenshot switching.
+- Customer-visible `AI` side-menu group with `Quality Manage` and `AI Assist Config` external links; both open a new browser tab without changing the current workspace.
 - Route-aware menu selection.
+- Left-menu management entries open or reuse workspace page tabs instead of replacing the workbench.
+- Registered management-page URLs remain compatible by opening the matching workspace tab and returning to `/`.
 - Unified customer/local visibility profile for local-only menus and guarded routes.
 - Header notification button.
 - Header Internal Chat entry.
 - Agent profile area.
 - Service mode sign-in.
 - Sign out confirmation and active-service block.
-- AUX reason menu from Busy Reason Management.
+- AUX reason menu from Busy Reason.
 - Agent Settings entry separated at the bottom of the profile menu with system prompt sound on/off control.
 
 ## 5. Completed Agent and Call Toolbar
@@ -70,6 +73,7 @@ This repository is still a demo application:
 
 - Home tab.
 - Home tab displays the selected static monitoring Home screenshot, defaulting to `Home-Agent`.
+- Home is the only top workspace tab that keeps an icon; other top workspace tabs are text-first.
 - Closable Monitor tab opens from Monitoring menu items and displays the selected static Monitor screenshot.
 - BankApp Demo tab.
 - Webchat Demo tab.
@@ -77,6 +81,8 @@ This repository is still a demo application:
 - Fixed Live Chat tab.
 - Dynamic PSTN / Voice Call tabs.
 - Dynamic Video Call tabs.
+- Closable workspace page tabs for visible Call Management, Routing Config, local-only Employee Management, and local-only Design System pages.
+- Duplicate management page tabs are prevented by stable `page:*` tab keys.
 - Ended call tab close behavior.
 - Active call tab close protection.
 - Live Chat unread, duration, and unanswered SLA alert display.
@@ -106,7 +112,7 @@ This repository is still a demo application:
 - Assistant screenshot with fallback.
 - Common Links tab.
 - Verification tab for side-by-side CRM comparison.
-- Call Transfer modal includes Transfer IVR targets from Common Number Management.
+- Call Transfer modal includes Transfer IVR targets from Common Number.
 
 ## 8. Completed Video Call Workspace
 
@@ -184,15 +190,17 @@ Customer-visible pages:
 
 - Verification Rules, implemented as Verification Rule V2.
 - Global Control Configuration.
-- Blacklist Management.
-- Priority List Management.
-- Common Phrase Management.
-- Common Link Management.
-- Common Number Management.
-- Sensitive Word Management.
-- Busy Reason Management.
-- Session End Reason Management.
-- Call Record Query.
+- Blacklist.
+- Priority List.
+- Common Phrase.
+- Common Link.
+- Common Number.
+- Sensitive Word.
+- Busy Reason.
+- Abnormal End Reasons.
+- Interaction Log.
+
+These pages open from the left menu as closable workspace tabs. Direct `/call-management/*` visits open the matching workspace tab and return to `/`, preserving active interaction tabs.
 
 Implemented behaviors:
 
@@ -207,22 +215,21 @@ Implemented behaviors:
 - Common phrase batch move between categories.
 - Public phrase linkage into the Live Chat Quick Replies tab.
 - Common link CRUD for website name, website address, and remark.
-- Common Link Management feeds the shared right-side Common Links tab in voice, video, and Live Chat workspaces.
+- Common Link feeds the shared right-side Common Links tab in voice, video, and Live Chat workspaces.
 - Common number CRUD for IVR transfer target name, number, status, and remark.
 - Enabled common numbers feed the call Transfer modal `Transfer IVR` tab.
 - Sensitive word CRUD with fixed category dictionary.
 - Sensitive word detection in Live Chat agent reply sending.
 - Busy reason edit and default selection.
-- Session End Reason Management CRUD for abnormal Voice, Video, and DM service end reasons.
-- Session End Reason Management filters by Keyword, Applicable Media, and Status.
-- Call Record Query for current-agent Phone, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp records.
-- Call Record Query filters by keyword, channel, media type, ended by, end reason, and date range.
-- Call Record Query details show compact voice playback, OpenEye-style vertical video replay, or DM conversation bubbles on the left, plus CWU Registration on the right.
-- Call Record Query allows local CWU Registration editing only for records ended within the last 24 hours.
-- Call Record Query list separates Customer Name / Customer ID and Agent Name / Agent ID, shows Contact, Queue, Service Time, Ended By, and End Reason.
-- Call Record Query treats CWU Registration summary as mandatory, so Summary Status and Summary Time are not exposed in the filter, list, or detail summary header.
-- Call Record Query uses `Contact` for the customer-side identifier: phone and WhatsApp numbers, BankID for logged-in BankApp/Webchat, and guest IDs for guest Webchat.
-- Email and Social Media records are intentionally excluded from Call Record Query in the current scope.
+- Abnormal End Reasons CRUD for abnormal Voice, Video, and DM service end reasons.
+- Abnormal End Reasons filters by Keyword, Applicable Media, and Status.
+- Interaction Log for current-agent Phone, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp records, seeded with 30 mock records.
+- Interaction Log filters by keyword, channel, media type, ended by, end reason, and date range, defaulting to the current day.
+- Interaction Log list separates Customer Name / Customer ID and Agent Name / Agent ID, shows Contact, Queue, Service Time, Ended By, End Reason, and QM Score.
+- Interaction Log details use a consistent layout: Voice and Video show left media playback, middle transcript, and right read-only CWU; DM shows conversation bubbles plus right read-only CWU without an empty media column.
+- Interaction Log treats CWU summary as mandatory and read-only in the query page, so Summary Status, Summary Time, and edit actions are not exposed.
+- Interaction Log uses `Contact` for the customer-side identifier: phone and WhatsApp numbers, BankID for logged-in BankApp/Webchat, and guest IDs for guest Webchat.
+- Email and Social Media records are intentionally excluded from Interaction Log in the current scope.
 - Local store state for demo changes.
 
 ## 14. Completed Routing Config
@@ -239,6 +246,8 @@ Pages implemented:
 - Site Access Volume.
 - Skill Routing Rules.
 - Working Time Plans.
+
+These pages open from the left menu as closable workspace tabs. Direct `/routing-config/*` visits open the matching workspace tab and return to `/` while preserving feature-flag redirects.
 
 Implemented behaviors:
 
@@ -261,11 +270,11 @@ Implemented behaviors:
 
 ## 15. Completed Local-Only Employee Management
 
-Employee Management is implemented in `main` but is visible only when `VITE_APP_VISIBILITY_PROFILE=local`; customer/default profile hides the menu and redirects direct routes.
+Employee Management is implemented in `main` but is visible only when `VITE_APP_VISIBILITY_PROFILE=local`; customer/default profile hides the menu and redirects direct routes. In local profile, the page opens as a closable workspace tab.
 
 Implemented page:
 
-- Employee Profile Management.
+- Employee Profile.
 
 Implemented behaviors:
 
@@ -280,7 +289,7 @@ Implemented behaviors:
 
 ## 16. Completed Design System
 
-`/design-system` currently demonstrates the design system when `VITE_APP_VISIBILITY_PROFILE=local`:
+`/design-system` currently demonstrates the design system as a local-only closable workspace tab when `VITE_APP_VISIBILITY_PROFILE=local`:
 
 - Color system.
 - Typography.
@@ -315,14 +324,12 @@ Current public assets include:
 
 ## 18. Current Validation Baseline
 
-Latest recorded validation before this documentation task:
+Latest recorded validation:
 
-- TypeScript check passed.
 - ESLint passed.
 - Production build passed with existing large chunk warning.
-- HTTP smoke checks passed for recent Call Management / Routing Config pages.
-
-This documentation task intentionally does not change runtime code.
+- Browser smoke checks passed for workspace management-page tabs: left-menu open/reuse, close fallback, direct URL bridge, active PSTN tab coexistence, and customer/local visibility profile behavior.
+- Vercel production deployment completed at `https://netinfo-aicc-demo-v2.vercel.app` with `VITE_APP_VISIBILITY_PROFILE=customer` and `VITE_ENABLE_ADMIN_MENUS=true`; post-deploy smoke confirmed AI links, Call Management tab opening, and hidden Employee Management / Design System.
 
 ## 19. Known Demo Boundaries
 

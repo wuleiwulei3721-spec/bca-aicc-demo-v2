@@ -417,12 +417,17 @@ interface AppState {
   verificationV2QuestionBank: VerificationV2Question[]
   verificationV2Rules: VerificationV2Rule[]
   voiceVideoHandoffReadiness: VoiceVideoHandoffReadiness
+  workspacePageTabOrder: string[]
   clearAgentServiceMode: () => void
   closeAllCallInteractionTabs: () => void
   closeBankAppDemoTab: () => void
   closeCallInteractionTab: (interactionId: string) => void
   closeLiveChatSession: (sessionId: string) => void
   closeMonitoringMonitorTab: () => void
+  closeWorkspacePageTab: (
+    tabKey: string,
+    fallbackTabKey?: string,
+  ) => void
   closeWebchatDemoTab: () => void
   closeWhatsAppDemoTab: () => void
   completeBankAppPinVerification: (result?: 'failed' | 'verified') => void
@@ -471,6 +476,7 @@ interface AppState {
   requestMonitoringMonitorWorkspace: (
     viewKey?: MonitoringMonitorViewKey,
   ) => void
+  openWorkspacePageTab: (tabKey: string) => void
   requestWebchatDemoWorkspace: () => void
   requestWhatsAppDemoWorkspace: () => void
   resetMonitoringViews: () => void
@@ -580,6 +586,7 @@ export const useAppStore = create<AppState>((set) => ({
   verificationRules: cloneVerificationRules(),
   ...cloneVerificationRuleV2State(),
   voiceVideoHandoffReadiness: 'not-ready',
+  workspacePageTabOrder: [],
   clearAgentServiceMode: () =>
     set({
       agentServiceMode: null,
@@ -677,6 +684,16 @@ export const useAppStore = create<AppState>((set) => ({
           ? 'home'
           : state.activeWorkspaceTabKey,
       isMonitoringMonitorTabOpen: false,
+    })),
+  closeWorkspacePageTab: (tabKey, fallbackTabKey = 'home') =>
+    set((state) => ({
+      activeWorkspaceTabKey:
+        state.activeWorkspaceTabKey === tabKey
+          ? fallbackTabKey
+          : state.activeWorkspaceTabKey,
+      workspacePageTabOrder: state.workspacePageTabOrder.filter(
+        (item) => item !== tabKey,
+      ),
     })),
   closeWebchatDemoTab: () =>
     set((state) => ({
@@ -1140,6 +1157,13 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({
       customerOutboundCallRequestId:
         state.customerOutboundCallRequestId + 1,
+    })),
+  openWorkspacePageTab: (tabKey) =>
+    set((state) => ({
+      activeWorkspaceTabKey: tabKey,
+      workspacePageTabOrder: state.workspacePageTabOrder.includes(tabKey)
+        ? state.workspacePageTabOrder
+        : [...state.workspacePageTabOrder, tabKey],
     })),
   requestMonitoringMonitorWorkspace: (
     viewKey = defaultMonitoringMonitorViewKey,
