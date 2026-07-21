@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-07-21 17:05 +08:00
+最后更新：2026-07-21 17:12 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,33 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-07-21 17:12 +08:00 - Customer 生产发布
+
+发布提交：
+
+- `3c1f937 feat: deliver agent status and workspace updates`
+
+发布命令与环境：
+
+- `vercel --prod --yes --scope wl-demo-s-projects --build-env VITE_APP_VISIBILITY_PROFILE=customer --build-env VITE_ENABLE_ADMIN_MENUS=true`
+- `VITE_APP_VISIBILITY_PROFILE=customer`
+- `VITE_ENABLE_ADMIN_MENUS=true`
+
+发布结果：
+
+- Production URL: `https://netinfo-aicc-demo-v2.vercel.app`
+- Inspect URL: `https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/B7nzhmxZigGR4qH9gpTdx8zD4odi`
+- Vercel 生产构建通过；仅保留既有 bundle size warning。
+- 已在生产地址使用演示账号登录并确认工作台可加载。Email 已在发布前从 Channel Simulation 菜单定义和点击处理移除，当前客户环境无 Email 工作台入口。
+
+回滚说明：
+
+- 如需回滚本次发布，在 Vercel 将生产 alias 指回上一稳定部署，或将 `main` 回退到前一已验证提交后重新部署。
+
+当前风险：
+
+- Email 页面实现仍在源码中但暂未开放；恢复入口前需完成其余功能并重新完成客户验收。
 
 ### 2026-07-21 17:05 +08:00 - 暂停 Email 渠道入口
 
