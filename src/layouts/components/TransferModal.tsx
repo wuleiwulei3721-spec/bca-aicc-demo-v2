@@ -292,7 +292,6 @@ function TransferNumberTab({ onComplete }: { onComplete: () => void }) {
         <AppButton type="primary" onClick={onComplete}>
           Transfer
         </AppButton>
-        <AppButton onClick={onComplete}>Conference</AppButton>
       </div>
     </div>
   )

@@ -2,11 +2,15 @@ import { DownOutlined } from '@ant-design/icons'
 import { Avatar, Dropdown, Modal } from 'antd'
 import type { MenuProps } from 'antd'
 import { useMemo, useState } from 'react'
-import { agentServiceModeOptions } from '../../mock/auth'
 import { headerAgentProfile } from '../../mock/agent'
 import { useCallManagementStore } from '../../store'
-import type { AgentServiceMode, AgentStatus } from '../../types'
-import { createAuxStatus, isAuxLikeStatus } from '../../utils/agentStatus'
+import type { AgentStatus } from '../../types'
+import {
+  createAuxStatus,
+  getAuxReason,
+  isAuxStatus,
+  isPreAuxStatus,
+} from '../../utils/agentStatus'
 import { AgentSettingsModal } from './AgentSettingsModal'
 
 export type AgentPresence = 'away' | 'busy' | 'offline' | 'ready'
@@ -18,16 +22,27 @@ const presenceClassName: Record<AgentPresence, string> = {
   ready: 'aicc-agent-status--ready',
 }
 
+function formatAgentStatus(status: AgentStatus) {
+  if (isPreAuxStatus(status)) {
+    return `Pre-AUX: ${getAuxReason(status)}`
+  }
+
+  if (isAuxStatus(status)) {
+    return `AUX: ${getAuxReason(status)}`
+  }
+
+  return status
+}
+
 interface AgentProfileAreaProps {
   agentName?: string
   presence: AgentPresence
   roleName?: string
-  serviceMode: AgentServiceMode | null
   status: AgentStatus
   teamName?: string
   hasActiveCustomerInteraction: boolean
   onBlockedSignOut: () => void
-  onServiceSignIn: (mode: AgentServiceMode) => void
+  onServiceSignIn: () => void
   onStatusChange: (status: AgentStatus) => void
 }
 
@@ -35,7 +50,6 @@ export function AgentProfileArea({
   agentName = headerAgentProfile.name,
   presence,
   roleName = headerAgentProfile.role,
-  serviceMode,
   status,
   teamName = headerAgentProfile.team,
   hasActiveCustomerInteraction,
@@ -44,14 +58,10 @@ export function AgentProfileArea({
   onStatusChange,
 }: AgentProfileAreaProps) {
   const isSignedIn = status !== 'Unsigned'
-  const isAuxLike = isAuxLikeStatus(status)
+  const formattedStatus = formatAgentStatus(status)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [systemSoundEnabled, setSystemSoundEnabled] = useState(false)
   const busyReasons = useCallManagementStore((state) => state.busyReasons)
-  const serviceModeLabel = serviceMode
-    ? (agentServiceModeOptions.find((option) => option.value === serviceMode)
-        ?.label ?? serviceMode)
-    : ''
   const enabledBusyReasons = useMemo(
     () =>
       busyReasons
@@ -62,124 +72,90 @@ export function AgentProfileArea({
     [busyReasons],
   )
 
-  const signInItems = agentServiceModeOptions.map((option) => ({
-    key: `sign-in-${option.value}`,
-    label: option.label,
-  }))
+  const currentStatusItem: MenuProps['items'][number] = {
+    key: 'current-agent-status',
+    disabled: true,
+    label: formattedStatus,
+  }
+  const readyItem: MenuProps['items'][number] = {
+    key: 'ready',
+    label: 'Ready',
+  }
+  const signOutItem: MenuProps['items'][number] = {
+    key: 'sign-out',
+    label: 'Sign Out',
+  }
+  const settingsItem: MenuProps['items'][number] = {
+    key: 'agent-settings',
+    label: 'Settings',
+  }
+  const auxReasonsItem: MenuProps['items'][number] = {
+    key: 'aux-reasons',
+    label: 'AUX',
+    type: 'group',
+    children:
+      enabledBusyReasons.length > 0
+        ? enabledBusyReasons.map((reason) => ({
+            key: `aux-reason-${reason.busyReasonId}`,
+            label: reason.busyReasonName,
+          }))
+        : [
+            {
+              key: 'no-enabled-aux-reason',
+              disabled: true,
+              label: 'No enabled AUX reason',
+            },
+          ],
+  }
 
-  const signedInMenuItems: MenuProps['items'] = isAuxLike
-    ? [
-        {
-          key: 'current-service-mode',
-          disabled: true,
-          label: serviceModeLabel
-            ? `Signed in: ${serviceModeLabel}`
-            : 'Signed in',
-        },
-        {
-          key: 'current-agent-status',
-          disabled: true,
-          label: `Current status: ${status}`,
-        },
-        {
-          key: 'divider-ready',
-          type: 'divider',
-        },
-        {
-          key: 'ready',
-          label: 'Ready',
-        },
-        {
-          key: 'divider-sign-out',
-          type: 'divider',
-        },
-        {
-          key: 'sign-out',
-          label: 'Sign Out',
-        },
-        {
-          key: 'divider-agent-settings',
-          type: 'divider',
-        },
-        {
-          key: 'agent-settings',
-          label: 'Settings',
-        },
-      ]
-    : [
-        {
-          key: 'current-service-mode',
-          disabled: true,
-          label: serviceModeLabel
-            ? `Signed in: ${serviceModeLabel}`
-            : 'Signed in',
-        },
-        {
-          key: 'divider-current-service-mode',
-          type: 'divider',
-        },
-        {
-          key: 'aux-reasons',
-          label: 'AUX',
-          type: 'group',
-          children:
-            enabledBusyReasons.length > 0
-              ? enabledBusyReasons.map((reason) => ({
-                  key: `aux-reason-${reason.busyReasonId}`,
-                  label: reason.busyReasonName,
-                }))
-              : [
-                  {
-                    key: 'no-enabled-aux-reason',
-                    disabled: true,
-                    label: 'No enabled AUX reason',
-                  },
-                ],
-        },
-        {
-          key: 'divider-sign-out',
-          type: 'divider',
-        },
-        {
-          key: 'sign-out',
-          label: 'Sign Out',
-        },
-        {
-          key: 'divider-agent-settings',
-          type: 'divider',
-        },
-        {
-          key: 'agent-settings',
-          label: 'Settings',
-        },
-      ]
+  const signedInMenuItems: MenuProps['items'] =
+    status === 'Not Ready'
+      ? [
+          currentStatusItem,
+          { key: 'divider-ready', type: 'divider' },
+          readyItem,
+          { key: 'divider-sign-out', type: 'divider' },
+          signOutItem,
+          { key: 'divider-agent-settings', type: 'divider' },
+          settingsItem,
+        ]
+      : status === 'Ready'
+        ? [
+            currentStatusItem,
+            { key: 'divider-aux-reasons', type: 'divider' },
+            auxReasonsItem,
+            { key: 'divider-agent-settings', type: 'divider' },
+            settingsItem,
+          ]
+        : isPreAuxStatus(status)
+          ? [
+              currentStatusItem,
+              { key: 'divider-ready', type: 'divider' },
+              readyItem,
+              { key: 'divider-agent-settings', type: 'divider' },
+              settingsItem,
+            ]
+          : [
+              currentStatusItem,
+              { key: 'divider-ready', type: 'divider' },
+              readyItem,
+              { key: 'divider-sign-out', type: 'divider' },
+              signOutItem,
+              { key: 'divider-agent-settings', type: 'divider' },
+              settingsItem,
+            ]
 
   const actionItems: MenuProps['items'] = isSignedIn
     ? signedInMenuItems
     : [
-        {
-          key: 'sign-in',
-          label: 'Sign In',
-          type: 'group',
-          children: signInItems,
-        },
-        {
-          key: 'divider-agent-settings',
-          type: 'divider',
-        },
-        {
-          key: 'agent-settings',
-          label: 'Settings',
-        },
+        { key: 'sign-in', label: 'Sign In' },
+        { key: 'divider-agent-settings', type: 'divider' },
+        settingsItem,
       ]
 
   const handleActionClick: MenuProps['onClick'] = ({ key }) => {
-    const selectedSignInMode = agentServiceModeOptions.find(
-      (option) => key === `sign-in-${option.value}`,
-    )
-
-    if (selectedSignInMode) {
-      onServiceSignIn(selectedSignInMode.value)
+    if (key === 'sign-in') {
+      onServiceSignIn()
       return
     }
 
@@ -246,8 +222,7 @@ export function AgentProfileArea({
             {roleName} - {agentName}
           </span>
           <span className="aicc-agent-profile__team">
-            {teamName}
-            {serviceModeLabel ? ` | ${serviceModeLabel}` : ''}
+            {teamName} | {formattedStatus}
           </span>
         </span>
 

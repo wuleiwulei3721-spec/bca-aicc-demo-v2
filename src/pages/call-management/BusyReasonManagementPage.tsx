@@ -19,13 +19,11 @@ import type { BusyReason, BusyReasonStatus } from '../../types'
 type BusyReasonModalMode = 'edit' | null
 
 interface BusyReasonFilters {
-  isDefault: '' | 'false' | 'true'
   keyword: string
   status: '' | BusyReasonStatus
 }
 
 const defaultFilters: BusyReasonFilters = {
-  isDefault: '',
   keyword: '',
   status: '',
 }
@@ -34,12 +32,6 @@ const statusOptions: Array<{ label: string; value: '' | BusyReasonStatus }> = [
   { label: 'All', value: '' },
   { label: 'Enabled', value: 'Active' },
   { label: 'Disabled', value: 'Disabled' },
-]
-
-const defaultOptions: Array<{ label: string; value: '' | 'false' | 'true' }> = [
-  { label: 'All', value: '' },
-  { label: 'Yes', value: 'true' },
-  { label: 'No', value: 'false' },
 ]
 
 function formatSavedTime(date: Date) {
@@ -59,17 +51,6 @@ function renderStatusBadge(status: BusyReasonStatus) {
       label={status === 'Active' ? 'Enabled' : 'Disabled'}
       size="small"
       status={status === 'Active' ? 'success' : 'disabled'}
-    />
-  )
-}
-
-function renderDefaultBadge(isDefault: boolean) {
-  return (
-    <StatusBadge
-      dot
-      label={isDefault ? 'Yes' : 'No'}
-      size="small"
-      status={isDefault ? 'selected' : 'neutral'}
     />
   )
 }
@@ -99,14 +80,11 @@ export function BusyReasonManagementPage() {
               reason.remark,
             ].some((value) => value.toLowerCase().includes(keyword))
           : true
-        const defaultMatched = appliedFilters.isDefault
-          ? String(reason.isDefault) === appliedFilters.isDefault
-          : true
         const statusMatched = appliedFilters.status
           ? reason.status === appliedFilters.status
           : true
 
-        return keywordMatched && defaultMatched && statusMatched
+        return keywordMatched && statusMatched
       }),
     [appliedFilters, busyReasons],
   )
@@ -179,11 +157,7 @@ export function BusyReasonManagementPage() {
     }
 
     upsertBusyReason(nextRecord)
-    setNotice(
-      nextRecord.isDefault
-        ? 'Busy reason saved and set as the unique default.'
-        : 'Busy reason saved.',
-    )
+    setNotice('Busy reason saved.')
     closeModal()
   }
 
@@ -197,12 +171,6 @@ export function BusyReasonManagementPage() {
       dataIndex: 'busyReasonName',
       title: 'Busy Reason',
       width: 180,
-    },
-    {
-      dataIndex: 'isDefault',
-      render: (value: boolean) => renderDefaultBadge(value),
-      title: 'Default',
-      width: 120,
     },
     {
       dataIndex: 'status',
@@ -281,18 +249,6 @@ export function BusyReasonManagementPage() {
                     }
                   />
                 </AdminFilterField>
-                <AdminFilterField label="Default" width={160}>
-                  <Select
-                    options={defaultOptions}
-                    value={filterDraft.isDefault}
-                    onChange={(value) =>
-                      setFilterDraft((currentDraft) => ({
-                        ...currentDraft,
-                        isDefault: value,
-                      }))
-                    }
-                  />
-                </AdminFilterField>
                 <AdminFilterField label="Status" width={160}>
                   <Select
                     options={statusOptions}
@@ -313,7 +269,7 @@ export function BusyReasonManagementPage() {
             dataSource={filteredReasons}
             pagination={{}}
             rowKey="busyReasonId"
-            horizontalScroll={1130}
+            horizontalScroll={1010}
           />
         </BaseCard>
       <AdminModal
@@ -355,17 +311,6 @@ export function BusyReasonManagementPage() {
                     updateDraft('busyReasonName', event.target.value)
                   }
                 />
-              </label>
-              <label className="global-control-config__field">
-                <span>Default</span>
-                <span className="busy-reason-config__switch-row">
-                  <Switch
-                    checked={draft.isDefault}
-                    size="small"
-                    onChange={(checked) => updateDraft('isDefault', checked)}
-                  />
-                  <em>{draft.isDefault ? 'Yes' : 'No'}</em>
-                </span>
               </label>
               <label className="global-control-config__field">
                 <span>Status</span>

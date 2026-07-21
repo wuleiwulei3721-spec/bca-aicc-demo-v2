@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Project Context
 
-Last updated: 2026-07-10 16:10 +08:00
+Last updated: 2026-07-21 10:33 +08:00
 Repository path: `D:\03projects\bca-aicc-demo-v2`
 
 ## 1. Project Name
@@ -29,7 +29,7 @@ The main demo quality target is a dense, restrained, enterprise-grade agent work
 
 The demo represents a bank customer service agent console. The primary story is:
 
-1. An agent logs in and signs in to a service mode.
+1. An agent logs in and signs in with the configured default agent status.
 2. The customer reaches BANK 1 through PSTN, BankApp, or WhatsApp.
 3. The workspace opens the correct interaction tab.
 4. The agent sees customer information, verification, journey, ticketing, next best action, quick action, CRM, and assistant context.
@@ -138,13 +138,14 @@ All business routes under `/` require an authenticated demo session.
 - `src/config/moduleVisibility.ts`: unified customer/local module visibility profile.
 - `src/layouts/BasicLayout.tsx`: global shell, header, side menu, agent status, call toolbar, handoff readiness, sign out / logout guards, internal chat entry.
 - `src/layouts/components/*`: toolbar, profile area, agent settings, Transfer, Outbound, Internal Chat, Toolbar Settings.
-- `src/pages/AgentWorkspace.tsx`: workspace tab container for Home, Monitor, BankApp Demo, Webchat Demo, WhatsApp Demo, Live Chat, PSTN, Voice Call, Video Call, and registered management page tabs.
+- `src/pages/AgentWorkspace.tsx`: workspace tab container for Home, Monitor, BankApp Demo, Webchat Demo, WhatsApp Demo, Email, Live Chat, PSTN, Voice Call, Video Call, and registered management page tabs.
 - `src/pages/inbound/InteractionWorkspace.tsx`: shared three-column workspace foundation.
 - `src/pages/inbound/InboundPage.tsx`: voice / PSTN and BankApp voice workspace.
 - `src/pages/inbound/VideoCallPage.tsx`: video call workspace and OpenEye floating client overlay.
 - `src/pages/inbound/LiveChat2Page.tsx`: current Live Chat workspace.
 - `src/pages/bankapp/BankAppDemoPage.tsx`: BankApp customer-side channel simulation.
 - `src/pages/whatsapp/WhatsAppDemoPage.tsx`: WhatsApp simulation using the BankApp demo framework.
+- `src/pages/email/EmailPage.tsx`: code-built Email agent workspace with mailbox folders, customer context, message handling, CRM, thread records, and CWU registration.
 - `src/pages/call-management/*`: customer-visible call management configuration pages.
 - `src/pages/routing-config/*`: routing configuration data maintenance pages.
 - `src/pages/employee-management/*`: local-only employee profile management pages.
@@ -173,7 +174,7 @@ The shell contains:
 - BANK 1 header brand.
 - Central call toolbar.
 - Notification and Internal Chat buttons.
-- Agent profile, service mode, status, sign in / sign out menu.
+- Agent profile, status, and single-action sign in / sign out menu.
 - Agent Settings entry separated at the bottom of the profile menu; current setting controls system prompt sound on/off.
 - Collapsible side menu with search.
 - Route-aware selected menu state.
@@ -242,7 +243,7 @@ Video call uses the same interaction workspace and adds an OpenEye floating vide
 Current formal Live Chat uses `LiveChat2Page`:
 
 - Current / History customer list.
-- WhatsApp, BankApp, and Webchat channel filters.
+- Unified WhatsApp, BankApp, and Webchat customer list.
 - Customer list collapsed / expanded states.
 - Sorting by access time or message time.
 - Star color marker UI is hidden in the customer list; compatibility state remains local.
@@ -292,6 +293,23 @@ WhatsApp supports:
 - Handoff to Live Chat.
 - Satisfaction rating / closed flow.
 
+### Email Workspace
+
+The Email workspace is implemented in source but temporarily hidden from `Channel Simulation` until it is complete. When enabled, its menu action opens or reuses a closable `Email` workspace tab.
+
+The current Email demo supports:
+
+- Inbox, Sent, Drafts, and Trash folders with search and local counts.
+- Email selection, read state, SLA progress, and related thread records.
+- Reply, Forward, Save Draft, Edit Draft, and Send with local folder/thread updates.
+- Ignore with AD, Spam, or Sales Email reason; ignored messages remain in Inbox with SLA stopped.
+- Trash recovery to Inbox.
+- Reused Customer Information, Customer Journey, Ticketing History, Next Best Action, and Quick Action context.
+- A BANK 1-safe code-built CRM view without embedding the legacy CRM screenshot.
+- CWU registration with Business Type, Summary, and one-click summary generation.
+
+Email message and CWU changes are local component state. Closing and reopening the Email tab or refreshing the application restores the default anonymized mock data. Email verification is not exposed because no Email verification rule is confirmed. Email Record Inquiry and Email Template Deploy remain separate future scope.
+
 ### Call Management
 
 Customer-visible Call Management pages:
@@ -316,6 +334,10 @@ BankApp Video, BankApp DM, Webchat, and WhatsApp records. It uses Contact /
 Queue / Service Time / Ended By / End Reason / QM Score to show the
 customer-side identifier, queue context, start-end service time, service ending
 metadata, and quality score.
+Numeric QM Scores open a static third-party quality-management detail preview
+in the current demo. The preview uses the customer-confirmed original image;
+future unified sign-in integration will replace it with the corresponding
+third-party detail page.
 Its detail modal keeps the main area focused on playback or conversation
 content and the right side focused on read-only CWU; it does not add a CRM
 or customer detail card in the current scope. Voice and Video details use
@@ -324,7 +346,7 @@ conversation plus right CWU without an empty media column. Voice media stacks
 Voice Recording Playback above the PSTN active-call Screen Recording Playback.
 Video media uses an OpenEye-style vertical replay with two video panes and a
 playback bar, without call-control buttons, labels, or icons. It intentionally excludes Email and Social Media
-records; Email流水查询 and Social Media查询 are separate future scopes.
+records; Email Record Inquiry and Social Media query remain separate future scopes even though the Email handling workspace is now implemented.
 
 Abnormal End Reasons maintains agent-selectable abnormal end reasons
 for Voice, Video, and DM service endings. `Normal` is the system default normal
@@ -396,7 +418,7 @@ Current behaviors:
 - Ant Design theme and Less token layer.
 - Auth route guard and demo login.
 - Main BANK 1 shell with header, side menu, toolbar, and profile status.
-- Agent service mode sign-in.
+- Single-action agent sign-in with the current demo account's existing full-channel capability retained internally.
 - Ready / Not Ready / AUX / Pre-AUX state handling.
 - PSTN inbound call simulation.
 - BankApp voice and video handoff.
@@ -411,6 +433,7 @@ Current behaviors:
 - Monitoring side menu with static Home / Monitor dashboard screenshot switching.
 - AI external side-menu group for Quality Manage and AI Assist Config.
 - BankApp, Webchat, and WhatsApp customer-side simulations with screenshot assets.
+- Code-built Email agent workspace with mailbox folders, message handling, CRM, thread records, and CWU registration.
 - Call Management pages listed above.
 - Abnormal End Reasons for abnormal Voice / Video / DM service end reasons.
 - Interaction Log for current-agent Phone, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp history, with 30 mock records, Contact, Queue, Service Time, Ended By, End Reason, QM Score, playback/transcript details, and read-only mandatory CWU summary.
@@ -429,6 +452,7 @@ Current behaviors:
 - Video Call is a visual demo, not real audio/video.
 - Live Chat is a front-end mock, not a real channel gateway.
 - Webchat customer-side simulation currently covers text only; voice and video Webchat media are future scope.
+- Email Record Inquiry and Email Template Deploy are not part of the current Email workspace scope.
 - Dashboard, Admin dashboard, Supervisor pages, and reporting pages are not fully implemented workspaces.
 - CRM and Assistant screenshots exist, but may still need final customer-approved images and quality checks.
 - Localization is mixed: framework UI is mostly English; business content is a mix of English and Indonesian.
@@ -458,6 +482,7 @@ Important demo boundary:
 - `useAuthStore`: demo session.
 - `useCallManagementStore`: blacklist, priority list, busy reasons, session end reasons.
 - `useRoutingConfigStore`: routing configuration collections.
+- `EmailPage` local state: mailbox messages, folders, drafts, reply/ignore handling, thread records, SLA stop state, and CWU registration.
 
 These are front-end stores. They are not connected to production APIs. Most changes reset after refresh or new session.
 
@@ -468,6 +493,7 @@ These are front-end stores. They are not connected to production APIs. Most chan
 - Browser visual verification is still important after any frontend change.
 - Call state currently supports only one active voice/video call at a time.
 - Closing a Video Call tab does not automatically hang up; Hang Up is the authoritative call end action.
+- Email is a front-end workflow simulation with no mailbox, SMTP, attachment, template service, or CWU backend integration.
 - Some older compatibility code or internal identifiers may still exist in source, but customer-visible text should use Bank / BankApp / BANK 1 wording.
 - `DEPLOY.md` may display encoding issues in non-UTF-8 terminals.
 

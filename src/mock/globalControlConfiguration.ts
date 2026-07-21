@@ -8,5 +8,5 @@ export const defaultGlobalControlConfiguration: GlobalControlConfiguration = {
   idleWarningMinutes: 10,
   maxTextMediaServices: 3,
   defaultSkillQueueCode: 'SQ_GENERAL_ID',
-  signInDefaultStatus: 'ready',
+  signInDefaultStatus: 'not-ready',
 }

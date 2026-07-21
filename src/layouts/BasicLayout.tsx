@@ -271,6 +271,9 @@ export function BasicLayout() {
   const sessionEndReasonEntries = useCallManagementStore(
     (state) => state.sessionEndReasonEntries,
   )
+  const globalControlConfiguration = useCallManagementStore(
+    (state) => state.globalControlConfiguration,
+  )
   const collapsed = useAppStore((state) => state.collapsed)
   const activeWorkspaceTabKey = useAppStore(
     (state) => state.activeWorkspaceTabKey,
@@ -466,12 +469,13 @@ export function BasicLayout() {
 
     setAgentStatus(nextStatus)
     setStatusStartedAt(Date.now())
-    setLiveChatTabOpen(
-      nextStatus !== 'Unsigned' && canHandleDigital(nextServiceMode),
-      {
+    if (nextStatus === 'Ready' && canHandleDigital(nextServiceMode)) {
+      setLiveChatTabOpen(true, {
         seedDefaultCurrentSessions: options.seedDefaultLiveChat === true,
-      },
-    )
+      })
+    } else if (nextStatus === 'Unsigned' || isAuxStatus(nextStatus)) {
+      setLiveChatTabOpen(false)
+    }
 
     if (nextStatus === 'Unsigned') {
       clearAgentServiceMode()
@@ -540,11 +544,22 @@ export function BasicLayout() {
   }, [])
 
   const handleServiceSignIn = useCallback(
-    (mode: AgentServiceMode) => {
+    () => {
+      const mode: AgentServiceMode = 'voice-digital'
+      const initialStatus: AgentStatus =
+        globalControlConfiguration.signInDefaultStatus === 'ready'
+          ? 'Ready'
+          : 'Not Ready'
       setAgentServiceMode(mode)
-      updateAgentStatus('Ready', mode, { seedDefaultLiveChat: true })
+      updateAgentStatus(initialStatus, mode, {
+        seedDefaultLiveChat: initialStatus === 'Ready',
+      })
     },
-    [setAgentServiceMode, updateAgentStatus],
+    [
+      globalControlConfiguration.signInDefaultStatus,
+      setAgentServiceMode,
+      updateAgentStatus,
+    ],
   )
 
   const isSignedIn = agentStatus !== 'Unsigned'
@@ -680,8 +695,13 @@ export function BasicLayout() {
   }, [agentStatus, isAfterCallWork, updateAgentStatus])
 
   const handleReadyToggle = useCallback(() => {
-    updateAgentStatus(agentStatus === 'Ready' ? 'Not Ready' : 'Ready')
-  }, [agentStatus, updateAgentStatus])
+    const nextStatus = agentStatus === 'Ready' ? 'Not Ready' : 'Ready'
+
+    updateAgentStatus(nextStatus, agentServiceMode, {
+      seedDefaultLiveChat:
+        agentStatus === 'Not Ready' && nextStatus === 'Ready',
+    })
+  }, [agentServiceMode, agentStatus, updateAgentStatus])
 
   const triggerVoiceInboundCall = useCallback(
     (
@@ -1253,7 +1273,6 @@ export function BasicLayout() {
             agentName={authSession?.displayName}
             presence={effectiveAgentPresence}
             roleName={authSession?.roleName}
-            serviceMode={agentServiceMode}
             status={agentStatus}
             teamName={authSession?.team}
             hasActiveCustomerInteraction={hasActiveCustomerInteraction}

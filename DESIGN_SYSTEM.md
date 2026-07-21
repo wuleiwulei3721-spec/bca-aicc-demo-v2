@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Design System
 
-Last updated: 2026-07-10 16:10 +08:00
+Last updated: 2026-07-18 12:19 +08:00
 
 This document records the current implemented visual rules. It should be treated as the design baseline for future pages and components.
 
@@ -37,6 +37,7 @@ The app shell is implemented by `BasicLayout`:
   - left customer context column,
   - center CRM / Conversation workspace,
   - right Assistant / Common Links panel.
+- Email uses a dedicated high-density desktop layout: mailbox folders/list, customer context, Mail / CRM workspace, and a related-record rail inside the main panel.
 
 The main workspace should not be turned into a landing page. The first screen after login is a working console.
 
@@ -46,17 +47,18 @@ The header is a high-emphasis BANK 1 shell:
 
 - Use the blue BANK 1 gradient / strong blue header treatment.
 - Keep `BANK 1` as the main brand signal.
-- Keep the agent call toolbar centered in the header when signed in.
+- Keep the agent call toolbar centered in a dedicated middle header region when signed in; it must not overlap the right-side controls.
 - Keep notification, internal chat, profile, and logout on the right.
-- Avoid adding long text or extra navigation into the header.
+- Long profile text is single-line ellipsized so the right action area remains compact and stable.
 - The header must remain scan-friendly at demo resolutions.
 
 Agent profile area:
 
 - Shows role + agent name.
-- Shows team and selected service mode.
+- Shows team and current status separated by ` | `; service capability is not exposed as a selectable or displayable profile field.
+- Profile metadata uses a compact fixed width: name and team/status lines truncate independently, while avatar, menu trigger, and logout retain stable dimensions.
 - Status dot reflects offline, ready, away, or busy.
-- Sign In / Sign Out / AUX actions are accessed from the profile menu.
+- The profile menu is status-specific: Unsigned exposes Sign In and Settings; Not Ready and AUX expose Sign Out; Ready exposes AUX reasons; Pre-AUX hides Sign Out.
 - Agent Settings sits below a divider at the bottom of the profile menu. Current setting: system prompt sound on/off; future agent-owned preferences can be added in this modal.
 
 ## 4. Toolbar Design Principles
@@ -72,6 +74,7 @@ The toolbar is operational and compact:
 - Ready uses success / ready styling.
 - Hold and Mute use selected / active styling.
 - More actions are behind an ellipsis menu; Settings is temporarily hidden from the toolbar More menu.
+- At narrow desktop widths, toolbar actions use their existing icons and tooltips while their text labels and call context are hidden to preserve the right-side controls.
 
 Call context display:
 
@@ -143,6 +146,7 @@ Rules:
 - Routing Config Channels Business Config uses the same Live Chat SLA warning and breach colors for Agent Service threshold status dots.
 - Active call tabs are not closable; ended call tabs are closable.
 - Management page tabs use stable `page:*` keys, are closable, and reuse an existing tab when the same left-menu item is clicked again.
+- The Email workspace is a text-first closable workspace tab reserved for later enablement; when exposed, repeated menu clicks reuse the same tab and closing it returns to Home.
 - Closing a management page tab should fall back to a neighboring workspace tab when available, otherwise Home.
 - CRM base tab is not closable.
 - Conversation tab is not closable.
@@ -297,6 +301,9 @@ Before changing UI, verify the target demo resolution:
 - Header controls should not overlap profile actions.
 - Inbound three-column layout should not overflow horizontally.
 - Live Chat four-column layout should still leave Customer Information, Conversation, and Assistant usable.
+- Live Chat customer lists show all three demo channels together; channel filter controls stay hidden, with sort and collapse actions grouped beside Current / History.
+- Email must keep mailbox, customer context, mail body, and thread record usable at 1366x768 and larger desktop demo resolutions; each panel owns its vertical scrolling and the browser page must not scroll horizontally.
+- Email CRM and message content must be BANK 1-safe code-built content; do not embed the legacy full-system Email design screenshots or duplicate the current application shell.
 - CRM / Assistant screenshots should render without distortion or fallback unless the file is missing.
 - Text inside buttons, tabs, cards, and table cells should not overlap or clip.
 

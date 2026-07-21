@@ -3,6 +3,7 @@ import { Alert, InputNumber, Select } from 'antd'
 import { useMemo, useState } from 'react'
 import { BaseButton, BaseCard, PageContainer } from '../../components'
 import { defaultGlobalControlConfiguration } from '../../mock/globalControlConfiguration'
+import { useCallManagementStore } from '../../store'
 import { useRoutingConfigStore } from '../../store/routingConfigStore'
 import type {
   GlobalControlAnswerMode,
@@ -25,10 +26,6 @@ const signInStatusOptions: Array<{
   { label: 'Ready', value: 'ready' },
   { label: 'Not Ready', value: 'not-ready' },
 ]
-
-function cloneDefaultConfig(): GlobalControlConfiguration {
-  return { ...defaultGlobalControlConfiguration }
-}
 
 function formatSavedTime(date: Date) {
   const year = date.getFullYear()
@@ -100,8 +97,17 @@ function SelectField<Value extends string>({
 
 export function GlobalControlConfigurationPage() {
   const skillQueues = useRoutingConfigStore((state) => state.skillQueues)
+  const savedConfiguration = useCallManagementStore(
+    (state) => state.globalControlConfiguration,
+  )
+  const updateGlobalControlConfiguration = useCallManagementStore(
+    (state) => state.updateGlobalControlConfiguration,
+  )
+  const resetGlobalControlConfiguration = useCallManagementStore(
+    (state) => state.resetGlobalControlConfiguration,
+  )
   const [config, setConfig] = useState<GlobalControlConfiguration>(
-    cloneDefaultConfig,
+    () => ({ ...savedConfiguration }),
   )
   const [savedAt, setSavedAt] = useState(formatSavedTime(new Date()))
   const [savedNotice, setSavedNotice] = useState('')
@@ -183,13 +189,17 @@ export function GlobalControlConfigurationPage() {
     }
 
     const nextSavedAt = formatSavedTime(new Date())
+    updateGlobalControlConfiguration(config)
     setSavedAt(nextSavedAt)
     setSavedNotice(`Global control configuration saved at ${nextSavedAt}.`)
   }
 
   const handleReset = () => {
-    setConfig(cloneDefaultConfig())
-    setSavedNotice('')
+    resetGlobalControlConfiguration()
+    setConfig({ ...defaultGlobalControlConfiguration })
+    const nextSavedAt = formatSavedTime(new Date())
+    setSavedAt(nextSavedAt)
+    setSavedNotice(`Global control configuration reset at ${nextSavedAt}.`)
   }
 
   return (

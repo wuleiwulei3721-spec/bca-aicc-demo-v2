@@ -23,6 +23,7 @@ import {
   getLiveChatSlaState,
 } from '../utils/duration'
 import { BankAppDemoPage } from './bankapp'
+import { EmailPage } from './email'
 import { InboundPage, LiveChat2Page, VideoCallPage } from './inbound'
 import { WebchatDemoPage } from './webchat'
 import { WhatsAppDemoPage } from './whatsapp'
@@ -32,6 +33,7 @@ const MONITORING_MONITOR_TAB_KEY = 'monitor'
 const BANKAPP_DEMO_TAB_KEY = 'bankapp-demo'
 const WEBCHAT_DEMO_TAB_KEY = 'webchat-demo'
 const WHATSAPP_DEMO_TAB_KEY = 'whatsapp-demo'
+const EMAIL_TAB_KEY = 'email'
 const LIVE_CHAT_TAB_KEY = 'live-chat'
 const staticLiveChat2SessionById = Object.fromEntries(
   liveChat2Sessions.map((session) => [session.id, session]),
@@ -218,6 +220,7 @@ export function AgentWorkspace() {
   const hasWhatsAppDemoTab = useAppStore(
     (state) => state.isWhatsAppDemoTabOpen,
   )
+  const hasEmailTab = useAppStore((state) => state.isEmailTabOpen)
   const hasWebchatDemoTab = useAppStore(
     (state) => state.isWebchatDemoTabOpen,
   )
@@ -259,6 +262,7 @@ export function AgentWorkspace() {
   const closeWhatsAppDemoTab = useAppStore(
     (state) => state.closeWhatsAppDemoTab,
   )
+  const closeEmailTab = useAppStore((state) => state.closeEmailTab)
   const closeWebchatDemoTab = useAppStore(
     (state) => state.closeWebchatDemoTab,
   )
@@ -460,6 +464,15 @@ export function AgentWorkspace() {
       })
     }
 
+    if (hasEmailTab) {
+      items.push({
+        key: EMAIL_TAB_KEY,
+        closable: true,
+        label: <WorkspaceTabLabel label="Email" now={now} />,
+        children: activeKey === EMAIL_TAB_KEY ? <EmailPage /> : null,
+      })
+    }
+
     if (hasWebchatDemoTab) {
       items.push({
         key: WEBCHAT_DEMO_TAB_KEY,
@@ -564,6 +577,7 @@ export function AgentWorkspace() {
     currentMonitoringMonitorViewKey,
     currentCallInteractionId,
     hasBankAppDemoTab,
+    hasEmailTab,
     hasLiveChatTab,
     hasMonitoringMonitorTab,
     hasWebchatDemoTab,
@@ -583,6 +597,10 @@ export function AgentWorkspace() {
 
     if (action === 'remove' && targetKey === WHATSAPP_DEMO_TAB_KEY) {
       closeWhatsAppDemoTab()
+    }
+
+    if (action === 'remove' && targetKey === EMAIL_TAB_KEY) {
+      closeEmailTab()
     }
 
     if (action === 'remove' && targetKey === WEBCHAT_DEMO_TAB_KEY) {

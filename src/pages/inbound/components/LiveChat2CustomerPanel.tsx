@@ -9,7 +9,6 @@ import {
   WhatsAppOutlined,
 } from '@ant-design/icons'
 import { Badge, Dropdown } from 'antd'
-import type { ReactNode } from 'react'
 import type { MenuProps } from 'antd'
 import type {
   LiveChat2EndReason,
@@ -25,7 +24,6 @@ import {
 } from '../../../utils/duration'
 
 type LiveChat2Channel = LiveChat2Session['channel']
-type LiveChat2ChannelFilter = 'all' | LiveChat2Channel
 type LiveChat2ListView = 'current' | 'history'
 
 export interface LiveChat2SessionView extends LiveChat2Session {
@@ -48,13 +46,11 @@ interface LiveChat2CustomerPanelProps {
   activeSessionId: string
   collapsed: boolean
   historySessions: LiveChat2SessionView[]
-  selectedChannels: LiveChat2Channel[]
   serviceSessions: LiveChat2SessionView[]
   sortMode: LiveChat2SortMode
   view: LiveChat2ListView
   onCloseSession: (sessionId: string) => void
   onCollapsedChange: (collapsed: boolean) => void
-  onChannelFilterChange: (channel: LiveChat2ChannelFilter) => void
   onSelectSession: (sessionId: string) => void
   onSortModeChange: (sortMode: LiveChat2SortMode) => void
   onViewChange: (view: LiveChat2ListView) => void
@@ -65,39 +61,6 @@ const channelLabels: Record<LiveChat2Session['channel'], string> = {
   Webchat: 'Webchat',
   WhatsApp: 'WhatsApp',
 }
-
-const liveChat2Channels: LiveChat2Channel[] = [
-  'WhatsApp',
-  'BankApp',
-  'Webchat',
-]
-
-const channelFilterOptions: Array<{
-  icon: ReactNode
-  label: string
-  value: LiveChat2ChannelFilter
-}> = [
-  {
-    icon: <span className="livechat2-channel-avatar__all-label">ALL</span>,
-    label: 'All channels',
-    value: 'all',
-  },
-  {
-    icon: <WhatsAppOutlined />,
-    label: channelLabels.WhatsApp,
-    value: 'WhatsApp',
-  },
-  {
-    icon: <MobileOutlined />,
-    label: channelLabels.BankApp,
-    value: 'BankApp',
-  },
-  {
-    icon: <GlobalOutlined />,
-    label: channelLabels.Webchat,
-    value: 'Webchat',
-  },
-]
 
 function getChannelIcon(channel: LiveChat2Session['channel']) {
   if (channel === 'WhatsApp') {
@@ -111,11 +74,7 @@ function getChannelIcon(channel: LiveChat2Session['channel']) {
   return <GlobalOutlined />
 }
 
-function getChannelClassName(channel: LiveChat2ChannelFilter) {
-  if (channel === 'all') {
-    return 'livechat2-channel-avatar--all'
-  }
-
+function getChannelClassName(channel: LiveChat2Channel) {
   if (channel === 'BankApp') {
     return 'livechat2-channel-avatar--bankapp'
   }
@@ -300,36 +259,25 @@ export function LiveChat2CustomerPanel({
   activeSessionId,
   collapsed,
   historySessions,
-  selectedChannels,
   serviceSessions,
   sortMode,
   view,
   onCloseSession,
   onCollapsedChange,
-  onChannelFilterChange,
   onSelectSession,
   onSortModeChange,
   onViewChange,
 }: LiveChat2CustomerPanelProps) {
-  const isAllChannelsSelected = liveChat2Channels.every((channel) =>
-    selectedChannels.includes(channel),
-  )
-  const visibleServiceSessions = serviceSessions.filter((session) =>
-    selectedChannels.includes(session.channel),
-  )
-  const visibleHistorySessions = historySessions.filter((session) =>
-    selectedChannels.includes(session.channel),
-  )
+  const visibleServiceSessions = serviceSessions
+  const visibleHistorySessions = historySessions
   const visibleSessions =
     view === 'current' ? visibleServiceSessions : visibleHistorySessions
   const emptyListTitle =
     view === 'current' ? 'No current conversations' : 'No history conversations'
   const emptyListDescription =
-    selectedChannels.length === 0
-      ? 'Select a channel filter to show conversations.'
-      : view === 'current'
-        ? 'New conversations will appear here.'
-        : 'Closed conversations will appear here.'
+    view === 'current'
+      ? 'New conversations will appear here.'
+      : 'Closed conversations will appear here.'
 
   return (
     <aside
@@ -341,69 +289,9 @@ export function LiveChat2CustomerPanel({
         .join(' ')}
       aria-label="Live Chat customers"
     >
-      <header className="livechat2-customer-panel__header">
-        <div
-          aria-label="Filter Live Chat customers by channel"
-          className="livechat2-customer-panel__filters"
-          role="group"
-        >
-          {channelFilterOptions.map((option) => {
-            const isActive =
-              option.value === 'all'
-                ? isAllChannelsSelected
-                : selectedChannels.includes(option.value)
-
-            return (
-              <button
-                aria-label={`Show ${option.label}`}
-                aria-pressed={isActive}
-                className={[
-                  'livechat2-customer-panel__filter',
-                  isActive ? 'livechat2-customer-panel__filter--active' : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                key={option.value}
-                title={option.label}
-                type="button"
-                onClick={() => onChannelFilterChange(option.value)}
-              >
-                <span
-                  className={[
-                    'livechat2-channel-avatar',
-                    getChannelClassName(option.value),
-                  ].join(' ')}
-                >
-                  {option.icon}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-
-        <button
-          aria-label={
-            collapsed
-              ? 'Expand Live Chat customer list'
-              : 'Collapse Live Chat customer list'
-          }
-          className="livechat2-customer-panel__toggle"
-          title={collapsed ? 'Expand' : 'Collapse'}
-          type="button"
-          onClick={() => onCollapsedChange(!collapsed)}
-        >
-          {collapsed ? <RightOutlined /> : <LeftOutlined />}
-        </button>
-      </header>
-
-      {!collapsed && (
-        <div
-          className="livechat2-customer-panel__view-toggle"
-        >
-          <div
-            className="livechat2-customer-panel__view-tabs"
-            role="tablist"
-          >
+      <div className="livechat2-customer-panel__view-toggle">
+        {!collapsed && (
+          <div className="livechat2-customer-panel__view-tabs" role="tablist">
             <button
               aria-label={`Current conversations, ${visibleServiceSessions.length}`}
               aria-selected={view === 'current'}
@@ -445,6 +333,8 @@ export function LiveChat2CustomerPanel({
               </span>
             </button>
           </div>
+        )}
+        <div className="livechat2-customer-panel__view-actions">
           <Dropdown
             menu={{
               items: sortMenuItems,
@@ -469,7 +359,20 @@ export function LiveChat2CustomerPanel({
             </button>
           </Dropdown>
         </div>
-      )}
+        <button
+          aria-label={
+            collapsed
+              ? 'Expand Live Chat customer list'
+              : 'Collapse Live Chat customer list'
+          }
+          className="livechat2-customer-panel__toggle"
+          title={collapsed ? 'Expand' : 'Collapse'}
+          type="button"
+          onClick={() => onCollapsedChange(!collapsed)}
+        >
+          {collapsed ? <RightOutlined /> : <LeftOutlined />}
+        </button>
+      </div>
 
       <section className="livechat2-customer-panel__section">
         <div className="livechat2-customer-panel__list" role="list">

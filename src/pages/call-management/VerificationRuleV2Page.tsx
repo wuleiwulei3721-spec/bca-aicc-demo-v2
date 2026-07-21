@@ -13,6 +13,7 @@ import {
   Checkbox,
   Input,
   InputNumber,
+  Radio,
   Select,
   Space,
   Switch,
@@ -43,7 +44,7 @@ import type {
   VerificationV2RuleStatus,
   VerificationV2Scenario,
 } from '../../types'
-import { CustomerVerificationV2Modal } from '../inbound/components/CustomerVerificationV2Modal'
+import { CustomerVerificationV2Panel } from '../inbound/components/CustomerVerificationV2Modal'
 import {
   cloneVerificationV2QuestionBlock,
   cloneVerificationV2Rule,
@@ -1781,28 +1782,28 @@ export function VerificationRuleV2Page() {
               }
             />
           </label>
-          <label>
-            <span>Create From</span>
-            <Select
-              options={[
-                {
-                  label: 'Copy current scenario',
-                  value: 'copy-current',
-                },
-                {
-                  label: 'Blank scenario',
-                  value: 'blank',
-                },
-              ]}
+          <div className="verification-rule-v2-scenario-create__field">
+            <span id="verification-scenario-create-from-label">
+              Create From
+            </span>
+            <Radio.Group
+              aria-labelledby="verification-scenario-create-from-label"
+              buttonStyle="solid"
+              className="verification-rule-v2-scenario-create__mode-group"
               value={scenarioCreateDraft.mode}
-              onChange={(mode) =>
+              onChange={(event) =>
                 setScenarioCreateDraft((current) => ({
                   ...current,
-                  mode: mode as ScenarioCreateMode,
+                  mode: event.target.value as ScenarioCreateMode,
                 }))
               }
-            />
-          </label>
+            >
+              <Radio.Button value="copy-current">
+                Copy current scenario
+              </Radio.Button>
+              <Radio.Button value="blank">Blank scenario</Radio.Button>
+            </Radio.Group>
+          </div>
           <AdminModalFooter className="verification-rule-config-modal__footer">
             <BaseButton onClick={closeScenarioCreateModal}>Cancel</BaseButton>
             <BaseButton variant="primary" onClick={addScenario}>
@@ -1821,12 +1822,13 @@ export function VerificationRuleV2Page() {
         onCancel={() => setPreviewOpen(false)}
       >
         {previewRule && previewInitialConditions && (
-          <CustomerVerificationV2Modal
+          <CustomerVerificationV2Panel
             key={previewKey}
             initialConditions={previewInitialConditions}
             questionBank={verificationV2QuestionBank}
             readonlyConditions
             rules={[previewRule]}
+            variant="compact"
             onFinish={() => setPreviewOpen(false)}
           />
         )}

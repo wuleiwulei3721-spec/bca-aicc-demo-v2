@@ -1,8 +1,31 @@
 # Decision Log
 
-Last updated: 2026-07-10
+Last updated: 2026-07-21
 
 This document records important product and system design decisions that can be confirmed from the current codebase, project documents, `DEV_LOG.md`, and readable Git history. It intentionally omits bug fixes, visual micro-adjustments, temporary test data, copy-only tweaks, and implementation details that do not affect product direction.
+
+--------------------------------------------------
+
+Decision ID:
+DEC-037
+
+Module:
+Email Channel / Workspace
+
+Decision:
+The first Email-channel delivery is a code-built, closable agent workspace opened from `Channel Simulation > Email`. It covers the design-reference flow for Inbox, Sent, Drafts, Trash, Reply, Forward, Ignore, CRM, thread records, and CWU. It does not embed the legacy full-system screenshots and does not add Email Record Inquiry or Email Template Deploy.
+
+Reason:
+The source images contain a complete legacy application shell, fixed 1440x874 dimensions, and old customer branding. Cropping them into the current workspace would duplicate navigation, blur under resizing, and make click hotspots brittle. The customer-facing objective is to demonstrate Email handling interactions, so code-built UI provides clearer workflow feedback while preserving the current BANK 1 shell and design system.
+
+Impact:
+Email handling uses anonymized front-end mock data and resets when the tab is closed/reopened or the app refreshes. Reply/Send, Draft, Ignore, Recover, CRM, thread, SLA, and CWU behavior is local only. Email verification stays hidden until a rule is confirmed. Email Record Inquiry remains separate from Interaction Log, and Email Template Deploy remains a future independent scope.
+
+Status:
+Implemented
+
+Source:
+Customer-provided Email design images and implementation request on 2026-07-18; Code: `src/pages/email/EmailPage.tsx`, `src/mock/email.ts`, `src/types/email.ts`, `src/layouts/BasicLayout.tsx`, `src/pages/AgentWorkspace.tsx`, `src/store/appStore.ts`; Docs: `PROJECT_CONTEXT.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `DESIGN_SYSTEM.md`, `BUSINESS_RULES.md`; History: `DEV_LOG.md`
 
 --------------------------------------------------
 
@@ -164,6 +187,29 @@ Implemented
 
 Source:
 代码: `src/layouts/BasicLayout.tsx`, `src/store/appStore.ts`, `src/pages/bankapp/BankAppDemoPage.tsx`; 文档: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`; 历史记录: `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-036
+
+Module:
+Agent Sign-in and Global Control
+
+Decision:
+The profile menu exposes one Sign In action. The current demo account keeps its existing full-channel capability internally, while `Status after Sign-in` from Global Control Configuration determines the next signed-in agent status and defaults to Not Ready.
+
+Reason:
+The customer requested that service eligibility is no longer chosen by the agent at sign-in. The current front-end demo has no channel-media mapping on employee-bound skills, so this delivery removes the selector without introducing an unconfirmed skill model.
+
+Impact:
+Not Ready sign-in creates no default Live Chat customer service. The first switch to Ready opens and seeds the default Live Chat demo sessions. Global Control changes are shared in memory and reset on browser refresh; future skill-driven routing must replace the hidden fixed capability with confirmed binding data.
+
+Status:
+Implemented
+
+Source:
+Code: `src/layouts/BasicLayout.tsx`, `src/layouts/components/AgentProfileArea.tsx`, `src/store/callManagementStore.ts`, `src/pages/call-management/GlobalControlConfigurationPage.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`
 
 --------------------------------------------------
 
@@ -783,6 +829,7 @@ Impact:
 2026-07-10 11:21 update: Interaction Log seeds 30 mock records. Voice details use a three-column layout with widescreen agent screen recording on the left, voice playback/transcript in the middle, and narrow CWU on the right. Video details label the replay section `Video Recording Playback`.
 2026-07-10 11:49 update: Voice `Screen Recording Playback` uses a PSTN active-call agent desktop screenshot instead of the earlier Live Chat agent screenshot.
 2026-07-10 14:53 update: the score field contract is renamed to `qmScore` / `QM Score`. Detail modals now share the same information architecture: Voice and Video use left media playback, middle transcript, and right CWU; DM uses conversation plus right CWU without a media column.
+2026-07-21 update: numeric QM Scores open a static third-party QM detail preview in the demo. The preview is a confirmed original reference image and intentionally has no simulated third-party controls; it uses the source image ratio without a BANK 1 modal title or duplicate close icon. Only the source image's top-right X closes the preview; future unified sign-in integration replaces it with the matching third-party detail page. Empty scores remain non-interactive.
 Future Email or Social Media record work should be added as independent modules or explicitly designed parent/tab structures, not silently folded into the current Call Record Query table. Call Record Query should follow the confirmed media display label `DM` instead of exposing internal Text/TEXT wording. The list uses `Contact` for customer-side identifiers rather than `Counterparty`. The list includes `Queue` and `Service Time`; missing Queue values render as `-`. The detail modal does not add a CRM/customer-detail card in the current scope, keeps media playback or conversation content separated from read-only CWU, and uses a CWU panel with Ticket No., multi-select Business Type, and Summary description on the right. Voice details use a compact playback bar without waveform display. Video details use an OpenEye-style vertical replay with two video panes and a playback bar, without live-call buttons, labels, or icons.
 
 Status:

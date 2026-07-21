@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-07-14 09:48 +08:00
+最后更新：2026-07-21 17:05 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,242 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-07-21 17:05 +08:00 - 暂停 Email 渠道入口
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `BUSINESS_RULES.md`
+- `PROJECT_CONTEXT.md`
+- `DESIGN_SYSTEM.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 产品经理确认 Email 渠道尚未完成，当前客户演示不能开放该入口。
+
+修改结果：
+
+- 从 Channel Simulation 菜单和其点击处理移除 Email，客户无法打开 Email 工作台。
+- Email 页面、mock、类型和工作台状态暂时保留在代码库，完成后恢复菜单入口即可继续开发和验证。
+- 知识库明确标记 Email 为暂时隐藏且未开放的范围。
+
+回滚说明：
+
+- Email 工作台完成并验收后，恢复 `customer-email` 菜单项及对应 `requestEmailWorkspace` 点击处理。
+
+当前风险：
+
+- Email 仍是未完成的前端 Demo，不应通过隐藏状态、直接 store 调用或后续新增入口绕过验收后再向客户开放。
+
+### 2026-07-21 16:43 +08:00 - 转号码页签移除三方操作
+
+修改页面或文件：
+
+- `src/layouts/components/TransferModal.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求在话务条转移弹框的 `Transfer Number` 页签中移除三方操作。
+
+修改结果：
+
+- `Transfer Number` 仅保留号码输入和 `Transfer` 按钮。
+- 同步收窄该页签的表单栅格，避免删除按钮后留下空白操作位。
+- 坐席、技能及会话转移场景的现有 Consult / Transfer / Conference 规则不变。
+
+回滚说明：
+
+- 在 `TransferNumberTab` 恢复 `Conference` 按钮，并将表单栅格恢复为三列即可。
+
+当前风险：
+
+- 转移操作仍为前端演示，点击按钮只关闭弹框，不发送真实转移或会议请求。
+
+### 2026-07-21 14:04 +08:00 - Interaction Log 第三方 QM 窗口预览优化
+
+修改页面或文件：
+
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `src/styles/index.less`
+- `CURRENT_STATUS.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户确认 QM 详情应呈现为第三方系统自己的窗口，不能叠加 BANK 1 标题栏或第二个关闭按钮；第三方顶栏中的其他功能仅作静态演示。
+
+修改结果：
+
+- 预览外层移除标题、默认关闭 X 和底部区域，窗口按原图 `1695:1297` 比例在视口中完整等比展示。
+- 原图完整保留；下载、收藏、编辑、设置等第三方顶栏图标不模拟交互。
+- 原图右上角 X 对应透明热区关闭预览；遮罩和 Esc 不会关闭窗口。
+
+回滚说明：
+
+- 如需恢复 BANK 1 标准弹框，移除关闭热区并恢复 QM 预览的标题、默认关闭按钮和滚动样式。
+
+当前风险：
+
+- 此交互仅用于静态 Demo。未来统一登录接入后必须替换为真实第三方页面和其原生工具栏行为。
+
+### 2026-07-21 10:33 +08:00 - Interaction Log 第三方 QM 详情预览
+
+修改页面或文件：
+
+- `public/screenshots/interaction-log/qm-detail.png`
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 质检由第三方公司执行。客户确认有分数的 `QM Score` 需要可进入第三方质检详情查看，并确认使用对方提供的原始详情截图作为 Demo 预览。
+
+修改结果：
+
+- 原始第三方详情图复制到 Interaction Log 静态资源目录，保留原图内容和水印。
+- 有数值的 `QM Score` 显示为蓝色可点击文本；空分数显示 `-` 且不提供交互。
+- 点击数值分数打开 `QM Detail - {Record No.}` 图片弹框；弹框不提供底部按钮，使用右上角 X 关闭，遮罩点击不会误关。
+- 当前仅展示静态预览，不模拟第三方的播放、搜索、申诉或确认等操作；未来统一登录对接后替换为真实第三方详情页。
+
+回滚说明：
+
+- 如需回滚，移除 QM Score 点击状态、预览弹框和相关样式，并删除 `public/screenshots/interaction-log/qm-detail.png`。
+
+当前风险：
+
+- 原图包含第三方界面水印和 BCA POC 标识，已按用户确认原样用于 Demo；正式第三方对接时需改为统一登录后的真实详情跳转。
+
+### 2026-07-21 10:26 +08:00 - Busy Reason 移除默认配置
+
+修改页面或文件：
+
+- `src/pages/call-management/BusyReasonManagementPage.tsx`
+- `src/types/busyReason.ts`
+- `src/mock/busyReasons.ts`
+- `src/store/callManagementStore.ts`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+
+修改原因：
+
+- 用户要求在 Busy Reason 管理中移除默认配置，覆盖查询条件、列表和编辑框。
+
+修改结果：
+
+- 移除 Default 查询条件、列表列和编辑开关。
+- 删除 Busy Reason 的 `isDefault` 数据字段及保存时的唯一默认原因约束。
+- 保留 Keyword、Status、原因名称、状态和备注的现有维护能力。
+
+验证：
+
+- `npm run lint` 和 `npm run build` 通过；构建仅有既有 large chunk warning。
+- 浏览器冒烟确认查询栏、表格和 Edit Busy Reason 弹窗均不再展示 Default 配置。
+
+回滚说明：
+
+- 恢复 Busy Reason 的 `isDefault` 类型、mock 字段、store 归一化逻辑和管理页控件即可回滚。
+
+当前风险：
+
+- Busy Reason 仍为前端本地 mock 状态，刷新页面会恢复默认列表。
+
+### 2026-07-18 12:19 +08:00 - Email 渠道可交互工作台
+
+修改页面或文件：
+
+- `src/pages/email/*`
+- `src/mock/email.ts`
+- `src/types/email.ts`
+- `src/types/inbound.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/AgentWorkspace.tsx`
+- `src/store/appStore.ts`
+- `src/styles/index.less`
+- 项目知识库文档
+
+修改原因：
+
+- 用户要求在 Channel Simulation 的 WhatsApp 下方新增 Email 入口，并通过可关闭的 Email 页签演示邮件渠道接入后的坐席交互。
+- 参考设计图包含旧版完整应用壳、固定分辨率和旧品牌内容，直接裁剪做热区会产生双层导航、缩放模糊和点击坐标风险，因此改为按当前 BANK 1 设计系统代码化重建。
+
+修改结果：
+
+- 新增可打开、复用、关闭并回退 Home 的 Email 工作台页签。
+- 实现 Inbox、Sent、Drafts、Trash、搜索、选择、已读、SLA、线程记录和匿名 mock 数据。
+- 实现 Reply / Forward 编辑器、内置模板、Save Draft、Edit Draft、Send、Ignore 原因和 Trash Recover 的本地状态联动。
+- 实现复用客户上下文卡片、BANK 1-safe 代码化 CRM、CWU Business Type / Summary / One-Click Generation / Confirm。
+- Email 不展示未确认的验证入口；Email Record Inquiry 和 Email Template Deploy 保留为独立后续范围。
+- 未复制邮件设计图到 `public`，新增客户可见内容使用 BANK 1 和匿名数据。
+
+验证：
+
+- `npm run lint`、`npx tsc --noEmit --pretty false`、`npm run build` 通过；构建仅有既有 large chunk warning。
+- `git diff --check` 通过，仅有既有 Windows LF / CRLF warning。
+- 浏览器验证通过：菜单位置、页签打开/复用/关闭、Reply/Send、Draft、Ignore、Recover、CRM、CWU 和关闭重开后的状态重置。
+- 1366x768、1440x900、1920x1080 的 DOM 布局度量均无浏览器页面横向溢出；1366x768 截图检查无文字重叠。
+- 修复 Ant Design Drawer `width` 弃用提示后，浏览器控制台未产生新的 warning/error。
+
+回滚说明：
+
+- 删除 `src/pages/email/*`、`src/mock/email.ts`、`src/types/email.ts`，移除 Email 菜单/页签/appStore 状态、`AccessChannel` 的 Email 值和 Email 专用样式，再恢复本次知识库记录即可回滚。
+
+当前风险：
+
+- 当前仅为前端本地 mock，不连接真实邮箱、SMTP、附件、路由、权限、审计、模板、邮件记录查询或 CWU 后端。
+- Email 验证规则、正式 SLA 阈值、Ignore 后端语义、邮件模板和记录查询仍需产品/客户后续确认。
+
+### 2026-07-16 17:16 +08:00 - Live Chat 客户列表隐藏渠道过滤并合并收起操作
+
+修改页面或文件：
+
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DESIGN_SYSTEM.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 当前 Live Chat 仅有 WhatsApp、BankApp、Webchat 三个渠道，且坐席通常同时处理的会话数量较少，渠道过滤入口会增加操作负担。
+- 用户要求将收起 / 展开按钮放到排序按钮旁边，保持列表控制集中。
+
+修改结果：
+
+- Live Chat 客户列表隐藏渠道过滤组件，Current / History 直接展示三种渠道的会话。
+- 排序与收起 / 展开按钮合并到 Current / History 行右侧；列表收起后仍保留排序和展开入口。
+- 同步项目上下文、当前状态、待办、设计系统和开发日志。
+
+验证：
+
+- `npm run lint`、`npm run build`、`npx tsc --noEmit --pretty false` 已通过。
+- `git diff --check` 已通过；仅有既有 Windows LF / CRLF warning。
+- 本地开发服务返回 HTTP 200；浏览器冒烟检查因浏览器插件运行时的 `process` 初始化冲突未能执行。
+
+回滚说明：
+
+- 恢复 `LiveChat2Page` 和 `LiveChat2CustomerPanel` 的渠道筛选状态、组件入口及原有样式即可回滚；同步恢复项目文档中的渠道过滤说明。
+
+当前风险：
+
+- 渠道筛选交互暂时不再对坐席可见；如未来渠道数量或并行会话数量增加，需要重新评估是否恢复该入口。
 
 ### 2026-07-14 09:48 +08:00 - 生产发布流程保护规则
 
@@ -3238,3 +3474,118 @@ Historical entries are preserved in archive files without content rewrites. Use 
 当前风险点：
 
 - 后续如接真实客户 API，需要在当前弹框入口后替换静态表格数据，并补充加载、失败和空状态策略。
+
+### 2026-07-21 14:46 +08:00 - 简化坐席签入并接入默认状态配置
+
+修改页面或文件：
+
+- `src/layouts/components/AgentProfileArea.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/store/callManagementStore.ts`
+- `src/pages/call-management/GlobalControlConfigurationPage.tsx`
+- `src/mock/globalControlConfiguration.ts`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户要求坐席不再选择 Voice only / Digital only / Voice + Digital，点击 Sign In 后由系统完成能力选择。
+- 客户要求 Sign In 后的默认状态使用 Global Control Configuration 的 `Status after Sign-in`，默认值改为 Not Ready。
+
+修改结果：
+
+- 未签入个人菜单仅保留 `Sign In`，签入后不再显示服务模式。
+- 当前演示账号在内部保留原 Voice + Digital 等效能力；本次未新增 Employee Profile 绑定技能与媒体能力映射。
+- Global Control Configuration 保存和 Reset to Default 现在更新共享内存配置，后续签入按已保存的 Ready / Not Ready 初始化；默认值为 Not Ready。
+- Not Ready 签入不创建 Live Chat 当前会话，首次切换 Ready 时才打开并填充默认 Live Chat 演示会话。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 bundle size warning。
+- 本地浏览器烟测 `http://127.0.0.1:5173/` 已通过：未签入菜单仅显示 Sign In；默认签入显示 Not Ready 且不打开 Live Chat；切换 Ready 后出现 Live Chat 和 2 个默认会话；保存 Status after Sign-in = Ready 后下一次签入显示 Ready；Reset to Default 后字段恢复 Not Ready。
+
+回滚说明：
+
+- 如需回滚，恢复 AgentProfileArea 的服务模式菜单、BasicLayout 的模式参数签入路径，并将 Global Control Configuration 恢复为页面局部状态和默认 Ready。
+
+当前风险点：
+
+- 绑定技能尚未提供 Voice / Text 媒体能力字段；未来接入真实技能路由时需替换当前隐藏的固定全渠道能力。
+
+### 2026-07-21 15:10 +08:00 - 坐席状态菜单矩阵与状态展示
+
+修改页面或文件：
+
+- `src/layouts/components/AgentProfileArea.tsx`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DESIGN_SYSTEM.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户明确坐席个人菜单应按 Unsigned、Not Ready、Ready、Pre-AUX、AUX 的实际状态展示，移除无业务意义的 `Signed in` 项。
+- 客户要求在团队名称后直接展示当前状态，便于在不打开菜单时辨识坐席可服务状态。
+
+修改结果：
+
+- Unsigned 显示 Sign In / Settings；Not Ready 显示当前状态 / Ready / Sign Out / Settings；Ready 显示当前状态 / AUX 原因 / Settings；Pre-AUX 隐藏 Sign Out；AUX 恢复 Sign Out。
+- 团队行显示 `PBK BSB | {status}`；AUX 和 Pre-AUX 在展示层使用冒号格式，内部状态值及自动转 AUX 逻辑不变。
+- 当前演示仍按语音与文字同时签入，完整话务条保持显示；未扩展未来仅文字坐席的技能能力模型。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npx tsc --noEmit` 已通过。
+- `npm run build` 已通过；仅保留既有 bundle size warning。
+- 本地浏览器烟测确认团队行显示 `PBK BSB | Unsigned`。当前浏览器自动化会话未能展开 Ant Design 下拉层；完整 Unsigned / Not Ready / Ready / Pre-AUX / AUX 菜单流仍建议在客户演示前手工点验。
+
+回滚说明：
+
+- 如需回滚，恢复 AgentProfileArea 的原通用签入菜单和团队行仅显示团队名称。
+
+当前风险点：
+
+- 当前状态菜单规则为前端演示状态机；真实多渠道坐席权限仍需以后端技能绑定为准。
+
+### 2026-07-21 16:35 +08:00 - 顶栏操作区溢出防护
+
+修改页面或文件：
+
+- `src/layouts/components/AgentProfileArea.tsx`
+- `src/styles/index.less`
+- `DESIGN_SYSTEM.md`
+- `CURRENT_STATUS.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 长 Pre-AUX / AUX 原因会扩展个人资料宽度，与居中的话务条重叠，并挤压通知、内部聊天和退出操作。
+
+修改结果：
+
+- Header 改为品牌、话务条、右侧操作区三列布局，话务条不再以绝对定位覆盖个人资料。
+- 个人资料姓名与团队/状态各自使用更紧凑的固定宽度、单行省略；不再通过悬浮提示展开完整文本，使头像菜单保持靠近右侧原有位置。
+- 960px 以下的话务条切换为图标优先，隐藏按钮文字与通话标识，保留可点击按钮、现有 title 和右侧操作区。
+- 下拉菜单首项保留为只读状态文本，省去 `Current status` 前缀以减少菜单占用空间。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 bundle size warning。
+- 本地浏览器截图已检查 711px、960px、1366px：品牌与右侧通知、内部聊天、个人资料、退出操作区不重叠。
+- 当前浏览器自动化会话无法经 Ant Design 个人下拉层构造长 Pre-AUX 状态；该状态下的最终像素检查仍建议在客户演示前手工点验。
+
+回滚说明：
+
+- 如需回滚，恢复 Header 的 flex/绝对话务条布局，并移除个人资料固定宽度与文本截断。
+
+当前风险点：
+
+- 极窄移动端不属于当前坐席桌面演示目标；仍需以目标客户演示分辨率验证活跃通话下的所有话务按钮。

@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-07-10 16:25 +08:00
+Last updated: 2026-07-21 14:04 +08:00
 
 ## 1. Overall Status
 
@@ -50,7 +50,10 @@ This repository is still a demo application:
 - Header notification button.
 - Header Internal Chat entry.
 - Agent profile area.
-- Service mode sign-in.
+- Header uses separate brand, call-toolbar, and right-action regions; profile name and team/status text truncate within compact fixed widths.
+- Single-action Sign In; the former service-mode selector is removed from the profile menu and header.
+- Profile menu follows explicit Unsigned / Not Ready / Ready / Pre-AUX / AUX state branches, with current status displayed beside the team name.
+- Status after Sign-in is shared Global Control Configuration, defaults to Not Ready, and applies to the next sign-in in the current browser session.
 - Sign out confirmation and active-service block.
 - AUX reason menu from Busy Reason.
 - Agent Settings entry separated at the bottom of the profile menu with system prompt sound on/off control.
@@ -58,7 +61,7 @@ This repository is still a demo application:
 ## 5. Completed Agent and Call Toolbar
 
 - Agent status model: Unsigned, Ready, Not Ready, AUX, Pre-AUX.
-- Service modes: Voice only, Digital only, Voice + Digital.
+- The current demo account retains its existing Voice + Digital-equivalent channel capability internally; no service mode is exposed to the agent.
 - Call statuses: Idle, Incoming, Talking, Hold, Mute.
 - Answer, Hold, Mute, Transfer, Hang Up.
 - Hang Up uses a split-button: the main action performs normal end, and the caret selects an abnormal end reason.
@@ -67,7 +70,7 @@ This repository is still a demo application:
 - Toolbar More menu currently exposes Outbound Call; toolbar display settings are hidden from the More menu.
 - Outbound Call modal entry.
 - Call identification and Skill display during call lifecycle.
-- Active-call and incompatible-service-mode handoff warnings.
+- Active-call and not-ready handoff warnings.
 
 ## 6. Completed Workspace Tabs
 
@@ -78,6 +81,7 @@ This repository is still a demo application:
 - BankApp Demo tab.
 - Webchat Demo tab.
 - WhatsApp Demo tab.
+- Email workspace source is retained but its customer menu entry is temporarily hidden.
 - Fixed Live Chat tab.
 - Dynamic PSTN / Voice Call tabs.
 - Dynamic Video Call tabs.
@@ -129,8 +133,7 @@ This repository is still a demo application:
 
 - Formal `Live Chat` tab uses the `LiveChat2Page` implementation.
 - Current / History customer list.
-- WhatsApp / BankApp / Webchat filtering.
-- All-channel toggle.
+- Unified WhatsApp / BankApp / Webchat customer list; channel filter controls are hidden for the three-channel demo.
 - Customer panel collapse / expand.
 - Access-time and message-time sorting.
 - Star color state remains for compatibility, but the customer list star marker UI is hidden.
@@ -184,7 +187,24 @@ This repository is still a demo application:
 - Webchat PIN verification is temporarily hidden pending customer confirmation.
 - Webchat queue, agent chat, and satisfaction rating use the latest desensitized screenshots from the customer Webchat folder.
 
-## 13. Completed Call Management
+## 13. Implemented but Temporarily Hidden Email Workspace
+
+- Email workspace implementation is retained in source but has no Channel Simulation menu entry in the current customer demo because the work is incomplete.
+- When re-enabled, Email opens or reuses one closable Email workspace tab; closing it falls back to Home.
+- Four-part desktop workspace for mailbox folders, customer context, Mail / CRM content, and thread records.
+- Inbox, Sent, Drafts, and Trash folder switching with search, refresh feedback, counts, selected mail, read state, and SLA progress.
+- Reply and Forward compose flows with anonymous BANK 1 addresses, built-in response templates, basic rich-text controls, Save Draft, and Send.
+- Sending adds a Sent record and related thread item; replying marks the source email replied and stops its SLA.
+- Drafts can be opened and edited; Trash has a recover flow back to Inbox.
+- Ignore supports AD, Spam, and Sales Email reasons, keeps the email in Inbox, and stops its SLA.
+- Customer context reuses Customer Information, Journey, Ticketing, NBA, and Quick Action components.
+- CRM is code-built with BANK 1-safe content and no legacy customer screenshot.
+- CWU drawer supports Business Type, Summary, one-click generation, and local confirmation.
+- Email verification is hidden because Email verification rules are not confirmed.
+- All Email workflow state is front-end local state and resets after refresh or closing/reopening the tab.
+- Email Record Inquiry and Email Template Deploy are not implemented in this scope.
+
+## 14. Completed Call Management
 
 Customer-visible pages:
 
@@ -220,19 +240,20 @@ Implemented behaviors:
 - Enabled common numbers feed the call Transfer modal `Transfer IVR` tab.
 - Sensitive word CRUD with fixed category dictionary.
 - Sensitive word detection in Live Chat agent reply sending.
-- Busy reason edit and default selection.
+- Busy reason keyword/status filtering and editing.
 - Abnormal End Reasons CRUD for abnormal Voice, Video, and DM service end reasons.
 - Abnormal End Reasons filters by Keyword, Applicable Media, and Status.
 - Interaction Log for current-agent Phone, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp records, seeded with 30 mock records.
 - Interaction Log filters by keyword, channel, media type, ended by, end reason, and date range, defaulting to the current day.
 - Interaction Log list separates Customer Name / Customer ID and Agent Name / Agent ID, shows Contact, Queue, Service Time, Ended By, End Reason, and QM Score.
+- Numeric QM Scores open a read-only third-party QM system-window preview at the source image ratio; only the source image's top-right X closes it, and empty scores render as non-interactive `-`.
 - Interaction Log details use a consistent layout: Voice and Video show left media playback, middle transcript, and right read-only CWU; DM shows conversation bubbles plus right read-only CWU without an empty media column.
 - Interaction Log treats CWU summary as mandatory and read-only in the query page, so Summary Status, Summary Time, and edit actions are not exposed.
 - Interaction Log uses `Contact` for the customer-side identifier: phone and WhatsApp numbers, BankID for logged-in BankApp/Webchat, and guest IDs for guest Webchat.
 - Email and Social Media records are intentionally excluded from Interaction Log in the current scope.
 - Local store state for demo changes.
 
-## 14. Completed Routing Config
+## 15. Completed Routing Config
 
 Routing Config is visible by default.
 
@@ -268,7 +289,7 @@ Implemented behaviors:
 - Skill Routing Rules batch behavior and duplicate handling.
 - Local store state for demo changes.
 
-## 15. Completed Local-Only Employee Management
+## 16. Completed Local-Only Employee Management
 
 Employee Management is implemented in `main` but is visible only when `VITE_APP_VISIBILITY_PROFILE=local`; customer/default profile hides the menu and redirects direct routes. In local profile, the page opens as a closable workspace tab.
 
@@ -287,7 +308,7 @@ Implemented behaviors:
 - Other Configuration stores Live Chat Max Services per employee.
 - Local mock store state for demo changes, seeded with 10 employee profiles.
 
-## 16. Completed Design System
+## 17. Completed Design System
 
 `/design-system` currently demonstrates the design system as a local-only closable workspace tab when `VITE_APP_VISIBILITY_PROFILE=local`:
 
@@ -306,7 +327,7 @@ Implemented behaviors:
 - Toolbar system.
 - Reusable component contracts.
 
-## 17. Completed Assets
+## 18. Completed Assets
 
 Current public assets include:
 
@@ -322,28 +343,30 @@ Current public assets include:
 - WhatsApp customer avatar.
 - Icons and favicon.
 
-## 18. Current Validation Baseline
+## 19. Current Validation Baseline
 
 Latest recorded validation:
 
 - ESLint passed.
 - Production build passed with existing large chunk warning.
 - Browser smoke checks passed for workspace management-page tabs: left-menu open/reuse, close fallback, direct URL bridge, active PSTN tab coexistence, and customer/local visibility profile behavior.
+- Email browser smoke checks passed for menu/tab lifecycle, Reply/Send, Draft editing, Ignore, Trash recovery, CRM, CWU, state reset, and 1366x768 / 1440x900 / 1920x1080 layout widths.
 - Vercel production deployment completed at `https://netinfo-aicc-demo-v2.vercel.app` with `VITE_APP_VISIBILITY_PROFILE=customer` and `VITE_ENABLE_ADMIN_MENUS=true`; post-deploy smoke confirmed AI links, Call Management tab opening, and hidden Employee Management / Design System.
 
-## 19. Known Demo Boundaries
+## 20. Known Demo Boundaries
 
 - No backend API integration.
 - No real CRM SSO handoff.
 - No real voice/video protocol.
 - No real OpenEye integration.
 - No real WhatsApp / BankApp / Webchat gateway.
+- No real Email mailbox, SMTP, attachment, template deployment, record inquiry, or CWU backend integration.
 - No real routing engine.
 - No production persistence.
 - No automated Playwright test suite.
 - Employee Management is local-only mock data and does not connect to real LDAP, HR, workforce management, permission, or employee skill backends.
 
-## 20. Current Branch State at Handoff
+## 21. Current Branch State at Handoff
 
 - Expected branch: `main`.
 - Expected remote: `origin/main`.

@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-07-10 16:10 +08:00
+Last updated: 2026-07-21 10:33 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -43,7 +43,9 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 
 ## P1 - Manual Verification Before Customer Demo
 
-- Verify `/` login, Sign In, service mode selection, Ready / Not Ready, AUX, Sign Out, and Log Out guards.
+- Verify `/` login, single-action Sign In, configured Status after Sign-in, Ready / Not Ready, AUX, Sign Out, and Log Out guards.
+- Verify the profile menu state matrix: Unsigned shows Sign In / Settings; Not Ready shows Ready / Sign Out; Ready shows AUX reasons only; Pre-AUX hides Sign Out; AUX restores Sign Out; the team line shows the formatted current status.
+- Verify default Not Ready sign-in creates no default Live Chat service; the first switch to Ready opens Live Chat and seeds its default demo sessions.
 - Verify Monitoring screenshot tabs:
   - default `/` Home tab shows `Home-Agent`,
   - `Monitoring > Home-Agent`, `Home-TL`, and `Home-SPV` keep the Home tab active and swap the screenshot,
@@ -90,7 +92,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Verify Live Chat workspace:
   - fixed Live Chat tab opens after digital-capable sign-in,
   - Current / History views,
-  - channel filters,
+  - unified three-channel customer list,
   - sorting,
   - hidden star marker behavior,
   - unread count,
@@ -107,6 +109,16 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - BankApp Live Chat handoff,
   - WhatsApp Demo handoff,
   - Webchat Demo handoff.
+- Complete and enable the temporarily hidden Email workspace before customer exposure:
+  - restore `Channel Simulation > Email` only after the workspace is complete,
+  - Inbox / Sent / Drafts / Trash switching, search, refresh, selection, read state, and SLA progress,
+  - Reply and Forward validation, built-in template selection, Save Draft, Edit Draft, and Send folder/thread updates,
+  - Ignore keeps the email in Inbox, records AD / Spam / Sales Email, and stops SLA,
+  - Trash Recover returns the mock email to Inbox,
+  - Customer context actions switch to the code-built BANK 1 CRM view,
+  - CWU Business Type, one-click Summary generation, validation, and confirmation,
+  - closing/reopening Email resets local mock state,
+  - 1366x768, 1440x900, and 1920x1080 layouts remain readable without horizontal page overflow.
 - Verify BankApp Demo:
   - Voice,
   - Video,
@@ -130,7 +142,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - satisfaction rating.
 - Verify Call Management:
   - Verification Rules,
-  - Global Control Configuration,
+  - Global Control Configuration Save / Reset and its effect on the next sign-in,
   - Blacklist,
   - Priority List,
   - Common Phrase,
@@ -139,7 +151,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Sensitive Word,
   - Busy Reason,
   - Abnormal End Reasons query, add, edit, disable, and delete,
-  - Interaction Log 30 mock records, default current-day Date Range paging, QM Score column, View-only Actions, Voice left media playback / middle transcript / right CWU detail, Video left replay / middle transcript / right CWU detail, DM conversation / right CWU detail, and read-only CWU detail.
+  - Interaction Log 30 mock records, default current-day Date Range paging, numeric QM Score third-party detail preview and non-interactive empty score, View-only Actions, Voice left media playback / middle transcript / right CWU detail, Video left replay / middle transcript / right CWU detail, DM conversation / right CWU detail, and read-only CWU detail.
 - Verify Routing Config:
   - Routing Config visible by default,
   - Channels Phone Accounts disabled,
@@ -169,7 +181,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - avoid returning to full-white or muddy modal backgrounds.
 - Live Chat visual polish:
   - ensure four-column layout does not compress the core workspace,
-  - keep Current / History and channel filters compact,
+  - keep Current / History, sorting, and collapse controls compact,
   - keep Message Record and Quick Replies usable.
 - Localization optimization:
   - standardize terms such as Skill, Customer Segment, Scenario, BankApp, Webchat, WhatsApp,
@@ -181,6 +193,9 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 
 ## P2 - Future Features
 
+- Add independent Email Record Inquiry list/detail scope when confirmed; do not fold it into Interaction Log.
+- Add Email Template Deploy CRUD and backend template integration when confirmed.
+- Add real mailbox/SMTP, attachment, routing, permission, audit, and CWU persistence contracts if Email moves beyond front-end demo state.
 - Add Webchat voice and video customer simulation if customer requires it.
 - Add Dashboard page if demo scope expands.
 - Add Supervisor page if demo scope expands.

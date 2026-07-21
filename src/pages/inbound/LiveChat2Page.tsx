@@ -33,12 +33,6 @@ import {
 } from './components/liveChat2QuickReplies'
 import type { LiveChat2QuickReplyGroup } from './components/liveChat2QuickReplies'
 
-const liveChat2Channels: Array<LiveChat2Session['channel']> = [
-  'WhatsApp',
-  'BankApp',
-  'Webchat',
-]
-
 const staticLiveChat2SessionById = Object.fromEntries(
   liveChat2Sessions.map((session) => [session.id, session]),
 ) as Record<string, LiveChat2Session>
@@ -100,8 +94,6 @@ function formatHistoryEndTime(endedAt: number | string | null) {
 export function LiveChat2Page() {
   const [isCustomerPanelCollapsed, setIsCustomerPanelCollapsed] =
     useState(false)
-  const [selectedChannels, setSelectedChannels] =
-    useState<Array<LiveChat2Session['channel']>>(liveChat2Channels)
   const [customerPanelView, setCustomerPanelView] = useState<
     'current' | 'history'
   >('current')
@@ -384,25 +376,6 @@ export function LiveChat2Page() {
     }
   }
 
-  const handleChannelFilterChange = (
-    nextChannel: 'all' | LiveChat2Session['channel'],
-  ) => {
-    if (nextChannel === 'all') {
-      const isAllChannelsSelected = liveChat2Channels.every((channel) =>
-        selectedChannels.includes(channel),
-      )
-
-      setSelectedChannels(isAllChannelsSelected ? [] : liveChat2Channels)
-      return
-    }
-
-    setSelectedChannels((currentChannels) =>
-      currentChannels.includes(nextChannel)
-        ? currentChannels.filter((channel) => channel !== nextChannel)
-        : [...currentChannels, nextChannel],
-    )
-  }
-
   const handleCloseRightPanelTab = (targetKey: string) => {
     if (targetKey !== LIVECHAT2_MESSAGE_RECORD_TAB_KEY) {
       return
@@ -481,13 +454,11 @@ export function LiveChat2Page() {
       activeSessionId={activeSession?.id ?? ''}
       collapsed={isCustomerPanelCollapsed}
       historySessions={historySessions}
-      selectedChannels={selectedChannels}
       serviceSessions={serviceSessions}
       sortMode={liveChat2SortMode}
       view={customerPanelView}
       onCloseSession={closeLiveChat2Session}
       onCollapsedChange={setIsCustomerPanelCollapsed}
-      onChannelFilterChange={handleChannelFilterChange}
       onSelectSession={handleSelectSession}
       onSortModeChange={setLiveChat2SortMode}
       onViewChange={setCustomerPanelView}

@@ -4,6 +4,7 @@ import { defaultBusyReasons } from '../mock/busyReasons'
 import { createDefaultCallRecords } from '../mock/callRecords'
 import { defaultCommonLinkEntries } from '../mock/commonLinks'
 import { defaultCommonNumberEntries } from '../mock/commonNumbers'
+import { defaultGlobalControlConfiguration } from '../mock/globalControlConfiguration'
 import {
   defaultCommonPhraseCategories,
   defaultCommonPhraseEntries,
@@ -20,6 +21,7 @@ import type {
   CommonNumberEntry,
   CommonPhraseCategory,
   CommonPhraseEntry,
+  GlobalControlConfiguration,
   PriorityListEntry,
   SensitiveWordEntry,
   SensitiveWordMatch,
@@ -55,6 +57,7 @@ interface CallManagementStore {
   getActiveSessionEndReasonsByMedia: (
     mediaType: SessionEndMediaType,
   ) => SessionEndReasonEntry[]
+  globalControlConfiguration: GlobalControlConfiguration
   moveCommonPhraseEntries: (phraseIds: string[], categoryId: string) => void
   priorityListEntries: PriorityListEntry[]
   resetBlacklistEntries: () => void
@@ -62,6 +65,7 @@ interface CallManagementStore {
   resetCommonLinkEntries: () => void
   resetCommonNumberEntries: () => void
   resetCommonPhrases: () => void
+  resetGlobalControlConfiguration: () => void
   resetPriorityListEntries: () => void
   resetSensitiveWordEntries: () => void
   resetSessionEndReasonEntries: () => void
@@ -69,6 +73,9 @@ interface CallManagementStore {
   sensitiveWordEntries: SensitiveWordEntry[]
   sessionEndReasonEntries: SessionEndReasonEntry[]
   updateCallRecordSummary: (recordId: string, summary: CallRecordSummary) => void
+  updateGlobalControlConfiguration: (
+    configuration: GlobalControlConfiguration,
+  ) => void
   updateCommonLinkEntry: (entry: CommonLinkEntry) => void
   updateCommonNumberEntry: (entry: CommonNumberEntry) => void
   updateCommonPhraseEntry: (entry: CommonPhraseEntry) => void
@@ -125,6 +132,10 @@ function cloneSessionEndReasonEntries() {
     ...entry,
     mediaTypes: [...entry.mediaTypes],
   }))
+}
+
+function cloneGlobalControlConfiguration(): GlobalControlConfiguration {
+  return { ...defaultGlobalControlConfiguration }
 }
 
 function normalizeMatchValue(value: string) {
@@ -291,6 +302,7 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
         (entry) =>
           entry.status === 'Active' && entry.mediaTypes.includes(mediaType),
       ),
+  globalControlConfiguration: cloneGlobalControlConfiguration(),
   moveCommonPhraseEntries: (phraseIds, categoryId) =>
     set((state) => {
       const idSet = new Set(phraseIds)
@@ -314,6 +326,8 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
       commonPhraseCategories: cloneCommonPhraseCategories(),
       commonPhraseEntries: cloneCommonPhraseEntries(),
     }),
+  resetGlobalControlConfiguration: () =>
+    set({ globalControlConfiguration: cloneGlobalControlConfiguration() }),
   resetPriorityListEntries: () =>
     set({ priorityListEntries: clonePriorityListEntries() }),
   resetSensitiveWordEntries: () =>
@@ -344,6 +358,8 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
           : record,
       ),
     })),
+  updateGlobalControlConfiguration: (configuration) =>
+    set({ globalControlConfiguration: { ...configuration } }),
   updateCommonLinkEntry: (entry) =>
     set((state) => ({
       commonLinkEntries: state.commonLinkEntries.map((currentEntry) =>
@@ -391,15 +407,8 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
               index === existingIndex ? nextReason : reason,
             )
           : [...state.busyReasons, nextReason]
-      const normalizedReasons = nextReason.isDefault
-        ? baseReasons.map((reason) => ({
-            ...reason,
-            isDefault: reason.busyReasonId === nextReason.busyReasonId,
-          }))
-        : baseReasons
-
       return {
-        busyReasons: normalizedReasons,
+        busyReasons: baseReasons,
       }
     }),
 }))

@@ -387,6 +387,7 @@ interface AppState {
   customerOutboundCallRequestId: number
   digitalHandoffReadiness: DigitalHandoffReadiness
   isBankAppDemoTabOpen: boolean
+  isEmailTabOpen: boolean
   isLiveChat2TabOpen: boolean
   isLiveChatTabOpen: boolean
   isMonitoringMonitorTabOpen: boolean
@@ -421,6 +422,7 @@ interface AppState {
   clearAgentServiceMode: () => void
   closeAllCallInteractionTabs: () => void
   closeBankAppDemoTab: () => void
+  closeEmailTab: () => void
   closeCallInteractionTab: (interactionId: string) => void
   closeLiveChatSession: (sessionId: string) => void
   closeMonitoringMonitorTab: () => void
@@ -448,6 +450,7 @@ interface AppState {
   markLiveChatSessionRead: (sessionId: string) => void
   clearCurrentCallInteraction: () => void
   requestBankAppDemoWorkspace: () => void
+  requestEmailWorkspace: () => void
   requestBankAppPinVerification: (target?: 'bankapp' | 'webchat') => void
   requestBankAppVideoCall: (
     activate?: boolean,
@@ -557,6 +560,7 @@ export const useAppStore = create<AppState>((set) => ({
   customerOutboundCallRequestId: 0,
   digitalHandoffReadiness: 'not-ready',
   isBankAppDemoTabOpen: false,
+  isEmailTabOpen: false,
   isLiveChat2TabOpen: false,
   isLiveChatTabOpen: false,
   isMonitoringMonitorTabOpen: false,
@@ -618,6 +622,14 @@ export const useAppStore = create<AppState>((set) => ({
       bankAppPinVerificationAttempts: 0,
       bankAppPinVerificationStatus: 'idle',
       isBankAppDemoTabOpen: false,
+    })),
+  closeEmailTab: () =>
+    set((state) => ({
+      activeWorkspaceTabKey:
+        state.activeWorkspaceTabKey === 'email'
+          ? 'home'
+          : state.activeWorkspaceTabKey,
+      isEmailTabOpen: false,
     })),
   closeCallInteractionTab: (interactionId) =>
     set((state) => {
@@ -889,6 +901,11 @@ export const useAppStore = create<AppState>((set) => ({
     set({
       activeWorkspaceTabKey: 'bankapp-demo',
       isBankAppDemoTabOpen: true,
+    }),
+  requestEmailWorkspace: () =>
+    set({
+      activeWorkspaceTabKey: 'email',
+      isEmailTabOpen: true,
     }),
   requestBankAppPinVerification: (target = 'bankapp') =>
     set((state) => {

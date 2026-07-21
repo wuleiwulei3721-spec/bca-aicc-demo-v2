@@ -1,6 +1,7 @@
 export type AccessChannel =
   | 'Phone'
   | 'Video'
+  | 'Email'
   | 'BankApp'
   | 'BankApp Voice'
   | 'BankApp Video'

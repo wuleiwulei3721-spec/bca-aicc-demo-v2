@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-07-10 14:53 +08:00
+Last updated: 2026-07-21 14:04 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -14,19 +14,11 @@ This document records the currently implemented business behavior. It describes 
 - If a session expires or cannot be parsed, it is removed and the user is sent back to `/login`.
 - Log Out is blocked while there is an active customer service interaction.
 
-## 2. Agent Service Mode Rules
+## 2. Agent Sign-in Capability Rules
 
-Agents sign in with one of three service modes:
-
-- `Voice only`
-- `Digital only`
-- `Voice + Digital`
-
-Service mode controls handoff readiness:
-
-- Voice and video interactions require `Voice only` or `Voice + Digital`.
-- Digital / live chat interactions require `Digital only` or `Voice + Digital`.
-- If the mode is incompatible, customer-side handoff displays a visible warning instead of silently opening a workspace.
+- The unsigned profile menu exposes `Sign In` and `Settings`, and does not expose a service-mode selector.
+- The current demo account retains existing voice, video, and digital capability internally after sign-in. This delivery does not model channel eligibility from Employee Profile skill bindings.
+- Voice/video and live-chat handoff still require the agent to be `Ready`; active-call protection remains unchanged.
 
 ## 3. Agent Status Rules
 
@@ -41,15 +33,25 @@ Implemented status model:
 ### Sign In
 
 - Sign In is available from the profile menu when status is `Unsigned`.
-- Selecting a service mode signs the agent in and sets status to `Ready`.
-- Digital-capable sign-in opens the fixed `Live Chat` tab and seeds default live chat demo sessions when appropriate.
+- Sign In uses `Call Management > Global Control Configuration > Status after Sign-in`; its default is `Not Ready`.
+- A Not Ready sign-in opens no Live Chat service or default customer session. The first switch to Ready opens the fixed `Live Chat` tab and seeds default live chat demo sessions.
+- Saving or resetting Global Control Configuration changes the status applied by the next sign-in in the current browser session. Refresh resets the demo configuration to its mock defaults.
+
+### Profile Menu
+
+- The profile team line displays the current agent status after ` | `. AUX and Pre-AUX display as `AUX: {reason}` and `Pre-AUX: {reason}`.
+- `Not Ready` menu: read-only current status, `Ready`, `Sign Out`, `Settings`.
+- `Ready` menu: read-only current status, active Busy Reason entries as AUX options, `Settings`.
+- `Pre-AUX` menu: read-only current status, `Ready`, `Settings`. Sign Out is hidden while service is still draining.
+- `AUX` menu: read-only current status, `Ready`, `Sign Out`, `Settings`.
+- The profile menu does not show a separate `Signed in` item.
 
 ### Sign Out
 
 - Sign Out is available after sign-in.
 - If there is any active customer service, Sign Out is blocked and a warning modal appears.
 - If there is no active service, Sign Out asks for confirmation.
-- Confirmed Sign Out sets status to `Unsigned`, clears service mode, clears call state, closes call tabs, clears live chat sessions, and hides video/share overlays.
+- Confirmed Sign Out sets status to `Unsigned`, clears the internal demo channel capability, clears call state, closes call tabs, clears live chat sessions, and hides video/share overlays.
 
 ### Ready
 
@@ -154,7 +156,7 @@ Call transfer modal:
 - Transfer Agent can filter by skill queue.
 - Agent row actions: `Consult`, `Transfer`, `Conference`.
 - Transfer Skill supports search by skill name.
-- Transfer Number accepts a phone number and supports `Transfer` and `Conference`.
+- Transfer Number accepts a phone number and supports `Transfer` only.
 - Transfer IVR lists enabled entries from `Call Management > Common Number`.
 - Transfer IVR row action is `Transfer`.
 - Video calls do not expose the call Transfer action in the header toolbar.
@@ -380,7 +382,7 @@ Common Links shows website names and website URLs from `Call Management > Common
 
 ## 17. Live Chat Rules
 
-Live Chat is opened automatically for digital-capable sign-in.
+Live Chat opens and seeds default current demo sessions when the signed-in agent first becomes Ready.
 
 Customer list:
 
@@ -480,8 +482,8 @@ Flow:
 
 Handoff rules:
 
-- Voice/video handoff requires agent Ready, call Idle, and compatible service mode.
-- Live chat handoff requires agent Ready and digital-compatible service mode.
+- Voice/video handoff requires agent Ready and call Idle.
+- Live chat handoff requires agent Ready.
 - If readiness fails, a warning is shown in the demo process panel.
 
 PIN:
@@ -535,7 +537,23 @@ Flow:
 
 WhatsApp demo is chat-only in the current implementation.
 
-## 20. Call Management Rules
+## 21. Email Workspace Rules
+
+- Email workspace implementation is temporarily hidden from `Channel Simulation` until completion; it does not add a standalone route. When enabled, its menu action opens or reuses one closable `Email` workspace tab.
+- Current scope is the agent Email handling workspace only. Email Record Inquiry and Email Template Deploy remain separate future scope.
+- Inbox, Sent, Drafts, and Trash use anonymized front-end mock data. All changes reset after refresh or closing/reopening the Email tab.
+- Selecting an email marks it read and updates Customer Information, Mail / CRM content, and the related thread record.
+- Reply creates a Sent email, appends the thread record, marks the source email `Replied`, and stops the source SLA.
+- Forward uses the same composer but requires an explicit receiver.
+- Save Draft creates or updates a Drafts item. Sending an edited draft removes the draft and creates a Sent item.
+- Ignore reasons are `AD`, `Spam`, and `Sales Email`. Ignore marks the email `No reply`, stops SLA, and keeps the email in Inbox; it must not silently map no-reply handling to Trash.
+- Trash Recover returns the pre-seeded trashed email to Inbox.
+- CWU Registration requires at least one Business Type and a Summary. One-Click Generation creates an editable local summary before confirmation.
+- Email verification is not shown because no confirmed Email verification channel rule exists.
+- The Email CRM view is code-built and customer-safe. It must not embed the legacy full-system screenshots or expose old customer branding.
+- No real mailbox, SMTP, attachment upload, routing, permission, audit, template deployment, record inquiry, or CWU backend integration exists.
+
+## 22. Call Management Rules
 
 Visible customer pages:
 
@@ -582,8 +600,7 @@ Hidden / redirected:
 ### Busy Reason
 
 - Active busy reasons appear as AUX options in the agent profile menu.
-- Updating the default reason keeps only one default busy reason.
-- Default active AUX reasons are Break, Coaching/Meeting, Prayer, Toilet, Others, Callback Finrisk, Callback Misinform, Sick/Problem Non System, Routine Job, Problem System, and Special Assignment.
+- Busy Reason management supports keyword and status filtering, plus reason, status, and remark editing. It does not use a default-reason configuration.
 - Store is local front-end state.
 
 ### Abnormal End Reasons
@@ -661,13 +678,14 @@ Hidden / redirected:
 - Interaction Log is the current demo's 通话记录查询 / interaction history page under Call Management. Its route remains `/call-management/call-record-query`.
 - Current scope includes Phone voice, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp service records.
 - The current demo seeds 30 mock records; at least 12 records are dynamically placed within the current day so the default Date Range has enough data for paging.
-- Current scope excludes Email and Social Media records. Email流水查询 and Social Media查询 are separate future scopes and are not exposed in the current menu.
+- Current scope excludes Email and Social Media records. Email Record Inquiry and Social Media query remain separate future scopes and are not exposed in the current Call Management menu; the implemented Email handling workspace does not change this boundary.
 - Production permission intent is: agents see their own records, TL sees their own group, and SPV sees groups under managed TLs. The current demo has no permission system, so records are seeded as the current agent view only.
 - Search supports keyword, Channel, Media Type, Ended By, End Reason, and Date Range. Default date range is the current day from `00:00:00` to `23:59:59`.
 - The list uses `Contact` for the customer-side contact identifier: phone and WhatsApp show the number, logged-in BankApp/Webchat show BankID, and guest Webchat shows a guest ID such as `guest-7118`.
 - The list shows `Queue`; missing queue values render as `-`.
 - The list shows `Service Time` as `start time - end time`.
 - The list shows `QM Score` as plain text or `-`; QM Score is not a search filter in the current demo.
+- A numeric `QM Score` is a third-party quality-management detail entry. The current demo opens a customer-confirmed static third-party system-window preview at the original image ratio. Only the source image's top-right close X is interactive; other third-party toolbar icons remain static, `-` is not clickable, and mask / Esc do not close the preview. Future unified sign-in integration should replace this preview with the corresponding third-party detail page.
 - End lifecycle fields are split into `Ended By` and `End Reason`.
 - `Ended By` values are `Agent`, `Customer`, or `System`.
 - Normal agent and customer endings both use `End Reason = Normal`; channel/media context is already shown by Channel and Media Type.
@@ -681,7 +699,7 @@ Hidden / redirected:
 - Interaction Log exposes only the View action. CWU edit entry points and the Edit CWU modal are not shown in the current demo.
 - Store is local front-end state.
 
-## 21. Routing Config Rules
+## 23. Routing Config Rules
 
 Routing Config is visible unless `VITE_ENABLE_ADMIN_MENUS=false`.
 
@@ -719,7 +737,7 @@ Important rules:
 
 All Routing Config changes are front-end demo state only.
 
-## 22. Local-Only Module Visibility Rules
+## 24. Local-Only Module Visibility Rules
 
 `main` is the customer release integration line. Local-only modules can live in `main`, but must be hidden from customer builds through `VITE_APP_VISIBILITY_PROFILE`.
 
@@ -730,7 +748,7 @@ All Routing Config changes are front-end demo state only.
 - Employee Management is front-end mock state only and does not connect to LDAP, HR, permission, workforce management, or employee skill backends.
 - Customer deployment environments must not set `VITE_APP_VISIBILITY_PROFILE=local`.
 
-## 23. Localization Rules
+## 25. Localization Rules
 
 Current implemented language mix:
 

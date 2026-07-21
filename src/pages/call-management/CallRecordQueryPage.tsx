@@ -31,6 +31,7 @@ const OPEN_EYE_REPLAY_SRC =
   '/screenshots/haloapp-v18/openeye-video-replay.png'
 const SCREEN_RECORDING_REPLAY_SRC =
   '/screenshots/interaction-log/pstn-active-call-screen.png'
+const QM_DETAIL_REPLAY_SRC = '/screenshots/interaction-log/qm-detail.png'
 
 type CallRecordDateRange = [Dayjs, Dayjs]
 type CallRecordPlaybackSource = 'screen' | 'video' | 'voice'
@@ -250,6 +251,9 @@ export function CallRecordQueryPage() {
   const [isPlaybackRunning, setIsPlaybackRunning] = useState(false)
   const [playbackSeconds, setPlaybackSeconds] = useState(0)
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null)
+  const [qmDetailRecordId, setQmDetailRecordId] = useState<string | null>(
+    null,
+  )
 
   const selectedRecord = useMemo(
     () =>
@@ -257,6 +261,13 @@ export function CallRecordQueryPage() {
         ? callRecords.find((record) => record.id === selectedRecordId) ?? null
         : null,
     [callRecords, selectedRecordId],
+  )
+  const qmDetailRecord = useMemo(
+    () =>
+      qmDetailRecordId
+        ? callRecords.find((record) => record.id === qmDetailRecordId) ?? null
+        : null,
+    [callRecords, qmDetailRecordId],
   )
 
   const filteredRecords = useMemo(
@@ -307,6 +318,18 @@ export function CallRecordQueryPage() {
     setIsPlaybackRunning(false)
     setPlaybackSeconds(0)
     setSelectedRecordId(null)
+  }
+
+  const openQmDetail = (record: CallRecord) => {
+    if (record.qmScore === null) {
+      return
+    }
+
+    setQmDetailRecordId(record.id)
+  }
+
+  const closeQmDetail = () => {
+    setQmDetailRecordId(null)
   }
 
   const handleSearch = () => {
@@ -476,7 +499,20 @@ export function CallRecordQueryPage() {
     },
     {
       dataIndex: 'qmScore',
-      render: (value: CallRecord['qmScore']) => value ?? '-',
+      render: (value: CallRecord['qmScore'], record) =>
+        value === null ? (
+          '-'
+        ) : (
+          <button
+            aria-label={`View QM detail for ${record.recordNo}`}
+            className="call-record-query__qm-score-link"
+            title="View QM detail"
+            type="button"
+            onClick={() => openQmDetail(record)}
+          >
+            {value}
+          </button>
+        ),
       title: 'QM Score',
       width: 86,
     },
@@ -760,6 +796,34 @@ export function CallRecordQueryPage() {
             Close
           </BaseButton>
         </AdminModalFooter>
+      </AdminModal>
+      <AdminModal
+        centered
+        closable={false}
+        destroyOnClose
+        keyboard={false}
+        maskClosable={false}
+        className="call-record-query__qm-detail-modal"
+        open={Boolean(qmDetailRecord)}
+        title={null}
+        onCancel={closeQmDetail}
+      >
+        {qmDetailRecord && (
+          <div className="call-record-query__qm-detail-preview">
+            <img
+              alt={`Third-party QM detail for ${qmDetailRecord.recordNo}`}
+              draggable={false}
+              src={QM_DETAIL_REPLAY_SRC}
+            />
+            <button
+              aria-label={`Close QM detail for ${qmDetailRecord.recordNo}`}
+              className="call-record-query__qm-detail-close-target"
+              title="Close QM detail"
+              type="button"
+              onClick={closeQmDetail}
+            />
+          </div>
+        )}
       </AdminModal>
     </AdminPage>
   )
