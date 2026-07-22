@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-07-22 16:31 +08:00
+最后更新：2026-07-22 17:28 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,36 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-07-22 17:28 +08:00 - 转移工作流客户生产发布
+
+修改页面或文件：
+
+- 客户生产环境 `https://netinfo-aicc-demo-v2.vercel.app`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 发布已完成的 TL 外呼审批和语音转移体验优化，并确保仅用于本地演示的 `Transferred Call` 不进入客户环境。
+
+修改结果：
+
+- 提交 `b717add feat: refine transfer workflow and approvals` 已推送至 `origin/main`。
+- 使用 `vercel --prod --yes --scope wl-demo-s-projects --build-env VITE_APP_VISIBILITY_PROFILE=customer --build-env VITE_ENABLE_ADMIN_MENUS=true` 完成客户环境部署并绑定正式域名。
+- 客户环境按 `localOnly` 规则隐藏 `Channel Simulation > Transferred Call`；该预览仍保留在本地演示环境。
+
+验证：
+
+- 客户环境构建通过；仅出现既有 large chunk warning。
+- 生产浏览器冒烟确认 `Channel Simulation` 仅显示 `PSTN`、`BankApp`、`Webchat`、`WhatsApp`，未显示 `Transferred Call`。
+
+回滚说明：
+
+- 可在 Vercel 控制台或 CLI 将正式域名重新指向上一条部署记录。
+
+当前风险：
+
+- 该项目仍为前端 Demo；转移、TL 审批和接收坐席预览均使用本地模拟状态，不连接真实 CTI 或审批服务。
 
 ### 2026-07-22 16:25 +08:00 - 自动登出超时与提醒英文口径收敛
 
