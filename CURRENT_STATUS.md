@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-07-21 14:04 +08:00
+Last updated: 2026-07-22 16:25 +08:00
 
 ## 1. Overall Status
 
@@ -54,21 +54,24 @@ This repository is still a demo application:
 - Single-action Sign In; the former service-mode selector is removed from the profile menu and header.
 - Profile menu follows explicit Unsigned / Not Ready / Ready / Pre-AUX / AUX state branches, with current status displayed beside the team name.
 - Status after Sign-in is shared Global Control Configuration, defaults to Not Ready, and applies to the next sign-in in the current browser session.
+- Global Control labels `System Idle Log-out Timeout` and `Auto Log-out Warning Lead Time` distinguish the system timeout from its pre-log-out warning and from the agent toolbar Sign Out action.
 - Sign out confirmation and active-service block.
 - AUX reason menu from Busy Reason.
+- All Not Ready states expose Busy Reason AUX options; in After Call Work, choosing one cancels the saved Global Control countdown so agents can extend CRM editing time.
 - Agent Settings entry separated at the bottom of the profile menu with system prompt sound on/off control.
 
 ## 5. Completed Agent and Call Toolbar
 
 - Agent status model: Unsigned, Ready, Not Ready, AUX, Pre-AUX.
 - The current demo account retains its existing Voice + Digital-equivalent channel capability internally; no service mode is exposed to the agent.
-- Call statuses: Idle, Incoming, Talking, Hold, Mute.
-- Answer, Hold, Mute, Transfer, Hang Up.
+- Call statuses: Idle, Incoming, Talking, Hold.
+- Answer, Hold, Transfer, Hang Up.
 - Hang Up uses a split-button: the main action performs normal end, and the caret selects an abnormal end reason.
 - Ready / Not Ready toggle.
 - Timer display.
+- Global Control `Auto Cancel ACW Duration` drives the next voice/video After Call Work timer.
 - Toolbar More menu currently exposes Outbound Call; toolbar display settings are hidden from the More menu.
-- Outbound Call modal entry.
+- Outbound Call modal entry with per-number TL approval before external calling is enabled.
 - Call identification and Skill display during call lifecycle.
 - Active-call and not-ready handoff warnings.
 
@@ -88,6 +91,7 @@ This repository is still a demo application:
 - Closable workspace page tabs for visible Call Management, Routing Config, local-only Employee Management, and local-only Design System pages.
 - Duplicate management page tabs are prevented by stable `page:*` tab keys.
 - Ended call tab close behavior.
+- A new voice/video interaction automatically removes all ended voice/video tabs and their embedded CRM workspaces, leaving only the latest call available for CRM editing.
 - Active call tab close protection.
 - Live Chat unread, duration, and unanswered SLA alert display.
 
@@ -106,7 +110,7 @@ This repository is still a demo application:
 - Call Flow Detail modal.
 - Send Email modal.
 - Contact Management modal.
-- Outbound approval demo.
+- Unified TL approval demo for external outbound number, external transfer number, and customer-phone outbound actions. A pending request opens a separate TL simulation popup over the supplied complete dashboard image, approvals use a fixed two-minute timeout, and the component-styled bottom-right result popup can include an optional TL note.
 - Customer Journey.
 - Ticketing History.
 - Next Best Action.
@@ -117,6 +121,8 @@ This repository is still a demo application:
 - Common Links tab.
 - Verification tab for side-by-side CRM comparison.
 - Call Transfer modal includes Transfer IVR targets from Common Number.
+- Voice Transfer supports Ready-only agent filtering, SPV/TL priority ordering, consultation cancellation, a compact Actions column, release transfer for skill / IVR, immediate approved number transfer with retryable deterministic failure, and conference mode that temporarily disables toolbar Transfer.
+- Transfer success/failure uses an English banner below the toolbar. The local-only `Channel Simulation > Transferred Call` preview shows a green transfer icon after the channel duration without consuming customer-card action space.
 
 ## 8. Completed Video Call Workspace
 
@@ -287,6 +293,7 @@ Implemented behaviors:
 - Business Types `Source Business Code`.
 - Skill Queues include required `Access Code` after `VDN` in list columns and Add / Edit / View forms; Keyword search includes Access Code.
 - Skill Routing Rules batch behavior and duplicate handling.
+- Working Time Plans hide internal plan IDs from query, list, editor, and preview surfaces.
 - Local store state for demo changes.
 
 ## 16. Completed Local-Only Employee Management

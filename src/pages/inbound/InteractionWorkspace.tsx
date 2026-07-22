@@ -14,6 +14,7 @@ import type {
   CustomerJourneyItem,
   TicketHistoryItem,
 } from '../../types'
+import type { CallTransferContext } from '../../store'
 import { AssistantPanel } from './components/AssistantPanel'
 import type { AssistantPanelExtraTab } from './components/AssistantPanel'
 import { CONVERSATION_TAB_KEY, CrmPanel } from './components/CrmPanel'
@@ -44,6 +45,7 @@ interface InteractionWorkspaceProps {
   overlay?: ReactNode
   showIvrJourney?: boolean
   showTransferHistory?: boolean
+  transferContext?: CallTransferContext
 }
 
 export function InteractionWorkspace({
@@ -65,6 +67,7 @@ export function InteractionWorkspace({
   overlay,
   showIvrJourney,
   showTransferHistory,
+  transferContext,
 }: InteractionWorkspaceProps) {
   const [internalAssistantActiveKey, setInternalAssistantActiveKey] =
     useState('assistant')
@@ -268,6 +271,7 @@ export function InteractionWorkspace({
           tickets={identityData.tickets}
           showIvrJourney={showIvrJourney}
           showTransferHistory={showTransferHistory}
+          transferContext={transferContext}
           onCustomerIdentityRefresh={refreshCustomerIdentity}
           onOpenCrm={openCrmWorkspaceTab}
           onOpenVerification={openVerificationPanel}

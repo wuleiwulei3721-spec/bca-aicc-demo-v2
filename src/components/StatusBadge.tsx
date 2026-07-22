@@ -1,5 +1,4 @@
 import {
-  AudioMutedOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
   ExclamationCircleOutlined,
@@ -16,7 +15,6 @@ export type StatusBadgeStatus =
   | 'aux'
   | 'talking'
   | 'hold'
-  | 'mute'
   | 'verified'
   | 'failed'
   | 'warning'
@@ -42,7 +40,6 @@ const defaultIcons: Partial<Record<StatusBadgeStatus, ReactNode>> = {
   aux: <ExclamationCircleOutlined />,
   talking: <PhoneIcon />,
   hold: <PauseCircleOutlined />,
-  mute: <AudioMutedOutlined />,
   verified: <CheckCircleOutlined />,
   failed: <CloseCircleOutlined />,
   warning: <ExclamationCircleOutlined />,

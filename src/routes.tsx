@@ -3,7 +3,7 @@ import { PublicLoginRoute, RequireAuth } from './components/AuthRouteGuards'
 import { WorkspacePageRouteOpener } from './components/WorkspacePageRouteOpener'
 import { isModuleVisible } from './config/moduleVisibility'
 import { workspacePageTabDefinitions } from './config/workspacePageTabs'
-import { AgentWorkspace } from './pages'
+import { AgentWorkspace, TlOutboundApprovalPage } from './pages'
 
 const workspacePageRoutes = workspacePageTabDefinitions
   .filter((definition) => isModuleVisible(definition.moduleKey))
@@ -96,6 +96,10 @@ const employeeManagementFallbackRoutes = isModuleVisible('employee-management')
     ]
 
 export const router = createBrowserRouter([
+  {
+    path: '/tl-outbound-approval',
+    element: <TlOutboundApprovalPage />,
+  },
   {
     path: '/login',
     element: <PublicLoginRoute />,

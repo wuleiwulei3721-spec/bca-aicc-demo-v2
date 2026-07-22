@@ -10,7 +10,6 @@ export type CallStatus =
   | 'Incoming'
   | 'Talking'
   | 'Hold'
-  | 'Mute'
 
 export interface AgentProfile {
   avatarUrl: string

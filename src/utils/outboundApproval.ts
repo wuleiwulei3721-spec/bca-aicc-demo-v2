@@ -1,0 +1,342 @@
+import type {
+  ExternalOperationApproval,
+  ExternalOperationApprovalEvent,
+  ExternalOperationApprovalEventKind,
+  ExternalOperationApprovalScope,
+} from '../types'
+
+export const OUTBOUND_APPROVAL_TIMEOUT_MS = 2 * 60 * 1000
+
+const storageKey = 'bank1-aicc-external-operation-approvals'
+const broadcastChannelName = 'bank1-aicc-external-operation-approvals'
+const retentionMs = 30 * 60 * 1000
+const tabId = `approval-tab-${Math.random().toString(36).slice(2, 10)}`
+
+type ApprovalListener = () => void
+type ApprovalEventListener = (event: ExternalOperationApprovalEvent) => void
+
+let approvals = readApprovals()
+let broadcastChannel: BroadcastChannel | null = null
+let expiryTimer: number | null = null
+const listeners = new Set<ApprovalListener>()
+const eventListeners = new Set<ApprovalEventListener>()
+
+function readApprovals() {
+  if (typeof window === 'undefined') {
+    return [] as ExternalOperationApproval[]
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(storageKey)
+
+    if (!rawValue) {
+      return [] as ExternalOperationApproval[]
+    }
+
+    const parsed = JSON.parse(rawValue) as unknown
+
+    return Array.isArray(parsed)
+      ? parsed.filter(isExternalOperationApproval)
+      : ([] as ExternalOperationApproval[])
+  } catch {
+    return [] as ExternalOperationApproval[]
+  }
+}
+
+function isExternalOperationApproval(
+  value: unknown,
+): value is ExternalOperationApproval {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const approval = value as Partial<ExternalOperationApproval>
+
+  return (
+    typeof approval.id === 'string' &&
+    typeof approval.type === 'string' &&
+    typeof approval.targetNumber === 'string' &&
+    typeof approval.status === 'string' &&
+    typeof approval.createdAt === 'number' &&
+    typeof approval.expiresAt === 'number' &&
+    typeof approval.updatedAt === 'number'
+  )
+}
+
+function notifyListeners() {
+  listeners.forEach((listener) => listener())
+}
+
+function notifyEventListeners(event: ExternalOperationApprovalEvent) {
+  eventListeners.forEach((listener) => listener(event))
+}
+
+function persistApprovals() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.setItem(storageKey, JSON.stringify(approvals))
+}
+
+function getBroadcastChannel() {
+  if (typeof window === 'undefined' || !('BroadcastChannel' in window)) {
+    return null
+  }
+
+  if (!broadcastChannel) {
+    broadcastChannel = new BroadcastChannel(broadcastChannelName)
+    broadcastChannel.onmessage = (message: MessageEvent<unknown>) => {
+      const data = message.data as {
+        event?: ExternalOperationApprovalEvent
+        senderId?: string
+      }
+
+      if (!data || data.senderId === tabId || !data.event) {
+        return
+      }
+
+      reloadApprovals(data.event)
+    }
+  }
+
+  return broadcastChannel
+}
+
+function publishEvent(event: ExternalOperationApprovalEvent) {
+  notifyEventListeners(event)
+  getBroadcastChannel()?.postMessage({ event, senderId: tabId })
+}
+
+function reloadApprovals(event?: ExternalOperationApprovalEvent) {
+  approvals = readApprovals()
+  notifyListeners()
+
+  if (event) {
+    notifyEventListeners(event)
+  }
+}
+
+function setApprovals(
+  nextApprovals: ExternalOperationApproval[],
+  event?: ExternalOperationApprovalEvent,
+) {
+  approvals = nextApprovals.filter(
+    (approval) =>
+      approval.status === 'pending' ||
+      approval.updatedAt >= Date.now() - retentionMs,
+  )
+  persistApprovals()
+  notifyListeners()
+
+  if (event) {
+    publishEvent(event)
+  }
+}
+
+function scopeMatches(
+  approval: ExternalOperationApproval,
+  scope: ExternalOperationApprovalScope,
+) {
+  return (
+    approval.type === scope.type &&
+    approval.targetNumber === scope.targetNumber &&
+    approval.customerId === scope.customerId
+  )
+}
+
+function resolveApproval(
+  id: string,
+  status: Extract<
+    ExternalOperationApproval['status'],
+    'approved' | 'cancelled' | 'consumed' | 'expired' | 'rejected'
+  >,
+  reviewNote?: string,
+) {
+  const current = approvals.find((approval) => approval.id === id)
+
+  if (!current || (current.status !== 'pending' && status !== 'consumed')) {
+    return current ?? null
+  }
+
+  if (status === 'consumed' && current.status !== 'approved') {
+    return current
+  }
+
+  const now = Date.now()
+  const nextApproval: ExternalOperationApproval = {
+    ...current,
+    reviewNote:
+      status === 'approved' || status === 'rejected'
+        ? reviewNote?.trim() || undefined
+        : undefined,
+    resolvedAt: now,
+    status,
+    updatedAt: now,
+  }
+  const kind = status as ExternalOperationApprovalEventKind
+
+  setApprovals(
+    approvals.map((approval) =>
+      approval.id === id ? nextApproval : approval,
+    ),
+    { approval: nextApproval, kind },
+  )
+
+  return nextApproval
+}
+
+function expirePendingApprovals() {
+  const now = Date.now()
+  const expiredApprovals = approvals.filter(
+    (approval) => approval.status === 'pending' && approval.expiresAt <= now,
+  )
+
+  expiredApprovals.forEach((approval) => {
+    resolveApproval(approval.id, 'expired')
+  })
+}
+
+function ensureExpiryTimer() {
+  if (typeof window === 'undefined' || expiryTimer !== null) {
+    return
+  }
+
+  expiryTimer = window.setInterval(expirePendingApprovals, 1000)
+}
+
+function createApprovalId() {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID()
+  }
+
+  return `outbound-approval-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+export function subscribeExternalOperationApprovals(listener: ApprovalListener) {
+  ensureExpiryTimer()
+  getBroadcastChannel()
+  listeners.add(listener)
+
+  return () => listeners.delete(listener)
+}
+
+export function subscribeExternalOperationApprovalEvents(
+  listener: ApprovalEventListener,
+) {
+  ensureExpiryTimer()
+  getBroadcastChannel()
+  eventListeners.add(listener)
+
+  return () => eventListeners.delete(listener)
+}
+
+export function getExternalOperationApprovalsSnapshot() {
+  expirePendingApprovals()
+  return approvals
+}
+
+export function getExternalOperationApproval(id: string) {
+  expirePendingApprovals()
+  return approvals.find((approval) => approval.id === id) ?? null
+}
+
+export function getExternalOperationApprovalForScope(
+  scope: ExternalOperationApprovalScope,
+) {
+  expirePendingApprovals()
+
+  return (
+    approvals
+      .filter((approval) => scopeMatches(approval, scope))
+      .sort((left, right) => right.createdAt - left.createdAt)[0] ?? null
+  )
+}
+
+export function requestExternalOperationApproval(
+  input: ExternalOperationApprovalScope & {
+    agentAvatarUrl: string
+    agentName: string
+  },
+) {
+  const now = Date.now()
+  const approval: ExternalOperationApproval = {
+    ...input,
+    createdAt: now,
+    expiresAt: now + OUTBOUND_APPROVAL_TIMEOUT_MS,
+    id: createApprovalId(),
+    status: 'pending',
+    updatedAt: now,
+  }
+
+  setApprovals([...approvals, approval], { approval, kind: 'created' })
+
+  const popup = window.open(
+    `/tl-outbound-approval?requestId=${encodeURIComponent(approval.id)}`,
+    `bank1-tl-approval-${approval.id}`,
+    'popup=yes,width=1440,height=810,resizable=yes,scrollbars=no',
+  )
+
+  if (!popup) {
+    resolveApproval(approval.id, 'cancelled')
+    return { approval, popupBlocked: true }
+  }
+
+  popup.focus()
+  return { approval, popupBlocked: false }
+}
+
+export function approveExternalOperationApproval(id: string, note?: string) {
+  return resolveApproval(id, 'approved', note)
+}
+
+export function rejectExternalOperationApproval(id: string, note?: string) {
+  return resolveApproval(id, 'rejected', note)
+}
+
+export function releaseExternalOperationApproval(
+  scope: ExternalOperationApprovalScope,
+) {
+  const approval = getExternalOperationApprovalForScope(scope)
+
+  if (!approval || !['pending', 'approved'].includes(approval.status)) {
+    return approval
+  }
+
+  return resolveApproval(approval.id, 'cancelled')
+}
+
+export function consumeExternalOperationApproval(
+  scope: ExternalOperationApprovalScope,
+) {
+  const approval = getExternalOperationApprovalForScope(scope)
+
+  if (!approval || approval.status !== 'approved') {
+    return approval
+  }
+
+  return resolveApproval(approval.id, 'consumed')
+}
+
+export function getExternalOperationApprovalDescription(
+  approval: ExternalOperationApproval,
+) {
+  if (approval.type === 'transfer-number') {
+    return `Requesting transfer to external number: ${approval.targetNumber}`
+  }
+
+  if (approval.type === 'customer-outbound') {
+    return `Requesting outbound call to customer ${approval.customerId ?? '-'}: ${approval.targetNumber}`
+  }
+
+  return `Requesting outbound call to external number: ${approval.targetNumber}`
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey) {
+      reloadApprovals()
+    }
+  })
+  ensureExpiryTimer()
+}

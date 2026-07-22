@@ -7,6 +7,29 @@ This document records important product and system design decisions that can be 
 --------------------------------------------------
 
 Decision ID:
+DEC-038
+
+Module:
+External Number Approval
+
+Decision:
+All external-number operations in the agent demo require a TL approval simulation: toolbar outbound number, call transfer number, and Customer Information customer-phone outbound. Approval is single-use and bound to the exact operation and number.
+
+Reason:
+The previous Customer Information-only three-second automatic approval did not make the TL role or decision visible in customer demonstrations. A separate TL popup makes the authorization step understandable while preserving the existing agent workbench and no-backend demo boundary.
+
+Impact:
+The same-browser demo stores and synchronizes approval records with localStorage and BroadcastChannel. TL can approve or reject with an optional generic note, or allow the fixed two-minute timeout to expire. The TL popup uses the supplied complete dashboard screenshot with the shared light-blue Modal header and white body, fixed to the bottom right; agent results use a compact non-masked `BaseModal` in the bottom-right corner. This is not a production approval, routing, permission, audit, or cross-device contract; a real integration must replace the local transport and introduce TL identity, authorization, persistence, and audit requirements.
+
+Status:
+Implemented
+
+Source:
+Customer requirement and approved implementation plan on 2026-07-22; Code: `src/utils/outboundApproval.ts`, `src/hooks/useExternalOperationApproval.ts`, `src/pages/TlOutboundApprovalPage.tsx`, `src/layouts/components/OutboundCallModal.tsx`, `src/layouts/components/TransferModal.tsx`, `src/pages/inbound/components/CustomerInformationCard.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `PROJECT_CONTEXT.md`, `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
 DEC-037
 
 Module:
@@ -440,6 +463,29 @@ Implemented
 
 Source:
 代码: `src/pages/AgentWorkspace.tsx`, `src/pages/inbound/LiveChat2Page.tsx`, `src/store/appStore.ts`; 文档: `PROJECT_CONTEXT.md`, `CURRENT_STATUS.md`; 历史记录: Git commits around livechat2 popup workspace
+
+--------------------------------------------------
+
+Decision ID:
+DEC-036
+
+Module:
+Voice Call Transfer
+
+Decision:
+An agent-to-agent call transfer ends the current agent's call segment and follows the ordinary ACW / CWU lifecycle. The receiving agent continues in a new call record with a separate CWU and ticket; the two agents do not concurrently edit one interaction popup or work order.
+
+Reason:
+Customer clarification confirmed that a transfer creates a new call record, and each call record owns one ticket. This avoids conflicting edits when an agent resolves one question and transfers a later question to a TL.
+
+Impact:
+The current transfer demo uses a ready-only agent list with consultation and conference controls. Agent, skill, and IVR transfers release the current agent through the existing Hang Up path; phone-number transfer requires TL approval and then completes immediately. Numbers ending in `000` provide the deterministic retryable failure path for the Demo. Conference remains in the current call and temporarily disables another transfer with the native title `Transfer unavailable during conference`. The receiving-seat story is represented only by the local-only `Channel Simulation > Transferred Call` preview, which opens a new PSTN interaction and displays a source-transfer icon inside the customer channel tag. The Interaction Log end-reason label remains `Normal` for now; a future `Transferred` end reason requires separate confirmation.
+
+Status:
+Implemented as local demo behavior
+
+Source:
+Customer clarification on 2026-07-22; Code: `src/layouts/components/TransferModal.tsx`, `src/layouts/components/AgentToolbar.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`
 
 --------------------------------------------------
 

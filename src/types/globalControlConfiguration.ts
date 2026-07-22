@@ -6,7 +6,7 @@ export interface GlobalControlConfiguration {
   answerMode: GlobalControlAnswerMode
   autoAnswerSeconds: number
   autoCancelAcwSeconds: number
-  idleAutoSignOutMinutes: number
+  idleAutoLogOutMinutes: number
   idleWarningMinutes: number
   maxTextMediaServices: number
   defaultSkillQueueCode: string

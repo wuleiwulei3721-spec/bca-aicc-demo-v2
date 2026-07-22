@@ -1,17 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   EditOutlined,
   SyncOutlined,
 } from '@ant-design/icons'
-import { Input, Popover } from 'antd'
+import { Input, message, Popover } from 'antd'
 import {
   BaseButton,
   BaseModal,
   CustomerInformationPanel,
   type CustomerOutboundRequestStatus,
 } from '../../../components'
+import { useExternalOperationApproval } from '../../../hooks/useExternalOperationApproval'
 import { callFlowDetail } from '../../../mock/inbound'
 import { useAppStore } from '../../../store'
+import type { CallTransferContext } from '../../../store'
 import type {
   CustomerInformation,
   VerificationV2CustomerSegment,
@@ -42,6 +44,7 @@ interface CustomerInformationCardProps {
   onOpenVerification: (config: CustomerVerificationPanelConfig) => void
   showIvrJourney?: boolean
   showTransferHistory?: boolean
+  transferContext?: CallTransferContext
 }
 
 export interface CustomerVerificationPanelConfig {
@@ -140,6 +143,7 @@ export function CustomerInformationCard({
   onOpenVerification,
   showIvrJourney,
   showTransferHistory,
+  transferContext,
 }: CustomerInformationCardProps) {
   const requestCustomerOutboundCall = useAppStore(
     (state) => state.requestCustomerOutboundCall,
@@ -220,13 +224,24 @@ export function CustomerInformationCard({
     contactsState.customerKey === customerKey
       ? contactsState.contacts
       : defaultContacts
-  const [outboundRequestStatuses, setOutboundRequestStatuses] = useState<
-    Record<string, CustomerOutboundRequestStatus>
-  >({})
-  const outboundApprovalTimerRefs = useRef<Record<string, number>>({})
+  const {
+    consume: consumeOutboundApproval,
+    isApproved: isOutboundApproved,
+    isPending: isOutboundApprovalPending,
+    release: releaseOutboundApproval,
+    request: requestOutboundApprovalRequest,
+  } = useExternalOperationApproval({
+    customerId: profile.cisNumber,
+    targetNumber: profile.phoneNumber,
+    type: 'customer-outbound',
+  })
   const [isSpecialHandlingOpen, setIsSpecialHandlingOpen] = useState(false)
-  const outboundRequestStatus =
-    outboundRequestStatuses[customerKey] ?? 'idle'
+  const outboundRequestStatus: CustomerOutboundRequestStatus =
+    isOutboundApprovalPending
+      ? 'requesting'
+      : isOutboundApproved
+        ? 'approved'
+        : 'idle'
   const shouldShowIvrJourney =
     showIvrJourney ??
     (customer.accessChannel === 'Phone' ||
@@ -249,14 +264,7 @@ export function CustomerInformationCard({
     [accessMenuName, customer.accessChannel, profile.customerType, routeMenuName],
   )
 
-  useEffect(
-    () => () => {
-      Object.values(outboundApprovalTimerRefs.current).forEach((timerId) =>
-        window.clearTimeout(timerId),
-      )
-    },
-    [],
-  )
+  useEffect(() => () => releaseOutboundApproval(), [releaseOutboundApproval])
 
   const openVerification = () => {
     if (verificationAction === 'pin') {
@@ -333,25 +341,20 @@ export function CustomerInformationCard({
   }
 
   const requestOutboundApproval = () => {
-    if (outboundRequestStatus !== 'idle') {
+    if (isOutboundApprovalPending || isOutboundApproved) {
       return
     }
 
-    setOutboundRequestStatuses((current) => ({
-      ...current,
-      [customerKey]: 'requesting',
-    }))
-    outboundApprovalTimerRefs.current[customerKey] = window.setTimeout(() => {
-      setOutboundRequestStatuses((current) => ({
-        ...current,
-        [customerKey]: 'approved',
-      }))
-      delete outboundApprovalTimerRefs.current[customerKey]
-    }, 3000)
+    const result = requestOutboundApprovalRequest()
+
+    if (result.popupBlocked) {
+      message.error('TL approval window was blocked. Allow pop-ups and try again.')
+    }
   }
 
   const startApprovedOutboundCall = () => {
-    if (outboundRequestStatus === 'approved') {
+    if (isOutboundApproved) {
+      consumeOutboundApproval()
       requestCustomerOutboundCall()
     }
   }
@@ -407,6 +410,11 @@ export function CustomerInformationCard({
           <ChannelTag
             compact
             duration={customer.accessDuration}
+            transferredFrom={
+              transferContext
+                ? `${transferContext.sourceAgentName} (${transferContext.sourceAgentEmployeeId})`
+                : undefined
+            }
             value={customer.accessChannel}
           />
         }

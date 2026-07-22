@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-07-21 14:04 +08:00
+Last updated: 2026-07-22 16:25 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -36,11 +36,12 @@ Implemented status model:
 - Sign In uses `Call Management > Global Control Configuration > Status after Sign-in`; its default is `Not Ready`.
 - A Not Ready sign-in opens no Live Chat service or default customer session. The first switch to Ready opens the fixed `Live Chat` tab and seeds default live chat demo sessions.
 - Saving or resetting Global Control Configuration changes the status applied by the next sign-in in the current browser session. Refresh resets the demo configuration to its mock defaults.
+- Global Control `System Idle Log-out Timeout` is a system-session inactivity setting. `Auto Log-out Warning Lead Time` defines how long before that timeout the system warns the agent. Neither setting represents or changes the agent toolbar `Sign Out` action.
 
 ### Profile Menu
 
 - The profile team line displays the current agent status after ` | `. AUX and Pre-AUX display as `AUX: {reason}` and `Pre-AUX: {reason}`.
-- `Not Ready` menu: read-only current status, `Ready`, `Sign Out`, `Settings`.
+- `Not Ready` menu: read-only current status, `Ready`, active Busy Reason entries as AUX options, `Sign Out`, `Settings`.
 - `Ready` menu: read-only current status, active Busy Reason entries as AUX options, `Settings`.
 - `Pre-AUX` menu: read-only current status, `Ready`, `Settings`. Sign Out is hidden while service is still draining.
 - `AUX` menu: read-only current status, `Ready`, `Sign Out`, `Settings`.
@@ -62,8 +63,10 @@ Implemented status model:
 ### Not Ready
 
 - `Not Ready` means the agent cannot receive new customer interactions.
+- The agent can select an active Busy Reason to enter AUX from any Not Ready state, whether it was entered manually or by After Call Work.
 - After a normal Hang Up, the agent temporarily enters `Not Ready` as After Call Work.
-- After Call Work currently auto-returns to `Ready` after about 5 seconds.
+- After Call Work auto-returns to `Ready` after the saved `Call Management > Global Control Configuration > Auto Cancel ACW Duration`; the mock default is 10 seconds.
+- Selecting an AUX reason during After Call Work cancels its timer and preserves the ended voice/video workspace so the agent can finish CRM editing before manually returning to Ready.
 
 ### AUX
 
@@ -71,7 +74,7 @@ Implemented status model:
 - Only active busy reasons appear in the profile menu.
 - If the agent selects AUX while active service exists, the status becomes `Pre-AUX - {reason}`.
 - When active service ends, `Pre-AUX` immediately becomes `AUX`.
-- AUX clears call state and live chat sessions when it becomes active.
+- AUX clears call state and live chat sessions when it becomes active. Ended voice/video workspace tabs remain available until a later voice/video interaction replaces them.
 
 ## 4. Call Status Rules
 
@@ -81,13 +84,13 @@ Implemented call statuses:
 - `Incoming`
 - `Talking`
 - `Hold`
-- `Mute`
 
 Only one voice/video call can be active at a time.
 
 ### Incoming
 
-- PSTN, BankApp Voice, and BankApp Video create a dynamic call interaction tab.
+- PSTN, BankApp Voice, and BankApp Video create and activate a dynamic call interaction tab.
+- A new voice/video interaction removes all ended voice/video workspace tabs. Their embedded CRM workspaces are unmounted, so only the latest voice/video interaction remains available for CRM editing.
 - The toolbar shows Answer and call context.
 - Answer flashes while the call is incoming.
 - Auto-answer currently starts talking after about 3 seconds.
@@ -102,20 +105,13 @@ Only one voice/video call can be active at a time.
 ### Talking
 
 - Talking is the connected call state.
-- Hold, Mute, Transfer, and Hang Up are available.
+- Hold, Transfer, and Hang Up are available.
 - Timer runs from call start / status start.
 
 ### Hold
 
 - Hold toggles between `Talking` and `Hold`.
-- Entering Hold clears an active Mute timer.
 - Hold elapsed time is accumulated separately.
-
-### Mute
-
-- Mute toggles between `Talking` and `Mute`.
-- Entering Mute clears an active Hold timer.
-- Mute elapsed time is accumulated separately.
 
 ### Hang Up
 
@@ -126,7 +122,7 @@ Only one voice/video call can be active at a time.
 - It clears call timing and active call channel.
 - It hides OpenEye video and resets desktop-share state.
 - It moves the agent to `Not Ready` After Call Work unless the agent was already in `Pre-AUX`.
-- Ended call tabs can be closed.
+- Ended call tabs can be closed manually while no new voice/video interaction has arrived; the next voice/video interaction closes all remaining ended call tabs automatically.
 
 ## 5. Toolbar Rules
 
@@ -135,7 +131,7 @@ Toolbar call context is visible for non-idle calls:
 - PSTN voice shows `IVR 08123456789`.
 - BankApp voice/video shows `BankID 00012345`.
 - Skill is shown as `Skill Credit card activation`.
-- Skill is shown during Incoming, Talking, Hold, and Mute.
+- Skill is shown during Incoming, Talking, and Hold.
 - Idle / ended states hide call identification and Skill.
 
 Toolbar more menu:
@@ -154,11 +150,17 @@ Call transfer modal:
 - Tabs: `Transfer Agent`, `Transfer Skill`, `Transfer Number`, `Transfer IVR`.
 - Transfer Agent supports search by name or employee ID.
 - Transfer Agent can filter by skill queue.
-- Agent row actions: `Consult`, `Transfer`, `Conference`.
-- Transfer Skill supports search by skill name.
-- Transfer Number accepts a phone number and supports `Transfer` only.
+- Call transfer displays only `Ready` agents. `SPV` and `TL` agents are ordered before regular agents.
+- Call transfer defaults to `Consult` enabled and `Transfer` / `Conference` disabled.
+- Selecting `Consult` immediately enters the demo consultation state: the selected row becomes red `Cancel Consult`, other rows cannot start a consultation, and only the selected row enables `Transfer` / `Conference`.
+- Closing the transfer modal or selecting `Cancel Consult` restores the default call-transfer actions. The call toolbar does not change during consultation.
+- A successful agent transfer ends the current agent's call using the ordinary Hang Up lifecycle and enters ACW. The current agent completes CWU for that call; the receiving agent's continued service is a new call record with its own CWU / ticket, not a shared editable popup.
+- A successful conference closes the modal and disables the toolbar Transfer button with native title `Transfer unavailable during conference`. The toolbar returns to its normal availability when the call ends.
+- The Transfer Agent table keeps a fixed 248px Actions column with compact cell padding so `Cancel Consult`, `Transfer`, and `Conference` remain adjacent without clipping or a stretched empty action area.
+- Transfer Skill supports search by skill name. Selecting Transfer is a release transfer: it closes the modal, ends the current call through ordinary Hang Up / ACW, and shows `Transferred to skill queue {Skill Name}.` below the toolbar.
+- Transfer Number accepts a phone number. Its `Transfer` action remains disabled until the agent receives TL approval for the exact entered external number. Approved transfers complete immediately, close the modal, end the current call through ordinary Hang Up / ACW, and show `Transferred to {Number}.` below the toolbar. Numbers ending in `000` deterministically simulate a failure, keep the modal and approved retry state open, and show `We couldn't complete the transfer. Please try again.`.
 - Transfer IVR lists enabled entries from `Call Management > Common Number`.
-- Transfer IVR row action is `Transfer`.
+- Transfer IVR row action is a release transfer: it closes the modal, ends the current call through ordinary Hang Up / ACW, and shows `Transferred to IVR {Name}.` below the toolbar.
 - Video calls do not expose the call Transfer action in the header toolbar.
 
 Conversation transfer modal:
@@ -169,8 +171,8 @@ Conversation transfer modal:
 
 Current demo behavior:
 
-- Transfer action buttons close the modal.
-- No real transfer, consultation, conference, queue update, or backend event is sent.
+- Transfer feedback uses a shared English banner directly below the toolbar and auto-hides after four seconds. Every completed release / successful transfer reuses the current agent's ordinary Hang Up / ACW flow.
+- `Channel Simulation > Transferred Call` is a local-only receiving-seat preview and is hidden in the customer visibility profile. It creates a new PSTN interaction carrying source-agent transfer metadata and shows a green transfer icon after the channel duration. It does not open a second editable popup or send a backend event.
 
 ## 7. Outbound Rules
 
@@ -179,15 +181,20 @@ Outbound Call is available from the toolbar More menu.
 Outbound modal:
 
 - Tabs: `Call Number`, `Call Agent`.
-- Call Number accepts a phone number and has a `Call` action.
+- Call Number accepts a phone number. Its `Call` action remains disabled until the agent receives TL approval for the exact entered external number.
 - Call Agent supports name / employee ID search and skill queue filtering.
 - Agent row action is `Call`.
 
-Customer Information also supports an outbound approval demo:
+Customer Information also requires TL approval before calling the displayed customer phone number.
 
-- Request outbound starts a local `requesting` state.
-- After about 3 seconds it becomes `approved`.
-- Approved outbound can trigger the current call to talking state through a store request.
+### External Number TL Approval
+
+- The approval scope is a single action and target: toolbar outbound number, call transfer number, or Customer Information customer phone number. Editing the number or closing the originating modal releases a pending or approved authorization; executing the original operation consumes it.
+- The agent creates a pending request and opens a same-origin `/tl-outbound-approval` popup from the click event. If the browser blocks the popup, the request is cancelled and the agent is told to allow popups before retrying.
+- The TL popup uses the customer-provided complete TL dashboard screenshot as a contained foreground image, so the BANK 1 header, left navigation, and dashboard edge are not cropped. The approval surface reuses the shared light-blue `BaseModal` title with a white body, is fixed to the TL viewport's bottom-right corner, and has an `Approval` title with a right-aligned countdown. Its body contains only the small agent avatar/name, relevant request description, an optional generic note, and Approve / Reject actions.
+- The optional note can accompany either Approve or Reject and is included in the agent notification. Approve enables only the original exact-number action. Reject returns the originating entry to a requestable state. Timeout expires the request and hides the TL approval surface without a result card.
+- Approval records are synchronized between same-origin browser windows with `BroadcastChannel` and `localStorage` so pending state survives refresh in the current browser. Agent approval result popups reuse a non-masked `BaseModal` at the bottom-right, are manually closable, and disappear after five seconds.
+- This is a front-end Demo simulation only. It does not create a real TL queue, permission check, backend audit record, or cross-device approval workflow.
 
 No real dialer integration exists.
 
@@ -733,7 +740,7 @@ Important rules:
 - Skill Queues require `Access Code`; it appears after `VDN` in list columns and Add / Edit / View forms. Keyword search includes Access Code.
 - Skill Routing Rules use configured route elements and target skill queues.
 - Site Access Volume ratios should total 100% for the same channel + media combination.
-- Working Time Plans support work schedule, Ramadan schedule, holiday schedule, and special working plans.
+- Working Time Plans support work schedule, Ramadan schedule, holiday schedule, and special working plans. Their plan codes are local internal keys and are not displayed or user-maintained.
 
 All Routing Config changes are front-end demo state only.
 

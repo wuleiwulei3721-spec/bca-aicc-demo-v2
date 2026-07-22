@@ -27,6 +27,7 @@ export function InboundPage({ interaction }: InboundPageProps) {
       initialJourney={isBankAppVoice ? undefined : unidentifiedCustomerJourney}
       initialTickets={isBankAppVoice ? undefined : unidentifiedTicketingHistory}
       showIvrJourney
+      transferContext={interaction.transferContext}
     />
   )
 }

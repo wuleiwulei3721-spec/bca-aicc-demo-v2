@@ -156,16 +156,18 @@ export function GlobalControlConfigurationPage() {
       errors.push('Auto Cancel ACW Duration must be greater than 0 seconds.')
     }
 
-    if (config.idleAutoSignOutMinutes <= 0) {
-      errors.push('Auto Sign-out Duration must be greater than 0 minutes.')
+    if (config.idleAutoLogOutMinutes <= 0) {
+      errors.push('System Idle Log-out Timeout must be greater than 0 minutes.')
     }
 
     if (config.idleWarningMinutes <= 0) {
-      errors.push('Early Warning Duration must be greater than 0 minutes.')
+      errors.push('Auto Log-out Warning Lead Time must be greater than 0 minutes.')
     }
 
-    if (config.idleWarningMinutes >= config.idleAutoSignOutMinutes) {
-      errors.push('Early Warning Duration must be less than Auto Sign-out Duration.')
+    if (config.idleWarningMinutes >= config.idleAutoLogOutMinutes) {
+      errors.push(
+        'Auto Log-out Warning Lead Time must be less than System Idle Log-out Timeout.',
+      )
     }
 
     if (config.maxTextMediaServices <= 0) {
@@ -294,15 +296,15 @@ export function GlobalControlConfigurationPage() {
           <BaseCard compact title="Inactivity Control">
             <div className="global-control-config__row">
               <NumberField
-                label="Auto Sign-out Duration"
+                label="System Idle Log-out Timeout"
                 unit="min"
-                value={config.idleAutoSignOutMinutes}
+                value={config.idleAutoLogOutMinutes}
                 onChange={(value) =>
-                  updateConfig('idleAutoSignOutMinutes', value)
+                  updateConfig('idleAutoLogOutMinutes', value)
                 }
               />
               <NumberField
-                label="Early Warning Duration"
+                label="Auto Log-out Warning Lead Time"
                 unit="min"
                 value={config.idleWarningMinutes}
                 onChange={(value) => updateConfig('idleWarningMinutes', value)}

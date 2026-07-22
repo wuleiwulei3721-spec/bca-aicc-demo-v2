@@ -6,6 +6,7 @@ import type {
   QuickActionItem,
   TicketHistoryItem,
 } from '../../../types'
+import type { CallTransferContext } from '../../../store'
 import { CustomerInformationCard } from './CustomerInformationCard'
 import type { CustomerVerificationPanelConfig } from './CustomerInformationCard'
 import { CustomerJourneyCard } from './CustomerJourneyCard'
@@ -27,6 +28,7 @@ interface LeftColumnProps {
   onOpenVerification: (config: CustomerVerificationPanelConfig) => void
   showIvrJourney?: boolean
   showTransferHistory?: boolean
+  transferContext?: CallTransferContext
 }
 
 export function LeftColumn({
@@ -43,6 +45,7 @@ export function LeftColumn({
   onOpenVerification,
   showIvrJourney,
   showTransferHistory,
+  transferContext,
 }: LeftColumnProps) {
   return (
     <div className="inbound-left-column">
@@ -54,6 +57,7 @@ export function LeftColumn({
           identityRefreshPasteValue={identityRefreshPasteValue}
           showIvrJourney={showIvrJourney}
           showTransferHistory={showTransferHistory}
+          transferContext={transferContext}
           onCustomerIdentityRefresh={onCustomerIdentityRefresh}
           onOpenVerification={onOpenVerification}
         />

@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-07-21 17:12 +08:00
+最后更新：2026-07-22 16:31 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,469 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-07-22 16:25 +08:00 - 自动登出超时与提醒英文口径收敛
+
+修改页面或文件：
+
+- `src/pages/call-management/GlobalControlConfigurationPage.tsx`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+
+修改原因：
+
+- 用户确认原 `Early Warning Duration` 无法表达“距系统自动登出还有多久时提醒”的实际含义。
+
+修改结果：
+
+- 配置标签改为 `System Idle Log-out Timeout` 与 `Auto Log-out Warning Lead Time`。
+- 校验提示同步明确提醒时间必须小于系统无操作自动登出时长。
+
+验证：
+
+- `npm run lint`、`npm run build`、`npx tsc --noEmit` 通过；构建仅有既有 large chunk warning。
+- 浏览器冒烟确认全局控制页面显示 `System Idle Log-out Timeout` 与 `Auto Log-out Warning Lead Time`。
+
+回滚说明：
+
+- 恢复原字段标签和校验文案即可回滚。
+
+当前风险：
+
+- 当前 demo 仍未模拟空闲超时后的实际提醒弹窗或自动系统登出动作。
+
+### 2026-07-22 16:00 +08:00 - 全局控制自动登出时长语义修正
+
+修改页面或文件：
+
+- `src/pages/call-management/GlobalControlConfigurationPage.tsx`
+- `src/types/globalControlConfiguration.ts`
+- `src/mock/globalControlConfiguration.ts`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+
+修改原因：
+
+- 用户确认 `Auto Sign-out Duration` 描述有误：Sign Out 属于坐席话务条操作，系统非活跃时长配置应表达为自动登出。
+
+修改结果：
+
+- 全局控制页面、校验提示和配置字段统一改为 `Auto Log-out Duration` / `idleAutoLogOutMinutes`。
+- 明确该配置是系统会话设置，不改变坐席话务条 Sign Out、ACW 或状态机行为。
+
+验证：
+
+- `npm run lint`、`npm run build`、`npx tsc --noEmit` 通过；构建仅有既有 large chunk warning。
+- 浏览器冒烟确认 Inactivity Control 显示 `Auto Log-out Duration`，话务条的 Sign Out 仍为独立操作。
+
+回滚说明：
+
+- 恢复原 `idleAutoSignOutMinutes` 字段及 `Auto Sign-out Duration` 文案即可回滚。
+
+当前风险：
+
+- 当前前端 demo 仅保存该系统登出配置，尚未模拟空闲超时后的自动系统登出动作。
+
+### 2026-07-22 14:18 +08:00 - TL 审批正文与坐席结果浮层统一组件修正
+
+修改页面或文件：
+
+- `src/pages/TlOutboundApprovalPage.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DECISION_LOG.md`、`DESIGN_SYSTEM.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户确认 TL 标题浅蓝风格正确，但要求去除审批正文浅蓝背景、让倒计时更贴近右侧；同时反馈坐席审批结果仍显示为没有项目样式的默认通知。
+
+修改结果：
+
+- TL 审批继续使用标准浅蓝标题；仅本审批正文覆盖为白色，并缩小标题右侧预留空间，使倒计时对齐到右侧。
+- 坐席审批结果不再依赖全局 `notification` 样式挂载，改为复用非遮罩、右下角定位的 `BaseModal`，带统一标题、边框、圆角、阴影、关闭按钮和通过/拒绝/超时状态色；备注继续显示并在五秒后自动消失。
+
+验证：
+
+- `npm run lint`、`npm run build`、`git diff --check` 已通过；构建仅保留既有 bundle size warning。
+- 浏览器烟测确认 TL dashboard 在本地页面完整显示 BANK 1 顶部、左侧导航和底部图表，未出现裁切或横向溢出。
+
+回滚说明：
+
+- 可移除 TL 的正文白色覆盖和坐席结果 `BaseModal`，恢复至此前的全局通知实现。
+
+当前风险：
+
+- TL 审批仍是同浏览器前端模拟，不含真实身份、权限、审计与跨设备消息服务。
+
+### 2026-07-22 14:04 +08:00 - TL 审批恢复标准浅蓝弹框与坐席提示样式
+
+修改页面或文件：
+
+- `src/pages/TlOutboundApprovalPage.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`、`DECISION_LOG.md`、`DESIGN_SYSTEM.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户反馈上一轮将 TL 标准浅蓝标题和浅色主体错误覆盖为白色，且坐席 notification 的 CSS class 未稳定命中实际节点，导致审批结果提示没有系统样式。
+
+修改结果：
+
+- TL 审批重新使用共享 `outbound` Modal 的浅蓝标题与浅色主体，去除局部白色 Header / Body 覆盖；保留 `Approval`、右侧倒计时、小头像和右下角定位。
+- 坐席 notification 保留语义 class，并通过 Ant Design 官方 `styles` 槽位直接写入项目颜色、边框、圆角、阴影、标题、描述和关闭按钮样式，按通过/拒绝/超时展示对应状态色。
+
+验证：
+
+- `npm run lint`、`npm run build`、`git diff --check` 已通过；构建仅保留既有 bundle size warning。
+
+回滚说明：
+
+- 恢复 TL Modal 的局部白色覆盖与旧 notification class-only 写法即可。
+
+当前风险：
+
+- 跨窗口 TL 审批仍需演示前人工点验；真实审批的身份、权限、审计与跨设备消息服务不在当前前端 Demo 范围。
+
+### 2026-07-22 13:12 +08:00 - TL 审批备注回传与右下角标准弹框
+
+修改页面或文件：
+
+- `src/utils/outboundApproval.ts`
+- `src/pages/TlOutboundApprovalPage.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户反馈 TL 同意时备注未显示在坐席提示中，TL 弹框没有稳定固定在右下角，且当前蓝色变体与坐席通知没有正确复用系统样式。
+
+修改结果：
+
+- `approveExternalOperationApproval` 现在接收并保存可选 `reviewNote`；同意和不同意均会向坐席提示显示 `Note: {内容}`。
+- TL 弹框移除内联容器渲染，使用标准 portal 和 root class 固定在视口右下角；头部显示 `Approval` 与右对齐倒计时，正文使用 28px 头像和紧凑页脚。
+- 坐席通知改用 Ant Design `notification.classNames` 的 root、title、description、close 语义槽位，项目 CSS 可以稳定命中相应节点。
+
+验证：
+
+- `npm run lint`、`npm run build`、`git diff --check` 已通过；构建仅保留既有 bundle size warning。
+- 浏览器截图确认完整 TL dashboard 在 1366×768 和 1440×900 均无裁切或溢出。原生 `window.open` 弹窗仍需在演示前完成最终 Approve / Reject 跨窗口手动点验。
+
+回滚说明：
+
+- 恢复同意方法无备注参数、旧 Modal 容器定位和旧 notification class 写法即可。
+
+当前风险：
+
+- TL 审批仍是同浏览器前端模拟，不含真实身份、权限、审计与跨设备消息服务。
+
+### 2026-07-22 12:43 +08:00 - TL 审批界面组件对齐与信息精简
+
+修改页面或文件：
+
+- `public/screenshots/tl-approval-dashboard.png`
+- `src/pages/TlOutboundApprovalPage.tsx`
+- `src/types/outboundApproval.ts`
+- `src/utils/outboundApproval.ts`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`、`DESIGN_SYSTEM.md`
+
+修改原因：
+
+- 客户指出原 TL 页面误用了裁切的 dashboard 截图，审批卡片没有复用系统 Modal 风格且内容过多；坐席右下角通知也需要与系统 token 对齐。
+
+修改结果：
+
+- 使用客户提供的完整 TL dashboard 截图作为独立静态资源，并以 `object-fit: contain` 完整显示 BANK 1 头部、左侧导航和页面边缘。
+- TL 审批浮层改用现有 `BaseModal` 的 `outbound` 变体，仅保留坐席头像/姓名、申请说明、倒计时、无标签的 `Add note (optional)` 输入和 Approve / Reject。
+- 原 `rejectionReason` 更名为可同时用于同意和拒绝的 `reviewNote`，坐席 5 秒通知会显示该备注。
+- 超时后仅隐藏 TL 审批浮层，不再显示 `Approval Closed` 结果卡；坐席通知继续使用 Ant Design notification，并以项目 token 统一边框、圆角、颜色、字体与阴影。
+
+验证：
+
+- `npm run lint`、`npm run build`、`git diff --check` 已通过；构建仅保留既有 bundle size warning。
+- 本地浏览器已确认完整 TL dashboard 截图按比例显示，BANK 1 头部、左侧导航和底部图表均未裁切。受控浏览器无法接管 `window.open` 创建的原生 TL 弹窗，因此 Approve / Reject 的跨窗口最终点击仍建议在演示前手动点验。
+
+回滚说明：
+
+- 移除完整 dashboard 静态资源与 TL 页面/通知的组件样式覆盖，并将审批记录的 `reviewNote` 恢复为旧拒绝原因字段即可。
+
+当前风险：
+
+- 该功能仍是同浏览器前端模拟；真实 TL 审批需要独立的身份、权限、审计和跨设备消息服务。
+
+### 2026-07-22 11:31 +08:00 - 语音转移体验收敛与接收坐席预览
+
+修改页面或文件：
+
+- `src/layouts/components/TransferModal.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/store/appStore.ts`
+- `src/pages/inbound/InboundPage.tsx`
+- `src/pages/inbound/InteractionWorkspace.tsx`
+- `src/pages/inbound/components/LeftColumn.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`PROJECT_CONTEXT.md`、`DESIGN_SYSTEM.md`、`DECISION_LOG.md`
+
+修改原因：
+
+- 客户确认转号码无需展示接通中的取消态；失败后应保留弹框以便再次转移。同时需避免转移提示覆盖话务条，并用最小视觉反馈说明接收坐席收到的是转移来电。
+
+修改结果：
+
+- 转坐席表 Actions 列固定为 248px，并收紧单元格内边距；SPV / TL 标识列扩至 52px，三个按钮保持 4px 间距且最长组合无大块空白、不遮挡标识。
+- 转技能、转 IVR、转号码和三方接入结果统一改为英文页头下方提示，四秒自动消失；三方禁用转移仅保留英文原生 title。
+- 已审批转号码立即完成；号码以 `000` 结尾时确定性模拟失败，保留号码、审批结果和弹框以支持重试。
+- 新增仅本地可见的 `Channel Simulation > Transferred Call`。它创建带来源坐席信息的新 PSTN interaction，并在渠道时长后展示带间距、垂直居中的绿色弧形转移箭头；不新增共享可编辑弹屏，不改变原坐席 ACW/CWU，也不占用 KBV 空间。
+- 转号码页签明确将输入、审批和 Transfer 控件统一为 30px 高；审批和 Transfer 按钮分别收紧为 104px、76px，避免沿用外呼审批的宽按钮样式。
+
+验证：
+
+- `npx tsc --noEmit`、`npm run lint`、`npm run build`、`git diff --check` 已通过；构建仅保留既有 bundle size warning。
+- 浏览器烟测已确认 `Transferred Call` 预览、来源坐席标记、完整的转坐席 Actions 按钮、咨询状态，以及三方通话中禁用 Transfer 的英文原生 title。外部号码的跨窗口 TL 审批回传仍保留为演示前人工点验项。
+- 本地 `local` profile 保留 `Transferred Call` 用于演示预览；`VITE_APP_VISIBILITY_PROFILE=customer npm run build` 已通过，客户发布配置会过滤该菜单入口。
+
+回滚说明：
+
+- 移除转移反馈 state、Transferred Call 菜单和 `transferContext` 字段，并恢复转号码的旧接通模拟即可。
+
+当前风险：
+
+- 转移、接收坐席弹屏、TL 审批与失败条件均为本地前端 Demo 行为，不连接真实电话、IVR、路由或审批后端。
+
+### 2026-07-22 11:09 +08:00 - 外部号码 TL 审批模拟
+
+修改页面或文件：
+
+- `src/types/outboundApproval.ts`
+- `src/utils/outboundApproval.ts`
+- `src/hooks/useExternalOperationApproval.ts`
+- `src/pages/TlOutboundApprovalPage.tsx`
+- `src/routes.tsx`
+- `src/layouts/components/OutboundCallModal.tsx`
+- `src/layouts/components/TransferModal.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`
+
+修改原因：
+
+- 客户要求外呼号码、转移外部号码和客户资料卡客户号码均由 TL 审批后才能执行；原客户卡片 3 秒自动通过无法直观展示 TL 审批角色。
+
+修改结果：
+
+- 新增统一审批记录，按操作类型和精确号码单次授权，包含坐席头像/名称、客户 ID、申请时间、固定 2 分钟失效时间、审批状态和可选拒绝原因。
+- 坐席点击申请时同步打开独立 TL 模拟窗口；窗口使用 `home-tl.png` 静态底图、顶部模拟提示和右下角审批卡片，提供 Approve、Reject 和可选原因输入。
+- 使用同源 `BroadcastChannel` 和 `localStorage` 在 TL 与坐席窗口同步审批；同意后只解锁对应 Call / Transfer / Outbound，执行后消耗授权，关闭原弹框或修改号码会释放授权。
+- 同意、拒绝或超时均向坐席右下角显示可手动关闭且 5 秒自动消失的通知；超时自动标记为未通过。浏览器拦截 TL 弹窗时取消申请并提示坐席允许弹窗后重试。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 bundle size warning。
+- 本地浏览器烟测确认外呼号码输入后 Call 保持禁用、Request Approval 可用，点击后坐席状态变为 `Requesting...`。受控浏览器未暴露原生 popup 句柄，TL 按钮回传与转移/客户卡完整跨窗口人工点验仍建议在客户演示前执行。
+
+回滚说明：
+
+- 移除 TL 路由、审批类型/同步模块和三个入口的审批钩子，并将 Call Number、Transfer Number、Customer Information 恢复为原直接操作逻辑即可。
+
+当前风险：
+
+- 当前审批仅限同一浏览器的前端 Demo；不含真实 TL 身份、持久审计、并发审批分配、权限控制或跨设备消息服务。
+
+### 2026-07-22 10:12 +08:00 - 转技能、转号码与转 IVR 转移状态
+
+修改页面或文件：
+
+- `src/layouts/components/TransferModal.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户确认转技能、转 IVR 应为释放转；转号码应先模拟接通，允许坐席在接通前取消，再完成成功转。另需移除三方禁用转移时突兀的黑底 Tooltip，并修复咨询操作列按钮被截断的问题。
+
+修改结果：
+
+- Transfer Agent 操作列扩展并压缩非关键列，完整显示 Cancel Consult、Transfer、Conference。
+- 三方通话中的 Transfer 仅保留英文原生 title `Transfer unavailable during conference`，不再使用黑底 Tooltip。
+- Transfer Skill、Transfer IVR 点击后直接关闭弹框、释放当前通话并进入 ACW；分别提示 `已转移至技能：XX`、`已转移至IVR：XX`。
+- Transfer Number 点击后在 1.2 秒内显示红色 Cancel Transfer；取消后恢复输入，模拟接通成功后关闭弹框、释放当前通话并提示 `已转移至号码：XX`。
+
+回滚说明：
+
+- 恢复技能、号码、IVR 页签的直接关闭回调，删除号码接通状态和工具栏对应回调即可。
+
+当前风险：
+
+- 接通、转移和接收坐席的新通话流水仍为前端演示，不连接真实电话、IVR 或路由后端。
+
+### 2026-07-22 09:56 +08:00 - 语音转坐席咨询与 ACW 流程
+
+修改页面或文件：
+
+- `src/layouts/components/TransferModal.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户确认转坐席前需支持咨询、成功转移后当前坐席按普通挂机进入 ACW 并填写自身 CWU；接收坐席对应新的通话流水、CWU 和工单，不与原坐席共享可编辑弹屏。
+
+修改结果：
+
+- 语音 `Transfer Agent` 只显示 Ready 坐席，SPV / TL 排在普通坐席之前。
+- 默认仅 Consult 可用；咨询后所选按钮改为红色 Cancel Consult，其他坐席不能再发起咨询，所选坐席才可 Transfer 或 Conference。
+- Transfer 复用普通 Hang Up / ACW 流程并提示转移目标；Conference 关闭弹框后禁用话务条 Transfer，并提供“三方通话中不可转移”提示。
+- 未新增 Connecting / Consulting 标识、接收坐席弹屏或真实后端转接。Interaction Log 的 End Reason 暂继续使用 Normal，未来是否新增 Transferred 待确认。
+
+回滚说明：
+
+- 移除 TransferModal 的咨询状态回调，并恢复 AgentToolbar 中转移行操作的直接关闭行为即可。
+
+当前风险：
+
+- 接收坐席的新通话流水和弹屏尚未在单坐席 Demo 中具象化，当前只模拟原坐席的结束、ACW 和提示。
+
+### 2026-07-21 20:57 +08:00 - 统一 Not Ready 的 AUX 入口
+
+修改页面或文件：
+
+- `src/layouts/components/AgentProfileArea.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DESIGN_SYSTEM.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 手动切换到 Not Ready 与话后整理自动进入 Not Ready 属于同一不可接听状态，不应因进入路径不同而出现不同的 AUX 入口。
+
+修改结果：
+
+- 所有 Not Ready 状态均在 Ready 下方展示现有 Busy Reason 的 AUX 原因。
+- 手动 Not Ready 选择 AUX 后进入现有 AUX 状态；ACW 中选择 AUX 仍会取消自动回 Ready 计时并保留 CRM 编辑上下文。
+- Pre-AUX、通话中预置 AUX 与 Sign Out 守卫保持不变。
+
+回滚说明：
+
+- 恢复 Not Ready 菜单对 After Call Work 的条件判断，并重新传入 `isAfterCallWork` 即可回退。
+
+当前风险：
+
+- Busy Reason 仍为前端 mock 配置，刷新页面会恢复其默认启用状态。
+
+### 2026-07-21 20:44 +08:00 - 语音/视频历史弹屏与 ACW-AUX CRM 编辑流程
+
+修改页面或文件：
+
+- `src/mock/globalControlConfiguration.ts`
+- `src/store/appStore.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/layouts/components/AgentProfileArea.tsx`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DESIGN_SYSTEM.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户确认语音/视频新进线只保留最新弹屏与 CRM 连接；座席需能在话后整理期间转 AUX，延长历史 CRM 编辑时间。
+
+修改结果：
+
+- Global Control 的 Auto Cancel ACW mock 默认值调整为 10 秒，实际 ACW 倒计时读取挂断时已保存的配置值。
+- ACW 的 Not Ready 下拉菜单在 Ready 下方展示现有 Busy Reason 的 AUX 原因；选择后取消 ACW 倒计时，已结束通话 Tab 保留至座席回 Ready 或下一次语音/视频进线。
+- 新 PSTN、BankApp Voice 或 BankApp Video 会话创建时，自动清理所有已结束的语音/视频 Tab；其嵌入式 CRM 随 Tab 卸载，仅最新会话保留 CRM 编辑入口。
+- Live Chat、频道模拟和管理页 Tab 未受此清理逻辑影响。
+
+回滚说明：
+
+- 恢复 Global Control 默认 5 秒、固定 ACW 计时、ACW Not Ready 菜单，以及 `createCallInteraction` 对已结束 interaction 的保留逻辑即可回退。
+
+当前风险：
+
+- CRM 仍为前端嵌入式 Demo；Tab 关闭即代表 CRM 连接断开，未模拟真实 CRM SSO 或未保存编辑提示。
+
+### 2026-07-21 19:17 +08:00 - Working Time Plans 移除 ID 字段
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+
+修改原因：
+
+- 用户要求在 Working Time Plans 配置中去掉 ID 字段。
+
+修改结果：
+
+- 查询、列表、Add / Edit / View 弹窗和关联预览均不再展示 Plan ID。
+- 新增方案由前端自动生成不冲突的内部 `planCode`，编辑、删除和 Skill Queue 关联继续以该内部键稳定工作。
+
+验证：
+
+- `npm run lint` 和 `npm run build` 通过；构建仅有既有 large chunk warning。
+- 浏览器冒烟确认查询、列表和 Add 弹窗均不再展示 Plan ID。
+
+回滚说明：
+
+- 恢复 Plan ID 的页面字段、关键词范围、列表列及原有手动编码校验即可回滚。
+
+当前风险：
+
+- `planCode` 仍为前端本地数据键；刷新页面会恢复 mock 数据与既有方案关联。
+
+### 2026-07-21 19:09 +08:00 - 移除话务条 Mute 控件
+
+修改页面或文件：
+
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/types/agent.ts`
+- `src/components/StatusBadge.tsx`
+- `src/pages/DesignSystem.tsx`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DESIGN_SYSTEM.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户确认坐席话务条不需要 Mute 操作。
+
+修改结果：
+
+- 移除 Mute 按钮、Mute 通话状态、计时和切换逻辑。
+- 话务条在通话中仅保留 Hold、Transfer 和 Hang Up；Answer 与 Ready / Not Ready 行为不变。
+- 设计系统示例和当前业务、验收规则同步移除 Mute。
+
+回滚说明：
+
+- 如需重新提供静音能力，恢复 `CallStatus`、计时状态、话务条按钮及对应业务规则后再验证通话状态转换。
+
+当前风险：
+
+- 当前 Demo 不模拟静音；真实话务平台若需要静音，应由后续接口能力和坐席权限重新定义。
 
 ### 2026-07-21 17:12 +08:00 - Customer 生产发布
 

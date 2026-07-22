@@ -114,6 +114,8 @@ export function AgentProfileArea({
           currentStatusItem,
           { key: 'divider-ready', type: 'divider' },
           readyItem,
+          { key: 'divider-aux-reasons', type: 'divider' },
+          auxReasonsItem,
           { key: 'divider-sign-out', type: 'divider' },
           signOutItem,
           { key: 'divider-agent-settings', type: 'divider' },

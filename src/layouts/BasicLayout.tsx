@@ -3,6 +3,8 @@ import {
   BarChartOutlined,
   BellOutlined,
   BranchesOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
   CustomerServiceOutlined,
   ExclamationCircleOutlined,
   IdcardOutlined,
@@ -19,6 +21,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
+  isLocalVisibility,
   isModuleVisible,
   type ModuleVisibilityKey,
 } from '../config/moduleVisibility'
@@ -36,6 +39,7 @@ import {
 import { useAppStore, useAuthStore, useCallManagementStore } from '../store'
 import type {
   DigitalHandoffReadiness,
+  CallTransferContext,
   InboundPopupSource,
   VideoCallPopupSource,
   VoiceVideoHandoffReadiness,
@@ -68,6 +72,7 @@ interface SideMenuChildItem {
   externalUrl?: string
   key: string
   label: string
+  localOnly?: boolean
 }
 
 interface SideMenuItem {
@@ -82,9 +87,7 @@ interface SideMenuItem {
 interface CallTiming {
   talkingStartedAt: number | null
   holdStartedAt: number | null
-  muteStartedAt: number | null
   accumulatedHoldSeconds: number
-  accumulatedMuteSeconds: number
 }
 
 type ActiveCallChannel = 'voice' | 'video' | null
@@ -100,9 +103,7 @@ interface AgentStatusUpdateOptions {
 const initialCallTiming: CallTiming = {
   talkingStartedAt: null,
   holdStartedAt: null,
-  muteStartedAt: null,
   accumulatedHoldSeconds: 0,
-  accumulatedMuteSeconds: 0,
 }
 
 function canHandleDigital(mode: AgentServiceMode | null) {
@@ -168,6 +169,11 @@ const allSideMenuItems: SideMenuItem[] = [
         label: 'PSTN',
       },
       {
+        key: 'test-transferred-voice',
+        label: 'Transferred Call',
+        localOnly: true,
+      },
+      {
         key: 'customer-bankapp',
         label: 'BankApp',
       },
@@ -224,9 +230,14 @@ const allSideMenuItems: SideMenuItem[] = [
   },
 ]
 
-const sideMenuItems = allSideMenuItems.filter((item) =>
-  isModuleVisible(item.moduleKey),
-)
+const sideMenuItems = allSideMenuItems
+  .filter((item) => isModuleVisible(item.moduleKey))
+  .map((item) => ({
+    ...item,
+    children: item.children?.filter(
+      (child) => !child.localOnly || isLocalVisibility,
+    ),
+  }))
 const externalChildMenuUrlByKey = Object.fromEntries(
   allSideMenuItems.flatMap((item) =>
     (item.children ?? [])
@@ -384,12 +395,23 @@ export function BasicLayout() {
   const [toolbarDisplayMode] = useState<'icon' | 'text'>('text')
   const [isInternalChatOpen, setIsInternalChatOpen] = useState(false)
   const [isAfterCallWork, setIsAfterCallWork] = useState(false)
+  const [afterCallWorkDurationSeconds, setAfterCallWorkDurationSeconds] =
+    useState(0)
   const [callHandoffNotice, setCallHandoffNotice] = useState<{
     id: number
     reason: CallHandoffNoticeReason | null
   }>({
     id: 0,
     reason: null,
+  })
+  const [transferNotice, setTransferNotice] = useState<{
+    id: number
+    message: string | null
+    tone: 'error' | 'success'
+  }>({
+    id: 0,
+    message: null,
+    tone: 'success',
   })
   const [closedFlyoutKey, setClosedFlyoutKey] = useState<string | null>(null)
   const [menuSearchQuery, setMenuSearchQuery] = useState('')
@@ -452,6 +474,17 @@ export function BasicLayout() {
         : current,
     )
   }, [])
+
+  const showTransferNotice = useCallback(
+    (notice: { message: string; tone: 'error' | 'success' }) => {
+      setTransferNotice((current) => ({
+        id: current.id + 1,
+        message: notice.message,
+        tone: notice.tone,
+      }))
+    },
+    [],
+  )
 
   const updateAgentStatus = useCallback((
     status: AgentStatus,
@@ -563,8 +596,7 @@ export function BasicLayout() {
   )
 
   const isSignedIn = agentStatus !== 'Unsigned'
-  const isConnectedCall =
-    callStatus === 'Talking' || callStatus === 'Hold' || callStatus === 'Mute'
+  const isConnectedCall = callStatus === 'Talking' || callStatus === 'Hold'
   const hasActiveCallInteraction = callStatus !== 'Idle'
   const hasActiveTextInteraction =
     activeLiveChatSessionIds.length > 0 ||
@@ -668,6 +700,23 @@ export function BasicLayout() {
   }, [callHandoffNotice.id, callHandoffNotice.reason])
 
   useEffect(() => {
+    if (!transferNotice.message) {
+      return undefined
+    }
+
+    const noticeId = transferNotice.id
+    const timer = window.setTimeout(() => {
+      setTransferNotice((current) =>
+        current.id === noticeId
+          ? { ...current, message: null }
+          : current,
+      )
+    }, 4000)
+
+    return () => window.clearTimeout(timer)
+  }, [transferNotice.id, transferNotice.message])
+
+  useEffect(() => {
     setOpenEyeVideoWindowVisible(
       activeCallChannel === 'video' &&
         isConnectedCall &&
@@ -689,10 +738,15 @@ export function BasicLayout() {
     const timer = window.setTimeout(() => {
       updateAgentStatus('Ready')
       setIsAfterCallWork(false)
-    }, 5000)
+    }, afterCallWorkDurationSeconds * 1000)
 
     return () => window.clearTimeout(timer)
-  }, [agentStatus, isAfterCallWork, updateAgentStatus])
+  }, [
+    afterCallWorkDurationSeconds,
+    agentStatus,
+    isAfterCallWork,
+    updateAgentStatus,
+  ])
 
   const handleReadyToggle = useCallback(() => {
     const nextStatus = agentStatus === 'Ready' ? 'Not Ready' : 'Ready'
@@ -708,6 +762,7 @@ export function BasicLayout() {
       source?: InboundPopupSource,
       activateWorkspace = true,
       bankAppCustomerType?: BankAppCustomerType,
+      transferContext?: CallTransferContext,
     ) => {
       if (voiceVideoHandoffReadiness !== 'available') {
         showCallHandoffNotice(voiceVideoHandoffReadiness)
@@ -725,6 +780,7 @@ export function BasicLayout() {
         source ?? 'pstn',
         activateWorkspace,
         bankAppCustomerType,
+        transferContext,
       )
       updateCallStatus('Incoming')
     },
@@ -896,44 +952,8 @@ export function BasicLayout() {
     setCallTiming((current) => ({
       ...current,
       holdStartedAt: now,
-      muteStartedAt: null,
-      accumulatedMuteSeconds:
-        current.accumulatedMuteSeconds +
-        (current.muteStartedAt
-          ? Math.floor((now - current.muteStartedAt) / 1000)
-          : 0),
     }))
     updateCallStatus('Hold')
-  }, [callStatus, updateCallStatus])
-
-  const handleMuteToggle = useCallback(() => {
-    const now = Date.now()
-
-    if (callStatus === 'Mute') {
-      setCallTiming((current) => ({
-        ...current,
-        accumulatedMuteSeconds:
-          current.accumulatedMuteSeconds +
-          (current.muteStartedAt
-            ? Math.floor((now - current.muteStartedAt) / 1000)
-            : 0),
-        muteStartedAt: null,
-      }))
-      updateCallStatus('Talking')
-      return
-    }
-
-    setCallTiming((current) => ({
-      ...current,
-      muteStartedAt: now,
-      holdStartedAt: null,
-      accumulatedHoldSeconds:
-        current.accumulatedHoldSeconds +
-        (current.holdStartedAt
-          ? Math.floor((now - current.holdStartedAt) / 1000)
-          : 0),
-    }))
-    updateCallStatus('Mute')
   }, [callStatus, updateCallStatus])
 
   const handleHangUp = useCallback((endReasonName = 'Normal') => {
@@ -950,6 +970,11 @@ export function BasicLayout() {
     updateCallStatus('Idle')
     setCallTiming(initialCallTiming)
     setActiveCallChannel(null)
+    setAfterCallWorkDurationSeconds(
+      shouldKeepPreAux
+        ? 0
+        : globalControlConfiguration.autoCancelAcwSeconds,
+    )
     setIsAfterCallWork(!shouldKeepPreAux)
     hideCallHandoffNotice()
     setOpenEyeVideoWindowVisible(false)
@@ -960,6 +985,7 @@ export function BasicLayout() {
   }, [
     agentStatus,
     currentCallInteractionId,
+    globalControlConfiguration.autoCancelAcwSeconds,
     hideCallHandoffNotice,
     markCallInteractionEnded,
     resetBankAppVideoDesktopShare,
@@ -1040,6 +1066,15 @@ export function BasicLayout() {
       if (childKey === 'test-pstn-voice') {
         navigate('/')
         triggerVoiceInboundCall()
+      }
+
+      if (childKey === 'test-transferred-voice') {
+        navigate('/')
+        triggerVoiceInboundCall('pstn', true, undefined, {
+          sourceAgentEmployeeId: 'AICC1088',
+          sourceAgentName: 'Rangga Aditya',
+          transferredAt: Date.now(),
+        })
       }
 
       if (childKey === 'customer-bankapp') {
@@ -1146,14 +1181,6 @@ export function BasicLayout() {
       }
     }
 
-    if (callStatus === 'Mute') {
-      return {
-        label: callStatus,
-        startedAt: callTiming.muteStartedAt ?? callStatusStartedAt,
-        elapsedSeconds: callTiming.accumulatedMuteSeconds,
-      }
-    }
-
     if (isAuxLikeStatus(agentStatus)) {
       return {
         label: agentStatus,
@@ -1246,8 +1273,8 @@ export function BasicLayout() {
             onAnswer={handleAnswer}
             onHangUp={handleHangUp}
             onHoldToggle={handleHoldToggle}
-            onMuteToggle={handleMuteToggle}
             onReadyToggle={handleReadyToggle}
+            onTransferNotice={showTransferNotice}
           />
         )}
         <div className="aicc-header__actions">
@@ -1299,6 +1326,20 @@ export function BasicLayout() {
         >
           <ExclamationCircleOutlined />
           <span>{callHandoffNoticeMessage}</span>
+        </div>
+      )}
+      {transferNotice.message && (
+        <div
+          aria-live="polite"
+          className={`aicc-transfer-notice aicc-transfer-notice--${transferNotice.tone}`}
+          role="status"
+        >
+          {transferNotice.tone === 'success' ? (
+            <CheckCircleOutlined />
+          ) : (
+            <CloseCircleOutlined />
+          )}
+          <span>{transferNotice.message}</span>
         </div>
       )}
       <InternalChatModal

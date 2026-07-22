@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Design System
 
-Last updated: 2026-07-18 12:19 +08:00
+Last updated: 2026-07-21 20:57 +08:00
 
 This document records the current implemented visual rules. It should be treated as the design baseline for future pages and components.
 
@@ -58,7 +58,7 @@ Agent profile area:
 - Shows team and current status separated by ` | `; service capability is not exposed as a selectable or displayable profile field.
 - Profile metadata uses a compact fixed width: name and team/status lines truncate independently, while avatar, menu trigger, and logout retain stable dimensions.
 - Status dot reflects offline, ready, away, or busy.
-- The profile menu is status-specific: Unsigned exposes Sign In and Settings; Not Ready and AUX expose Sign Out; Ready exposes AUX reasons; Pre-AUX hides Sign Out.
+- The profile menu is status-specific: Unsigned exposes Sign In and Settings; all Not Ready states expose AUX reasons and Sign Out; Ready exposes AUX reasons; Pre-AUX hides Sign Out.
 - Agent Settings sits below a divider at the bottom of the profile menu. Current setting: system prompt sound on/off; future agent-owned preferences can be added in this modal.
 
 ## 4. Toolbar Design Principles
@@ -66,19 +66,20 @@ Agent profile area:
 The toolbar is operational and compact:
 
 - Use icon + text mode by default.
-- Use familiar call icons for Answer, Hold, Mute, Transfer, Hang Up, Ready / Not Ready.
+- Use familiar call icons for Answer, Hold, Transfer, Hang Up, Ready / Not Ready.
 - Do not replace call actions with decorative text buttons.
 - Answer flashes only for incoming calls.
 - Hang Up uses danger styling.
 - Hang Up can use a compact split-button: the main danger action stays on the left, and the right caret opens abnormal end reasons.
 - Ready uses success / ready styling.
-- Hold and Mute use selected / active styling.
+- Hold uses selected / active styling.
 - More actions are behind an ellipsis menu; Settings is temporarily hidden from the toolbar More menu.
 - At narrow desktop widths, toolbar actions use their existing icons and tooltips while their text labels and call context are hidden to preserve the right-side controls.
+- Transfer result feedback uses a compact English success/error banner directly below the toolbar; do not use the default Ant message position for transfer outcomes.
 
 Call context display:
 
-- During `Incoming`, `Talking`, `Hold`, and `Mute`, show call identification and Skill.
+- During `Incoming`, `Talking`, and `Hold`, show call identification and Skill.
 - PSTN displays `IVR 08123456789`.
 - BankApp voice/video displays `BankID 00012345`.
 - Skill displays as a second row, currently `Skill Credit card activation`.
@@ -126,6 +127,8 @@ General rules:
 - Search controls and action buttons inside modals should align to the same height.
 - Long modal content should scroll inside the modal body, not push footer actions off-screen.
 - Admin modal footers should use `AdminModalFooter`.
+- External approval results use a compact, non-masked `BaseModal` fixed to the bottom-right corner, manually closable and timed for five seconds; do not use the unstyled global notification surface.
+- Read-only simulation overlays such as TL approval reuse the shared light-blue Modal header and use a white body for focused approval content; when an interaction requires bottom-right placement, position the Modal root/wrapper rather than rendering the Modal inline inside the page.
 
 ## 7. Tab Design Principles
 

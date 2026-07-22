@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
-import { Input, Select, Tag } from 'antd'
+import { Input, message, Select, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
   AppButton,
@@ -10,6 +10,7 @@ import {
   PhoneIcon,
   SearchInput,
 } from '../../components'
+import { useExternalOperationApproval } from '../../hooks/useExternalOperationApproval'
 import { transferAgents } from '../../mock/transfer'
 import type { TransferAgent, TransferAgentStatus } from '../../types'
 
@@ -35,8 +36,51 @@ function renderAgentStatus(status: TransferAgentStatus) {
   )
 }
 
-function CallNumberTab({ onComplete }: { onComplete: () => void }) {
+function CallNumberTab({
+  open,
+  onComplete,
+}: {
+  open: boolean
+  onComplete: () => void
+}) {
   const [phoneNumber, setPhoneNumber] = useState('')
+  const normalizedPhoneNumber = phoneNumber.trim()
+  const previousOpenRef = useRef(open)
+  const { consume, isApproved, isPending, release, request, status } =
+    useExternalOperationApproval({
+      targetNumber: normalizedPhoneNumber,
+      type: 'outbound-number',
+    })
+
+  useEffect(() => {
+    if (previousOpenRef.current && !open) {
+      release()
+    }
+
+    previousOpenRef.current = open
+  }, [open, release])
+
+  useEffect(() => () => release(), [release])
+
+  const handleRequestApproval = () => {
+    if (!normalizedPhoneNumber || isPending || isApproved) {
+      return
+    }
+
+    const result = request()
+
+    if (result.popupBlocked) {
+      message.error('TL approval window was blocked. Allow pop-ups and try again.')
+    }
+  }
+
+  const approvalLabel = isPending
+    ? 'Requesting...'
+    : isApproved
+      ? 'Approved'
+      : status === 'rejected'
+        ? 'Request Again'
+        : 'Request Approval'
 
   return (
     <div className="aicc-modal-section aicc-outbound-number">
@@ -49,7 +93,27 @@ function CallNumberTab({ onComplete }: { onComplete: () => void }) {
           value={phoneNumber}
           onChange={(event) => setPhoneNumber(event.target.value)}
         />
-        <AppButton icon={<PhoneIcon />} type="primary" onClick={onComplete}>
+        <AppButton
+          className="aicc-outbound-number__approval"
+          disabled={!normalizedPhoneNumber || isPending || isApproved}
+          onClick={handleRequestApproval}
+        >
+          {approvalLabel}
+        </AppButton>
+        <AppButton
+          disabled={!isApproved}
+          icon={<PhoneIcon />}
+          title={
+            isApproved
+              ? 'Call approved external number'
+              : 'Request TL approval before placing this call'
+          }
+          type="primary"
+          onClick={() => {
+            consume()
+            onComplete()
+          }}
+        >
           Call
         </AppButton>
       </div>
@@ -175,7 +239,7 @@ export function OutboundCallModal({ open, onClose }: OutboundCallModalProps) {
     {
       key: 'number',
       label: 'Call Number',
-      children: <CallNumberTab onComplete={onClose} />,
+      children: <CallNumberTab open={open} onComplete={onClose} />,
     },
     {
       key: 'agent',

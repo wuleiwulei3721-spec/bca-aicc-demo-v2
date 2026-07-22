@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
-import { Input, Select, Space, Tag } from 'antd'
+import { Input, message, Select, Space, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
   AppButton,
@@ -9,6 +9,7 @@ import {
   BaseTabs,
   SearchInput,
 } from '../../components'
+import { useExternalOperationApproval } from '../../hooks/useExternalOperationApproval'
 import { transferAgents, transferSkills } from '../../mock/transfer'
 import { useCallManagementStore } from '../../store'
 import type {
@@ -21,12 +22,19 @@ import type {
 interface TransferModalProps {
   open: boolean
   variant?: TransferModalVariant
+  consultedAgentId?: string | null
   onClose: () => void
+  onConsultAgent?: (agent: TransferAgent | null) => void
+  onTransferToAgent?: (agent: TransferAgent) => void
+  onConferenceWithAgent?: (agent: TransferAgent) => void
+  onTransferToSkill?: (skill: TransferSkill) => void
+  onTransferToNumber?: (number: string) => void
+  onTransferToIvr?: (entry: CommonNumberEntry) => void
+  onTransferToNumberFailed?: () => void
 }
 
 type TransferModalVariant = 'call' | 'conversation'
 
-const callAgentActions = ['Consult', 'Transfer', 'Conference']
 const conversationPrimaryAgentActions = ['Transfer', 'Conference']
 const allFilterValue = 'all'
 const transferStatusClassNames: Record<TransferAgentStatus, string> = {
@@ -45,18 +53,6 @@ function renderAgentStatus(status: TransferAgentStatus) {
   )
 }
 
-function rowActions(actions: string[], onComplete: () => void) {
-  return (
-    <Space className="aicc-transfer-row-actions" size={4}>
-      {actions.map((action) => (
-        <AppButton key={action} size="small" onClick={onComplete}>
-          {action}
-        </AppButton>
-      ))}
-    </Space>
-  )
-}
-
 function ConversationAgentActions({ onComplete }: { onComplete: () => void }) {
   return (
     <div className="aicc-transfer-agent-actions">
@@ -70,10 +66,18 @@ function ConversationAgentActions({ onComplete }: { onComplete: () => void }) {
 }
 
 function TransferAgentTab({
+  consultedAgentId,
   variant,
+  onConferenceWithAgent,
+  onConsultAgent,
+  onTransferToAgent,
   onComplete,
 }: {
+  consultedAgentId?: string | null
   variant: TransferModalVariant
+  onConferenceWithAgent?: (agent: TransferAgent) => void
+  onConsultAgent?: (agent: TransferAgent | null) => void
+  onTransferToAgent?: (agent: TransferAgent) => void
   onComplete: () => void
 }) {
   const [keyword, setKeyword] = useState('')
@@ -87,65 +91,105 @@ function TransferAgentTab({
   const filteredAgents = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLowerCase()
 
-    return transferAgents.filter((agent) => {
-      const matchesKeyword =
-        !normalizedKeyword ||
-        [agent.name, agent.employeeId].some((value) =>
-          value.toLowerCase().includes(normalizedKeyword),
-        )
-      const matchesSkillQueue =
-        skillQueue === allFilterValue || agent.skillName === skillQueue
+    return transferAgents
+      .filter((agent) => {
+        const matchesKeyword =
+          !normalizedKeyword ||
+          [agent.name, agent.employeeId].some((value) =>
+            value.toLowerCase().includes(normalizedKeyword),
+          )
+        const matchesSkillQueue =
+          skillQueue === allFilterValue || agent.skillName === skillQueue
+        const isAvailableForCallTransfer =
+          variant === 'conversation' || agent.status === 'Ready'
 
-      return matchesKeyword && matchesSkillQueue
-    })
-  }, [keyword, skillQueue])
+        return (
+          matchesKeyword && matchesSkillQueue && isAvailableForCallTransfer
+        )
+      })
+      .sort((left, right) => {
+        const priority = (agent: TransferAgent) =>
+          agent.marker === 'SPV' ? 0 : agent.marker === 'TL' ? 1 : 2
+
+        return priority(left) - priority(right)
+      })
+  }, [keyword, skillQueue, variant])
 
   const columns: ColumnsType<TransferAgent> = [
     {
       dataIndex: 'marker',
       title: '',
-      width: 42,
+      width: 52,
       render: (marker?: TransferAgent['marker']) =>
         marker ? <Tag className="aicc-transfer-tag">{marker}</Tag> : null,
     },
     {
       dataIndex: 'employeeId',
       title: 'Employee ID',
-      width: 92,
+      width: 88,
     },
     {
       dataIndex: 'name',
       title: 'Name',
       ellipsis: true,
-      width: 142,
+      width: 118,
     },
     {
       dataIndex: 'skillName',
       title: 'Skill Name',
       ellipsis: true,
-      width: 136,
+      width: 112,
     },
     {
       dataIndex: 'status',
       title: 'Status',
-      width: 90,
+      width: 82,
       render: renderAgentStatus,
     },
     {
       dataIndex: 'extension',
       title: 'Extension',
-      width: 70,
+      width: 64,
     },
     {
       key: 'actions',
       title: 'Actions',
-      width: 180,
-      render: () =>
-        variant === 'conversation' ? (
-          <ConversationAgentActions onComplete={onComplete} />
-        ) : (
-          rowActions(callAgentActions, onComplete)
-        ),
+      width: 248,
+      render: (_, agent) => {
+        if (variant === 'conversation') {
+          return <ConversationAgentActions onComplete={onComplete} />
+        }
+
+        const isConsultedAgent = consultedAgentId === agent.id
+        const hasActiveConsultation = Boolean(consultedAgentId)
+
+        return (
+          <Space className="aicc-transfer-row-actions" size={4}>
+            <AppButton
+              disabled={hasActiveConsultation && !isConsultedAgent}
+              size="small"
+              variant={isConsultedAgent ? 'danger' : 'secondary'}
+              onClick={() => onConsultAgent?.(isConsultedAgent ? null : agent)}
+            >
+              {isConsultedAgent ? 'Cancel Consult' : 'Consult'}
+            </AppButton>
+            <AppButton
+              disabled={!isConsultedAgent}
+              size="small"
+              onClick={() => onTransferToAgent?.(agent)}
+            >
+              Transfer
+            </AppButton>
+            <AppButton
+              disabled={!isConsultedAgent}
+              size="small"
+              onClick={() => onConferenceWithAgent?.(agent)}
+            >
+              Conference
+            </AppButton>
+          </Space>
+        )
+      },
     },
   ]
 
@@ -177,17 +221,26 @@ function TransferAgentTab({
         </span>
       </div>
       <AppTable<TransferAgent>
+        className="aicc-transfer-agent-table"
         columns={columns}
         dataSource={filteredAgents}
         pagination={{ pageSize: 10 }}
         rowKey="id"
+        scroll={{ x: 764 }}
         size="small"
+        tableLayout="fixed"
       />
     </div>
   )
 }
 
-function TransferSkillTab({ onComplete }: { onComplete: () => void }) {
+function TransferSkillTab({
+  onComplete,
+  onTransferToSkill,
+}: {
+  onComplete: () => void
+  onTransferToSkill?: (skill: TransferSkill) => void
+}) {
   const [keyword, setKeyword] = useState('')
 
   const filteredSkills = useMemo(() => {
@@ -248,7 +301,21 @@ function TransferSkillTab({ onComplete }: { onComplete: () => void }) {
       key: 'action',
       title: 'Action',
       width: 120,
-      render: () => rowActions(['Transfer'], onComplete),
+      render: (_, skill) => (
+        <AppButton
+          size="small"
+          onClick={() => {
+            if (onTransferToSkill) {
+              onTransferToSkill(skill)
+              return
+            }
+
+            onComplete()
+          }}
+        >
+          Transfer
+        </AppButton>
+      ),
     },
   ]
 
@@ -278,8 +345,50 @@ function TransferSkillTab({ onComplete }: { onComplete: () => void }) {
   )
 }
 
-function TransferNumberTab({ onComplete }: { onComplete: () => void }) {
+function TransferNumberTab({
+  open,
+  onTransferToNumberFailed,
+  onTransferToNumber,
+}: {
+  open: boolean
+  onTransferToNumberFailed?: () => void
+  onTransferToNumber?: (number: string) => void
+}) {
   const [phoneNumber, setPhoneNumber] = useState('')
+  const normalizedPhoneNumber = phoneNumber.trim()
+  const { consume, isApproved, isPending, release, request, status } =
+    useExternalOperationApproval({
+      targetNumber: normalizedPhoneNumber,
+      type: 'transfer-number',
+    })
+
+  useEffect(() => {
+    if (!open) {
+      release()
+    }
+  }, [open, release])
+
+  useEffect(() => () => release(), [release])
+
+  const handleRequestApproval = () => {
+    if (!normalizedPhoneNumber || isPending || isApproved) {
+      return
+    }
+
+    const result = request()
+
+    if (result.popupBlocked) {
+      message.error('TL approval window was blocked. Allow pop-ups and try again.')
+    }
+  }
+
+  const approvalLabel = isPending
+    ? 'Requesting...'
+    : isApproved
+      ? 'Approved'
+      : status === 'rejected'
+        ? 'Request Again'
+        : 'Request Approval'
 
   return (
     <div className="aicc-modal-section aicc-transfer-number">
@@ -289,7 +398,31 @@ function TransferNumberTab({ onComplete }: { onComplete: () => void }) {
           value={phoneNumber}
           onChange={(event) => setPhoneNumber(event.target.value)}
         />
-        <AppButton type="primary" onClick={onComplete}>
+        <AppButton
+          className="aicc-transfer-number__approval"
+          disabled={!normalizedPhoneNumber || isPending || isApproved}
+          onClick={handleRequestApproval}
+        >
+          {approvalLabel}
+        </AppButton>
+        <AppButton
+          disabled={!normalizedPhoneNumber || !isApproved}
+          title={
+            isApproved
+              ? 'Transfer to approved external number'
+              : 'Request TL approval before transferring this number'
+          }
+          type="primary"
+          onClick={() => {
+            if (normalizedPhoneNumber.endsWith('000')) {
+              onTransferToNumberFailed?.()
+              return
+            }
+
+            consume()
+            onTransferToNumber?.(normalizedPhoneNumber)
+          }}
+        >
           Transfer
         </AppButton>
       </div>
@@ -297,7 +430,13 @@ function TransferNumberTab({ onComplete }: { onComplete: () => void }) {
   )
 }
 
-function TransferIvrTab({ onComplete }: { onComplete: () => void }) {
+function TransferIvrTab({
+  onComplete,
+  onTransferToIvr,
+}: {
+  onComplete: () => void
+  onTransferToIvr?: (entry: CommonNumberEntry) => void
+}) {
   const commonNumbers = useCallManagementStore(
     (state) => state.commonNumberEntries,
   )
@@ -326,7 +465,21 @@ function TransferIvrTab({ onComplete }: { onComplete: () => void }) {
       key: 'action',
       title: 'Action',
       width: 110,
-      render: () => rowActions(['Transfer'], onComplete),
+      render: (_, entry) => (
+        <AppButton
+          size="small"
+          onClick={() => {
+            if (onTransferToIvr) {
+              onTransferToIvr(entry)
+              return
+            }
+
+            onComplete()
+          }}
+        >
+          Transfer
+        </AppButton>
+      ),
     },
   ]
 
@@ -351,30 +504,63 @@ function TransferIvrTab({ onComplete }: { onComplete: () => void }) {
 export function TransferModal({
   open,
   variant = 'call',
+  consultedAgentId,
   onClose,
+  onConferenceWithAgent,
+  onConsultAgent,
+  onTransferToAgent,
+  onTransferToIvr,
+  onTransferToNumber,
+  onTransferToNumberFailed,
+  onTransferToSkill,
 }: TransferModalProps) {
   const items = [
     {
       key: 'agent',
       label: 'Transfer Agent',
-      children: <TransferAgentTab variant={variant} onComplete={onClose} />,
+      children: (
+        <TransferAgentTab
+          consultedAgentId={consultedAgentId}
+          variant={variant}
+          onComplete={onClose}
+          onConferenceWithAgent={onConferenceWithAgent}
+          onConsultAgent={onConsultAgent}
+          onTransferToAgent={onTransferToAgent}
+        />
+      ),
     },
     {
       key: 'skill',
       label: 'Transfer Skill',
-      children: <TransferSkillTab onComplete={onClose} />,
+      children: (
+        <TransferSkillTab
+          onComplete={onClose}
+          onTransferToSkill={onTransferToSkill}
+        />
+      ),
     },
     ...(variant === 'call'
       ? [
           {
             key: 'number',
             label: 'Transfer Number',
-            children: <TransferNumberTab onComplete={onClose} />,
+            children: (
+              <TransferNumberTab
+                open={open}
+                onTransferToNumberFailed={onTransferToNumberFailed}
+                onTransferToNumber={onTransferToNumber}
+              />
+            ),
           },
           {
             key: 'ivr',
             label: 'Transfer IVR',
-            children: <TransferIvrTab onComplete={onClose} />,
+            children: (
+              <TransferIvrTab
+                onComplete={onClose}
+                onTransferToIvr={onTransferToIvr}
+              />
+            ),
           },
         ]
       : []),

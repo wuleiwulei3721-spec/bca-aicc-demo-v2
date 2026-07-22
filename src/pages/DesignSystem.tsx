@@ -1,5 +1,4 @@
 import {
-  AudioMutedOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
   DisconnectOutlined,
@@ -243,7 +242,6 @@ export function DesignSystem() {
             <StatusBadge dot label="AUX" status="aux" />
             <StatusBadge label="Talking" status="talking" />
             <StatusBadge label="Hold" status="hold" />
-            <StatusBadge label="Mute" status="mute" />
             <StatusBadge label="Verified" status="verified" />
             <StatusBadge label="Failed" status="failed" />
           </div>
@@ -536,7 +534,6 @@ export function DesignSystem() {
             <ToolbarButton active icon={<PauseCircleOutlined />}>
               Hold
             </ToolbarButton>
-            <ToolbarButton icon={<AudioMutedOutlined />}>Mute</ToolbarButton>
             <ToolbarButton selected icon={<SwapOutlined />}>
               Transfer
             </ToolbarButton>

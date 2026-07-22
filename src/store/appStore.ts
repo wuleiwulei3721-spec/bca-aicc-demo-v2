@@ -43,6 +43,11 @@ export type BankAppVideoShareState = 'idle' | 'sharing'
 export type CallInteractionKind = 'voice' | 'video'
 export type CallInteractionPhase = 'incoming' | 'active' | 'ended'
 export type CallInteractionSource = InboundPopupSource | VideoCallPopupSource
+export interface CallTransferContext {
+  sourceAgentEmployeeId: string
+  sourceAgentName: string
+  transferredAt: number
+}
 export type DigitalHandoffReadiness =
   | 'available'
   | 'digital-skill-unavailable'
@@ -87,6 +92,7 @@ export interface CallInteraction {
   startedAt: number
   tabKey: string
   title: string
+  transferContext?: CallTransferContext
 }
 
 interface SetLiveChatTabOpenOptions {
@@ -439,6 +445,7 @@ interface AppState {
     source?: CallInteractionSource,
     activate?: boolean,
     bankAppCustomerType?: BankAppCustomerType,
+    transferContext?: CallTransferContext,
   ) => string
   markCallInteractionActive: (interactionId: string) => void
   markCallInteractionEnded: (
@@ -746,10 +753,21 @@ export const useAppStore = create<AppState>((set) => ({
     rawSource,
     activate = true,
     bankAppCustomerType,
+    transferContext,
   ) => {
     let createdId = ''
 
     set((state) => {
+      const remainingInteractionIds = state.callInteractionOrder.filter(
+        (interactionId) =>
+          state.callInteractions[interactionId]?.phase !== 'ended',
+      )
+      const remainingInteractions = Object.fromEntries(
+        remainingInteractionIds.map((interactionId) => [
+          interactionId,
+          state.callInteractions[interactionId],
+        ]),
+      ) as Record<string, CallInteraction>
       const nextSeq = state.callInteractionSeq + 1
       const id = `call-${nextSeq}`
       const now = Date.now()
@@ -773,6 +791,7 @@ export const useAppStore = create<AppState>((set) => ({
         startedAt: now,
         tabKey: id,
         title: getCallInteractionTitle(kind, source),
+        transferContext,
       }
 
       createdId = id
@@ -787,10 +806,10 @@ export const useAppStore = create<AppState>((set) => ({
             : kind === 'video'
               ? 'idle'
               : state.bankAppVideoShareState,
-        callInteractionOrder: [...state.callInteractionOrder, id],
+        callInteractionOrder: [...remainingInteractionIds, id],
         callInteractionSeq: nextSeq,
         callInteractions: {
-          ...state.callInteractions,
+          ...remainingInteractions,
           [id]: interaction,
         },
         currentCallInteractionId: id,

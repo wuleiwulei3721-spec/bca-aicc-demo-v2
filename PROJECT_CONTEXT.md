@@ -98,6 +98,7 @@ Deployment is configured as a Vite SPA:
 Current router structure:
 
 - `/login` -> public login page.
+- `/tl-outbound-approval?requestId=...` -> public lightweight TL approval simulation popup for a pending external-number request.
 - `/` -> authenticated `BasicLayout` -> `AgentWorkspace`.
 - Monitoring screenshot menu items also open `/` and switch the Home or Monitor workspace tab image; there are no standalone Monitoring routes in the current scope.
 - `AI` is a side-menu group with external child links for `Quality Manage` and `AI Assist Config`; these open new browser tabs and do not change the current workspace.
@@ -138,6 +139,8 @@ All business routes under `/` require an authenticated demo session.
 - `src/config/moduleVisibility.ts`: unified customer/local module visibility profile.
 - `src/layouts/BasicLayout.tsx`: global shell, header, side menu, agent status, call toolbar, handoff readiness, sign out / logout guards, internal chat entry.
 - `src/layouts/components/*`: toolbar, profile area, agent settings, Transfer, Outbound, Internal Chat, Toolbar Settings.
+- `src/utils/outboundApproval.ts` and `src/hooks/useExternalOperationApproval.ts`: localStorage + BroadcastChannel synchronization for the external-number TL approval simulation.
+- `src/pages/TlOutboundApprovalPage.tsx`: customer-supplied complete TL dashboard image and component-based popup approval decision surface.
 - `src/pages/AgentWorkspace.tsx`: workspace tab container for Home, Monitor, BankApp Demo, Webchat Demo, WhatsApp Demo, Email, Live Chat, PSTN, Voice Call, Video Call, and registered management page tabs.
 - `src/pages/inbound/InteractionWorkspace.tsx`: shared three-column workspace foundation.
 - `src/pages/inbound/InboundPage.tsx`: voice / PSTN and BankApp voice workspace.
@@ -191,6 +194,8 @@ The toolbar supports:
 - Ready / Not Ready toggle.
 - Timer display.
 - More menu for Outbound Call; toolbar Settings is temporarily hidden.
+- External outbound number, external transfer number, and Customer Information outbound actions require one TL approval per target before their original action is enabled.
+- `Channel Simulation > Transferred Call` is local-only and opens a PSTN receiving-seat preview with source-agent transfer metadata; it is a local demo visualization, not a real routed call.
 - Call identification display: `IVR` / `BankID`.
 - Skill display during active call lifecycle.
 

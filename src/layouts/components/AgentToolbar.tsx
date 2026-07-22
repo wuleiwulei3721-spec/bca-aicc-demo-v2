@@ -1,8 +1,8 @@
 import {
-  AudioMutedOutlined,
   CaretDownOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
+  ClockCircleOutlined,
   DisconnectOutlined,
   EllipsisOutlined,
   PauseCircleOutlined,
@@ -11,13 +11,35 @@ import {
 import { Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
 import { useEffect, useState } from 'react'
-import { PhoneIcon, ToolbarButton } from '../../components'
-import type { AgentStatus, CallStatus, SessionEndReasonEntry } from '../../types'
+import { BaseModal, PhoneIcon, ToolbarButton } from '../../components'
+import type {
+  AgentStatus,
+  CallStatus,
+  SessionEndReasonEntry,
+  CommonNumberEntry,
+  TransferAgent,
+  TransferSkill,
+} from '../../types'
 import { formatDuration } from '../../utils/duration'
 import { OutboundCallModal } from './OutboundCallModal'
 import { TransferModal } from './TransferModal'
+import {
+  getExternalOperationApprovalDescription,
+  subscribeExternalOperationApprovalEvents,
+} from '../../utils/outboundApproval'
 
 export type ToolbarDisplayMode = 'icon' | 'text'
+
+export interface TransferNotice {
+  message: string
+  tone: 'error' | 'success'
+}
+
+interface ApprovalNotice {
+  description: string
+  title: string
+  tone: 'approved' | 'expired' | 'rejected'
+}
 
 interface CallIdentification {
   label: string
@@ -38,8 +60,8 @@ interface AgentToolbarProps {
   onAnswer: () => void
   onHangUp: (endReasonName?: string) => void
   onHoldToggle: () => void
-  onMuteToggle: () => void
   onReadyToggle: () => void
+  onTransferNotice: (notice: TransferNotice) => void
 }
 
 export function AgentToolbar({
@@ -56,12 +78,19 @@ export function AgentToolbar({
   onAnswer,
   onHangUp,
   onHoldToggle,
-  onMuteToggle,
   onReadyToggle,
+  onTransferNotice,
 }: AgentToolbarProps) {
   const [now, setNow] = useState(() => Date.now())
   const [isOutboundOpen, setIsOutboundOpen] = useState(false)
   const [isTransferOpen, setIsTransferOpen] = useState(false)
+  const [consultedAgent, setConsultedAgent] = useState<TransferAgent | null>(
+    null,
+  )
+  const [isConferenceActive, setIsConferenceActive] = useState(false)
+  const [approvalNotice, setApprovalNotice] = useState<ApprovalNotice | null>(
+    null,
+  )
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000)
@@ -69,9 +98,50 @@ export function AgentToolbar({
     return () => window.clearInterval(timer)
   }, [])
 
+  useEffect(
+    () =>
+      subscribeExternalOperationApprovalEvents((event) => {
+        if (!['approved', 'rejected', 'expired'].includes(event.kind)) {
+          return
+        }
+
+        const { approval } = event
+        const result =
+          event.kind === 'approved'
+            ? 'TL approval granted'
+            : event.kind === 'rejected'
+              ? 'TL approval rejected'
+              : 'TL approval timed out'
+        const tone: ApprovalNotice['tone'] =
+          event.kind === 'approved'
+            ? 'approved'
+            : event.kind === 'rejected'
+              ? 'rejected'
+              : 'expired'
+        const note = approval.reviewNote
+          ? ` Note: ${approval.reviewNote}`
+          : ''
+        setApprovalNotice({
+          description: `${getExternalOperationApprovalDescription(approval)}.${note}`,
+          title: result,
+          tone,
+        })
+      }),
+    [],
+  )
+
+  useEffect(() => {
+    if (!approvalNotice) {
+      return undefined
+    }
+
+    const timer = window.setTimeout(() => setApprovalNotice(null), 5000)
+
+    return () => window.clearTimeout(timer)
+  }, [approvalNotice])
+
   const isIncoming = callStatus === 'Incoming'
-  const isInCall =
-    callStatus === 'Talking' || callStatus === 'Hold' || callStatus === 'Mute'
+  const isInCall = callStatus === 'Talking' || callStatus === 'Hold'
   const isReady = agentStatus === 'Ready'
   const readyLabel = isReady ? 'Ready' : 'Not Ready'
   const showButtonText = toolbarDisplayMode === 'text'
@@ -79,6 +149,7 @@ export function AgentToolbar({
     0,
     (baseElapsedSeconds ?? 0) + Math.floor((now - timerStartedAt) / 1000),
   )
+
   const moreItems: MenuProps['items'] = [
     {
       key: 'outbound-call',
@@ -91,6 +162,52 @@ export function AgentToolbar({
     if (key === 'outbound-call') {
       setIsOutboundOpen(true)
     }
+  }
+  const closeTransferModal = () => {
+    setConsultedAgent(null)
+    setIsTransferOpen(false)
+  }
+  const handleCallEnd = (endReasonName?: string) => {
+    closeTransferModal()
+    setIsConferenceActive(false)
+    onHangUp(endReasonName)
+  }
+  const handleTransferToAgent = (agent: TransferAgent) => {
+    handleCallEnd()
+    onTransferNotice({
+      message: `Transferred to ${agent.name}.`,
+      tone: 'success',
+    })
+  }
+  const handleConferenceWithAgent = (agent: TransferAgent) => {
+    setConsultedAgent(null)
+    setIsConferenceActive(true)
+    setIsTransferOpen(false)
+    onTransferNotice({
+      message: `${agent.name} joined the conference.`,
+      tone: 'success',
+    })
+  }
+  const handleTransferToSkill = (skill: TransferSkill) => {
+    handleCallEnd()
+    onTransferNotice({
+      message: `Transferred to skill queue ${skill.skillName}.`,
+      tone: 'success',
+    })
+  }
+  const handleTransferToNumber = (number: string) => {
+    handleCallEnd()
+    onTransferNotice({
+      message: `Transferred to ${number}.`,
+      tone: 'success',
+    })
+  }
+  const handleTransferToIvr = (entry: CommonNumberEntry) => {
+    handleCallEnd()
+    onTransferNotice({
+      message: `Transferred to IVR ${entry.name}.`,
+      tone: 'success',
+    })
   }
   const endReasonItems: MenuProps['items'] =
     sessionEndReasons.length > 0
@@ -119,7 +236,7 @@ export function AgentToolbar({
       return
     }
 
-    onHangUp(selectedReason.reasonName)
+    handleCallEnd(selectedReason.reasonName)
   }
   const callContextTitle = [
     callIdentification
@@ -193,26 +310,27 @@ export function AgentToolbar({
             >
               {showButtonText ? 'Hold' : undefined}
             </ToolbarButton>
-            <ToolbarButton
-              active={callStatus === 'Mute'}
-              aria-label="Mute"
-              icon={<AudioMutedOutlined />}
-              title="Mute"
-              onClick={onMuteToggle}
-            >
-              {showButtonText ? 'Mute' : undefined}
-            </ToolbarButton>
-            {canTransfer && (
-              <ToolbarButton
-                active={isTransferOpen}
-                aria-label="Transfer"
-                icon={<SwapOutlined />}
-                title="Transfer"
-                onClick={() => setIsTransferOpen(true)}
-              >
-                {showButtonText ? 'Transfer' : undefined}
-              </ToolbarButton>
-            )}
+            {canTransfer &&
+              (isConferenceActive ? (
+                <ToolbarButton
+                  aria-label="Transfer"
+                  disabled
+                  icon={<SwapOutlined />}
+                  title="Transfer unavailable during conference"
+                >
+                  {showButtonText ? 'Transfer' : undefined}
+                </ToolbarButton>
+              ) : (
+                <ToolbarButton
+                  active={isTransferOpen}
+                  aria-label="Transfer"
+                  icon={<SwapOutlined />}
+                  title="Transfer"
+                  onClick={() => setIsTransferOpen(true)}
+                >
+                  {showButtonText ? 'Transfer' : undefined}
+                </ToolbarButton>
+              ))}
             <span className="aicc-agent-toolbar__split-action">
               <ToolbarButton
                 aria-label="Hang Up"
@@ -220,7 +338,7 @@ export function AgentToolbar({
                 icon={<DisconnectOutlined />}
                 title="Hang Up"
                 tone="danger"
-                onClick={() => onHangUp()}
+                onClick={() => handleCallEnd()}
               >
                 {showButtonText ? 'Hang Up' : undefined}
               </ToolbarButton>
@@ -285,16 +403,60 @@ export function AgentToolbar({
         </Dropdown>
       </div>
 
-      {canTransfer && (
+      {canTransfer && isTransferOpen && (
         <TransferModal
+          consultedAgentId={consultedAgent?.id}
           open={isTransferOpen}
-          onClose={() => setIsTransferOpen(false)}
+          onClose={closeTransferModal}
+          onConferenceWithAgent={handleConferenceWithAgent}
+          onConsultAgent={setConsultedAgent}
+          onTransferToAgent={handleTransferToAgent}
+          onTransferToIvr={handleTransferToIvr}
+          onTransferToNumber={handleTransferToNumber}
+          onTransferToNumberFailed={() =>
+            onTransferNotice({
+              message: "We couldn't complete the transfer. Please try again.",
+              tone: 'error',
+            })
+          }
+          onTransferToSkill={handleTransferToSkill}
         />
       )}
       <OutboundCallModal
         open={isOutboundOpen}
         onClose={() => setIsOutboundOpen(false)}
       />
+      <BaseModal
+        className={`aicc-approval-result-modal aicc-approval-result-modal--${approvalNotice?.tone ?? 'approved'}`}
+        closable
+        footer={null}
+        kind="standard"
+        mask={false}
+        open={Boolean(approvalNotice)}
+        rootClassName="aicc-approval-result-modal-root"
+        title={
+          approvalNotice && (
+            <span className="aicc-approval-result-modal__title">
+              {approvalNotice.tone === 'approved' ? (
+                <CheckCircleOutlined />
+              ) : approvalNotice.tone === 'rejected' ? (
+                <CloseCircleOutlined />
+              ) : (
+                <ClockCircleOutlined />
+              )}
+              {approvalNotice.title}
+            </span>
+          )
+        }
+        width={360}
+        onCancel={() => setApprovalNotice(null)}
+      >
+        {approvalNotice && (
+          <p className="aicc-approval-result-modal__description">
+            {approvalNotice.description}
+          </p>
+        )}
+      </BaseModal>
     </>
   )
 }

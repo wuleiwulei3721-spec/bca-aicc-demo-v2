@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-07-21 10:33 +08:00
+Last updated: 2026-07-22 11:09 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -44,7 +44,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 ## P1 - Manual Verification Before Customer Demo
 
 - Verify `/` login, single-action Sign In, configured Status after Sign-in, Ready / Not Ready, AUX, Sign Out, and Log Out guards.
-- Verify the profile menu state matrix: Unsigned shows Sign In / Settings; Not Ready shows Ready / Sign Out; Ready shows AUX reasons only; Pre-AUX hides Sign Out; AUX restores Sign Out; the team line shows the formatted current status.
+- Verify the profile menu state matrix: Unsigned shows Sign In / Settings; all Not Ready states show Ready, AUX reasons, and Sign Out; Ready shows AUX reasons only; Pre-AUX hides Sign Out; AUX restores Sign Out; the team line shows the formatted current status.
 - Verify default Not Ready sign-in creates no default Live Chat service; the first switch to Ready opens Live Chat and seeds its default demo sessions.
 - Verify Monitoring screenshot tabs:
   - default `/` Home tab shows `Home-Agent`,
@@ -58,11 +58,16 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Verify PSTN flow:
   - menu click opens incoming call,
   - Answer works,
-  - Hold and Mute are mutually exclusive,
+  - Hold toggles correctly during an active call,
   - Transfer opens call transfer modal,
   - Transfer IVR shows enabled Common Number entries only,
-  - Hang Up main action enters After Call Work then Ready,
+  - Hang Up main action enters After Call Work for the saved Global Control duration (10 seconds by default), then Ready,
+  - selecting AUX from a manually selected Not Ready state enters AUX and does not auto-return to Ready,
+  - selecting AUX during ACW cancels its timer and retains the ended call CRM workspace until Ready,
+  - the next successful Voice or Video incoming interaction closes all ended Voice / Video tabs and their CRM workspaces,
   - Hang Up caret shows active Voice/Video abnormal end reasons and ends without a second confirmation.
+  - Transfer Number requires TL approval for the entered external number; Approve unlocks immediate Transfer, Reject / timeout keeps it blocked, numbers ending in `000` keep the approved modal open for retry, and closing the Transfer modal releases the authorization.
+  - Local-only `Channel Simulation > Transferred Call` opens a receiving-seat PSTN preview with a green source-transfer icon after the customer channel duration.
 - Verify toolbar call context:
   - PSTN shows IVR and Skill,
   - BankApp voice/video shows BankID and Skill,
@@ -70,7 +75,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Verify Customer Information:
   - identity refresh,
   - contact management,
-  - outbound approval,
+  - customer-phone TL outbound approval: popup request, approve/reject with optional generic note, timeout hiding the TL surface, five-second system-styled agent result popup, and single-use authorization.
   - Send Email,
   - Call Flow Detail,
   - Customer Verification V2.
@@ -78,6 +83,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - `/screenshots/crm-workspace.jpg`,
   - `/screenshots/assistant-workspace.jpg`,
   - fallback does not appear unless intentionally testing missing images.
+- Verify toolbar Outbound Call Number: the TL popup request carries the entered number, Call stays disabled until approval, and an approved authorization is consumed after Call or released when the modal closes.
 - Verify Ticketing History / Next Best Action / Quick Action:
   - click opens CRM dynamic tabs,
   - dynamic tabs can close,

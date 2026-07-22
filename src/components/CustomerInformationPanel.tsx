@@ -90,8 +90,8 @@ export function CustomerInformationPanel({
     outboundRequestStatus === 'requesting'
       ? 'Requesting...'
       : outboundRequestStatus === 'approved'
-        ? 'Call'
-        : 'Request Outbound'
+        ? 'Outbound'
+        : 'Request Approval'
   const handleOutboundClick =
     outboundRequestStatus === 'approved'
       ? onStartOutbound

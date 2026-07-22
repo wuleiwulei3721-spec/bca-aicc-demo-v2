@@ -4485,13 +4485,22 @@ function cloneWorkingTimePlan(plan: WorkingTimePlan): WorkingTimePlan {
   }
 }
 
-function createWorkingTimePlanDraft(): WorkingTimePlan {
+function createWorkingTimePlanDraft(
+  existingPlans: WorkingTimePlan[] = [],
+): WorkingTimePlan {
   const today = getLocalDateString()
+  let sequence = existingPlans.length + 1
+  let planCode = `WTP_${String(sequence).padStart(3, '0')}`
+
+  while (existingPlans.some((plan) => plan.planCode === planCode)) {
+    sequence += 1
+    planCode = `WTP_${String(sequence).padStart(3, '0')}`
+  }
 
   return {
     description: '',
     holidayRules: [],
-    planCode: 'WTP_NEW',
+    planCode,
     planName: '',
     ramadanSchedule: {
       dateFrom: '',
@@ -4556,20 +4565,8 @@ function validateWorkingTimeRange(
   }
 }
 
-function validateWorkingTimePlan(
-  draft: WorkingTimePlan,
-  workingTimePlans: WorkingTimePlan[],
-  currentRecord: WorkingTimePlan | null,
-) {
+function validateWorkingTimePlan(draft: WorkingTimePlan) {
   const errors = [
-    ...validateCode(draft.planCode, 'Plan ID'),
-    ...validateUnique(
-      workingTimePlans,
-      currentRecord,
-      'planCode',
-      draft.planCode,
-      'Plan ID',
-    ),
     ...(draft.planName.trim() ? [] : ['Plan Name is required.']),
   ]
 
@@ -4696,8 +4693,8 @@ export function WorkingTimePlansPage() {
       skillQueues.some((queue) => queue.workTimePlanCode === selectedPlan.planCode),
   )
   const validationErrors = useMemo(
-    () => validateWorkingTimePlan(draft, workingTimePlans, selectedPlan),
-    [draft, selectedPlan, workingTimePlans],
+    () => validateWorkingTimePlan(draft),
+    [draft],
   )
   const visibleValidationErrors = submitAttempted ? validationErrors : []
   const filteredData = useMemo(() => {
@@ -4706,7 +4703,7 @@ export function WorkingTimePlansPage() {
     return workingTimePlans.filter((plan) => {
       const matchesKeyword =
         !keyword ||
-        [plan.planCode, plan.planName, plan.description]
+        [plan.planName, plan.description]
           .join(' ')
           .toLowerCase()
           .includes(keyword)
@@ -4735,14 +4732,18 @@ export function WorkingTimePlansPage() {
     setModalMode(null)
     setSelectedPlan(null)
     setSubmitAttempted(false)
-    setDraft(createWorkingTimePlanDraft())
+    setDraft(createWorkingTimePlanDraft(workingTimePlans))
   }
 
   function openModal(mode: Exclude<WorkingTimeModalMode, null>, plan?: WorkingTimePlan) {
     setModalMode(mode)
     setSelectedPlan(plan ?? null)
     setSubmitAttempted(false)
-    setDraft(plan ? cloneWorkingTimePlan(plan) : createWorkingTimePlanDraft())
+    setDraft(
+      plan
+        ? cloneWorkingTimePlan(plan)
+        : createWorkingTimePlanDraft(workingTimePlans),
+    )
   }
 
   function updateDraft(patch: Partial<WorkingTimePlan>) {
@@ -4940,12 +4941,6 @@ export function WorkingTimePlansPage() {
   }
 
   const columns: ColumnsType<WorkingTimePlan> = [
-    {
-      dataIndex: 'planCode',
-      title: 'Plan ID',
-      width: 150,
-      render: (value: string) => <strong>{value}</strong>,
-    },
     { dataIndex: 'planName', title: 'Plan Name', width: 180 },
     {
       dataIndex: 'description',
@@ -4967,7 +4962,7 @@ export function WorkingTimePlansPage() {
       render: (_value, record) => (
         <div className="routing-config-crud__row-actions">
           <button
-            aria-label={`View ${record.planCode}`}
+            aria-label={`View ${record.planName}`}
             title="View"
             type="button"
             onClick={() => openModal('view', record)}
@@ -4975,7 +4970,7 @@ export function WorkingTimePlansPage() {
             <EyeOutlined />
           </button>
           <button
-            aria-label={`Edit ${record.planCode}`}
+            aria-label={`Edit ${record.planName}`}
             title="Edit"
             type="button"
             onClick={() => openModal('edit', record)}
@@ -4983,7 +4978,7 @@ export function WorkingTimePlansPage() {
             <EditOutlined />
           </button>
           <button
-            aria-label={`Delete ${record.planCode}`}
+            aria-label={`Delete ${record.planName}`}
             title="Delete"
             type="button"
             onClick={() => openModal('delete', record)}
@@ -5495,7 +5490,7 @@ export function WorkingTimePlansPage() {
                 >
                   <span>Keyword</span>
                   <Input
-                    placeholder="Plan ID / Name / Description"
+                    placeholder="Plan Name / Description"
                     value={filterDraft.keyword}
                     onChange={(event) =>
                       setFilterDraft((currentFilters) => ({
@@ -5550,7 +5545,7 @@ export function WorkingTimePlansPage() {
             dataSource={filteredData}
             pagination={paginationConfig}
             rowKey={(record) => record.planCode}
-            scroll={{ x: 1080 }}
+            scroll={{ x: 930 }}
             size="small"
           />
         </BaseCard>
@@ -5599,22 +5594,6 @@ export function WorkingTimePlansPage() {
                 <strong>Basic Info</strong>
               </header>
               <div className="routing-config-working-time-modal__basic-grid">
-                <label className="routing-config-crud-modal__field">
-                  <span>
-                    Plan ID <strong>*</strong>
-                  </span>
-                  {isReadOnly ? (
-                    <em>{draft.planCode}</em>
-                  ) : (
-                    <Input
-                      disabled={modalMode === 'edit'}
-                      value={draft.planCode}
-                      onChange={(event) =>
-                        updateDraft({ planCode: event.target.value })
-                      }
-                    />
-                  )}
-                </label>
                 <label className="routing-config-crud-modal__field">
                   <span>
                     Plan Name <strong>*</strong>
@@ -5806,10 +5785,6 @@ function WorkingTimePlanPreviewContent({ plan }: { plan: WorkingTimePlan }) {
           <strong>Basic Info</strong>
         </header>
         <div className="routing-config-working-time-modal__basic-grid">
-          <label className="routing-config-crud-modal__field">
-            <span>Plan ID</span>
-            <em>{plan.planCode}</em>
-          </label>
           <label className="routing-config-crud-modal__field">
             <span>Plan Name</span>
             <em>{plan.planName}</em>
