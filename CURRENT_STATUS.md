@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-07-24 14:04 +08:00
+Last updated: 2026-07-24 14:10 +08:00
 
 ## 1. Overall Status
 
@@ -362,7 +362,7 @@ Latest recorded validation:
 - Production build passed with existing large chunk warning.
 - Browser smoke checks passed for workspace management-page tabs: left-menu open/reuse, close fallback, direct URL bridge, active PSTN tab coexistence, and customer/local visibility profile behavior.
 - Email browser smoke checks passed for customer/local menu visibility, menu/tab lifecycle, shared customer context, `CRM / Email`, the shared CRM screenshot, dynamic CRM tabs, Reply/Send, Save Draft, Ignore, Trash recovery, search, CWU, state reset, and 1366x768 / 1440x900 / 1920x1080 layout widths without page overflow.
-- Vercel production deployment completed at `https://netinfo-aicc-demo-v2.vercel.app` with `VITE_APP_VISIBILITY_PROFILE=customer` and `VITE_ENABLE_ADMIN_MENUS=true`; post-deploy smoke confirmed AI links, Call Management tab opening, and hidden Employee Management / Design System.
+- Latest Vercel production deployment completed at `https://netinfo-aicc-demo-v2.vercel.app` with `VITE_APP_VISIBILITY_PROFILE=customer` and `VITE_ENABLE_ADMIN_MENUS=true`; post-deploy smoke confirmed the Email menu and workspace are customer-visible while Transferred Call, Employee Management, and Design System remain hidden.
 
 ## 20. Known Demo Boundaries
 

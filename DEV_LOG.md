@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-07-24 14:04 +08:00
+最后更新：2026-07-24 14:10 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -52,9 +52,18 @@ Historical entries are preserved in archive files without content rewrites. Use 
 - customer profile 生产产物浏览器烟测确认 Email 菜单数量为 1，位于 WhatsApp 下方，Transferred Call 数量为 0；Employee Management 与 Design System 保持隐藏。
 - Email 工作台可打开，邮箱栏和 `CRM / Email` 可见，关闭 Email 页签后回到 Home。
 
+提交与发布：
+
+- 提交 `3e30d06 feat: release customer workspace updates` 已推送至 `origin/main`。
+- 使用 `vercel --prod --yes --scope wl-demo-s-projects --build-env VITE_APP_VISIBILITY_PROFILE=customer --build-env VITE_ENABLE_ADMIN_MENUS=true` 发布已提交的干净工作区。
+- Vercel Inspect：`https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/APMgiPYtrGD6U8tiffx3Gqcg6yJ2`。
+- Production deployment：`https://netinfo-aicc-demo-v2-opdqw5rhs-wl-demo-s-projects.vercel.app`，正式 alias：`https://netinfo-aicc-demo-v2.vercel.app`。
+- 线上登录烟测确认 Email 菜单和工作台均可用，`CRM / Email` 正常；Transferred Call、Employee Management、Design System 继续隐藏。
+
 回滚说明：
 
 - 在 `customer-email` 菜单项恢复 `localOnly: true` 并恢复对应客户可见知识库描述，即可重新隐藏客户入口。
+- 如需整体回滚本次发布，可将 Vercel production alias 切回上一版 deployment，并在 Git 中提交对应的反向修改。
 
 当前风险：
 
