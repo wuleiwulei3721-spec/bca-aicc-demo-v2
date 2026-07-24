@@ -29,6 +29,38 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
 
+### 2026-07-24 17:12 +08:00 - Social Media 渠道工作区整合
+
+修改页面或文件：
+
+- `src/pages/social-media/*`、`public/social-media-assets/*`
+- `src/layouts/BasicLayout.tsx`、`src/pages/AgentWorkspace.tsx`、`src/store/appStore.ts`、`src/styles/index.less`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 用户确认将同事在独立仓库 `Rh3in/bca-aicc-demo-v2@5ca52fd` 完成的社媒渠道接入当前客户演示，入口位于 `Channel Simulation > Email` 后。
+
+修改结果：
+
+- 新增 `Social Media` 并列菜单和可关闭工作区标签，标签可复用，关闭回到 Home。
+- 选择性导入社媒队列、筛选、回复 SLA、帖子详情、CRM 预览、CWU 原型、Reviews 本地回复和所需资源；未合并同事仓库的全局样式、无关改动或 BCA 可见品牌内容。
+- 当前范围保持为前端 mock，不扩展 Live Chat 会话、异常服务结束原因或 Interaction Log 查询。
+
+验证：
+
+- `npm run lint`、`npm run build`、`git diff --check` 通过；构建仅保留既有 large chunk warning。
+- 本地服务 `http://127.0.0.1:5180/` 返回 200，并完成登录页渲染检查。Codex 浏览器在登录后的工作区导航按钮未响应，菜单展开和页签交互仍需在常规浏览器中人工确认。
+
+回滚说明：
+
+- 移除 `customer-social-media` 菜单项、Social Media workspace store/tab wiring、`src/pages/social-media/*`、`public/social-media-assets/*` 和 `.social-media-*` 样式块即可回退，不影响 Email 或其他渠道。
+
+当前风险：
+
+- 社媒数据、回复、CWU 与 SLA 均为本地前端状态；没有真实渠道 API、审核、路由、审计、持久化、服务结束或记录查询集成。
+
+
 ### 2026-07-24 14:04 +08:00 - Email 客户入口开放
 
 修改页面或文件：

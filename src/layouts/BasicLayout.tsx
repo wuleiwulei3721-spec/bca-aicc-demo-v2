@@ -178,6 +178,10 @@ const allSideMenuItems: SideMenuItem[] = [
         key: 'customer-email',
         label: 'Email',
       },
+      {
+        key: 'customer-social-media',
+        label: 'Social Media',
+      },
     ],
   },
   {
@@ -350,6 +354,9 @@ export function BasicLayout() {
   )
   const requestEmailWorkspace = useAppStore(
     (state) => state.requestEmailWorkspace,
+  )
+  const requestSocialMediaWorkspace = useAppStore(
+    (state) => state.requestSocialMediaWorkspace,
   )
   const requestWebchatDemoWorkspace = useAppStore(
     (state) => state.requestWebchatDemoWorkspace,
@@ -1136,6 +1143,11 @@ export function BasicLayout() {
         requestEmailWorkspace()
       }
 
+      if (childKey === 'customer-social-media') {
+        navigate('/')
+        requestSocialMediaWorkspace()
+      }
+
       if (childKey === 'customer-webchat') {
         navigate('/')
         requestWebchatDemoWorkspace()
@@ -1163,6 +1175,7 @@ export function BasicLayout() {
       requestBankAppDemoWorkspace,
       requestEmailWorkspace,
       requestMonitoringMonitorWorkspace,
+      requestSocialMediaWorkspace,
       requestWebchatDemoWorkspace,
       requestWhatsAppDemoWorkspace,
       selectMonitoringHomeView,

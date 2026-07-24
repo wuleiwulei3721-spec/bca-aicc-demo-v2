@@ -576,7 +576,15 @@ WhatsApp demo is chat-only in the current implementation.
 - Email directly reuses Live Chat's `CrmPanel`; CRM uses the same current screenshot and Email uses the same tab styling as Conversation. Legacy full-system Email design screenshots are not embedded.
 - No real mailbox, SMTP, attachment upload, routing, permission, audit, template deployment, record inquiry, or CWU backend integration exists.
 
-## 22. Call Management Rules
+## 22. Social Media Workspace Rules
+
+- Social Media is available from `Channel Simulation` directly after Email in both customer and local visibility profiles. It does not add a standalone route; its menu action opens or reuses one closable `Social Media` workspace tab.
+- The workspace uses local anonymized mock data for Facebook, Instagram, X, YouTube, LinkedIn, TikTok, App Store, and Google Play. It distinguishes `Chats`, `Cmts`, `AT`, and `Reviews` queue items.
+- Search plus channel/type filters only affect local queue visibility. Selecting an item opens its local CRM preview or conversation/post-detail area and does not create a Live Chat session.
+- Reply SLA progress is visual demo state only. Review replies, CWU popover states, queue selection, and filters are local component state and reset after closing/reopening the tab or refreshing the application.
+- Social Media does not currently integrate channel authentication, real API delivery, moderation, routing, persistence, audit, abnormal service ending, or Social Media record inquiry. It must not be folded into Interaction Log without a separately confirmed query model.
+
+## 23. Call Management Rules
 
 Visible customer pages:
 
@@ -723,7 +731,7 @@ Hidden / redirected:
 - Interaction Log exposes only the View action. CWU edit entry points and the Edit CWU modal are not shown in the current demo.
 - Store is local front-end state.
 
-## 23. Routing Config Rules
+## 24. Routing Config Rules
 
 Routing Config is visible unless `VITE_ENABLE_ADMIN_MENUS=false`.
 
@@ -761,7 +769,7 @@ Important rules:
 
 All Routing Config changes are front-end demo state only.
 
-## 24. Local-Only Module Visibility Rules
+## 25. Local-Only Module Visibility Rules
 
 `main` is the customer release integration line. Local-only modules can live in `main`, but must be hidden from customer builds through `VITE_APP_VISIBILITY_PROFILE`.
 
@@ -772,7 +780,7 @@ All Routing Config changes are front-end demo state only.
 - Employee Management is front-end mock state only and does not connect to LDAP, HR, permission, workforce management, or employee skill backends.
 - Customer deployment environments must not set `VITE_APP_VISIBILITY_PROFILE=local`.
 
-## 25. Localization Rules
+## 26. Localization Rules
 
 Current implemented language mix:
 

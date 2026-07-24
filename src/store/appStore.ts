@@ -392,6 +392,7 @@ interface AppState {
   digitalHandoffReadiness: DigitalHandoffReadiness
   isBankAppDemoTabOpen: boolean
   isEmailTabOpen: boolean
+  isSocialMediaTabOpen: boolean
   isLiveChat2TabOpen: boolean
   isLiveChatTabOpen: boolean
   isMonitoringMonitorTabOpen: boolean
@@ -427,6 +428,7 @@ interface AppState {
   closeAllCallInteractionTabs: () => void
   closeBankAppDemoTab: () => void
   closeEmailTab: () => void
+  closeSocialMediaTab: () => void
   closeCallInteractionTab: (interactionId: string) => void
   closeLiveChatSession: (sessionId: string) => void
   closeMonitoringMonitorTab: () => void
@@ -456,6 +458,7 @@ interface AppState {
   clearCurrentCallInteraction: () => void
   requestBankAppDemoWorkspace: () => void
   requestEmailWorkspace: () => void
+  requestSocialMediaWorkspace: () => void
   requestBankAppPinVerification: (target?: 'bankapp' | 'webchat') => void
   requestBankAppVideoCall: (
     activate?: boolean,
@@ -566,6 +569,7 @@ export const useAppStore = create<AppState>((set) => ({
   digitalHandoffReadiness: 'not-ready',
   isBankAppDemoTabOpen: false,
   isEmailTabOpen: false,
+  isSocialMediaTabOpen: false,
   isLiveChat2TabOpen: false,
   isLiveChatTabOpen: false,
   isMonitoringMonitorTabOpen: false,
@@ -635,6 +639,14 @@ export const useAppStore = create<AppState>((set) => ({
           ? 'home'
           : state.activeWorkspaceTabKey,
       isEmailTabOpen: false,
+    })),
+  closeSocialMediaTab: () =>
+    set((state) => ({
+      activeWorkspaceTabKey:
+        state.activeWorkspaceTabKey === 'social-media'
+          ? 'home'
+          : state.activeWorkspaceTabKey,
+      isSocialMediaTabOpen: false,
     })),
   closeCallInteractionTab: (interactionId) =>
     set((state) => {
@@ -923,6 +935,11 @@ export const useAppStore = create<AppState>((set) => ({
     set({
       activeWorkspaceTabKey: 'email',
       isEmailTabOpen: true,
+    }),
+  requestSocialMediaWorkspace: () =>
+    set({
+      activeWorkspaceTabKey: 'social-media',
+      isSocialMediaTabOpen: true,
     }),
   requestBankAppPinVerification: (target = 'bankapp') =>
     set((state) => {

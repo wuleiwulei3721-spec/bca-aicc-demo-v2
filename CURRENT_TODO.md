@@ -192,6 +192,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Add independent Email Record Inquiry list/detail scope when confirmed; do not fold it into Interaction Log.
 - Add Email Template Deploy CRUD and backend template integration when confirmed.
 - Add real mailbox/SMTP, attachment, routing, permission, audit, and CWU persistence contracts if Email moves beyond front-end demo state.
+- Define Social Media API, channel authentication, moderation, routing, delivery, audit, persistence, service-ending, and independent record-inquiry contracts before treating the Social Media workspace as a production integration.
 - Add Webchat voice and video customer simulation if customer requires it.
 - Add Dashboard page if demo scope expands.
 - Add Supervisor page if demo scope expands.

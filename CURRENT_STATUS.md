@@ -88,6 +88,7 @@ This repository is still a demo application:
 - Webchat Demo tab.
 - WhatsApp Demo tab.
 - Customer and local profiles expose the Email workspace entry below WhatsApp.
+- Customer and local profiles expose the Social Media workspace entry immediately below Email.
 - Fixed Live Chat tab.
 - Dynamic PSTN / Voice Call tabs.
 - Dynamic Video Call tabs.
@@ -214,7 +215,16 @@ This repository is still a demo application:
 - All Email workflow state is front-end local state and resets after refresh or closing/reopening the tab.
 - Email Record Inquiry and Email Template Deploy are not implemented in this scope.
 
-## 14. Completed Call Management
+## 14. Implemented Social Media Workspace
+
+- `Channel Simulation > Social Media` is available in both customer and local visibility profiles, directly below Email.
+- Social Media opens or reuses one closable workspace tab; closing it falls back to Home.
+- The standalone agent workspace provides search, channel and item-type filters, reply SLA progress, a queue for Chats / Comments / Mentions / Reviews, CRM preview, post detail, and local CWU prototype states.
+- Review items include a local draft and Send reply interaction. Queue, filters, drafts, replies, CWU, and active selection reset after refresh or closing/reopening the tab.
+- Demo data covers Facebook, Instagram, X, YouTube, LinkedIn, TikTok, App Store, and Google Play using anonymized mock content.
+- The workspace does not add real social API delivery, authentication, moderation, persistence, routing, service-ending behavior, or Social Media record inquiry.
+
+## 15. Completed Call Management
 
 Customer-visible pages:
 
@@ -263,7 +273,7 @@ Implemented behaviors:
 - Email and Social Media records are intentionally excluded from Interaction Log in the current scope.
 - Local store state for demo changes.
 
-## 15. Completed Routing Config
+## 16. Completed Routing Config
 
 Routing Config is visible by default.
 
@@ -300,7 +310,7 @@ Implemented behaviors:
 - Working Time Plans hide internal plan IDs from query, list, editor, and preview surfaces.
 - Local store state for demo changes.
 
-## 16. Completed Local-Only Employee Management
+## 17. Completed Local-Only Employee Management
 
 Employee Management is implemented in `main` but is visible only when `VITE_APP_VISIBILITY_PROFILE=local`; customer/default profile hides the menu and redirects direct routes. In local profile, the page opens as a closable workspace tab.
 
@@ -319,7 +329,7 @@ Implemented behaviors:
 - Other Configuration stores Live Chat Max Services per employee.
 - Local mock store state for demo changes, seeded with 10 employee profiles.
 
-## 17. Completed Design System
+## 18. Completed Design System
 
 `/design-system` currently demonstrates the design system as a local-only closable workspace tab when `VITE_APP_VISIBILITY_PROFILE=local`:
 
@@ -338,7 +348,7 @@ Implemented behaviors:
 - Toolbar system.
 - Reusable component contracts.
 
-## 18. Completed Assets
+## 19. Completed Assets
 
 Current public assets include:
 
@@ -354,7 +364,7 @@ Current public assets include:
 - WhatsApp customer avatar.
 - Icons and favicon.
 
-## 19. Current Validation Baseline
+## 20. Current Validation Baseline
 
 Latest recorded validation:
 
@@ -364,7 +374,7 @@ Latest recorded validation:
 - Email browser smoke checks passed for customer/local menu visibility, menu/tab lifecycle, shared customer context, `CRM / Email`, the shared CRM screenshot, dynamic CRM tabs, Reply/Send, Save Draft, Ignore, Trash recovery, search, CWU, state reset, and 1366x768 / 1440x900 / 1920x1080 layout widths without page overflow.
 - Latest Vercel production deployment completed at `https://netinfo-aicc-demo-v2.vercel.app` with `VITE_APP_VISIBILITY_PROFILE=customer` and `VITE_ENABLE_ADMIN_MENUS=true`; post-deploy smoke confirmed the Email menu and workspace are customer-visible while Transferred Call, Employee Management, and Design System remain hidden.
 
-## 20. Known Demo Boundaries
+## 21. Known Demo Boundaries
 
 - No backend API integration.
 - No real CRM SSO handoff.
@@ -377,7 +387,7 @@ Latest recorded validation:
 - No automated Playwright test suite.
 - Employee Management is local-only mock data and does not connect to real LDAP, HR, workforce management, permission, or employee skill backends.
 
-## 21. Current Branch State at Handoff
+## 22. Current Branch State at Handoff
 
 - Expected branch: `main`.
 - Expected remote: `origin/main`.

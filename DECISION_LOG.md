@@ -1006,6 +1006,29 @@ Customer-provided requirement screenshot and plan on 2026-07-07; Code: `src/page
 --------------------------------------------------
 
 Decision ID:
+DEC-036
+
+Module:
+Social Media Workspace
+
+Decision:
+Social Media is delivered as a dedicated, closable agent workspace tab opened from `Channel Simulation` immediately after Email. The integration preserves the existing BANK 1 shell and imports only the Social Media page, resources, local state, and menu/tab wiring from the collaborator delivery.
+
+Reason:
+The collaborator implementation was maintained in an independent repository and also contained unrelated global visual changes. Selective integration keeps the current customer-approved shell stable while adding the social queue demo.
+
+Impact:
+The current Social Media workspace simulates queue filtering, post/review/mention handling, CRM preview, CWU prototype, and review reply locally. It does not create Live Chat sessions or extend service-ending and Interaction Log rules. Future changes must be delivered through a feature branch or PR against the canonical repository instead of merging independent `main` histories.
+
+Status:
+Implemented as front-end demo; real integration Pending
+
+Source:
+Collaborator source commit `Rh3in/bca-aicc-demo-v2@5ca52fd`; Code: `src/pages/social-media/SocialMediaPage.tsx`, `src/layouts/BasicLayout.tsx`, `src/pages/AgentWorkspace.tsx`, `src/store/appStore.ts`; Docs: `PROJECT_CONTEXT.md`, `CURRENT_STATUS.md`, `BUSINESS_RULES.md`
+
+--------------------------------------------------
+
+Decision ID:
 DEC-028
 
 Module:

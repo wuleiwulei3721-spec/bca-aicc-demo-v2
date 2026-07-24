@@ -25,6 +25,7 @@ import {
 import { BankAppDemoPage } from './bankapp'
 import { EmailPage } from './email'
 import { InboundPage, LiveChat2Page, VideoCallPage } from './inbound'
+import { SocialMediaPage } from './social-media'
 import { WebchatDemoPage } from './webchat'
 import { WhatsAppDemoPage } from './whatsapp'
 
@@ -34,6 +35,7 @@ const BANKAPP_DEMO_TAB_KEY = 'bankapp-demo'
 const WEBCHAT_DEMO_TAB_KEY = 'webchat-demo'
 const WHATSAPP_DEMO_TAB_KEY = 'whatsapp-demo'
 const EMAIL_TAB_KEY = 'email'
+const SOCIAL_MEDIA_TAB_KEY = 'social-media'
 const LIVE_CHAT_TAB_KEY = 'live-chat'
 const staticLiveChat2SessionById = Object.fromEntries(
   liveChat2Sessions.map((session) => [session.id, session]),
@@ -221,6 +223,9 @@ export function AgentWorkspace() {
     (state) => state.isWhatsAppDemoTabOpen,
   )
   const hasEmailTab = useAppStore((state) => state.isEmailTabOpen)
+  const hasSocialMediaTab = useAppStore(
+    (state) => state.isSocialMediaTabOpen,
+  )
   const hasWebchatDemoTab = useAppStore(
     (state) => state.isWebchatDemoTabOpen,
   )
@@ -263,6 +268,9 @@ export function AgentWorkspace() {
     (state) => state.closeWhatsAppDemoTab,
   )
   const closeEmailTab = useAppStore((state) => state.closeEmailTab)
+  const closeSocialMediaTab = useAppStore(
+    (state) => state.closeSocialMediaTab,
+  )
   const closeWebchatDemoTab = useAppStore(
     (state) => state.closeWebchatDemoTab,
   )
@@ -473,6 +481,16 @@ export function AgentWorkspace() {
       })
     }
 
+    if (hasSocialMediaTab) {
+      items.push({
+        key: SOCIAL_MEDIA_TAB_KEY,
+        closable: true,
+        label: <WorkspaceTabLabel label="Social Media" now={now} />,
+        children:
+          activeKey === SOCIAL_MEDIA_TAB_KEY ? <SocialMediaPage /> : null,
+      })
+    }
+
     if (hasWebchatDemoTab) {
       items.push({
         key: WEBCHAT_DEMO_TAB_KEY,
@@ -578,6 +596,7 @@ export function AgentWorkspace() {
     currentCallInteractionId,
     hasBankAppDemoTab,
     hasEmailTab,
+    hasSocialMediaTab,
     hasLiveChatTab,
     hasMonitoringMonitorTab,
     hasWebchatDemoTab,
@@ -601,6 +620,10 @@ export function AgentWorkspace() {
 
     if (action === 'remove' && targetKey === EMAIL_TAB_KEY) {
       closeEmailTab()
+    }
+
+    if (action === 'remove' && targetKey === SOCIAL_MEDIA_TAB_KEY) {
+      closeSocialMediaTab()
     }
 
     if (action === 'remove' && targetKey === WEBCHAT_DEMO_TAB_KEY) {

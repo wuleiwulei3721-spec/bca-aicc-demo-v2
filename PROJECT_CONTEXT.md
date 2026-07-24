@@ -149,6 +149,7 @@ All business routes under `/` require an authenticated demo session.
 - `src/pages/bankapp/BankAppDemoPage.tsx`: BankApp customer-side channel simulation.
 - `src/pages/whatsapp/WhatsAppDemoPage.tsx`: WhatsApp simulation using the BankApp demo framework.
 - `src/pages/email/EmailPage.tsx`: code-built Email agent workspace with mailbox folders, customer context, message handling, CRM, thread records, and CWU registration.
+- `src/pages/social-media/SocialMediaPage.tsx`: Social Media agent workspace with queue filters, post/review handling, CRM preview, and CWU prototype.
 - `src/pages/call-management/*`: customer-visible call management configuration pages.
 - `src/pages/routing-config/*`: routing configuration data maintenance pages.
 - `src/pages/employee-management/*`: local-only employee profile management pages.
@@ -316,6 +317,14 @@ The current Email demo supports:
 
 Email message and CWU changes are local component state. Closing and reopening the Email tab or refreshing the application restores the default anonymized mock data. Email verification is not exposed because no Email verification rule is confirmed. Email Record Inquiry and Email Template Deploy remain separate future scope.
 
+### Social Media Workspace
+
+The Social Media workspace is available immediately after Email under `Channel Simulation` in both customer and local visibility profiles. Its menu action opens or reuses one closable `Social Media` workspace tab.
+
+The current front-end demo provides anonymized social queue items across Facebook, Instagram, X, YouTube, LinkedIn, TikTok, App Store, and Google Play. Agents can filter by channel and item type (Chats, Comments, Mentions, Reviews), search the queue, inspect post context and conversation/detail views, switch between CRM preview and conversation, open the local CWU prototype, and send a local reply for a Review. All state resets when the tab is closed or the application refreshes.
+
+Social Media does not add a standalone route, real social-network API, authentication, delivery, moderation, routing, audit, persistence, service-ending lifecycle, or Interaction Log query in the current scope.
+
 ### Call Management
 
 Customer-visible Call Management pages:
@@ -439,6 +448,7 @@ Current behaviors:
 - AI external side-menu group for Quality Manage and AI Assist Config.
 - BankApp, Webchat, and WhatsApp customer-side simulations with screenshot assets.
 - Customer-visible Email agent workspace with mailbox folders, shared customer context, the Live Chat CRM screenshot, message handling, thread records, and CWU registration.
+- Customer-visible Social Media agent workspace with queue filtering, social post/review handling, CRM preview, local CWU prototype, and review reply simulation.
 - Call Management pages listed above.
 - Abnormal End Reasons for abnormal Voice / Video / DM service end reasons.
 - Interaction Log for current-agent Phone, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp history, with 30 mock records, Contact, Queue, Service Time, Ended By, End Reason, QM Score, playback/transcript details, and read-only mandatory CWU summary.
@@ -458,6 +468,7 @@ Current behaviors:
 - Live Chat is a front-end mock, not a real channel gateway.
 - Webchat customer-side simulation currently covers text only; voice and video Webchat media are future scope.
 - Email Record Inquiry and Email Template Deploy are not part of the current Email workspace scope.
+- Social Media has no real social-network gateway, persistence, moderation, routing, audit, service-ending lifecycle, or record-query integration.
 - Dashboard, Admin dashboard, Supervisor pages, and reporting pages are not fully implemented workspaces.
 - CRM and Assistant screenshots exist, but may still need final customer-approved images and quality checks.
 - Localization is mixed: framework UI is mostly English; business content is a mix of English and Indonesian.
