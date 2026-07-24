@@ -52,6 +52,14 @@ Historical entries are preserved in archive files without content rewrites. Use 
 - `npm run lint`、`npm run build`、`git diff --check` 通过；构建仅保留既有 large chunk warning。
 - 本地服务 `http://127.0.0.1:5180/` 返回 200，并完成登录页渲染检查。Codex 浏览器在登录后的工作区导航按钮未响应，菜单展开和页签交互仍需在常规浏览器中人工确认。
 
+提交与发布：
+
+- 提交 `355dd9b feat: integrate social media workspace` 已快进到 `main` 并推送至 `origin/main`。
+- 使用 `npx vercel --prod --yes --scope wl-demo-s-projects --build-env VITE_APP_VISIBILITY_PROFILE=customer --build-env VITE_ENABLE_ADMIN_MENUS=true` 发布已提交的干净工作区。
+- Vercel Inspect：`https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/DR3Ah17b7pqkMcUB3M1H9ipSpSvr`。
+- Production deployment：`https://netinfo-aicc-demo-v2-7x6z3w3va-wl-demo-s-projects.vercel.app`，正式 alias：`https://netinfo-aicc-demo-v2.vercel.app`。
+- 线上浏览器登录烟测和 HTTP 检查通过：正式 alias 首页与 `/social-media-assets/post-card-bg.png` 均返回 200。Codex 浏览器在登录后未响应导航按钮，Social Media 菜单展开与页签交互仍需客户浏览器人工确认。
+
 回滚说明：
 
 - 移除 `customer-social-media` 菜单项、Social Media workspace store/tab wiring、`src/pages/social-media/*`、`public/social-media-assets/*` 和 `.social-media-*` 样式块即可回退，不影响 Email 或其他渠道。
