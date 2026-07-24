@@ -7,16 +7,22 @@ import {
   AppTable,
   BaseModal,
   BaseTabs,
-  PhoneIcon,
   SearchInput,
 } from '../../components'
 import { useExternalOperationApproval } from '../../hooks/useExternalOperationApproval'
 import { transferAgents } from '../../mock/transfer'
-import type { TransferAgent, TransferAgentStatus } from '../../types'
+import { externalOutboundReasonOptions } from '../../types'
+import type {
+  ExternalOutboundReason,
+  TransferAgent,
+  TransferAgentStatus,
+} from '../../types'
 
 interface OutboundCallModalProps {
+  callAgentScope: 'all' | 'leaders-only'
   open: boolean
   onClose: () => void
+  requiresOutboundApproval: boolean
 }
 
 const allFilterValue = 'all'
@@ -39,15 +45,20 @@ function renderAgentStatus(status: TransferAgentStatus) {
 function CallNumberTab({
   open,
   onComplete,
+  requiresOutboundApproval,
 }: {
   open: boolean
   onComplete: () => void
+  requiresOutboundApproval: boolean
 }) {
   const [phoneNumber, setPhoneNumber] = useState('')
+  const [outboundReason, setOutboundReason] =
+    useState<ExternalOutboundReason | null>(null)
   const normalizedPhoneNumber = phoneNumber.trim()
   const previousOpenRef = useRef(open)
   const { consume, isApproved, isPending, release, request, status } =
     useExternalOperationApproval({
+      outboundReason: outboundReason ?? undefined,
       targetNumber: normalizedPhoneNumber,
       type: 'outbound-number',
     })
@@ -63,7 +74,13 @@ function CallNumberTab({
   useEffect(() => () => release(), [release])
 
   const handleRequestApproval = () => {
-    if (!normalizedPhoneNumber || isPending || isApproved) {
+    if (
+      !requiresOutboundApproval ||
+      !normalizedPhoneNumber ||
+      !outboundReason ||
+      isPending ||
+      isApproved
+    ) {
       return
     }
 
@@ -74,7 +91,9 @@ function CallNumberTab({
     }
   }
 
-  const approvalLabel = isPending
+  const approvalLabel = !outboundReason
+    ? 'Request Approval'
+    : isPending
     ? 'Requesting...'
     : isApproved
       ? 'Approved'
@@ -83,34 +102,62 @@ function CallNumberTab({
         : 'Request Approval'
 
   return (
-    <div className="aicc-modal-section aicc-outbound-number">
+    <div
+      className={[
+        'aicc-modal-section',
+        'aicc-outbound-number',
+        !requiresOutboundApproval && 'aicc-outbound-number--direct',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="aicc-outbound-number__field">
         <label htmlFor="aicc-outbound-phone-number">Phone Number</label>
         <Input
           id="aicc-outbound-phone-number"
           placeholder="Enter phone number"
-          prefix={<PhoneIcon />}
           value={phoneNumber}
           onChange={(event) => setPhoneNumber(event.target.value)}
         />
+        <Select<ExternalOutboundReason>
+          aria-label="Outbound reason"
+          className="aicc-outbound-number__reason"
+          options={externalOutboundReasonOptions}
+          placeholder="Select reason"
+          value={outboundReason}
+          onChange={setOutboundReason}
+        />
+        {requiresOutboundApproval && (
+          <AppButton
+            className="aicc-outbound-number__approval"
+            disabled={
+              !normalizedPhoneNumber || !outboundReason || isPending || isApproved
+            }
+            onClick={handleRequestApproval}
+          >
+            {approvalLabel}
+          </AppButton>
+        )}
         <AppButton
-          className="aicc-outbound-number__approval"
-          disabled={!normalizedPhoneNumber || isPending || isApproved}
-          onClick={handleRequestApproval}
-        >
-          {approvalLabel}
-        </AppButton>
-        <AppButton
-          disabled={!isApproved}
-          icon={<PhoneIcon />}
+          disabled={
+            !normalizedPhoneNumber ||
+            !outboundReason ||
+            (requiresOutboundApproval && !isApproved)
+          }
           title={
-            isApproved
+            !outboundReason
+              ? 'Select a reason before requesting TL approval'
+              : !requiresOutboundApproval
+                ? 'Call external number'
+              : isApproved
               ? 'Call approved external number'
               : 'Request TL approval before placing this call'
           }
           type="primary"
           onClick={() => {
-            consume()
+            if (requiresOutboundApproval) {
+              consume()
+            }
             onComplete()
           }}
         >
@@ -121,19 +168,34 @@ function CallNumberTab({
   )
 }
 
-function CallAgentTab({ onComplete }: { onComplete: () => void }) {
+function CallAgentTab({
+  callAgentScope,
+  onComplete,
+}: {
+  callAgentScope: OutboundCallModalProps['callAgentScope']
+  onComplete: () => void
+}) {
   const [keyword, setKeyword] = useState('')
   const [skillQueue, setSkillQueue] = useState(allFilterValue)
+  const visibleAgents = useMemo(
+    () =>
+      callAgentScope === 'leaders-only'
+        ? transferAgents.filter(
+            (agent) => agent.marker === 'SPV' || agent.marker === 'TL',
+          )
+        : transferAgents,
+    [callAgentScope],
+  )
 
   const skillQueueOptions = useMemo(
-    () => Array.from(new Set(transferAgents.map((agent) => agent.skillName))),
-    [],
+    () => Array.from(new Set(visibleAgents.map((agent) => agent.skillName))),
+    [visibleAgents],
   )
 
   const filteredAgents = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLowerCase()
 
-    return transferAgents.filter((agent) => {
+    return visibleAgents.filter((agent) => {
       const matchesKeyword =
         !normalizedKeyword ||
         [agent.name, agent.employeeId].some((value) =>
@@ -144,7 +206,7 @@ function CallAgentTab({ onComplete }: { onComplete: () => void }) {
 
       return matchesKeyword && matchesSkillQueue
     })
-  }, [keyword, skillQueue])
+  }, [keyword, skillQueue, visibleAgents])
 
   const columns: ColumnsType<TransferAgent> = [
     {
@@ -234,17 +296,30 @@ function CallAgentTab({ onComplete }: { onComplete: () => void }) {
   )
 }
 
-export function OutboundCallModal({ open, onClose }: OutboundCallModalProps) {
+export function OutboundCallModal({
+  callAgentScope,
+  open,
+  onClose,
+  requiresOutboundApproval,
+}: OutboundCallModalProps) {
   const items = [
     {
       key: 'number',
       label: 'Call Number',
-      children: <CallNumberTab open={open} onComplete={onClose} />,
+      children: (
+        <CallNumberTab
+          open={open}
+          requiresOutboundApproval={requiresOutboundApproval}
+          onComplete={onClose}
+        />
+      ),
     },
     {
       key: 'agent',
       label: 'Call Agent',
-      children: <CallAgentTab onComplete={onClose} />,
+      children: (
+        <CallAgentTab callAgentScope={callAgentScope} onComplete={onClose} />
+      ),
     },
   ]
 

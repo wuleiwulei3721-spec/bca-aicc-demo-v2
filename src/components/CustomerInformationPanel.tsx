@@ -181,17 +181,26 @@ export function CustomerInformationPanel({
                   </button>
                 )}
               </div>
-              <button
-                className="aicc-customer-info__fact-action"
-                title="Send email"
-                type="button"
-                onClick={onSendEmail}
-              >
-                <MailOutlined />
-                <span className="aicc-customer-info__email-value">
-                  {profile.email}
+              {onSendEmail ? (
+                <button
+                  className="aicc-customer-info__fact-action"
+                  title="Send email"
+                  type="button"
+                  onClick={onSendEmail}
+                >
+                  <MailOutlined />
+                  <span className="aicc-customer-info__email-value">
+                    {profile.email}
+                  </span>
+                </button>
+              ) : (
+                <span className="aicc-customer-info__fact-static">
+                  <MailOutlined />
+                  <span className="aicc-customer-info__email-value">
+                    {profile.email}
+                  </span>
                 </span>
-              </button>
+              )}
               <span>
                 <IdcardOutlined />
                 {profile.cisNumber}

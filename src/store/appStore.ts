@@ -50,13 +50,11 @@ export interface CallTransferContext {
 }
 export type DigitalHandoffReadiness =
   | 'available'
-  | 'digital-skill-unavailable'
   | 'not-ready'
 export type VoiceVideoHandoffReadiness =
   | 'active-call'
   | 'available'
   | 'not-ready'
-  | 'voice-skill-unavailable'
 
 export interface InteractionTiming {
   flashUntil: number

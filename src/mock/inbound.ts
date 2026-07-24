@@ -25,11 +25,21 @@ export const inboundCustomer: CustomerInformation = {
     email: 'Dimas@gmail.com',
     cisNumber: '00000078987',
     customerType: 'Priority Customer',
+    crmContacts: {
+      Phone: ['087825100234', '+62 21 5088 1001'],
+      WhatsApp: ['+62 878 2510 0234'],
+      BankApp: ['dimas.bank1'],
+      Email: ['Dimas@gmail.com', 'dimas.abimanyu@example.net'],
+      Instagram: ['@dimas.abimanyu'],
+      X: ['@dimasabimanyu'],
+      LinkedIn: ['linkedin.com/in/dimas-abimanyu'],
+      'App Store': ['Dimas A.'],
+    },
   },
   verificationStatus: 'Unverified',
 }
 
-export const CUSTOMER_IDENTITY_REFRESH_DEMO_ID =
+export const CRM_DEMO_CIS_NUMBER =
   inboundCustomer.profile.cisNumber
 
 export const unidentifiedInboundCustomer: CustomerInformation = {
@@ -39,9 +49,9 @@ export const unidentifiedInboundCustomer: CustomerInformation = {
     avatarInitials: '?',
     avatarUrl: '',
     name: 'Unidentified Customer',
-    phoneNumber: 'Caller ID unavailable',
-    email: 'Customer identity not loaded',
-    cisNumber: 'Customer ID not loaded',
+    phoneNumber: '08123456789',
+    email: '-',
+    cisNumber: '-',
     customerType: '',
   },
   verificationStatus: 'Unverified',
@@ -1584,10 +1594,10 @@ export const ticketingHistory: TicketHistoryItem[] = [
   },
 ]
 
-export function lookupCustomerIdentityRefresh(
-  customerId: string,
+export function lookupCustomerByCis(
+  cisNumber: string,
 ): CustomerIdentityRefreshResult | null {
-  if (customerId.trim() !== CUSTOMER_IDENTITY_REFRESH_DEMO_ID) {
+  if (cisNumber.trim() !== CRM_DEMO_CIS_NUMBER) {
     return null
   }
 

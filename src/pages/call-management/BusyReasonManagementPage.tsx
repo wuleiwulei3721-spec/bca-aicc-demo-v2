@@ -1,5 +1,5 @@
 import { EditOutlined } from '@ant-design/icons'
-import { Alert, Input, Select, Switch } from 'antd'
+import { Alert, Input, Radio, Select, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useMemo, useState } from 'react'
 import {
@@ -14,17 +14,23 @@ import {
   StatusBadge,
 } from '../../components'
 import { useCallManagementStore } from '../../store'
-import type { BusyReason, BusyReasonStatus } from '../../types'
+import type {
+  BusyReason,
+  BusyReasonProductivityType,
+  BusyReasonStatus,
+} from '../../types'
 
 type BusyReasonModalMode = 'edit' | null
 
 interface BusyReasonFilters {
   keyword: string
+  productivityType: '' | BusyReasonProductivityType
   status: '' | BusyReasonStatus
 }
 
 const defaultFilters: BusyReasonFilters = {
   keyword: '',
+  productivityType: '',
   status: '',
 }
 
@@ -33,6 +39,19 @@ const statusOptions: Array<{ label: string; value: '' | BusyReasonStatus }> = [
   { label: 'Enabled', value: 'Active' },
   { label: 'Disabled', value: 'Disabled' },
 ]
+
+const productivityTypeOptions: Array<{
+  label: string
+  value: BusyReasonProductivityType
+}> = [
+  { label: 'Productive', value: 'Productive' },
+  { label: 'Non-Productive', value: 'Non-Productive' },
+]
+
+const productivityTypeFilterOptions: Array<{
+  label: string
+  value: '' | BusyReasonProductivityType
+}> = [{ label: 'All', value: '' }, ...productivityTypeOptions]
 
 function formatSavedTime(date: Date) {
   const year = date.getFullYear()
@@ -83,8 +102,11 @@ export function BusyReasonManagementPage() {
         const statusMatched = appliedFilters.status
           ? reason.status === appliedFilters.status
           : true
+        const productivityTypeMatched = appliedFilters.productivityType
+          ? reason.productivityType === appliedFilters.productivityType
+          : true
 
-        return keywordMatched && statusMatched
+        return keywordMatched && productivityTypeMatched && statusMatched
       }),
     [appliedFilters, busyReasons],
   )
@@ -173,6 +195,11 @@ export function BusyReasonManagementPage() {
       width: 180,
     },
     {
+      dataIndex: 'productivityType',
+      title: 'Productivity Type',
+      width: 160,
+    },
+    {
       dataIndex: 'status',
       render: (value: BusyReasonStatus) => renderStatusBadge(value),
       title: 'Status',
@@ -249,6 +276,18 @@ export function BusyReasonManagementPage() {
                     }
                   />
                 </AdminFilterField>
+                <AdminFilterField label="Productivity Type" width={180}>
+                  <Select
+                    options={productivityTypeFilterOptions}
+                    value={filterDraft.productivityType}
+                    onChange={(value) =>
+                      setFilterDraft((currentDraft) => ({
+                        ...currentDraft,
+                        productivityType: value,
+                      }))
+                    }
+                  />
+                </AdminFilterField>
                 <AdminFilterField label="Status" width={160}>
                   <Select
                     options={statusOptions}
@@ -269,7 +308,7 @@ export function BusyReasonManagementPage() {
             dataSource={filteredReasons}
             pagination={{}}
             rowKey="busyReasonId"
-            horizontalScroll={1010}
+            horizontalScroll={1170}
           />
         </BaseCard>
       <AdminModal
@@ -309,6 +348,19 @@ export function BusyReasonManagementPage() {
                   value={draft.busyReasonName}
                   onChange={(event) =>
                     updateDraft('busyReasonName', event.target.value)
+                  }
+                />
+              </label>
+              <label className="global-control-config__field">
+                <span>
+                  Productivity Type <strong>*</strong>
+                </span>
+                <Radio.Group
+                  optionType="button"
+                  options={productivityTypeOptions}
+                  value={draft.productivityType}
+                  onChange={(event) =>
+                    updateDraft('productivityType', event.target.value)
                   }
                 />
               </label>

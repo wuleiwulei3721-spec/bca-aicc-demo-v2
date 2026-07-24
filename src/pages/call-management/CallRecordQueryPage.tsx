@@ -20,6 +20,7 @@ import {
 import { useCallManagementStore } from '../../store'
 import type {
   CallRecord,
+  CallRecordCallType,
   CallRecordChannel,
   CallRecordEndReason,
   CallRecordMediaType,
@@ -37,6 +38,7 @@ type CallRecordDateRange = [Dayjs, Dayjs]
 type CallRecordPlaybackSource = 'screen' | 'video' | 'voice'
 
 interface CallRecordFilters {
+  callType: 'All' | CallRecordCallType
   channel: 'All' | CallRecordChannel
   dateRange: CallRecordDateRange
   endedBy: 'All' | ServiceEndedBy
@@ -61,6 +63,16 @@ const mediaTypeOptions: Array<{
   { label: 'Voice', value: 'Voice' },
   { label: 'Video', value: 'Video' },
   { label: 'DM', value: 'DM' },
+]
+
+const callTypeOptions: Array<{
+  label: string
+  value: CallRecordFilters['callType']
+}> = [
+  { label: 'All Call Types', value: 'All' },
+  { label: 'Customer', value: 'Customer' },
+  { label: 'Transfer', value: 'Transfer' },
+  { label: 'Conference', value: 'Conference' },
 ]
 
 const endedByOptions: Array<{
@@ -93,6 +105,7 @@ const endReasonOptions: Array<{
 
 function createDefaultFilters(): CallRecordFilters {
   return {
+    callType: 'All',
     channel: 'All',
     dateRange: [dayjs().startOf('day'), dayjs().endOf('day')],
     endedBy: 'All',
@@ -140,6 +153,7 @@ function createSearchText(record: CallRecord) {
     record.recordNo,
     record.channel,
     record.mediaType,
+    record.callType,
     record.customerName,
     record.customerId,
     record.contact,
@@ -163,6 +177,7 @@ function recordMatchesFilters(record: CallRecord, filters: CallRecordFilters) {
 
   return (
     (!keyword || createSearchText(record).includes(keyword)) &&
+    (filters.callType === 'All' || record.callType === filters.callType) &&
     (filters.channel === 'All' || record.channel === filters.channel) &&
     (filters.mediaType === 'All' || record.mediaType === filters.mediaType) &&
     (filters.endedBy === 'All' || record.endedBy === filters.endedBy) &&
@@ -440,6 +455,11 @@ export function CallRecordQueryPage() {
       width: 78,
     },
     {
+      dataIndex: 'callType',
+      title: 'Call Type',
+      width: 100,
+    },
+    {
       dataIndex: 'customerName',
       ellipsis: true,
       title: 'Customer Name',
@@ -600,16 +620,6 @@ export function CallRecordQueryPage() {
     >
       <BaseCard compact>
         <AdminToolbar
-          actions={
-            <>
-              <BaseButton variant="primary" onClick={handleSearch}>
-                Search
-              </BaseButton>
-              <BaseButton variant="secondary" onClick={handleReset}>
-                Reset
-              </BaseButton>
-            </>
-          }
           filters={
             <>
               <AdminFilterField label="Keyword" width={260}>
@@ -645,6 +655,18 @@ export function CallRecordQueryPage() {
                     setDraftFilters((currentFilters) => ({
                       ...currentFilters,
                       mediaType: value,
+                    }))
+                  }
+                />
+              </AdminFilterField>
+              <AdminFilterField label="Call Type" width={170}>
+                <Select
+                  options={callTypeOptions}
+                  value={draftFilters.callType}
+                  onChange={(value) =>
+                    setDraftFilters((currentFilters) => ({
+                      ...currentFilters,
+                      callType: value,
                     }))
                   }
                 />
@@ -690,13 +712,21 @@ export function CallRecordQueryPage() {
                   }}
                 />
               </AdminFilterField>
+              <div className="routing-config-page__admin-actions">
+                <BaseButton variant="primary" onClick={handleSearch}>
+                  Search
+                </BaseButton>
+                <BaseButton variant="secondary" onClick={handleReset}>
+                  Reset
+                </BaseButton>
+              </div>
             </>
           }
         />
         <AdminTable<CallRecord>
           columns={columns}
           dataSource={filteredRecords}
-          horizontalScroll={1798}
+          horizontalScroll={1898}
           pagination={{}}
           rowKey="id"
         />

@@ -615,26 +615,18 @@ export function LiveChat2ConversationWorkspace({
     onDraftChange(session.id, message.message)
     window.setTimeout(() => composerRef.current?.focus(), 0)
   }
-  const abnormalEndReasonItems: MenuProps['items'] =
-    sessionEndReasons.length > 0
-      ? [
-          {
-            key: 'abnormal-end-reason-title',
-            label: 'Abnormal End Reason',
-            type: 'group',
-            children: sessionEndReasons.map((reason) => ({
-              key: reason.id,
-              label: reason.reasonName,
-            })),
-          },
-        ]
-      : [
-          {
-            key: 'no-abnormal-end-reason',
-            disabled: true,
-            label: 'No abnormal end reason',
-          },
-        ]
+  const hasAbnormalEndReasons = sessionEndReasons.length > 0
+  const abnormalEndReasonItems: MenuProps['items'] = [
+    {
+      key: 'abnormal-end-reason-title',
+      label: 'Abnormal End Reason',
+      type: 'group',
+      children: sessionEndReasons.map((reason) => ({
+        key: reason.id,
+        label: reason.reasonName,
+      })),
+    },
+  ]
   const handleAbnormalEndReasonClick: MenuProps['onClick'] = ({ key }) => {
     const selectedReason = sessionEndReasons.find((reason) => reason.id === key)
 
@@ -714,9 +706,40 @@ export function LiveChat2ConversationWorkspace({
                   <SwapOutlined />
                   Transfer
                 </button>
-                <span className="livechat2-conversation__split-action">
+                {hasAbnormalEndReasons ? (
+                  <span className="livechat2-conversation__split-action">
+                    <button
+                      className="livechat2-conversation__end-action livechat2-conversation__split-main"
+                      title="End service"
+                      type="button"
+                      onClick={() => setIsConfirmOpen(true)}
+                    >
+                      <CloseOutlined />
+                      End Service
+                    </button>
+                    <Dropdown
+                      classNames={{ root: 'aicc-agent-status-menu' }}
+                      menu={{
+                        items: abnormalEndReasonItems,
+                        onClick: handleAbnormalEndReasonClick,
+                      }}
+                      placement="bottomRight"
+                      trigger={['click']}
+                    >
+                      <button
+                        aria-label="Select abnormal end reason"
+                        className="livechat2-conversation__end-caret"
+                        title="Abnormal End Reason"
+                        type="button"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <CaretDownOutlined />
+                      </button>
+                    </Dropdown>
+                  </span>
+                ) : (
                   <button
-                    className="livechat2-conversation__end-action livechat2-conversation__split-main"
+                    className="livechat2-conversation__end-action"
                     title="End service"
                     type="button"
                     onClick={() => setIsConfirmOpen(true)}
@@ -724,26 +747,7 @@ export function LiveChat2ConversationWorkspace({
                     <CloseOutlined />
                     End Service
                   </button>
-                  <Dropdown
-                    classNames={{ root: 'aicc-agent-status-menu' }}
-                    menu={{
-                      items: abnormalEndReasonItems,
-                      onClick: handleAbnormalEndReasonClick,
-                    }}
-                    placement="bottomRight"
-                    trigger={['click']}
-                  >
-                    <button
-                      aria-label="Select abnormal end reason"
-                      className="livechat2-conversation__end-caret"
-                      title="Abnormal End Reason"
-                      type="button"
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      <CaretDownOutlined />
-                    </button>
-                  </Dropdown>
-                </span>
+                )}
               </>
             )}
           </div>

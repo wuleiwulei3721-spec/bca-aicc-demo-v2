@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-07-22 16:25 +08:00
+Last updated: 2026-07-24 14:04 +08:00
 
 ## 1. Overall Status
 
@@ -55,6 +55,8 @@ This repository is still a demo application:
 - Profile menu follows explicit Unsigned / Not Ready / Ready / Pre-AUX / AUX state branches, with current status displayed beside the team name.
 - Status after Sign-in is shared Global Control Configuration, defaults to Not Ready, and applies to the next sign-in in the current browser session.
 - Global Control labels `System Idle Log-out Timeout` and `Auto Log-out Warning Lead Time` distinguish the system timeout from its pre-log-out warning and from the agent toolbar Sign Out action.
+- Header Log Out first blocks active call, Live Chat, or Live Chat 2 services; when no service is active, it blocks signed-in Ready and Pre-AUX states until the agent switches to Not Ready or AUX. Unsigned, Not Ready, and AUX states then use a confirmation dialog.
+- Idle system log-out monitors Unsigned, Not Ready, and AUX states, resets on window activity or warning dismissal, shows a pre-expiry warning, and returns to Login at the configured timeout.
 - Sign out confirmation and active-service block.
 - AUX reason menu from Busy Reason.
 - All Not Ready states expose Busy Reason AUX options; in After Call Work, choosing one cancels the saved Global Control countdown so agents can extend CRM editing time.
@@ -63,15 +65,16 @@ This repository is still a demo application:
 ## 5. Completed Agent and Call Toolbar
 
 - Agent status model: Unsigned, Ready, Not Ready, AUX, Pre-AUX.
-- The current demo account retains its existing Voice + Digital-equivalent channel capability internally; no service mode is exposed to the agent.
+- The current demo account retains fixed full-channel capability internally; no service mode is exposed to the agent and no legacy service-mode mismatch prompt is shown.
 - Call statuses: Idle, Incoming, Talking, Hold.
 - Answer, Hold, Transfer, Hang Up.
-- Hang Up uses a split-button: the main action performs normal end, and the caret selects an abnormal end reason.
+- Hang Up uses a split-button only when its current media has an active abnormal end reason; otherwise it remains the normal single Hang Up action.
 - Ready / Not Ready toggle.
 - Timer display.
 - Global Control `Auto Cancel ACW Duration` drives the next voice/video After Call Work timer.
 - Toolbar More menu currently exposes Outbound Call; toolbar display settings are hidden from the More menu.
-- Outbound Call modal entry with per-number TL approval before external calling is enabled.
+- Outbound Call and Customer Information customer-phone outbound require `Miss Information` or `Financial Risk`. Ordinary Agents require TL approval; TL selects the reason and calls directly. The Call Number form uses aligned, icon-free controls.
+- Ordinary Agents see only SPV and TL entries in `Outbound Call > Call Agent`; TL-and-above accounts see the full list.
 - Call identification and Skill display during call lifecycle.
 - Active-call and not-ready handoff warnings.
 
@@ -84,7 +87,7 @@ This repository is still a demo application:
 - BankApp Demo tab.
 - Webchat Demo tab.
 - WhatsApp Demo tab.
-- Email workspace source is retained but its customer menu entry is temporarily hidden.
+- Customer and local profiles expose the Email workspace entry below WhatsApp.
 - Fixed Live Chat tab.
 - Dynamic PSTN / Voice Call tabs.
 - Dynamic Video Call tabs.
@@ -100,17 +103,17 @@ This repository is still a demo application:
 - Shared `InteractionWorkspace` layout.
 - PSTN call simulation.
 - BankApp voice workspace.
-- Unidentified PSTN customer initial state.
-- Customer identity refresh demo.
+- Unidentified PSTN customer initial state with anonymous caller number, `-` email/CIS, and no CRM-dependent customer actions.
+- KBV-approved CRM CIS customer-information refresh demo: no manual Customer ID entry; valid same-origin CRM postMessage responses refresh profile, journey, and ticket history while retaining `Verified`.
 - Customer Information card.
-- Customer Information card includes a compact `Special Handling` action that opens a read-only static demo modal.
+- CRM-identified Customer Information cards include a compact `Special Handling` action that opens a read-only static demo modal; it is hidden before identity refresh and for Guests.
 - Customer Information verification action is channel-aware: PSTN and BankApp Voice use compact `KBV`; logged-in BankApp text uses compact `PIN`; BankApp text guest, Webchat text, and unsupported channels hide the action.
 - Guest customer information is channel-aware: text-channel guests keep the entered name / phone / email with customer ID shown as `-`, while BankApp voice / video guests show generated `Guest-06290001`-style names, the entered phone number, and `-` for unavailable fields.
 - Customer Verification V2 right-side tab for KBV.
 - Call Flow Detail modal.
 - Send Email modal.
-- Contact Management modal.
-- Unified TL approval demo for external outbound number, external transfer number, and customer-phone outbound actions. A pending request opens a separate TL simulation popup over the supplied complete dashboard image, approvals use a fixed two-minute timeout, and the component-styled bottom-right result popup can include an optional TL note.
+- CRM-backed read-only customer contact display with an `IdcardOutlined` `All Contact Details` header viewer. Its grouped left-channel/right-value list supports multi-value and empty CRM states while reusing the legacy editor's channel icons. Legacy Contact Management DEMO is local-only and disabled by default.
+- Two Demo login identities: `888888 / 888888` is Agent Budi Kartika and `666666 / 666666` is TL Maya Lestari with a distinct female avatar. Both use the same workbench; TL receives `transfer:external-number`, which displays `Transfer Number` with direct transfer. Ordinary Agent Call Agent lists are limited to SPV and TL records; TL sees all records. Only ordinary-Agent external outbound and customer-phone calls create TL approvals. Pending requests share one masked TL simulation window and are processed as a FIFO queue, with the centered approval Modal displaying the current item, queue count, two-minute timeout, and optional TL note. A single real request appends one TL-page-only mock follow-up so the two-item queue can be demonstrated.
 - Customer Journey.
 - Ticketing History.
 - Next Best Action.
@@ -150,7 +153,7 @@ This repository is still a demo application:
 - Webchat active conversations show a static floating `Customer is typing` indicator above the agent composer for demo purposes.
 - Send message local state.
 - End Service / Close session behavior.
-- End Service uses a split-button: the main action keeps the normal confirmation modal, and the caret selects an abnormal end reason without a second confirmation.
+- End Service uses a split-button only when DM has an active abnormal end reason; otherwise it remains the normal confirmation-based End Service action.
 - Customer-ended mock session handling.
 - Transfer modal from conversation.
 - Quick Replies right-side tab.
@@ -193,18 +196,19 @@ This repository is still a demo application:
 - Webchat PIN verification is temporarily hidden pending customer confirmation.
 - Webchat queue, agent chat, and satisfaction rating use the latest desensitized screenshots from the customer Webchat folder.
 
-## 13. Implemented but Temporarily Hidden Email Workspace
+## 13. Implemented Email Workspace
 
-- Email workspace implementation is retained in source but has no Channel Simulation menu entry in the current customer demo because the work is incomplete.
-- When re-enabled, Email opens or reuses one closable Email workspace tab; closing it falls back to Home.
-- Four-part desktop workspace for mailbox folders, customer context, Mail / CRM content, and thread records.
+- `Channel Simulation > Email` is available in both customer and local visibility profiles.
+- Email opens or reuses one closable Email workspace tab; closing it falls back to Home.
+- High-density desktop workspace for mailbox folders, shared customer context, `CRM / Email` content, and the thread record rail inside Email.
 - Inbox, Sent, Drafts, and Trash folder switching with search, refresh feedback, counts, selected mail, read state, and SLA progress.
-- Reply and Forward compose flows with anonymous BANK 1 addresses, built-in response templates, basic rich-text controls, Save Draft, and Send.
-- Sending adds a Sent record and related thread item; replying marks the source email replied and stops its SLA.
+- Reply and Forward compose flows with anonymous BANK 1 addresses, built-in response templates, basic rich-text controls, Save Draft, and Send. A sent Forward removes both its source and forwarding record from all four folders; a saved Forward draft retains that behavior when later sent.
+- Sending a Reply or normal draft adds a Sent record and related thread item; replying marks the source email replied and stops its SLA.
 - Drafts can be opened and edited; Trash has a recover flow back to Inbox.
-- Ignore supports AD, Spam, and Sales Email reasons, keeps the email in Inbox, and stops its SLA.
-- Customer context reuses Customer Information, Journey, Ticketing, NBA, and Quick Action components.
-- CRM is code-built with BANK 1-safe content and no legacy customer screenshot.
+- Ignore supports AD, Spam, and Sales Email reasons, moves the email to Trash, and stops its SLA.
+- Customer context directly reuses the shared Customer Information, Journey, Ticketing, NBA, and Quick Action column; Customer Information shows Email as the access channel.
+- The workspace directly reuses Live Chat's `CrmPanel`: CRM uses the same screenshot and Email replaces the visible Conversation label while keeping the same tab styling.
+- The shared customer context column is fixed at 280px in the Email layout. Mailbox folders use solid green, blue, orange, and red icon circles with a subtle active background; search uses one prefixed input plus a separate refresh control.
 - CWU drawer supports Business Type, Summary, one-click generation, and local confirmation.
 - Email verification is hidden because Email verification rules are not confirmed.
 - All Email workflow state is front-end local state and resets after refresh or closing/reopening the tab.
@@ -246,12 +250,12 @@ Implemented behaviors:
 - Enabled common numbers feed the call Transfer modal `Transfer IVR` tab.
 - Sensitive word CRUD with fixed category dictionary.
 - Sensitive word detection in Live Chat agent reply sending.
-- Busy reason keyword/status filtering and editing.
-- Abnormal End Reasons CRUD for abnormal Voice, Video, and DM service end reasons.
+- Busy reason Productivity Type (`Productive` / `Non-Productive`) filtering and editing for future status and report statistics.
+- Abnormal End Reasons CRUD for configurable Voice, Video, and DM service end reasons, seeded with two active DM reasons only.
 - Abnormal End Reasons filters by Keyword, Applicable Media, and Status.
 - Interaction Log for current-agent Phone, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp records, seeded with 30 mock records.
-- Interaction Log filters by keyword, channel, media type, ended by, end reason, and date range, defaulting to the current day.
-- Interaction Log list separates Customer Name / Customer ID and Agent Name / Agent ID, shows Contact, Queue, Service Time, Ended By, End Reason, and QM Score.
+- Interaction Log filters by keyword, channel, media type, call type, ended by, end reason, and date range, defaulting to the current day.
+- Interaction Log list separates Customer Name / Customer ID and Agent Name / Agent ID, shows Contact, Call Type, Queue, Service Time, Ended By, End Reason, and QM Score.
 - Numeric QM Scores open a read-only third-party QM system-window preview at the source image ratio; only the source image's top-right X closes it, and empty scores render as non-interactive `-`.
 - Interaction Log details use a consistent layout: Voice and Video show left media playback, middle transcript, and right read-only CWU; DM shows conversation bubbles plus right read-only CWU without an empty media column.
 - Interaction Log treats CWU summary as mandatory and read-only in the query page, so Summary Status, Summary Time, and edit actions are not exposed.
@@ -357,7 +361,7 @@ Latest recorded validation:
 - ESLint passed.
 - Production build passed with existing large chunk warning.
 - Browser smoke checks passed for workspace management-page tabs: left-menu open/reuse, close fallback, direct URL bridge, active PSTN tab coexistence, and customer/local visibility profile behavior.
-- Email browser smoke checks passed for menu/tab lifecycle, Reply/Send, Draft editing, Ignore, Trash recovery, CRM, CWU, state reset, and 1366x768 / 1440x900 / 1920x1080 layout widths.
+- Email browser smoke checks passed for customer/local menu visibility, menu/tab lifecycle, shared customer context, `CRM / Email`, the shared CRM screenshot, dynamic CRM tabs, Reply/Send, Save Draft, Ignore, Trash recovery, search, CWU, state reset, and 1366x768 / 1440x900 / 1920x1080 layout widths without page overflow.
 - Vercel production deployment completed at `https://netinfo-aicc-demo-v2.vercel.app` with `VITE_APP_VISIBILITY_PROFILE=customer` and `VITE_ENABLE_ADMIN_MENUS=true`; post-deploy smoke confirmed AI links, Call Management tab opening, and hidden Employee Management / Design System.
 
 ## 20. Known Demo Boundaries

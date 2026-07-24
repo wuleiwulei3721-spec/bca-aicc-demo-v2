@@ -15,6 +15,24 @@ export type VerificationStatus =
   | 'Unverified'
   | 'Verification Failed'
 
+export type CustomerContactChannel =
+  | 'Phone'
+  | 'WhatsApp'
+  | 'BankApp'
+  | 'Email'
+  | 'Facebook'
+  | 'Instagram'
+  | 'X'
+  | 'TikTok'
+  | 'YouTube'
+  | 'LinkedIn'
+  | 'App Store'
+  | 'Play Store'
+
+export type CustomerCrmContacts = Partial<
+  Record<CustomerContactChannel, string[]>
+>
+
 export type JourneyChannel =
   | 'Email'
   | 'X'
@@ -32,6 +50,7 @@ export interface CustomerProfile {
   email: string
   cisNumber: string
   customerType: string
+  crmContacts?: CustomerCrmContacts
 }
 
 export interface CustomerInformation {

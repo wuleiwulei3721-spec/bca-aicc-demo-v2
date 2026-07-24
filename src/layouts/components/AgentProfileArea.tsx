@@ -36,6 +36,7 @@ function formatAgentStatus(status: AgentStatus) {
 
 interface AgentProfileAreaProps {
   agentName?: string
+  avatarUrl?: string
   presence: AgentPresence
   roleName?: string
   status: AgentStatus
@@ -48,6 +49,7 @@ interface AgentProfileAreaProps {
 
 export function AgentProfileArea({
   agentName = headerAgentProfile.name,
+  avatarUrl = headerAgentProfile.avatarUrl,
   presence,
   roleName = headerAgentProfile.role,
   status,
@@ -205,7 +207,7 @@ export function AgentProfileArea({
           <Avatar
             className="aicc-agent-profile__avatar"
             size={34}
-            src={headerAgentProfile.avatarUrl}
+            src={avatarUrl}
           >
             BK
           </Avatar>

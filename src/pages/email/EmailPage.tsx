@@ -1,5 +1,4 @@
 import {
-  BankOutlined,
   CheckCircleFilled,
   ClockCircleOutlined,
   CloseOutlined,
@@ -12,6 +11,7 @@ import {
   ReloadOutlined,
   RobotOutlined,
   RollbackOutlined,
+  SearchOutlined,
   SendOutlined,
   UserOutlined,
 } from '@ant-design/icons'
@@ -25,14 +25,12 @@ import {
   Select,
   Tooltip,
 } from 'antd'
-import type { MenuProps, TabsProps } from 'antd'
+import type { MenuProps } from 'antd'
 import type { ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   BaseButton,
   BaseModal,
-  BaseTabs,
-  CustomerInformationPanel,
   StatusBadge,
 } from '../../components'
 import { useNow } from '../../hooks/useNow'
@@ -50,11 +48,12 @@ import type {
   EmailIgnoreReason,
   EmailMessage,
 } from '../../types'
-import { ChannelTag } from '../inbound/components/ChannelTag'
-import { CustomerJourneyCard } from '../inbound/components/CustomerJourneyCard'
-import { NextBestActionCard } from '../inbound/components/NextBestActionCard'
-import { QuickActionCard } from '../inbound/components/QuickActionCard'
-import { TicketingHistoryCard } from '../inbound/components/TicketingHistoryCard'
+import {
+  CONVERSATION_TAB_KEY,
+  CRM_TAB_KEY,
+  CrmPanel,
+} from '../inbound/components/CrmPanel'
+import { LeftColumn } from '../inbound/components/LeftColumn'
 
 const BANK_EMAIL_ACCOUNT = 'contact@bank1.demo'
 
@@ -208,12 +207,15 @@ function createComposeDraft(
   const replySubject = source?.subject.replace(/^(RE|FW):\s*/i, '') ?? ''
 
   if (mode === 'draft' && source) {
+    const forwardSourceMessageId = source.forwardSourceMessageId
+
     return {
       bodyHtml: source.bodyHtml,
       draftMessageId: source.id,
-      mode,
+      mode: forwardSourceMessageId ? 'forward' : mode,
       receiver: source.receiver,
       sender: source.sender,
+      sourceMessageId: forwardSourceMessageId ?? source.id,
       subject: source.subject,
       threadId: source.threadId,
     }
@@ -578,9 +580,12 @@ function MailboxPanel({
       </div>
 
       <div className="email-mailbox-panel__search">
-        <Input.Search
+        <Input
           allowClear
+          aria-label="Search email"
           placeholder="Search email"
+          prefix={<SearchOutlined />}
+          type="search"
           value={searchValue}
           onChange={(event) => onSearchChange(event.target.value)}
         />
@@ -644,22 +649,22 @@ function MailboxPanel({
   )
 }
 
-interface EmailCustomerColumnProps {
+interface EmailCustomerContextProps {
   activeEmail: EmailMessage | null
   now: number
   onCompose: () => void
   onOpenCrm: (tab: CrmWorkspaceTab) => void
 }
 
-function EmailCustomerColumn({
+function EmailCustomerContext({
   activeEmail,
   now,
   onCompose,
   onOpenCrm,
-}: EmailCustomerColumnProps) {
+}: EmailCustomerContextProps) {
   if (!activeEmail) {
     return (
-      <aside className="email-customer-column email-customer-column--empty">
+      <aside className="inbound-left-column email-customer-context--empty">
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Select an email" />
       </aside>
     )
@@ -676,29 +681,17 @@ function EmailCustomerColumn({
   }
 
   return (
-    <aside className="email-customer-column">
-      <div className="email-customer-column__fixed">
-        <CustomerInformationPanel
-          accessChannelNode={
-            <ChannelTag
-              compact
-              duration={customer.accessDuration}
-              value="Email"
-            />
-          }
-          className="inbound-section-card inbound-section-card--customer"
-          customer={customer}
-          verificationStatus={customer.verificationStatus}
-          onSendEmail={onCompose}
-        />
-      </div>
-      <div className="email-customer-column__scroll">
-        <CustomerJourneyCard items={customerJourney} />
-        <TicketingHistoryCard items={ticketingHistory} onOpenCrm={onOpenCrm} />
-        <NextBestActionCard items={nextBestActions} onOpenCrm={onOpenCrm} />
-        <QuickActionCard items={quickActions} onOpenCrm={onOpenCrm} />
-      </div>
-    </aside>
+    <LeftColumn
+      customer={{ ...customer, accessChannel: 'Email' }}
+      journey={customerJourney}
+      nextBestActions={nextBestActions}
+      quickActions={quickActions}
+      tickets={ticketingHistory}
+      onOpenCrm={onOpenCrm}
+      onOpenVerification={() => undefined}
+      onSendEmail={onCompose}
+      onVerificationFinish={() => undefined}
+    />
   )
 }
 
@@ -858,80 +851,6 @@ function EmailDetail({
   )
 }
 
-function EmailCrmWorkspace({
-  activeEmail,
-  context,
-}: {
-  activeEmail: EmailMessage | null
-  context: CrmWorkspaceTab | null
-}) {
-  if (!activeEmail) {
-    return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Select an email" />
-  }
-
-  const { profile } = activeEmail.customer
-
-  return (
-    <div className="email-crm-workspace">
-      <aside>
-        <strong>BANK 1 CRM</strong>
-        {['Customer Profile', 'Accounts & Cards', 'Ticketing', 'Omnichannel', 'Email History'].map(
-          (item, index) => (
-            <span className={index === 0 ? 'email-crm-workspace__nav-active' : ''} key={item}>
-              {item}
-            </span>
-          ),
-        )}
-      </aside>
-      <section>
-        <header>
-          <div>
-            <span>Customer 360</span>
-            <strong>{profile.name}</strong>
-          </div>
-          <StatusBadge label={profile.customerType} status="selected" />
-        </header>
-        {context && (
-          <div className="email-crm-workspace__context">
-            <BankOutlined />
-            <span>Opened from Email customer context</span>
-            <strong>{context.title}</strong>
-            <small>{context.reference}</small>
-          </div>
-        )}
-        <div className="email-crm-workspace__grid">
-          {[
-            ['CIS Number', profile.cisNumber],
-            ['Customer Name', profile.name],
-            ['Phone Number', profile.phoneNumber],
-            ['Email Address', profile.email],
-            ['Segment', profile.customerType],
-            ['Access Channel', 'Email'],
-          ].map(([label, value]) => (
-            <label key={label}>
-              <span>{label}</span>
-              <Input readOnly value={value} />
-            </label>
-          ))}
-        </div>
-        <div className="email-crm-workspace__activity">
-          <strong>Recent Activity</strong>
-          <div>
-            <MailOutlined />
-            <span>{activeEmail.subject}</span>
-            <time>{formatEmailTime(activeEmail.sentAt)}</time>
-          </div>
-          <div>
-            <CheckCircleFilled />
-            <span>Email identity matched to the customer profile</span>
-            <time>Current interaction</time>
-          </div>
-        </div>
-      </section>
-    </div>
-  )
-}
-
 export function EmailPage() {
   const [messages, setMessages] = useState<EmailMessage[]>(() =>
     cloneMessages(createEmailDemoMessages()),
@@ -941,8 +860,13 @@ export function EmailPage() {
     'email-inbox-001',
   )
   const [searchValue, setSearchValue] = useState('')
-  const [activeWorkspaceView, setActiveWorkspaceView] = useState('mail')
-  const [crmContext, setCrmContext] = useState<CrmWorkspaceTab | null>(null)
+  const [crmWorkspace, setCrmWorkspace] = useState<{
+    activeKey: string
+    tabs: CrmWorkspaceTab[]
+  }>({
+    activeKey: CONVERSATION_TAB_KEY,
+    tabs: [],
+  })
   const [composeDraft, setComposeDraft] = useState<EmailComposeDraft | null>(null)
   const [isCwuOpen, setIsCwuOpen] = useState(false)
   const [cwuBusinessTypes, setCwuBusinessTypes] = useState<string[]>([])
@@ -1003,12 +927,37 @@ export function EmailPage() {
     setActiveFolder(folder)
     setSearchValue('')
     setSelectedMessageId(firstMessage?.id ?? null)
-    setActiveWorkspaceView('mail')
+    setCrmWorkspace((current) => ({
+      ...current,
+      activeKey: CONVERSATION_TAB_KEY,
+    }))
   }
 
   const openCrm = (tab: CrmWorkspaceTab) => {
-    setCrmContext(tab)
-    setActiveWorkspaceView('crm')
+    setCrmWorkspace((current) => ({
+      activeKey: tab.key,
+      tabs: current.tabs.some((item) => item.key === tab.key)
+        ? current.tabs
+        : [...current.tabs, tab],
+    }))
+  }
+
+  const closeCrmTab = (targetKey: string) => {
+    setCrmWorkspace((current) => {
+      const removedIndex = current.tabs.findIndex(
+        (tab) => tab.key === targetKey,
+      )
+      const tabs = current.tabs.filter((tab) => tab.key !== targetKey)
+      const nextActiveTab = tabs[Math.max(0, removedIndex - 1)] ?? tabs[0]
+
+      return {
+        activeKey:
+          current.activeKey === targetKey
+            ? nextActiveTab?.key ?? CRM_TAB_KEY
+            : current.activeKey,
+        tabs,
+      }
+    })
   }
 
   const createDraftMessage = (draft: EmailComposeDraft): EmailMessage => {
@@ -1031,6 +980,8 @@ export function EmailPage() {
       },
       direction: 'outbound',
       folder: 'drafts',
+      forwardSourceMessageId:
+        draft.mode === 'forward' ? draft.sourceMessageId : undefined,
       handlingStatus: 'draft',
       isRead: true,
       preview: getEmailText(bodyHtml).slice(0, 96) || 'Empty draft',
@@ -1053,7 +1004,10 @@ export function EmailPage() {
     setComposeDraft(null)
     setActiveFolder('drafts')
     setSelectedMessageId(draftMessage.id)
-    setActiveWorkspaceView('mail')
+    setCrmWorkspace((current) => ({
+      ...current,
+      activeKey: CONVERSATION_TAB_KEY,
+    }))
     showNotice('Draft saved in the Drafts folder.')
   }
 
@@ -1061,6 +1015,33 @@ export function EmailPage() {
     const source = draft.sourceMessageId
       ? messages.find((email) => email.id === draft.sourceMessageId)
       : selectedEmail
+
+    if (draft.mode === 'forward') {
+      const removedMessageIds = new Set(
+        [draft.sourceMessageId, draft.draftMessageId].filter(
+          (messageId): messageId is string => Boolean(messageId),
+        ),
+      )
+      const nextMessage = messages
+        .filter(
+          (email) =>
+            email.folder === activeFolder && !removedMessageIds.has(email.id),
+        )
+        .sort((first, second) => second.sentAt - first.sentAt)[0]
+
+      setMessages((current) =>
+        current.filter((email) => !removedMessageIds.has(email.id)),
+      )
+      setComposeDraft(null)
+      setSelectedMessageId(nextMessage?.id ?? null)
+      setCrmWorkspace((current) => ({
+        ...current,
+        activeKey: CONVERSATION_TAB_KEY,
+      }))
+      showNotice('Email forwarded and removed from the mailbox.', 'info')
+      return
+    }
+
     const draftMessage = createDraftMessage(draft)
     const sentMessage: EmailMessage = {
       ...draftMessage,
@@ -1089,7 +1070,10 @@ export function EmailPage() {
     setComposeDraft(null)
     setSelectedMessageId(sentMessage.id)
     setActiveFolder('sent')
-    setActiveWorkspaceView('mail')
+    setCrmWorkspace((current) => ({
+      ...current,
+      activeKey: CONVERSATION_TAB_KEY,
+    }))
     showNotice('Email sent and added to the conversation record.')
   }
 
@@ -1103,15 +1087,19 @@ export function EmailPage() {
         email.id === selectedEmail.id
           ? {
               ...email,
+              folder: 'trash',
               handlingStatus: 'ignored',
               ignoreReason: reason,
               isRead: true,
+              originalFolder:
+                email.folder === 'trash' ? 'inbox' : email.folder,
               slaStoppedAt: Date.now(),
             }
           : email,
       ),
     )
-    showNotice(`Email marked as no reply: ${reason}.`, 'info')
+    setActiveFolder('trash')
+    showNotice(`Email moved to Trash: ${reason}.`, 'info')
   }
 
   const recoverEmail = () => {
@@ -1127,6 +1115,7 @@ export function EmailPage() {
               ...email,
               folder: recoveredFolder,
               handlingStatus: email.direction === 'inbound' ? 'read' : 'sent',
+              ignoreReason: undefined,
               originalFolder: undefined,
             }
           : email,
@@ -1212,27 +1201,6 @@ export function EmailPage() {
     </div>
   )
 
-  const workspaceTabs: TabsProps['items'] = [
-    {
-      children: mailContent,
-      key: 'mail',
-      label: (
-        <span className="email-workspace-tab-label">
-          <MailOutlined /> Mail
-        </span>
-      ),
-    },
-    {
-      children: <EmailCrmWorkspace activeEmail={selectedEmail} context={crmContext} />,
-      key: 'crm',
-      label: (
-        <span className="email-workspace-tab-label">
-          <BankOutlined /> CRM
-        </span>
-      ),
-    },
-  ]
-
   return (
     <section className="email-page" aria-label="Email channel workspace">
       {notice && (
@@ -1260,7 +1228,7 @@ export function EmailPage() {
         onSelectMessage={selectMessage}
       />
 
-      <EmailCustomerColumn
+      <EmailCustomerContext
         activeEmail={selectedEmail}
         now={now}
         onCompose={() =>
@@ -1269,26 +1237,29 @@ export function EmailPage() {
         onOpenCrm={openCrm}
       />
 
-      <main className="email-main-panel">
-        <BaseTabs
-          activeKey={activeWorkspaceView}
-          className="email-main-tabs"
-          items={workspaceTabs}
-          tabBarExtraContent={
-            <BaseButton
-              disabled={!selectedEmail}
-              icon={<RobotOutlined />}
-              size="small"
-              variant="primary"
-              onClick={openCwu}
-            >
-              CWU
-            </BaseButton>
-          }
-          variant="toolbar"
-          onChange={setActiveWorkspaceView}
-        />
-      </main>
+      <CrmPanel
+        activeKey={crmWorkspace.activeKey}
+        conversationContent={mailContent}
+        conversationIcon={<MailOutlined />}
+        conversationKey={selectedMessageId ?? undefined}
+        conversationLabel="Email"
+        tabBarExtraContent={
+          <BaseButton
+            disabled={!selectedEmail}
+            icon={<RobotOutlined />}
+            size="small"
+            variant="primary"
+            onClick={openCwu}
+          >
+            CWU
+          </BaseButton>
+        }
+        workspaceTabs={crmWorkspace.tabs}
+        onActiveKeyChange={(activeKey) =>
+          setCrmWorkspace((current) => ({ ...current, activeKey }))
+        }
+        onCloseTab={closeCrmTab}
+      />
 
       <EmailComposeModal
         draft={composeDraft}

@@ -35,11 +35,11 @@ export const internalChatSessions: InternalChatSession[] = [
   },
   {
     id: 'chat-002',
-    agentName: 'Rangga Aditya',
+    agentName: 'Maya Lestari',
     employeeId: 'AICC1088',
     department: 'Card Service',
     avatarUrl:
-      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=120&q=80',
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
     latestMessage: 'Use the replacement route in CRM if the card is damaged.',
     latestMessageTime: '10:29',
     latestMessageTimestamp: 1759823340,

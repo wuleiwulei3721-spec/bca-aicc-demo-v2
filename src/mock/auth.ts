@@ -1,22 +1,58 @@
-import type {
-  AgentServiceMode,
-  AuthSession,
-  LoginPayload,
-  LoginResult,
-} from '../types'
+import type { AuthRole, AuthSession, LoginPayload, LoginResult } from '../types'
 
-export const demoLoginAccount = {
-  password: '888888',
-  username: '888888',
+interface DemoLoginAccount {
+  avatarUrl: string
+  displayName: string
+  employeeId: string
+  ldapDn: string
+  password: string
+  permissions: string[]
+  role: AuthRole
+  roleName: string
+  team: string
+  username: string
 }
 
-export const agentServiceModeOptions: Array<{
-  label: string
-  value: AgentServiceMode
-}> = [
-  { label: 'Voice only', value: 'voice' },
-  { label: 'Digital only', value: 'digital' },
-  { label: 'Voice + Digital', value: 'voice-digital' },
+export const demoLoginAccounts: DemoLoginAccount[] = [
+  {
+    avatarUrl:
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80',
+    displayName: 'Budi Kartika',
+    employeeId: 'EMP-10027',
+    ldapDn: 'uid=888888,ou=People,dc=bank1,dc=local',
+    password: '888888',
+    permissions: [
+      'workspace:agent',
+      'interaction:voice',
+      'interaction:digital',
+      'crm:sso',
+      'call-management:view',
+    ],
+    role: 'agent',
+    roleName: 'Agent',
+    team: 'PBK BSB',
+    username: '888888',
+  },
+  {
+    avatarUrl:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
+    displayName: 'Maya Lestari',
+    employeeId: 'AICC1088',
+    ldapDn: 'uid=666666,ou=People,dc=bank1,dc=local',
+    password: '666666',
+    permissions: [
+      'workspace:agent',
+      'interaction:voice',
+      'interaction:digital',
+      'crm:sso',
+      'call-management:view',
+      'transfer:external-number',
+    ],
+    role: 'team-leader',
+    roleName: 'TL',
+    team: 'PBK BSB',
+    username: '666666',
+  },
 ]
 
 export const demoLdapFailureMessage =
@@ -36,10 +72,13 @@ export function authenticateDemoLogin(payload: LoginPayload): LoginResult {
   const username = payload.username.trim()
   const password = payload.password
 
-  if (
-    username.toLowerCase() !== demoLoginAccount.username ||
-    password !== demoLoginAccount.password
-  ) {
+  const account = demoLoginAccounts.find(
+    (candidate) =>
+      candidate.username === username.toLowerCase() &&
+      candidate.password === password,
+  )
+
+  if (!account) {
     return {
       errorCode: 'LDAP_INVALID_CREDENTIALS',
       message: demoLdapFailureMessage,
@@ -51,30 +90,25 @@ export function authenticateDemoLogin(payload: LoginPayload): LoginResult {
   const expiresAt = addMinutes(now, 120)
   const extension = payload.extension?.trim()
   const session: AuthSession = {
+    avatarUrl: account.avatarUrl,
     crmSso: {
       expiresAt: expiresAt.toISOString(),
       issuedAt: now.toISOString(),
       relayState: 'aicc-crm-workspace',
-      subject: 'uid=888888,ou=People,dc=bank1,dc=local',
+      subject: account.ldapDn,
     },
-    displayName: 'Budi Kartika',
-    employeeId: 'EMP-10027',
+    displayName: account.displayName,
+    employeeId: account.employeeId,
     expiresAt: expiresAt.toISOString(),
     extension: extension || undefined,
-    ldapDn: 'uid=888888,ou=People,dc=bank1,dc=local',
+    ldapDn: account.ldapDn,
     loginAt: now.toISOString(),
-    permissions: [
-      'workspace:agent',
-      'interaction:voice',
-      'interaction:digital',
-      'crm:sso',
-      'call-management:view',
-    ],
-    role: 'agent',
-    roleName: 'Agent',
+    permissions: account.permissions,
+    role: account.role,
+    roleName: account.roleName,
     sessionId: createDemoSessionId(),
-    team: 'PBK BSB',
-    username: '888888',
+    team: account.team,
+    username: account.username,
   }
 
   return {

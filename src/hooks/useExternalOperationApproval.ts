@@ -24,10 +24,16 @@ export function useExternalOperationApproval(
   const stableScope = useMemo(
     () => ({
       customerId: scope.customerId,
+      outboundReason: scope.outboundReason,
       targetNumber: scope.targetNumber,
       type: scope.type,
     }),
-    [scope.customerId, scope.targetNumber, scope.type],
+    [
+      scope.customerId,
+      scope.outboundReason,
+      scope.targetNumber,
+      scope.type,
+    ],
   )
   const approvals = useSyncExternalStore(
     subscribeExternalOperationApprovals,
@@ -39,14 +45,17 @@ export function useExternalOperationApproval(
       approvals
         .filter(
           (item) =>
+            Boolean(stableScope.outboundReason) &&
             item.type === stableScope.type &&
             item.targetNumber === stableScope.targetNumber &&
-            item.customerId === stableScope.customerId,
+            item.customerId === stableScope.customerId &&
+            item.outboundReason === stableScope.outboundReason,
         )
         .sort((left, right) => right.createdAt - left.createdAt)[0] ?? null,
     [
       approvals,
       stableScope.customerId,
+      stableScope.outboundReason,
       stableScope.targetNumber,
       stableScope.type,
     ],
@@ -57,10 +66,10 @@ export function useExternalOperationApproval(
     () =>
       requestExternalOperationApproval({
         ...stableScope,
-        agentAvatarUrl: headerAgentProfile.avatarUrl,
+        agentAvatarUrl: session?.avatarUrl ?? headerAgentProfile.avatarUrl,
         agentName: session?.displayName ?? headerAgentProfile.name,
       }),
-    [session?.displayName, stableScope],
+    [session?.avatarUrl, session?.displayName, stableScope],
   )
   const release = useCallback(
     () => releaseExternalOperationApproval(stableScope),

@@ -1,9 +1,9 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { OperationNotice } from '../../components'
 import {
-  CUSTOMER_IDENTITY_REFRESH_DEMO_ID,
   customerJourney,
-  lookupCustomerIdentityRefresh,
+  lookupCustomerByCis,
   nextBestActions,
   quickActions,
   ticketingHistory,
@@ -13,6 +13,7 @@ import type {
   CustomerInformation,
   CustomerJourneyItem,
   TicketHistoryItem,
+  VerificationStatus,
 } from '../../types'
 import type { CallTransferContext } from '../../store'
 import { AssistantPanel } from './components/AssistantPanel'
@@ -22,9 +23,14 @@ import type { ConversationWorkspaceConfig } from './components/ConversationWorks
 import type { CustomerVerificationPanelConfig } from './components/CustomerInformationCard'
 import { CustomerVerificationV2Panel } from './components/CustomerVerificationV2Modal'
 import { LeftColumn } from './components/LeftColumn'
+import {
+  createCrmCisRequest,
+  isCrmCisResponseMessage,
+} from '../../utils/crmCustomerIdentity'
 
 const CRM_TAB_KEY = 'crm'
 const VERIFICATION_TAB_KEY = 'verification'
+const CRM_CIS_REQUEST_TIMEOUT_MS = 1200
 
 interface InteractionWorkspaceProps {
   accessMenuLabel?: string
@@ -73,6 +79,22 @@ export function InteractionWorkspace({
     useState('assistant')
   const [verificationPanelConfig, setVerificationPanelConfig] =
     useState<CustomerVerificationPanelConfig | null>(null)
+  const [verificationConditions, setVerificationConditions] = useState<{
+    sourceKey: string
+    values: CustomerVerificationPanelConfig['initialConditions']
+  } | null>(null)
+  const [crmRefreshError, setCrmRefreshError] = useState<{
+    id: number
+    message: string | null
+  }>({
+    id: 0,
+    message: null,
+  })
+  const pendingCrmCisRequestRef = useRef<{
+    correlationId: string
+    sourceKey: string
+    timeoutId: number
+  } | null>(null)
   const [crmWorkspace, setCrmWorkspace] = useState<{
     activeKey: string
     tabs: CrmWorkspaceTab[]
@@ -99,6 +121,7 @@ export function InteractionWorkspace({
         avatarInitials: customer.profile.avatarInitials,
         avatarUrl: customer.profile.avatarUrl,
         cisNumber: customer.profile.cisNumber,
+        crmContacts: customer.profile.crmContacts,
         customerType: customer.profile.customerType,
         email: customer.profile.email,
         name: customer.profile.name,
@@ -112,6 +135,7 @@ export function InteractionWorkspace({
       customer.profile.avatarInitials,
       customer.profile.avatarUrl,
       customer.profile.cisNumber,
+      customer.profile.crmContacts,
       customer.profile.customerType,
       customer.profile.email,
       customer.profile.name,
@@ -139,6 +163,10 @@ export function InteractionWorkspace({
     }
     sourceKey: string
   } | null>(null)
+  const [verificationStatusOverride, setVerificationStatusOverride] = useState<{
+    sourceKey: string
+    status: VerificationStatus
+  } | null>(null)
   const identityData =
     identityOverride?.sourceKey === sourceCustomerKey
       ? identityOverride.data
@@ -150,12 +178,18 @@ export function InteractionWorkspace({
       accessChannel: customer.accessChannel,
       accessDuration: customer.accessDuration,
       bankAppLoginStatus: customer.bankAppLoginStatus,
+      verificationStatus:
+        verificationStatusOverride?.sourceKey === sourceCustomerKey
+          ? verificationStatusOverride.status
+          : identityData.customer.verificationStatus,
     }),
     [
       customer.accessChannel,
       customer.accessDuration,
       customer.bankAppLoginStatus,
       identityData.customer,
+      sourceCustomerKey,
+      verificationStatusOverride,
     ],
   )
   const displayCustomerKey = [
@@ -163,6 +197,10 @@ export function InteractionWorkspace({
     displayCustomer.profile.cisNumber,
     displayCustomer.profile.phoneNumber,
   ].join(':')
+  const currentVerificationConditions =
+    verificationConditions?.sourceKey === sourceCustomerKey
+      ? verificationConditions.values
+      : undefined
 
   const openCrmWorkspaceTab = useCallback((tab: CrmWorkspaceTab) => {
     setCrmWorkspace((current) => ({
@@ -192,12 +230,66 @@ export function InteractionWorkspace({
     })
   }, [])
 
-  const refreshCustomerIdentity = useCallback(
-    (customerId: string) => {
-      const refreshResult = lookupCustomerIdentityRefresh(customerId)
+  const clearPendingCrmCisRequest = useCallback(() => {
+    const pendingRequest = pendingCrmCisRequestRef.current
+
+    if (pendingRequest) {
+      window.clearTimeout(pendingRequest.timeoutId)
+      pendingCrmCisRequestRef.current = null
+    }
+  }, [])
+
+  const showCrmRefreshError = useCallback(() => {
+    setCrmRefreshError((current) => ({
+      id: current.id + 1,
+      message: 'CRM customer information could not be refreshed.',
+    }))
+  }, [])
+
+  const requestCrmCis = useCallback(() => {
+    if (pendingCrmCisRequestRef.current) {
+      return
+    }
+
+    const correlationId = crypto.randomUUID()
+    const timeoutId = window.setTimeout(() => {
+      if (
+        pendingCrmCisRequestRef.current?.correlationId !== correlationId
+      ) {
+        return
+      }
+
+      pendingCrmCisRequestRef.current = null
+      showCrmRefreshError()
+    }, CRM_CIS_REQUEST_TIMEOUT_MS)
+
+    pendingCrmCisRequestRef.current = {
+      correlationId,
+      sourceKey: sourceCustomerKey,
+      timeoutId,
+    }
+    window.postMessage(createCrmCisRequest(correlationId), window.location.origin)
+  }, [showCrmRefreshError, sourceCustomerKey])
+
+  useEffect(() => {
+    const handleCrmCisResponse = (event: MessageEvent<unknown>) => {
+      const pendingRequest = pendingCrmCisRequestRef.current
+
+      if (
+        event.origin !== window.location.origin ||
+        !pendingRequest ||
+        !isCrmCisResponseMessage(event.data) ||
+        event.data.correlationId !== pendingRequest.correlationId
+      ) {
+        return
+      }
+
+      const refreshResult = lookupCustomerByCis(event.data.cisNumber)
+      clearPendingCrmCisRequest()
 
       if (!refreshResult) {
-        return false
+        showCrmRefreshError()
+        return
       }
 
       setIdentityOverride({
@@ -207,21 +299,52 @@ export function InteractionWorkspace({
             accessChannel: customer.accessChannel,
             accessDuration: customer.accessDuration,
             bankAppLoginStatus: customer.bankAppLoginStatus,
+            verificationStatus: 'Verified',
           },
           journey: refreshResult.journey,
           tickets: refreshResult.tickets,
         },
-        sourceKey: sourceCustomerKey,
+        sourceKey: pendingRequest.sourceKey,
       })
+      setVerificationStatusOverride({
+        sourceKey: pendingRequest.sourceKey,
+        status: 'Verified',
+      })
+    }
 
-      return true
+    window.addEventListener('message', handleCrmCisResponse)
+
+    return () => window.removeEventListener('message', handleCrmCisResponse)
+  }, [clearPendingCrmCisRequest, customer.accessChannel, customer.accessDuration, customer.bankAppLoginStatus, showCrmRefreshError])
+
+  useEffect(() => {
+    return () => clearPendingCrmCisRequest()
+  }, [clearPendingCrmCisRequest, sourceCustomerKey])
+
+  useEffect(() => {
+    if (!crmRefreshError.message) {
+      return undefined
+    }
+
+    const noticeId = crmRefreshError.id
+    const timer = window.setTimeout(() => {
+      setCrmRefreshError((current) =>
+        current.id === noticeId ? { ...current, message: null } : current,
+      )
+    }, 4000)
+
+    return () => window.clearTimeout(timer)
+  }, [crmRefreshError.id, crmRefreshError.message])
+
+  const handleVerificationFinish = useCallback(
+    (status: VerificationStatus) => {
+      setVerificationStatusOverride({ sourceKey: sourceCustomerKey, status })
+
+      if (status === 'Verified') {
+        requestCrmCis()
+      }
     },
-    [
-      customer.accessChannel,
-      customer.accessDuration,
-      customer.bankAppLoginStatus,
-      sourceCustomerKey,
-    ],
+    [requestCrmCis, sourceCustomerKey],
   )
   const handleAssistantActiveKeyChange = useCallback(
     (activeKey: string) => {
@@ -232,10 +355,21 @@ export function InteractionWorkspace({
   )
   const openVerificationPanel = useCallback(
     (config: CustomerVerificationPanelConfig) => {
-      setVerificationPanelConfig(config)
+      setVerificationConditions({
+        sourceKey: sourceCustomerKey,
+        values: config.initialConditions,
+      })
+      setVerificationPanelConfig({
+        ...config,
+        onConditionsChange: (conditions) =>
+          setVerificationConditions({
+            sourceKey: sourceCustomerKey,
+            values: conditions,
+          }),
+      })
       handleAssistantActiveKeyChange(VERIFICATION_TAB_KEY)
     },
-    [handleAssistantActiveKeyChange],
+    [handleAssistantActiveKeyChange, sourceCustomerKey],
   )
   const closeVerificationPanel = useCallback(() => {
     setVerificationPanelConfig(null)
@@ -264,7 +398,6 @@ export function InteractionWorkspace({
           accessMenuLabel={accessMenuLabel}
           accessMenuName={accessMenuName}
           customer={displayCustomer}
-          identityRefreshPasteValue={CUSTOMER_IDENTITY_REFRESH_DEMO_ID}
           journey={identityData.journey}
           nextBestActions={nextBestActions}
           quickActions={quickActions}
@@ -272,9 +405,10 @@ export function InteractionWorkspace({
           showIvrJourney={showIvrJourney}
           showTransferHistory={showTransferHistory}
           transferContext={transferContext}
-          onCustomerIdentityRefresh={refreshCustomerIdentity}
           onOpenCrm={openCrmWorkspaceTab}
           onOpenVerification={openVerificationPanel}
+          onVerificationFinish={handleVerificationFinish}
+          verificationConditions={currentVerificationConditions}
         />
         <CrmPanel
           activeKey={crmWorkspace.activeKey}
@@ -308,6 +442,7 @@ export function InteractionWorkspace({
           onCloseExtraTab={onAssistantCloseExtraTab}
         />
       </section>
+      <OperationNotice message={crmRefreshError.message} tone="error" />
       {overlay}
     </>
   )

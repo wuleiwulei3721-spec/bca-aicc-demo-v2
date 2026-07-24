@@ -1,8 +1,100 @@
 # Decision Log
 
-Last updated: 2026-07-21
+Last updated: 2026-07-24 13:57 +08:00
 
 This document records important product and system design decisions that can be confirmed from the current codebase, project documents, `DEV_LOG.md`, and readable Git history. It intentionally omits bug fixes, visual micro-adjustments, temporary test data, copy-only tweaks, and implementation details that do not affect product direction.
+
+--------------------------------------------------
+
+Decision ID:
+DEC-042
+
+Module:
+Demo Authentication / Transfer Permission
+
+Decision:
+The Demo exposes two safe accounts in the same workbench: `888888 / 888888` is the ordinary Agent account, and `666666 / 666666` is the female TL account Maya Lestari. The TL account receives `transfer:external-number`, which exposes direct `Transfer Number` behavior, and calls external numbers directly after selecting the required reason. Ordinary Agents see only SPV and TL records in Call Agent; TL-and-above roles see the full Call Agent list.
+
+Reason:
+The customer needs to demonstrate that external-number transfer is a TL-and-above operation while preserving the ordinary-agent transfer experience and without adding a separate TL application.
+
+Impact:
+The authenticated session carries the explicit permission and role scope to the toolbar and its dialogs. The TL account changes only the external outbound, `Transfer Number`, and Call Agent list visibility capabilities; it does not gain a TL dashboard, supervisor management features, backend authorization, or cross-device workflow. Every external outbound still requires one selected reason, `Miss Information` or `Financial Risk`, but only ordinary Agents create TL approval requests.
+
+Status:
+Implemented as front-end Demo behavior
+
+Source:
+Customer requirement and approved plan on 2026-07-23; Code: `src/mock/auth.ts`, `src/types/auth.ts`, `src/layouts/BasicLayout.tsx`, `src/layouts/components/AgentToolbar.tsx`, `src/layouts/components/TransferModal.tsx`, `src/layouts/components/OutboundCallModal.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `PROJECT_CONTEXT.md`, `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-041
+
+Module:
+Customer Information / Contact Information
+
+Decision:
+Customer-visible contact information is read-only and sourced from CRM-backed customer profile data. Customer Information always provides an `All Contact Details` viewer for structured, multi-value CRM contacts across communication, social media, and app-store channels. The agent contact-edit entry is hidden in every customer deployment; the previous Contact Management mock is available only when local visibility and the explicit `VITE_ENABLE_CONTACT_EDIT=true` maintainer flag are both enabled.
+
+Reason:
+The customer requires agents to view all CRM-provided contact details without making changes. The existing modal creates local mock changes and has no CRM write-back, audit, or permission contract, so exposing it as the customer experience would misrepresent the intended workflow.
+
+Impact:
+The formal viewer has no input, add, delete, save, dial, messaging, or external-link actions. Future customer-facing contact editing must be designed as a CRM-authorized workflow with confirmed field ownership, validation, auditing, write-back, and failure handling. The local flag preserves the legacy DEMO for maintenance only and must not be treated as a customer deployment setting.
+
+Status:
+Implemented
+
+Source:
+Customer requirement and approved plan on 2026-07-23; Code: `src/config/featureFlags.ts`, `src/config/moduleVisibility.ts`, `src/pages/inbound/components/CustomerInformationCard.tsx`; Docs: `BUSINESS_RULES.md`, `DESIGN_SYSTEM.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `PROJECT_CONTEXT.md`, `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-040
+
+Module:
+Customer Verification V2 / CRM
+
+Decision:
+Segment, Skill, and Scenario are captured for the active interaction when KBV first opens. They are not recomputed after CRM CIS refresh, and the agent's condition changes persist when KBV is reopened in that same interaction.
+
+Reason:
+CRM profile loading can legitimately change the displayed customer segment after KBV. Recalculating KBV conditions from that new profile changes the verification context partway through one customer service interaction and makes repeat verification inconsistent.
+
+Impact:
+Customer-information refresh updates profile, journey, and ticket data only. A new customer interaction establishes a new KBV condition context. The current front-end demo does not persist this context across browser refreshes.
+
+Status:
+Implemented
+
+Source:
+Customer feedback and approved follow-up on 2026-07-23; Code: `src/pages/inbound/InteractionWorkspace.tsx`, `src/pages/inbound/components/CustomerInformationCard.tsx`, `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`; Docs: `BUSINESS_RULES.md`, `DESIGN_SYSTEM.md`, `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-039
+
+Module:
+Customer Information / CRM / KBV
+
+Decision:
+Customer identity refresh no longer accepts agent-entered Customer IDs. Only a completed voice KBV `Apply Verified` requests CRM CIS through `postMessage`; a valid matching CIS response refreshes the left customer profile, journey, and ticket information while preserving `Verified`.
+
+Reason:
+Customer information must be sourced from the CRM after KBV rather than manually entered by an agent, which reduces identity-selection risk in the customer-service workflow.
+
+Impact:
+The current screenshot-based CRM uses a same-origin front-end DEMO bridge with versioned request/response messages and correlation IDs. AICC ignores untrusted, malformed, mismatched, empty, or unknown CIS responses and retains its existing profile on failure. This does not establish a production CRM iframe, origin allowlist, authentication, audit, or customer-data API contract; those details must be confirmed before real integration.
+
+Status:
+Implemented as DEMO bridge; production integration Pending
+
+Source:
+Customer requirement and approved implementation plan on 2026-07-23; Code: `src/pages/inbound/InteractionWorkspace.tsx`, `src/pages/inbound/components/CrmPanel.tsx`, `src/utils/crmCustomerIdentity.ts`; Docs: `BUSINESS_RULES.md`, `PROJECT_CONTEXT.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `DEV_LOG.md`
 
 --------------------------------------------------
 
@@ -13,19 +105,19 @@ Module:
 External Number Approval
 
 Decision:
-All external-number operations in the agent demo require a TL approval simulation: toolbar outbound number, call transfer number, and Customer Information customer-phone outbound. Approval is single-use and bound to the exact operation and number.
+Toolbar outbound number and Customer Information customer-phone outbound require a TL approval simulation. Both entries require `Miss Information` or `Financial Risk` as part of the request. `Transfer Number` is not visible to ordinary agents; it is a TL-and-above operation and transfers directly without a separate TL approval.
 
 Reason:
 The previous Customer Information-only three-second automatic approval did not make the TL role or decision visible in customer demonstrations. A separate TL popup makes the authorization step understandable while preserving the existing agent workbench and no-backend demo boundary.
 
 Impact:
-The same-browser demo stores and synchronizes approval records with localStorage and BroadcastChannel. TL can approve or reject with an optional generic note, or allow the fixed two-minute timeout to expire. The TL popup uses the supplied complete dashboard screenshot with the shared light-blue Modal header and white body, fixed to the bottom right; agent results use a compact non-masked `BaseModal` in the bottom-right corner. This is not a production approval, routing, permission, audit, or cross-device contract; a real integration must replace the local transport and introduce TL identity, authorization, persistence, and audit requirements.
+The same-browser demo stores and synchronizes ordinary-Agent outbound and customer-phone approval records with localStorage and BroadcastChannel. Both approval scopes include the selected reason, so changing the number or reason invalidates the previous authorization. Customer Information opens a compact Reason modal before it creates its request. TL can approve or reject with an optional generic note, or allow the fixed two-minute timeout to expire. The TL account's direct external outbound and Transfer Number permissions are documented separately in DEC-042. The TL popup reuses one window, overlays the supplied complete dashboard screenshot with a light mask, and processes pending requests FIFO through a single centered light-blue-header/white-body Modal; agent results use a compact non-masked `BaseModal` in the bottom-right corner. This is not a production approval, routing, permission, audit, or cross-device contract; a real integration must replace the local transport and introduce TL identity, authorization, persistence, and audit requirements.
 
 Status:
 Implemented
 
 Source:
-Customer requirement and approved implementation plan on 2026-07-22; Code: `src/utils/outboundApproval.ts`, `src/hooks/useExternalOperationApproval.ts`, `src/pages/TlOutboundApprovalPage.tsx`, `src/layouts/components/OutboundCallModal.tsx`, `src/layouts/components/TransferModal.tsx`, `src/pages/inbound/components/CustomerInformationCard.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `PROJECT_CONTEXT.md`, `DEV_LOG.md`
+Customer requirement and approved implementation plans on 2026-07-22 and 2026-07-23; Code: `src/utils/outboundApproval.ts`, `src/hooks/useExternalOperationApproval.ts`, `src/pages/TlOutboundApprovalPage.tsx`, `src/layouts/components/OutboundCallModal.tsx`, `src/layouts/components/TransferModal.tsx`, `src/pages/inbound/components/CustomerInformationCard.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `PROJECT_CONTEXT.md`, `DEV_LOG.md`
 
 --------------------------------------------------
 
@@ -36,19 +128,19 @@ Module:
 Email Channel / Workspace
 
 Decision:
-The first Email-channel delivery is a code-built, closable agent workspace opened from `Channel Simulation > Email`. It covers the design-reference flow for Inbox, Sent, Drafts, Trash, Reply, Forward, Ignore, CRM, thread records, and CWU. It does not embed the legacy full-system screenshots and does not add Email Record Inquiry or Email Template Deploy.
+The Email-channel delivery is a code-built, closable agent workspace opened from `Channel Simulation > Email`. It covers Inbox, Sent, Drafts, Trash, Reply, Forward, Ignore, thread records, and CWU, directly reuses the shared five-card customer column, and uses Live Chat's `CrmPanel` with the same CRM screenshot and `CRM / Email` tab styling. It does not embed the legacy full-system Email design screenshots and does not add Email Record Inquiry or Email Template Deploy.
 
 Reason:
-The source images contain a complete legacy application shell, fixed 1440x874 dimensions, and old customer branding. Cropping them into the current workspace would duplicate navigation, blur under resizing, and make click hotspots brittle. The customer-facing objective is to demonstrate Email handling interactions, so code-built UI provides clearer workflow feedback while preserving the current BANK 1 shell and design system.
+The Email reference images contain a complete legacy application shell and fixed dimensions, so the mailbox interaction remains code-built. Reusing the existing Live Chat customer and CRM workspace components keeps shared behavior and visual contracts identical across channels, including the current CRM screenshot already used by Live Chat.
 
 Impact:
-Email handling uses anonymized front-end mock data and resets when the tab is closed/reopened or the app refreshes. Reply/Send, Draft, Ignore, Recover, CRM, thread, SLA, and CWU behavior is local only. Email verification stays hidden until a rule is confirmed. Email Record Inquiry remains separate from Interaction Log, and Email Template Deploy remains a future independent scope.
+Email handling uses anonymized front-end mock data and resets when the tab is closed/reopened or the app refreshes. 2026-07-24 update: Ignore moves the email to Trash, while a completed Forward removes the source and forwarding record from all four folders, including when resumed from a saved draft. Reply/Send, Draft, Ignore, Recover, thread, SLA, and CWU behavior remains front-end only. The same date's customer-release approval exposes the Email menu in both customer and local visibility profiles. Email verification stays hidden until a rule is confirmed. Email Record Inquiry remains separate from Interaction Log, and Email Template Deploy remains a future independent scope.
 
 Status:
 Implemented
 
 Source:
-Customer-provided Email design images and implementation request on 2026-07-18; Code: `src/pages/email/EmailPage.tsx`, `src/mock/email.ts`, `src/types/email.ts`, `src/layouts/BasicLayout.tsx`, `src/pages/AgentWorkspace.tsx`, `src/store/appStore.ts`; Docs: `PROJECT_CONTEXT.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `DESIGN_SYSTEM.md`, `BUSINESS_RULES.md`; History: `DEV_LOG.md`
+Customer-provided Email design images and implementation requests on 2026-07-18 and 2026-07-24; Code: `src/pages/email/EmailPage.tsx`, `src/mock/email.ts`, `src/types/email.ts`, `src/layouts/BasicLayout.tsx`, `src/pages/AgentWorkspace.tsx`, `src/pages/inbound/components/CrmPanel.tsx`, `src/pages/inbound/components/LeftColumn.tsx`, `src/store/appStore.ts`; Docs: `PROJECT_CONTEXT.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `DESIGN_SYSTEM.md`, `BUSINESS_RULES.md`; History: `DEV_LOG.md`
 
 --------------------------------------------------
 
@@ -206,7 +298,10 @@ Impact:
 Future handoff entry points should check `voiceVideoHandoffReadiness` or `digitalHandoffReadiness` before creating service workspaces.
 
 Status:
-Implemented
+Superseded by DEC-036
+
+Supersession:
+After agent-controlled service-mode selection was removed, this gating is no longer used by the demo. The current account has fixed full-channel capability; handoffs are gated only by `Ready` state and active-service guards until a confirmed employee-skill media model is available.
 
 Source:
 代码: `src/layouts/BasicLayout.tsx`, `src/store/appStore.ts`, `src/pages/bankapp/BankAppDemoPage.tsx`; 文档: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`; 历史记录: `DEV_LOG.md`
@@ -479,7 +574,7 @@ Reason:
 Customer clarification confirmed that a transfer creates a new call record, and each call record owns one ticket. This avoids conflicting edits when an agent resolves one question and transfers a later question to a TL.
 
 Impact:
-The current transfer demo uses a ready-only agent list with consultation and conference controls. Agent, skill, and IVR transfers release the current agent through the existing Hang Up path; phone-number transfer requires TL approval and then completes immediately. Numbers ending in `000` provide the deterministic retryable failure path for the Demo. Conference remains in the current call and temporarily disables another transfer with the native title `Transfer unavailable during conference`. The receiving-seat story is represented only by the local-only `Channel Simulation > Transferred Call` preview, which opens a new PSTN interaction and displays a source-transfer icon inside the customer channel tag. The Interaction Log end-reason label remains `Normal` for now; a future `Transferred` end reason requires separate confirmation.
+The current transfer demo uses a ready-only agent list with consultation and conference controls. Agent, skill, and IVR transfers release the current agent through the existing Hang Up path. `Transfer Number` is hidden from ordinary agents and, when enabled for a TL-and-above capability, completes immediately without approval. Numbers ending in `000` provide the deterministic retryable failure path for the Demo. Conference remains in the current call and temporarily disables another transfer with the native title `Transfer unavailable during conference`. The receiving-seat story is represented only by the local-only `Channel Simulation > Transferred Call` preview, which opens a new PSTN interaction and displays a source-transfer icon inside the customer channel tag. The Interaction Log end-reason label remains `Normal` for now; a future `Transferred` end reason requires separate confirmation.
 
 Status:
 Implemented as local demo behavior
@@ -876,6 +971,7 @@ Impact:
 2026-07-10 11:49 update: Voice `Screen Recording Playback` uses a PSTN active-call agent desktop screenshot instead of the earlier Live Chat agent screenshot.
 2026-07-10 14:53 update: the score field contract is renamed to `qmScore` / `QM Score`. Detail modals now share the same information architecture: Voice and Video use left media playback, middle transcript, and right CWU; DM uses conversation plus right CWU without a media column.
 2026-07-21 update: numeric QM Scores open a static third-party QM detail preview in the demo. The preview is a confirmed original reference image and intentionally has no simulated third-party controls; it uses the source image ratio without a BANK 1 modal title or duplicate close icon. Only the source image's top-right X closes the preview; future unified sign-in integration replaces it with the matching third-party detail page. Empty scores remain non-interactive.
+2026-07-23 update: Interaction Log adds `Call Type` after Media and as a query filter. `Customer`, `Transfer`, and `Conference` distinguish direct interactions from transferred and three-party records so leadership can inspect agent transfer frequency.
 Future Email or Social Media record work should be added as independent modules or explicitly designed parent/tab structures, not silently folded into the current Call Record Query table. Call Record Query should follow the confirmed media display label `DM` instead of exposing internal Text/TEXT wording. The list uses `Contact` for customer-side identifiers rather than `Counterparty`. The list includes `Queue` and `Service Time`; missing Queue values render as `-`. The detail modal does not add a CRM/customer-detail card in the current scope, keeps media playback or conversation content separated from read-only CWU, and uses a CWU panel with Ticket No., multi-select Business Type, and Summary description on the right. Voice details use a compact playback bar without waveform display. Video details use an OpenEye-style vertical replay with two video panes and a playback bar, without live-call buttons, labels, or icons.
 
 Status:
@@ -893,13 +989,13 @@ Module:
 Call Management / Service End Lifecycle
 
 Decision:
-Abnormal agent-side service end reasons are maintained in `Call Management > Abnormal End Reasons` for Voice, Video, and DM. `Normal` remains a system default reason and is not maintained in the abnormal reason list.
+Abnormal agent-side service end reasons are maintained in `Call Management > Abnormal End Reasons` for Voice, Video, and DM. `Normal` remains a system default reason and is not maintained in the abnormal reason list; the default configuration contains two active DM reasons only.
 
 Reason:
-The customer requirement separates normal service completion from exceptional agent-selected ending causes, and Social Media / Non-DM is out of current scope. The source attachment explicitly names Voice Calls and Digital Channels; Video is included in this demo as a synchronous-call extension of Voice, while BankApp text, Webchat, and WhatsApp use the DM abnormal reason set.
+The customer requirement separates normal service completion from exceptional agent-selected ending causes, and Social Media / Non-DM is out of current scope. Voice, Video, and DM remain future-configurable media, while the current default data is limited to the two confirmed DM reasons.
 
 Impact:
-Voice/video Hang Up and Live Chat End Service should preserve the default normal action while exposing abnormal reasons through a caret menu. Abnormal reason selection ends immediately without a second confirmation. Service records split `Ended By` from `End Reason`: agent/customer normal ends use `Normal`, agent abnormal ends use the selected configured reason, and system ends use specific system reasons such as `Customer Timeout`, `Connection Lost`, `System Error`, or `Channel Gateway Error`. Do not add Social Media / Non-DM values unless that scope is explicitly added.
+Voice/video Hang Up and Live Chat End Service should preserve the default normal action. The abnormal-reason caret renders only when an active configured reason matches the current media; otherwise the main action renders with its normal full shape. Abnormal reason selection ends immediately without a second confirmation. Service records split `Ended By` from `End Reason`: agent/customer normal ends use `Normal`, agent abnormal ends use the selected configured reason, and system ends use specific system reasons such as `Customer Timeout`, `Connection Lost`, `System Error`, or `Channel Gateway Error`. Do not add Social Media / Non-DM values unless that scope is explicitly added.
 
 Status:
 Implemented

@@ -4,6 +4,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR001',
     busyReasonName: 'Break',
+    productivityType: 'Non-Productive',
     remark: 'Short rest break before returning to service.',
     status: 'Active',
     updatedAt: '2026-06-25 16:40',
@@ -12,6 +13,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR002',
     busyReasonName: 'Coaching/Meeting',
+    productivityType: 'Productive',
     remark: 'Coaching, briefing, or team meeting outside active service.',
     status: 'Active',
     updatedAt: '2026-06-25 16:40',
@@ -20,6 +22,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR003',
     busyReasonName: 'Prayer',
+    productivityType: 'Non-Productive',
     remark: 'Prayer time or religious observance during the shift.',
     status: 'Active',
     updatedAt: '2026-06-25 16:40',
@@ -28,6 +31,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR004',
     busyReasonName: 'Toilet',
+    productivityType: 'Non-Productive',
     remark: 'Restroom break during the shift.',
     status: 'Active',
     updatedAt: '2026-06-25 16:40',
@@ -36,6 +40,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR005',
     busyReasonName: 'Others',
+    productivityType: 'Non-Productive',
     remark: 'Other approved AUX reason not covered by a dedicated category.',
     status: 'Active',
     updatedAt: '2026-06-25 16:40',
@@ -44,6 +49,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR006',
     busyReasonName: 'Callback Finrisk',
+    productivityType: 'Productive',
     remark: 'Callback activity for Finrisk case handling.',
     status: 'Active',
     updatedAt: '2026-06-25 16:40',
@@ -52,6 +58,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR007',
     busyReasonName: 'Callback Misinform',
+    productivityType: 'Non-Productive',
     remark: 'Callback activity for misinformation case follow-up.',
     status: 'Active',
     updatedAt: '2026-06-25 16:40',
@@ -60,6 +67,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR008',
     busyReasonName: 'Sick/Problem Non System',
+    productivityType: 'Non-Productive',
     remark: 'Health or non-system issue preventing queue service.',
     status: 'Active',
     updatedAt: '2026-06-25 16:40',
@@ -68,6 +76,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR009',
     busyReasonName: 'Routine Job',
+    productivityType: 'Productive',
     remark: 'Routine operational task outside active service.',
     status: 'Active',
     updatedAt: '2026-06-25 16:40',
@@ -76,6 +85,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR010',
     busyReasonName: 'Problem System',
+    productivityType: 'Productive',
     remark: 'System issue preventing active queue service.',
     status: 'Active',
     updatedAt: '2026-06-25 16:40',
@@ -84,6 +94,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR011',
     busyReasonName: 'Special Assignment',
+    productivityType: 'Productive',
     remark: 'Assigned operational task outside the queue.',
     status: 'Active',
     updatedAt: '2026-06-25 16:40',
@@ -92,6 +103,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR012',
     busyReasonName: 'Extension 3',
+    productivityType: 'Non-Productive',
     remark: 'Reserved for future AUX reason configuration.',
     status: 'Disabled',
     updatedAt: '2026-06-09 09:30',
@@ -100,6 +112,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR013',
     busyReasonName: 'Extension 4',
+    productivityType: 'Non-Productive',
     remark: 'Reserved for future AUX reason configuration.',
     status: 'Disabled',
     updatedAt: '2026-06-09 09:30',
@@ -108,6 +121,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR014',
     busyReasonName: 'Extension 5',
+    productivityType: 'Non-Productive',
     remark: 'Reserved for future AUX reason configuration.',
     status: 'Disabled',
     updatedAt: '2026-06-09 09:30',
@@ -116,6 +130,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR015',
     busyReasonName: 'Extension 6',
+    productivityType: 'Non-Productive',
     remark: 'Reserved for future AUX reason configuration.',
     status: 'Disabled',
     updatedAt: '2026-06-09 09:30',
@@ -124,6 +139,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR016',
     busyReasonName: 'Extension 7',
+    productivityType: 'Non-Productive',
     remark: 'Reserved for future AUX reason configuration.',
     status: 'Disabled',
     updatedAt: '2026-06-09 09:30',
@@ -132,6 +148,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR017',
     busyReasonName: 'Extension 8',
+    productivityType: 'Non-Productive',
     remark: 'Reserved for future AUX reason configuration.',
     status: 'Disabled',
     updatedAt: '2026-06-09 09:30',
@@ -140,6 +157,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR018',
     busyReasonName: 'Extension 9',
+    productivityType: 'Non-Productive',
     remark: 'Reserved for future AUX reason configuration.',
     status: 'Disabled',
     updatedAt: '2026-06-09 09:30',
@@ -148,6 +166,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR019',
     busyReasonName: 'Extension 10',
+    productivityType: 'Non-Productive',
     remark: 'Reserved for future AUX reason configuration.',
     status: 'Disabled',
     updatedAt: '2026-06-09 09:30',
@@ -156,6 +175,7 @@ export const defaultBusyReasons: BusyReason[] = [
   {
     busyReasonId: 'BR020',
     busyReasonName: 'Extension 11',
+    productivityType: 'Non-Productive',
     remark: 'Reserved for future AUX reason configuration.',
     status: 'Disabled',
     updatedAt: '2026-06-09 09:30',

@@ -3,8 +3,6 @@ import {
   BarChartOutlined,
   BellOutlined,
   BranchesOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
   CustomerServiceOutlined,
   ExclamationCircleOutlined,
   IdcardOutlined,
@@ -36,16 +34,14 @@ import {
   monitoringScreenshotViews,
   type MonitoringScreenshotView,
 } from '../mock/monitoring'
+import { useIdleLogout } from '../hooks/useIdleLogout'
 import { useAppStore, useAuthStore, useCallManagementStore } from '../store'
 import type {
-  DigitalHandoffReadiness,
   CallTransferContext,
   InboundPopupSource,
   VideoCallPopupSource,
-  VoiceVideoHandoffReadiness,
 } from '../store'
 import type {
-  AgentServiceMode,
   AgentStatus,
   BankAppCustomerType,
   CallStatus,
@@ -65,6 +61,7 @@ import {
 } from './components/AgentProfileArea'
 import { AgentToolbar } from './components/AgentToolbar'
 import { InternalChatModal } from './components/InternalChatModal'
+import { OperationNotice } from '../components'
 
 const { Header, Sider, Content } = Layout
 
@@ -104,14 +101,6 @@ const initialCallTiming: CallTiming = {
   talkingStartedAt: null,
   holdStartedAt: null,
   accumulatedHoldSeconds: 0,
-}
-
-function canHandleDigital(mode: AgentServiceMode | null) {
-  return mode === 'digital' || mode === 'voice-digital'
-}
-
-function canHandleVoiceVideo(mode: AgentServiceMode | null) {
-  return mode === 'voice' || mode === 'voice-digital'
 }
 
 const monitoringMenuKeyPrefix = 'monitoring-'
@@ -184,6 +173,10 @@ const allSideMenuItems: SideMenuItem[] = [
       {
         key: 'customer-whatsapp',
         label: 'WhatsApp',
+      },
+      {
+        key: 'customer-email',
+        label: 'Email',
       },
     ],
   },
@@ -279,6 +272,10 @@ export function BasicLayout() {
   const location = useLocation()
   const authSession = useAuthStore((state) => state.session)
   const logout = useAuthStore((state) => state.logout)
+  const canTransferToNumber =
+    authSession?.permissions.includes('transfer:external-number') ?? false
+  const callAgentScope =
+    authSession?.role === 'agent' ? 'leaders-only' : 'all'
   const sessionEndReasonEntries = useCallManagementStore(
     (state) => state.sessionEndReasonEntries,
   )
@@ -289,7 +286,6 @@ export function BasicLayout() {
   const activeWorkspaceTabKey = useAppStore(
     (state) => state.activeWorkspaceTabKey,
   )
-  const agentServiceMode = useAppStore((state) => state.agentServiceMode)
   const activeLiveChatSessionIds = useAppStore(
     (state) => state.activeLiveChatSessionIds,
   )
@@ -351,6 +347,9 @@ export function BasicLayout() {
   )
   const requestWhatsAppDemoWorkspace = useAppStore(
     (state) => state.requestWhatsAppDemoWorkspace,
+  )
+  const requestEmailWorkspace = useAppStore(
+    (state) => state.requestEmailWorkspace,
   )
   const requestWebchatDemoWorkspace = useAppStore(
     (state) => state.requestWebchatDemoWorkspace,
@@ -433,25 +432,17 @@ export function BasicLayout() {
     callStatus !== 'Idle' &&
     currentCallInteraction !== null &&
     currentCallInteraction.phase !== 'ended'
-  const voiceVideoHandoffReadiness: VoiceVideoHandoffReadiness =
+  const voiceVideoHandoffReadiness =
     hasUnfinishedCurrentCall
       ? 'active-call'
       : agentStatus !== 'Ready' || callStatus !== 'Idle'
         ? 'not-ready'
-        : canHandleVoiceVideo(agentServiceMode)
-          ? 'available'
-          : 'voice-skill-unavailable'
-  const digitalHandoffReadiness: DigitalHandoffReadiness =
-    agentStatus !== 'Ready'
-      ? 'not-ready'
-      : canHandleDigital(agentServiceMode)
-        ? 'available'
-        : 'digital-skill-unavailable'
+        : 'available'
+  const digitalHandoffReadiness =
+    agentStatus === 'Ready' ? 'available' : 'not-ready'
   const callHandoffNoticeMessage =
     callHandoffNotice.reason === 'active-call'
       ? 'Active call in progress. Please hang up and wait until the agent is Ready before accepting another voice or video interaction.'
-      : callHandoffNotice.reason === 'voice-skill-unavailable'
-        ? 'Current sign-in mode is Digital only. Please sign out and sign in with Voice or Voice + Digital before accepting a voice or video interaction.'
       : 'Agent is not Ready. Please switch to Ready before accepting another voice or video interaction.'
 
   const showCallHandoffNotice = useCallback(
@@ -488,7 +479,6 @@ export function BasicLayout() {
 
   const updateAgentStatus = useCallback((
     status: AgentStatus,
-    nextServiceMode: AgentServiceMode | null = agentServiceMode,
     options: AgentStatusUpdateOptions = {},
   ) => {
     const hasActiveWork =
@@ -502,7 +492,7 @@ export function BasicLayout() {
 
     setAgentStatus(nextStatus)
     setStatusStartedAt(Date.now())
-    if (nextStatus === 'Ready' && canHandleDigital(nextServiceMode)) {
+    if (nextStatus === 'Ready') {
       setLiveChatTabOpen(true, {
         seedDefaultCurrentSessions: options.seedDefaultLiveChat === true,
       })
@@ -557,7 +547,6 @@ export function BasicLayout() {
   }, [
     activeLiveChat2SessionIds,
     activeLiveChatSessionIds,
-    agentServiceMode,
     callStatus,
     clearAgentServiceMode,
     closeAllCallInteractionTabs,
@@ -578,13 +567,12 @@ export function BasicLayout() {
 
   const handleServiceSignIn = useCallback(
     () => {
-      const mode: AgentServiceMode = 'voice-digital'
       const initialStatus: AgentStatus =
         globalControlConfiguration.signInDefaultStatus === 'ready'
           ? 'Ready'
           : 'Not Ready'
-      setAgentServiceMode(mode)
-      updateAgentStatus(initialStatus, mode, {
+      setAgentServiceMode('voice-digital')
+      updateAgentStatus(initialStatus, {
         seedDefaultLiveChat: initialStatus === 'Ready',
       })
     },
@@ -604,51 +592,107 @@ export function BasicLayout() {
   const hasActiveCustomerInteraction =
     isSignedIn && (hasActiveCallInteraction || hasActiveTextInteraction)
 
-  const showActiveServiceExitWarning = useCallback(
-    (action: 'logging out' | 'signing out') => {
-      Modal.warning({
-        centered: true,
-        content: `Please finish or close all current customer services before ${action}.`,
-        okText: 'OK',
-        title: 'Active Service in Progress',
-      })
-    },
-    [],
-  )
+  const showActiveServiceExitWarning = useCallback(() => {
+    Modal.warning({
+      centered: true,
+      content: 'Please finish or close all current customer services before signing out.',
+      okText: 'OK',
+      title: 'Active Service in Progress',
+    })
+  }, [])
 
   const handleBlockedSignOut = useCallback(() => {
-    showActiveServiceExitWarning('signing out')
+    showActiveServiceExitWarning()
   }, [showActiveServiceExitWarning])
+
+  const completeSystemLogout = useCallback(() => {
+    updateAgentStatus('Unsigned')
+    logout()
+    navigate('/login', { replace: true })
+  }, [logout, navigate, updateAgentStatus])
 
   const handleLogout = useCallback(() => {
     if (hasActiveCustomerInteraction) {
-      showActiveServiceExitWarning('logging out')
+      Modal.warning({
+        centered: true,
+        content:
+          'You have active customer service in progress. Please finish or close it before logging out.',
+        okText: 'OK',
+        title: 'Active Service in Progress',
+      })
+      return
+    }
+
+    const requiresStatusChange =
+      isSignedIn && agentStatus !== 'Not Ready' && !isAuxStatus(agentStatus)
+
+    if (requiresStatusChange) {
+      Modal.warning({
+        centered: true,
+        content:
+          'To prevent new customer work from being assigned while you log out, change your status to Not Ready or AUX before logging out.',
+        okText: 'OK',
+        title: 'Update Agent Status Before Log Out',
+      })
       return
     }
 
     Modal.confirm({
       cancelText: 'Cancel',
       centered: true,
-      content:
-        'This will end the system session, sign out media status, and return to the login page.',
+      content: 'Do you want to log out of the system?',
       okButtonProps: {
         className: 'aicc-logout-confirm__ok',
       },
       okText: 'Log Out',
       okType: 'danger',
       title: 'Confirm Log Out',
-      onOk: () => {
-        updateAgentStatus('Unsigned', null)
-        logout()
-        navigate('/login', { replace: true })
-      },
+      onOk: completeSystemLogout,
     })
   }, [
+    agentStatus,
+    completeSystemLogout,
     hasActiveCustomerInteraction,
-    logout,
-    navigate,
-    showActiveServiceExitWarning,
-    updateAgentStatus,
+    isSignedIn,
+  ])
+
+  const idleLogoutEnabled =
+    agentStatus === 'Unsigned' ||
+    agentStatus === 'Not Ready' ||
+    isAuxStatus(agentStatus)
+  const { dismissWarning: dismissIdleLogoutWarning, warningOpen: idleLogoutWarningOpen } =
+    useIdleLogout({
+      enabled: idleLogoutEnabled,
+      onExpire: completeSystemLogout,
+      timeoutMinutes: globalControlConfiguration.idleAutoLogOutMinutes,
+      warningLeadMinutes: globalControlConfiguration.idleWarningMinutes,
+    })
+
+  useEffect(() => {
+    if (!idleLogoutWarningOpen || !idleLogoutEnabled) {
+      return undefined
+    }
+
+    const idleLogoutWarning = Modal.warning({
+      autoFocusButton: null,
+      centered: true,
+      closable: true,
+      content:
+        'You have been inactive for an extended period. The system will automatically log you out in ' +
+        `${globalControlConfiguration.idleWarningMinutes} minutes. Continue working to stay signed in.`,
+      maskClosable: true,
+      okText: 'Continue Working',
+      title: 'Session Expiring',
+      onCancel: dismissIdleLogoutWarning,
+      onOk: dismissIdleLogoutWarning,
+    })
+
+    return () => idleLogoutWarning.destroy()
+  }, [
+    dismissIdleLogoutWarning,
+    globalControlConfiguration.idleWarningMinutes,
+    idleLogoutEnabled,
+    idleLogoutWarningOpen,
   ])
 
   const effectiveAgentPresence: AgentPresence = !isSignedIn
@@ -751,11 +795,11 @@ export function BasicLayout() {
   const handleReadyToggle = useCallback(() => {
     const nextStatus = agentStatus === 'Ready' ? 'Not Ready' : 'Ready'
 
-    updateAgentStatus(nextStatus, agentServiceMode, {
+    updateAgentStatus(nextStatus, {
       seedDefaultLiveChat:
         agentStatus === 'Not Ready' && nextStatus === 'Ready',
     })
-  }, [agentServiceMode, agentStatus, updateAgentStatus])
+  }, [agentStatus, updateAgentStatus])
 
   const triggerVoiceInboundCall = useCallback(
     (
@@ -1072,7 +1116,7 @@ export function BasicLayout() {
         navigate('/')
         triggerVoiceInboundCall('pstn', true, undefined, {
           sourceAgentEmployeeId: 'AICC1088',
-          sourceAgentName: 'Rangga Aditya',
+          sourceAgentName: 'Maya Lestari',
           transferredAt: Date.now(),
         })
       }
@@ -1085,6 +1129,11 @@ export function BasicLayout() {
       if (childKey === 'customer-whatsapp') {
         navigate('/')
         requestWhatsAppDemoWorkspace()
+      }
+
+      if (childKey === 'customer-email') {
+        navigate('/')
+        requestEmailWorkspace()
       }
 
       if (childKey === 'customer-webchat') {
@@ -1112,6 +1161,7 @@ export function BasicLayout() {
       navigate,
       openWorkspacePageFromMenu,
       requestBankAppDemoWorkspace,
+      requestEmailWorkspace,
       requestMonitoringMonitorWorkspace,
       requestWebchatDemoWorkspace,
       requestWhatsAppDemoWorkspace,
@@ -1261,6 +1311,9 @@ export function BasicLayout() {
         {isSignedIn && (
           <AgentToolbar
             agentStatus={agentStatus}
+            callAgentScope={callAgentScope}
+            requiresOutboundApproval={authSession?.role === 'agent'}
+            canTransferToNumber={canTransferToNumber}
             callStatus={callStatus}
             canTransfer={activeCallChannel !== 'video'}
             callIdentification={callIdentification}
@@ -1298,6 +1351,7 @@ export function BasicLayout() {
           <span className="aicc-header__divider" />
           <AgentProfileArea
             agentName={authSession?.displayName}
+            avatarUrl={authSession?.avatarUrl}
             presence={effectiveAgentPresence}
             roleName={authSession?.roleName}
             status={agentStatus}
@@ -1328,20 +1382,10 @@ export function BasicLayout() {
           <span>{callHandoffNoticeMessage}</span>
         </div>
       )}
-      {transferNotice.message && (
-        <div
-          aria-live="polite"
-          className={`aicc-transfer-notice aicc-transfer-notice--${transferNotice.tone}`}
-          role="status"
-        >
-          {transferNotice.tone === 'success' ? (
-            <CheckCircleOutlined />
-          ) : (
-            <CloseCircleOutlined />
-          )}
-          <span>{transferNotice.message}</span>
-        </div>
-      )}
+      <OperationNotice
+        message={transferNotice.message}
+        tone={transferNotice.tone}
+      />
       <InternalChatModal
         open={isInternalChatOpen}
         onClose={() => setIsInternalChatOpen(false)}

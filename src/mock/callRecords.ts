@@ -1,4 +1,4 @@
-import type { CallRecord } from '../types'
+import type { CallRecord, CallRecordCallType } from '../types'
 
 function daysAgo(days: number, hour = 9, minute = 30) {
   const date = new Date()
@@ -32,7 +32,8 @@ function addSeconds(isoDate: string, seconds: number) {
 }
 
 function createRecord(
-  record: Omit<CallRecord, 'endedAt'> & {
+  record: Omit<CallRecord, 'callType' | 'endedAt'> & {
+    callType?: CallRecordCallType
     endedAt?: string
   },
 ): CallRecord {
@@ -40,6 +41,7 @@ function createRecord(
 
   return {
     ...record,
+    callType: record.callType ?? 'Customer',
     endedAt,
   }
 }
@@ -178,6 +180,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       endedBy: 'Agent',
       id: 'call-record-021',
       mediaType: 'Video',
+      callType: 'Transfer',
       queueName: 'Digital Banking Support',
       recordNo: 'CR202607050002',
       endReason: 'Normal',
@@ -264,6 +267,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       endedBy: 'Agent',
       id: 'call-record-024',
       mediaType: 'Video',
+      callType: 'Conference',
       queueName: 'Priority Service',
       recordNo: 'CR202607010002',
       endReason: 'Problem Teknis',
@@ -406,6 +410,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       endedBy: 'Agent',
       id: 'call-record-029',
       mediaType: 'Voice',
+      callType: 'Transfer',
       queueName: 'Fraud Support',
       recordNo: 'CR202606090001',
       endReason: 'Normal',
@@ -493,6 +498,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       endedBy: 'Agent',
       id: 'call-record-014',
       mediaType: 'Video',
+      callType: 'Transfer',
       queueName: 'Digital Banking Support',
       recordNo: 'CR202607100006',
       endReason: 'Normal',
@@ -608,6 +614,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       endedBy: 'Agent',
       id: 'call-record-018',
       mediaType: 'Voice',
+      callType: 'Conference',
       queueName: 'Paylater Service',
       recordNo: 'CR202607100010',
       endReason: 'Normal',
@@ -636,6 +643,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       endedBy: 'Agent',
       id: 'call-record-019',
       mediaType: 'Voice',
+      callType: 'Transfer',
       queueName: 'Fraud Support',
       recordNo: 'CR202607100011',
       endReason: 'Hening & Tidak Ada Respons',
@@ -693,6 +701,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       endedBy: 'Agent',
       id: 'call-record-002',
       mediaType: 'Video',
+      callType: 'Transfer',
       queueName: 'Digital Banking Support',
       recordNo: 'CR202607070002',
       endReason: 'Problem Teknis',
@@ -797,6 +806,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       endedBy: 'Agent',
       id: 'call-record-004',
       mediaType: 'DM',
+      callType: 'Conference',
       queueName: 'Card Service',
       recordNo: 'CR202607070004',
       endReason: 'Normal',
@@ -846,6 +856,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       endedBy: 'Agent',
       id: 'call-record-005',
       mediaType: 'Voice',
+      callType: 'Transfer',
       queueName: 'Loan Service',
       recordNo: 'CR202607060001',
       endReason: 'Normal',
@@ -932,6 +943,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       endedBy: 'Customer',
       id: 'call-record-007',
       mediaType: 'Video',
+      callType: 'Conference',
       queueName: 'Priority Service',
       recordNo: 'CR202607040001',
       endReason: 'Normal',
@@ -975,6 +987,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       endedBy: 'Agent',
       id: 'call-record-008',
       mediaType: 'Voice',
+      callType: 'Transfer',
       queueName: 'Fraud Support',
       recordNo: 'CR202607030001',
       endReason: 'Hening & Tidak Ada Respons',
@@ -1135,6 +1148,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       endedBy: 'System',
       id: 'call-record-012',
       mediaType: 'Video',
+      callType: 'Conference',
       queueName: 'Digital Banking Support',
       recordNo: 'CR202606010001',
       endReason: 'System Error',

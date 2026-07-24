@@ -49,10 +49,13 @@ interface CallIdentification {
 interface AgentToolbarProps {
   agentStatus: AgentStatus
   baseElapsedSeconds: number | null
+  callAgentScope?: 'all' | 'leaders-only'
   callIdentification?: CallIdentification | null
   callSkillDisplayName?: string | null
   callStatus: CallStatus
   canTransfer?: boolean
+  canTransferToNumber?: boolean
+  requiresOutboundApproval?: boolean
   sessionEndReasons?: SessionEndReasonEntry[]
   timerLabel: string
   timerStartedAt: number
@@ -67,10 +70,13 @@ interface AgentToolbarProps {
 export function AgentToolbar({
   agentStatus,
   baseElapsedSeconds,
+  callAgentScope = 'all',
   callIdentification,
   callSkillDisplayName,
   callStatus,
   canTransfer = true,
+  canTransferToNumber = false,
+  requiresOutboundApproval = true,
   sessionEndReasons = [],
   timerLabel,
   timerStartedAt,
@@ -209,26 +215,18 @@ export function AgentToolbar({
       tone: 'success',
     })
   }
-  const endReasonItems: MenuProps['items'] =
-    sessionEndReasons.length > 0
-      ? [
-          {
-            key: 'abnormal-end-reason-title',
-            label: 'Abnormal End Reason',
-            type: 'group',
-            children: sessionEndReasons.map((reason) => ({
-              key: reason.id,
-              label: reason.reasonName,
-            })),
-          },
-        ]
-      : [
-          {
-            key: 'no-abnormal-end-reason',
-            disabled: true,
-            label: 'No abnormal end reason',
-          },
-        ]
+  const hasAbnormalEndReasons = sessionEndReasons.length > 0
+  const endReasonItems: MenuProps['items'] = [
+    {
+      key: 'abnormal-end-reason-title',
+      label: 'Abnormal End Reason',
+      type: 'group',
+      children: sessionEndReasons.map((reason) => ({
+        key: reason.id,
+        label: reason.reasonName,
+      })),
+    },
+  ]
   const handleEndReasonMenuClick: MenuProps['onClick'] = ({ key }) => {
     const selectedReason = sessionEndReasons.find((reason) => reason.id === key)
 
@@ -331,10 +329,41 @@ export function AgentToolbar({
                   {showButtonText ? 'Transfer' : undefined}
                 </ToolbarButton>
               ))}
-            <span className="aicc-agent-toolbar__split-action">
+            {hasAbnormalEndReasons ? (
+              <span className="aicc-agent-toolbar__split-action">
+                <ToolbarButton
+                  aria-label="Hang Up"
+                  className="aicc-agent-toolbar__split-main"
+                  icon={<DisconnectOutlined />}
+                  title="Hang Up"
+                  tone="danger"
+                  onClick={() => handleCallEnd()}
+                >
+                  {showButtonText ? 'Hang Up' : undefined}
+                </ToolbarButton>
+                <Dropdown
+                  classNames={{ root: 'aicc-agent-status-menu' }}
+                  menu={{
+                    items: endReasonItems,
+                    onClick: handleEndReasonMenuClick,
+                  }}
+                  placement="bottomRight"
+                  trigger={['click']}
+                >
+                  <button
+                    aria-label="Select abnormal end reason"
+                    className="aicc-agent-toolbar__split-caret"
+                    title="Abnormal End Reason"
+                    type="button"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <CaretDownOutlined />
+                  </button>
+                </Dropdown>
+              </span>
+            ) : (
               <ToolbarButton
                 aria-label="Hang Up"
-                className="aicc-agent-toolbar__split-main"
                 icon={<DisconnectOutlined />}
                 title="Hang Up"
                 tone="danger"
@@ -342,26 +371,7 @@ export function AgentToolbar({
               >
                 {showButtonText ? 'Hang Up' : undefined}
               </ToolbarButton>
-              <Dropdown
-                classNames={{ root: 'aicc-agent-status-menu' }}
-                menu={{
-                  items: endReasonItems,
-                  onClick: handleEndReasonMenuClick,
-                }}
-                placement="bottomRight"
-                trigger={['click']}
-              >
-                <button
-                  aria-label="Select abnormal end reason"
-                  className="aicc-agent-toolbar__split-caret"
-                  title="Abnormal End Reason"
-                  type="button"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  <CaretDownOutlined />
-                </button>
-              </Dropdown>
-            </span>
+            )}
           </>
         )}
 
@@ -405,6 +415,7 @@ export function AgentToolbar({
 
       {canTransfer && isTransferOpen && (
         <TransferModal
+          canTransferToNumber={canTransferToNumber}
           consultedAgentId={consultedAgent?.id}
           open={isTransferOpen}
           onClose={closeTransferModal}
@@ -423,7 +434,9 @@ export function AgentToolbar({
         />
       )}
       <OutboundCallModal
+        callAgentScope={callAgentScope}
         open={isOutboundOpen}
+        requiresOutboundApproval={requiresOutboundApproval}
         onClose={() => setIsOutboundOpen(false)}
       />
       <BaseModal

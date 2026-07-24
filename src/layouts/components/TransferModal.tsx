@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
-import { Input, message, Select, Space, Tag } from 'antd'
+import { Input, Select, Space, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
   AppButton,
@@ -9,7 +9,6 @@ import {
   BaseTabs,
   SearchInput,
 } from '../../components'
-import { useExternalOperationApproval } from '../../hooks/useExternalOperationApproval'
 import { transferAgents, transferSkills } from '../../mock/transfer'
 import { useCallManagementStore } from '../../store'
 import type {
@@ -20,6 +19,7 @@ import type {
 } from '../../types'
 
 interface TransferModalProps {
+  canTransferToNumber?: boolean
   open: boolean
   variant?: TransferModalVariant
   consultedAgentId?: string | null
@@ -346,49 +346,14 @@ function TransferSkillTab({
 }
 
 function TransferNumberTab({
-  open,
   onTransferToNumberFailed,
   onTransferToNumber,
 }: {
-  open: boolean
   onTransferToNumberFailed?: () => void
   onTransferToNumber?: (number: string) => void
 }) {
   const [phoneNumber, setPhoneNumber] = useState('')
   const normalizedPhoneNumber = phoneNumber.trim()
-  const { consume, isApproved, isPending, release, request, status } =
-    useExternalOperationApproval({
-      targetNumber: normalizedPhoneNumber,
-      type: 'transfer-number',
-    })
-
-  useEffect(() => {
-    if (!open) {
-      release()
-    }
-  }, [open, release])
-
-  useEffect(() => () => release(), [release])
-
-  const handleRequestApproval = () => {
-    if (!normalizedPhoneNumber || isPending || isApproved) {
-      return
-    }
-
-    const result = request()
-
-    if (result.popupBlocked) {
-      message.error('TL approval window was blocked. Allow pop-ups and try again.')
-    }
-  }
-
-  const approvalLabel = isPending
-    ? 'Requesting...'
-    : isApproved
-      ? 'Approved'
-      : status === 'rejected'
-        ? 'Request Again'
-        : 'Request Approval'
 
   return (
     <div className="aicc-modal-section aicc-transfer-number">
@@ -399,19 +364,8 @@ function TransferNumberTab({
           onChange={(event) => setPhoneNumber(event.target.value)}
         />
         <AppButton
-          className="aicc-transfer-number__approval"
-          disabled={!normalizedPhoneNumber || isPending || isApproved}
-          onClick={handleRequestApproval}
-        >
-          {approvalLabel}
-        </AppButton>
-        <AppButton
-          disabled={!normalizedPhoneNumber || !isApproved}
-          title={
-            isApproved
-              ? 'Transfer to approved external number'
-              : 'Request TL approval before transferring this number'
-          }
+          disabled={!normalizedPhoneNumber}
+          title="Transfer to external number"
           type="primary"
           onClick={() => {
             if (normalizedPhoneNumber.endsWith('000')) {
@@ -419,7 +373,6 @@ function TransferNumberTab({
               return
             }
 
-            consume()
             onTransferToNumber?.(normalizedPhoneNumber)
           }}
         >
@@ -502,6 +455,7 @@ function TransferIvrTab({
 }
 
 export function TransferModal({
+  canTransferToNumber = false,
   open,
   variant = 'call',
   consultedAgentId,
@@ -541,17 +495,20 @@ export function TransferModal({
     },
     ...(variant === 'call'
       ? [
-          {
-            key: 'number',
-            label: 'Transfer Number',
-            children: (
-              <TransferNumberTab
-                open={open}
-                onTransferToNumberFailed={onTransferToNumberFailed}
-                onTransferToNumber={onTransferToNumber}
-              />
-            ),
-          },
+          ...(canTransferToNumber
+            ? [
+                {
+                  key: 'number',
+                  label: 'Transfer Number',
+                  children: (
+                    <TransferNumberTab
+                      onTransferToNumberFailed={onTransferToNumberFailed}
+                      onTransferToNumber={onTransferToNumber}
+                    />
+                  ),
+                },
+              ]
+            : []),
           {
             key: 'ivr',
             label: 'Transfer IVR',

@@ -2,6 +2,7 @@ import { Avatar, Input } from 'antd'
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { BaseButton, BaseModal } from '../components'
+import type { ExternalOperationApproval } from '../types'
 import {
   approveExternalOperationApproval,
   getExternalOperationApprovalDescription,
@@ -18,6 +19,20 @@ function formatRemainingTime(expiresAt: number, now: number) {
   return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`
 }
 
+const demoQueuedApproval: ExternalOperationApproval = {
+  agentAvatarUrl:
+    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
+  agentName: 'Siti Rahmawati',
+  createdAt: 0,
+  expiresAt: Number.MAX_SAFE_INTEGER,
+  id: 'tl-approval-demo-queue-item',
+  outboundReason: 'financial-risk',
+  status: 'pending',
+  targetNumber: '081298700456',
+  type: 'outbound-number',
+  updatedAt: 0,
+}
+
 export function TlOutboundApprovalPage() {
   const [searchParams] = useSearchParams()
   const requestId = searchParams.get('requestId')
@@ -28,10 +43,30 @@ export function TlOutboundApprovalPage() {
   )
   const [now, setNow] = useState(() => Date.now())
   const [reviewNote, setReviewNote] = useState('')
-  const approval = useMemo(
-    () => approvals.find((item) => item.id === requestId) ?? null,
-    [approvals, requestId],
+  const [showDemoFollowup, setShowDemoFollowup] = useState(false)
+  const pendingApprovals = useMemo(
+    () =>
+      approvals
+        .filter((item) => item.status === 'pending')
+        .sort((left, right) => left.createdAt - right.createdAt),
+    [approvals],
   )
+  const requestedApproval =
+    approvals.find(
+      (item) => item.id === requestId && item.status === 'pending',
+    ) ?? null
+  const shouldAppendDemoFollowup =
+    pendingApprovals.length === 1 && !showDemoFollowup
+  const approval =
+    pendingApprovals[0] ??
+    (showDemoFollowup ? demoQueuedApproval : requestedApproval)
+  const queuedApprovals = [
+    ...pendingApprovals.slice(1),
+    ...(shouldAppendDemoFollowup ? [demoQueuedApproval] : []),
+  ]
+  const isDemoApproval = approval?.id === demoQueuedApproval.id
+  const approvalCount =
+    pendingApprovals.length + (shouldAppendDemoFollowup || showDemoFollowup ? 1 : 0)
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000)
@@ -40,7 +75,7 @@ export function TlOutboundApprovalPage() {
   }, [])
 
   const closePopupAfterResolution = () => {
-    if (!window.opener) {
+    if (!window.opener || queuedApprovals.length > 0) {
       return
     }
 
@@ -52,7 +87,17 @@ export function TlOutboundApprovalPage() {
       return
     }
 
+    if (isDemoApproval) {
+      setShowDemoFollowup(false)
+      closePopupAfterResolution()
+      return
+    }
+
+    if (shouldAppendDemoFollowup) {
+      setShowDemoFollowup(true)
+    }
     approveExternalOperationApproval(approval.id, reviewNote)
+    setReviewNote('')
     closePopupAfterResolution()
   }
 
@@ -61,7 +106,17 @@ export function TlOutboundApprovalPage() {
       return
     }
 
+    if (isDemoApproval) {
+      setShowDemoFollowup(false)
+      closePopupAfterResolution()
+      return
+    }
+
+    if (shouldAppendDemoFollowup) {
+      setShowDemoFollowup(true)
+    }
     rejectExternalOperationApproval(approval.id, reviewNote)
+    setReviewNote('')
     closePopupAfterResolution()
   }
 
@@ -82,17 +137,26 @@ export function TlOutboundApprovalPage() {
           header: 'tl-outbound-approval-modal__header',
           title: 'tl-outbound-approval-modal__title',
         }}
+        centered
         closable={false}
         footer={null}
         kind="outbound"
-        mask={false}
-        open={approval?.status === 'pending'}
+        mask
+        maskClosable={false}
+        open={Boolean(approval)}
         rootClassName="tl-outbound-approval-modal-root"
         title={
           approval ? (
             <>
               <span>Approval</span>
-              <time>Expires in {formatRemainingTime(approval.expiresAt, now)}</time>
+              <span className="tl-outbound-approval-modal__header-meta">
+                {approvalCount > 1 && (
+                  <span>{showDemoFollowup ? 2 : 1} of {approvalCount}</span>
+                )}
+                <time>
+                  Expires in {formatRemainingTime(approval.expiresAt, now)}
+                </time>
+              </span>
             </>
           ) : null
         }
@@ -115,6 +179,12 @@ export function TlOutboundApprovalPage() {
               value={reviewNote}
               onChange={(event) => setReviewNote(event.target.value)}
             />
+            {queuedApprovals.length > 0 && (
+              <div className="tl-outbound-approval-modal__queue">
+                <span>{queuedApprovals.length} more pending</span>
+                <p>{getExternalOperationApprovalDescription(queuedApprovals[0])}</p>
+              </div>
+            )}
             <footer className="tl-outbound-approval-modal__actions">
               <BaseButton variant="secondary" onClick={handleReject}>
                 Reject

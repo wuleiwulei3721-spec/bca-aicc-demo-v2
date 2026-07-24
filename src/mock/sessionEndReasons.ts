@@ -2,17 +2,10 @@ import type { SessionEndReasonEntry } from '../types'
 
 export const defaultSessionEndReasonEntries: SessionEndReasonEntry[] = [
   {
-    id: 'SER001',
-    mediaTypes: ['Voice', 'Video'],
-    reasonName: 'Hening & Tidak Ada Respons',
-    remark: 'Abnormal voice or video end when the customer is silent or gives no response.',
-    status: 'Active',
-  },
-  {
     id: 'SER002',
-    mediaTypes: ['Voice', 'Video', 'DM'],
+    mediaTypes: ['DM'],
     reasonName: 'Problem Teknis',
-    remark: 'Technical issue during voice, video, or direct-message service.',
+    remark: 'Technical issue during direct-message service.',
     status: 'Active',
   },
   {

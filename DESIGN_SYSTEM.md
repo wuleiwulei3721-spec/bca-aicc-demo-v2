@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Design System
 
-Last updated: 2026-07-21 20:57 +08:00
+Last updated: 2026-07-24 13:57 +08:00
 
 This document records the current implemented visual rules. It should be treated as the design baseline for future pages and components.
 
@@ -37,7 +37,7 @@ The app shell is implemented by `BasicLayout`:
   - left customer context column,
   - center CRM / Conversation workspace,
   - right Assistant / Common Links panel.
-- Email uses a dedicated high-density desktop layout: mailbox folders/list, customer context, Mail / CRM workspace, and a related-record rail inside the main panel.
+- Email uses a dedicated high-density desktop layout: mailbox folders/list, a fixed 280px shared customer context column, the shared `CRM / Email` workspace shell, and a related-record rail inside the Email panel.
 
 The main workspace should not be turned into a landing page. The first screen after login is a working console.
 
@@ -70,12 +70,13 @@ The toolbar is operational and compact:
 - Do not replace call actions with decorative text buttons.
 - Answer flashes only for incoming calls.
 - Hang Up uses danger styling.
-- Hang Up can use a compact split-button: the main danger action stays on the left, and the right caret opens abnormal end reasons.
+- Hang Up can use a compact split-button when abnormal end reasons are available: the main danger action stays on the left, and the right caret opens those reasons.
 - Ready uses success / ready styling.
 - Hold uses selected / active styling.
 - More actions are behind an ellipsis menu; Settings is temporarily hidden from the toolbar More menu.
 - At narrow desktop widths, toolbar actions use their existing icons and tooltips while their text labels and call context are hidden to preserve the right-side controls.
-- Transfer result feedback uses a compact English success/error banner directly below the toolbar; do not use the default Ant message position for transfer outcomes.
+- Shared operation feedback uses `OperationNotice`: a compact English success/error banner directly below the toolbar, centered without covering the call controls, auto-hiding after four seconds. Transfer and other workspace operation failures reuse this component; do not create page-specific toast styles or use the default Ant message position for operational outcomes.
+- Do not show a success notice when the resulting state is already immediately visible in the workspace, such as a CRM-driven Customer Information refresh. Keep success feedback for actions whose completion would otherwise be unclear.
 
 Call context display:
 
@@ -100,6 +101,8 @@ Use `BaseCard` and `SectionCard` patterns:
 Inbound left-column cards:
 
 - Customer Information stays fixed at the top.
+- Unidentified PSTN uses a minimal fact set: identity title, caller number, and `-` for unavailable email / CIS. CRM-dependent header and avatar actions stay hidden until a valid CIS loads.
+- Customer-profile contact information is read-only in customer deployments. Its header provides the compact `IdcardOutlined` `All Contact Details` icon with a tooltip. The modal groups channels in a clean two-column list: fixed left channel icon/name and right CRM values stacked as read-only text, including `-` empty states. The viewer and local legacy editor reuse one shared channel-icon presentation. Do not render editing controls in customer deployments. The legacy pencil is local-maintainer-only behind its explicit feature flag and appears beside the viewer only when enabled.
 - Journey / Ticket / NBA / Quick Action live in the scroll area.
 - Collapsed journey and ticket lists show the most recent two items.
 - Expanded journey and ticket lists show up to ten items.
@@ -128,7 +131,7 @@ General rules:
 - Long modal content should scroll inside the modal body, not push footer actions off-screen.
 - Admin modal footers should use `AdminModalFooter`.
 - External approval results use a compact, non-masked `BaseModal` fixed to the bottom-right corner, manually closable and timed for five seconds; do not use the unstyled global notification surface.
-- Read-only simulation overlays such as TL approval reuse the shared light-blue Modal header and use a white body for focused approval content; when an interaction requires bottom-right placement, position the Modal root/wrapper rather than rendering the Modal inline inside the page.
+- TL approval reuses the shared light-blue Modal header with one uninterrupted white body, is centered over a light mask, and blocks the static simulation dashboard while a decision is pending. Multiple pending approvals use one centered Modal with compact queue progress rather than stacked dialogs.
 
 ## 7. Tab Design Principles
 
@@ -149,7 +152,7 @@ Rules:
 - Routing Config Channels Business Config uses the same Live Chat SLA warning and breach colors for Agent Service threshold status dots.
 - Active call tabs are not closable; ended call tabs are closable.
 - Management page tabs use stable `page:*` keys, are closable, and reuse an existing tab when the same left-menu item is clicked again.
-- The Email workspace is a text-first closable workspace tab reserved for later enablement; when exposed, repeated menu clicks reuse the same tab and closing it returns to Home.
+- The Email workspace is a customer-visible text-first closable workspace tab; repeated menu clicks reuse the same tab and closing it returns to Home.
 - Closing a management page tab should fall back to a neighboring workspace tab when available, otherwise Home.
 - CRM base tab is not closable.
 - Conversation tab is not closable.
@@ -181,6 +184,7 @@ Admin buttons:
 Split action buttons:
 
 - Use split buttons only when the main action has a clear default and the caret exposes related alternatives.
+- When no alternative is available, omit the caret and render the main action with its normal full border radius.
 - Keep the main button and caret at the same height with no layout shift.
 - The caret segment should be icon-only with an accessible label and tooltip/title.
 - End-service split buttons must preserve the existing main action behavior; abnormal alternatives live only under the caret menu.
@@ -306,7 +310,8 @@ Before changing UI, verify the target demo resolution:
 - Live Chat four-column layout should still leave Customer Information, Conversation, and Assistant usable.
 - Live Chat customer lists show all three demo channels together; channel filter controls stay hidden, with sort and collapse actions grouped beside Current / History.
 - Email must keep mailbox, customer context, mail body, and thread record usable at 1366x768 and larger desktop demo resolutions; each panel owns its vertical scrolling and the browser page must not scroll horizontally.
-- Email CRM and message content must be BANK 1-safe code-built content; do not embed the legacy full-system Email design screenshots or duplicate the current application shell.
+- Email must reuse the shared Live Chat customer column and `CrmPanel`. Its CRM tab uses the same current CRM screenshot as Live Chat; the legacy full-system Email design screenshots must not be embedded or used to duplicate the application shell.
+- Email folder controls use solid circular colors sampled from the approved reference: Inbox `#00B578`, Sent `#39B0FF`, Drafts `#FF8200`, and Trash `#EF4444`, with white icons and `#EFF6FF` for the active background. Search is a single rounded input with a leading search icon; Refresh is the separate adjacent icon button.
 - CRM / Assistant screenshots should render without distortion or fallback unless the file is missing.
 - Text inside buttons, tabs, cards, and table cells should not overlap or clip.
 

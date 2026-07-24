@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-07-22 11:09 +08:00
+Last updated: 2026-07-24 13:57 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -39,7 +39,6 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - all Indonesian,
   - English framework UI with Indonesian business content.
 - Confirm whether screenshots are approved for customer demos and public deployment.
-- Confirm whether Session End Reason abnormal reason applicability should keep Video as a synchronous-call extension, since the customer attachment explicitly lists Voice Calls and Digital Channels but does not separately name Video.
 
 ## P1 - Manual Verification Before Customer Demo
 
@@ -65,17 +64,18 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - selecting AUX from a manually selected Not Ready state enters AUX and does not auto-return to Ready,
   - selecting AUX during ACW cancels its timer and retains the ended call CRM workspace until Ready,
   - the next successful Voice or Video incoming interaction closes all ended Voice / Video tabs and their CRM workspaces,
-  - Hang Up caret shows active Voice/Video abnormal end reasons and ends without a second confirmation.
-  - Transfer Number requires TL approval for the entered external number; Approve unlocks immediate Transfer, Reject / timeout keeps it blocked, numbers ending in `000` keep the approved modal open for retry, and closing the Transfer modal releases the authorization.
+  - Hang Up caret appears only when the current Voice/Video media has an active abnormal reason; otherwise the normal Hang Up button has no caret.
+  - `888888 / 888888` Transfer modal shows Agent, Skill, and IVR only; its external outbound requests need approval. `666666 / 666666` (TL Maya Lestari) shows `Transfer Number`, enables direct Transfer after entering a number, does not show Request Approval for external outbound, and preserves the `000` failure path. In Outbound Call > Call Agent, verify Agent only sees SPV/TL and TL sees all agents.
   - Local-only `Channel Simulation > Transferred Call` opens a receiving-seat PSTN preview with a green source-transfer icon after the customer channel duration.
 - Verify toolbar call context:
   - PSTN shows IVR and Skill,
   - BankApp voice/video shows BankID and Skill,
   - Idle hides call context.
 - Verify Customer Information:
-  - identity refresh,
-  - contact management,
-  - customer-phone TL outbound approval: popup request, approve/reject with optional generic note, timeout hiding the TL surface, five-second system-styled agent result popup, and single-use authorization.
+  - KBV-approved CRM CIS identity refresh, including valid response, unknown/empty CIS, mismatched correlation ID, foreign origin, and timeout handling,
+  - unidentified PSTN minimum-card state: anonymous caller number, `-` email/CIS, KBV retained, and no CRM-dependent actions before a valid CIS response,
+  - CRM-backed read-only all-channel contact viewer, including multi-value and empty-channel states after CIS refresh; confirm CRM write authority, audit, field ownership, validation, and failure handling before any customer-facing contact editing is added,
+  - customer-phone TL outbound approval: Request Approval opens the compact Reason modal, Reason is required, popup request includes the reason, approve/reject supports an optional generic note, timeout hides the TL surface, the agent result popup lasts five seconds, and authorization is single-use.
   - Send Email,
   - Call Flow Detail,
   - Customer Verification V2.
@@ -83,7 +83,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - `/screenshots/crm-workspace.jpg`,
   - `/screenshots/assistant-workspace.jpg`,
   - fallback does not appear unless intentionally testing missing images.
-- Verify toolbar Outbound Call Number: the TL popup request carries the entered number, Call stays disabled until approval, and an approved authorization is consumed after Call or released when the modal closes.
+- Verify both outbound entries: `Miss Information` or `Financial Risk` must be selected before Request Approval is enabled; the TL popup carries the entered number and selected reason, Call/Outbound stays disabled until approval, changing either value requires a new approval, and an approved authorization is consumed after execution or released when the originating surface closes.
 - Verify Ticketing History / Next Best Action / Quick Action:
   - click opens CRM dynamic tabs,
   - dynamic tabs can close,
@@ -106,7 +106,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Send message,
   - End Service / Close,
   - End Service main action keeps the confirmation modal,
-  - End Service caret shows active DM abnormal end reasons and ends without a second confirmation,
+  - End Service caret appears only when DM has an active abnormal reason; otherwise the normal End Service confirmation flow has no caret,
   - Message Record,
   - Quick Replies,
   - Sensitive Word send blocking,
@@ -115,16 +115,6 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - BankApp Live Chat handoff,
   - WhatsApp Demo handoff,
   - Webchat Demo handoff.
-- Complete and enable the temporarily hidden Email workspace before customer exposure:
-  - restore `Channel Simulation > Email` only after the workspace is complete,
-  - Inbox / Sent / Drafts / Trash switching, search, refresh, selection, read state, and SLA progress,
-  - Reply and Forward validation, built-in template selection, Save Draft, Edit Draft, and Send folder/thread updates,
-  - Ignore keeps the email in Inbox, records AD / Spam / Sales Email, and stops SLA,
-  - Trash Recover returns the mock email to Inbox,
-  - Customer context actions switch to the code-built BANK 1 CRM view,
-  - CWU Business Type, one-click Summary generation, validation, and confirmation,
-  - closing/reopening Email resets local mock state,
-  - 1366x768, 1440x900, and 1920x1080 layouts remain readable without horizontal page overflow.
 - Verify BankApp Demo:
   - Voice,
   - Video,
@@ -156,8 +146,8 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Common Number,
   - Sensitive Word,
   - Busy Reason,
-  - Abnormal End Reasons query, add, edit, disable, and delete,
-  - Interaction Log 30 mock records, default current-day Date Range paging, numeric QM Score third-party detail preview and non-interactive empty score, View-only Actions, Voice left media playback / middle transcript / right CWU detail, Video left replay / middle transcript / right CWU detail, DM conversation / right CWU detail, and read-only CWU detail.
+  - Abnormal End Reasons query, add, edit, disable, and delete, with two active DM defaults and no default Voice/Video reason,
+  - Interaction Log 30 mock records, default current-day Date Range paging, Call Type list/filter (`Customer` / `Transfer` / `Conference`), numeric QM Score third-party detail preview and non-interactive empty score, View-only Actions, Voice left media playback / middle transcript / right CWU detail, Video left replay / middle transcript / right CWU detail, DM conversation / right CWU detail, and read-only CWU detail.
 - Verify Routing Config:
   - Routing Config visible by default,
   - Channels Phone Accounts disabled,
@@ -227,6 +217,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - live chat sessions,
   - session end reasons and ended-by/end-reason record fields,
   - CRM and assistant integration.
+  - real CRM iframe postMessage origin allowlist, authentication, and CIS/customer-data API contract.
 
 ## Not Currently Planned Without Confirmation
 

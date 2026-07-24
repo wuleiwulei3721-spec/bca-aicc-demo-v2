@@ -1,25 +1,25 @@
 import { useEffect, useMemo, useState } from 'react'
-import {
-  EditOutlined,
-  SyncOutlined,
-} from '@ant-design/icons'
-import { Input, message, Popover } from 'antd'
+import { EditOutlined, IdcardOutlined } from '@ant-design/icons'
+import { message, Select } from 'antd'
 import {
   BaseButton,
   BaseModal,
   CustomerInformationPanel,
   type CustomerOutboundRequestStatus,
 } from '../../../components'
+import { isLocalContactEditingEnabled } from '../../../config/moduleVisibility'
 import { useExternalOperationApproval } from '../../../hooks/useExternalOperationApproval'
 import { callFlowDetail } from '../../../mock/inbound'
-import { useAppStore } from '../../../store'
+import { useAppStore, useAuthStore } from '../../../store'
 import type { CallTransferContext } from '../../../store'
 import type {
   CustomerInformation,
+  ExternalOutboundReason,
   VerificationV2CustomerSegment,
   VerificationV2DemoConditions,
   VerificationStatus,
 } from '../../../types'
+import { externalOutboundReasonOptions } from '../../../types'
 import {
   getDefaultVerificationV2ChannelCode,
   getDefaultVerificationV2SkillQueueCode,
@@ -27,6 +27,7 @@ import {
 import { CallFlowDetailModal } from './CallFlowDetailModal'
 import { ChannelTag } from './ChannelTag'
 import { ContactManagementModal } from './ContactManagementModal'
+import { CustomerContactDetailsModal } from './CustomerContactDetailsModal'
 import {
   CONTACT_TYPES,
   type ContactGroups,
@@ -39,9 +40,10 @@ interface CustomerInformationCardProps {
   accessMenuLabel?: string
   accessMenuName?: string
   customer: CustomerInformation
-  identityRefreshPasteValue: string
-  onCustomerIdentityRefresh: (customerId: string) => boolean
+  onSendEmail?: () => void
   onOpenVerification: (config: CustomerVerificationPanelConfig) => void
+  onVerificationFinish: (status: VerificationStatus) => void
+  verificationConditions?: VerificationV2DemoConditions
   showIvrJourney?: boolean
   showTransferHistory?: boolean
   transferContext?: CallTransferContext
@@ -50,6 +52,7 @@ interface CustomerInformationCardProps {
 export interface CustomerVerificationPanelConfig {
   customerKey: string
   initialConditions: VerificationV2DemoConditions
+  onConditionsChange?: (conditions: VerificationV2DemoConditions) => void
   questionBank: ReturnType<typeof useAppStore.getState>['verificationV2QuestionBank']
   rules: ReturnType<typeof useAppStore.getState>['verificationV2Rules']
   onFinish: (status: VerificationStatus) => void
@@ -134,19 +137,139 @@ function getVerificationAction(customer: CustomerInformation) {
   return 'none'
 }
 
+function hasCrmCustomerIdentity(cisNumber: string) {
+  return /^\d{6,}$/.test(cisNumber.trim())
+}
+
+interface CustomerOutboundReasonModalProps {
+  open: boolean
+  reason: ExternalOutboundReason | null
+  submitLabel: string
+  submitting: boolean
+  onCancel: () => void
+  onReasonChange: (reason: ExternalOutboundReason) => void
+  onSubmit: () => void
+}
+
+function CustomerOutboundReasonModal({
+  open,
+  reason,
+  submitLabel,
+  submitting,
+  onCancel,
+  onReasonChange,
+  onSubmit,
+}: CustomerOutboundReasonModalProps) {
+  return (
+    <BaseModal
+      className="inbound-customer-outbound-reason-modal"
+      footer={null}
+      kind="outbound"
+      open={open}
+      title="Outbound Reason"
+      width={360}
+      onCancel={onCancel}
+    >
+      <div className="inbound-customer-outbound-reason-modal__content">
+        <label htmlFor="customer-outbound-reason">Reason</label>
+        <Select<ExternalOutboundReason>
+          id="customer-outbound-reason"
+          options={externalOutboundReasonOptions}
+          placeholder="Select reason"
+          value={reason}
+          onChange={onReasonChange}
+        />
+        <div className="inbound-customer-outbound-reason-modal__actions">
+          <BaseButton disabled={submitting} onClick={onCancel}>
+            Cancel
+          </BaseButton>
+          <BaseButton
+            disabled={!reason || submitting}
+            type="primary"
+            onClick={onSubmit}
+          >
+            {submitLabel}
+          </BaseButton>
+        </div>
+      </div>
+    </BaseModal>
+  )
+}
+
+interface ContactEditingDemoProps {
+  customerKey: string
+  email: string
+  phoneNumber: string
+}
+
+function ContactEditingDemo({
+  customerKey,
+  email,
+  phoneNumber,
+}: ContactEditingDemoProps) {
+  const defaultContacts = useMemo(
+    () => createContactsForCustomerProfile(email, phoneNumber),
+    [email, phoneNumber],
+  )
+  const [contactsState, setContactsState] = useState<{
+    contacts: ContactGroups
+    customerKey: string
+  }>(() => ({
+    contacts: defaultContacts,
+    customerKey,
+  }))
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false)
+  const contacts =
+    contactsState.customerKey === customerKey
+      ? contactsState.contacts
+      : defaultContacts
+
+  return (
+    <>
+      <button
+        aria-label="Edit contact"
+        className="aicc-customer-info__edit-button"
+        title="Edit Contact"
+        type="button"
+        onClick={() => setIsContactModalOpen(true)}
+      >
+        <EditOutlined />
+      </button>
+      {isContactModalOpen && (
+        <ContactManagementModal
+          contacts={contacts}
+          open={isContactModalOpen}
+          onCancel={() => setIsContactModalOpen(false)}
+          onSave={(nextContacts) => {
+            setContactsState({
+              contacts: nextContacts,
+              customerKey,
+            })
+            setIsContactModalOpen(false)
+          }}
+        />
+      )}
+    </>
+  )
+}
+
 export function CustomerInformationCard({
   accessMenuLabel = 'Access Menu',
   accessMenuName,
   customer,
-  identityRefreshPasteValue,
-  onCustomerIdentityRefresh,
+  onSendEmail,
   onOpenVerification,
+  onVerificationFinish,
+  verificationConditions,
   showIvrJourney,
   showTransferHistory,
   transferContext,
 }: CustomerInformationCardProps) {
   const requestCustomerOutboundCall = useAppStore(
     (state) => state.requestCustomerOutboundCall,
+  )
+  const requiresOutboundApproval = useAuthStore(
+    (state) => state.session?.role === 'agent',
   )
   const requestBankAppPinVerification = useAppStore(
     (state) => state.requestBankAppPinVerification,
@@ -164,41 +287,20 @@ export function CustomerInformationCard({
     (state) => state.verificationV2Rules,
   )
   const { profile } = customer
+  const isCrmIdentified = hasCrmCustomerIdentity(profile.cisNumber)
   const customerKey = [
     customer.accessChannel,
     profile.cisNumber,
     profile.phoneNumber,
   ].join(':')
-  const [verificationState, setVerificationState] = useState<{
-    customerKey: string
-    status: VerificationStatus
-  }>(() => ({
-    customerKey,
-    status: customer.verificationStatus,
-  }))
   const [isCallFlowOpen, setIsCallFlowOpen] = useState(false)
+  const [isContactDetailsOpen, setIsContactDetailsOpen] = useState(false)
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
-  const defaultContacts = useMemo(
-    () => createContactsForCustomerProfile(profile.email, profile.phoneNumber),
-    [profile.email, profile.phoneNumber],
-  )
-  const [contactsState, setContactsState] = useState<{
-    contacts: ContactGroups
-    customerKey: string
-  }>(() => ({
-    contacts: defaultContacts,
-    customerKey,
-  }))
-  const [isContactModalOpen, setIsContactModalOpen] = useState(false)
-  const [isIdentityRefreshOpen, setIsIdentityRefreshOpen] = useState(false)
-  const [identityCustomerId, setIdentityCustomerId] = useState('')
-  const [identityRefreshError, setIdentityRefreshError] = useState<
-    string | null
-  >(null)
-  const verificationStatus =
-    verificationState.customerKey === customerKey
-      ? verificationState.status
-      : customer.verificationStatus
+  const [isOutboundReasonModalOpen, setIsOutboundReasonModalOpen] =
+    useState(false)
+  const [outboundReason, setOutboundReason] =
+    useState<ExternalOutboundReason | null>(null)
+  const verificationStatus = customer.verificationStatus
   const verificationAction = getVerificationAction(customer)
   const pinAttemptsRemaining = Math.max(0, 3 - bankAppPinVerificationAttempts)
   const pinButtonDisabled =
@@ -220,10 +322,6 @@ export function CustomerInformationCard({
               : verificationStatus
   const effectiveVerificationStatus =
     verificationAction === 'pin' ? pinVerificationStatus : verificationStatus
-  const contacts =
-    contactsState.customerKey === customerKey
-      ? contactsState.contacts
-      : defaultContacts
   const {
     consume: consumeOutboundApproval,
     isApproved: isOutboundApproved,
@@ -232,12 +330,15 @@ export function CustomerInformationCard({
     request: requestOutboundApprovalRequest,
   } = useExternalOperationApproval({
     customerId: profile.cisNumber,
+    outboundReason: outboundReason ?? undefined,
     targetNumber: profile.phoneNumber,
     type: 'customer-outbound',
   })
   const [isSpecialHandlingOpen, setIsSpecialHandlingOpen] = useState(false)
   const outboundRequestStatus: CustomerOutboundRequestStatus =
-    isOutboundApprovalPending
+    !requiresOutboundApproval && outboundReason
+      ? 'approved'
+      : isOutboundApprovalPending
       ? 'requesting'
       : isOutboundApproved
         ? 'approved'
@@ -263,25 +364,23 @@ export function CustomerInformationCard({
     }),
     [accessMenuName, customer.accessChannel, profile.customerType, routeMenuName],
   )
+  const effectiveVerificationV2Conditions =
+    verificationConditions ?? initialVerificationV2Conditions
 
   useEffect(() => () => releaseOutboundApproval(), [releaseOutboundApproval])
 
   const openVerification = () => {
     if (verificationAction === 'pin') {
       requestBankAppPinVerification('bankapp')
-      setVerificationState({
-        customerKey,
-        status: 'Verifying',
-      })
       return
     }
 
     onOpenVerification({
       customerKey,
-      initialConditions: initialVerificationV2Conditions,
+      initialConditions: effectiveVerificationV2Conditions,
       questionBank: verificationV2QuestionBank,
       rules: verificationV2Rules,
-      onFinish: finishVerification,
+      onFinish: onVerificationFinish,
     })
   }
 
@@ -300,48 +399,37 @@ export function CustomerInformationCard({
         ? 'Open knowledge-based verification'
         : undefined
 
-  const finishVerification = (status: VerificationStatus) => {
-    setVerificationState({
-      customerKey,
-      status,
-    })
-  }
-
-  const handleIdentityRefreshOpenChange = (open: boolean) => {
-    setIsIdentityRefreshOpen(open)
-
-    if (!open) {
-      setIdentityRefreshError(null)
+  const openOutboundReasonModal = () => {
+    if (
+      (requiresOutboundApproval && isOutboundApprovalPending) ||
+      outboundRequestStatus === 'approved'
+    ) {
       return
     }
 
-    setIdentityRefreshError(null)
+    setOutboundReason(null)
+    setIsOutboundReasonModalOpen(true)
   }
 
-  const pasteIdentityCustomerId = () => {
-    setIdentityCustomerId(identityRefreshPasteValue)
-    setIdentityRefreshError(null)
-  }
-
-  const confirmIdentityRefresh = () => {
-    const normalizedCustomerId = identityCustomerId.trim()
-
-    if (!normalizedCustomerId) {
-      setIdentityRefreshError('Customer ID is required.')
+  const cancelOutboundReasonModal = () => {
+    if (isOutboundApprovalPending) {
       return
     }
 
-    if (!onCustomerIdentityRefresh(normalizedCustomerId)) {
-      setIdentityRefreshError('No customer found for this ID.')
-      return
-    }
-
-    setIdentityRefreshError(null)
-    setIsIdentityRefreshOpen(false)
+    setIsOutboundReasonModalOpen(false)
+    setOutboundReason(null)
   }
 
   const requestOutboundApproval = () => {
-    if (isOutboundApprovalPending || isOutboundApproved) {
+    if (
+      !outboundReason ||
+      (requiresOutboundApproval && (isOutboundApprovalPending || isOutboundApproved))
+    ) {
+      return
+    }
+
+    if (!requiresOutboundApproval) {
+      setIsOutboundReasonModalOpen(false)
       return
     }
 
@@ -349,59 +437,21 @@ export function CustomerInformationCard({
 
     if (result.popupBlocked) {
       message.error('TL approval window was blocked. Allow pop-ups and try again.')
+      return
     }
+
+    setIsOutboundReasonModalOpen(false)
   }
 
   const startApprovedOutboundCall = () => {
-    if (isOutboundApproved) {
-      consumeOutboundApproval()
+    if ((requiresOutboundApproval && isOutboundApproved) || (!requiresOutboundApproval && outboundReason)) {
+      if (requiresOutboundApproval) {
+        consumeOutboundApproval()
+      }
       requestCustomerOutboundCall()
+      setOutboundReason(null)
     }
   }
-
-  const identityRefreshContent = (
-    <div className="aicc-identity-refresh-popover">
-      <label
-        className="aicc-identity-refresh-popover__label"
-        htmlFor="customer-identity-refresh-input"
-      >
-        Customer ID
-      </label>
-      <Input
-        allowClear
-        id="customer-identity-refresh-input"
-        placeholder="Paste or enter customer ID"
-        size="small"
-        status={identityRefreshError ? 'error' : undefined}
-        value={identityCustomerId}
-        onChange={(event) => {
-          setIdentityCustomerId(event.target.value)
-          setIdentityRefreshError(null)
-        }}
-        onPressEnter={confirmIdentityRefresh}
-      />
-      {identityRefreshError && (
-        <div
-          className="aicc-identity-refresh-popover__error"
-          role="alert"
-        >
-          {identityRefreshError}
-        </div>
-      )}
-      <div className="aicc-identity-refresh-popover__actions">
-        <BaseButton size="small" onClick={pasteIdentityCustomerId}>
-          Paste
-        </BaseButton>
-        <BaseButton
-          size="small"
-          type="primary"
-          onClick={confirmIdentityRefresh}
-        >
-          Confirm
-        </BaseButton>
-      </div>
-    </div>
-  )
 
   return (
     <>
@@ -421,33 +471,26 @@ export function CustomerInformationCard({
         className="inbound-section-card inbound-section-card--customer"
         customer={customer}
         headerExtra={
-          <div className="aicc-customer-info__header-actions">
-            <Popover
-              content={identityRefreshContent}
-              open={isIdentityRefreshOpen}
-              placement="bottom"
-              trigger="click"
-              onOpenChange={handleIdentityRefreshOpenChange}
-            >
+          isCrmIdentified ? (
+            <div className="aicc-customer-info__header-actions">
               <button
-                aria-label="Refresh customer identity"
+                aria-label="View all contact details"
                 className="aicc-customer-info__edit-button"
-                title="Refresh Customer Identity"
+                title="All Contact Details"
                 type="button"
+                onClick={() => setIsContactDetailsOpen(true)}
               >
-                <SyncOutlined />
+                <IdcardOutlined />
               </button>
-            </Popover>
-            <button
-              aria-label="Edit contact"
-              className="aicc-customer-info__edit-button"
-              title="Edit Contact"
-              type="button"
-              onClick={() => setIsContactModalOpen(true)}
-            >
-              <EditOutlined />
-            </button>
-          </div>
+              {isLocalContactEditingEnabled && (
+                <ContactEditingDemo
+                  customerKey={customerKey}
+                  email={profile.email}
+                  phoneNumber={profile.phoneNumber}
+                />
+              )}
+            </div>
+          ) : undefined
         }
         outboundRequestStatus={outboundRequestStatus}
         verificationStatus={effectiveVerificationStatus}
@@ -457,21 +500,41 @@ export function CustomerInformationCard({
         verifyButtonLabel={verifyButtonLabel}
         verifyButtonTitle={verifyButtonTitle}
         onOpenCallFlow={() => setIsCallFlowOpen(true)}
-        onOpenSpecialHandling={() => setIsSpecialHandlingOpen(true)}
-        onRequestOutbound={requestOutboundApproval}
-        onSendEmail={() => setIsEmailModalOpen(true)}
-        onStartOutbound={startApprovedOutboundCall}
+        onOpenSpecialHandling={
+          isCrmIdentified
+            ? () => setIsSpecialHandlingOpen(true)
+            : undefined
+        }
+        onRequestOutbound={isCrmIdentified ? openOutboundReasonModal : undefined}
+        onSendEmail={
+          isCrmIdentified
+            ? onSendEmail ?? (() => setIsEmailModalOpen(true))
+            : undefined
+        }
+        onStartOutbound={
+          isCrmIdentified ? startApprovedOutboundCall : undefined
+        }
         onVerify={verificationAction === 'none' ? undefined : openVerification}
       />
-      <BaseModal
-        centered
-        className="inbound-special-handling-modal"
-        kind="detail"
-        open={isSpecialHandlingOpen}
-        title="Special handling information"
-        width={520}
-        onCancel={() => setIsSpecialHandlingOpen(false)}
-      >
+      <CustomerOutboundReasonModal
+        open={isOutboundReasonModalOpen}
+        reason={outboundReason}
+        submitting={isOutboundApprovalPending}
+        submitLabel={requiresOutboundApproval ? 'Request Approval' : 'Continue'}
+        onCancel={cancelOutboundReasonModal}
+        onReasonChange={setOutboundReason}
+        onSubmit={requestOutboundApproval}
+      />
+      {isCrmIdentified && (
+        <BaseModal
+          centered
+          className="inbound-special-handling-modal"
+          kind="detail"
+          open={isSpecialHandlingOpen}
+          title="Special handling information"
+          width={520}
+          onCancel={() => setIsSpecialHandlingOpen(false)}
+        >
         <div className="inbound-special-handling">
           <table className="inbound-special-handling__table">
             <thead>
@@ -496,7 +559,8 @@ export function CustomerInformationCard({
             </BaseButton>
           </div>
         </div>
-      </BaseModal>
+        </BaseModal>
+      )}
 
       <CallFlowDetailModal
         accessMenuLabel={accessMenuLabel}
@@ -506,24 +570,21 @@ export function CustomerInformationCard({
         showTransferHistory={showTransferHistory}
         onClose={() => setIsCallFlowOpen(false)}
       />
-      <SendEmailModal
-        customerEmail={profile.email}
-        open={isEmailModalOpen}
-        onClose={() => setIsEmailModalOpen(false)}
-      />
-      {isContactModalOpen && (
-        <ContactManagementModal
-          contacts={contacts}
-          open={isContactModalOpen}
-          onCancel={() => setIsContactModalOpen(false)}
-          onSave={(nextContacts) => {
-            setContactsState({
-              contacts: nextContacts,
-              customerKey,
-            })
-            setIsContactModalOpen(false)
-          }}
-        />
+      {isCrmIdentified && (
+        <>
+          {!onSendEmail && (
+            <SendEmailModal
+              customerEmail={profile.email}
+              open={isEmailModalOpen}
+              onClose={() => setIsEmailModalOpen(false)}
+            />
+          )}
+          <CustomerContactDetailsModal
+            contacts={profile.crmContacts}
+            open={isContactDetailsOpen}
+            onClose={() => setIsContactDetailsOpen(false)}
+          />
+        </>
       )}
     </>
   )

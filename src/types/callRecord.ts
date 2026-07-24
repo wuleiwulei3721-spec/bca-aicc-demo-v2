@@ -4,6 +4,8 @@ export type CallRecordChannel = 'Phone' | 'BankApp' | 'Webchat' | 'WhatsApp'
 
 export type CallRecordMediaType = 'Voice' | 'Video' | 'DM'
 
+export type CallRecordCallType = 'Customer' | 'Transfer' | 'Conference'
+
 export type CallRecordEndReason =
   | 'Normal'
   | 'Hening & Tidak Ada Respons'
@@ -33,6 +35,7 @@ export interface CallRecord {
   id: string
   agentId: string
   agentName: string
+  callType: CallRecordCallType
   channel: CallRecordChannel
   contact: string
   customerId: string

@@ -138,10 +138,15 @@ function scopeMatches(
   approval: ExternalOperationApproval,
   scope: ExternalOperationApprovalScope,
 ) {
+  if (!scope.outboundReason) {
+    return false
+  }
+
   return (
     approval.type === scope.type &&
     approval.targetNumber === scope.targetNumber &&
-    approval.customerId === scope.customerId
+    approval.customerId === scope.customerId &&
+    approval.outboundReason === scope.outboundReason
   )
 }
 
@@ -273,7 +278,7 @@ export function requestExternalOperationApproval(
 
   const popup = window.open(
     `/tl-outbound-approval?requestId=${encodeURIComponent(approval.id)}`,
-    `bank1-tl-approval-${approval.id}`,
+    'bank1-tl-approval',
     'popup=yes,width=1440,height=810,resizable=yes,scrollbars=no',
   )
 
@@ -321,15 +326,19 @@ export function consumeExternalOperationApproval(
 export function getExternalOperationApprovalDescription(
   approval: ExternalOperationApproval,
 ) {
-  if (approval.type === 'transfer-number') {
-    return `Requesting transfer to external number: ${approval.targetNumber}`
-  }
+  const reason = approval.outboundReason
+    ? ` (Reason: ${
+        approval.outboundReason === 'financial-risk'
+          ? 'Financial Risk'
+          : 'Miss Information'
+      })`
+    : ''
 
   if (approval.type === 'customer-outbound') {
-    return `Requesting outbound call to customer ${approval.customerId ?? '-'}: ${approval.targetNumber}`
+    return `Requesting outbound call to customer ${approval.customerId ?? '-'}: ${approval.targetNumber}${reason}`
   }
 
-  return `Requesting outbound call to external number: ${approval.targetNumber}`
+  return `Requesting outbound call to external number: ${approval.targetNumber}${reason}`
 }
 
 if (typeof window !== 'undefined') {

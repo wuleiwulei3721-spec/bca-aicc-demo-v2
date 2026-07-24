@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-07-22 17:28 +08:00
+最后更新：2026-07-24 14:04 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,678 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-07-24 14:04 +08:00 - Email 客户入口开放
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DESIGN_SYSTEM.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 用户确认 Email 工作台可以向客户环境开放，并要求提交当前完整工作区后发布。
+
+修改结果：
+
+- 移除 `Channel Simulation > Email` 的 `localOnly` 标记，Email 现在在 customer 与 local visibility profile 中均位于 WhatsApp 下方。
+- Transferred Call、Employee Management、Design System 等既有 local-only 模块保持隐藏规则不变。
+- Email Record Inquiry、Template Deploy、真实邮箱后端和 Email 验证规则仍不属于当前客户工作台范围。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、customer profile `npm run build`、`git diff --check` 均通过；构建仅保留既有 large chunk warning。
+- customer profile 生产产物浏览器烟测确认 Email 菜单数量为 1，位于 WhatsApp 下方，Transferred Call 数量为 0；Employee Management 与 Design System 保持隐藏。
+- Email 工作台可打开，邮箱栏和 `CRM / Email` 可见，关闭 Email 页签后回到 Home。
+
+回滚说明：
+
+- 在 `customer-email` 菜单项恢复 `localOnly: true` 并恢复对应客户可见知识库描述，即可重新隐藏客户入口。
+
+当前风险：
+
+- Email 仍为前端 mock，客户环境中所有邮件状态在刷新或关闭页签后重置；真实邮箱、SMTP、路由、附件、审计与 CWU 后端未接入。
+
+### 2026-07-24 13:22 +08:00 - Email 处理状态与邮箱导航视觉修正
+
+修改页面或文件：
+
+- `src/pages/email/EmailPage.tsx`、`src/types/email.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DESIGN_SYSTEM.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 用户确认 Ignore 后邮件应进入 Trash，Forward 完成后不应出现在 Inbox、Sent、Drafts、Trash 任一文件夹；同时要求 Email 的共享客户栏保持其他弹屏的固定宽度，并按原始 UI 图修正邮箱文件夹与搜索区视觉。
+
+修改结果：
+
+- Ignore 现在记录 AD / Spam / Sales Email 原因、停止 SLA，并将邮件移至 Trash；Recover 清除忽略标记并返回原文件夹。
+- Forward 发送后删除原邮件且不创建 Sent 项；先保存为 Draft 再发送时同时删除原邮件和转发草稿。
+- Email 共享客户上下文列固定为 280px。Inbox、Sent、Drafts、Trash 改为设计图取色的实心圆形图标和白色图标，搜索区改为带前置图标的单输入框与独立 Refresh 按钮。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check` 均通过；构建仅保留既有 large chunk warning。
+- 浏览器逐步验证 Ignore Spam 后 Inbox 由 3 减为 2、Trash 由 1 增为 2并显示 `No reply: Spam`。
+- 浏览器逐步验证直接 Forward 后原邮件从四个文件夹消失且 Sent 不增加；保存 Forward Draft 后再次发送也会清除原邮件和草稿且 Sent 不增加。
+- 1366x768、1440x900、1920x1080 下客户栏均为 280px，页面无横向溢出；四个图标颜色分别为 `#00B578`、`#39B0FF`、`#FF8200`、`#EF4444`。
+
+回滚说明：
+
+- 恢复 `ignoreEmail` 与 `sendComposeDraft` 的旧文件夹更新逻辑，移除 `forwardSourceMessageId`，并恢复 Email 网格、文件夹和搜索区旧样式即可回退。
+
+当前风险：
+
+- Email 仍为 local-only 前端 mock；文件夹状态、转发移除与 Recover 只在当前前端会话中有效。
+
+### 2026-07-24 11:38 +08:00 - 系统登出服务阻断分层提示
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 用户反馈坐席已切换为 Not Ready 但仍有客户服务时，继续显示状态切换提示无法反映实际阻断原因。
+
+修改结果：
+
+- 顶栏系统 Log Out 现在优先识别进行中的通话、Live Chat 或 Live Chat 2 服务，并显示 `Active Service in Progress` 和完成或关闭服务的提示。
+- 仅在没有进行中服务时，Ready 与 Pre-AUX 才显示切换至 Not Ready 或 AUX 的提示；Unsigned、Not Ready、AUX 继续进入二次确认。
+- 话务条 Sign Out 维持原有服务阻断提示和语义；无操作自动登出配置与计时范围未改动。
+
+回滚说明：
+
+- 移除 `handleLogout` 中的服务优先判断，并恢复对应业务规则记录即可回退。
+
+当前风险：
+
+- 当前仍为前端 Demo，进行中服务仅由本地通话状态与 Live Chat / Live Chat 2 活跃会话判断。
+
+### 2026-07-24 10:11 +08:00 - Email 本地入口与共享工作台统一
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/email/EmailPage.tsx`、`src/mock/email.ts`
+- `src/pages/inbound/components/CrmPanel.tsx`、`src/pages/inbound/components/LeftColumn.tsx`、`src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DESIGN_SYSTEM.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 用户要求仅在本地环境恢复 `Channel Simulation > Email`，并让 Email 客户上下文和 `CRM / Email` 页签与 Live Chat / Inbound 工作台完全一致；CRM 必须复用 Live Chat 当前截图。
+
+修改结果：
+
+- Email 菜单恢复在 WhatsApp 下方并标记为 local-only；customer profile 保持隐藏。现有唯一可关闭 Email 页签、复用和 Home 回退行为保持不变。
+- Email 直接复用共享 `LeftColumn` 的 Customer Information、Customer Journey、Ticketing History、Next Best Action 和 Quick Action。Customer Information 显示 Email 接入且不显示未确认的 Verify；点击客户邮箱打开 Email 自有编辑器。
+- Email 中间工作区改为共享 `CrmPanel`，固定显示 `CRM / Email`，默认激活 Email。CRM 使用 Live Chat 同一 `/screenshots/crm-workspace.jpg`；Ticket、NBA、Quick Action 使用标准可关闭 CRM 业务页签。
+- 删除 Email 自建 CRM、客户栏和重复页签样式；补全匿名 Email mock 的 CRM 联系方式，保留全部邮件、线程、SLA 和 CWU 本地交互。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check` 均通过；构建仅保留既有 large chunk warning。
+- local 浏览器确认 Email 位于 WhatsApp 下方；customer profile 确认 Email 菜单数量为 0。打开、重复复用、关闭回 Home、重开状态重置均通过。
+- 浏览器确认五个共享客户组件、Email 接入、无 Verify、`CRM / Email` 顺序、默认 Email、CRM 截图加载、动态 CRM 页签及关闭回退。
+- Reply/Send、Save Draft、Ignore Spam、Trash Recover、搜索、CWU 生成与确认均通过；1366x768、1440x900、1920x1080 下页面与 Email 容器无横向溢出。
+
+回滚说明：
+
+- 移除 `customer-email` local-only 菜单和点击处理，恢复 Email 自建 Customer Column、CRM/页签及对应样式，并撤销共享组件可选参数即可回退。
+
+当前风险：
+
+- Email 仍是 local-only 前端 mock，不连接真实邮箱、SMTP、模板、附件或 CWU 后端；customer profile 暂未开放。
+- 浏览器控制台仍有既有 Ant Design `maskClosable` 弃用提示，与本次 Email 改动无关。
+
+### 2026-07-23 18:57 +08:00 - 系统登出与无操作超时
+
+修改页面或文件：
+
+- `src/hooks/useIdleLogout.ts`
+- `src/layouts/BasicLayout.tsx`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+
+修改原因：
+
+- 用户定义系统登出规则：坐席状态必须先切换为 Not Ready 或 AUX 才能手动登出；无操作超时仅对 Unsigned、Not Ready 和 AUX 生效，并使用全局控制的 30 / 10 分钟配置。
+
+修改结果：
+
+- 统一手动确认和自动到期的系统登出出口，清理坐席服务状态、认证会话并跳转登录页。
+- Ready 与 Pre-AUX 的顶栏 Log Out 显示状态切换提示；Unsigned、Not Ready 和 AUX 显示二次确认。
+- 新增当前窗口无操作监控，窗口活动、提醒关闭或 Continue Working 会重新计时；到达预警阈值显示 Session Expiring，到达总时长自动登出。
+
+验证：
+
+- `npx tsc --noEmit`、`npm run lint`、`npm run build`、`git diff --check` 已通过；构建仅有既有 large chunk warning。
+- 浏览器确认 Unsigned Log Out 显示二次确认，Ready Log Out 显示 Not Ready/AUX 状态切换提示。默认 30 / 10 分钟周期未在冒烟会话中等待至到期，计时边界与回调经代码检查确认。
+
+回滚说明：
+
+- 移除 `useIdleLogout`、恢复 BasicLayout 原有顶栏 Log Out 处理和项目规则记录即可回滚。
+
+当前风险：
+
+- 当前仅监控单个浏览器窗口；不包含服务端会话失效、多标签同步或真实认证撤销。
+
+### 2026-07-23 17:02 +08:00 - TL 外呼直拨与审批队列演示
+
+修改页面或文件：
+
+- `src/mock/auth.ts`、`src/mock/transfer.ts`、`src/mock/chat.ts`、`src/types/auth.ts`
+- `src/layouts/BasicLayout.tsx`、`src/layouts/components/AgentProfileArea.tsx`、`src/layouts/components/AgentToolbar.tsx`、`src/layouts/components/OutboundCallModal.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`、`src/pages/TlOutboundApprovalPage.tsx`
+- `src/hooks/useExternalOperationApproval.ts`、`src/utils/outboundApproval.ts`、`src/styles/index.less`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DESIGN_SYSTEM.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求避免使用其领导姓名，TL 改为女性身份；只有普通坐席外呼需要申请。TL 审批需用蒙层锁定静态底图、展示两笔及以上申请的队列效果，并消除主体灰白套层。
+
+修改结果：
+
+- `666666 / 666666` 现为 TL Maya Lestari 并使用女性头像。TL 外呼号码和客户电话仍需选择 Reason，但直接解锁 Call/Outbound；普通 Agent 保持审批规则。
+- 多个普通 Agent 申请复用一个 TL 窗口，按创建时间 FIFO 处理；标题显示进度、正文展示下一笔摘要。TL Modal 使用轻量蒙层和统一白色主体，Call Number 输入框为白色无图标，Call 按钮也不再使用图标。
+
+验证：
+
+- `npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` 均通过；构建仅保留既有 bundle 大小提示。
+- 浏览器烟测：`666666 / 666666` 显示 `TL - Maya Lestari`；Call Number 无 Request Approval，填写号码和 `Miss Information` 后 Call 可用；号码输入框为白色 32px 无图标。普通 Agent 仍显示 Request Approval。
+- 单笔真实审批会在 TL 页面显示 `1 of 2` 和下一笔摘要；处理首笔后切换至本地模拟的第二笔，不会关闭窗口。输入框申请中仍保持白色，TL Modal 的内容区域和容器均使用白色背景。
+
+回滚说明：
+
+- 恢复每笔申请的独立窗口名、普通/ TL 统一审批分支和原 TL mock 身份即可回退。
+
+当前风险：
+
+- 队列仍为浏览器本地模拟，真实系统需要后端的审批领取、并发锁和审计记录。
+
+### 2026-07-23 16:18 +08:00 - TL 审批居中与 Call Agent 可见范围
+
+修改页面或文件：
+
+- `src/pages/TlOutboundApprovalPage.tsx`
+- `src/layouts/BasicLayout.tsx`、`src/layouts/components/AgentToolbar.tsx`、`src/layouts/components/OutboundCallModal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求 TL 审批浮层改为居中；Call Number 表单去除号码图标并与原因、操作按钮对齐；普通坐席 Call Agent 仅展示直属上级 SPV 和 TL。
+
+修改结果：
+
+- TL 审批沿用标准 `BaseModal` 居中行为。Call Number 使用无前缀的简洁输入框，号码、Reason、审批和 Call 控件统一为 32px 高、8px 间距。
+- `888888 / 888888` 的 Call Agent 筛选为 SPV/TL；TL 及后续非普通 Agent 角色保持完整列表。此限制只影响 Call Agent，不影响 Transfer Agent、Skill、IVR 或 Transfer Number 的既有规则。
+
+验证：
+
+- `npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` 均通过；构建仅保留既有 bundle 大小提示。
+- 浏览器烟测：Call Number 的号码、Reason、Request Approval、Call 外框均为 32px；普通 Agent Call Agent 显示 2 位 SPV/TL，TL 显示完整 6 位坐席。
+
+回滚说明：
+
+- 移除 `callAgentScope` 过滤并恢复 TL Modal 的固定定位样式，即可回到此前 Demo 行为。
+
+当前风险：
+
+- 角色范围为前端 Demo 映射，真实系统仍需由组织层级和后端权限服务提供可见人员范围。
+
+### 2026-07-23 15:43 +08:00 - 客户资料卡外呼 Reason 与审批范围统一
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/layouts/components/OutboundCallModal.tsx`
+- `src/hooks/useExternalOperationApproval.ts`
+- `src/types/outboundApproval.ts`、`src/utils/outboundApproval.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户确认 `Miss Information` / `Financial Risk` 不只适用于工具栏外呼，也必须适用于 Customer Information 客户电话外呼；号码和 Reason 共同决定一次 TL 审批授权。
+
+修改结果：
+
+- Customer Information 的 Request Approval 保持紧凑卡片操作，点击后打开标准 `BaseModal`，选择必填 Reason 后才创建申请。
+- 工具栏和客户资料卡复用同一组 Reason 值。审批 hook、查找、释放和消耗均比较 Reason，旧的无 Reason 授权不能被复用；TL 对两类申请均显示 Reason。
+
+验证：
+
+- `npm run lint`、`npx tsc --noEmit`、`npm run build` 均通过；构建仅保留现有 bundle 大小提示。
+- 浏览器烟测：工具栏 `Outbound Call > Call Number` 在仅填写号码时保持禁用，选择 `Miss Information` 后申请按钮可用；客户资料卡完成 KBV 后确认悬停电话号码显示的 `Request Approval` 入口仍存在于 DOM，且该入口接入紧凑 Reason Modal。
+
+回滚说明：
+
+- 移除资料卡 Reason modal 和 scope 的 `outboundReason` 匹配，即可恢复仅工具栏要求 Reason 的旧 Demo 流程。
+
+当前风险：
+
+- Reason 仍为前端固定 mock 字典；真实系统需由业务配置、权限和审计模型定义可选值与留痕要求。
+
+### 2026-07-23 15:28 +08:00 - Interaction Log 呼叫类型查询
+
+修改页面或文件：
+
+- `src/types/callRecord.ts`
+- `src/mock/callRecords.ts`
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求在 Interaction Log 中识别从转移或三方接入当前坐席的记录，供主管检查座席转移电话的频率。
+
+修改结果：
+
+- 列表在 `Media` 后新增 `Call Type`，显示 `Customer`、`Transfer`、`Conference`。
+- 查询条件新增 `Call Type`，默认 `All Call Types`；Search 和 Reset 与其他筛选条件一致。
+- 30 条 mock 记录补充呼叫类型，当前日期数据覆盖三种类型，并保留多条 `Transfer` / `Conference` 供筛选演示。
+
+回滚说明：
+
+- 移除 `callType` 类型字段、mock 值、列表列与查询条件即可恢复原始 Interaction Log 结构。
+
+当前风险：
+
+- 当前类型为前端 mock 口径。真实接入时需由呼叫平台明确提供转接和三方会议事件，不能仅由结束原因推断。
+
+### 2026-07-23 15:05 +08:00 - 未识别 PSTN 客户卡最小化展示
+
+修改页面或文件：
+
+- `src/mock/inbound.ts`
+- `src/components/CustomerInformationPanel.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DESIGN_SYSTEM.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户反馈未识别来电仍显示未加载邮件、客户号和 Special Handling，造成座席在尚未确认身份前看到过多无效信息与入口。
+
+修改结果：
+
+- 未识别 PSTN 显示匿名来电号码 `08123456789`，Email 与 CIS 统一显示 `-`；邮件不再是可点击操作。
+- 仅合法数字 CRM CIS 代表已识别客户。未识别与 Guest 均隐藏 Special Handling、全渠道联系方式、客户号码外呼和邮件发送；KBV、来电渠道、状态和 Call Flow Detail 保留。
+- KBV 通过后 CRM 返回有效 CIS 时，识别客户的 CRM 联系方式、Special Handling、邮件和外呼入口恢复显示。
+
+验证：
+
+- `npx tsc --noEmit`、`npm run lint`、`npm run build` 通过；构建仅保留既有 large chunk warning。
+- customer 浏览器烟测：全新 PSTN 会话只显示 `Unidentified Customer`、`08123456789`、Email / CIS `-`、来电渠道和 KBV，没有 Special Handling、联系人查看、邮件或客户外呼入口；KBV 4/4 后 CRM 刷新为 Dimas，`Verified` 保持，Special Handling、联系人查看和可点击邮件恢复显示。测试页与开发服务保持运行。
+
+回滚说明：
+
+- 还原未识别 mock 字段及 CRM CIS 条件渲染即可恢复原先所有客户卡均显示 CRM 动作的表现。
+
+当前风险：
+
+- 合法 CIS 当前以至少六位数字的前端 DEMO 格式判断；真实 CRM 接入时应替换为后端明确的身份加载状态，而不是依赖客户端格式。
+
+### 2026-07-23 14:30 +08:00 - 联系方式查看弹窗左右列表与共享图标
+
+修改页面或文件：
+
+- `src/pages/inbound/components/ContactChannelIcon.tsx`
+- `src/pages/inbound/components/ContactManagementModal.tsx`
+- `src/pages/inbound/components/CustomerContactDetailsModal.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/mock/inbound.ts`、`src/styles/index.less`
+- `CURRENT_STATUS.md`、`DESIGN_SYSTEM.md`、`BUSINESS_RULES.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户反馈查看入口图标过于瘪小，查看弹窗的卡片网格不如旧编辑弹窗简洁，同时要求渠道图标直接复用旧实现，并明确需要单条、多条和无数据的 CRM 联系方式样本。
+
+修改结果：
+
+- 查看入口改为 `IdcardOutlined`，tooltip 保持 `All Contact Details`。
+- 新增共享 `ContactChannelIcon`，查看和本地旧编辑弹窗复用完全相同的渠道图标、色彩与 Play Store 图形。
+- 查看弹窗改为固定左侧渠道、右侧纵向联系方式的分隔列表；不再有渠道卡片、输入、增删改或保存操作。
+- Dimas mock 覆盖 Phone / Email 多值、多个单值渠道和 Facebook、TikTok、YouTube、Play Store 空值；未识别客户仍无 CRM 联系方式。
+
+验证：
+
+- `npx tsc --noEmit`、`npm run lint`、`npm run build` 通过；构建仅保留既有 large chunk warning。
+- customer 浏览器烟测：未识别 PSTN 只显示 `IdcardOutlined` 查看入口，弹窗 12 个渠道均为 `-` 且不含编辑控件；完成 KBV 4/4 后，CRM 刷新为 Dimas 并保持 `Verified`，查看弹窗正确显示多条 Phone / Email、单值渠道和空值渠道。
+- local 维护配置：查看入口与旧铅笔在 `VITE_APP_VISIBILITY_PROFILE=local` 和 `VITE_ENABLE_CONTACT_EDIT=true` 时并列显示；浏览器测试页与开发服务均保持运行，不再在测试完成时自动清理。
+
+回滚说明：
+
+- 移除共享图标组件并恢复查看弹窗原有卡片栅格及 `ContactsOutlined` 即可回退；旧本地编辑功能不依赖查看弹窗的数据流。
+
+当前风险：
+
+- CRM 联系方式仍是前端结构化 mock。真实 CRM 集成仍须确认渠道归属、零到多值字段映射、数据权限与刷新契约。
+
+### 2026-07-23 12:30 +08:00 - CRM 全渠道联系方式只读查看
+
+修改页面或文件：
+
+- `src/types/inbound.ts`、`src/mock/inbound.ts`
+- `src/pages/inbound/InteractionWorkspace.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/pages/inbound/components/CustomerContactDetailsModal.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DESIGN_SYSTEM.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 之前仅隐藏铅笔入口并未满足客户的“查看所有 CRM 联系方式”需求；客户需要在 Customer Information 标题栏查看每个渠道可有零至多条的完整只读联系方式。
+
+修改结果：
+
+- Customer Information 标题栏新增 `All Contact Details` 图标。客户版只显示查看入口；本地维护环境在显式开关打开时仍可在其旁使用旧铅笔 DEMO。
+- 新增独立只读弹窗，按 Communication Channels、Social Media、App Store Channels 显示 12 个渠道。每个渠道以 CRM 多值文本纵向展示，无值时显示 `-`；弹窗只有 Close 操作。
+- `CustomerProfile` 新增结构化 CRM 联系方式字段。未识别 PSTN 不提供联系方式；有效 CIS 刷新会连同对应客户的 CRM 联系方式写入左栏 profile。
+
+验证：
+
+- `npx tsc --noEmit` 通过。
+- `npm run lint`、`npm run build` 和 customer/local 浏览器烟测待本次实现完成后执行。
+
+回滚说明：
+
+- 移除 `CustomerContactDetailsModal`、标题栏查看入口和 `crmContacts` mock 字段即可回退到无客户联系方式查看的前一版本；本地旧编辑 DEMO 不受此新增查看能力影响。
+
+当前风险：
+
+- 联系方式仍为前端结构化 mock；真实 CRM 需按同一渠道到多值契约返回数据，并确认 iframe origin、认证与数据权限。
+
+### 2026-07-23 12:12 +08:00 - 双账号 TL 转号码权限与外呼原因
+
+修改页面或文件：
+
+- `src/mock/auth.ts`、`src/types/auth.ts`
+- `src/layouts/BasicLayout.tsx`、`src/layouts/components/AgentToolbar.tsx`
+- `src/layouts/components/OutboundCallModal.tsx`
+- `src/types/outboundApproval.ts`、`src/utils/outboundApproval.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求以不同 Demo 登录账号演示普通坐席与 TL 的 `Transfer Number` 权限；同时确认坐席发起工具栏外部号码外呼时必须选择业务原因。
+
+修改结果：
+
+- 新增 `666666 / 666666` TL 账号，登录后显示 `TL - Rangga Aditya` 并通过 `transfer:external-number` 显示直接可用的 Transfer Number；`888888 / 888888` 保持普通 Agent 并隐藏该标签。
+- 工具栏 Outbound Call Number 新增必填 Reason 下拉选项 `Miss Information`、`Financial Risk`。原因随审批记录同步给 TL；修改号码或原因会要求重新申请审批。
+
+验证：
+
+- `npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` 已通过；构建仅保留既有 large chunk warning。
+- 浏览器烟测：`888888 / 888888` 显示 `Agent - Budi Kartika`，Outbound Call Number 未选原因时 Request Approval 不可用；选择 `Miss Information` 并输入新号码后 Request Approval 可用。`666666 / 666666` 显示 `TL - Rangga Aditya`，Transfer modal 出现 Transfer Number，输入号码后可直接 Transfer，并显示成功反馈及进入 Not Ready / ACW。
+
+回滚说明：
+
+- 移除 TL mock 账号和权限传递即可恢复单 Agent 登录；移除 outbound reason 字段、Select 和审批匹配字段即可恢复原外呼审批流程。
+
+当前风险：
+
+- 两组账号和权限均是前端 Demo mock；不构成真实 LDAP、岗位、权限审计或后端授权实现。
+
+### 2026-07-23 11:49 +08:00 - 普通坐席隐藏 Transfer Number
+
+修改页面或文件：
+
+- `src/layouts/components/TransferModal.tsx`
+- `src/types/outboundApproval.ts`
+- `src/utils/outboundApproval.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户确认 `Transfer Number` 仅对 TL 及以上角色展示，普通坐席不应看到该标签；高权限号码转移不需要再走 TL 审批。
+
+修改结果：
+
+- 当前普通坐席 Demo 的 Transfer modal 仅显示 `Transfer Agent`、`Transfer Skill` 和 `Transfer IVR`；`Transfer Number` 默认隐藏。
+- 增加明确的 `canTransferToNumber` 能力入口供未来 TL-and-above 角色映射使用。启用后，该页仅保留号码输入与直接可用的 `Transfer`，不再渲染 `Request Approval` 或创建审批记录。
+- 外呼审批模型收窄为工具栏外呼号码和客户资料卡客户号码两个入口。
+
+验证：
+
+- `npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` 已通过；构建仅保留既有 large chunk warning。
+- 浏览器烟测：普通 Agent 登录、签入、Ready、PSTN 接通后打开 Transfer modal，标签栏仅显示 `Transfer Agent`、`Transfer Skill`、`Transfer IVR`，未显示 `Transfer Number`。
+
+回滚说明：
+
+- 将 `canTransferToNumber` 默认值改回可见，并恢复 Transfer Number 的审批钩子和审批类型即可。
+
+当前风险：
+
+- 当前前端 Demo 尚未建立真实岗位权限模型；TL-and-above 能力通过组件显式属性预留，接入真实角色时须由后端权限结果驱动。
+
+### 2026-07-23 11:12 +08:00 - CRM 只读联系方式与本地编辑开关
+
+修改页面或文件：
+
+- `src/config/featureFlags.ts`
+- `src/config/moduleVisibility.ts`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `.env.example`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DESIGN_SYSTEM.md`
+- `PROJECT_CONTEXT.md`
+- `DECISION_LOG.md`
+
+修改原因：
+
+- 客户确认 Customer Information 仅展示 CRM 获取的联系方式，座席不支持编辑；同时需要保留旧 Contact Management DEMO 供未来维护或需求确认时查看。
+
+修改结果：
+
+- 客户版不再渲染 Customer Information 铅笔按钮、Contact Management modal 或其本地编辑状态；电话和邮箱继续只来自当前 CRM-backed profile。
+- 新增 `VITE_ENABLE_CONTACT_EDIT=false` 默认开关。只有 `VITE_APP_VISIBILITY_PROFILE=local` 且开关为 `true` 时，维护环境才会挂载旧的本地 Contact Management DEMO。
+- 文档明确该开关不是客户部署能力；未来客户编辑必须先确认 CRM 写回、权限、审计、字段归属、校验和失败处理。
+
+验证：
+
+- `npm run lint`、`npx tsc --noEmit`、`npm run build` 通过；构建仅保留既有 large chunk warning。
+- customer 浏览器烟测：即使设置 `VITE_ENABLE_CONTACT_EDIT=true`，Customer Information 仍没有 Edit contact 按钮。
+- local 浏览器烟测：`VITE_APP_VISIBILITY_PROFILE=local` 且 `VITE_ENABLE_CONTACT_EDIT=true` 时，Edit contact 按钮显示并可打开旧 Contact Management DEMO。
+
+回滚说明：
+
+- 移除 contact-edit feature flag 和 local-only 条件渲染，即可恢复客户卡上的旧本地编辑入口。
+
+当前风险：
+
+- 旧编辑 DEMO 仍是前端本地 mock，不得作为 CRM 写回能力或客户版功能启用。
+
+### 2026-07-23 10:59 +08:00 - CRM 刷新反馈与 KBV 条件稳定性
+
+修改页面或文件：
+
+- `src/components/OperationNotice.tsx`
+- `src/components/index.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/inbound/InteractionWorkspace.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/pages/inbound/components/CustomerVerificationV2Modal.tsx`
+- `src/pages/inbound/components/LeftColumn.tsx`
+- `src/styles/index.less`
+- `DESIGN_SYSTEM.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+
+修改原因：
+
+- 客户确认 CRM 刷新成功后不需要额外提示，避免遮挡话务条；并反馈再次打开 KBV 后 Segment / Skill 不应因 CRM 刷新而变化。
+
+修改结果：
+
+- 成功 CRM 刷新改为静默更新左栏可见资料；失败复用位于话务条下方、四秒自动隐藏的共享 `OperationNotice` banner。
+- Transfer banner 提取为可复用 `OperationNotice`，Design System 明确：可见状态已足以说明成功时不提示，操作失败使用共享 banner，不使用页面私有 toast 样式。
+- 当前通话首次 KBV 的 Segment、Skill、Scenario 成为稳定上下文；座席在 KBV 面板调整后的条件会在同一通话再次打开时保留，CRM 资料刷新不再重算这些条件。
+
+验证：
+
+- `npm run lint`、`npx tsc --noEmit`、`npm run build` 通过；构建仅保留既有 large chunk warning。
+- 浏览器烟测：未识别 PSTN 客户完成 KBV 4/4 并触发 CRM 刷新后，客户卡更新为 Priority/Dimas；重新打开 KBV 仍显示首次条件 `Layanan Reguler`、`Kartu Kredit` 和 `Default`，成功刷新没有 toast。
+
+回滚说明：
+
+- 删除共享 `OperationNotice` 并恢复原转移 banner；移除工作区 KBV 条件缓存即可回退。
+
+当前风险：
+
+- KBV 条件缓存仅覆盖当前前端交互，刷新页面或开始新的客户交互后会按新交互重新建立。
+
+### 2026-07-23 10:51 +08:00 - 移除旧服务模式接入拦截
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/store/appStore.ts`
+- `src/mock/auth.ts`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户发现语音/视频接入仍显示 `Current sign-in mode is Digital only`。该提示来自已移除的坐席自主服务模式选择逻辑，与当前固定全渠道 Demo 能力冲突。
+
+修改结果：
+
+- 移除 Voice only / Digital only 不匹配状态及其在 Header、BankApp、WhatsApp、Webchat handoff 中的提示分支。
+- 语音、视频和文字渠道现在只受 `Ready` 状态及当前活跃服务保护；签入仍内部固定为全渠道兼容值。
+- DEC-006 标记为已被 DEC-036 取代，避免后续恢复已废弃的服务模式决策。
+
+回滚说明：
+
+- 若未来确认按绑定技能区分媒体资格，应建立正式的员工技能媒体能力模型，再在接入判断中使用该模型；不要恢复旧的坐席手选服务模式。
+
+当前风险：
+
+- 当前 Demo 尚未读取真实绑定技能；所有演示账号仍按全渠道能力处理。
+
+### 2026-07-23 10:32 +08:00 - KBV 通过后 CRM CIS 刷新客户信息
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/pages/inbound/InteractionWorkspace.tsx`
+- `src/pages/inbound/components/CrmPanel.tsx`
+- `src/utils/crmCustomerIdentity.ts`
+- `src/mock/inbound.ts`
+- `BUSINESS_RULES.md`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DECISION_LOG.md`
+
+修改原因：
+
+- 客户要求取消座席手动输入 Customer ID 的刷新方式，改为座席完成 KBV 并点击 `Apply Verified` 后，由 AICC 通过 CRM `postMessage` 获取 CIS 并刷新左侧客户信息。
+
+修改结果：
+
+- 删除 Customer Information 标题栏的刷新图标、Customer ID 粘贴/输入 popover 和对应样式。
+- KBV 状态上移至 `InteractionWorkspace` 管理；`Apply Verified` 先保留 `Verified`，再发出包含版本与关联 ID 的 CRM CIS 请求。
+- 截图式 CRM 增加无可见控件的同源 DEMO bridge，返回 CIS 后一次更新客户 profile、Journey 和 Ticketing History；成功提示资料已从 CRM 更新。
+- AICC 忽略错误 origin、错误消息、错误关联 ID、空 CIS；未知 CIS 或超时不覆盖当前资料并提示失败。`Apply Failed`、未满足 KBV、Clear All 和 PIN 均不会触发 CRM CIS 请求。
+
+验证：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；仅保留既有 large chunk warning。
+- 浏览器烟测：以未识别 PSTN 客户完成 Mandatory 1/1 和 Static 3/3 后点击 `Apply Verified 4/4`；左栏自动刷新为 CRM CIS 对应的 Dimas 资料、Journey 和 Ticket，状态保持 `Verified`，且仅剩 Edit contact 标题栏动作并显示 CRM 更新成功反馈。
+
+回滚说明：
+
+- 还原 Customer Information 卡的手动刷新入口，并移除 CRM CIS bridge 与工作区消息监听即可回退到原 DEMO 行为。
+
+当前风险：
+
+- 当前仅为同源前端 DEMO 消息桥接；真实 CRM iframe、可信 origin allowlist、认证、审计和 CIS/customer-data API 仍需在后端集成阶段确认。
+
+### 2026-07-23 10:14 +08:00 - 异常挂机原因默认 DM 与条件下拉入口
+
+修改页面或文件：
+
+- `src/mock/sessionEndReasons.ts`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `BUSINESS_RULES.md`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DESIGN_SYSTEM.md`
+- `DECISION_LOG.md`
+
+修改原因：
+
+- 客户确认默认异常挂机原因只保留两条 DM 配置；Voice 和 Video 仍可由管理台后续配置，但不预置异常原因。
+
+修改结果：
+
+- 移除 `Hening & Tidak Ada Respons` 默认记录；`Problem Teknis` 改为仅适用 DM，保留既有 ID；`Nasabah Tidak Ada Respons Lebih Lanjut` 保持 DM。
+- Voice、Video、DM 只有当前媒体存在启用的异常原因时才展示挂机/结束服务的小三角；无可用原因时使用完整圆角的正常主按钮。
+- 正常语音/视频挂机仍一键结束；正常文字会话仍保留确认弹框；异常原因选择仍直接结束、不二次确认。
+- 管理台仍允许配置 Voice、Video、DM；新增并启用 Voice 原因后，PSTN 坐席侧即时恢复异常原因小三角。
+
+验证：
+
+- `npm run lint`、`npm run build` 通过；构建仅有既有 large chunk warning。
+- 浏览器烟测确认管理台初始仅两条 DM、PSTN/Video 无匹配原因时无小三角、删除全部 DM 原因后 End Service 仍可打开确认框、启用 Voice 原因后 PSTN 小三角恢复。
+
+回滚说明：
+
+- 恢复原有默认 mock 数据，并还原 AgentToolbar 与 LiveChat 会话工作区的始终显示 split button 渲染即可回滚。
+
+当前风险：
+
+- 原因配置仅保存于当前前端 demo 会话；刷新页面后会回到默认两条 DM 原因。
+
+### 2026-07-22 17:58 +08:00 - Busy Reason Productivity Type 分类
+
+修改页面或文件：
+
+- `src/pages/call-management/BusyReasonManagementPage.tsx`
+- `src/types/busyReason.ts`
+- `src/mock/busyReasons.ts`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+
+修改原因：
+
+- 客户要求为 AUX 原因增加生产性分类，以支持未来坐席状态统计和报表统计区分。
+
+修改结果：
+
+- 新增 `Productivity Type`，固定为 `Productive` 和 `Non-Productive`。
+- 查询使用含 All 的下拉筛选；列表列位于 Busy Reason 后；编辑弹窗使用直接可见的两项单选按钮。
+- 按客户提供映射初始化 11 个启用 AUX 原因；禁用的 Extension 3-11 统一初始化为 `Non-Productive`。
+- 当前交付仅维护配置，不改变 AUX 状态流或新增报表逻辑。
+
+验证：
+
+- `npm run lint`、`npx tsc --noEmit`、`npm run build` 通过；构建仅有既有 large chunk warning。
+- 浏览器冒烟确认 Productivity Type 查询下拉、紧跟 Busy Reason 的列表列、附件初始映射，以及编辑弹窗中的两项直接单选。
+
+回滚说明：
+
+- 移除 `productivityType` 类型、mock 字段、管理页查询/列表/编辑控件和对应文档即可回滚。
+
+当前风险：
+
+- Productivity Type 当前仅保存在前端本地 Busy Reason 配置中，实际坐席状态统计与报表消费仍是后续范围。
 
 ### 2026-07-22 17:28 +08:00 - 转移工作流客户生产发布
 

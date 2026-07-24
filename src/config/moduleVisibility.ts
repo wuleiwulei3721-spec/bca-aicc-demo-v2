@@ -17,6 +17,8 @@ export const visibilityProfile: VisibilityProfile =
   rawVisibilityProfile === 'local' ? 'local' : 'customer'
 
 export const isLocalVisibility = visibilityProfile === 'local'
+export const isLocalContactEditingEnabled =
+  isLocalVisibility && featureFlags.enableContactEdit
 
 const localOnlyModules = new Set<ModuleVisibilityKey>([
   'design-system',

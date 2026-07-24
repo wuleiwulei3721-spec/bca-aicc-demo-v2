@@ -12,6 +12,11 @@ const dimasCustomer: CustomerInformation = {
     avatarUrl: '',
     cisNumber: '00000078987',
     customerType: 'Priority Customer',
+    crmContacts: {
+      Email: ['dimas.abimanyu@example.com'],
+      Phone: ['087825100234'],
+      WhatsApp: ['+62 878 2510 0234'],
+    },
     email: 'dimas.abimanyu@example.com',
     name: 'Dimas Abimanyu Prabowo',
     phoneNumber: '087825100234',
@@ -27,6 +32,10 @@ const sitiCustomer: CustomerInformation = {
     avatarUrl: '',
     cisNumber: '00000056231',
     customerType: 'Regular Customer',
+    crmContacts: {
+      Email: ['siti.aminah@example.com'],
+      Phone: ['081234560118'],
+    },
     email: 'siti.aminah@example.com',
     name: 'Siti Aminah',
     phoneNumber: '081234560118',
@@ -42,6 +51,10 @@ const agusCustomer: CustomerInformation = {
     avatarUrl: '',
     cisNumber: '00000061342',
     customerType: 'Regular Customer',
+    crmContacts: {
+      Email: ['agus.wijaya@example.com'],
+      Phone: ['081234560229'],
+    },
     email: 'agus.wijaya@example.com',
     name: 'Agus Wijaya',
     phoneNumber: '081234560229',
@@ -98,7 +111,16 @@ export const emailTemplates: EmailTemplate[] = [
 function cloneCustomer(customer: CustomerInformation): CustomerInformation {
   return {
     ...customer,
-    profile: { ...customer.profile },
+    profile: {
+      ...customer.profile,
+      crmContacts: customer.profile.crmContacts
+        ? Object.fromEntries(
+            Object.entries(customer.profile.crmContacts).map(
+              ([channel, values]) => [channel, values ? [...values] : values],
+            ),
+          )
+        : undefined,
+    },
   }
 }
 
@@ -209,4 +231,3 @@ export function createEmailDemoMessages(now = Date.now()): EmailMessage[] {
     },
   ]
 }
-

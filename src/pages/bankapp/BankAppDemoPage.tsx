@@ -24,8 +24,6 @@ import {
 import {
   useAppStore,
   type BankAppVideoShareState,
-  type DigitalHandoffReadiness,
-  type VoiceVideoHandoffReadiness,
 } from '../../store'
 import type {
   BankAppBusinessOption,
@@ -39,10 +37,7 @@ import type {
 const BANKAPP_LIVE_CHAT_SESSION_ID = 'live-chat-002'
 const WEBCHAT_LIVE_CHAT_SESSION_ID = 'live-chat-003'
 const WHATSAPP_LIVE_CHAT_SESSION_ID = 'live-chat-001'
-type HandoffWarningReason = Exclude<
-  VoiceVideoHandoffReadiness,
-  'available'
-> | Exclude<DigitalHandoffReadiness, 'available'>
+type HandoffWarningReason = 'active-call' | 'not-ready'
 
 type CustomerAppDemoVariant = 'bankapp' | 'webchat' | 'whatsapp'
 
@@ -643,11 +638,7 @@ export function BankAppDemoPage({
   const handoffWarningMessage =
     handoffWarningReason === 'active-call'
       ? 'Please hang up the current call and wait until the agent is Ready before routing this interaction to Agent Workspace.'
-      : handoffWarningReason === 'voice-skill-unavailable'
-        ? 'Current sign-in mode is Digital only. Sign in with Voice or Voice + Digital before routing this voice or video interaction.'
-        : handoffWarningReason === 'digital-skill-unavailable'
-          ? 'Current sign-in mode is Voice only. Sign in with Digital or Voice + Digital before routing this chat interaction.'
-        : 'Agent must be Ready before routing this interaction to Agent Workspace.'
+      : 'Agent must be Ready before routing this interaction to Agent Workspace.'
 
   const triggerAgentWorkspace = (activateWorkspace = false) => {
     if (effectiveContactMethod === 'livechat') {

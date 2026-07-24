@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Project Context
 
-Last updated: 2026-07-21 10:33 +08:00
+Last updated: 2026-07-24 13:57 +08:00
 Repository path: `D:\03projects\bca-aicc-demo-v2`
 
 ## 1. Project Name
@@ -165,7 +165,7 @@ All business routes under `/` require an authenticated demo session.
 ### Login and Authentication
 
 - Demo login page at `/login`.
-- Demo credentials are implemented in mock auth data.
+- Demo credentials are implemented in mock auth data: `888888 / 888888` is the ordinary Agent account, and `666666 / 666666` is the female TL Demo account Maya Lestari, used to demonstrate direct external outbound, `Transfer Number`, and broader Call Agent visibility.
 - Session is stored in `sessionStorage`.
 - Protected routes redirect unauthenticated users to `/login`.
 - Log Out is blocked while active customer service exists.
@@ -190,11 +190,12 @@ The toolbar supports:
 - Mute.
 - Transfer.
 - Hang Up.
-- Split-button abnormal end reason selection for active voice/video calls.
+- Conditional split-button abnormal end reason selection for active voice/video calls; the caret is hidden when no active reason applies.
 - Ready / Not Ready toggle.
 - Timer display.
 - More menu for Outbound Call; toolbar Settings is temporarily hidden.
-- External outbound number, external transfer number, and Customer Information outbound actions require one TL approval per target before their original action is enabled.
+- Ordinary Agent external outbound number and Customer Information outbound actions require one TL approval per target before their original action is enabled. Both external outbound entries require `Miss Information` or `Financial Risk`; TL selects the same reason but calls directly. `Transfer Number` is a TL-and-above permission, hidden from `888888` and available to `666666` without additional approval.
+- In `Outbound Call > Call Agent`, ordinary Agents see only SPV and TL records; TL-and-above roles see the complete agent list.
 - `Channel Simulation > Transferred Call` is local-only and opens a PSTN receiving-seat preview with source-agent transfer metadata; it is a local demo visualization, not a real routed call.
 - Call identification display: `IVR` / `BankID`.
 - Skill display during active call lifecycle.
@@ -237,7 +238,7 @@ Inbound voice workspace uses the shared three-column layout:
 - Center: CRM workspace, Conversation tab when applicable, dynamic business tabs.
 - Right: Assistant, Common Links, and optional extra tabs.
 
-PSTN initially shows an unidentified customer. Customer identity can be refreshed through the Customer Information card using the demo customer ID.
+PSTN initially shows an unidentified customer. After voice KBV passes, AICC requests the CIS from CRM through a same-origin DEMO `postMessage` bridge and refreshes the Customer Information, journey, ticket data, and structured CRM contact values from the mock CIS lookup. Manual Customer ID entry is not available. Customer Information provides a read-only all-channel contact viewer; real CRM iframe, origin allowlist, and customer-data API integration remain future work.
 
 ### Video Call Workspace
 
@@ -300,17 +301,17 @@ WhatsApp supports:
 
 ### Email Workspace
 
-The Email workspace is implemented in source but temporarily hidden from `Channel Simulation` until it is complete. When enabled, its menu action opens or reuses a closable `Email` workspace tab.
+The Email workspace is available from `Channel Simulation > Email` in both customer and local visibility profiles. Its menu action opens or reuses one closable `Email` workspace tab.
 
 The current Email demo supports:
 
 - Inbox, Sent, Drafts, and Trash folders with search and local counts.
 - Email selection, read state, SLA progress, and related thread records.
-- Reply, Forward, Save Draft, Edit Draft, and Send with local folder/thread updates.
-- Ignore with AD, Spam, or Sales Email reason; ignored messages remain in Inbox with SLA stopped.
-- Trash recovery to Inbox.
-- Reused Customer Information, Customer Journey, Ticketing History, Next Best Action, and Quick Action context.
-- A BANK 1-safe code-built CRM view without embedding the legacy CRM screenshot.
+- Reply, Save Draft, Edit Draft, and Send with local folder/thread updates. Forward requires a receiver and, after Send, removes the source and forwarding record from Inbox, Sent, Drafts, and Trash.
+- Ignore with AD, Spam, or Sales Email reason; ignored messages move to Trash with SLA stopped.
+- Trash recovery returns a trashed or ignored mock email to its original folder.
+- The shared Customer Information, Customer Journey, Ticketing History, Next Best Action, and Quick Action column used by the other interaction workspaces; Email is shown as the access channel.
+- The shared Live Chat `CrmPanel`, including the same CRM screenshot, `CRM / Email` tab styling, and closable CRM business-detail tabs.
 - CWU registration with Business Type, Summary, and one-click summary generation.
 
 Email message and CWU changes are local component state. Closing and reopening the Email tab or refreshing the application restores the default anonymized mock data. Email verification is not exposed because no Email verification rule is confirmed. Email Record Inquiry and Email Template Deploy remain separate future scope.
@@ -336,7 +337,7 @@ Legacy or hidden routes redirect to Verification Rules.
 Interaction Log is implemented at `/call-management/call-record-query` and is
 scoped to the current agent's Phone, BankApp Voice,
 BankApp Video, BankApp DM, Webchat, and WhatsApp records. It uses Contact /
-Queue / Service Time / Ended By / End Reason / QM Score to show the
+Call Type / Queue / Service Time / Ended By / End Reason / QM Score to show the
 customer-side identifier, queue context, start-end service time, service ending
 metadata, and quality score.
 Numeric QM Scores open a static third-party quality-management detail preview
@@ -353,12 +354,11 @@ Video media uses an OpenEye-style vertical replay with two video panes and a
 playback bar, without call-control buttons, labels, or icons. It intentionally excludes Email and Social Media
 records; Email Record Inquiry and Social Media query remain separate future scopes even though the Email handling workspace is now implemented.
 
-Abnormal End Reasons maintains agent-selectable abnormal end reasons
-for Voice, Video, and DM service endings. `Normal` is the system default normal
-end reason and is not listed as a maintainable abnormal reason. The source
-attachment explicitly names Voice and Digital; Video is included in the current
-demo as a synchronous-call extension of Voice, not as a separate customer-stated
-row.
+Abnormal End Reasons maintains agent-selectable abnormal end reasons for Voice,
+Video, and DM service endings. `Normal` is the system default normal end reason
+and is not listed as a maintainable abnormal reason. The default configuration
+contains two active DM reasons only; Voice and Video remain available for future
+management configuration, but have no preconfigured abnormal reason.
 
 ### Routing Config
 
@@ -433,12 +433,12 @@ Current behaviors:
 - CRM screenshot / fallback workspace.
 - Assistant screenshot / fallback workspace.
 - Common Links tab.
-- Transfer, Outbound Call, Internal Chat, Agent Settings, Toolbar Settings, Call Flow Detail, Send Email, Contact Management modals.
+- Transfer, Outbound Call, Internal Chat, Agent Settings, Toolbar Settings, Call Flow Detail, Send Email, and read-only All Contact Details modals. Legacy Contact Management is local-only and disabled by default because customer contact information is CRM read-only.
 - Live Chat workspace with customer list, conversation, message record, quick replies, and local message state.
 - Monitoring side menu with static Home / Monitor dashboard screenshot switching.
 - AI external side-menu group for Quality Manage and AI Assist Config.
 - BankApp, Webchat, and WhatsApp customer-side simulations with screenshot assets.
-- Code-built Email agent workspace with mailbox folders, message handling, CRM, thread records, and CWU registration.
+- Customer-visible Email agent workspace with mailbox folders, shared customer context, the Live Chat CRM screenshot, message handling, thread records, and CWU registration.
 - Call Management pages listed above.
 - Abnormal End Reasons for abnormal Voice / Video / DM service end reasons.
 - Interaction Log for current-agent Phone, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp history, with 30 mock records, Contact, Queue, Service Time, Ended By, End Reason, QM Score, playback/transcript details, and read-only mandatory CWU summary.

@@ -34,6 +34,7 @@ export type VerificationV2QuestionStepStatus =
 
 interface CustomerVerificationV2ModalProps {
   initialConditions: VerificationV2DemoConditions
+  onConditionsChange?: (conditions: VerificationV2DemoConditions) => void
   questionBank: VerificationV2Question[]
   readonlyConditions?: boolean
   rules: VerificationV2Rule[]
@@ -231,6 +232,7 @@ function getQuestionBlockGroups(
 
 export function CustomerVerificationV2Panel({
   initialConditions,
+  onConditionsChange,
   questionBank,
   readonlyConditions = false,
   rules,
@@ -343,6 +345,7 @@ export function CustomerVerificationV2Panel({
     )
     setConditions(nextConditions)
     setQuestionStatuses(nextQuestionStatuses)
+    onConditionsChange?.(nextConditions)
   }
 
   const handleQuestionAction = (

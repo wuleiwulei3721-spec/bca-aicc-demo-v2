@@ -15,6 +15,8 @@ export type EmailHandlingStatus =
 
 export type EmailIgnoreReason = 'AD' | 'Spam' | 'Sales Email'
 
+export type EmailComposeMode = 'new' | 'reply' | 'forward' | 'draft'
+
 export interface EmailCwuRegistration {
   businessTypes: string[]
   summary: string
@@ -43,6 +45,7 @@ export interface EmailMessage {
   slaStoppedAt?: number
   slaTargetSeconds?: number
   cwu?: EmailCwuRegistration
+  forwardSourceMessageId?: string
 }
 
 export interface EmailTemplate {
@@ -55,7 +58,7 @@ export interface EmailTemplate {
 export interface EmailComposeDraft {
   bodyHtml: string
   draftMessageId?: string
-  mode: 'new' | 'reply' | 'forward' | 'draft'
+  mode: EmailComposeMode
   receiver: string
   sender: string
   sourceMessageId?: string
@@ -63,4 +66,3 @@ export interface EmailComposeDraft {
   templateId?: string
   threadId: string
 }
-

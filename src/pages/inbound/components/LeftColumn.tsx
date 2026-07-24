@@ -18,14 +18,15 @@ interface LeftColumnProps {
   accessMenuLabel?: string
   accessMenuName?: string
   customer: CustomerInformation
-  identityRefreshPasteValue: string
   journey: CustomerJourneyItem[]
   tickets: TicketHistoryItem[]
   nextBestActions: NextBestActionItem[]
   quickActions: QuickActionItem[]
-  onCustomerIdentityRefresh: (customerId: string) => boolean
   onOpenCrm: (tab: CrmWorkspaceTab) => void
+  onSendEmail?: () => void
   onOpenVerification: (config: CustomerVerificationPanelConfig) => void
+  onVerificationFinish: CustomerVerificationPanelConfig['onFinish']
+  verificationConditions?: CustomerVerificationPanelConfig['initialConditions']
   showIvrJourney?: boolean
   showTransferHistory?: boolean
   transferContext?: CallTransferContext
@@ -35,14 +36,15 @@ export function LeftColumn({
   accessMenuLabel,
   accessMenuName,
   customer,
-  identityRefreshPasteValue,
   journey,
   tickets,
   nextBestActions,
   quickActions,
-  onCustomerIdentityRefresh,
   onOpenCrm,
+  onSendEmail,
   onOpenVerification,
+  onVerificationFinish,
+  verificationConditions,
   showIvrJourney,
   showTransferHistory,
   transferContext,
@@ -54,12 +56,13 @@ export function LeftColumn({
           accessMenuLabel={accessMenuLabel}
           accessMenuName={accessMenuName}
           customer={customer}
-          identityRefreshPasteValue={identityRefreshPasteValue}
+          onSendEmail={onSendEmail}
           showIvrJourney={showIvrJourney}
           showTransferHistory={showTransferHistory}
           transferContext={transferContext}
-          onCustomerIdentityRefresh={onCustomerIdentityRefresh}
           onOpenVerification={onOpenVerification}
+          onVerificationFinish={onVerificationFinish}
+          verificationConditions={verificationConditions}
         />
       </div>
       <div className="inbound-left-column__scroll">

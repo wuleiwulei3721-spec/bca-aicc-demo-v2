@@ -1,4 +1,9 @@
-export type AuthRole = 'admin' | 'agent' | 'monitor' | 'supervisor'
+export type AuthRole =
+  | 'admin'
+  | 'agent'
+  | 'monitor'
+  | 'supervisor'
+  | 'team-leader'
 
 export type AgentServiceMode = 'digital' | 'voice' | 'voice-digital'
 
@@ -10,6 +15,7 @@ export interface AuthCrmSsoContext {
 }
 
 export interface AuthSession {
+  avatarUrl?: string
   crmSso: AuthCrmSsoContext
   displayName: string
   employeeId: string

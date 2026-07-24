@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   BankOutlined,
@@ -10,13 +10,18 @@ import {
 } from '@ant-design/icons'
 import type { TabsProps } from 'antd'
 import { BaseTabs } from '../../../components'
+import { CRM_DEMO_CIS_NUMBER } from '../../../mock/inbound'
 import type { CrmWorkspaceTab } from '../../../types'
+import {
+  createCrmCisResponse,
+  isCrmCisRequestMessage,
+} from '../../../utils/crmCustomerIdentity'
 import {
   ConversationWorkspace,
   type ConversationWorkspaceConfig,
 } from './ConversationWorkspace'
 
-const CRM_TAB_KEY = 'crm'
+export const CRM_TAB_KEY = 'crm'
 export const CONVERSATION_TAB_KEY = 'conversation'
 const CRM_SCREENSHOT_SRC = '/screenshots/crm-workspace.jpg'
 
@@ -24,7 +29,10 @@ interface CrmPanelProps {
   activeKey: string
   conversation?: ConversationWorkspaceConfig
   conversationContent?: ReactNode
+  conversationIcon?: ReactNode
   conversationKey?: string
+  conversationLabel?: string
+  tabBarExtraContent?: ReactNode
   workspaceTabs: CrmWorkspaceTab[]
   onActiveKeyChange: (activeKey: string) => void
   onCloseTab: (tabKey: string) => void
@@ -53,6 +61,31 @@ function renderWorkspaceTabIcon(kind: CrmWorkspaceTab['kind']) {
 
 function CrmScreenshotArea() {
   const [screenshotLoaded, setScreenshotLoaded] = useState(false)
+
+  useEffect(() => {
+    const handleCrmCisRequest = (event: MessageEvent<unknown>) => {
+      if (
+        event.origin !== window.location.origin ||
+        !isCrmCisRequestMessage(event.data)
+      ) {
+        return
+      }
+
+      window.setTimeout(() => {
+        window.postMessage(
+          createCrmCisResponse(
+            event.data.correlationId,
+            CRM_DEMO_CIS_NUMBER,
+          ),
+          window.location.origin,
+        )
+      }, 150)
+    }
+
+    window.addEventListener('message', handleCrmCisRequest)
+
+    return () => window.removeEventListener('message', handleCrmCisRequest)
+  }, [])
 
   return (
     <div
@@ -225,7 +258,10 @@ export function CrmPanel({
   activeKey,
   conversation,
   conversationContent,
+  conversationIcon,
   conversationKey,
+  conversationLabel = 'Conversation',
+  tabBarExtraContent,
   workspaceTabs,
   onActiveKeyChange,
   onCloseTab,
@@ -243,7 +279,10 @@ export function CrmPanel({
             {
               key: CONVERSATION_TAB_KEY,
               closable: false,
-              label: renderCrmTabLabel('Conversation', <MessageOutlined />),
+              label: renderCrmTabLabel(
+                conversationLabel,
+                conversationIcon ?? <MessageOutlined />,
+              ),
               children: conversationContent ?? (
                 <ConversationWorkspace
                   key={conversationKey ?? conversation?.session.id}
@@ -263,7 +302,14 @@ export function CrmPanel({
         children: <WorkspaceBusinessDetail tab={tab} />,
       })),
     ],
-    [conversation, conversationContent, conversationKey, workspaceTabs],
+    [
+      conversation,
+      conversationContent,
+      conversationIcon,
+      conversationKey,
+      conversationLabel,
+      workspaceTabs,
+    ],
   )
 
   const handleEdit: TabsProps['onEdit'] = (targetKey, action) => {
@@ -282,6 +328,7 @@ export function CrmPanel({
         hideAdd
         items={items}
         removeIcon={<CloseOutlined />}
+        tabBarExtraContent={tabBarExtraContent}
         type="editable-card"
         variant="toolbar"
         onChange={onActiveKeyChange}

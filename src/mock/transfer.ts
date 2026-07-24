@@ -20,7 +20,7 @@ export const transferAgents: TransferAgent[] = [
     marker: 'TL',
     employeeId: 'AICC1088',
     department: 'Card Service',
-    name: 'Rangga Aditya',
+    name: 'Maya Lestari',
     skillName: 'Credit Card',
     status: 'Ready',
     extension: '81088',

@@ -1,6 +1,17 @@
+export type ExternalOutboundReason =
+  | 'financial-risk'
+  | 'miss-information'
+
+export const externalOutboundReasonOptions: {
+  label: string
+  value: ExternalOutboundReason
+}[] = [
+  { label: 'Miss Information', value: 'miss-information' },
+  { label: 'Financial Risk', value: 'financial-risk' },
+]
+
 export type ExternalOperationApprovalType =
   | 'outbound-number'
-  | 'transfer-number'
   | 'customer-outbound'
 
 export type ExternalOperationApprovalStatus =
@@ -13,6 +24,7 @@ export type ExternalOperationApprovalStatus =
 
 export interface ExternalOperationApprovalScope {
   customerId?: string
+  outboundReason?: ExternalOutboundReason
   targetNumber: string
   type: ExternalOperationApprovalType
 }
