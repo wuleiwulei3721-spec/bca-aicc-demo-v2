@@ -8,6 +8,7 @@ import {
   MessageOutlined,
   MoreOutlined,
   PaperClipOutlined,
+  PoweroffOutlined,
   SendOutlined,
   SmileOutlined,
   StarFilled,
@@ -65,6 +66,11 @@ const REPLY_TIMEOUT_SECONDS = 5 * 60
 const REVIEW_DISPLAY_DATE = '2024/03/17'
 const DEFAULT_REVIEW_REPLY =
   'Hello! I will help you to apply for a credit card activation.'
+const CHAT_DISPLAY_DATE = 'TODAY, 23 SEP 2025'
+const DEFAULT_CHAT_REPLY =
+  'Thanks for the detailed feedback. We will share this with the product team and follow up once the update is reviewed.'
+const LONG_CHAT_MESSAGE =
+  "Could you introduce a new feature that allows me to copy all the text highlighted and marked with a single click? After reading the entire book, I really want to copy all the highlighted content and collect it. The toolbar for highlighting annotations in the current version is really not as user-friendly as the old version (with black background and graphical symbols). The current options for selecting colors, deleting annotations, and copying are too awkward. I'm completely unaccustomed to the text-based toolbar. The icon-based toolbar in the old version was much better. Please change it back to the old version! I don't know if it's just my illusion, but the color of the highlighted annotations has become darker, which makes me feel uncomfortable compared to the old version. The visual effect of the highlighted border turning into an arc is not good at all. Please restore it to the original right angle. Really, really, it will affect my reading mood and efficiency. Why is the cross to exit reading set in the top right corner? I'm used to exiting from the top left corner and can't accept it at all. The page and progress display during reading are also extremely unaccustomed. Please, please change it back to the old version. The old version is much more comfortable! Please, please change it back to the old version. It really affects my reading mood!!"
 
 const socialMediaAsset = (fileName: string) =>
   `/social-media-assets/${fileName}`
@@ -242,14 +248,13 @@ const socialMediaItems: SocialMediaItem[] = [
     handle: '@michaelchen',
     id: 'sm-003',
     initialReplySeconds: 899,
-    post:
-      'I tagged support twice because my account verification still fails after the latest app update.',
+    post: LONG_CHAT_MESSAGE,
     preview: 'Account verification needed',
     queue: 'Account verification',
     replies: 5,
     status: 'pending',
-    title: 'Mention from X',
-    type: 'at',
+    title: 'X Inbox',
+    type: 'chats',
     unread: 2,
   },
   {
@@ -375,6 +380,9 @@ const socialMediaItems: SocialMediaItem[] = [
 
 const allChannelKeys = channelOptions.map((option) => option.key)
 const allTypeKeys = typeOptions.map((option) => option.key)
+const defaultSocialMediaItemId =
+  socialMediaItems.find((item) => item.type === 'chats')?.id ??
+  socialMediaItems[0].id
 
 function toggleValue<T extends string>(values: T[], value: T) {
   if (values.includes(value)) {
@@ -634,14 +642,16 @@ export function SocialMediaPage() {
     useState<SocialMediaChannel[]>(allChannelKeys)
   const [selectedTypes, setSelectedTypes] =
     useState<SocialMediaType[]>(allTypeKeys)
-  const [activeItemId, setActiveItemId] = useState(socialMediaItems[0].id)
+  const [activeItemId, setActiveItemId] = useState(defaultSocialMediaItemId)
   const [view, setView] = useState<SocialMediaView>('conversation')
   const [activeWorkbenchTab, setActiveWorkbenchTab] =
-    useState<SocialMediaWorkbenchTab>('crm')
+    useState<SocialMediaWorkbenchTab>('conversation')
   const [isCwuOpen, setIsCwuOpen] = useState(false)
   const [activeCwuWindowIndex, setActiveCwuWindowIndex] = useState(0)
   const [reviewDrafts, setReviewDrafts] = useState<Record<string, string>>({})
   const [reviewReplies, setReviewReplies] = useState<Record<string, string>>({})
+  const [chatDrafts, setChatDrafts] = useState<Record<string, string>>({})
+  const [chatReplies, setChatReplies] = useState<Record<string, string>>({})
   const [pageStartedAt] = useState(() => Date.now())
   const now = useNow(true)
 
@@ -676,6 +686,12 @@ export function SocialMediaPage() {
   const activeCwuWindow = cwuWindows[activeCwuWindowIndex]
   const activeReviewDraft = activeItem ? (reviewDrafts[activeItem.id] ?? '') : ''
   const activeReviewReply = activeItem ? reviewReplies[activeItem.id] : ''
+  const activeChatDraft = activeItem ? (chatDrafts[activeItem.id] ?? '') : ''
+  const activeChatReply = activeItem ? chatReplies[activeItem.id] : ''
+  const activeItemIsReplied =
+    activeItem?.status === 'replied' ||
+    Boolean(activeReviewReply) ||
+    Boolean(activeChatReply)
 
   const openCwuWindow = () => {
     setActiveCwuWindowIndex(CWU_INITIAL_FORM_INDEX)
@@ -694,6 +710,23 @@ export function SocialMediaPage() {
       [activeItem.id]: replyText,
     }))
     setReviewDrafts((current) => ({
+      ...current,
+      [activeItem.id]: '',
+    }))
+  }
+
+  const sendChatReply = () => {
+    if (!activeItem || activeItem.type !== 'chats') {
+      return
+    }
+
+    const replyText = activeChatDraft.trim() || DEFAULT_CHAT_REPLY
+
+    setChatReplies((current) => ({
+      ...current,
+      [activeItem.id]: replyText,
+    }))
+    setChatDrafts((current) => ({
       ...current,
       [activeItem.id]: '',
     }))
@@ -858,8 +891,11 @@ export function SocialMediaPage() {
               const type = getTypeOption(item.type)
               const isActive = activeItem?.id === item.id
               const replyProgress = getReplyProgress(item, now, pageStartedAt)
-              const isReviewReplySent =
-                item.type === 'reviews' && Boolean(reviewReplies[item.id])
+              const isChatReplySent =
+                item.type === 'chats' && Boolean(chatReplies[item.id])
+              const isReplySent =
+                (item.type === 'reviews' && Boolean(reviewReplies[item.id])) ||
+                isChatReplySent
 
               return (
                 <button
@@ -867,6 +903,10 @@ export function SocialMediaPage() {
                   aria-label={`Open ${item.customer} ${type.label} item`}
                   className={`social-media-page__queue-card${
                     isActive ? ' social-media-page__queue-card--selected' : ''
+                  }${
+                    isChatReplySent
+                      ? ' social-media-page__queue-card--chat-replied'
+                      : ''
                   } social-media-page__queue-card--${replyProgress.tone}`}
                   type="button"
                   onClick={() => {
@@ -881,23 +921,25 @@ export function SocialMediaPage() {
                       <strong>{item.customer}</strong>
                       <span className="social-media-page__queue-badges">
                         <SocialQueueTypeIcon type={item.type} />
-                        <span
-                          className={`social-media-page__queue-time social-media-page__queue-time--${replyProgress.tone}`}
-                        >
-                          {replyProgress.label}
-                        </span>
+                        {isChatReplySent ? null : (
+                          <span
+                            className={`social-media-page__queue-time social-media-page__queue-time--${replyProgress.tone}`}
+                          >
+                            {replyProgress.label}
+                          </span>
+                        )}
                       </span>
                     </span>
                     <span className="social-media-page__queue-preview">
                       {item.preview} ...
                     </span>
                   </span>
-                  {item.unread > 0 ? (
+                  {item.unread > 0 && !isChatReplySent ? (
                     <em className="social-media-page__queue-unread">
                       {item.unread}
                     </em>
                   ) : null}
-                  {isReviewReplySent ? null : (
+                  {isReplySent ? null : (
                     <span
                       aria-label={`Reply progress ${replyProgress.label} of 5 minutes`}
                       aria-valuemax={REPLY_TIMEOUT_SECONDS}
@@ -964,6 +1006,17 @@ export function SocialMediaPage() {
           >
             CWU
           </BaseButton>
+          {activeItem?.type === 'chats' &&
+          activeWorkbenchTab === 'conversation' ? (
+            <BaseButton
+              aria-label="End Social Media service"
+              className="social-media-page__end-service-button"
+              icon={<PoweroffOutlined />}
+              variant="danger"
+            >
+              End Service
+            </BaseButton>
+          ) : null}
           {isCwuOpen ? (
             <div
               aria-label="CWU Registration"
@@ -1183,7 +1236,7 @@ export function SocialMediaPage() {
                           <SocialTypeChip active type={activeItem.type} />
                         </span>
                         <span>
-                          {activeItem.status === 'replied' ? (
+                          {activeItemIsReplied ? (
                             <>
                               <CheckCircleFilled />
                               Replied
@@ -1201,87 +1254,57 @@ export function SocialMediaPage() {
                 </div>
               </div>
 
-              <article className="social-media-page__post-card">
-                <div className="social-media-page__post-card-main">
-                  <BrandLogo />
-                  <div className="social-media-page__post-card-copy">
-                    <span className="social-media-page__post-card-title">
-                      <strong>{getPostTitle(activeItem)}</strong>
-                      {activeItem.type === 'reviews' ? (
-                        <ReviewStars compact />
-                      ) : null}
+              {activeItem.type === 'chats' ? (
+                <div className="social-media-page__chat-workspace">
+                  <div className="social-media-page__chat-thread">
+                    <span className="social-media-page__chat-date">
+                      {CHAT_DISPLAY_DATE}
                     </span>
-                    <p>{getPostCopy(activeItem)}</p>
-                  </div>
-                </div>
-                <div className="social-media-page__post-card-actions">
-                  <span className="social-media-page__post-context">
-                    {getPostContextLabel(activeItem)}
-                  </span>
-                  <BaseButton
-                    aria-label="Open selected Social Media post detail"
-                    className="social-media-page__view-post"
-                    icon={<EyeOutlined />}
-                    variant="primary"
-                    onClick={() => setView('post-detail')}
-                  >
-                    View
-                  </BaseButton>
-                </div>
-              </article>
-
-              {activeItem.type === 'reviews' ? (
-                <div className="social-media-page__review-workspace">
-                  <div className="social-media-page__review-thread">
-                    <div className="social-media-page__review-message">
+                    <div className="social-media-page__chat-message">
                       <SocialAvatar item={activeItem} />
-                      <div className="social-media-page__review-message-body">
-                        <div className="social-media-page__review-author">
-                          <strong>{activeItem.customer}</strong>
-                          <ReviewStars />
+                      <div className="social-media-page__chat-message-content">
+                        <strong>{activeItem.customer}</strong>
+                        <div className="social-media-page__chat-bubble">
+                          <p>{activeItem.post}</p>
                         </div>
-                        <p>{getReviewCopy(activeItem)}</p>
-                        <div className="social-media-page__review-actions">
-                          <span>{REVIEW_DISPLAY_DATE}</span>
-                          <button type="button">Reply</button>
-                          <button type="button">Mark as Handled</button>
-                        </div>
+                        <span className="social-media-page__chat-time">
+                          10:23
+                        </span>
                       </div>
-                      <span className="social-media-page__message-time">
-                        {activeReplyProgress?.label}
-                      </span>
                     </div>
 
-                    {activeReviewReply ? (
-                      <div className="social-media-page__review-message social-media-page__review-message--agent">
-                        <span className="social-media-page__avatar social-media-page__avatar--review-agent">
+                    {activeChatReply ? (
+                      <div className="social-media-page__chat-message social-media-page__chat-message--agent">
+                        <div className="social-media-page__chat-message-content">
+                          <strong>BANK 1 (Budi Kartika)</strong>
+                          <div className="social-media-page__chat-bubble social-media-page__chat-bubble--agent">
+                            <p>{activeChatReply}</p>
+                          </div>
+                          <span className="social-media-page__chat-time">
+                            10:24
+                          </span>
+                        </div>
+                        <span className="social-media-page__avatar social-media-page__avatar--agent">
                           BK
                         </span>
-                        <div className="social-media-page__review-message-body">
-                          <strong>BANK 1 (Budi Kartika)</strong>
-                          <p>{activeReviewReply}</p>
-                          <div className="social-media-page__review-actions">
-                            <span>{REVIEW_DISPLAY_DATE}</span>
-                          </div>
-                        </div>
                       </div>
                     ) : null}
                   </div>
 
-                  <div className="social-media-page__review-composer">
+                  <div className="social-media-page__chat-composer">
                     <textarea
-                      aria-label="Reply to review"
+                      aria-label="Reply to chat"
                       placeholder="Type / for quick replies"
-                      value={activeReviewDraft}
+                      value={activeChatDraft}
                       onChange={(event) => {
-                        setReviewDrafts((current) => ({
+                        setChatDrafts((current) => ({
                           ...current,
                           [activeItem.id]: event.target.value,
                         }))
                       }}
                     />
-                    <div className="social-media-page__review-composer-toolbar">
-                      <span className="social-media-page__review-composer-tools">
+                    <div className="social-media-page__chat-composer-toolbar">
+                      <span className="social-media-page__chat-composer-tools">
                         <SmileOutlined />
                         <PaperClipOutlined />
                         <ClockCircleOutlined />
@@ -1289,7 +1312,7 @@ export function SocialMediaPage() {
                       <BaseButton
                         icon={<SendOutlined />}
                         variant="primary"
-                        onClick={sendReviewReply}
+                        onClick={sendChatReply}
                       >
                         Send
                       </BaseButton>
@@ -1298,57 +1321,156 @@ export function SocialMediaPage() {
                 </div>
               ) : (
                 <>
-                  <div className="social-media-page__thread-tabs">
-                    <span className="social-media-page__thread-tab--active">
-                      <CommentOutlined />
-                      Comments
-                    </span>
-                    <span>@ Mentions</span>
-                    <BaseButton
-                      className="social-media-page__pin-button"
-                      icon={<MoreOutlined />}
-                      title="More"
-                    />
-                  </div>
-
-                  <div className="social-media-page__message-list">
-                    <div className="social-media-page__message-row">
-                      <SocialAvatar item={activeItem} />
-                      <div className="social-media-page__message-body">
-                        <strong>{activeItem.customer}</strong>
-                        <p>{activeItem.preview}.</p>
-                        <span>22Dec / Reply / Mark as Handled</span>
-                      </div>
-                      <span className="social-media-page__message-time">
-                        {activeReplyProgress?.label}
-                      </span>
-                    </div>
-
-                    <div className="social-media-page__message-row social-media-page__message-row--reply">
-                      <span className="social-media-page__avatar social-media-page__avatar--agent">
-                        BK
-                      </span>
-                      <div className="social-media-page__message-body">
-                        <strong>BANK 1 (Budi Kartika)</strong>
-                        <p>
-                          Hi, we can help from here. Please share the reference
-                          number in the secure chat channel.
-                        </p>
-                        <span>2 hours ago</span>
+                  <article className="social-media-page__post-card">
+                    <div className="social-media-page__post-card-main">
+                      <BrandLogo />
+                      <div className="social-media-page__post-card-copy">
+                        <span className="social-media-page__post-card-title">
+                          <strong>{getPostTitle(activeItem)}</strong>
+                          {activeItem.type === 'reviews' ? (
+                            <ReviewStars compact />
+                          ) : null}
+                        </span>
+                        <p>{getPostCopy(activeItem)}</p>
                       </div>
                     </div>
+                    <div className="social-media-page__post-card-actions">
+                      <span className="social-media-page__post-context">
+                        {getPostContextLabel(activeItem)}
+                      </span>
+                      <BaseButton
+                        aria-label="Open selected Social Media post detail"
+                        className="social-media-page__view-post"
+                        icon={<EyeOutlined />}
+                        variant="primary"
+                        onClick={() => setView('post-detail')}
+                      >
+                        View
+                      </BaseButton>
+                    </div>
+                  </article>
 
-                    <div className="social-media-page__message-row">
-                      <SocialAvatar item={activeItem} />
-                      <div className="social-media-page__message-body">
-                        <strong>{activeItem.customer}</strong>
-                        <div className="social-media-page__embedded-post">
-                          <span>{activeItem.handle}</span>
-                          <p>{activeItem.post}</p>
+                  {activeItem.type === 'reviews' ? (
+                    <div className="social-media-page__review-workspace">
+                      <div className="social-media-page__review-thread">
+                        <div className="social-media-page__review-message">
+                          <SocialAvatar item={activeItem} />
+                          <div className="social-media-page__review-message-body">
+                            <div className="social-media-page__review-author">
+                              <strong>{activeItem.customer}</strong>
+                              <ReviewStars />
+                            </div>
+                            <p>{getReviewCopy(activeItem)}</p>
+                            <div className="social-media-page__review-actions">
+                              <span>{REVIEW_DISPLAY_DATE}</span>
+                              <button type="button">Reply</button>
+                              <button type="button">Mark as Handled</button>
+                            </div>
+                          </div>
+                          <span className="social-media-page__message-time">
+                            {activeReplyProgress?.label}
+                          </span>
+                        </div>
+
+                        {activeReviewReply ? (
+                          <div className="social-media-page__review-message social-media-page__review-message--agent">
+                            <span className="social-media-page__avatar social-media-page__avatar--review-agent">
+                              BK
+                            </span>
+                            <div className="social-media-page__review-message-body">
+                              <strong>BANK 1 (Budi Kartika)</strong>
+                              <p>{activeReviewReply}</p>
+                              <div className="social-media-page__review-actions">
+                                <span>{REVIEW_DISPLAY_DATE}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="social-media-page__review-composer">
+                        <textarea
+                          aria-label="Reply to review"
+                          placeholder="Type / for quick replies"
+                          value={activeReviewDraft}
+                          onChange={(event) => {
+                            setReviewDrafts((current) => ({
+                              ...current,
+                              [activeItem.id]: event.target.value,
+                            }))
+                          }}
+                        />
+                        <div className="social-media-page__review-composer-toolbar">
+                          <span className="social-media-page__review-composer-tools">
+                            <SmileOutlined />
+                            <PaperClipOutlined />
+                            <ClockCircleOutlined />
+                          </span>
+                          <BaseButton
+                            icon={<SendOutlined />}
+                            variant="primary"
+                            onClick={sendReviewReply}
+                          >
+                            Send
+                          </BaseButton>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="social-media-page__thread-tabs">
+                        <span className="social-media-page__thread-tab--active">
+                          <CommentOutlined />
+                          Comments
+                        </span>
+                        <span>@ Mentions</span>
+                        <BaseButton
+                          className="social-media-page__pin-button"
+                          icon={<MoreOutlined />}
+                          title="More"
+                        />
+                      </div>
+
+                      <div className="social-media-page__message-list">
+                        <div className="social-media-page__message-row">
+                          <SocialAvatar item={activeItem} />
+                          <div className="social-media-page__message-body">
+                            <strong>{activeItem.customer}</strong>
+                            <p>{activeItem.preview}.</p>
+                            <span>22Dec / Reply / Mark as Handled</span>
+                          </div>
+                          <span className="social-media-page__message-time">
+                            {activeReplyProgress?.label}
+                          </span>
+                        </div>
+
+                        <div className="social-media-page__message-row social-media-page__message-row--reply">
+                          <span className="social-media-page__avatar social-media-page__avatar--agent">
+                            BK
+                          </span>
+                          <div className="social-media-page__message-body">
+                            <strong>BANK 1 (Budi Kartika)</strong>
+                            <p>
+                              Hi, we can help from here. Please share the
+                              reference number in the secure chat channel.
+                            </p>
+                            <span>2 hours ago</span>
+                          </div>
+                        </div>
+
+                        <div className="social-media-page__message-row">
+                          <SocialAvatar item={activeItem} />
+                          <div className="social-media-page__message-body">
+                            <strong>{activeItem.customer}</strong>
+                            <div className="social-media-page__embedded-post">
+                              <span>{activeItem.handle}</span>
+                              <p>{activeItem.post}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </section>
