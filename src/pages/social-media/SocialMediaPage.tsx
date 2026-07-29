@@ -75,6 +75,8 @@ interface SocialMediaItem {
   id: string
   initialReplySeconds: number
   post: string
+  postAvatarAlt?: string
+  postAvatarSrc?: string
   preview: string
   queue: string
   replies: number
@@ -113,12 +115,16 @@ const DEFAULT_CHAT_REPLY =
   'Thanks for the detailed feedback. We will share this with the product team and follow up once the update is reviewed.'
 const LONG_CHAT_MESSAGE =
   "Could you introduce a new feature that allows me to copy all the text highlighted and marked with a single click? After reading the entire book, I really want to copy all the highlighted content and collect it. The toolbar for highlighting annotations in the current version is really not as user-friendly as the old version (with black background and graphical symbols). The current options for selecting colors, deleting annotations, and copying are too awkward. I'm completely unaccustomed to the text-based toolbar. The icon-based toolbar in the old version was much better. Please change it back to the old version! I don't know if it's just my illusion, but the color of the highlighted annotations has become darker, which makes me feel uncomfortable compared to the old version. The visual effect of the highlighted border turning into an arc is not good at all. Please restore it to the original right angle. Really, really, it will affect my reading mood and efficiency. Why is the cross to exit reading set in the top right corner? I'm used to exiting from the top left corner and can't accept it at all. The page and progress display during reading are also extremely unaccustomed. Please, please change it back to the old version. The old version is much more comfortable! Please, please change it back to the old version. It really affects my reading mood!!"
+const SOCIAL_MEDIA_MENTION_HANDLE = '@BCA'
 
 const socialMediaAsset = (fileName: string) =>
   `/social-media-assets/${fileName}`
 
 const socialMediaAvatar = (fileName: string) =>
   socialMediaAsset(`avatars/${fileName}`)
+
+const socialMediaPostAvatar = (fileName: string) =>
+  socialMediaAsset(`post-avatars/${fileName}`)
 
 const allFilterIcon = socialMediaAsset('all.svg')
 const allFilterIconActive = socialMediaAsset('all-active.svg')
@@ -275,6 +281,8 @@ const socialMediaItems: SocialMediaItem[] = [
     initialReplySeconds: 59,
     post:
       'Up to 50% off on all summer essentials! Get yours before they run out. All cards and digital payment options are supported.',
+    postAvatarAlt: 'BANK 1 social page avatar',
+    postAvatarSrc: socialMediaPostAvatar('bca-post-avatar.jpg'),
     preview: 'Need help with card activation',
     queue: 'Credit card activation',
     replies: 3,
@@ -301,6 +309,8 @@ const socialMediaItems: SocialMediaItem[] = [
     initialReplySeconds: 239,
     post:
       'Payment failed after checkout but the balance has already been deducted. Please help me confirm the transaction.',
+    postAvatarAlt: 'BANK 1 Facebook page avatar',
+    postAvatarSrc: socialMediaPostAvatar('bca-post-avatar.jpg'),
     preview: 'Payment dispute on FB comment',
     queue: 'Payment dispute',
     replies: 2,
@@ -390,6 +400,8 @@ const socialMediaItems: SocialMediaItem[] = [
     initialReplySeconds: 568,
     post:
       'The branch queue video was helpful. I want to know whether online appointment slots are available today.',
+    postAvatarAlt: 'BANK 1 TikTok page avatar',
+    postAvatarSrc: socialMediaPostAvatar('bca-post-avatar.jpg'),
     preview: 'Branch appointment question',
     queue: 'Branch service',
     replies: 4,
@@ -424,8 +436,10 @@ const socialMediaItems: SocialMediaItem[] = [
     id: 'sm-008',
     initialReplySeconds: 662,
     post:
-      '@BANK 1 Support can the agent check why my card limit request is still pending after two business days?',
-    preview: 'Customer post mentioned BANK 1',
+      '@BCA can the agent check why my card limit request is still pending after two business days?',
+    postAvatarAlt: 'Customer post profile avatar',
+    postAvatarSrc: socialMediaPostAvatar('customer-post-avatar.jpg'),
+    preview: 'Customer post mentioned BCA',
     queue: 'Direct post mention',
     replies: 2,
     sourceContext: 'customer-post-mention',
@@ -459,8 +473,10 @@ const socialMediaItems: SocialMediaItem[] = [
     id: 'sm-010',
     initialReplySeconds: 126,
     post:
-      'Commented under Bank Deals Indonesia: @BANK 1 Support QR payment setup still asks for verification twice after the update.',
-    preview: 'Third-party post comment mentioned BANK 1',
+      'Commented under Bank Deals Indonesia: @BCA QR payment setup still asks for verification twice after the update.',
+    postAvatarAlt: 'External post profile avatar',
+    postAvatarSrc: socialMediaPostAvatar('external-post-avatar.jpg'),
+    preview: 'Third-party post comment mentioned BCA',
     queue: 'External post mention',
     replies: 2,
     sourceContext: 'third-party-comment-mention',
@@ -593,7 +609,7 @@ function getAtThreadComments(
   item: SocialMediaItem,
 ): SocialMediaThreadComment[] {
   const bankReply =
-    'Thanks for tagging BANK 1. We have checked this case and will continue the follow-up from the secure support channel.'
+    'Thanks for tagging BCA. We have checked this case and will continue the follow-up from the secure support channel.'
 
   if (item.sourceContext === 'third-party-comment-mention') {
     return [
@@ -606,7 +622,7 @@ function getAtThreadComments(
         isMention: true,
         showActions: true,
         text:
-          'Commented under Bank Deals Indonesia: QR payment setup still asks for verification twice after the update.',
+          'Commented under Bank Deals Indonesia: @BCA QR payment setup still asks for verification twice after the update.',
       },
       {
         avatarSrc: item.avatarSrc,
@@ -618,7 +634,7 @@ function getAtThreadComments(
         isMention: true,
         showActions: false,
         text:
-          'The original discussion is from another page, but the customer mentioned support in the comment thread.',
+          'The original discussion is from another page, but the customer mentioned @BCA in the comment thread.',
       },
       {
         agentReply: bankReply,
@@ -644,7 +660,7 @@ function getAtThreadComments(
       isMention: true,
       showActions: true,
       text:
-        'Can the agent check why my card limit request is still pending after two business days?',
+        '@BCA can the agent check why my card limit request is still pending after two business days?',
     },
     {
       avatarSrc: item.avatarSrc,
@@ -656,7 +672,7 @@ function getAtThreadComments(
       isMention: true,
       showActions: false,
       text:
-        "This is the customer's own post, so it belongs to the AT queue even without being under a BANK 1 post.",
+        "This is the customer's own post with @BCA, so it belongs to the AT queue even without being under a BCA post.",
     },
     {
       agentReply: bankReply,
@@ -1004,6 +1020,18 @@ function BrandLogo() {
   return (
     <span aria-label="BANK 1" className="social-media-page__brand-logo">
       BANK 1
+    </span>
+  )
+}
+
+function PostAvatar({ item }: { item: SocialMediaItem }) {
+  if (!item.postAvatarSrc) {
+    return <BrandLogo />
+  }
+
+  return (
+    <span className="social-media-page__post-avatar">
+      <img alt={item.postAvatarAlt ?? ''} src={item.postAvatarSrc} />
     </span>
   )
 }
@@ -1567,7 +1595,7 @@ export function SocialMediaPage() {
 
               <article className="social-media-page__detail-card">
                 <div className="social-media-page__brand-row">
-                  <BrandLogo />
+                  <PostAvatar item={activeItem} />
                   <div>
                     <strong>{activeItem.title}</strong>
                     <span>{activeItem.handle}</span>
@@ -1611,7 +1639,7 @@ export function SocialMediaPage() {
                     <div className="social-media-page__conversation-heading-row">
                       <strong>{activeChannel.label}</strong>
                       <span className="social-media-page__conversation-handle">
-                        @BANK 1 Support
+                        {SOCIAL_MEDIA_MENTION_HANDLE}
                       </span>
                       <div className="social-media-page__conversation-tags">
                         <span className="social-media-page__conversation-type">
@@ -1705,7 +1733,7 @@ export function SocialMediaPage() {
                 <>
                   <article className="social-media-page__post-card">
                     <div className="social-media-page__post-card-main">
-                      <BrandLogo />
+                      <PostAvatar item={activeItem} />
                       <div className="social-media-page__post-card-copy">
                         <span className="social-media-page__post-card-title">
                           <strong>{getPostTitle(activeItem)}</strong>
@@ -1873,9 +1901,12 @@ export function SocialMediaPage() {
                                 {comment.text ? (
                                   <p>
                                     {comment.text}
-                                    {comment.isMention ? (
+                                    {comment.isMention &&
+                                    !comment.text.includes(
+                                      SOCIAL_MEDIA_MENTION_HANDLE,
+                                    ) ? (
                                       <span className="social-media-page__mention-inline">
-                                        @BANK 1 Support
+                                        {SOCIAL_MEDIA_MENTION_HANDLE}
                                       </span>
                                     ) : null}
                                   </p>
