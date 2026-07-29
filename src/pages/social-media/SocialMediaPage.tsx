@@ -4,6 +4,7 @@ import {
   ClockCircleOutlined,
   CommentOutlined,
   EyeOutlined,
+  ExportOutlined,
   LeftOutlined,
   MessageOutlined,
   MoreOutlined,
@@ -88,9 +89,14 @@ interface SocialMediaThreadComment {
   embeddedPost?: boolean
   id: string
   isMention: boolean
+  liveStream?: {
+    replayUrl: string
+    schedule: string
+    title: string
+  }
   media?: SocialMediaCommentMedia[]
   showActions?: boolean
-  text: string
+  text?: string
 }
 
 const REPLY_TIMEOUT_SECONDS = 5 * 60
@@ -555,6 +561,21 @@ function getThreadComments(item: SocialMediaItem): SocialMediaThreadComment[] {
       media: item.commentMedia,
       showActions: true,
       text: `${item.preview}.`,
+    },
+    {
+      avatarSrc: item.avatarSrc,
+      channel: item.channel,
+      customer: item.customer,
+      date: '2 hours ago',
+      id: `${item.id}-live-stream`,
+      isMention: false,
+      liveStream: {
+        replayUrl:
+          'https://www.facebook.com/BankOfficial/live/videos/1234567890123456/',
+        schedule: '8 June 2026 14:00 - 16:00',
+        title: 'Introduction to BCA Loan Products',
+      },
+      showActions: false,
     },
     {
       avatarSrc: socialMediaAvatar('avatar-09.jpg'),
@@ -1712,14 +1733,41 @@ export function SocialMediaPage() {
                               />
                               <div className="social-media-page__message-body">
                                 <strong>{comment.customer}</strong>
-                                <p>
-                                  {comment.text}
-                                  {comment.isMention ? (
-                                    <span className="social-media-page__mention-inline">
-                                      @BANK 1 Support
-                                    </span>
-                                  ) : null}
-                                </p>
+                                {comment.text ? (
+                                  <p>
+                                    {comment.text}
+                                    {comment.isMention ? (
+                                      <span className="social-media-page__mention-inline">
+                                        @BANK 1 Support
+                                      </span>
+                                    ) : null}
+                                  </p>
+                                ) : null}
+                                {comment.liveStream ? (
+                                  <div className="social-media-page__live-comment">
+                                    <p>
+                                      <span>Live Stream Info: </span>
+                                      <strong>
+                                        {comment.liveStream.title}
+                                      </strong>
+                                      <span>
+                                        {' '}
+                                        | {comment.liveStream.schedule}
+                                      </span>
+                                    </p>
+                                    <p>
+                                      <span>Replay: </span>
+                                      <a
+                                        href={comment.liveStream.replayUrl}
+                                        rel="noreferrer"
+                                        target="_blank"
+                                      >
+                                        {comment.liveStream.replayUrl}
+                                        <ExportOutlined />
+                                      </a>
+                                    </p>
+                                  </div>
+                                ) : null}
                                 <CommentMediaAttachments media={comment.media} />
                                 {comment.showActions ? (
                                   <span>
