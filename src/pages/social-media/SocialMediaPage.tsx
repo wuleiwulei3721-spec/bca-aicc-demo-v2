@@ -30,6 +30,10 @@ type SocialMediaChannel =
   | 'appstore'
   | 'googleplay'
 type SocialMediaType = 'chats' | 'cmts' | 'reviews' | 'at'
+type SocialMediaSourceContext =
+  | 'bca-post-comment'
+  | 'customer-post-mention'
+  | 'third-party-comment-mention'
 type ReplyProgressTone = 'active' | 'warning' | 'expired'
 
 type SocialMediaCommentMedia =
@@ -74,6 +78,7 @@ interface SocialMediaItem {
   preview: string
   queue: string
   replies: number
+  sourceContext?: SocialMediaSourceContext
   status: 'pending' | 'replied' | 'review'
   title: string
   type: SocialMediaType
@@ -273,6 +278,7 @@ const socialMediaItems: SocialMediaItem[] = [
     preview: 'Need help with card activation',
     queue: 'Credit card activation',
     replies: 3,
+    sourceContext: 'bca-post-comment',
     status: 'pending',
     title: 'BANK 1 Official Support',
     type: 'cmts',
@@ -298,6 +304,7 @@ const socialMediaItems: SocialMediaItem[] = [
     preview: 'Payment dispute on FB comment',
     queue: 'Payment dispute',
     replies: 2,
+    sourceContext: 'bca-post-comment',
     status: 'review',
     title: 'BANK 1 Facebook Page',
     type: 'cmts',
@@ -386,6 +393,7 @@ const socialMediaItems: SocialMediaItem[] = [
     preview: 'Branch appointment question',
     queue: 'Branch service',
     replies: 4,
+    sourceContext: 'bca-post-comment',
     status: 'pending',
     title: 'TikTok comment',
     type: 'cmts',
@@ -416,12 +424,13 @@ const socialMediaItems: SocialMediaItem[] = [
     id: 'sm-008',
     initialReplySeconds: 662,
     post:
-      'Can the agent check why my card limit request is still pending after two business days?',
-    preview: 'Tagged support for limit request',
-    queue: 'Limit request',
+      '@BANK 1 Support can the agent check why my card limit request is still pending after two business days?',
+    preview: 'Customer post mentioned BANK 1',
+    queue: 'Direct post mention',
     replies: 2,
+    sourceContext: 'customer-post-mention',
     status: 'pending',
-    title: 'Facebook mention',
+    title: 'Customer Post Mention',
     type: 'at',
     unread: 2,
   },
@@ -450,12 +459,13 @@ const socialMediaItems: SocialMediaItem[] = [
     id: 'sm-010',
     initialReplySeconds: 126,
     post:
-      'I updated the app and tagged support because QR payment setup still asks for verification twice.',
-    preview: 'QR payment setup mention',
-    queue: 'App verification',
+      'Commented under Bank Deals Indonesia: @BANK 1 Support QR payment setup still asks for verification twice after the update.',
+    preview: 'Third-party post comment mentioned BANK 1',
+    queue: 'External post mention',
     replies: 2,
+    sourceContext: 'third-party-comment-mention',
     status: 'pending',
-    title: 'Google Play Mention',
+    title: 'Third-party Post Mention',
     type: 'at',
     unread: 2,
   },
@@ -530,10 +540,45 @@ function getPostCopy(item: SocialMediaItem) {
   return item.post
 }
 
+function getSourceContext(item: SocialMediaItem) {
+  if (item.type === 'cmts') {
+    return item.sourceContext ?? 'bca-post-comment'
+  }
+
+  if (item.type === 'at') {
+    return item.sourceContext
+  }
+
+  return undefined
+}
+
 function getPostContextLabel(item: SocialMediaItem) {
-  return item.type === 'reviews'
-    ? 'Original Reviews Context'
-    : 'Original Post Context'
+  if (item.type === 'reviews') {
+    return 'Original Reviews Context'
+  }
+
+  switch (getSourceContext(item)) {
+    case 'customer-post-mention':
+      return 'Original Customer Post Context'
+    case 'third-party-comment-mention':
+      return 'Original External Post Context'
+    case 'bca-post-comment':
+    default:
+      return 'Original Post Context'
+  }
+}
+
+function getSourceContextLabel(item: SocialMediaItem) {
+  switch (getSourceContext(item)) {
+    case 'bca-post-comment':
+      return 'BCA Post Comment'
+    case 'customer-post-mention':
+      return 'Customer Post Mention'
+    case 'third-party-comment-mention':
+      return 'External Comment Mention'
+    default:
+      return ''
+  }
 }
 
 function getReviewCopy(item: SocialMediaItem) {
@@ -544,7 +589,94 @@ function getReviewCopy(item: SocialMediaItem) {
   return `${item.preview}.`
 }
 
+function getAtThreadComments(
+  item: SocialMediaItem,
+): SocialMediaThreadComment[] {
+  const bankReply =
+    'Thanks for tagging BANK 1. We have checked this case and will continue the follow-up from the secure support channel.'
+
+  if (item.sourceContext === 'third-party-comment-mention') {
+    return [
+      {
+        avatarSrc: item.avatarSrc,
+        channel: item.channel,
+        customer: item.customer,
+        date: '22Dec',
+        id: `${item.id}-third-party-comment`,
+        isMention: true,
+        showActions: true,
+        text:
+          'Commented under Bank Deals Indonesia: QR payment setup still asks for verification twice after the update.',
+      },
+      {
+        avatarSrc: item.avatarSrc,
+        channel: item.channel,
+        customer: item.customer,
+        date: '2 hours ago',
+        embeddedPost: true,
+        id: `${item.id}-external-context`,
+        isMention: true,
+        showActions: false,
+        text:
+          'The original discussion is from another page, but the customer mentioned support in the comment thread.',
+      },
+      {
+        agentReply: bankReply,
+        avatarSrc: item.avatarSrc,
+        channel: item.channel,
+        customer: item.customer,
+        date: '22Dec',
+        id: `${item.id}-third-party-replied`,
+        isMention: true,
+        showActions: false,
+        text: 'Can support confirm whether I need to re-register the device?',
+      },
+    ]
+  }
+
+  return [
+    {
+      avatarSrc: item.avatarSrc,
+      channel: item.channel,
+      customer: item.customer,
+      date: '22Dec',
+      id: `${item.id}-customer-post`,
+      isMention: true,
+      showActions: true,
+      text:
+        'Can the agent check why my card limit request is still pending after two business days?',
+    },
+    {
+      avatarSrc: item.avatarSrc,
+      channel: item.channel,
+      customer: item.customer,
+      date: '22Dec',
+      embeddedPost: true,
+      id: `${item.id}-customer-post-context`,
+      isMention: true,
+      showActions: false,
+      text:
+        "This is the customer's own post, so it belongs to the AT queue even without being under a BANK 1 post.",
+    },
+    {
+      agentReply: bankReply,
+      avatarSrc: item.avatarSrc,
+      channel: item.channel,
+      customer: item.customer,
+      date: '22Dec',
+      id: `${item.id}-customer-post-replied`,
+      isMention: true,
+      showActions: false,
+      text: 'I have already submitted the reference number by private message.',
+    },
+  ]
+}
+
 function getThreadComments(item: SocialMediaItem): SocialMediaThreadComment[] {
+  if (item.type === 'at') {
+    return getAtThreadComments(item)
+  }
+
   const bankReply =
     item.channel === 'instagram'
       ? 'Bisa kak! Silahkan cek ongkir saat checkout ya.'
@@ -1582,6 +1714,11 @@ export function SocialMediaPage() {
                           ) : null}
                         </span>
                         <p>{getPostCopy(activeItem)}</p>
+                        {getSourceContextLabel(activeItem) ? (
+                          <span className="social-media-page__source-context-chip">
+                            {getSourceContextLabel(activeItem)}
+                          </span>
+                        ) : null}
                       </div>
                     </div>
                     <div className="social-media-page__post-card-actions">
