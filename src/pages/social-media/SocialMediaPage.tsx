@@ -30,6 +30,21 @@ type SocialMediaChannel =
 type SocialMediaType = 'chats' | 'cmts' | 'reviews' | 'at'
 type ReplyProgressTone = 'active' | 'warning' | 'expired'
 
+type SocialMediaCommentMedia =
+  | {
+      alt: string
+      caption: string
+      kind: 'image'
+      src: string
+    }
+  | {
+      caption: string
+      kind: 'video'
+      posterSrc: string
+      src: string
+      title: string
+    }
+
 interface SocialMediaFilterOption<T extends string> {
   activeButtonChrome?: boolean
   activeIconSrc: string
@@ -48,6 +63,7 @@ interface SocialMediaFilterOption<T extends string> {
 interface SocialMediaItem {
   avatarSrc: string
   channel: SocialMediaChannel
+  commentMedia?: SocialMediaCommentMedia[]
   customer: string
   handle: string
   id: string
@@ -89,6 +105,9 @@ const cwuWindows = [
   socialMediaAsset('cwu/cwu-window-3.svg'),
   socialMediaAsset('cwu/cwu-window-4.svg'),
 ]
+const COMMENT_VIDEO_LOOP_SECONDS = 3
+const scenicWaterfallVideoSrc =
+  'https://upload.wikimedia.org/wikipedia/commons/5/52/Video_%C5%A0%C3%BAtovsk%C3%BD_vodop%C3%A1d.webm'
 const CWU_GROUPED_DROPDOWN_INDEX = 0
 const CWU_FLAT_DROPDOWN_INDEX = 1
 const CWU_INITIAL_FORM_INDEX = 2
@@ -210,6 +229,20 @@ const socialMediaItems: SocialMediaItem[] = [
   {
     avatarSrc: socialMediaAvatar('avatar-01.jpg'),
     channel: 'instagram',
+    commentMedia: [
+      {
+        alt: 'Sunny coastal village shared by the commenter',
+        caption: 'Customer image attachment',
+        kind: 'image',
+        src: socialMediaAsset('comments/comment-image-01.png'),
+      },
+      {
+        alt: 'Cliffside village by the sea shared by the commenter',
+        caption: 'Follow-up image attachment',
+        kind: 'image',
+        src: socialMediaAsset('comments/comment-image-02.png'),
+      },
+    ],
     customer: 'Dimas Abimanyu Prabowo',
     handle: '@dimas.ap',
     id: 'sm-001',
@@ -227,6 +260,14 @@ const socialMediaItems: SocialMediaItem[] = [
   {
     avatarSrc: socialMediaAvatar('avatar-02.jpg'),
     channel: 'facebook',
+    commentMedia: [
+      {
+        alt: 'Blue sea dome travel image shared in the comment',
+        caption: 'Reference image',
+        kind: 'image',
+        src: socialMediaAsset('comments/comment-image-03.png'),
+      },
+    ],
     customer: 'Guest',
     handle: 'Guest account',
     id: 'sm-002',
@@ -294,6 +335,27 @@ const socialMediaItems: SocialMediaItem[] = [
   {
     avatarSrc: socialMediaAvatar('avatar-06.jpg'),
     channel: 'tiktok',
+    commentMedia: [
+      {
+        alt: 'Coastal city image shared by the commenter',
+        caption: 'Image comment',
+        kind: 'image',
+        src: socialMediaAsset('comments/comment-image-04.png'),
+      },
+      {
+        alt: 'Lake and mountain landscape shared by the commenter',
+        caption: 'Image comment',
+        kind: 'image',
+        src: socialMediaAsset('comments/comment-image-05.png'),
+      },
+      {
+        caption: 'Short landscape video comment',
+        kind: 'video',
+        posterSrc: socialMediaAsset('comments/comment-image-05.png'),
+        src: scenicWaterfallVideoSrc,
+        title: 'Waterfall video comment',
+      },
+    ],
     customer: 'Rafi Aditya',
     handle: '@rafiaditya',
     id: 'sm-006',
@@ -473,6 +535,61 @@ function ReviewStars({ compact }: { compact?: boolean }) {
         <StarFilled key={index} />
       ))}
     </span>
+  )
+}
+
+function CommentMediaAttachments({
+  media,
+}: {
+  media?: SocialMediaCommentMedia[]
+}) {
+  if (!media?.length) {
+    return null
+  }
+
+  return (
+    <div
+      className={`social-media-page__comment-media-grid${
+        media.length === 1
+          ? ' social-media-page__comment-media-grid--single'
+          : ''
+      }`}
+    >
+      {media.map((mediaItem) => (
+        <figure
+          className="social-media-page__comment-media"
+          key={`${mediaItem.kind}-${mediaItem.src}`}
+        >
+          {mediaItem.kind === 'image' ? (
+            <img alt={mediaItem.alt} src={mediaItem.src} />
+          ) : (
+            <video
+              aria-label={mediaItem.title}
+              autoPlay
+              controls
+              muted
+              playsInline
+              poster={mediaItem.posterSrc}
+              preload="metadata"
+              onLoadedMetadata={(event) => {
+                event.currentTarget.currentTime = 0
+              }}
+              onTimeUpdate={(event) => {
+                if (
+                  event.currentTarget.currentTime >=
+                  COMMENT_VIDEO_LOOP_SECONDS
+                ) {
+                  event.currentTarget.currentTime = 0
+                }
+              }}
+            >
+              <source src={mediaItem.src} type="video/webm" />
+            </video>
+          )}
+          <figcaption>{mediaItem.caption}</figcaption>
+        </figure>
+      ))}
+    </div>
   )
 }
 
@@ -1437,6 +1554,9 @@ export function SocialMediaPage() {
                           <div className="social-media-page__message-body">
                             <strong>{activeItem.customer}</strong>
                             <p>{activeItem.preview}.</p>
+                            <CommentMediaAttachments
+                              media={activeItem.commentMedia}
+                            />
                             <span>22Dec / Reply / Mark as Handled</span>
                           </div>
                           <span className="social-media-page__message-time">
