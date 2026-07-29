@@ -76,6 +76,12 @@ export interface LiveChat2SessionSummaryOverride {
   unreadCount: number
 }
 
+export interface NewCustomerAlert {
+  channelCode: string
+  id: number
+  mediaCode: 'NON_DM' | 'TEXT'
+}
+
 export interface CallInteraction {
   bankAppCustomerType?: BankAppCustomerType
   endedBy: ServiceEndedBy | null
@@ -116,6 +122,22 @@ const liveChat2SessionById = Object.fromEntries(
 ) as Record<string, (typeof liveChat2Sessions)[number]>
 const fallbackLiveChat2SessionId =
   liveChat2Sessions.find((session) => !session.isInitialHistory)?.id ?? null
+const channelCodeByLiveChatChannel: Record<string, string> = {
+  BankApp: 'BANKAPP',
+  Webchat: 'WEBCHAT',
+  WhatsApp: 'WHATSAPP',
+}
+
+function createNewCustomerAlert(
+  channel: string,
+  id: number,
+): NewCustomerAlert | null {
+  const channelCode = channelCodeByLiveChatChannel[channel]
+
+  return channelCode
+    ? { channelCode, id, mediaCode: 'TEXT' }
+    : null
+}
 
 function cloneVerificationRules(): VerificationRule[] {
   return verificationRules.map((rule) => ({
@@ -413,6 +435,7 @@ interface AppState {
   liveChat2SessionTimings: Record<string, InteractionTiming>
   liveChat2SortMode: LiveChat2SortMode
   liveChat2HandoffSeq: number
+  newCustomerAlert: NewCustomerAlert | null
   liveChat2StarColors: Record<string, LiveChat2StarColor>
   liveChat2UnansweredSinceBySessionId: Record<string, number>
   liveChatSessionTimings: Record<string, InteractionTiming>
@@ -523,6 +546,10 @@ interface AppState {
   deleteVerificationV2Question: (questionId: string) => void
   startBankAppVideoScreenShare: () => void
   stopBankAppVideoScreenShare: () => void
+  triggerNewCustomerAlert: (
+    channelCode: string,
+    mediaCode: NewCustomerAlert['mediaCode'],
+  ) => void
   resetBankAppPinVerification: () => void
   resetBankAppVideoDesktopShare: () => void
   closeLiveChat2Session: (sessionId: string) => void
@@ -590,6 +617,7 @@ export const useAppStore = create<AppState>((set) => ({
   liveChat2SessionTimings: {},
   liveChat2SortMode: 'access-time',
   liveChat2HandoffSeq: 0,
+  newCustomerAlert: null,
   liveChat2StarColors: {},
   liveChat2UnansweredSinceBySessionId: {},
   liveChatSessionTimings: {},
@@ -995,14 +1023,24 @@ export const useAppStore = create<AppState>((set) => ({
   requestLiveChat2Workspace: (sessionIds, options) =>
     set((state) => {
       const now = Date.now()
+      const newlyActivatedSessionIds = sessionIds.filter(
+        (sessionId) =>
+          !state.activeLiveChat2SessionIds.includes(sessionId) &&
+          !state.liveChat2ClosedSessionIds.includes(sessionId),
+      )
       const nextActiveSessionIds = [
         ...state.activeLiveChat2SessionIds,
-        ...sessionIds.filter(
-          (sessionId) =>
-            !state.activeLiveChat2SessionIds.includes(sessionId) &&
-            !state.liveChat2ClosedSessionIds.includes(sessionId),
-        ),
+        ...newlyActivatedSessionIds,
       ]
+      const alertSession = newlyActivatedSessionIds
+        .map((sessionId) => liveChat2SessionById[sessionId])
+        .find(Boolean)
+      const newCustomerAlert = alertSession
+        ? createNewCustomerAlert(
+            alertSession.channel,
+            (state.newCustomerAlert?.id ?? 0) + 1,
+          )
+        : null
       const nextTimings = { ...state.liveChat2SessionTimings }
       const nextStatuses = { ...state.liveChat2SessionStatuses }
       const nextStarColors = { ...state.liveChat2StarColors }
@@ -1075,6 +1113,7 @@ export const useAppStore = create<AppState>((set) => ({
             : state.liveChat2FocusRequestId,
         liveChat2FocusSessionId:
           state.liveChat2FocusSessionId ?? sessionIds[0] ?? null,
+        newCustomerAlert: newCustomerAlert ?? state.newCustomerAlert,
         liveChat2SessionStatuses: nextStatuses,
         liveChat2SessionTimings: nextTimings,
         liveChat2StarColors: nextStarColors,
@@ -1198,6 +1237,12 @@ export const useAppStore = create<AppState>((set) => ({
         liveChat2HandoffSeq: handoffSessionId
           ? nextHandoffSeq
           : state.liveChat2HandoffSeq,
+        newCustomerAlert: handoffSession
+          ? createNewCustomerAlert(
+              handoffSession.channel,
+              (state.newCustomerAlert?.id ?? 0) + 1,
+            ) ?? state.newCustomerAlert
+          : state.newCustomerAlert,
         liveChatFocusRequestId: state.liveChatFocusRequestId,
         liveChatFocusSessionId: null,
         liveChatSessionTimings: {},
@@ -1208,6 +1253,14 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({
       customerOutboundCallRequestId:
         state.customerOutboundCallRequestId + 1,
+    })),
+  triggerNewCustomerAlert: (channelCode, mediaCode) =>
+    set((state) => ({
+      newCustomerAlert: {
+        channelCode,
+        id: (state.newCustomerAlert?.id ?? 0) + 1,
+        mediaCode,
+      },
     })),
   openWorkspacePageTab: (tabKey) =>
     set((state) => ({

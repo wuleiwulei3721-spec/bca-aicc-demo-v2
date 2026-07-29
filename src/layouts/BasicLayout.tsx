@@ -29,13 +29,19 @@ import {
   workspacePageTabByTabKey,
   workspacePageTabDefinitions,
 } from '../config/workspacePageTabs'
+import { getNewCustomerAlertSoundUrl } from '../config/newCustomerAlertSounds'
 import { headerAgentProfile } from '../mock/agent'
 import {
   monitoringScreenshotViews,
   type MonitoringScreenshotView,
 } from '../mock/monitoring'
 import { useIdleLogout } from '../hooks/useIdleLogout'
-import { useAppStore, useAuthStore, useCallManagementStore } from '../store'
+import {
+  useAppStore,
+  useAuthStore,
+  useCallManagementStore,
+  useRoutingConfigStore,
+} from '../store'
 import type {
   CallTransferContext,
   InboundPopupSource,
@@ -45,6 +51,7 @@ import type {
   AgentStatus,
   BankAppCustomerType,
   CallStatus,
+  LoginLogLogoutType,
   SessionEndMediaType,
 } from '../types'
 import {
@@ -94,6 +101,7 @@ type CallHandoffNoticeReason = Exclude<
 >
 
 interface AgentStatusUpdateOptions {
+  bypassPreAux?: boolean
   seedDefaultLiveChat?: boolean
 }
 
@@ -276,6 +284,7 @@ export function BasicLayout() {
   const location = useLocation()
   const authSession = useAuthStore((state) => state.session)
   const logout = useAuthStore((state) => state.logout)
+  const recordLoginLog = useCallManagementStore((state) => state.recordLoginLog)
   const canTransferToNumber =
     authSession?.permissions.includes('transfer:external-number') ?? false
   const callAgentScope =
@@ -296,6 +305,8 @@ export function BasicLayout() {
   const activeLiveChat2SessionIds = useAppStore(
     (state) => state.activeLiveChat2SessionIds,
   )
+  const newCustomerAlert = useAppStore((state) => state.newCustomerAlert)
+  const routingChannels = useRoutingConfigStore((state) => state.channels)
   const clearLiveChat2Sessions = useAppStore(
     (state) => state.clearLiveChat2Sessions,
   )
@@ -400,9 +411,13 @@ export function BasicLayout() {
   const [autoAnswerSeconds] = useState(3)
   const [toolbarDisplayMode] = useState<'icon' | 'text'>('text')
   const [isInternalChatOpen, setIsInternalChatOpen] = useState(false)
+  const [systemSoundEnabled, setSystemSoundEnabled] = useState(false)
   const [isAfterCallWork, setIsAfterCallWork] = useState(false)
   const [afterCallWorkDurationSeconds, setAfterCallWorkDurationSeconds] =
     useState(0)
+  const [afterCallWorkAuxReason, setAfterCallWorkAuxReason] = useState<
+    string | null
+  >(null)
   const [callHandoffNotice, setCallHandoffNotice] = useState<{
     id: number
     reason: CallHandoffNoticeReason | null
@@ -432,6 +447,8 @@ export function BasicLayout() {
   const handledBankAppVideoCallRequestIdRef = useRef(0)
   const handledBankAppVoiceCallRequestIdRef = useRef(0)
   const handledOutboundCallRequestIdRef = useRef(0)
+  const playedNewCustomerAlertIdRef = useRef<number | null>(null)
+  const newCustomerAlertAudioRef = useRef<HTMLAudioElement | null>(null)
   const currentCallInteraction = currentCallInteractionId
     ? callInteractions[currentCallInteractionId]
     : null
@@ -493,7 +510,9 @@ export function BasicLayout() {
       activeLiveChatSessionIds.length > 0 ||
       activeLiveChat2SessionIds.length > 0
     const nextStatus =
-      isAuxStatus(status) && hasActiveWork
+      isAuxStatus(status) &&
+      hasActiveWork &&
+      !options.bypassPreAux
         ? createPreAuxStatus(getAuxReason(status))
         : status
 
@@ -591,6 +610,42 @@ export function BasicLayout() {
   )
 
   const isSignedIn = agentStatus !== 'Unsigned'
+
+  useEffect(() => {
+    if (
+      !newCustomerAlert ||
+      playedNewCustomerAlertIdRef.current === newCustomerAlert.id
+    ) {
+      return
+    }
+
+    playedNewCustomerAlertIdRef.current = newCustomerAlert.id
+
+    if (!systemSoundEnabled) {
+      return
+    }
+
+    const sound = routingChannels.find(
+      (channel) => channel.channelCode === newCustomerAlert.channelCode,
+    )?.businessConfig[newCustomerAlert.mediaCode]?.newCustomerAlertSound
+
+    if (!sound) {
+      return
+    }
+
+    newCustomerAlertAudioRef.current?.pause()
+    const audio = new Audio(getNewCustomerAlertSoundUrl(sound))
+    newCustomerAlertAudioRef.current = audio
+    void audio.play().catch(() => undefined)
+  }, [newCustomerAlert, routingChannels, systemSoundEnabled])
+
+  useEffect(
+    () => () => {
+      newCustomerAlertAudioRef.current?.pause()
+    },
+    [],
+  )
+
   const isConnectedCall = callStatus === 'Talking' || callStatus === 'Hold'
   const hasActiveCallInteraction = callStatus !== 'Idle'
   const hasActiveTextInteraction =
@@ -598,6 +653,24 @@ export function BasicLayout() {
     activeLiveChat2SessionIds.length > 0
   const hasActiveCustomerInteraction =
     isSignedIn && (hasActiveCallInteraction || hasActiveTextInteraction)
+
+  const handleProfileStatusChange = useCallback(
+    (nextStatus: AgentStatus) => {
+      if (
+        nextStatus === 'Ready' ||
+        nextStatus === 'Unsigned' ||
+        isAuxStatus(nextStatus)
+      ) {
+        setAfterCallWorkAuxReason(null)
+      }
+
+      updateAgentStatus(nextStatus, {
+        seedDefaultLiveChat:
+          agentStatus === 'Not Ready' && nextStatus === 'Ready',
+      })
+    },
+    [agentStatus, updateAgentStatus],
+  )
 
   const showActiveServiceExitWarning = useCallback(() => {
     Modal.warning({
@@ -612,11 +685,25 @@ export function BasicLayout() {
     showActiveServiceExitWarning()
   }, [showActiveServiceExitWarning])
 
-  const completeSystemLogout = useCallback(() => {
+  const completeSystemLogout = useCallback((logoutType: LoginLogLogoutType) => {
+    if (authSession) {
+      recordLoginLog({
+        employeeId: authSession.employeeId,
+        employeeName: authSession.displayName,
+        logoutType,
+        operation: 'Log Out',
+      })
+    }
+
     updateAgentStatus('Unsigned')
     logout()
     navigate('/login', { replace: true })
-  }, [logout, navigate, updateAgentStatus])
+  }, [authSession, logout, navigate, recordLoginLog, updateAgentStatus])
+
+  const handleIdleSystemLogout = useCallback(
+    () => completeSystemLogout('System'),
+    [completeSystemLogout],
+  )
 
   const handleLogout = useCallback(() => {
     if (hasActiveCustomerInteraction) {
@@ -654,7 +741,7 @@ export function BasicLayout() {
       okText: 'Log Out',
       okType: 'danger',
       title: 'Confirm Log Out',
-      onOk: completeSystemLogout,
+      onOk: () => completeSystemLogout('User'),
     })
   }, [
     agentStatus,
@@ -670,7 +757,7 @@ export function BasicLayout() {
   const { dismissWarning: dismissIdleLogoutWarning, warningOpen: idleLogoutWarningOpen } =
     useIdleLogout({
       enabled: idleLogoutEnabled,
-      onExpire: completeSystemLogout,
+      onExpire: handleIdleSystemLogout,
       timeoutMinutes: globalControlConfiguration.idleAutoLogOutMinutes,
       warningLeadMinutes: globalControlConfiguration.idleWarningMinutes,
     })
@@ -711,7 +798,11 @@ export function BasicLayout() {
         : 'away'
 
   useEffect(() => {
-    if (!isPreAuxStatus(agentStatus) || hasActiveCustomerInteraction) {
+    if (
+      !isPreAuxStatus(agentStatus) ||
+      hasActiveCustomerInteraction ||
+      isAfterCallWork
+    ) {
       return undefined
     }
 
@@ -720,7 +811,12 @@ export function BasicLayout() {
     }, 0)
 
     return () => window.clearTimeout(timer)
-  }, [agentStatus, hasActiveCustomerInteraction, updateAgentStatus])
+  }, [
+    agentStatus,
+    hasActiveCustomerInteraction,
+    isAfterCallWork,
+    updateAgentStatus,
+  ])
 
   useEffect(() => {
     setVoiceVideoHandoffReadiness(voiceVideoHandoffReadiness)
@@ -782,31 +878,32 @@ export function BasicLayout() {
   ])
 
   useEffect(() => {
-    if (!isAfterCallWork || agentStatus !== 'Not Ready') {
+    if (
+      !isAfterCallWork ||
+      (agentStatus !== 'Not Ready' && !isPreAuxStatus(agentStatus))
+    ) {
       return undefined
     }
 
     const timer = window.setTimeout(() => {
-      updateAgentStatus('Ready')
+      updateAgentStatus(
+        afterCallWorkAuxReason
+          ? createAuxStatus(afterCallWorkAuxReason)
+          : 'Ready',
+        { bypassPreAux: Boolean(afterCallWorkAuxReason) },
+      )
       setIsAfterCallWork(false)
+      setAfterCallWorkAuxReason(null)
     }, afterCallWorkDurationSeconds * 1000)
 
     return () => window.clearTimeout(timer)
   }, [
     afterCallWorkDurationSeconds,
+    afterCallWorkAuxReason,
     agentStatus,
     isAfterCallWork,
     updateAgentStatus,
   ])
-
-  const handleReadyToggle = useCallback(() => {
-    const nextStatus = agentStatus === 'Ready' ? 'Not Ready' : 'Ready'
-
-    updateAgentStatus(nextStatus, {
-      seedDefaultLiveChat:
-        agentStatus === 'Not Ready' && nextStatus === 'Ready',
-    })
-  }, [agentStatus, updateAgentStatus])
 
   const triggerVoiceInboundCall = useCallback(
     (
@@ -1008,7 +1105,9 @@ export function BasicLayout() {
   }, [callStatus, updateCallStatus])
 
   const handleHangUp = useCallback((endReasonName = 'Normal') => {
-    const shouldKeepPreAux = isPreAuxStatus(agentStatus)
+    const preAuxReason = isPreAuxStatus(agentStatus)
+      ? getAuxReason(agentStatus)
+      : null
 
     if (currentCallInteractionId) {
       markCallInteractionEnded(
@@ -1022,15 +1121,16 @@ export function BasicLayout() {
     setCallTiming(initialCallTiming)
     setActiveCallChannel(null)
     setAfterCallWorkDurationSeconds(
-      shouldKeepPreAux
-        ? 0
-        : globalControlConfiguration.autoCancelAcwSeconds,
+      globalControlConfiguration.autoCancelAcwSeconds,
     )
-    setIsAfterCallWork(!shouldKeepPreAux)
+    setAfterCallWorkAuxReason(preAuxReason)
+    setIsAfterCallWork(true)
     hideCallHandoffNotice()
     setOpenEyeVideoWindowVisible(false)
     resetBankAppVideoDesktopShare()
-    if (!shouldKeepPreAux) {
+    if (preAuxReason) {
+      setStatusStartedAt(Date.now())
+    } else {
       updateAgentStatus('Not Ready')
     }
   }, [
@@ -1244,6 +1344,14 @@ export function BasicLayout() {
       }
     }
 
+    if (isAfterCallWork) {
+      return {
+        label: 'Not Ready',
+        startedAt: statusStartedAt,
+        elapsedSeconds: null,
+      }
+    }
+
     if (isAuxLikeStatus(agentStatus)) {
       return {
         label: agentStatus,
@@ -1262,6 +1370,7 @@ export function BasicLayout() {
     callStatus,
     callStatusStartedAt,
     callTiming,
+    isAfterCallWork,
     statusStartedAt,
   ])
   const callIdentification = useMemo(() => {
@@ -1269,17 +1378,21 @@ export function BasicLayout() {
       return null
     }
 
-    if (currentCallInteraction.kind === 'voice') {
-      return currentCallInteraction.source === 'bankapp-voice'
-        ? { label: 'BankID', value: '00012345' }
-        : { label: 'IVR', value: '08123456789' }
+    if (currentCallInteraction.source === 'pstn') {
+      return { label: 'IVR:', value: '08123456789' }
     }
 
     if (
-      currentCallInteraction.kind === 'video' &&
+      currentCallInteraction.source === 'bankapp-voice' ||
       currentCallInteraction.source === 'bankapp-video'
     ) {
-      return { label: 'BankID', value: '00012345' }
+      return {
+        label: 'HaloApp:',
+        value:
+          currentCallInteraction.bankAppCustomerType === 'guest'
+            ? 'Guest'
+            : '00012345',
+      }
     }
 
     return null
@@ -1323,7 +1436,6 @@ export function BasicLayout() {
         </div>
         {isSignedIn && (
           <AgentToolbar
-            agentStatus={agentStatus}
             callAgentScope={callAgentScope}
             requiresOutboundApproval={authSession?.role === 'agent'}
             canTransferToNumber={canTransferToNumber}
@@ -1339,7 +1451,6 @@ export function BasicLayout() {
             onAnswer={handleAnswer}
             onHangUp={handleHangUp}
             onHoldToggle={handleHoldToggle}
-            onReadyToggle={handleReadyToggle}
             onTransferNotice={showTransferNotice}
           />
         )}
@@ -1370,9 +1481,11 @@ export function BasicLayout() {
             status={agentStatus}
             teamName={authSession?.team}
             hasActiveCustomerInteraction={hasActiveCustomerInteraction}
+            systemSoundEnabled={systemSoundEnabled}
             onBlockedSignOut={handleBlockedSignOut}
             onServiceSignIn={handleServiceSignIn}
-            onStatusChange={updateAgentStatus}
+            onStatusChange={handleProfileStatusChange}
+            onSystemSoundEnabledChange={setSystemSoundEnabled}
           />
           <button
             aria-label="Log Out"

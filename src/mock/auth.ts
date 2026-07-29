@@ -36,8 +36,8 @@ export const demoLoginAccounts: DemoLoginAccount[] = [
   {
     avatarUrl:
       'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
-    displayName: 'Maya Lestari',
-    employeeId: 'AICC1088',
+    displayName: 'Maya Santoso',
+    employeeId: 'EMP-10108',
     ldapDn: 'uid=666666,ou=People,dc=bank1,dc=local',
     password: '666666',
     permissions: [
@@ -50,7 +50,7 @@ export const demoLoginAccounts: DemoLoginAccount[] = [
     ],
     role: 'team-leader',
     roleName: 'TL',
-    team: 'PBK BSB',
+    team: 'Card Service TL',
     username: '666666',
   },
 ]

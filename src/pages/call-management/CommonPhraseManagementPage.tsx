@@ -124,6 +124,9 @@ export function CommonPhraseManagementPage() {
     () => new Set(selectedRecords.map((entry) => entry.categoryId)),
     [selectedRecords],
   )
+  const isCrossCategorySelectionFromAll =
+    selectedCategoryId === allCategoriesKey &&
+    selectedRecordCategoryIds.size > 1
   const categoryCounts = useMemo(() => {
     const counts = new Map<string, number>()
 
@@ -165,11 +168,13 @@ export function CommonPhraseManagementPage() {
   const moveCategoryOptions = useMemo(
     () =>
       categories.map((category) => ({
-        disabled: selectedRecordCategoryIds.has(category.categoryId),
+        disabled:
+          !isCrossCategorySelectionFromAll &&
+          selectedRecordCategoryIds.has(category.categoryId),
         label: category.categoryName,
         value: category.categoryId,
       })),
-    [categories, selectedRecordCategoryIds],
+    [categories, isCrossCategorySelectionFromAll, selectedRecordCategoryIds],
   )
   const canMoveSelected =
     selectedPhraseIds.length > 0 &&
@@ -398,11 +403,15 @@ export function CommonPhraseManagementPage() {
       return
     }
 
+    const movedCount = selectedRecords.filter(
+      (entry) => entry.categoryId !== moveTargetCategoryId,
+    ).length
+
     moveEntries(selectedPhraseIds, moveTargetCategoryId)
     setNotice(
-      selectedPhraseIds.length === 1
+      movedCount === 1
         ? 'Selected common phrase moved.'
-        : `${selectedPhraseIds.length} selected common phrases moved.`,
+        : `${movedCount} selected common phrases moved.`,
     )
     setSelectedPhraseIds([])
     setMovePopoverOpen(false)

@@ -194,7 +194,7 @@ function getHandlingBadge(email: EmailMessage) {
   }
 
   if (email.cwu) {
-    return <StatusBadge label="CWU saved" size="small" status="selected" />
+    return <StatusBadge label="Ticket saved" size="small" status="selected" />
   }
 
   return null
@@ -1173,7 +1173,7 @@ export function EmailPage() {
       ),
     )
     setIsCwuOpen(false)
-    showNotice('CWU registration saved.')
+    showNotice('Ticket saved.')
   }
 
   const mailContent = (
@@ -1251,7 +1251,7 @@ export function EmailPage() {
             variant="primary"
             onClick={openCwu}
           >
-            CWU
+            Ticket
           </BaseButton>
         }
         workspaceTabs={crmWorkspace.tabs}
@@ -1274,7 +1274,7 @@ export function EmailPage() {
         open={isCwuOpen}
         rootClassName="email-cwu-drawer"
         size={380}
-        title="CWU Registration"
+        title="Ticket"
         onClose={() => setIsCwuOpen(false)}
       >
         <div className="email-cwu-form">

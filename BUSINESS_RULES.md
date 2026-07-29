@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-07-24 13:57 +08:00
+Last updated: 2026-07-29 15:54 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -8,7 +8,7 @@ This document records the currently implemented business behavior. It describes 
 
 - `/login` is public.
 - All business pages under `/` require an authenticated session.
-- Demo login validates against two mock credentials: `888888 / 888888` creates Agent Budi Kartika, and `666666 / 666666` creates TL Maya Lestari.
+- Demo login validates against two mock credentials: `888888 / 888888` creates Agent Budi Kartika (`EMP-10027`), and `666666 / 666666` creates TL Maya Santoso (`EMP-10108`).
 - Successful login creates a session in `sessionStorage`.
 - Invalid login shows an LDAP-style error message.
 - If a session expires or cannot be parsed, it is removed and the user is sent back to `/login`.
@@ -65,10 +65,18 @@ Implemented status model:
 - At `System Idle Log-out Timeout - Auto Log-out Warning Lead Time`, the demo shows `Session Expiring`; closing the dialog or choosing `Continue Working` resets the timer. At the full timeout, the demo automatically logs out.
 - This is a current-window front-end demo only. It does not provide server session invalidation, multi-tab synchronization, or a backend authentication revocation flow.
 
+### Login Log
+
+- `Call Management > Login Log` records system-session activity, not agent media Sign In / Sign Out activity.
+- Login rows render `Log Out Type = -`. Manual Log Out is recorded with `Log Out Type = User`; an idle automatic Log Out is recorded with `Log Out Type = System`.
+- Keyword searches Employee ID and Employee Name together. Time Range, Operation, and Log Out Type are separate filters. The default Time Range covers the latest seven calendar days. Results are ordered by Time descending and show Employee ID, Employee Name, Operation, Log Out Type, and Time.
+- The current front-end demo appends Login, manual Log Out, and idle Log Out only while the page is running. Real browser-close, network loss, and heartbeat-timeout logs need a backend or CTI heartbeat service; seeded `System` records demonstrate that outcome.
+
 ### Ready
 
 - `Ready` means the agent can receive compatible interactions.
-- Ready can be toggled from the toolbar.
+- After signing in as `Not Ready`, the agent changes to `Ready` from the profile menu. The call toolbar does not provide a Ready / Not Ready control.
+- Once the agent is `Ready`, the profile menu does not allow a manual return to `Not Ready`; the agent can select an active AUX reason instead. Selecting Ready while in Pre-AUX cancels the pending AUX request.
 - Returning to Ready clears After Call Work and call handoff warnings.
 
 ### Not Ready
@@ -76,7 +84,7 @@ Implemented status model:
 - `Not Ready` means the agent cannot receive new customer interactions.
 - The agent can select an active Busy Reason to enter AUX from any Not Ready state, whether it was entered manually or by After Call Work.
 - After a normal Hang Up, the agent temporarily enters `Not Ready` as After Call Work.
-- After Call Work auto-returns to `Ready` after the saved `Call Management > Global Control Configuration > Auto Cancel ACW Duration`; the mock default is 10 seconds.
+- After Call Work auto-returns to `Ready` after the saved `Call Management > Global Control Configuration > Auto Cancel ACW Duration`; the mock default is 10 seconds. If the agent selected an AUX reason during the call and is in Pre-AUX, the same timer completes by entering that pending AUX reason instead.
 - Selecting an AUX reason during After Call Work cancels its timer and preserves the ended voice/video workspace so the agent can finish CRM editing before manually returning to Ready.
 
 ### AUX
@@ -84,7 +92,7 @@ Implemented status model:
 - AUX reasons are loaded from `Busy Reason`.
 - Only active busy reasons appear in the profile menu.
 - If the agent selects AUX while active service exists, the status becomes `Pre-AUX - {reason}`.
-- When active service ends, `Pre-AUX` immediately becomes `AUX`.
+- When a voice or video call ends during Pre-AUX, the header profile retains `Pre-AUX - {reason}` while the call toolbar enters Not Ready After Call Work. The configured ACW duration then automatically enters the pending AUX reason. Other service types retain the direct Pre-AUX to AUX completion behavior.
 - AUX clears call state and live chat sessions when it becomes active. Ended voice/video workspace tabs remain available until a later voice/video interaction replaces them.
 
 ## 4. Call Status Rules
@@ -132,15 +140,16 @@ Only one voice/video call can be active at a time.
 - It sets call status to `Idle`.
 - It clears call timing and active call channel.
 - It hides OpenEye video and resets desktop-share state.
-- It moves the agent to `Not Ready` After Call Work unless the agent was already in `Pre-AUX`.
+- It moves the agent to `Not Ready` After Call Work. When the call ended during Pre-AUX, the saved AUX reason is applied automatically after the ACW timer completes.
 - Ended call tabs can be closed manually while no new voice/video interaction has arrived; the next voice/video interaction closes all remaining ended call tabs automatically.
 
 ## 5. Toolbar Rules
 
 Toolbar call context is visible for non-idle calls:
 
-- PSTN voice shows `IVR 08123456789`.
-- BankApp voice/video shows `BankID 00012345`.
+- PSTN voice shows `IVR: {ANI Number}`; the current demo ANI is `08123456789`.
+- HaloApp voice/video shows `HaloApp: {BCAID}` for logged-in customers; the current demo BCAID is `00012345`. Guests show `HaloApp: Guest`.
+- Webchat voice/video must show `Webchat: {BCAID}` for logged-in customers and `Webchat: Guest-0001` for guests when those media routes are implemented. The current Webchat demo supports DM only and does not open the voice/video toolbar.
 - Skill is shown as `Skill Credit card activation`.
 - Skill is shown during Incoming, Talking, and Hold.
 - Idle / ended states hide call identification and Skill.
@@ -571,10 +580,10 @@ WhatsApp demo is chat-only in the current implementation.
 - Save Draft creates or updates a Drafts item. Sending a normal edited draft removes the draft and creates a Sent item; sending a saved Forward draft removes both the draft and its original source without creating a Sent item.
 - Ignore reasons are `AD`, `Spam`, and `Sales Email`. Ignore marks the email `No reply`, stops SLA, and moves it from Inbox to Trash.
 - Trash Recover returns the pre-seeded or ignored trashed email to its original folder and clears the ignore marker.
-- CWU Registration requires at least one Business Type and a Summary. One-Click Generation creates an editable local summary before confirmation.
+- The customer-visible Email panel is named `Ticket`. It requires at least one Business Type and a Summary; One-Click Generation creates an editable local summary before confirmation. The existing internal CWU mock field remains unchanged.
 - Email verification is not shown because no confirmed Email verification channel rule exists.
 - Email directly reuses Live Chat's `CrmPanel`; CRM uses the same current screenshot and Email uses the same tab styling as Conversation. Legacy full-system Email design screenshots are not embedded.
-- No real mailbox, SMTP, attachment upload, routing, permission, audit, template deployment, record inquiry, or CWU backend integration exists.
+- No real mailbox, SMTP, attachment upload, routing, permission, audit, template deployment, record inquiry, or Ticket backend integration exists.
 
 ## 22. Social Media Workspace Rules
 
@@ -607,11 +616,11 @@ Hidden / redirected:
 
 ### Blacklist
 
-- Entries contain Channel, Restricted Number, Restriction Policy, Validity Days, Remark, Created Date, Created By.
+- Entries contain Channel, Identifier, Restriction Policy, Validity Days, Remark, Created Date, Created By.
 - Restriction policies:
   - Block Access.
   - Prohibit Transfer to Agent.
-- Add / Batch Add are local demo actions.
+- Batch Add is the only local demo creation action. Channel is required and supports multiple selections; Identifier is required. Saving creates one record for every selected Channel + Identifier combination.
 - Delete supports selected rows and confirmation.
 - Store is local front-end state.
 
@@ -667,7 +676,7 @@ Hidden / redirected:
 - Shortcut Code is globally unique across public common phrases after trim and lowercase normalization.
 - Category Name is unique after trim and lowercase normalization.
 - Deleting a category requires confirmation and deletes all phrases under that category.
-- Selected phrases can be moved to another category; source categories for selected rows are disabled as move targets.
+- Selected phrases can be moved to another category. Source categories for selected rows are disabled as move targets, except when `All Categories` is selected and the selected rows span multiple source categories: then every category is available as a target, and entries already in the chosen target category are left unchanged.
 - Store is local front-end state.
 
 ### Common Link
@@ -711,22 +720,21 @@ Hidden / redirected:
 - The current demo seeds 30 mock records; at least 12 records are dynamically placed within the current day so the default Date Range has enough data for paging.
 - Current scope excludes Email and Social Media records. Email Record Inquiry and Social Media query remain separate future scopes and are not exposed in the current Call Management menu; the implemented Email handling workspace does not change this boundary.
 - Production permission intent is: agents see their own records, TL sees their own group, and SPV sees groups under managed TLs. The current demo has no permission system, so records are seeded as the current agent view only.
-- Search supports keyword, Channel, Media Type, Call Type, Ended By, End Reason, and Date Range. Default date range is the current day from `00:00:00` to `23:59:59`.
+- Search supports keyword, Channel, Media Type, Call Type, Ended By, Rating Score, and Date Range. Default date range is the current day from `00:00:00` to `23:59:59`.
 - `Call Type` identifies how the record arrived at the current agent: `Customer` for a direct customer interaction, `Transfer` for a transferred interaction, and `Conference` for a three-party interaction. It is available as both a list field and query filter for leadership transfer-frequency checks.
 - The list uses `Contact` for the customer-side contact identifier: phone and WhatsApp show the number, logged-in BankApp/Webchat show BankID, and guest Webchat shows a guest ID such as `guest-7118`.
 - The list shows `Queue`; missing queue values render as `-`.
 - The list shows `Service Time` as `start time - end time`.
+- The list shows `Rating Score` as integer `1` to `5` or `-`; it is available as a query filter. `End Reason` is not exposed in the current Interaction Log query page.
+- PSTN satisfaction is sent periodically through an independent outreach flow and cannot be bound to an individual call record, so PSTN `Rating Score` and feedback render as `-`. BankApp, Webchat, and WhatsApp interaction ratings are stored with the record; feedback is optional and may render as `-`.
 - The list shows `QM Score` as plain text or `-`; QM Score is not a search filter in the current demo.
 - A numeric `QM Score` is a third-party quality-management detail entry. The current demo opens a customer-confirmed static third-party system-window preview at the original image ratio. Only the source image's top-right close X is interactive; other third-party toolbar icons remain static, `-` is not clickable, and mask / Esc do not close the preview. Future unified sign-in integration should replace this preview with the corresponding third-party detail page.
-- End lifecycle fields are split into `Ended By` and `End Reason`.
 - `Ended By` values are `Agent`, `Customer`, or `System`.
-- Normal agent and customer endings both use `End Reason = Normal`; channel/media context is already shown by Channel and Media Type.
-- Agent abnormal endings use the selected Session End Reason value. System endings use specific system reasons such as `Customer Timeout`, `Connection Lost`, `System Error`, or `Channel Gateway Error`.
 - Voice records use a three-column detail layout: left media playback, middle `Auto Transcript`, and right read-only CWU. The left media column stacks `Voice Recording Playback` above `Screen Recording Playback`; the screen recording uses a PSTN active-call agent desktop recording frame and is not a customer video surface.
 - Video records use a three-column detail layout: left `Video Recording Playback`, middle `Auto Transcript`, and right read-only CWU. The replay is an OpenEye-style vertical replay with two video panes and a playback bar; it should not include the live-call buttons, labels, or icons from the OpenEye call screen.
 - DM records use a two-column detail layout: conversation-style bubbles with speaker, avatar, and time on the left, and read-only CWU on the right. DM details do not show an empty media column.
 - Detail modal does not add a CRM or customer-detail card in the current scope; customer and service metadata stay in the list-level fields.
-- Detail modal right side shows read-only CWU with Ticket No., multi-select Business Type, and Summary description only.
+- Detail modal right side uses separate bordered read-only Ticket and Satisfaction panels. Ticket places the Ticket No. in the title row. Satisfaction shows static stars plus the final `Rating Score` number when available, then the optional feedback content. Field labels use title case rather than forced uppercase.
 - CWU Registration summary is mandatory in the current demo, so the list and filters do not expose Summary Status or Summary Time.
 - Interaction Log exposes only the View action. CWU edit entry points and the Edit CWU modal are not shown in the current demo.
 - Store is local front-end state.
@@ -757,7 +765,9 @@ Important rules:
 - Channels DM Business Config shows `Queue Configuration` immediately after `Access Configuration`.
 - `Queue Configuration` contains `Outside Service Hours Message`, `Queue Waiting Message`, and `Queue Timeout Message`.
 - `Queue Waiting Message` does not support estimated-wait dynamic parameters in the current demo.
-- Channels Non-DM Business Config shows a tab but no configuration content in the current demo.
+- Channels DM and Non-DM Business Config can each select one fixed `New Customer Alert Sound` and preview it. Clearing the selection means no alert sound for that channel/media pair.
+- New customer alert sounds play once for a new DM or Non-DM interaction. Playback is gated by the existing agent-level `System prompt sound` setting.
+- Voice and Video do not expose this configuration and continue to use OpenEye ringing.
 - Webchat DM Business Config shows `Webchat Message Recall Limit (sec)`.
 - Non-Webchat text channels do not show that Webchat-specific field.
 - Channels Business Config `Agent Service Configuration` keeps the existing `Agent No Reply Warning (sec)` and `Agent No Reply Breach (sec)` labels, and uses colored dots matching Live Chat SLA warning and breach colors to clarify the threshold severity.

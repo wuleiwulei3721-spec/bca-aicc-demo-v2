@@ -4,6 +4,7 @@ import type { ColumnsType } from 'antd/es/table'
 import { useMemo, useState } from 'react'
 import {
   AdminFilterField,
+  AdminFormField,
   AdminModal,
   AdminModalFooter,
   AdminPage,
@@ -23,7 +24,7 @@ import type {
   BlacklistRestrictionPolicy,
 } from '../../types'
 
-type BlacklistModalMode = 'batch' | 'single' | null
+type BlacklistModalMode = 'batch' | null
 
 interface BlacklistFilters {
   channel: '' | BlacklistChannel
@@ -32,7 +33,7 @@ interface BlacklistFilters {
 }
 
 interface BlacklistDraft {
-  channel: BlacklistChannel
+  channels: BlacklistChannel[]
   remark: string
   restrictedNumbers: string
   restrictionPolicy: BlacklistRestrictionPolicy
@@ -46,7 +47,7 @@ const defaultFilters: BlacklistFilters = {
 }
 
 const defaultDraft: BlacklistDraft = {
-  channel: '',
+  channels: [],
   remark: '',
   restrictedNumbers: '',
   restrictionPolicy: 'block-transfer-to-agent',
@@ -124,7 +125,6 @@ export function BlacklistManagementPage() {
   const [selectedEntryIds, setSelectedEntryIds] = useState<string[]>([])
   const [submitAttempted, setSubmitAttempted] = useState(false)
 
-  const isBatchMode = modalMode === 'batch'
   const selectedCount = selectedEntryIds.length
   const enabledChannelOptions = useMemo(() => {
     const channelNames = new Set<string>()
@@ -186,18 +186,25 @@ export function BlacklistManagementPage() {
 
     const errors: string[] = []
 
-    if (!draft.channel) {
-      errors.push('Channel is required. Please enable a channel first.')
+    if (draft.channels.length === 0) {
+      errors.push(
+        'Channel is required. Please select at least one enabled channel.',
+      )
     }
 
     if (!draft.restrictedNumbers.trim()) {
-      errors.push('Restricted Number is required.')
+      errors.push('Identifier is required.')
     } else if (parsedNumbers.length === 0) {
-      errors.push('At least one restricted number is required.')
+      errors.push('At least one identifier is required.')
     }
 
     return errors
-  }, [draft.channel, draft.restrictedNumbers, modalMode, parsedNumbers.length])
+  }, [
+    draft.channels.length,
+    draft.restrictedNumbers,
+    modalMode,
+    parsedNumbers.length,
+  ])
 
   const updateDraft = <Key extends keyof BlacklistDraft>(
     key: Key,
@@ -210,14 +217,11 @@ export function BlacklistManagementPage() {
     setNotice('')
   }
 
-  const createDefaultDraft = (): BlacklistDraft => ({
-    ...defaultDraft,
-    channel: enabledChannelOptions[0]?.value ?? '',
-  })
+  const createDefaultDraft = (): BlacklistDraft => ({ ...defaultDraft })
 
-  const openCreateModal = (mode: Exclude<BlacklistModalMode, null>) => {
+  const openCreateModal = () => {
     setDraft(createDefaultDraft())
-    setModalMode(mode)
+    setModalMode('batch')
     setSubmitAttempted(false)
     setNotice('')
   }
@@ -246,29 +250,33 @@ export function BlacklistManagementPage() {
       return
     }
 
+    const uniqueChannels = Array.from(new Set(draft.channels))
     const uniqueNumbers = Array.from(new Set(parsedNumbers))
     const baseSequence = getNextSequence(blacklistEntries)
     const createdAt = formatSavedTime(new Date())
     const createdBy = authSession?.displayName ?? 'Admin'
     const remark = draft.remark.trim()
-    const nextEntries: BlacklistEntry[] = uniqueNumbers.map(
-      (restrictedNumber, index) => ({
-        channel: draft.channel,
-        createdAt,
-        createdBy,
-        id: `BL${String(baseSequence + index + 1).padStart(3, '0')}`,
-        remark,
-        restrictedNumber,
-        restrictionPolicy: draft.restrictionPolicy,
-        validityDays: draft.validityDays,
-      }),
+    const nextEntries: BlacklistEntry[] = uniqueChannels.flatMap(
+      (channel, channelIndex) =>
+        uniqueNumbers.map((restrictedNumber, numberIndex) => ({
+          channel,
+          createdAt,
+          createdBy,
+          id: `BL${String(
+            baseSequence + channelIndex * uniqueNumbers.length + numberIndex + 1,
+          ).padStart(3, '0')}`,
+          remark,
+          restrictedNumber,
+          restrictionPolicy: draft.restrictionPolicy,
+          validityDays: draft.validityDays,
+        })),
     )
 
     addBlacklistEntries(nextEntries)
     setNotice(
       nextEntries.length === 1
-        ? 'Blacklist number added.'
-        : `${nextEntries.length} blacklist numbers added.`,
+        ? 'Blacklist identifier added.'
+        : `${nextEntries.length} blacklist identifiers added.`,
     )
     closeModal()
   }
@@ -318,7 +326,7 @@ export function BlacklistManagementPage() {
     },
     {
       dataIndex: 'restrictedNumber',
-      title: 'Restricted Number',
+      title: 'Identifier',
       width: 140,
     },
     {
@@ -388,9 +396,9 @@ export function BlacklistManagementPage() {
                     }
                   />
                 </AdminFilterField>
-                <AdminFilterField label="Restricted Number" width={240}>
+                <AdminFilterField label="Identifier" width={240}>
                   <Input
-                    placeholder="Restricted number"
+                    placeholder="Identifier"
                     value={filterDraft.restrictedNumber}
                     onChange={(event) =>
                       setFilterDraft((currentDraft) => ({
@@ -419,14 +427,7 @@ export function BlacklistManagementPage() {
               <BaseButton
                 icon={<PlusOutlined />}
                 variant="primary"
-                onClick={() => openCreateModal('single')}
-              >
-                Add
-              </BaseButton>
-              <BaseButton
-                icon={<PlusOutlined />}
-                variant="primary"
-                onClick={() => openCreateModal('batch')}
+                onClick={openCreateModal}
               >
                 Batch Add
               </BaseButton>
@@ -456,7 +457,7 @@ export function BlacklistManagementPage() {
       <AdminModal
         destroyOnClose
         open={Boolean(modalMode)}
-        title={isBatchMode ? 'Batch Add Blacklist' : 'Add Blacklist'}
+        title="Batch Add Blacklist"
         width={760}
         onCancel={closeModal}
       >
@@ -477,14 +478,17 @@ export function BlacklistManagementPage() {
             />
           )}
           <div className="routing-config-crud-modal__form">
-            <label className="routing-config-crud-modal__field">
-              <span>Channel</span>
+            <AdminFormField label="Channel" required>
               <Select
+                aria-required
+                maxTagCount="responsive"
+                mode="multiple"
                 options={channelFormOptions}
-                value={draft.channel}
-                onChange={(value) => updateDraft('channel', value)}
+                placeholder="Select channels"
+                value={draft.channels}
+                onChange={(value) => updateDraft('channels', value)}
               />
-            </label>
+            </AdminFormField>
             <label className="routing-config-crud-modal__field">
               <span>Restriction Policy</span>
               <Select
@@ -493,38 +497,20 @@ export function BlacklistManagementPage() {
                 onChange={(value) => updateDraft('restrictionPolicy', value)}
               />
             </label>
-            <label
-              className={[
-                'routing-config-crud-modal__field',
-                isBatchMode
-                  ? 'routing-config-crud-modal__field--full call-management-list__number-field--batch'
-                  : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
+            <AdminFormField
+              className="routing-config-crud-modal__field--full call-management-list__number-field--batch"
+              label="Identifier"
+              required
             >
-              <span>
-                Restricted Number <strong>*</strong>
-              </span>
-              {isBatchMode ? (
-                <Input.TextArea
-                  rows={8}
-                  placeholder="Use semicolons for batch add"
-                  value={draft.restrictedNumbers}
-                  onChange={(event) =>
-                    updateDraft('restrictedNumbers', event.target.value)
-                  }
-                />
-              ) : (
-                <Input
-                  placeholder="Restricted number"
-                  value={draft.restrictedNumbers}
-                  onChange={(event) =>
-                    updateDraft('restrictedNumbers', event.target.value)
-                  }
-                />
-              )}
-            </label>
+              <Input.TextArea
+                rows={8}
+                placeholder="Use semicolons for batch add"
+                value={draft.restrictedNumbers}
+                onChange={(event) =>
+                  updateDraft('restrictedNumbers', event.target.value)
+                }
+              />
+            </AdminFormField>
             <label className="routing-config-crud-modal__field">
               <span>Validity Days</span>
               <InputNumber

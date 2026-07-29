@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-07-24 14:10 +08:00
+最后更新：2026-07-29 17:05 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,156 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-07-29 17:05 +08:00 - 渠道新客户提示音
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/config/newCustomerAlertSounds.ts`
+- `public/audio/new-customer-alerts/`
+- `src/types/routingConfiguration.ts`、`src/mock/routingConfiguration.ts`
+- `src/store/appStore.ts`、`src/layouts/BasicLayout.tsx`、`src/layouts/components/AgentProfileArea.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`BUSINESS_RULES.md`
+
+修改原因：
+
+- 支持 DM 和 Non-DM 渠道按渠道/媒体配置新客户接入提示音，同时保持 Voice、Video 的 OpenEye 振铃和坐席 Settings 中系统声音总开关的既有含义。
+
+修改结果：
+
+- Business Config 中的 DM、Non-DM 页签提供固定五项音频名称下拉与试听按钮；Voice、Video 不显示该配置。
+- 所选文件名保存在渠道媒体业务配置中；新 DM/Non-DM 交互进入工作区时仅播放一次，并受 `System prompt sound` 开关控制；未配置时静默。
+- 已加入五个可公开加载的本地 WAV 演示音，当前用于前端演示。
+- `npm run lint`、`npm run build` 和 Channels 弹窗浏览器冒烟均通过。
+
+回滚说明：
+
+- 移除 `newCustomerAlertSound` 字段、提示音静态资源、Business Config 控件与 `newCustomerAlert` 播放逻辑即可恢复原行为。
+
+当前风险：
+
+- 当前五个文件是演示提示音；客户最终验收前需替换为 BCA 批准的音频文件，并保持既有文件名或同步更新固定选项。
+
+### 2026-07-29 16:20 +08:00 - 话务条接入标识
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `BUSINESS_RULES.md`、`PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求话务条按渠道和登录状态显示接入标识。
+
+修改结果：
+
+- PSTN 语音显示 `IVR: 08123456789`（当前 demo ANI）。HaloApp 语音和视频的已登录用户显示 BCAID 编号 `HaloApp: 00012345`，未登录用户显示 `HaloApp: Guest`。
+- 已在业务规则中锁定 Webchat 语音/视频后续接入时的对应显示：已登录 `Webchat: {BCAID}`、未登录 `Webchat: Guest-0001`。当前 Webchat demo 仅支持 DM，不会渲染语音/视频话务条。
+
+回滚说明：
+
+- 恢复 `BasicLayout` 的话务条标识映射，并删除本日志及对应文档规则即可回退。
+
+当前风险：
+
+- 当前为前端 mock 标识；真实 ANI、BCAID 和访客 ID 应由 CTI / 渠道网关在接入事件中传入。
+
+### 2026-07-28 16:34 +08:00 - Call Management 登录日志查询
+
+修改页面或文件：
+
+- `src/pages/call-management/LoginLogQueryPage.tsx`
+- `src/types/loginLog.ts`、`src/mock/loginLogs.ts`、`src/store/callManagementStore.ts`
+- `src/pages/LoginPage.tsx`、`src/layouts/BasicLayout.tsx`
+- `src/config/workspacePageTabs.tsx`、`src/pages/call-management/index.ts`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`BUSINESS_RULES.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 用户要求在 Call Management 的 Interaction Log 后新增登录日志查询，用于审阅用户的系统登录和登出时间。
+
+修改结果：
+
+- 新增 `Login Log` 菜单、可关闭工作台页签和 `/call-management/login-log` 兼容路由。
+- 查询条件包含合并的 Employee ID / Name Keyword、Time Range、Operation 和 `Log Out Type`；列表按 Employee ID、Employee Name、Operation、Log Out Type、Time 展示并按时间倒序排序。
+- Login 行的 Log Out Type 显示 `-`；手动登出记录为 User，无操作超时自动登出记录为 System。当前 demo 提供最近七个自然日的 19 条 mock 记录，并在运行期间追加实际登录、手动登出和超时登出事件。所有日志 Employee ID / Name 对齐 Employee Profile：Budi Kartika 为 `EMP-10027`，Maya Santoso 为 `EMP-10108`；登录日志不再使用 CTI 标识 `AICC1088` 作为 Employee ID。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check` 已通过；构建仅有既有 large chunk warning。
+- 浏览器确认 Login Log 位于 Interaction Log 后，默认 Time Range 覆盖最近七个自然日，显示 19 条记录并按 Time 倒序排列；查询显示 Keyword、Time Range、Operation、Log Out Type 和五个列表字段。Login 行的 Log Out Type 显示 `-`，Log Out 行分别显示 `User` 或 `System`。单页流程确认手动登出写入 `Log Out / User`、重新登录写入 Login，`EMP-10027` Keyword 查询可筛出对应记录；以 TL 账号登录确认实时 Login 记录为 `EMP-10108 / Maya Santoso`。
+
+回滚说明：
+
+- 移除 Login Log 页面、类型/mock/store 字段、登录/登出事件写入和工作台页签定义即可回滚。
+
+当前风险：
+
+- 当前为前端内存 demo；刷新恢复 mock 数据。浏览器关闭、网络断开与真实心跳超时须由服务端或 CTI 平台记录，当前仅以 seeded System 记录展示。
+
+### 2026-07-28 12:06 +08:00 - Interaction Log 满意度评分
+
+修改页面或文件：
+
+- `src/types/callRecord.ts`
+- `src/mock/callRecords.ts`
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求移除 Interaction Log 的挂机原因，增加可筛选的 `Rating Score`，并在详情中查看满意度评分和可选反馈。
+
+修改结果：
+
+- 查询和列表移除 `End Reason`，新增 `Rating Score`，支持 `1` 至 `5` 分筛选。
+- 详情右栏改为独立的上下卡片：上方 CWU，下方 Satisfaction；Ticket No. 位于 CWU 标题右侧，评分使用星级与单个数字，字段标签使用标题式大小写，反馈未填写时显示 `-`。
+- PSTN 评分与反馈显示 `-`，因为满意度通过独立的周期性外呼/邮件触达，不能绑定单次通话；BankApp、Webchat、WhatsApp mock 记录保存评分和可选反馈。
+
+回滚说明：
+
+- 移除评分字段、筛选、详情 Satisfaction 区并恢复 End Reason 查询与列表列即可回退。
+
+当前风险：
+
+- 当前满意度为前端 mock。真实接入时应由渠道满意度回调按 interaction ID 写入，PSTN 的周期性调研不得错误关联到单次通话。
+
+### 2026-07-28 11:31 +08:00 - 常用语跨分类批量移动优化
+
+修改页面或文件：
+
+- `src/pages/call-management/CommonPhraseManagementPage.tsx`
+- `src/store/callManagementStore.ts`
+- `BUSINESS_RULES.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户确认仅在左侧选择 `All Categories` 且勾选的常用语跨多个分类时，移动目标分类应允许选择全部分类；其他选择方式保持当前分类不可作为目标的规则。
+
+修改结果：
+
+- 新增跨分类选择判断；仅该条件下，移动分类下拉不再禁用已选记录所属的分类。
+- 移动保存时自动保留本来已属于目标分类的记录，仅更新其余记录的 `categoryId`；结果提示显示实际移动数量。
+- 单一分类或非跨分类勾选仍禁用其所属分类，避免无效移动。
+
+验证：
+
+- `git diff --check` 通过。
+- `npm run lint`、`npm run build` 通过；构建仅保留既有 chunk size warning。
+- Common Phrase 页面浏览器冒烟通过关键开放条件：`All Categories` 下全选跨 `Verification` / `Security` 的记录后，Move to Category 启用，且两个分类均显示为可选目标。
+- 浏览器自动化在后续点击 Ant Design 下拉选项时超时；未影响已验证的可选状态。保存时的跳过语义由 `moveCommonPhraseEntries` 条件更新和 TypeScript 构建覆盖。
+
+回滚说明：
+
+- 恢复 `moveCategoryOptions` 对所有已选来源分类的禁用判断，并将 `moveCommonPhraseEntries` 恢复为直接更新全部已选记录即可。
+
+当前风险点：
+
+- 当前为前端内存 demo；真实后端批量移动接口应采用同样的“目标分类相同则跳过”语义，并返回实际更新数量。
 
 ### 2026-07-24 17:12 +08:00 - Social Media 渠道工作区整合
 
@@ -4830,3 +4980,142 @@ Historical entries are preserved in archive files without content rewrites. Use 
 当前风险点：
 
 - 极窄移动端不属于当前坐席桌面演示目标；仍需以目标客户演示分辨率验证活跃通话下的所有话务按钮。
+
+### 2026-07-29 14:38 +08:00 - 坐席状态改为个人菜单单向切换
+
+修改页面或文件：
+
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `BUSINESS_RULES.md`
+- `DESIGN_SYSTEM.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户要求坐席签入后以 Not Ready 起始，切换到 Ready 后不能再手工切回 Not Ready，只能选择 AUX。
+
+修改结果：
+
+- 移除话务条的 Ready / Not Ready 双向切换按钮。
+- 右侧个人菜单仍在 Not Ready、Pre-AUX 和 AUX 状态提供 Ready；Ready 状态只提供 AUX 原因，不提供 Not Ready。
+- 首次从 Not Ready 切换到 Ready 的默认 Live Chat 页签和会话初始化，改由个人菜单状态转换保留。
+- Pre-AUX 在电话/视频通话结束时不再绕过 ACW：先转为 Not Ready 并完成当前 ACW 倒计时，再自动进入预设的 AUX 原因；Pre-AUX 期间选择 Ready 会取消预设。工具条和个人资料仍显示 Not Ready，保持既有演示文案。
+- 工具条计时在状态开始时间切换时立即重置刷新基准，并由 1 秒全局节拍改为 250ms 校准，避免 ACW 前两秒停留过久而使 10 秒配置视觉上缩短。
+- 默认 Live Chat 演示会话仍视为服务，Ready 时选择 AUX 会进入 Pre-AUX。Pre-AUX 通话挂机后的 ACW 期间，工具条显示 Not Ready，右上角个人资料保留 Pre-AUX 原因；ACW 结束后自动进入对应 AUX。
+
+验证：
+
+- `git diff --check`、`npm run lint`、`npm run build` 已通过；构建仅有既有 large chunk warning。
+- `git diff --check`、`npm run lint`、`npm run build` 已通过；构建仅有既有 large chunk warning。
+- PSTN 浏览器烟测已通过：通话中选择 `Break` 显示 `Pre-AUX: Break`；挂机后右上角继续显示 `Pre-AUX: Break`，工具条显示 `Not Ready 00:00`；约 10 秒 ACW 后显示 `AUX: Break`。Pre-AUX 中选择 Ready 会立即取消预设并恢复 Ready。
+- ACW 计时采样已通过：挂机后 `00:00`、`00:01`、`00:02` 分别出现在 0、1.1、2.1 秒，前两秒不再因旧的全局 1 秒刷新节拍而滞后。
+
+回滚说明：
+
+- 恢复 `AgentToolbar` 的 Ready / Not Ready 按钮与 `BasicLayout` 的双向切换回调，即可恢复旧行为。
+
+当前风险点：
+
+- 当前状态流仍为前端 demo 状态机；真实生产坐席状态切换需要 CTI / 路由后端确认。
+
+### 2026-07-29 15:13 +08:00 - 黑名单仅保留批量新增
+
+修改页面或文件：
+
+- `src/pages/call-management/BlacklistManagementPage.tsx`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求在 Call Management > Blacklist 移除单个新增入口，只保留批量添加功能。
+
+修改结果：
+
+- 工具栏仅保留 `Batch Add` 与批量删除操作。
+- 新增弹窗固定为 `Batch Add Blacklist`，号码输入固定使用分号分隔的多行文本框。
+- 移除单个新增模式及其表单分支；批量新增、重复去重、有效期、备注和删除逻辑保持不变。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅有既有 large chunk warning。
+- 浏览器烟测已通过：`/call-management/blacklist` 工具栏仅显示一个 `Batch Add` 新增入口，不存在精确名为 `Add` 的单个新增按钮；点击后弹出 `Batch Add Blacklist`，号码输入为分号分隔的多行文本框。
+
+回滚说明：
+
+- 恢复黑名单页单个新增按钮和 `single` 弹窗分支即可恢复旧交互。
+
+当前风险点：
+
+- 黑名单仍为本地前端演示数据，刷新页面会重置。
+
+### 2026-07-29 15:38 +08:00 - 黑名单必填字段与 Identifier 术语对齐
+
+修改页面或文件：
+
+- `src/pages/call-management/BlacklistManagementPage.tsx`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求黑名单批量新增的渠道下拉框明确为必填，并将限制号码字段名称与 Priority List 统一为 `Identifier`。
+
+修改结果：
+
+- Channel 多选下拉框使用共享必填字段样式，显示必填标识并保留至少选择一个已启用渠道的校验。
+- 列表列名、查询字段、弹窗字段、校验提示和成功提示统一使用 `Identifier`；内部数据字段保持兼容。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅有既有 large chunk warning。
+- 浏览器烟测已通过：列表、查询和弹窗均显示 `Identifier`；Channel 与 Identifier 均显示必填标识，空提交会提示选择至少一个已启用渠道及输入 Identifier。
+
+回滚说明：
+
+- 恢复黑名单页原有标签和普通表单字段即可回退显示文案与必填样式。
+
+当前风险点：
+
+- 黑名单仍为本地前端演示数据，刷新页面会重置。
+
+### 2026-07-29 15:32 +08:00 - 黑名单批量新增支持多选渠道
+
+修改页面或文件：
+
+- `src/pages/call-management/BlacklistManagementPage.tsx`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求 Call Management > Blacklist 的批量新增渠道支持多选。
+
+修改结果：
+
+- `Batch Add Blacklist` 的 Channel 改为多选控件，不预选渠道并保留必填校验。
+- 保存时按所选渠道与去重后的受限号码生成组合记录；记录编号连续递增。
+- 现有单渠道筛选、记录字段、有效期、备注和批量删除逻辑保持不变。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅有既有 large chunk warning。
+- 浏览器烟测已通过：在 `Batch Add Blacklist` 同时选择 `Bankapp` 和 `Webchat`，输入两个分号分隔号码后页面提示新增 4 条，并正确生成四个 Channel + Restricted Number 组合记录。
+
+回滚说明：
+
+- 将渠道字段恢复为单选并按号码单层创建记录，即可恢复原行为。
+
+当前风险点：
+
+- 黑名单仍为本地前端演示数据，刷新页面会重置。

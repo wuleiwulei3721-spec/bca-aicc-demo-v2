@@ -2768,7 +2768,9 @@ a {
 }
 
 .call-record-query__detail {
+  --call-record-query-detail-height: 540px;
   display: grid;
+  align-items: stretch;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
   gap: 12px;
 }
@@ -2786,11 +2788,12 @@ a {
 }
 
 .call-record-query__content-panel,
-.call-record-query__media-panel,
-.call-record-query__summary-panel {
+.call-record-query__media-panel {
+  box-sizing: border-box;
   display: flex;
+  height: var(--call-record-query-detail-height);
   min-width: 0;
-  min-height: 540px;
+  min-height: 0;
   flex-direction: column;
   gap: 10px;
 }
@@ -3124,8 +3127,46 @@ a {
   line-height: 20px;
 }
 
+.call-record-query__summary-stack {
+  box-sizing: border-box;
+  display: flex;
+  min-width: 0;
+  height: var(--call-record-query-detail-height);
+  min-height: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .call-record-query__summary-panel {
-  min-height: 540px;
+  display: flex;
+  min-height: 0;
+  flex: 1 1 0;
+  flex-direction: column;
+  padding: 12px;
+  gap: 10px;
+}
+
+.call-record-query__summary-panel--cwu {
+  flex: 1 1 auto;
+}
+
+.call-record-query__summary-panel--satisfaction {
+  flex: 0 0 210px;
+}
+
+.call-record-query__cwu-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.call-record-query__cwu-ticket-no {
+  color: var(--aicc-text-secondary);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 20px;
+  white-space: nowrap;
 }
 
 .call-record-query__summary-card {
@@ -3137,6 +3178,63 @@ a {
   padding: 4px 0 0;
   border: 0;
   background: transparent;
+  overflow: auto;
+}
+
+.call-record-query__satisfaction-fields {
+  display: grid;
+  overflow: auto;
+  gap: 16px;
+  padding-top: 4px;
+}
+
+.call-record-query__satisfaction-fields > div {
+  display: grid;
+  gap: 6px;
+}
+
+.call-record-query__satisfaction-fields > div > span {
+  color: var(--aicc-text-secondary);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 20px;
+}
+
+.call-record-query__satisfaction-fields > div > strong,
+.call-record-query__rating-score strong {
+  color: var(--aicc-text);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.call-record-query__rating-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.call-record-query__rating-score strong {
+  margin-left: 4px;
+}
+
+.call-record-query__rating-star,
+.call-record-query__rating-star--filled {
+  font-size: 16px;
+}
+
+.call-record-query__rating-star {
+  color: #dbe3ed;
+}
+
+.call-record-query__rating-star--filled {
+  color: #f5a623;
+}
+
+.call-record-query__satisfaction-fields p {
+  margin: 0;
+  color: var(--aicc-text-secondary);
+  font-size: 13px;
+  line-height: 22px;
 }
 
 .call-record-query__cwu-fields {
@@ -3154,24 +3252,23 @@ a {
   padding-top: 16px;
 }
 
-.call-record-query__cwu-fields span {
+.call-record-query__cwu-fields > div > span {
   color: var(--aicc-text-secondary);
-  font-size: 12px;
-  font-weight: 750;
-  line-height: 18px;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 20px;
 }
 
 .call-record-query__cwu-fields strong {
   color: var(--aicc-text);
-  font-size: 14px;
+  font-size: 13px;
   line-height: 20px;
 }
 
 .call-record-query__cwu-fields p {
   margin: 0;
   color: var(--aicc-text-secondary);
-  font-size: 14px;
+  font-size: 13px;
   line-height: 22px;
 }
 
@@ -3213,8 +3310,13 @@ a {
 
   .call-record-query__content-panel,
   .call-record-query__media-panel,
-  .call-record-query__summary-panel {
+  .call-record-query__summary-stack {
+    height: auto;
     min-height: auto;
+  }
+
+  .call-record-query__summary-panel {
+    flex: 0 0 auto;
   }
 
   .call-record-query__media-player--video {
@@ -5354,6 +5456,22 @@ a {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
+}
+
+.routing-config-channel-business__sound-control {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 8px;
+}
+
+.routing-config-channel-business__sound-control .aicc-button.ant-btn {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
 }
 
 .routing-config-channel-business__work-time-control .aicc-button.ant-btn {

@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Project Context
 
-Last updated: 2026-07-24 13:57 +08:00
+Last updated: 2026-07-29 15:54 +08:00
 Repository path: `D:\03projects\bca-aicc-demo-v2`
 
 ## 1. Project Name
@@ -114,6 +114,7 @@ Current router structure:
 - `/call-management/busy-reasons`
 - `/call-management/session-end-reasons`
 - `/call-management/call-record-query`
+- `/call-management/login-log`
 - `/call-management/*` legacy or hidden routes redirect to Verification Rules.
 - `/routing-config/channels`
 - `/routing-config/vdn`
@@ -148,7 +149,7 @@ All business routes under `/` require an authenticated demo session.
 - `src/pages/inbound/LiveChat2Page.tsx`: current Live Chat workspace.
 - `src/pages/bankapp/BankAppDemoPage.tsx`: BankApp customer-side channel simulation.
 - `src/pages/whatsapp/WhatsAppDemoPage.tsx`: WhatsApp simulation using the BankApp demo framework.
-- `src/pages/email/EmailPage.tsx`: code-built Email agent workspace with mailbox folders, customer context, message handling, CRM, thread records, and CWU registration.
+- `src/pages/email/EmailPage.tsx`: code-built Email agent workspace with mailbox folders, customer context, message handling, CRM, thread records, and Ticket registration.
 - `src/pages/social-media/SocialMediaPage.tsx`: Social Media agent workspace with queue filters, post/review handling, CRM preview, and CWU prototype.
 - `src/pages/call-management/*`: customer-visible call management configuration pages.
 - `src/pages/routing-config/*`: routing configuration data maintenance pages.
@@ -166,7 +167,7 @@ All business routes under `/` require an authenticated demo session.
 ### Login and Authentication
 
 - Demo login page at `/login`.
-- Demo credentials are implemented in mock auth data: `888888 / 888888` is the ordinary Agent account, and `666666 / 666666` is the female TL Demo account Maya Lestari, used to demonstrate direct external outbound, `Transfer Number`, and broader Call Agent visibility.
+- Demo credentials are implemented in mock auth data: `888888 / 888888` is the ordinary Agent account, and `666666 / 666666` is the TL Demo account Maya Santoso (`EMP-10108`), used to demonstrate direct external outbound, `Transfer Number`, and broader Call Agent visibility.
 - Session is stored in `sessionStorage`.
 - Protected routes redirect unauthenticated users to `/login`.
 - Log Out is blocked while active customer service exists.
@@ -198,7 +199,7 @@ The toolbar supports:
 - Ordinary Agent external outbound number and Customer Information outbound actions require one TL approval per target before their original action is enabled. Both external outbound entries require `Miss Information` or `Financial Risk`; TL selects the same reason but calls directly. `Transfer Number` is a TL-and-above permission, hidden from `888888` and available to `666666` without additional approval.
 - In `Outbound Call > Call Agent`, ordinary Agents see only SPV and TL records; TL-and-above roles see the complete agent list.
 - `Channel Simulation > Transferred Call` is local-only and opens a PSTN receiving-seat preview with source-agent transfer metadata; it is a local demo visualization, not a real routed call.
-- Call identification display: `IVR` / `BankID`.
+- Call identification display: `IVR: {ANI Number}` for PSTN and `HaloApp: {BCAID}` / `HaloApp: Guest` for HaloApp voice and video; the current HaloApp BCAID mock is `00012345`. Future Webchat voice/video follows `Webchat: {BCAID}` / `Webchat: Guest-0001`.
 - Skill display during active call lifecycle.
 
 ### Agent Workspace
@@ -313,9 +314,9 @@ The current Email demo supports:
 - Trash recovery returns a trashed or ignored mock email to its original folder.
 - The shared Customer Information, Customer Journey, Ticketing History, Next Best Action, and Quick Action column used by the other interaction workspaces; Email is shown as the access channel.
 - The shared Live Chat `CrmPanel`, including the same CRM screenshot, `CRM / Email` tab styling, and closable CRM business-detail tabs.
-- CWU registration with Business Type, Summary, and one-click summary generation.
+- Ticket registration with Business Type, Summary, and one-click summary generation.
 
-Email message and CWU changes are local component state. Closing and reopening the Email tab or refreshing the application restores the default anonymized mock data. Email verification is not exposed because no Email verification rule is confirmed. Email Record Inquiry and Email Template Deploy remain separate future scope.
+Email message and Ticket changes are local component state. Closing and reopening the Email tab or refreshing the application restores the default anonymized mock data. Email verification is not exposed because no Email verification rule is confirmed. Email Record Inquiry and Email Template Deploy remain separate future scope.
 
 ### Social Media Workspace
 
@@ -340,15 +341,16 @@ Customer-visible Call Management pages:
 - Busy Reason.
 - Abnormal End Reasons.
 - Interaction Log.
+- Login Log.
 
 Legacy or hidden routes redirect to Verification Rules.
 
 Interaction Log is implemented at `/call-management/call-record-query` and is
 scoped to the current agent's Phone, BankApp Voice,
 BankApp Video, BankApp DM, Webchat, and WhatsApp records. It uses Contact /
-Call Type / Queue / Service Time / Ended By / End Reason / QM Score to show the
+Call Type / Queue / Service Time / Ended By / Rating Score / QM Score to show the
 customer-side identifier, queue context, start-end service time, service ending
-metadata, and quality score.
+metadata, customer satisfaction, and quality score.
 Numeric QM Scores open a static third-party quality-management detail preview
 in the current demo. The preview uses the customer-confirmed original image;
 future unified sign-in integration will replace it with the corresponding
@@ -362,6 +364,8 @@ Voice Recording Playback above the PSTN active-call Screen Recording Playback.
 Video media uses an OpenEye-style vertical replay with two video panes and a
 playback bar, without call-control buttons, labels, or icons. It intentionally excludes Email and Social Media
 records; Email Record Inquiry and Social Media query remain separate future scopes even though the Email handling workspace is now implemented.
+
+Login Log is implemented at `/call-management/login-log`. It queries Employee ID / Name through one Keyword field, Time Range, Operation, and Log Out Type. The list records Employee ID, Employee Name, Operation, Log Out Type, and Time. It defaults to the latest seven calendar days and sorts Time descending. Login rows display `-` for Log Out Type; manual log-out uses `User` and idle automatic log-out uses `System`. Browser-close and network-heartbeat detection require a backend/CTI service and are represented only by seeded System records in the current demo.
 
 Abnormal End Reasons maintains agent-selectable abnormal end reasons for Voice,
 Video, and DM service endings. `Normal` is the system default normal end reason
@@ -388,6 +392,10 @@ Routing Config media types currently include Voice, Video, DM, and Non-DM.
 Non-DM is used for social channel comments, replies, mentions, and app-store
 reviews. Instagram, LinkedIn, Facebook, X, Tik Tok, and YouTube support DM
 and Non-DM media; AppStore and PlayStore support Non-DM only.
+Channels Business Config lets DM and Non-DM select and preview one fixed
+new-customer alert sound. Voice and Video continue to rely on OpenEye ringing;
+the alert plays once for a new text/non-DM interaction only when the agent's
+existing System prompt sound setting is enabled.
 Skill Queues include a required Access Code field shown after VDN in lists
 and add/edit/view forms. Keyword search includes Access Code.
 
@@ -447,7 +455,7 @@ Current behaviors:
 - Monitoring side menu with static Home / Monitor dashboard screenshot switching.
 - AI external side-menu group for Quality Manage and AI Assist Config.
 - BankApp, Webchat, and WhatsApp customer-side simulations with screenshot assets.
-- Customer-visible Email agent workspace with mailbox folders, shared customer context, the Live Chat CRM screenshot, message handling, thread records, and CWU registration.
+- Customer-visible Email agent workspace with mailbox folders, shared customer context, the Live Chat CRM screenshot, message handling, thread records, and Ticket registration.
 - Customer-visible Social Media agent workspace with queue filtering, social post/review handling, CRM preview, local CWU prototype, and review reply simulation.
 - Call Management pages listed above.
 - Abnormal End Reasons for abnormal Voice / Video / DM service end reasons.
@@ -498,7 +506,7 @@ Important demo boundary:
 - `useAuthStore`: demo session.
 - `useCallManagementStore`: blacklist, priority list, busy reasons, session end reasons.
 - `useRoutingConfigStore`: routing configuration collections.
-- `EmailPage` local state: mailbox messages, folders, drafts, reply/ignore handling, thread records, SLA stop state, and CWU registration.
+- `EmailPage` local state: mailbox messages, folders, drafts, reply/ignore handling, thread records, SLA stop state, and Ticket registration backed by the existing internal CWU mock field.
 
 These are front-end stores. They are not connected to production APIs. Most changes reset after refresh or new session.
 
@@ -509,7 +517,7 @@ These are front-end stores. They are not connected to production APIs. Most chan
 - Browser visual verification is still important after any frontend change.
 - Call state currently supports only one active voice/video call at a time.
 - Closing a Video Call tab does not automatically hang up; Hang Up is the authoritative call end action.
-- Email is a front-end workflow simulation with no mailbox, SMTP, attachment, template service, or CWU backend integration.
+- Email is a front-end workflow simulation with no mailbox, SMTP, attachment, template service, or Ticket backend integration.
 - Some older compatibility code or internal identifiers may still exist in source, but customer-visible text should use Bank / BankApp / BANK 1 wording.
 - `DEPLOY.md` may display encoding issues in non-UTF-8 terminals.
 

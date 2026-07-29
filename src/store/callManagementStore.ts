@@ -5,6 +5,7 @@ import { createDefaultCallRecords } from '../mock/callRecords'
 import { defaultCommonLinkEntries } from '../mock/commonLinks'
 import { defaultCommonNumberEntries } from '../mock/commonNumbers'
 import { defaultGlobalControlConfiguration } from '../mock/globalControlConfiguration'
+import { createDefaultLoginLogs } from '../mock/loginLogs'
 import {
   defaultCommonPhraseCategories,
   defaultCommonPhraseEntries,
@@ -22,6 +23,9 @@ import type {
   CommonPhraseCategory,
   CommonPhraseEntry,
   GlobalControlConfiguration,
+  LoginLogEntry,
+  LoginLogLogoutType,
+  LoginLogOperation,
   PriorityListEntry,
   SensitiveWordEntry,
   SensitiveWordMatch,
@@ -58,8 +62,16 @@ interface CallManagementStore {
     mediaType: SessionEndMediaType,
   ) => SessionEndReasonEntry[]
   globalControlConfiguration: GlobalControlConfiguration
+  loginLogs: LoginLogEntry[]
   moveCommonPhraseEntries: (phraseIds: string[], categoryId: string) => void
   priorityListEntries: PriorityListEntry[]
+  recordLoginLog: (entry: {
+    employeeId: string
+    employeeName: string
+    logoutType: LoginLogLogoutType | null
+    occurredAt?: string
+    operation: LoginLogOperation
+  }) => void
   resetBlacklistEntries: () => void
   resetBusyReasons: () => void
   resetCommonLinkEntries: () => void
@@ -136,6 +148,10 @@ function cloneSessionEndReasonEntries() {
 
 function cloneGlobalControlConfiguration(): GlobalControlConfiguration {
   return { ...defaultGlobalControlConfiguration }
+}
+
+function cloneLoginLogs() {
+  return createDefaultLoginLogs().map((entry) => ({ ...entry }))
 }
 
 function normalizeMatchValue(value: string) {
@@ -303,17 +319,31 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
           entry.status === 'Active' && entry.mediaTypes.includes(mediaType),
       ),
   globalControlConfiguration: cloneGlobalControlConfiguration(),
+  loginLogs: cloneLoginLogs(),
   moveCommonPhraseEntries: (phraseIds, categoryId) =>
     set((state) => {
       const idSet = new Set(phraseIds)
 
       return {
         commonPhraseEntries: state.commonPhraseEntries.map((entry) =>
-          idSet.has(entry.phraseId) ? { ...entry, categoryId } : entry,
+          idSet.has(entry.phraseId) && entry.categoryId !== categoryId
+            ? { ...entry, categoryId }
+            : entry,
         ),
       }
     }),
   priorityListEntries: clonePriorityListEntries(),
+  recordLoginLog: (entry) =>
+    set((state) => ({
+      loginLogs: [
+        {
+          ...entry,
+          id: `login-log-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          occurredAt: entry.occurredAt ?? new Date().toISOString(),
+        },
+        ...state.loginLogs,
+      ],
+    })),
   resetBlacklistEntries: () =>
     set({ blacklistEntries: cloneBlacklistEntries() }),
   resetBusyReasons: () => set({ busyReasons: cloneBusyReasons() }),

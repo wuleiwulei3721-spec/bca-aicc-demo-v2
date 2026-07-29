@@ -15,6 +15,7 @@ import {
   CommonNumberManagementPage,
   CommonPhraseManagementPage,
   GlobalControlConfigurationPage,
+  LoginLogQueryPage,
   PriorityListManagementPage,
   SensitiveWordManagementPage,
   SessionEndReasonManagementPage,
@@ -146,6 +147,15 @@ export const workspacePageTabDefinitions: WorkspacePageTabDefinition[] = [
     moduleKey: 'call-management',
     routePath: '/call-management/call-record-query',
     tabKey: 'page:call-management-call-record-query',
+  },
+  {
+    element: <LoginLogQueryPage />,
+    icon: callManagementIcon,
+    label: 'Login Log',
+    menuKey: 'call-management-login-log',
+    moduleKey: 'call-management',
+    routePath: '/call-management/login-log',
+    tabKey: 'page:call-management-login-log',
   },
   {
     element: <VdnPage />,

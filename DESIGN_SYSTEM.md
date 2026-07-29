@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Design System
 
-Last updated: 2026-07-24 13:57 +08:00
+Last updated: 2026-07-29 14:38 +08:00
 
 This document records the current implemented visual rules. It should be treated as the design baseline for future pages and components.
 
@@ -66,12 +66,11 @@ Agent profile area:
 The toolbar is operational and compact:
 
 - Use icon + text mode by default.
-- Use familiar call icons for Answer, Hold, Transfer, Hang Up, Ready / Not Ready.
+- Use familiar call icons for Answer, Hold, Transfer, and Hang Up.
 - Do not replace call actions with decorative text buttons.
 - Answer flashes only for incoming calls.
 - Hang Up uses danger styling.
 - Hang Up can use a compact split-button when abnormal end reasons are available: the main danger action stays on the left, and the right caret opens those reasons.
-- Ready uses success / ready styling.
 - Hold uses selected / active styling.
 - More actions are behind an ellipsis menu; Settings is temporarily hidden from the toolbar More menu.
 - At narrow desktop widths, toolbar actions use their existing icons and tooltips while their text labels and call context are hidden to preserve the right-side controls.

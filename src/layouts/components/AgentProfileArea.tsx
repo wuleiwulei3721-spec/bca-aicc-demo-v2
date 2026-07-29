@@ -42,9 +42,11 @@ interface AgentProfileAreaProps {
   status: AgentStatus
   teamName?: string
   hasActiveCustomerInteraction: boolean
+  systemSoundEnabled: boolean
   onBlockedSignOut: () => void
   onServiceSignIn: () => void
   onStatusChange: (status: AgentStatus) => void
+  onSystemSoundEnabledChange: (enabled: boolean) => void
 }
 
 export function AgentProfileArea({
@@ -55,14 +57,15 @@ export function AgentProfileArea({
   status,
   teamName = headerAgentProfile.team,
   hasActiveCustomerInteraction,
+  systemSoundEnabled,
   onBlockedSignOut,
   onServiceSignIn,
   onStatusChange,
+  onSystemSoundEnabledChange,
 }: AgentProfileAreaProps) {
   const isSignedIn = status !== 'Unsigned'
   const formattedStatus = formatAgentStatus(status)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const [systemSoundEnabled, setSystemSoundEnabled] = useState(false)
   const busyReasons = useCallManagementStore((state) => state.busyReasons)
   const enabledBusyReasons = useMemo(
     () =>
@@ -249,7 +252,7 @@ export function AgentProfileArea({
         open={isSettingsOpen}
         systemSoundEnabled={systemSoundEnabled}
         onClose={() => setIsSettingsOpen(false)}
-        onSystemSoundEnabledChange={setSystemSoundEnabled}
+        onSystemSoundEnabledChange={onSystemSoundEnabledChange}
       />
     </>
   )

@@ -1,4 +1,10 @@
-import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons'
+import {
+  CaretRightOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+  PlusOutlined,
+} from '@ant-design/icons'
 import { Alert, DatePicker, Input, InputNumber, Select, Switch, Tabs, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -41,6 +47,10 @@ import {
   type RoutingConfigSelectOption,
 } from './RoutingConfigCrudPage'
 import { RoutingConfigStatusBadge } from './RoutingConfigStatusBadge'
+import {
+  getNewCustomerAlertSoundUrl,
+  newCustomerAlertSounds,
+} from '../../config/newCustomerAlertSounds'
 
 const statusSwitchLabels = {
   checked: 'Enabled',
@@ -640,6 +650,7 @@ const defaultChannelBusinessConfigByMedia: Record<
     exceptionWorkTimePlanCode: '',
     maxConcurrentAccess: 50,
     minScanIntervalSeconds: 30,
+    newCustomerAlertSound: '',
     outsideServiceHoursMessage:
       'Sorry, we are currently outside service hours.',
     preTimeoutReminderMessage:
@@ -1012,6 +1023,7 @@ export function ChannelsPage() {
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null)
   const [submitAttempted, setSubmitAttempted] = useState(false)
   const [accountSubmitAttempted, setAccountSubmitAttempted] = useState(false)
+  const alertSoundPreviewRef = useRef<HTMLAudioElement | null>(null)
   const businessMessageSelectionsRef = useRef<
     Record<string, { end: number; start: number }>
   >({})
@@ -1466,6 +1478,50 @@ export function ChannelsPage() {
       </label>
     )
   }
+  const previewNewCustomerAlertSound = (sound: string) => {
+    if (!sound) {
+      return
+    }
+
+    alertSoundPreviewRef.current?.pause()
+    const audio = new Audio(getNewCustomerAlertSoundUrl(sound))
+    alertSoundPreviewRef.current = audio
+    void audio.play().catch(() => undefined)
+  }
+  const renderNewCustomerAlertSoundField = (mediaCode: MediaTypeCode) => {
+    const config =
+      draft.businessConfig[mediaCode] ??
+      createDefaultChannelBusinessConfig(mediaCode)
+
+    return (
+      <label className="routing-config-crud-modal__field routing-config-channel-business__sound-field">
+        <span>New Customer Alert Sound</span>
+        <div className="routing-config-channel-business__sound-control">
+          <Select
+            allowClear
+            options={newCustomerAlertSounds}
+            placeholder="No alert sound"
+            value={config.newCustomerAlertSound || undefined}
+            onChange={(value) =>
+              updateBusinessConfig(
+                mediaCode,
+                'newCustomerAlertSound',
+                String(value ?? ''),
+              )
+            }
+          />
+          <BaseButton
+            aria-label="Preview new customer alert sound"
+            disabled={!config.newCustomerAlertSound}
+            icon={<CaretRightOutlined />}
+            title="Preview sound"
+            variant="secondary"
+            onClick={() => previewNewCustomerAlertSound(config.newCustomerAlertSound)}
+          />
+        </div>
+      </label>
+    )
+  }
   const getBusinessMessageFieldKey = (
     mediaCode: MediaTypeCode,
     field: keyof ChannelMediaBusinessConfig,
@@ -1653,7 +1709,18 @@ export function ChannelsPage() {
       usesSocialAccessCapacity || isPhoneVoice || isText
 
     if (isNonDm) {
-      return <div className="routing-config-channel-business" />
+      return (
+        <div className="routing-config-channel-business">
+          <section className="routing-config-media-rule-modal__section">
+            <header>
+              <strong>New Customer Alert</strong>
+            </header>
+            <div className="routing-config-crud-modal__section-grid">
+              {renderNewCustomerAlertSoundField(mediaCode)}
+            </div>
+          </section>
+        </div>
+      )
     }
 
     if (!hasAccessConfiguration && !isText) {
@@ -1728,6 +1795,14 @@ export function ChannelsPage() {
                   2,
                   true,
                 )}
+              </div>
+            </section>
+            <section className="routing-config-media-rule-modal__section">
+              <header>
+                <strong>New Customer Alert</strong>
+              </header>
+              <div className="routing-config-crud-modal__section-grid">
+                {renderNewCustomerAlertSoundField(mediaCode)}
               </div>
             </section>
             <section className="routing-config-media-rule-modal__section">

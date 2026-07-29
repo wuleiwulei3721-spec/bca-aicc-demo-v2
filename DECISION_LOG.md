@@ -1,6 +1,6 @@
 # Decision Log
 
-Last updated: 2026-07-24 13:57 +08:00
+Last updated: 2026-07-28 12:06 +08:00
 
 This document records important product and system design decisions that can be confirmed from the current codebase, project documents, `DEV_LOG.md`, and readable Git history. It intentionally omits bug fixes, visual micro-adjustments, temporary test data, copy-only tweaks, and implementation details that do not affect product direction.
 
@@ -384,13 +384,13 @@ Module:
 Call Toolbar
 
 Decision:
-The header toolbar is the single control surface for Answer, Hold, Mute, Transfer, Hang Up, Ready/Not Ready, Outbound Call, and toolbar settings.
+The header toolbar is the single persistent control surface for Answer, Hold, Mute, Transfer, Hang Up, and Outbound Call. Agent status transitions are owned by the profile menu: Not Ready can enter Ready, while Ready can enter AUX but cannot manually return to Not Ready.
 
 Reason:
-Customer service controls need to remain visible regardless of active workspace tab; the toolbar provides persistent status, timer, customer access identifier, and skill context.
+Customer service controls need to remain visible regardless of active workspace tab; the toolbar provides persistent timer, customer access identifier, and skill context. The customer requires a one-way post-sign-in status flow, so status transitions remain in the profile menu instead of a bidirectional toolbar toggle.
 
 Impact:
-New call actions should be added through the toolbar model instead of being hidden inside individual workspace cards.
+New call actions should be added through the toolbar model instead of being hidden inside individual workspace cards. Status-menu changes must preserve the one-way Ready to AUX flow.
 
 Status:
 Implemented
@@ -972,6 +972,7 @@ Impact:
 2026-07-10 14:53 update: the score field contract is renamed to `qmScore` / `QM Score`. Detail modals now share the same information architecture: Voice and Video use left media playback, middle transcript, and right CWU; DM uses conversation plus right CWU without a media column.
 2026-07-21 update: numeric QM Scores open a static third-party QM detail preview in the demo. The preview is a confirmed original reference image and intentionally has no simulated third-party controls; it uses the source image ratio without a BANK 1 modal title or duplicate close icon. Only the source image's top-right X closes the preview; future unified sign-in integration replaces it with the matching third-party detail page. Empty scores remain non-interactive.
 2026-07-23 update: Interaction Log adds `Call Type` after Media and as a query filter. `Customer`, `Transfer`, and `Conference` distinguish direct interactions from transferred and three-party records so leadership can inspect agent transfer frequency.
+2026-07-28 update: Interaction Log removes `End Reason` from the query and list, adds `Rating Score` (`1`-`5`) as a query/list field, and stacks Satisfaction below CWU in details. PSTN renders `-` because its periodic satisfaction outreach is not call-bound; BankApp, Webchat, and WhatsApp store score with optional feedback.
 Future Email or Social Media record work should be added as independent modules or explicitly designed parent/tab structures, not silently folded into the current Call Record Query table. Call Record Query should follow the confirmed media display label `DM` instead of exposing internal Text/TEXT wording. The list uses `Contact` for customer-side identifiers rather than `Counterparty`. The list includes `Queue` and `Service Time`; missing Queue values render as `-`. The detail modal does not add a CRM/customer-detail card in the current scope, keeps media playback or conversation content separated from read-only CWU, and uses a CWU panel with Ticket No., multi-select Business Type, and Summary description on the right. Voice details use a compact playback bar without waveform display. Video details use an OpenEye-style vertical replay with two video panes and a playback bar, without live-call buttons, labels, or icons.
 
 Status:

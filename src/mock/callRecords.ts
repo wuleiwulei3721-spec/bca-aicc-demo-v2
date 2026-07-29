@@ -1,4 +1,8 @@
-import type { CallRecord, CallRecordCallType } from '../types'
+import type {
+  CallRecord,
+  CallRecordCallType,
+  CallRecordRatingScore,
+} from '../types'
 
 function daysAgo(days: number, hour = 9, minute = 30) {
   const date = new Date()
@@ -31,18 +35,62 @@ function addSeconds(isoDate: string, seconds: number) {
   return new Date(Date.parse(isoDate) + seconds * 1000).toISOString()
 }
 
+const ratingFeedbackByScore: Record<CallRecordRatingScore, string> = {
+  1: 'The service did not resolve my issue.',
+  2: 'The response could be faster and clearer.',
+  3: 'The service was acceptable, but the process could be smoother.',
+  4: 'The agent explained the next steps clearly.',
+  5: 'Very helpful service and clear guidance.',
+}
+
+function createDefaultRating(
+  record: Pick<CallRecord, 'channel' | 'id'>,
+): Pick<CallRecord, 'ratingFeedback' | 'ratingScore'> {
+  if (record.channel === 'Phone') {
+    return {
+      ratingFeedback: null,
+      ratingScore: null,
+    }
+  }
+
+  const recordNumber = Number(record.id.split('-').pop())
+  const ratingScore = ([5, 4, 3, 2, 5] as const)[
+    (recordNumber - 1) % 5
+  ]
+
+  return {
+    ratingFeedback:
+      recordNumber % 4 === 0 ? null : ratingFeedbackByScore[ratingScore],
+    ratingScore,
+  }
+}
+
 function createRecord(
-  record: Omit<CallRecord, 'callType' | 'endedAt'> & {
+  record: Omit<
+    CallRecord,
+    'callType' | 'endedAt' | 'ratingFeedback' | 'ratingScore'
+  > & {
     callType?: CallRecordCallType
     endedAt?: string
+    ratingFeedback?: string | null
+    ratingScore?: CallRecordRatingScore | null
   },
 ): CallRecord {
   const endedAt = record.endedAt ?? addSeconds(record.startedAt, record.durationSeconds)
+  const defaultRating = createDefaultRating(record)
 
   return {
     ...record,
     callType: record.callType ?? 'Customer',
     endedAt,
+    ratingFeedback:
+      record.ratingFeedback === undefined
+        ? defaultRating.ratingFeedback
+        : record.ratingFeedback,
+    ratingScore:
+      record.ratingScore === undefined
+        ? defaultRating.ratingScore
+        : record.ratingScore,
   }
 }
 

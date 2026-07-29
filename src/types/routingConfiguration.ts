@@ -72,6 +72,7 @@ export interface ChannelMediaBusinessConfig {
   exceptionWorkTimePlanCode: string
   maxConcurrentAccess: number
   minScanIntervalSeconds: number
+  newCustomerAlertSound: string
   outsideServiceHoursMessage: string
   preTimeoutReminderMessage: string
   preTimeoutReminderMinutes: number

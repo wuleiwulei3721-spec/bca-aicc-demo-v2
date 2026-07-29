@@ -8,7 +8,7 @@ import type { FormEvent } from 'react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BaseButton } from '../components'
-import { useAuthStore } from '../store'
+import { useAuthStore, useCallManagementStore } from '../store'
 
 interface LoginFormState {
   extension: string
@@ -25,6 +25,7 @@ const initialFormState: LoginFormState = {
 export function LoginPage() {
   const navigate = useNavigate()
   const login = useAuthStore((state) => state.login)
+  const recordLoginLog = useCallManagementStore((state) => state.recordLoginLog)
   const [formState, setFormState] =
     useState<LoginFormState>(initialFormState)
   const [errorMessage, setErrorMessage] = useState('')
@@ -71,6 +72,14 @@ export function LoginPage() {
       }))
       return
     }
+
+    recordLoginLog({
+      employeeId: result.session.employeeId,
+      employeeName: result.session.displayName,
+      logoutType: null,
+      occurredAt: result.session.loginAt,
+      operation: 'Login',
+    })
 
     navigate('/', { replace: true })
   }

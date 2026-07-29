@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-07-24 13:57 +08:00
+Last updated: 2026-07-29 14:38 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -42,8 +42,9 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 
 ## P1 - Manual Verification Before Customer Demo
 
-- Verify `/` login, single-action Sign In, configured Status after Sign-in, Ready / Not Ready, AUX, Sign Out, and Log Out guards.
+- Verify `/` login, single-action Sign In, configured Status after Sign-in, profile-menu Ready transition, Pre-AUX cancellation, Pre-AUX profile display during ACW, ACW-to-pending-AUX transition, AUX, Sign Out, and Log Out guards.
 - Verify the profile menu state matrix: Unsigned shows Sign In / Settings; all Not Ready states show Ready, AUX reasons, and Sign Out; Ready shows AUX reasons only; Pre-AUX hides Sign Out; AUX restores Sign Out; the team line shows the formatted current status.
+- Verify Channels Business Config: DM and Non-DM can select and preview each of the five new-customer alert sounds; Voice and Video have no alert-sound field; a new matching interaction plays once only while the existing System prompt sound switch is enabled; unconfigured channels remain silent.
 - Verify default Not Ready sign-in creates no default Live Chat service; the first switch to Ready opens Live Chat and seeds its default demo sessions.
 - Verify Monitoring screenshot tabs:
   - default `/` Home tab shows `Home-Agent`,
@@ -147,7 +148,8 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Sensitive Word,
   - Busy Reason,
   - Abnormal End Reasons query, add, edit, disable, and delete, with two active DM defaults and no default Voice/Video reason,
-  - Interaction Log 30 mock records, default current-day Date Range paging, Call Type list/filter (`Customer` / `Transfer` / `Conference`), numeric QM Score third-party detail preview and non-interactive empty score, View-only Actions, Voice left media playback / middle transcript / right CWU detail, Video left replay / middle transcript / right CWU detail, DM conversation / right CWU detail, and read-only CWU detail.
+  - Interaction Log 30 mock records, default current-day Date Range paging, Call Type list/filter (`Customer` / `Transfer` / `Conference`), Rating Score list/filter (`1`-`5` and PSTN `-`), numeric QM Score third-party detail preview and non-interactive empty score, View-only Actions, Voice left media playback / middle transcript / right CWU plus Satisfaction detail, Video left replay / middle transcript / right CWU plus Satisfaction detail, DM conversation / right CWU plus Satisfaction detail, and read-only CWU detail,
+  - Login Log 19 seeded records across the default seven-day range, keyword, Time Range, Operation, Log Out Type filters, live Login / manual Log Out / idle Log Out records, and seeded System records.
 - Verify Routing Config:
   - Routing Config visible by default,
   - Channels Phone Accounts disabled,
@@ -185,7 +187,8 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Routing Config content review:
   - align channel names, business type names, skill queues, and routing examples with customer narration.
 - Routing Config Non-DM follow-up:
-  - define the future Business Config content for Non-DM social comments, replies, mentions, and app-store reviews.
+  - define Business Config content beyond the implemented new-customer alert sound for Non-DM social comments, replies, mentions, and app-store reviews.
+- Replace the five bundled demo alert tones with BCA-provided approved audio before customer final acceptance.
 
 ## P2 - Future Features
 

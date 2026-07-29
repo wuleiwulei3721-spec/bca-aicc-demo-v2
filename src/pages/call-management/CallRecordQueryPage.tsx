@@ -2,6 +2,7 @@ import {
   EyeOutlined,
   PauseCircleOutlined,
   PlayCircleOutlined,
+  StarFilled,
 } from '@ant-design/icons'
 import { DatePicker, Input, Select } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -22,8 +23,8 @@ import type {
   CallRecord,
   CallRecordCallType,
   CallRecordChannel,
-  CallRecordEndReason,
   CallRecordMediaType,
+  CallRecordRatingScore,
   ServiceEndedBy,
 } from '../../types'
 
@@ -42,9 +43,9 @@ interface CallRecordFilters {
   channel: 'All' | CallRecordChannel
   dateRange: CallRecordDateRange
   endedBy: 'All' | ServiceEndedBy
-  endReason: 'All' | CallRecordEndReason
   keyword: string
   mediaType: 'All' | CallRecordMediaType
+  ratingScore: 'All' | CallRecordRatingScore
 }
 
 const channelOptions: Array<{ label: string; value: CallRecordFilters['channel'] }> = [
@@ -85,22 +86,16 @@ const endedByOptions: Array<{
   { label: 'System', value: 'System' },
 ]
 
-const endReasonOptions: Array<{
+const ratingScoreOptions: Array<{
   label: string
-  value: CallRecordFilters['endReason']
+  value: CallRecordFilters['ratingScore']
 }> = [
-  { label: 'All Reasons', value: 'All' },
-  { label: 'Normal', value: 'Normal' },
-  { label: 'Hening & Tidak Ada Respons', value: 'Hening & Tidak Ada Respons' },
-  { label: 'Problem Teknis', value: 'Problem Teknis' },
-  {
-    label: 'Nasabah Tidak Ada Respons Lebih Lanjut',
-    value: 'Nasabah Tidak Ada Respons Lebih Lanjut',
-  },
-  { label: 'Customer Timeout', value: 'Customer Timeout' },
-  { label: 'Connection Lost', value: 'Connection Lost' },
-  { label: 'System Error', value: 'System Error' },
-  { label: 'Channel Gateway Error', value: 'Channel Gateway Error' },
+  { label: 'All Scores', value: 'All' },
+  { label: '1', value: 1 },
+  { label: '2', value: 2 },
+  { label: '3', value: 3 },
+  { label: '4', value: 4 },
+  { label: '5', value: 5 },
 ]
 
 function createDefaultFilters(): CallRecordFilters {
@@ -109,9 +104,9 @@ function createDefaultFilters(): CallRecordFilters {
     channel: 'All',
     dateRange: [dayjs().startOf('day'), dayjs().endOf('day')],
     endedBy: 'All',
-    endReason: 'All',
     keyword: '',
     mediaType: 'All',
+    ratingScore: 'All',
   }
 }
 
@@ -161,7 +156,8 @@ function createSearchText(record: CallRecord) {
     record.agentName,
     record.queueName,
     record.endedBy,
-    record.endReason,
+    record.ratingScore?.toString() ?? '',
+    record.ratingFeedback ?? '',
     record.summary.businessTypes.join(' '),
     record.summary.description,
     record.summary.ticketNo,
@@ -181,8 +177,8 @@ function recordMatchesFilters(record: CallRecord, filters: CallRecordFilters) {
     (filters.channel === 'All' || record.channel === filters.channel) &&
     (filters.mediaType === 'All' || record.mediaType === filters.mediaType) &&
     (filters.endedBy === 'All' || record.endedBy === filters.endedBy) &&
-    (filters.endReason === 'All' ||
-      record.endReason === filters.endReason) &&
+    (filters.ratingScore === 'All' ||
+      record.ratingScore === filters.ratingScore) &&
     (!rangeStart || startedAt.isSame(rangeStart, 'second') || startedAt.isAfter(rangeStart)) &&
     (!rangeEnd || startedAt.isSame(rangeEnd, 'second') || startedAt.isBefore(rangeEnd))
   )
@@ -512,10 +508,11 @@ export function CallRecordQueryPage() {
       width: 96,
     },
     {
-      dataIndex: 'endReason',
-      ellipsis: true,
-      title: 'End Reason',
-      width: 150,
+      align: 'center',
+      dataIndex: 'ratingScore',
+      render: (value: CallRecord['ratingScore']) => value ?? '-',
+      title: 'Rating Score',
+      width: 110,
     },
     {
       dataIndex: 'qmScore',
@@ -556,40 +553,76 @@ export function CallRecordQueryPage() {
   ]
 
   const renderCwuPanel = (record: CallRecord) => (
-    <section className="call-record-query__summary-panel">
-      <div className="call-record-query__column-title call-record-query__cwu-title">
-        CWU
-      </div>
-      <div className="call-record-query__summary-card call-record-query__cwu-card">
-        <div className="call-record-query__cwu-fields">
-          <div>
-            <span>Ticket No.</span>
-            <strong>{record.summary.ticketNo}</strong>
-          </div>
-          <div>
-            <span>Business Type</span>
-            <div className="call-record-query__business-tags">
-              {record.summary.businessTypes.length > 0 ? (
-                record.summary.businessTypes.map((businessType) => (
-                  <span
-                    className="call-record-query__business-tag"
-                    key={businessType}
-                  >
-                    {businessType}
-                  </span>
-                ))
-              ) : (
-                <strong>-</strong>
-              )}
+    <div className="call-record-query__summary-stack">
+      <section className="call-record-query__summary-panel call-record-query__summary-panel--cwu">
+        <div className="call-record-query__column-title call-record-query__cwu-title">
+          <span>Ticket</span>
+          <span className="call-record-query__cwu-ticket-no">
+            {record.summary.ticketNo}
+          </span>
+        </div>
+        <div className="call-record-query__summary-card call-record-query__cwu-card">
+          <div className="call-record-query__cwu-fields">
+            <div>
+              <span>Business Type</span>
+              <div className="call-record-query__business-tags">
+                {record.summary.businessTypes.length > 0 ? (
+                  record.summary.businessTypes.map((businessType) => (
+                    <span
+                      className="call-record-query__business-tag"
+                      key={businessType}
+                    >
+                      {businessType}
+                    </span>
+                  ))
+                ) : (
+                  <strong>-</strong>
+                )}
+              </div>
+            </div>
+            <div>
+              <span>Summary</span>
+              <p>{record.summary.description}</p>
             </div>
           </div>
+        </div>
+      </section>
+      <section className="call-record-query__summary-panel call-record-query__summary-panel--satisfaction">
+        <div className="call-record-query__column-title">
+          Satisfaction
+        </div>
+        <div className="call-record-query__satisfaction-fields">
           <div>
-            <span>Summary</span>
-            <p>{record.summary.description}</p>
+            <span>Rating Score</span>
+            {record.ratingScore === null ? (
+              <strong>-</strong>
+            ) : (
+              <div
+                aria-label={`${record.ratingScore} out of 5 stars`}
+                className="call-record-query__rating-score"
+                role="img"
+              >
+                {Array.from({ length: 5 }, (_, index) => (
+                  <StarFilled
+                    className={
+                      index < record.ratingScore
+                        ? 'call-record-query__rating-star--filled'
+                        : 'call-record-query__rating-star'
+                    }
+                    key={index}
+                  />
+                ))}
+                <strong>{record.ratingScore}</strong>
+              </div>
+            )}
+          </div>
+          <div>
+            <span>Feedback</span>
+            <p>{record.ratingFeedback ?? '-'}</p>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   )
   const detailModalWidth =
     selectedRecord?.mediaType === 'Voice'
@@ -616,7 +649,7 @@ export function CallRecordQueryPage() {
     <AdminPage
       className="call-record-query"
       title="Interaction Log"
-      description="Current agent view for Phone, BankApp Voice, BankApp Video, BankApp, Webchat, and WhatsApp interaction records."
+      description="Current agent view for Phone, BankApp, Webchat, and WhatsApp interaction records."
     >
       <BaseCard compact>
         <AdminToolbar
@@ -683,14 +716,14 @@ export function CallRecordQueryPage() {
                   }
                 />
               </AdminFilterField>
-              <AdminFilterField label="End Reason" width={190}>
+              <AdminFilterField label="Rating Score" width={170}>
                 <Select
-                  options={endReasonOptions}
-                  value={draftFilters.endReason}
+                  options={ratingScoreOptions}
+                  value={draftFilters.ratingScore}
                   onChange={(value) =>
                     setDraftFilters((currentFilters) => ({
                       ...currentFilters,
-                      endReason: value,
+                      ratingScore: value,
                     }))
                   }
                 />
@@ -726,7 +759,7 @@ export function CallRecordQueryPage() {
         <AdminTable<CallRecord>
           columns={columns}
           dataSource={filteredRecords}
-          horizontalScroll={1898}
+          horizontalScroll={1858}
           pagination={{}}
           rowKey="id"
         />

@@ -180,6 +180,7 @@ const textBusinessConfig: ChannelMediaBusinessConfig = {
   exceptionWorkTimePlanCode: '',
   maxConcurrentAccess: 50,
   minScanIntervalSeconds: 30,
+  newCustomerAlertSound: 'new-customer-alert-01.wav',
   outsideServiceHoursMessage: 'Sorry, we are currently outside service hours.',
   preTimeoutReminderMessage:
     'We have not received your reply. This conversation will close in {reminderMinutes} minute(s).',
@@ -205,6 +206,7 @@ const nonDmBusinessConfig: ChannelMediaBusinessConfig = {
   ...textBusinessConfig,
   accessSuccessWelcomeMessage:
     'Hello, BANK 1 social service assistant is ready to help you.',
+  newCustomerAlertSound: 'new-customer-alert-02.wav',
 }
 
 const buildBusinessConfig = (

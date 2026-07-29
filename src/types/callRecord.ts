@@ -6,6 +6,8 @@ export type CallRecordMediaType = 'Voice' | 'Video' | 'DM'
 
 export type CallRecordCallType = 'Customer' | 'Transfer' | 'Conference'
 
+export type CallRecordRatingScore = 1 | 2 | 3 | 4 | 5
+
 export type CallRecordEndReason =
   | 'Normal'
   | 'Hening & Tidak Ada Respons'
@@ -47,6 +49,8 @@ export interface CallRecord {
   mediaType: CallRecordMediaType
   qmScore: number | null
   queueName: string
+  ratingFeedback: string | null
+  ratingScore: CallRecordRatingScore | null
   recordNo: string
   startedAt: string
   summary: CallRecordSummary
