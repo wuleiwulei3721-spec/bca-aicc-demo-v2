@@ -18,6 +18,7 @@ import { useNow } from '../../hooks/useNow'
 
 type SocialMediaView = 'conversation' | 'post-detail'
 type SocialMediaWorkbenchTab = 'crm' | 'conversation'
+type SocialMediaThreadTab = 'comments' | 'mentions'
 type SocialMediaChannel =
   | 'facebook'
   | 'instagram'
@@ -76,6 +77,20 @@ interface SocialMediaItem {
   title: string
   type: SocialMediaType
   unread: number
+}
+
+interface SocialMediaThreadComment {
+  agentReply?: string
+  avatarSrc: string
+  channel: SocialMediaChannel
+  customer: string
+  date: string
+  embeddedPost?: boolean
+  id: string
+  isMention: boolean
+  media?: SocialMediaCommentMedia[]
+  showActions?: boolean
+  text: string
 }
 
 const REPLY_TIMEOUT_SECONDS = 5 * 60
@@ -523,6 +538,79 @@ function getReviewCopy(item: SocialMediaItem) {
   return `${item.preview}.`
 }
 
+function getThreadComments(item: SocialMediaItem): SocialMediaThreadComment[] {
+  const bankReply =
+    item.channel === 'instagram'
+      ? 'Bisa kak! Silahkan cek ongkir saat checkout ya.'
+      : 'Hi, we can help from here. Please share the reference number in the secure chat channel.'
+
+  return [
+    {
+      avatarSrc: item.avatarSrc,
+      channel: item.channel,
+      customer: item.customer,
+      date: '22Dec',
+      id: `${item.id}-primary-mention`,
+      isMention: true,
+      media: item.commentMedia,
+      showActions: true,
+      text: `${item.preview}.`,
+    },
+    {
+      avatarSrc: socialMediaAvatar('avatar-09.jpg'),
+      channel: 'facebook',
+      customer: 'Maya Larasati',
+      date: '22Dec',
+      id: `${item.id}-general-payment`,
+      isMention: false,
+      showActions: true,
+      text: 'I used the card promo yesterday and the discount still has not appeared in my statement.',
+    },
+    {
+      agentReply: bankReply,
+      avatarSrc: item.avatarSrc,
+      channel: item.channel,
+      customer: item.customer,
+      date: '22Dec',
+      id: `${item.id}-replied-mention`,
+      isMention: true,
+      showActions: false,
+      text: 'Bisa kirim ke Papua via udara?',
+    },
+    {
+      avatarSrc: socialMediaAvatar('avatar-10.jpg'),
+      channel: 'googleplay',
+      customer: 'Andi Pratama',
+      date: '22Dec',
+      id: `${item.id}-general-app`,
+      isMention: false,
+      showActions: true,
+      text: 'The app notification says my request is completed, but the status page still shows pending.',
+    },
+    {
+      avatarSrc: item.avatarSrc,
+      channel: item.channel,
+      customer: item.customer,
+      date: '22Dec',
+      embeddedPost: true,
+      id: `${item.id}-embedded-mention`,
+      isMention: true,
+      showActions: false,
+      text: 'Please check this original post thread too.',
+    },
+    {
+      avatarSrc: socialMediaAvatar('avatar-08.jpg'),
+      channel: 'linkedin',
+      customer: 'Budi Santoso',
+      date: '22Dec',
+      id: `${item.id}-general-limit`,
+      isMention: false,
+      showActions: true,
+      text: 'Can your team confirm whether this promo also applies to corporate card users?',
+    },
+  ]
+}
+
 function ReviewStars({ compact }: { compact?: boolean }) {
   return (
     <span
@@ -694,6 +782,21 @@ function SocialAvatar({ item }: { item: SocialMediaItem }) {
   )
 }
 
+function SocialCommentAvatar({
+  avatarSrc,
+  channel,
+}: {
+  avatarSrc: string
+  channel: SocialMediaChannel
+}) {
+  return (
+    <span className="social-media-page__avatar">
+      <img alt="" className="social-media-page__avatar-image" src={avatarSrc} />
+      <SocialChannelMark channel={channel} />
+    </span>
+  )
+}
+
 function SocialTypeChip({
   active,
   compact,
@@ -763,6 +866,8 @@ export function SocialMediaPage() {
   const [view, setView] = useState<SocialMediaView>('conversation')
   const [activeWorkbenchTab, setActiveWorkbenchTab] =
     useState<SocialMediaWorkbenchTab>('conversation')
+  const [activeThreadTab, setActiveThreadTab] =
+    useState<SocialMediaThreadTab>('comments')
   const [isCwuOpen, setIsCwuOpen] = useState(false)
   const [activeCwuWindowIndex, setActiveCwuWindowIndex] = useState(0)
   const [reviewDrafts, setReviewDrafts] = useState<Record<string, string>>({})
@@ -809,6 +914,11 @@ export function SocialMediaPage() {
     activeItem?.status === 'replied' ||
     Boolean(activeReviewReply) ||
     Boolean(activeChatReply)
+  const activeThreadComments = activeItem ? getThreadComments(activeItem) : []
+  const visibleThreadComments =
+    activeThreadTab === 'mentions'
+      ? activeThreadComments.filter((comment) => comment.isMention)
+      : activeThreadComments
 
   const openCwuWindow = () => {
     setActiveCwuWindowIndex(CWU_INITIAL_FORM_INDEX)
@@ -888,6 +998,7 @@ export function SocialMediaPage() {
               setSelectedChannels(allChannelKeys)
               setSelectedTypes(allTypeKeys)
               setView('conversation')
+              setActiveThreadTab('comments')
             }}
           >
             <RefreshGlyph />
@@ -1030,6 +1141,7 @@ export function SocialMediaPage() {
                     setActiveItemId(item.id)
                     setView('conversation')
                     setActiveWorkbenchTab('conversation')
+                    setActiveThreadTab('comments')
                   }}
                 >
                   <SocialAvatar item={item} />
@@ -1536,58 +1648,123 @@ export function SocialMediaPage() {
                   ) : (
                     <>
                       <div className="social-media-page__thread-tabs">
-                        <span className="social-media-page__thread-tab--active">
+                        <button
+                          aria-pressed={activeThreadTab === 'comments'}
+                          className={`social-media-page__thread-tab${
+                            activeThreadTab === 'comments'
+                              ? ' social-media-page__thread-tab--active'
+                              : ''
+                          }`}
+                          type="button"
+                          onClick={() => setActiveThreadTab('comments')}
+                        >
                           <CommentOutlined />
                           Comments
-                        </span>
-                        <span>@ Mentions</span>
-                        <BaseButton
-                          className="social-media-page__pin-button"
-                          icon={<MoreOutlined />}
-                          title="More"
-                        />
+                        </button>
+                        <button
+                          aria-pressed={activeThreadTab === 'mentions'}
+                          className={`social-media-page__thread-tab${
+                            activeThreadTab === 'mentions'
+                              ? ' social-media-page__thread-tab--active'
+                              : ''
+                          }`}
+                          type="button"
+                          onClick={() => setActiveThreadTab('mentions')}
+                        >
+                          <span aria-hidden="true">@</span>
+                          Mentions
+                        </button>
+                        {activeThreadTab === 'mentions' ? (
+                          <button
+                            className="social-media-page__pin-mention-button"
+                            type="button"
+                          >
+                            PIN THE MENTION
+                          </button>
+                        ) : (
+                          <BaseButton
+                            className="social-media-page__pin-button"
+                            icon={<MoreOutlined />}
+                            title="More"
+                          />
+                        )}
                       </div>
 
                       <div className="social-media-page__message-list">
-                        <div className="social-media-page__message-row">
-                          <SocialAvatar item={activeItem} />
-                          <div className="social-media-page__message-body">
-                            <strong>{activeItem.customer}</strong>
-                            <p>{activeItem.preview}.</p>
-                            <CommentMediaAttachments
-                              media={activeItem.commentMedia}
-                            />
-                            <span>22Dec / Reply / Mark as Handled</span>
-                          </div>
-                          <span className="social-media-page__message-time">
-                            {activeReplyProgress?.label}
-                          </span>
-                        </div>
+                        {visibleThreadComments.map((comment, index) => {
+                          const showProgress =
+                            index === 0 &&
+                            !comment.agentReply &&
+                            activeReplyProgress
 
-                        <div className="social-media-page__message-row social-media-page__message-row--reply">
-                          <span className="social-media-page__avatar social-media-page__avatar--agent">
-                            BK
-                          </span>
-                          <div className="social-media-page__message-body">
-                            <strong>BANK 1 (Budi Kartika)</strong>
-                            <p>
-                              Hi, we can help from here. Please share the
-                              reference number in the secure chat channel.
-                            </p>
-                            <span>2 hours ago</span>
-                          </div>
-                        </div>
-
-                        <div className="social-media-page__message-row">
-                          <SocialAvatar item={activeItem} />
-                          <div className="social-media-page__message-body">
-                            <strong>{activeItem.customer}</strong>
-                            <div className="social-media-page__embedded-post">
-                              <span>{activeItem.handle}</span>
-                              <p>{activeItem.post}</p>
+                          return (
+                            <div
+                              className={`social-media-page__message-row${
+                                comment.agentReply
+                                  ? ' social-media-page__message-row--replied'
+                                  : ''
+                              }`}
+                              key={comment.id}
+                            >
+                              <SocialCommentAvatar
+                                avatarSrc={comment.avatarSrc}
+                                channel={comment.channel}
+                              />
+                              <div className="social-media-page__message-body">
+                                <strong>{comment.customer}</strong>
+                                <p>
+                                  {comment.text}
+                                  {comment.isMention ? (
+                                    <span className="social-media-page__mention-inline">
+                                      @BANK 1 Support
+                                    </span>
+                                  ) : null}
+                                </p>
+                                <CommentMediaAttachments media={comment.media} />
+                                {comment.showActions ? (
+                                  <span>
+                                    {comment.date} / Reply / Mark as Handled
+                                  </span>
+                                ) : (
+                                  <span>{comment.date}</span>
+                                )}
+                                {comment.agentReply ? (
+                                  <div className="social-media-page__comment-agent-reply">
+                                    <strong>
+                                      Your Brand&nbsp; (Budi Kartika)
+                                    </strong>
+                                    <p>{comment.agentReply}</p>
+                                    <span>2 hours ago</span>
+                                  </div>
+                                ) : null}
+                                {comment.embeddedPost ? (
+                                  <div className="social-media-page__embedded-post">
+                                    <span>{activeItem.handle}</span>
+                                    <p>{activeItem.post}</p>
+                                  </div>
+                                ) : null}
+                              </div>
+                              {showProgress ? (
+                                <span className="social-media-page__message-time">
+                                  {activeReplyProgress.label}
+                                </span>
+                              ) : null}
+                              {comment.agentReply ? (
+                                <span className="social-media-page__message-replied-tag">
+                                  <MessageOutlined />
+                                  Replied by Budi Kartika
+                                </span>
+                              ) : null}
                             </div>
+                          )
+                        })}
+
+                        {visibleThreadComments.length === 0 ? (
+                          <div className="social-media-page__empty">
+                            <strong>No mentions</strong>
+                            <span>This post has no support mentions.</span>
                           </div>
-                        </div>
+                        ) : null}
                       </div>
                     </>
                   )}
