@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import {
   CheckCircleFilled,
   ClockCircleOutlined,
@@ -281,7 +281,7 @@ const socialMediaItems: SocialMediaItem[] = [
     initialReplySeconds: 59,
     post:
       'Up to 50% off on all summer essentials! Get yours before they run out. All cards and digital payment options are supported.',
-    postAvatarAlt: 'BANK 1 social page avatar',
+    postAvatarAlt: 'Credit card terminal post avatar',
     postAvatarSrc: socialMediaPostAvatar('bca-post-avatar.jpg'),
     preview: 'Need help with card activation',
     queue: 'Credit card activation',
@@ -309,8 +309,8 @@ const socialMediaItems: SocialMediaItem[] = [
     initialReplySeconds: 239,
     post:
       'Payment failed after checkout but the balance has already been deducted. Please help me confirm the transaction.',
-    postAvatarAlt: 'BANK 1 Facebook page avatar',
-    postAvatarSrc: socialMediaPostAvatar('bca-post-avatar.jpg'),
+    postAvatarAlt: 'Finance branch post avatar',
+    postAvatarSrc: socialMediaPostAvatar('bca-facebook-post-avatar.jpg'),
     preview: 'Payment dispute on FB comment',
     queue: 'Payment dispute',
     replies: 2,
@@ -400,8 +400,8 @@ const socialMediaItems: SocialMediaItem[] = [
     initialReplySeconds: 568,
     post:
       'The branch queue video was helpful. I want to know whether online appointment slots are available today.',
-    postAvatarAlt: 'BANK 1 TikTok page avatar',
-    postAvatarSrc: socialMediaPostAvatar('bca-post-avatar.jpg'),
+    postAvatarAlt: 'Coastal landscape post avatar',
+    postAvatarSrc: socialMediaPostAvatar('bca-tiktok-post-avatar.jpg'),
     preview: 'Branch appointment question',
     queue: 'Branch service',
     replies: 4,
@@ -437,7 +437,7 @@ const socialMediaItems: SocialMediaItem[] = [
     initialReplySeconds: 662,
     post:
       '@BCA can the agent check why my card limit request is still pending after two business days?',
-    postAvatarAlt: 'Customer post profile avatar',
+    postAvatarAlt: 'Financial chart post avatar',
     postAvatarSrc: socialMediaPostAvatar('customer-post-avatar.jpg'),
     preview: 'Customer post mentioned BCA',
     queue: 'Direct post mention',
@@ -474,7 +474,7 @@ const socialMediaItems: SocialMediaItem[] = [
     initialReplySeconds: 126,
     post:
       'Commented under Bank Deals Indonesia: @BCA QR payment setup still asks for verification twice after the update.',
-    postAvatarAlt: 'External post profile avatar',
+    postAvatarAlt: 'Payment terminal post avatar',
     postAvatarSrc: socialMediaPostAvatar('external-post-avatar.jpg'),
     preview: 'Third-party post comment mentioned BCA',
     queue: 'External post mention',
@@ -1033,6 +1033,29 @@ function PostAvatar({ item }: { item: SocialMediaItem }) {
     <span className="social-media-page__post-avatar">
       <img alt={item.postAvatarAlt ?? ''} src={item.postAvatarSrc} />
     </span>
+  )
+}
+
+function HighlightedMentionText({ text }: { text: string }) {
+  const segments = text.split(SOCIAL_MEDIA_MENTION_HANDLE)
+
+  if (segments.length === 1) {
+    return <>{text}</>
+  }
+
+  return (
+    <>
+      {segments.map((segment, index) => (
+        <Fragment key={`${segment}-${index}`}>
+          {index > 0 ? (
+            <span className="social-media-page__mention-highlight">
+              {SOCIAL_MEDIA_MENTION_HANDLE}
+            </span>
+          ) : null}
+          {segment}
+        </Fragment>
+      ))}
+    </>
   )
 }
 
@@ -1604,7 +1627,9 @@ export function SocialMediaPage() {
                     Original Post
                   </span>
                 </div>
-                <p>{activeItem.post}</p>
+                <p>
+                  <HighlightedMentionText text={activeItem.post} />
+                </p>
                 <div className="social-media-page__detail-stats">
                   <span>
                     <EyeOutlined />
@@ -1741,7 +1766,11 @@ export function SocialMediaPage() {
                             <ReviewStars compact />
                           ) : null}
                         </span>
-                        <p>{getPostCopy(activeItem)}</p>
+                        <p>
+                          <HighlightedMentionText
+                            text={getPostCopy(activeItem)}
+                          />
+                        </p>
                         {getSourceContextLabel(activeItem) ? (
                           <span className="social-media-page__source-context-chip">
                             {getSourceContextLabel(activeItem)}
@@ -1900,7 +1929,9 @@ export function SocialMediaPage() {
                                 <strong>{comment.customer}</strong>
                                 {comment.text ? (
                                   <p>
-                                    {comment.text}
+                                    <HighlightedMentionText
+                                      text={comment.text}
+                                    />
                                     {comment.isMention &&
                                     !comment.text.includes(
                                       SOCIAL_MEDIA_MENTION_HANDLE,
@@ -1956,7 +1987,11 @@ export function SocialMediaPage() {
                                 {comment.embeddedPost ? (
                                   <div className="social-media-page__embedded-post">
                                     <span>{activeItem.handle}</span>
-                                    <p>{activeItem.post}</p>
+                                    <p>
+                                      <HighlightedMentionText
+                                        text={activeItem.post}
+                                      />
+                                    </p>
                                   </div>
                                 ) : null}
                               </div>

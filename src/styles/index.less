@@ -18878,13 +18878,27 @@ button.inbound-list-row .inbound-list-row__title {
   font-size: 12px;
 }
 
-.social-media-page__mention-inline {
+.social-media-page__mention-inline,
+.social-media-page__mention-highlight {
   display: inline-flex;
-  margin-left: 4px;
+  height: 18px;
+  align-items: center;
+  padding: 0 5px;
+  border-radius: 5px;
+  background: rgba(23, 105, 224, 0.1);
   color: #1769e0 !important;
   font-size: 12px !important;
   font-weight: 750 !important;
   line-height: 18px !important;
+}
+
+.social-media-page__mention-inline {
+  margin-left: 4px;
+}
+
+.social-media-page__mention-highlight {
+  margin: 0 2px;
+  vertical-align: baseline;
 }
 
 .social-media-page__comment-agent-reply {
