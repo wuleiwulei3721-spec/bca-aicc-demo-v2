@@ -5055,6 +5055,38 @@ Historical entries are preserved in archive files without content rewrites. Use 
 
 - 黑名单仍为本地前端演示数据，刷新页面会重置。
 
+### 2026-07-29 22:15 +08:00 - Customer Production Release
+
+修改页面或文件：
+
+- Release commit `1dea72b` (`feat: update agent status and management demo`)
+- `DEV_LOG.md`
+
+修改原因：
+
+- 发布当前工作区的全部已验证改动到客户可见生产环境。
+
+修改结果：
+
+- 已将 release commit 推送至 `origin/main`。
+- 使用 `vercel --prod --yes --build-env VITE_APP_VISIBILITY_PROFILE=customer --build-env VITE_ENABLE_ADMIN_MENUS=true` 部署生产版本。
+- 生产 URL：`https://netinfo-aicc-demo-v2.vercel.app`
+- Vercel deployment URL：`https://netinfo-aicc-demo-v2-ovb2t4vhr-wl-demo-s-projects.vercel.app`
+
+验证：
+
+- `npm run lint`、`npm run build`、`git diff --check` 已通过；构建仅有既有 large chunk warning。
+- 生产 URL 返回 HTTP 200，页面标题为 `BANK 1 AICC Demo`。
+- 浏览器烟测通过：登录页正常加载；客户可见配置下侧栏仅显示 Channel Simulation、Monitoring、AI、Call Management 和 Routing Config，Employee Management 与 Design System 未暴露。
+
+回滚说明：
+
+- 在 Vercel 将生产别名回退到前一个成功部署，或重新部署此前的 Git commit `9645a8e`。
+
+当前风险点：
+
+- 仍保留既有 Vite large chunk warning；当前发布为前端 mock demo，不包含后端持久化或真实渠道集成。
+
 ### 2026-07-29 15:38 +08:00 - 黑名单必填字段与 Identifier 术语对齐
 
 修改页面或文件：
