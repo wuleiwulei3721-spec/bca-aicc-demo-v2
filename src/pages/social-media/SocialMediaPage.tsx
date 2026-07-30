@@ -1431,13 +1431,13 @@ export function SocialMediaPage() {
             Conversation
           </button>
           <BaseButton
-            aria-label="Create Social Media CWU"
+            aria-label="Create Social Media Ticket"
             className="social-media-page__cwu-button"
             icon={<SendOutlined />}
             variant="primary"
             onClick={openCwuWindow}
           >
-            CWU
+            Ticket
           </BaseButton>
           {activeItem?.type === 'chats' &&
           activeWorkbenchTab === 'conversation' ? (
@@ -1452,19 +1452,22 @@ export function SocialMediaPage() {
           ) : null}
           {isCwuOpen ? (
             <div
-              aria-label="CWU Registration"
+              aria-label="Ticket Registration"
               className={`social-media-page__cwu-popover social-media-page__cwu-popover--window-${
                 activeCwuWindowIndex + 1
               }`}
               role="dialog"
             >
+              <strong className="social-media-page__cwu-title-overlay">
+                Ticket Registration
+              </strong>
               <img
-                alt="CWU Registration floating window"
+                alt="Ticket Registration floating window"
                 className="social-media-page__cwu-popover-image"
                 src={activeCwuWindow}
               />
               <button
-                aria-label="Close CWU Registration"
+                aria-label="Close Ticket Registration"
                 className="social-media-page__cwu-hotspot social-media-page__cwu-hotspot--close"
                 type="button"
                 onClick={() => setIsCwuOpen(false)}
@@ -1472,7 +1475,7 @@ export function SocialMediaPage() {
               {activeCwuWindowIndex === CWU_INITIAL_FORM_INDEX ? (
                 <>
                   <button
-                    aria-label="Open CWU Business Type select"
+                    aria-label="Open Ticket Business Type select"
                     className="social-media-page__cwu-hotspot social-media-page__cwu-hotspot--select"
                     type="button"
                     onClick={() =>
@@ -1480,7 +1483,7 @@ export function SocialMediaPage() {
                     }
                   />
                   <button
-                    aria-label="Generate CWU summary"
+                    aria-label="Generate Ticket summary"
                     className="social-media-page__cwu-hotspot social-media-page__cwu-hotspot--generate-initial"
                     type="button"
                     onClick={() =>
@@ -1488,13 +1491,13 @@ export function SocialMediaPage() {
                     }
                   />
                   <button
-                    aria-label="Cancel CWU Registration"
+                    aria-label="Cancel Ticket Registration"
                     className="social-media-page__cwu-hotspot social-media-page__cwu-hotspot--cancel-initial"
                     type="button"
                     onClick={() => setIsCwuOpen(false)}
                   />
                   <button
-                    aria-label="Confirm CWU Registration"
+                    aria-label="Confirm Ticket Registration"
                     className="social-media-page__cwu-hotspot social-media-page__cwu-hotspot--confirm-initial"
                     type="button"
                     onClick={() => setIsCwuOpen(false)}
@@ -1504,7 +1507,7 @@ export function SocialMediaPage() {
               {activeCwuWindowIndex === CWU_GROUPED_DROPDOWN_INDEX ? (
                 <>
                   <button
-                    aria-label="Close CWU Business Type select"
+                    aria-label="Close Ticket Business Type select"
                     className="social-media-page__cwu-hotspot social-media-page__cwu-hotspot--select-open"
                     type="button"
                     onClick={() =>
@@ -1512,7 +1515,7 @@ export function SocialMediaPage() {
                     }
                   />
                   <button
-                    aria-label="Select CWU grouped business type"
+                    aria-label="Select Ticket grouped business type"
                     className="social-media-page__cwu-hotspot social-media-page__cwu-hotspot--grouped-options"
                     type="button"
                     onClick={() =>
@@ -1520,7 +1523,7 @@ export function SocialMediaPage() {
                     }
                   />
                   <button
-                    aria-label="Show CWU flat business type list"
+                    aria-label="Show Ticket flat business type list"
                     className="social-media-page__cwu-hotspot social-media-page__cwu-hotspot--category-list"
                     type="button"
                     onClick={() =>
@@ -1532,7 +1535,7 @@ export function SocialMediaPage() {
               {activeCwuWindowIndex === CWU_FLAT_DROPDOWN_INDEX ? (
                 <>
                   <button
-                    aria-label="Close CWU flat business type list"
+                    aria-label="Close Ticket flat business type list"
                     className="social-media-page__cwu-hotspot social-media-page__cwu-hotspot--select-open"
                     type="button"
                     onClick={() =>
@@ -1540,7 +1543,7 @@ export function SocialMediaPage() {
                     }
                   />
                   <button
-                    aria-label="Select CWU flat business type"
+                    aria-label="Select Ticket flat business type"
                     className="social-media-page__cwu-hotspot social-media-page__cwu-hotspot--flat-options"
                     type="button"
                     onClick={() =>
@@ -1552,7 +1555,7 @@ export function SocialMediaPage() {
               {activeCwuWindowIndex === CWU_SELECTED_FORM_INDEX ? (
                 <>
                   <button
-                    aria-label="Edit CWU selected business type"
+                    aria-label="Edit Ticket selected business type"
                     className="social-media-page__cwu-hotspot social-media-page__cwu-hotspot--business-options"
                     type="button"
                     onClick={() =>
@@ -1560,7 +1563,7 @@ export function SocialMediaPage() {
                     }
                   />
                   <button
-                    aria-label="Generate CWU selected summary"
+                    aria-label="Generate Ticket selected summary"
                     className="social-media-page__cwu-hotspot social-media-page__cwu-hotspot--generate-selected"
                     type="button"
                     onClick={() =>
@@ -1568,13 +1571,13 @@ export function SocialMediaPage() {
                     }
                   />
                   <button
-                    aria-label="Cancel CWU selected Registration"
+                    aria-label="Cancel Ticket selected Registration"
                     className="social-media-page__cwu-hotspot social-media-page__cwu-hotspot--cancel-selected"
                     type="button"
                     onClick={() => setIsCwuOpen(false)}
                   />
                   <button
-                    aria-label="Confirm CWU selected Registration"
+                    aria-label="Confirm Ticket selected Registration"
                     className="social-media-page__cwu-hotspot social-media-page__cwu-hotspot--confirm-selected"
                     type="button"
                     onClick={() => setIsCwuOpen(false)}
