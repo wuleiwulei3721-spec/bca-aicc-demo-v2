@@ -1152,11 +1152,14 @@ export function SocialMediaPage() {
   const activeItemHasThreadResolution = activeItem
     ? hasThreadResolutionForItem(activeItem)
     : false
-  const activeItemIsReplied =
+  const activeItemIsComplete =
     activeItem?.status === 'replied' ||
     Boolean(activeReviewReply) ||
     Boolean(activeChatReply) ||
     activeItemHasThreadResolution
+  const activeItemTimedProgress = activeItemIsComplete
+    ? null
+    : activeReplyProgress
 
   const openCwuWindow = () => {
     setActiveCwuWindowIndex(CWU_INITIAL_FORM_INDEX)
@@ -1698,10 +1701,12 @@ export function SocialMediaPage() {
                     <CommentOutlined />
                     {activeItem.replies} Replies
                   </span>
-                  <span>
-                    <ClockCircleOutlined />
-                    {activeReplyProgress?.label}
-                  </span>
+                  {activeItemTimedProgress ? (
+                    <span>
+                      <ClockCircleOutlined />
+                      {activeItemTimedProgress.label}
+                    </span>
+                  ) : null}
                 </div>
               </article>
 
@@ -1730,7 +1735,7 @@ export function SocialMediaPage() {
                           <SocialTypeChip active type={activeItem.type} />
                         </span>
                         <span>
-                          {activeItemIsReplied ? (
+                          {activeItemIsComplete ? (
                             <>
                               <CheckCircleFilled />
                               Replied
@@ -1870,9 +1875,11 @@ export function SocialMediaPage() {
                               <button type="button">Mark as Handled</button>
                             </div>
                           </div>
-                          <span className="social-media-page__message-time">
-                            {activeReplyProgress?.label}
-                          </span>
+                          {activeItemTimedProgress ? (
+                            <span className="social-media-page__message-time">
+                              {activeItemTimedProgress.label}
+                            </span>
+                          ) : null}
                         </div>
 
                         {activeReviewReply ? (
@@ -1982,12 +1989,12 @@ export function SocialMediaPage() {
                             index === 0 &&
                             !renderedAgentReply &&
                             !isHandled &&
-                            activeReplyProgress
+                            activeItemTimedProgress
 
                           return (
                             <div
                               className={`social-media-page__message-row${
-                                renderedAgentReply
+                                renderedAgentReply || isHandled
                                   ? ' social-media-page__message-row--replied'
                                   : ''
                               }`}
@@ -2040,7 +2047,9 @@ export function SocialMediaPage() {
                                   </div>
                                 ) : null}
                                 <CommentMediaAttachments media={comment.media} />
-                                {comment.showActions && !renderedAgentReply ? (
+                                {comment.showActions &&
+                                !renderedAgentReply &&
+                                !isHandled ? (
                                   <div className="social-media-page__message-actions">
                                     <span>{comment.date}</span>
                                     <button
@@ -2099,13 +2108,15 @@ export function SocialMediaPage() {
                               </div>
                               {showProgress ? (
                                 <span className="social-media-page__message-time">
-                                  {activeReplyProgress.label}
+                                  {activeItemTimedProgress.label}
                                 </span>
                               ) : null}
-                              {renderedAgentReply ? (
+                              {renderedAgentReply || isHandled ? (
                                 <span className="social-media-page__message-replied-tag">
                                   <MessageOutlined />
-                                  Replied by Budi Kartika
+                                  {renderedAgentReply
+                                    ? 'Replied by Budi Kartika'
+                                    : 'Handled by Budi Kartika'}
                                 </span>
                               ) : null}
                             </div>
