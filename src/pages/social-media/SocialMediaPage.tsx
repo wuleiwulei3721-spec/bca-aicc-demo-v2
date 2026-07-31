@@ -113,6 +113,8 @@ const DEFAULT_REVIEW_REPLY =
 const CHAT_DISPLAY_DATE = 'TODAY, 23 SEP 2025'
 const DEFAULT_CHAT_REPLY =
   'Thanks for the detailed feedback. We will share this with the product team and follow up once the update is reviewed.'
+const DEFAULT_THREAD_REPLY =
+  'Thanks for reaching out. We will continue the follow-up from here and keep the case updated.'
 const LONG_CHAT_MESSAGE =
   "Could you introduce a new feature that allows me to copy all the text highlighted and marked with a single click? After reading the entire book, I really want to copy all the highlighted content and collect it. The toolbar for highlighting annotations in the current version is really not as user-friendly as the old version (with black background and graphical symbols). The current options for selecting colors, deleting annotations, and copying are too awkward. I'm completely unaccustomed to the text-based toolbar. The icon-based toolbar in the old version was much better. Please change it back to the old version! I don't know if it's just my illusion, but the color of the highlighted annotations has become darker, which makes me feel uncomfortable compared to the old version. The visual effect of the highlighted border turning into an arc is not good at all. Please restore it to the original right angle. Really, really, it will affect my reading mood and efficiency. Why is the cross to exit reading set in the top right corner? I'm used to exiting from the top left corner and can't accept it at all. The page and progress display during reading are also extremely unaccustomed. Please, please change it back to the old version. The old version is much more comfortable! Please, please change it back to the old version. It really affects my reading mood!!"
 const SOCIAL_MEDIA_MENTION_HANDLE = '@BCA'
@@ -1078,6 +1080,16 @@ export function SocialMediaPage() {
   const [reviewReplies, setReviewReplies] = useState<Record<string, string>>({})
   const [chatDrafts, setChatDrafts] = useState<Record<string, string>>({})
   const [chatReplies, setChatReplies] = useState<Record<string, string>>({})
+  const [threadDrafts, setThreadDrafts] = useState<Record<string, string>>({})
+  const [threadReplies, setThreadReplies] = useState<Record<string, string>>(
+    {},
+  )
+  const [handledThreadCommentIds, setHandledThreadCommentIds] = useState<
+    string[]
+  >([])
+  const [activeThreadReplyId, setActiveThreadReplyId] = useState<string | null>(
+    null,
+  )
   const [pageStartedAt] = useState(() => Date.now())
   const now = useNow(true)
 
@@ -1114,15 +1126,37 @@ export function SocialMediaPage() {
   const activeReviewReply = activeItem ? reviewReplies[activeItem.id] : ''
   const activeChatDraft = activeItem ? (chatDrafts[activeItem.id] ?? '') : ''
   const activeChatReply = activeItem ? chatReplies[activeItem.id] : ''
-  const activeItemIsReplied =
-    activeItem?.status === 'replied' ||
-    Boolean(activeReviewReply) ||
-    Boolean(activeChatReply)
   const activeThreadComments = activeItem ? getThreadComments(activeItem) : []
   const visibleThreadComments =
     activeThreadTab === 'mentions'
       ? activeThreadComments.filter((comment) => comment.isMention)
       : activeThreadComments
+  const activeThreadReplyTarget = activeThreadReplyId
+    ? visibleThreadComments.find((comment) => comment.id === activeThreadReplyId)
+    : null
+  const activeThreadDraft = activeThreadReplyId
+    ? (threadDrafts[activeThreadReplyId] ?? '')
+    : ''
+  const hasThreadResolutionForItem = (item: SocialMediaItem) => {
+    const commentIdPrefix = `${item.id}-`
+
+    return (
+      Object.keys(threadReplies).some((commentId) =>
+        commentId.startsWith(commentIdPrefix),
+      ) ||
+      handledThreadCommentIds.some((commentId) =>
+        commentId.startsWith(commentIdPrefix),
+      )
+    )
+  }
+  const activeItemHasThreadResolution = activeItem
+    ? hasThreadResolutionForItem(activeItem)
+    : false
+  const activeItemIsReplied =
+    activeItem?.status === 'replied' ||
+    Boolean(activeReviewReply) ||
+    Boolean(activeChatReply) ||
+    activeItemHasThreadResolution
 
   const openCwuWindow = () => {
     setActiveCwuWindowIndex(CWU_INITIAL_FORM_INDEX)
@@ -1161,6 +1195,24 @@ export function SocialMediaPage() {
       ...current,
       [activeItem.id]: '',
     }))
+  }
+
+  const sendThreadReply = () => {
+    if (!activeItem || !activeThreadReplyId || !activeThreadReplyTarget) {
+      return
+    }
+
+    const replyText = activeThreadDraft.trim() || DEFAULT_THREAD_REPLY
+
+    setThreadReplies((current) => ({
+      ...current,
+      [activeThreadReplyId]: replyText,
+    }))
+    setThreadDrafts((current) => ({
+      ...current,
+      [activeThreadReplyId]: '',
+    }))
+    setActiveThreadReplyId(null)
   }
 
   const areAllChannelsSelected =
@@ -1203,6 +1255,7 @@ export function SocialMediaPage() {
               setSelectedTypes(allTypeKeys)
               setView('conversation')
               setActiveThreadTab('comments')
+              setActiveThreadReplyId(null)
             }}
           >
             <RefreshGlyph />
@@ -1325,9 +1378,11 @@ export function SocialMediaPage() {
               const replyProgress = getReplyProgress(item, now, pageStartedAt)
               const isChatReplySent =
                 item.type === 'chats' && Boolean(chatReplies[item.id])
+              const isThreadResolved = hasThreadResolutionForItem(item)
               const isReplySent =
                 (item.type === 'reviews' && Boolean(reviewReplies[item.id])) ||
-                isChatReplySent
+                isChatReplySent ||
+                isThreadResolved
 
               return (
                 <button
@@ -1336,7 +1391,7 @@ export function SocialMediaPage() {
                   className={`social-media-page__queue-card${
                     isActive ? ' social-media-page__queue-card--selected' : ''
                   }${
-                    isChatReplySent
+                    isReplySent
                       ? ' social-media-page__queue-card--chat-replied'
                       : ''
                   } social-media-page__queue-card--${replyProgress.tone}`}
@@ -1346,6 +1401,7 @@ export function SocialMediaPage() {
                     setView('conversation')
                     setActiveWorkbenchTab('conversation')
                     setActiveThreadTab('comments')
+                    setActiveThreadReplyId(null)
                   }}
                 >
                   <SocialAvatar item={item} />
@@ -1354,7 +1410,7 @@ export function SocialMediaPage() {
                       <strong>{item.customer}</strong>
                       <span className="social-media-page__queue-badges">
                         <SocialQueueTypeIcon type={item.type} />
-                        {isChatReplySent ? null : (
+                        {isReplySent ? null : (
                           <span
                             className={`social-media-page__queue-time social-media-page__queue-time--${replyProgress.tone}`}
                           >
@@ -1367,7 +1423,7 @@ export function SocialMediaPage() {
                       {item.preview} ...
                     </span>
                   </span>
-                  {item.unread > 0 && !isChatReplySent ? (
+                  {item.unread > 0 && !isReplySent ? (
                     <em className="social-media-page__queue-unread">
                       {item.unread}
                     </em>
@@ -1874,7 +1930,10 @@ export function SocialMediaPage() {
                               : ''
                           }`}
                           type="button"
-                          onClick={() => setActiveThreadTab('comments')}
+                          onClick={() => {
+                            setActiveThreadTab('comments')
+                            setActiveThreadReplyId(null)
+                          }}
                         >
                           <CommentOutlined />
                           Comments
@@ -1887,7 +1946,10 @@ export function SocialMediaPage() {
                               : ''
                           }`}
                           type="button"
-                          onClick={() => setActiveThreadTab('mentions')}
+                          onClick={() => {
+                            setActiveThreadTab('mentions')
+                            setActiveThreadReplyId(null)
+                          }}
                         >
                           <span aria-hidden="true">@</span>
                           Mentions
@@ -1910,15 +1972,22 @@ export function SocialMediaPage() {
 
                       <div className="social-media-page__message-list">
                         {visibleThreadComments.map((comment, index) => {
+                          const sentThreadReply = threadReplies[comment.id]
+                          const renderedAgentReply =
+                            comment.agentReply ?? sentThreadReply
+                          const isHandled = handledThreadCommentIds.includes(
+                            comment.id,
+                          )
                           const showProgress =
                             index === 0 &&
-                            !comment.agentReply &&
+                            !renderedAgentReply &&
+                            !isHandled &&
                             activeReplyProgress
 
                           return (
                             <div
                               className={`social-media-page__message-row${
-                                comment.agentReply
+                                renderedAgentReply
                                   ? ' social-media-page__message-row--replied'
                                   : ''
                               }`}
@@ -1971,20 +2040,50 @@ export function SocialMediaPage() {
                                   </div>
                                 ) : null}
                                 <CommentMediaAttachments media={comment.media} />
-                                {comment.showActions ? (
-                                  <span>
-                                    {comment.date} / Reply / Mark as Handled
-                                  </span>
+                                {comment.showActions && !renderedAgentReply ? (
+                                  <div className="social-media-page__message-actions">
+                                    <span>{comment.date}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setActiveThreadReplyId(comment.id)
+                                      }
+                                    >
+                                      <CommentOutlined />
+                                      Reply
+                                    </button>
+                                    <button
+                                      className={
+                                        isHandled
+                                          ? 'social-media-page__message-action--handled'
+                                          : ''
+                                      }
+                                      type="button"
+                                      onClick={() =>
+                                        setHandledThreadCommentIds(
+                                          (current) =>
+                                            current.includes(comment.id)
+                                              ? current
+                                              : [...current, comment.id],
+                                        )
+                                      }
+                                    >
+                                      <CheckCircleFilled />
+                                      {isHandled ? 'Handled' : 'Mark as Handled'}
+                                    </button>
+                                  </div>
                                 ) : (
                                   <span>{comment.date}</span>
                                 )}
-                                {comment.agentReply ? (
+                                {renderedAgentReply ? (
                                   <div className="social-media-page__comment-agent-reply">
                                     <strong>
                                       Your Brand&nbsp; (Budi Kartika)
                                     </strong>
-                                    <p>{comment.agentReply}</p>
-                                    <span>2 hours ago</span>
+                                    <p>{renderedAgentReply}</p>
+                                    <span>
+                                      {comment.agentReply ? '2 hours ago' : 'Just now'}
+                                    </span>
                                   </div>
                                 ) : null}
                                 {comment.embeddedPost ? (
@@ -2003,7 +2102,7 @@ export function SocialMediaPage() {
                                   {activeReplyProgress.label}
                                 </span>
                               ) : null}
-                              {comment.agentReply ? (
+                              {renderedAgentReply ? (
                                 <span className="social-media-page__message-replied-tag">
                                   <MessageOutlined />
                                   Replied by Budi Kartika
@@ -2020,6 +2119,41 @@ export function SocialMediaPage() {
                           </div>
                         ) : null}
                       </div>
+
+                      {activeThreadReplyTarget ? (
+                        <div
+                          aria-label={`Reply to ${activeThreadReplyTarget.customer}`}
+                          className="social-media-page__thread-composer"
+                          role="dialog"
+                        >
+                          <textarea
+                            aria-label="Reply to social media comment"
+                            placeholder="Send message"
+                            value={activeThreadDraft}
+                            onChange={(event) => {
+                              setThreadDrafts((current) => ({
+                                ...current,
+                                [activeThreadReplyTarget.id]:
+                                  event.target.value,
+                              }))
+                            }}
+                          />
+                          <div className="social-media-page__thread-composer-toolbar">
+                            <span className="social-media-page__thread-composer-tools">
+                              <SmileOutlined />
+                              <PaperClipOutlined />
+                              <ClockCircleOutlined />
+                            </span>
+                            <BaseButton
+                              icon={<SendOutlined />}
+                              variant="primary"
+                              onClick={sendThreadReply}
+                            >
+                              Send
+                            </BaseButton>
+                          </div>
+                        </div>
+                      ) : null}
                     </>
                   )}
                 </>
