@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-08-01 16:45 +08:00
+最后更新：2026-08-03 10:28 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,32 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-08-03 10:28 +08:00 - Customer Production Release
+
+修改页面或文件：
+
+- Vercel production deployment for commit `07adbc6`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 发布已提交并推送至 `main` 的客户演示更新。
+
+修改结果：
+
+- 生产地址：https://netinfo-aicc-demo-v2.vercel.app
+- 部署命令：`vercel deploy --prod --yes --build-env VITE_APP_VISIBILITY_PROFILE=customer`
+- 使用客户可见构建配置 `VITE_APP_VISIBILITY_PROFILE=customer`，本地维护模块保持隐藏。
+- 发布前 `npm run lint`、`npm run build` 与 `git diff --check` 均通过；构建仅保留既有的大包体告警。
+
+回滚说明：
+
+- 在 Vercel 项目中回滚至前一个生产部署，或使用 `vercel rollback` 指向上一生产版本。
+
+当前风险点：
+
+- 当前项目仍为前端 mock 演示，刷新会重置大部分内存状态；构建仍存在既有的大包体告警。
 
 ### 2026-08-01 16:45 +08:00 - HaloApp PIN 失败原因提示
 
