@@ -4,7 +4,7 @@ interface PriorityListSeed {
   channels: string[]
   createdBy: string
   identifiers: string[]
-  remark: string
+  reason: string
 }
 
 const priorityListSeeds: PriorityListSeed[] = [
@@ -12,25 +12,25 @@ const priorityListSeeds: PriorityListSeed[] = [
     channels: ['Bankapp'],
     createdBy: 'Admin',
     identifiers: ['BANKID00045678'],
-    remark: 'BankApp customer identifier for priority queue.',
+    reason: 'BankApp customer identifier for priority queue.',
   },
   {
     channels: ['Phone'],
     createdBy: 'Admin',
     identifiers: ['08129876543', '08123456789', '08122222222'],
-    remark: 'Phone priority customer batch.',
+    reason: 'Phone priority customer batch.',
   },
   {
     channels: ['Instagram', 'X', 'Tik Tok', 'YouTube', 'Facebook'],
     createdBy: 'Supervisor',
     identifiers: ['Bank', 'Bank_1', 'Bank_2', 'Bank_3'],
-    remark: 'Social media account priority batch.',
+    reason: 'Social media account priority batch.',
   },
   {
     channels: ['Webchat', 'Email Contact', 'Email Priority'],
     createdBy: 'Supervisor',
     identifiers: ['123@gmail.com', '@ojk.co.id', '@bi.go.id'],
-    remark: 'Email and webchat priority batch.',
+    reason: 'Email and webchat priority batch.',
   },
 ]
 
@@ -53,7 +53,7 @@ export const defaultPriorityListEntries: PriorityListEntry[] =
           createdBy: seed.createdBy,
           identifier,
           matchRule: getSeedMatchRule(identifier),
-          remark: seed.remark,
+          reason: seed.reason,
         })),
       ),
     )

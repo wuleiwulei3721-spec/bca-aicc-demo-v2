@@ -102,6 +102,7 @@ type CallHandoffNoticeReason = Exclude<
 
 interface AgentStatusUpdateOptions {
   bypassPreAux?: boolean
+  preserveAfterCallWork?: boolean
   seedDefaultLiveChat?: boolean
 }
 
@@ -412,6 +413,8 @@ export function BasicLayout() {
   const [toolbarDisplayMode] = useState<'icon' | 'text'>('text')
   const [isInternalChatOpen, setIsInternalChatOpen] = useState(false)
   const [systemSoundEnabled, setSystemSoundEnabled] = useState(false)
+  const [isInitialReadyToggleLocked, setIsInitialReadyToggleLocked] =
+    useState(false)
   const [isAfterCallWork, setIsAfterCallWork] = useState(false)
   const [afterCallWorkDurationSeconds, setAfterCallWorkDurationSeconds] =
     useState(0)
@@ -517,7 +520,9 @@ export function BasicLayout() {
         : status
 
     setAgentStatus(nextStatus)
-    setStatusStartedAt(Date.now())
+    if (!options.preserveAfterCallWork) {
+      setStatusStartedAt(Date.now())
+    }
     if (nextStatus === 'Ready') {
       setLiveChatTabOpen(true, {
         seedDefaultCurrentSessions: options.seedDefaultLiveChat === true,
@@ -527,6 +532,7 @@ export function BasicLayout() {
     }
 
     if (nextStatus === 'Unsigned') {
+      setIsInitialReadyToggleLocked(false)
       clearAgentServiceMode()
       setCallStatus('Idle')
       setCallStatusStartedAt(Date.now())
@@ -549,7 +555,9 @@ export function BasicLayout() {
     }
 
     if (isPreAuxStatus(nextStatus)) {
-      setIsAfterCallWork(false)
+      if (!options.preserveAfterCallWork) {
+        setIsAfterCallWork(false)
+      }
       hideCallHandoffNotice()
       return
     }
@@ -598,6 +606,7 @@ export function BasicLayout() {
           ? 'Ready'
           : 'Not Ready'
       setAgentServiceMode('voice-digital')
+      setIsInitialReadyToggleLocked(initialStatus === 'Not Ready')
       updateAgentStatus(initialStatus, {
         seedDefaultLiveChat: initialStatus === 'Ready',
       })
@@ -656,7 +665,12 @@ export function BasicLayout() {
 
   const handleProfileStatusChange = useCallback(
     (nextStatus: AgentStatus) => {
-      if (
+      const isSelectingAuxDuringAfterCallWork =
+        isAfterCallWork && isAuxStatus(nextStatus)
+
+      if (isSelectingAuxDuringAfterCallWork) {
+        setAfterCallWorkAuxReason(getAuxReason(nextStatus))
+      } else if (
         nextStatus === 'Ready' ||
         nextStatus === 'Unsigned' ||
         isAuxStatus(nextStatus)
@@ -665,12 +679,25 @@ export function BasicLayout() {
       }
 
       updateAgentStatus(nextStatus, {
+        preserveAfterCallWork: isSelectingAuxDuringAfterCallWork,
         seedDefaultLiveChat:
           agentStatus === 'Not Ready' && nextStatus === 'Ready',
       })
     },
-    [agentStatus, updateAgentStatus],
+    [agentStatus, isAfterCallWork, updateAgentStatus],
   )
+
+  const handleReadyToggle = useCallback(() => {
+    if (agentStatus === 'Ready' && isInitialReadyToggleLocked) {
+      return
+    }
+
+    const nextStatus = agentStatus === 'Ready' ? 'Not Ready' : 'Ready'
+    updateAgentStatus(nextStatus, {
+      seedDefaultLiveChat:
+        agentStatus === 'Not Ready' && nextStatus === 'Ready',
+    })
+  }, [agentStatus, isInitialReadyToggleLocked, updateAgentStatus])
 
   const showActiveServiceExitWarning = useCallback(() => {
     Modal.warning({
@@ -894,7 +921,10 @@ export function BasicLayout() {
       )
       setIsAfterCallWork(false)
       setAfterCallWorkAuxReason(null)
-    }, afterCallWorkDurationSeconds * 1000)
+    }, Math.max(
+      0,
+      afterCallWorkDurationSeconds * 1000 - (Date.now() - statusStartedAt),
+    ))
 
     return () => window.clearTimeout(timer)
   }, [
@@ -902,6 +932,7 @@ export function BasicLayout() {
     afterCallWorkAuxReason,
     agentStatus,
     isAfterCallWork,
+    statusStartedAt,
     updateAgentStatus,
   ])
 
@@ -918,6 +949,7 @@ export function BasicLayout() {
       }
 
       hideCallHandoffNotice()
+      setIsInitialReadyToggleLocked(false)
       setCallTiming(initialCallTiming)
       setActiveCallChannel('voice')
       setIsAfterCallWork(false)
@@ -955,6 +987,7 @@ export function BasicLayout() {
       }
 
       hideCallHandoffNotice()
+      setIsInitialReadyToggleLocked(false)
       setCallTiming(initialCallTiming)
       setActiveCallChannel('video')
       setIsAfterCallWork(false)
@@ -1436,6 +1469,7 @@ export function BasicLayout() {
         </div>
         {isSignedIn && (
           <AgentToolbar
+            agentStatus={agentStatus}
             callAgentScope={callAgentScope}
             requiresOutboundApproval={authSession?.role === 'agent'}
             canTransferToNumber={canTransferToNumber}
@@ -1448,9 +1482,13 @@ export function BasicLayout() {
             timerStartedAt={timerState.startedAt}
             toolbarDisplayMode={toolbarDisplayMode}
             sessionEndReasons={activeCallSessionEndReasons}
+            readyToggleDisabled={
+              agentStatus === 'Ready' && isInitialReadyToggleLocked
+            }
             onAnswer={handleAnswer}
             onHangUp={handleHangUp}
             onHoldToggle={handleHoldToggle}
+            onReadyToggle={handleReadyToggle}
             onTransferNotice={showTransferNotice}
           />
         )}

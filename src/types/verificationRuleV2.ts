@@ -25,6 +25,11 @@ export type VerificationV2CustomerSegment =
 
 export type VerificationV2RuleStatus = 'disabled' | 'enabled'
 
+export type VerificationV2HaloAppLoginStatus =
+  | 'all'
+  | 'guest'
+  | 'registered'
+
 export type VerificationV2OrganizationSegment = 'none' | 'o1-o3' | 'o4-o5'
 
 export type VerificationV2SpecialScenarioMode = 'append' | 'replace'
@@ -88,6 +93,7 @@ export interface VerificationV2Rule {
     VerificationV2QuestionGroupConfig
   >
   id: string
+  haloAppLoginStatus?: VerificationV2HaloAppLoginStatus
   maxWrongAttempts: number | null
   scenarios?: VerificationV2Scenario[]
   skillQueueCode: string
@@ -109,6 +115,7 @@ export interface VerificationV2RuleMatch {
 export interface VerificationV2DemoConditions {
   channelCode: string
   customerSegment: VerificationV2CustomerSegment
+  haloAppLoginStatus?: VerificationV2HaloAppLoginStatus
   organizationSegment: VerificationV2OrganizationSegment
   scenarioId: string
   skillQueueCode: string

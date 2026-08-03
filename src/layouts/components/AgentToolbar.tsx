@@ -13,6 +13,7 @@ import type { MenuProps } from 'antd'
 import { useEffect, useState } from 'react'
 import { BaseModal, PhoneIcon, ToolbarButton } from '../../components'
 import type {
+  AgentStatus,
   CallStatus,
   SessionEndReasonEntry,
   CommonNumberEntry,
@@ -46,6 +47,7 @@ interface CallIdentification {
 }
 
 interface AgentToolbarProps {
+  agentStatus: AgentStatus
   baseElapsedSeconds: number | null
   callAgentScope?: 'all' | 'leaders-only'
   callIdentification?: CallIdentification | null
@@ -55,16 +57,19 @@ interface AgentToolbarProps {
   canTransferToNumber?: boolean
   requiresOutboundApproval?: boolean
   sessionEndReasons?: SessionEndReasonEntry[]
+  readyToggleDisabled?: boolean
   timerLabel: string
   timerStartedAt: number
   toolbarDisplayMode: ToolbarDisplayMode
   onAnswer: () => void
   onHangUp: (endReasonName?: string) => void
   onHoldToggle: () => void
+  onReadyToggle: () => void
   onTransferNotice: (notice: TransferNotice) => void
 }
 
 export function AgentToolbar({
+  agentStatus,
   baseElapsedSeconds,
   callAgentScope = 'all',
   callIdentification,
@@ -74,12 +79,14 @@ export function AgentToolbar({
   canTransferToNumber = false,
   requiresOutboundApproval = true,
   sessionEndReasons = [],
+  readyToggleDisabled = false,
   timerLabel,
   timerStartedAt,
   toolbarDisplayMode,
   onAnswer,
   onHangUp,
   onHoldToggle,
+  onReadyToggle,
   onTransferNotice,
 }: AgentToolbarProps) {
   const [now, setNow] = useState(() => Date.now())
@@ -147,6 +154,8 @@ export function AgentToolbar({
 
   const isIncoming = callStatus === 'Incoming'
   const isInCall = callStatus === 'Talking' || callStatus === 'Hold'
+  const isReady = agentStatus === 'Ready'
+  const readyLabel = isReady ? 'Ready' : 'Not Ready'
   const showButtonText = toolbarDisplayMode === 'text'
   const elapsedSeconds = Math.max(
     0,
@@ -371,6 +380,19 @@ export function AgentToolbar({
             )}
           </>
         )}
+
+        <ToolbarButton
+          aria-label={readyLabel}
+          aria-pressed={isReady}
+          disabled={readyToggleDisabled}
+          icon={isReady ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
+          selected={isReady}
+          title={readyLabel}
+          tone={isReady ? 'ready' : 'default'}
+          onClick={onReadyToggle}
+        >
+          {showButtonText ? readyLabel : undefined}
+        </ToolbarButton>
 
         <div className="aicc-agent-toolbar__timer">
           <span>{timerLabel}</span>

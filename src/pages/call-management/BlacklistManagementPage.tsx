@@ -1,5 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons'
-import { Alert, Input, InputNumber, Select } from 'antd'
+import { Alert, Input, InputNumber, Select, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useMemo, useState } from 'react'
 import {
@@ -22,35 +22,44 @@ import type {
   BlacklistChannel,
   BlacklistEntry,
   BlacklistRestrictionPolicy,
+  BlacklistStatus,
 } from '../../types'
 
 type BlacklistModalMode = 'batch' | null
 
 interface BlacklistFilters {
   channel: '' | BlacklistChannel
-  restrictedNumber: string
+  identifier: string
   restrictionPolicy: '' | BlacklistRestrictionPolicy
+  status: '' | BlacklistStatus
 }
 
 interface BlacklistDraft {
   channels: BlacklistChannel[]
-  remark: string
-  restrictedNumbers: string
+  countryCode: string
+  identifiers: string
+  phoneNumbers: string
+  reason: string
   restrictionPolicy: BlacklistRestrictionPolicy
+  status: BlacklistStatus
   validityDays: number | null
 }
 
 const defaultFilters: BlacklistFilters = {
   channel: '',
-  restrictedNumber: '',
+  identifier: '',
   restrictionPolicy: '',
+  status: '',
 }
 
 const defaultDraft: BlacklistDraft = {
   channels: [],
-  remark: '',
-  restrictedNumbers: '',
+  countryCode: '062',
+  identifiers: '',
+  phoneNumbers: '',
+  reason: '',
   restrictionPolicy: 'block-transfer-to-agent',
+  status: 'Active',
   validityDays: null,
 }
 
@@ -77,6 +86,15 @@ const formRestrictionPolicyOptions = Object.entries(restrictionPolicyLabels).map
   }),
 )
 
+const blacklistStatusOptions: Array<{
+  label: string
+  value: '' | BlacklistStatus
+}> = [
+  { label: 'All', value: '' },
+  { label: 'Enabled', value: 'Active' },
+  { label: 'Disabled', value: 'Disabled' },
+]
+
 function formatSavedTime(date: Date) {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -87,11 +105,15 @@ function formatSavedTime(date: Date) {
   return `${year}-${month}-${day} ${hour}:${minute}`
 }
 
-function parseRestrictedNumbers(value: string) {
+function parseIdentifiers(value: string) {
   return value
     .split(';')
     .map((item) => item.trim())
     .filter(Boolean)
+}
+
+function getIdentifierDisplay(entry: BlacklistEntry) {
+  return entry.identifier
 }
 
 function getNextSequence(entries: BlacklistEntry[]) {
@@ -113,6 +135,9 @@ export function BlacklistManagementPage() {
   const deleteBlacklistEntries = useCallManagementStore(
     (state) => state.deleteBlacklistEntries,
   )
+  const updateBlacklistEntryStatus = useCallManagementStore(
+    (state) => state.updateBlacklistEntryStatus,
+  )
   const routingChannels = useRoutingConfigStore((state) => state.channels)
   const [appliedFilters, setAppliedFilters] =
     useState<BlacklistFilters>(defaultFilters)
@@ -126,6 +151,7 @@ export function BlacklistManagementPage() {
   const [submitAttempted, setSubmitAttempted] = useState(false)
 
   const selectedCount = selectedEntryIds.length
+  const isPhoneMode = draft.channels.includes('Phone')
   const enabledChannelOptions = useMemo(() => {
     const channelNames = new Set<string>()
 
@@ -150,33 +176,48 @@ export function BlacklistManagementPage() {
     [enabledChannelOptions],
   )
   const channelFormOptions = useMemo(
-    () => enabledChannelOptions,
-    [enabledChannelOptions],
+    () =>
+      enabledChannelOptions.map((option) => ({
+        ...option,
+        disabled:
+          option.value === 'Phone'
+            ? draft.channels.length > 0 && !isPhoneMode
+            : isPhoneMode,
+      })),
+    [draft.channels.length, enabledChannelOptions, isPhoneMode],
   )
   const filteredEntries = useMemo(
     () =>
       blacklistEntries.filter((entry) => {
-        const numberKeyword = appliedFilters.restrictedNumber
+        const identifierKeyword = appliedFilters.identifier
           .trim()
           .toLowerCase()
         const channelMatched = appliedFilters.channel
           ? entry.channel === appliedFilters.channel
           : true
-        const numberMatched = numberKeyword
-          ? entry.restrictedNumber.toLowerCase().includes(numberKeyword)
+        const identifierMatched = identifierKeyword
+          ? getIdentifierDisplay(entry).toLowerCase().includes(identifierKeyword)
           : true
         const policyMatched = appliedFilters.restrictionPolicy
           ? entry.restrictionPolicy === appliedFilters.restrictionPolicy
           : true
+        const statusMatched = appliedFilters.status
+          ? entry.status === appliedFilters.status
+          : true
 
-        return channelMatched && numberMatched && policyMatched
+        return (
+          channelMatched &&
+          identifierMatched &&
+          policyMatched &&
+          statusMatched
+        )
       }),
     [appliedFilters, blacklistEntries],
   )
 
-  const parsedNumbers = useMemo(
-    () => parseRestrictedNumbers(draft.restrictedNumbers),
-    [draft.restrictedNumbers],
+  const parsedIdentifiers = useMemo(
+    () => parseIdentifiers(isPhoneMode ? draft.phoneNumbers : draft.identifiers),
+    [draft.identifiers, draft.phoneNumbers, isPhoneMode],
   )
 
   const validationErrors = useMemo(() => {
@@ -192,18 +233,38 @@ export function BlacklistManagementPage() {
       )
     }
 
-    if (!draft.restrictedNumbers.trim()) {
-      errors.push('Identifier is required.')
-    } else if (parsedNumbers.length === 0) {
-      errors.push('At least one identifier is required.')
+    if (isPhoneMode && !draft.countryCode.trim()) {
+      errors.push('Country Code is required.')
+    }
+
+    const identifierValue = isPhoneMode
+      ? draft.phoneNumbers
+      : draft.identifiers
+
+    if (!identifierValue.trim()) {
+      errors.push(isPhoneMode ? 'Phone Number is required.' : 'Identifier is required.')
+    } else if (parsedIdentifiers.length === 0) {
+      errors.push(
+        isPhoneMode
+          ? 'At least one phone number is required.'
+          : 'At least one identifier is required.',
+      )
+    }
+
+    if (!draft.reason.trim()) {
+      errors.push('Reason is required.')
     }
 
     return errors
   }, [
     draft.channels.length,
-    draft.restrictedNumbers,
+    draft.countryCode,
+    draft.identifiers,
+    draft.phoneNumbers,
+    draft.reason,
+    isPhoneMode,
     modalMode,
-    parsedNumbers.length,
+    parsedIdentifiers.length,
   ])
 
   const updateDraft = <Key extends keyof BlacklistDraft>(
@@ -251,23 +312,30 @@ export function BlacklistManagementPage() {
     }
 
     const uniqueChannels = Array.from(new Set(draft.channels))
-    const uniqueNumbers = Array.from(new Set(parsedNumbers))
+    const uniqueIdentifiers = Array.from(new Set(parsedIdentifiers))
     const baseSequence = getNextSequence(blacklistEntries)
     const createdAt = formatSavedTime(new Date())
     const createdBy = authSession?.displayName ?? 'Admin'
-    const remark = draft.remark.trim()
+    const countryCode = draft.countryCode.trim()
+    const reason = draft.reason.trim()
     const nextEntries: BlacklistEntry[] = uniqueChannels.flatMap(
       (channel, channelIndex) =>
-        uniqueNumbers.map((restrictedNumber, numberIndex) => ({
+        uniqueIdentifiers.map((identifier, identifierIndex) => ({
           channel,
+          countryCode: isPhoneMode ? countryCode : undefined,
           createdAt,
           createdBy,
           id: `BL${String(
-            baseSequence + channelIndex * uniqueNumbers.length + numberIndex + 1,
+            baseSequence +
+              channelIndex * uniqueIdentifiers.length +
+              identifierIndex +
+              1,
           ).padStart(3, '0')}`,
-          remark,
-          restrictedNumber,
+          identifier,
+          phoneNumber: isPhoneMode ? identifier : undefined,
+          reason,
           restrictionPolicy: draft.restrictionPolicy,
+          status: draft.status,
           validityDays: draft.validityDays,
         })),
     )
@@ -311,6 +379,15 @@ export function BlacklistManagementPage() {
     )
   }
 
+  const handleStatusChange = (entry: BlacklistEntry, enabled: boolean) => {
+    const nextStatus: BlacklistStatus = enabled ? 'Active' : 'Disabled'
+
+    updateBlacklistEntryStatus(entry.id, nextStatus)
+    setNotice(
+      `Blacklist record ${nextStatus === 'Active' ? 'enabled' : 'disabled'}.`,
+    )
+  }
+
   const columns: ColumnsType<BlacklistEntry> = [
     {
       key: 'sequence',
@@ -325,9 +402,17 @@ export function BlacklistManagementPage() {
       width: 112,
     },
     {
-      dataIndex: 'restrictedNumber',
+      dataIndex: 'countryCode',
+      render: (countryCode: string | undefined, entry) =>
+        entry.channel === 'Phone' ? countryCode || '-' : '-',
+      title: 'Country Code',
+      width: 108,
+    },
+    {
+      dataIndex: 'identifier',
+      render: (_, entry) => getIdentifierDisplay(entry),
       title: 'Identifier',
-      width: 140,
+      width: 168,
     },
     {
       dataIndex: 'restrictionPolicy',
@@ -343,10 +428,28 @@ export function BlacklistManagementPage() {
       width: 104,
     },
     {
-      dataIndex: 'remark',
+      dataIndex: 'reason',
       ellipsis: true,
-      title: 'Remark',
+      title: 'Reason',
       width: 230,
+    },
+    {
+      dataIndex: 'status',
+      render: (status: BlacklistStatus, entry) => (
+        <span className="routing-config-status-control">
+          <Switch
+            checked={status === 'Active'}
+            className="routing-config-status-switch"
+            size="small"
+            onChange={(enabled) => handleStatusChange(entry, enabled)}
+          />
+          <span className="routing-config-status-control__text">
+            {status === 'Active' ? 'Enabled' : 'Disabled'}
+          </span>
+        </span>
+      ),
+      title: 'Status',
+      width: 150,
     },
     {
       dataIndex: 'createdAt',
@@ -399,11 +502,11 @@ export function BlacklistManagementPage() {
                 <AdminFilterField label="Identifier" width={240}>
                   <Input
                     placeholder="Identifier"
-                    value={filterDraft.restrictedNumber}
+                    value={filterDraft.identifier}
                     onChange={(event) =>
                       setFilterDraft((currentDraft) => ({
                         ...currentDraft,
-                        restrictedNumber: event.target.value,
+                        identifier: event.target.value,
                       }))
                     }
                   />
@@ -416,6 +519,18 @@ export function BlacklistManagementPage() {
                       setFilterDraft((currentDraft) => ({
                         ...currentDraft,
                         restrictionPolicy: value,
+                      }))
+                    }
+                  />
+                </AdminFilterField>
+                <AdminFilterField label="Status" width={160}>
+                  <Select
+                    options={blacklistStatusOptions}
+                    value={filterDraft.status}
+                    onChange={(value) =>
+                      setFilterDraft((currentDraft) => ({
+                        ...currentDraft,
+                        status: value,
                       }))
                     }
                   />
@@ -497,20 +612,62 @@ export function BlacklistManagementPage() {
                 onChange={(value) => updateDraft('restrictionPolicy', value)}
               />
             </label>
-            <AdminFormField
-              className="routing-config-crud-modal__field--full call-management-list__number-field--batch"
-              label="Identifier"
-              required
-            >
-              <Input.TextArea
-                rows={8}
-                placeholder="Use semicolons for batch add"
-                value={draft.restrictedNumbers}
-                onChange={(event) =>
-                  updateDraft('restrictedNumbers', event.target.value)
-                }
-              />
+            <AdminFormField label="Status">
+              <span className="busy-reason-config__switch-row">
+                <Switch
+                  checked={draft.status === 'Active'}
+                  size="small"
+                  onChange={(enabled) =>
+                    updateDraft('status', enabled ? 'Active' : 'Disabled')
+                  }
+                />
+                <em>{draft.status === 'Active' ? 'Enabled' : 'Disabled'}</em>
+              </span>
             </AdminFormField>
+            {isPhoneMode ? (
+              <>
+                <AdminFormField label="Country Code" required>
+                  <Input
+                    aria-required
+                    placeholder="Country code"
+                    value={draft.countryCode}
+                    onChange={(event) =>
+                      updateDraft('countryCode', event.target.value)
+                    }
+                  />
+                </AdminFormField>
+                <AdminFormField
+                  className="routing-config-crud-modal__field--full call-management-list__number-field--batch"
+                  label="Phone Number"
+                  required
+                >
+                  <Input.TextArea
+                    aria-required
+                    rows={8}
+                    placeholder="Use semicolons for batch add"
+                    value={draft.phoneNumbers}
+                    onChange={(event) =>
+                      updateDraft('phoneNumbers', event.target.value)
+                    }
+                  />
+                </AdminFormField>
+              </>
+            ) : (
+              <AdminFormField
+                className="routing-config-crud-modal__field--full call-management-list__number-field--batch"
+                label="Identifier"
+                required
+              >
+                <Input.TextArea
+                  rows={8}
+                  placeholder="Use semicolons for batch add"
+                  value={draft.identifiers}
+                  onChange={(event) =>
+                    updateDraft('identifiers', event.target.value)
+                  }
+                />
+              </AdminFormField>
+            )}
             <label className="routing-config-crud-modal__field">
               <span>Validity Days</span>
               <InputNumber
@@ -523,14 +680,13 @@ export function BlacklistManagementPage() {
               />
               <small>Leave blank for permanent validity.</small>
             </label>
-            <label className="routing-config-crud-modal__field routing-config-crud-modal__field--full">
-              <span>Remark</span>
+            <AdminFormField label="Reason" required fullWidth>
               <Input.TextArea
                 rows={3}
-                value={draft.remark}
-                onChange={(event) => updateDraft('remark', event.target.value)}
+                value={draft.reason}
+                onChange={(event) => updateDraft('reason', event.target.value)}
               />
-            </label>
+            </AdminFormField>
           </div>
         </div>
         <AdminModalFooter>

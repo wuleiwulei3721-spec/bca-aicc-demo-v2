@@ -7,5 +7,5 @@ export interface PriorityListEntry {
   id: string
   identifier: string
   matchRule: PriorityListMatchRule
-  remark: string
+  reason: string
 }

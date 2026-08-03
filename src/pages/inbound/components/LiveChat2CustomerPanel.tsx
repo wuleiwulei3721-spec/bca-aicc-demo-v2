@@ -45,8 +45,8 @@ export interface LiveChat2SessionView extends LiveChat2Session {
 interface LiveChat2CustomerPanelProps {
   activeSessionId: string
   collapsed: boolean
+  currentSessions: LiveChat2SessionView[]
   historySessions: LiveChat2SessionView[]
-  serviceSessions: LiveChat2SessionView[]
   sortMode: LiveChat2SortMode
   view: LiveChat2ListView
   onCloseSession: (sessionId: string) => void
@@ -258,8 +258,8 @@ function renderSessionCard({
 export function LiveChat2CustomerPanel({
   activeSessionId,
   collapsed,
+  currentSessions,
   historySessions,
-  serviceSessions,
   sortMode,
   view,
   onCloseSession,
@@ -268,10 +268,10 @@ export function LiveChat2CustomerPanel({
   onSortModeChange,
   onViewChange,
 }: LiveChat2CustomerPanelProps) {
-  const visibleServiceSessions = serviceSessions
+  const visibleCurrentSessions = currentSessions
   const visibleHistorySessions = historySessions
   const visibleSessions =
-    view === 'current' ? visibleServiceSessions : visibleHistorySessions
+    view === 'current' ? visibleCurrentSessions : visibleHistorySessions
   const emptyListTitle =
     view === 'current' ? 'No current conversations' : 'No history conversations'
   const emptyListDescription =
@@ -293,7 +293,7 @@ export function LiveChat2CustomerPanel({
         {!collapsed && (
           <div className="livechat2-customer-panel__view-tabs" role="tablist">
             <button
-              aria-label={`Current conversations, ${visibleServiceSessions.length}`}
+              aria-label={`Current conversations, ${visibleCurrentSessions.length}`}
               aria-selected={view === 'current'}
               className={
                 view === 'current'
@@ -309,7 +309,7 @@ export function LiveChat2CustomerPanel({
                 Current
               </span>
               <span className="livechat2-customer-panel__view-count">
-                {visibleServiceSessions.length}
+                {visibleCurrentSessions.length}
               </span>
             </button>
             <button

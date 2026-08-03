@@ -182,10 +182,14 @@ const textBusinessConfig: ChannelMediaBusinessConfig = {
   minScanIntervalSeconds: 30,
   newCustomerAlertSound: 'new-customer-alert-01.wav',
   outsideServiceHoursMessage: 'Sorry, we are currently outside service hours.',
+  longQueueWaitingMessage:
+    'All agents are currently busy. Thank you for your patience.',
+  longQueueWaitingSeconds: 180,
   preTimeoutReminderMessage:
     'We have not received your reply. This conversation will close in {reminderMinutes} minute(s).',
   preTimeoutReminderMinutes: 1,
   queueTimeoutMessage: 'All agents are currently busy. Please try again later.',
+  queueTimeoutSeconds: 360,
   queueWaitingMessage: 'All agents are currently busy. Please wait.',
   webchatRecallLimitSeconds: 120,
 }

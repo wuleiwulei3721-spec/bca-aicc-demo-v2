@@ -6,6 +6,7 @@ import type {
   VerificationV2EffectiveQuestion,
   VerificationV2EffectiveRequirement,
   VerificationV2EffectiveRule,
+  VerificationV2HaloAppLoginStatus,
   VerificationV2OrganizationSegment,
   VerificationV2Question,
   VerificationV2QuestionBlock,
@@ -79,6 +80,22 @@ export const verificationV2CustomerSegmentOptions =
     label: verificationV2CustomerSegmentLabels[value],
     value,
   }))
+
+export const verificationV2HaloAppLoginStatusLabels: Record<
+  VerificationV2HaloAppLoginStatus,
+  string
+> = {
+  all: 'Same for Both',
+  guest: 'Not Logged In',
+  registered: 'Logged In',
+}
+
+export const verificationV2HaloAppLoginStatusOptions = Object.entries(
+  verificationV2HaloAppLoginStatusLabels,
+).map(([value, label]) => ({
+  label,
+  value: value as VerificationV2HaloAppLoginStatus,
+}))
 
 export const verificationV2OrganizationSegmentLabels: Record<
   VerificationV2OrganizationSegment,
@@ -537,7 +554,7 @@ export function findMatchingVerificationV2Rule(
   rules: VerificationV2Rule[],
   conditions: Pick<
     VerificationV2DemoConditions,
-    'channelCode' | 'customerSegment' | 'skillQueueCode'
+    'channelCode' | 'customerSegment' | 'haloAppLoginStatus' | 'skillQueueCode'
   >,
 ) {
   return (
@@ -545,6 +562,10 @@ export function findMatchingVerificationV2Rule(
       (rule) =>
         rule.status === 'enabled' &&
         rule.channelCodes.includes(conditions.channelCode) &&
+        (conditions.channelCode !== 'BANKAPP' ||
+          !rule.haloAppLoginStatus ||
+          rule.haloAppLoginStatus === 'all' ||
+          rule.haloAppLoginStatus === conditions.haloAppLoginStatus) &&
         rule.skillQueueCode === conditions.skillQueueCode &&
         rule.customerSegments.includes(conditions.customerSegment),
     ) ?? null
@@ -555,7 +576,7 @@ export function findVerificationV2RuleMatch(
   rules: VerificationV2Rule[],
   conditions: Pick<
     VerificationV2DemoConditions,
-    'channelCode' | 'customerSegment' | 'skillQueueCode'
+    'channelCode' | 'customerSegment' | 'haloAppLoginStatus' | 'skillQueueCode'
   >,
 ): VerificationV2RuleMatch {
   const exactRule =
@@ -563,6 +584,10 @@ export function findVerificationV2RuleMatch(
       (rule) =>
         rule.status === 'enabled' &&
         rule.channelCodes.includes(conditions.channelCode) &&
+        (conditions.channelCode !== 'BANKAPP' ||
+          !rule.haloAppLoginStatus ||
+          rule.haloAppLoginStatus === 'all' ||
+          rule.haloAppLoginStatus === conditions.haloAppLoginStatus) &&
         rule.skillQueueCode === conditions.skillQueueCode &&
         rule.customerSegments.includes(conditions.customerSegment),
     ) ?? null

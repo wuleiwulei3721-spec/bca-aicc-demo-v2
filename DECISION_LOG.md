@@ -1,8 +1,31 @@
 # Decision Log
 
-Last updated: 2026-07-28 12:06 +08:00
+Last updated: 2026-08-01 10:58 +08:00
 
 This document records important product and system design decisions that can be confirmed from the current codebase, project documents, `DEV_LOG.md`, and readable Git history. It intentionally omits bug fixes, visual micro-adjustments, temporary test data, copy-only tweaks, and implementation details that do not affect product direction.
+
+--------------------------------------------------
+
+Decision ID:
+DEC-043
+
+Module:
+Customer Verification V2 / HaloApp Voice
+
+Decision:
+HaloApp login status is a rule applicability dimension for every HaloApp KBV rule: `Same for Both`, `Logged In`, or `Not Logged In`. The agent receives the status only at the first Voice handoff and cannot change it. Perbankan uses a HaloApp-only 3-answer Logged In rule plus a shared Phone/HaloApp-not-logged-in 5-answer rule; Kartu Kredit uses the same structure with 3 and 4 answers. Other skills retain one `Same for Both` configuration.
+
+Reason:
+The customer needs lower-friction KBV for authenticated HaloApp callers in two confirmed skills, without turning every other skill into duplicate logged-in/guest configurations or trusting unsupported in-call login changes.
+
+Impact:
+Enabled configurations are unique across overlapping channel, skill, customer-segment, and login-status conditions. The management page exposes the login-status list/filter/form field and supports copying a full rule draft. A future trusted status callback must define whether a current KBV is reset or re-run before it changes this frozen initial condition.
+
+Status:
+Implemented as front-end Demo behavior
+
+Source:
+Customer requirement confirmed on 2026-07-30; Code: `src/types/verificationRuleV2.ts`, `src/utils/verificationRuleV2.ts`, `src/mock/verificationRuleV2.ts`, `src/pages/call-management/VerificationRuleV2Page.tsx`, `src/pages/inbound/components/CustomerInformationCard.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `DEV_LOG.md`
 
 --------------------------------------------------
 
@@ -384,13 +407,13 @@ Module:
 Call Toolbar
 
 Decision:
-The header toolbar is the single persistent control surface for Answer, Hold, Mute, Transfer, Hang Up, and Outbound Call. Agent status transitions are owned by the profile menu: Not Ready can enter Ready, while Ready can enter AUX but cannot manually return to Not Ready.
+The header toolbar is the single persistent control surface for Answer, Hold, Mute, Transfer, Hang Up, Ready / Not Ready, and Outbound Call. A default-Not Ready sign-in can first enter Ready from the toolbar; its Ready button is then locked until a Voice or Video Incoming popup occurs, after which the toolbar resumes normal two-way status toggling for the current signed-in session.
 
 Reason:
-Customer service controls need to remain visible regardless of active workspace tab; the toolbar provides persistent timer, customer access identifier, and skill context. The customer requires a one-way post-sign-in status flow, so status transitions remain in the profile menu instead of a bidirectional toolbar toggle.
+Customer service controls need to remain visible regardless of active workspace tab; the toolbar provides persistent status, timer, customer access identifier, and skill context. The customer requires a first-login guard without removing the established toolbar control.
 
 Impact:
-New call actions should be added through the toolbar model instead of being hidden inside individual workspace cards. Status-menu changes must preserve the one-way Ready to AUX flow.
+New call actions should be added through the toolbar model instead of being hidden inside individual workspace cards. Voice and Video Incoming popup paths must unlock the first-login toolbar guard; text-channel activity must not.
 
 Status:
 Implemented
@@ -1026,6 +1049,29 @@ Implemented as front-end demo; real integration Pending
 
 Source:
 Collaborator source commit `Rh3in/bca-aicc-demo-v2@5ca52fd`; Code: `src/pages/social-media/SocialMediaPage.tsx`, `src/layouts/BasicLayout.tsx`, `src/pages/AgentWorkspace.tsx`, `src/store/appStore.ts`; Docs: `PROJECT_CONTEXT.md`, `CURRENT_STATUS.md`, `BUSINESS_RULES.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-037
+
+Module:
+Live Chat Service List
+
+Decision:
+Current is a unified list containing active Live Chat service sessions up to Global Control `Max Digital Media Services` (default 3), plus recently ended Live Chat sessions up to `Max Live Chat Ended Session Retention` (default 10). End Service retains the completed session in Current; Close moves it to History. When the ended-session retention limit is exceeded, the retained session with the earliest end time moves to History.
+
+Reason:
+Customer clarification requires agents to continue CRM editing for recently completed conversations without treating those conversations as active service. A bounded retained list prevents Current from growing without limit while preserving the latest editing context.
+
+Impact:
+Active-service counters, SLA, unread badges, AUX guards, Sign Out guards, and handoff capacity use only active session slots. Saving or resetting Global Control immediately applies the ended-session retention limit by moving the earliest-ended excess sessions to History; lowering the active-service limit does not force-end already active sessions. History retains its current CRM behavior. When active capacity is full, the front-end demo leaves new customer handoffs in the customer-side queue rather than creating an additional service session.
+
+Status:
+Implemented
+
+Source:
+Customer clarification on 2026-07-31; Code: `src/store/appStore.ts`, `src/pages/inbound/LiveChat2Page.tsx`, `src/pages/bankapp/BankAppDemoPage.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`
 
 --------------------------------------------------
 

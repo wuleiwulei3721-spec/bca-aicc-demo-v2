@@ -36,6 +36,7 @@ interface CustomerVerificationV2ModalProps {
   initialConditions: VerificationV2DemoConditions
   onConditionsChange?: (conditions: VerificationV2DemoConditions) => void
   questionBank: VerificationV2Question[]
+  readonlyActions?: boolean
   readonlyConditions?: boolean
   rules: VerificationV2Rule[]
   onFinish: (status: VerificationStatus) => void
@@ -234,6 +235,7 @@ export function CustomerVerificationV2Panel({
   initialConditions,
   onConditionsChange,
   questionBank,
+  readonlyActions = false,
   readonlyConditions = false,
   rules,
   variant = 'modal',
@@ -365,6 +367,10 @@ export function CustomerVerificationV2Panel({
   }
 
   const renderQuestionActions = (question: VerificationV2EffectiveQuestion) => {
+    if (readonlyActions) {
+      return null
+    }
+
     const status = questionStatuses[question.id]
 
     return (
@@ -471,7 +477,13 @@ export function CustomerVerificationV2Panel({
 
   if (variant === 'compact') {
     return (
-      <div className="inbound-verification-workflow inbound-verification-workflow--v2 inbound-verification-workflow--compact">
+      <div
+        className={`inbound-verification-workflow inbound-verification-workflow--v2 inbound-verification-workflow--compact${
+          readonlyActions
+            ? ' inbound-verification-workflow--readonly-actions'
+            : ''
+        }`}
+      >
         <div className="inbound-verification-workflow__toolbar inbound-verification-workflow__toolbar--v2 inbound-verification-workflow__toolbar--compact">
           {renderConditionControls()}
         </div>
@@ -538,25 +550,33 @@ export function CustomerVerificationV2Panel({
 
         <div className="aicc-modal-footer inbound-verification-modal__footer inbound-verification-modal__footer--compact">
           <div className="inbound-verification-compact-actions">
-            <AppButton size="small" onClick={resetProgress}>
-              Clear All
-            </AppButton>
-            <AppButton
-              danger
-              disabled={!effectiveRule}
-              size="small"
-              onClick={() => onFinish('Verification Failed')}
-            >
-              {applyFailedLabel}
-            </AppButton>
-            <AppButton
-              disabled={!evaluation.passed}
-              size="small"
-              type="primary"
-              onClick={() => onFinish('Verified')}
-            >
-              {applyVerifiedLabel}
-            </AppButton>
+            {readonlyActions ? (
+              <AppButton size="small" onClick={() => onFinish('Unverified')}>
+                Close
+              </AppButton>
+            ) : (
+              <>
+                <AppButton size="small" onClick={resetProgress}>
+                  Clear All
+                </AppButton>
+                <AppButton
+                  danger
+                  disabled={!effectiveRule}
+                  size="small"
+                  onClick={() => onFinish('Verification Failed')}
+                >
+                  {applyFailedLabel}
+                </AppButton>
+                <AppButton
+                  disabled={!evaluation.passed}
+                  size="small"
+                  type="primary"
+                  onClick={() => onFinish('Verified')}
+                >
+                  {applyVerifiedLabel}
+                </AppButton>
+              </>
+            )}
           </div>
         </div>
       </div>

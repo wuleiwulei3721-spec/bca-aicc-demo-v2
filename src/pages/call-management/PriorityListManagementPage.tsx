@@ -32,7 +32,7 @@ interface PriorityListDraft {
   channels: string[]
   identifiers: string
   matchRule: PriorityListEntry['matchRule']
-  remark: string
+  reason: string
 }
 
 interface PriorityListDuplicateRow {
@@ -53,7 +53,7 @@ const defaultDraft: PriorityListDraft = {
   channels: [],
   identifiers: '',
   matchRule: 'exact_match',
-  remark: '',
+  reason: '',
 }
 
 const matchRuleLabels: Record<PriorityListEntry['matchRule'], string> = {
@@ -290,10 +290,15 @@ export function PriorityListManagementPage() {
       errors.push('At least one identifier is required.')
     }
 
+    if (!draft.reason.trim()) {
+      errors.push('Reason is required.')
+    }
+
     return errors
   }, [
     draft.channels.length,
     draft.identifiers,
+    draft.reason,
     modalMode,
     parsedIdentifiers.length,
   ])
@@ -351,7 +356,7 @@ export function PriorityListManagementPage() {
     const baseSequence = getNextSequence(priorityListEntries)
     const createdAt = formatSavedTime(new Date())
     const createdBy = authSession?.displayName ?? 'Admin'
-    const remark = draft.remark.trim()
+    const reason = draft.reason.trim()
     const nextEntries: PriorityListEntry[] = []
 
     uniqueIdentifiers.forEach((identifier) => {
@@ -372,7 +377,7 @@ export function PriorityListManagementPage() {
           )}`,
           identifier,
           matchRule: draft.matchRule,
-          remark,
+          reason,
         })
       })
     })
@@ -455,9 +460,9 @@ export function PriorityListManagementPage() {
       width: 150,
     },
     {
-      dataIndex: 'remark',
+      dataIndex: 'reason',
       ellipsis: true,
-      title: 'Remark',
+      title: 'Reason',
       width: 320,
     },
     {
@@ -634,11 +639,11 @@ export function PriorityListManagementPage() {
                 onChange={(value) => updateDraft('matchRule', value)}
               />
             </AdminFormField>
-            <AdminFormField label="Remark" fullWidth>
+            <AdminFormField label="Reason" required fullWidth>
               <Input.TextArea
                 rows={3}
-                value={draft.remark}
-                onChange={(event) => updateDraft('remark', event.target.value)}
+                value={draft.reason}
+                onChange={(event) => updateDraft('reason', event.target.value)}
               />
             </AdminFormField>
           </div>

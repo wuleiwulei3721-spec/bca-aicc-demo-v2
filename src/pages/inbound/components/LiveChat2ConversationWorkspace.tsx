@@ -475,7 +475,6 @@ export function LiveChat2ConversationWorkspace({
   const readOnly = session.statusDisplay === 'history'
   const isEnded = session.statusDisplay === 'ended'
   const canCompose = !readOnly && !isEnded
-  const shouldShowTypingIndicator = session.channel === 'Webchat' && canCompose
   const canRecallMessages =
     session.channel === 'BankApp' || session.channel === 'Webchat'
   const trimmedDraft = draftMessage.trim()
@@ -840,21 +839,6 @@ export function LiveChat2ConversationWorkspace({
 
       {canCompose && (
         <div className="livechat2-composer-shell">
-          {shouldShowTypingIndicator && (
-            <div
-              aria-label="Customer is typing"
-              className="livechat2-typing-indicator"
-              role="status"
-            >
-              <span>Customer is typing</span>
-              <span aria-hidden="true" className="livechat2-typing-dots">
-                <span>.</span>
-                <span>.</span>
-                <span>.</span>
-              </span>
-            </div>
-          )}
-
           <footer className="livechat2-composer">
             {sendBlockedMessage && (
               <Alert

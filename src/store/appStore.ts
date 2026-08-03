@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { useCallManagementStore } from './callManagementStore'
 import type {
   AgentServiceMode,
   BankAppCustomerType,
@@ -200,32 +201,65 @@ function createLiveChat2Status(
   }
 }
 
+function getLiveChat2CapacityLimits() {
+  const configuration =
+    useCallManagementStore.getState().globalControlConfiguration
+
+  return {
+    maxActiveServices: Math.max(1, configuration.maxDigitalMediaServices),
+    maxEndedSessionRetention: Math.max(
+      1,
+      configuration.maxLiveChatEndedSessionRetention,
+    ),
+  }
+}
+
 function createDefaultLiveChat2CurrentState(now: number) {
-  const activeSessionIds = DEFAULT_LIVECHAT2_CURRENT_SESSION_IDS.filter(
-    (sessionId) => Boolean(liveChat2SessionById[sessionId]),
-  )
+  const { maxActiveServices, maxEndedSessionRetention } =
+    getLiveChat2CapacityLimits()
+  const activeSessionIds: string[] = []
+  const recentClosedSessionIds: string[] = []
   const sessionStatuses: Record<string, LiveChat2SessionStatusState> = {}
   const sessionTimings: Record<string, InteractionTiming> = {}
   const starColors: Record<string, LiveChat2StarColor> = {}
   const unansweredSinceBySessionId: Record<string, number> = {}
 
-  activeSessionIds.forEach((sessionId) => {
+  DEFAULT_LIVECHAT2_CURRENT_SESSION_IDS.forEach((sessionId) => {
     const session = liveChat2SessionById[sessionId]
+
+    if (!session) {
+      return
+    }
+
     const initialElapsedSeconds = parseDurationSeconds(
       session.customer.accessDuration,
     )
-
-    sessionTimings[sessionId] = {
-      flashUntil: 0,
-      startedAt: now - initialElapsedSeconds * 1000,
-    }
-    sessionStatuses[sessionId] = createLiveChat2Status(
+    const initialStatus = createLiveChat2Status(
       session.status,
       session.endReason ?? (session.status === 'ended' ? 'customer' : null),
     )
+
+    if (initialStatus.status === 'ended') {
+      const endedAt = Date.parse(session.lastMessageAt)
+      initialStatus.endedAt = Number.isFinite(endedAt) ? endedAt : now
+      recentClosedSessionIds.push(sessionId)
+    } else if (activeSessionIds.length < maxActiveServices) {
+      activeSessionIds.push(sessionId)
+    }
+
+    if (initialStatus.status === 'active') {
+      sessionTimings[sessionId] = {
+        flashUntil: 0,
+        startedAt: now - initialElapsedSeconds * 1000,
+      }
+    }
+    sessionStatuses[sessionId] = initialStatus
     starColors[sessionId] = session.initialStarColor
 
-    if (typeof session.initialUnansweredSeconds === 'number') {
+    if (
+      initialStatus.status === 'active' &&
+      typeof session.initialUnansweredSeconds === 'number'
+    ) {
       unansweredSinceBySessionId[sessionId] =
         now -
         Math.min(session.initialUnansweredSeconds, initialElapsedSeconds) *
@@ -235,6 +269,10 @@ function createDefaultLiveChat2CurrentState(now: number) {
 
   return {
     activeSessionIds,
+    recentClosedSessionIds: recentClosedSessionIds.slice(
+      0,
+      maxEndedSessionRetention,
+    ),
     sessionStatuses,
     sessionTimings,
     starColors,
@@ -423,6 +461,7 @@ interface AppState {
   isWebchatDemoTabOpen: boolean
   isWhatsAppDemoTabOpen: boolean
   liveChat2ClosedSessionIds: string[]
+  liveChat2RecentClosedSessionIds: string[]
   liveChat2DraftMessages: Record<string, string>
   liveChat2FocusRequestId: number
   liveChat2FocusSessionId: string | null
@@ -505,7 +544,7 @@ interface AppState {
     sessionId?: string,
     activate?: boolean,
     bankAppCustomerType?: BankAppCustomerType,
-  ) => void
+  ) => boolean
   requestCustomerOutboundCall: () => void
   requestMonitoringMonitorWorkspace: (
     viewKey?: MonitoringMonitorViewKey,
@@ -530,6 +569,7 @@ interface AppState {
     sessionId: string,
     starColor: LiveChat2StarColor,
   ) => void
+  syncLiveChat2RetentionLimit: () => void
   setLiveChatTabOpen: (
     open: boolean,
     options?: SetLiveChatTabOpenOptions,
@@ -605,6 +645,7 @@ export const useAppStore = create<AppState>((set) => ({
   isWebchatDemoTabOpen: false,
   isWhatsAppDemoTabOpen: false,
   liveChat2ClosedSessionIds: [],
+  liveChat2RecentClosedSessionIds: [],
   liveChat2DraftMessages: {},
   liveChat2FocusRequestId: 0,
   liveChat2FocusSessionId: null,
@@ -1022,12 +1063,29 @@ export const useAppStore = create<AppState>((set) => ({
     })),
   requestLiveChat2Workspace: (sessionIds, options) =>
     set((state) => {
+      const { maxActiveServices } = getLiveChat2CapacityLimits()
       const now = Date.now()
-      const newlyActivatedSessionIds = sessionIds.filter(
-        (sessionId) =>
-          !state.activeLiveChat2SessionIds.includes(sessionId) &&
-          !state.liveChat2ClosedSessionIds.includes(sessionId),
+      const availableSlots = Math.max(
+        0,
+        maxActiveServices - state.activeLiveChat2SessionIds.length,
       )
+      const newlyActivatedSessionIds = Array.from(new Set(sessionIds))
+        .filter((sessionId) => {
+          const session = liveChat2SessionById[sessionId]
+          const requestedStatus = options?.initialSessionStatuses?.[sessionId]
+            ?.status
+          const currentStatus =
+            state.liveChat2SessionStatuses[sessionId]?.status ?? session?.status
+
+          return (
+            Boolean(session) &&
+            (requestedStatus ?? currentStatus) === 'active' &&
+            !state.activeLiveChat2SessionIds.includes(sessionId) &&
+            !state.liveChat2RecentClosedSessionIds.includes(sessionId) &&
+            !state.liveChat2ClosedSessionIds.includes(sessionId)
+          )
+        })
+        .slice(0, availableSlots)
       const nextActiveSessionIds = [
         ...state.activeLiveChat2SessionIds,
         ...newlyActivatedSessionIds,
@@ -1048,7 +1106,7 @@ export const useAppStore = create<AppState>((set) => ({
         ...state.liveChat2UnansweredSinceBySessionId,
       }
 
-      sessionIds.forEach((sessionId) => {
+      newlyActivatedSessionIds.forEach((sessionId) => {
         const initialElapsedSeconds =
           options?.initialElapsedSeconds?.[sessionId]
         const safeInitialElapsedSeconds =
@@ -1108,11 +1166,13 @@ export const useAppStore = create<AppState>((set) => ({
         isLiveChatTabOpen: true,
         isLiveChat2TabOpen: false,
         liveChat2FocusRequestId:
-          sessionIds.length > 0
+          newlyActivatedSessionIds.length > 0
             ? state.liveChat2FocusRequestId + 1
             : state.liveChat2FocusRequestId,
         liveChat2FocusSessionId:
-          state.liveChat2FocusSessionId ?? sessionIds[0] ?? null,
+          state.liveChat2FocusSessionId ??
+          newlyActivatedSessionIds[0] ??
+          null,
         newCustomerAlert: newCustomerAlert ?? state.newCustomerAlert,
         liveChat2SessionStatuses: nextStatuses,
         liveChat2SessionTimings: nextTimings,
@@ -1120,12 +1180,23 @@ export const useAppStore = create<AppState>((set) => ({
         liveChat2UnansweredSinceBySessionId: nextUnanswered,
       }
     }),
-  requestLiveChatWorkspace: (sessionId, activate = true, bankAppCustomerType) =>
+  requestLiveChatWorkspace: (sessionId, activate = true, bankAppCustomerType) => {
+    let wasAdmitted = false
+
     set((state) => {
+      const { maxActiveServices } = getLiveChat2CapacityLimits()
       const liveChat2SessionId = getLiveChat2ReplacementSessionId(sessionId)
       const sourceSession = liveChat2SessionId
         ? liveChat2SessionById[liveChat2SessionId]
         : null
+      const canAcceptSession =
+        state.activeLiveChat2SessionIds.length <
+        maxActiveServices
+
+      if (!canAcceptSession) {
+        return {}
+      }
+
       const now = Date.now()
       const nextHandoffSeq = state.liveChat2HandoffSeq + 1
       const handoffSessionId =
@@ -1156,6 +1227,7 @@ export const useAppStore = create<AppState>((set) => ({
       let nextSessionInstances = state.liveChat2SessionInstances
 
       if (handoffSessionId && handoffSession) {
+        wasAdmitted = true
         const initialUnansweredSeconds =
           typeof handoffSession.initialUnansweredSeconds === 'number'
             ? 0
@@ -1248,7 +1320,10 @@ export const useAppStore = create<AppState>((set) => ({
         liveChatSessionTimings: {},
         readLiveChatSessionIds: [],
       }
-    }),
+    })
+
+    return wasAdmitted
+  },
   requestCustomerOutboundCall: () =>
     set((state) => ({
       customerOutboundCallRequestId:
@@ -1335,6 +1410,38 @@ export const useAppStore = create<AppState>((set) => ({
         [sessionId]: starColor,
       },
     })),
+  syncLiveChat2RetentionLimit: () =>
+    set((state) => {
+      const { maxEndedSessionRetention } = getLiveChat2CapacityLimits()
+      const retainedSessionIds = state.liveChat2RecentClosedSessionIds.slice(
+        0,
+        maxEndedSessionRetention,
+      )
+      const evictedSessionIds = state.liveChat2RecentClosedSessionIds.slice(
+        maxEndedSessionRetention,
+      )
+
+      if (evictedSessionIds.length === 0) {
+        return {}
+      }
+
+      return {
+        liveChat2ClosedSessionIds: [
+          ...evictedSessionIds,
+          ...state.liveChat2ClosedSessionIds.filter(
+            (sessionId) => !evictedSessionIds.includes(sessionId),
+          ),
+        ].slice(0, 30),
+        liveChat2FocusSessionId:
+          state.liveChat2FocusSessionId &&
+          evictedSessionIds.includes(state.liveChat2FocusSessionId)
+            ? state.activeLiveChat2SessionIds[0] ??
+              retainedSessionIds[0] ??
+              null
+            : state.liveChat2FocusSessionId,
+        liveChat2RecentClosedSessionIds: retainedSessionIds,
+      }
+    }),
   setLiveChatTabOpen: (open, options) =>
     set((state) => {
       if (!open) {
@@ -1348,6 +1455,7 @@ export const useAppStore = create<AppState>((set) => ({
           isLiveChat2TabOpen: false,
           isLiveChatTabOpen: false,
           liveChat2ClosedSessionIds: [],
+          liveChat2RecentClosedSessionIds: [],
           liveChat2DraftMessages: {},
           liveChat2FocusSessionId: null,
           liveChat2LastMessageOverrides: {},
@@ -1370,6 +1478,7 @@ export const useAppStore = create<AppState>((set) => ({
         options?.seedDefaultCurrentSessions === true &&
         state.activeLiveChat2SessionIds.length === 0 &&
         state.liveChat2ClosedSessionIds.length === 0 &&
+        state.liveChat2RecentClosedSessionIds.length === 0 &&
         Object.keys(state.liveChat2SessionInstances).length === 0 &&
         Object.keys(state.liveChat2SessionStatuses).length === 0
       const defaultCurrentState = shouldSeedDefaultCurrentSessions
@@ -1385,6 +1494,9 @@ export const useAppStore = create<AppState>((set) => ({
         isLiveChat2TabOpen: false,
         isLiveChatTabOpen: true,
         liveChat2ClosedSessionIds: state.liveChat2ClosedSessionIds,
+        liveChat2RecentClosedSessionIds:
+          defaultCurrentState?.recentClosedSessionIds ??
+          state.liveChat2RecentClosedSessionIds,
         liveChat2DraftMessages: state.liveChat2DraftMessages,
         liveChat2FocusRequestId: defaultCurrentState
           ? state.liveChat2FocusRequestId + 1
@@ -1557,6 +1669,10 @@ export const useAppStore = create<AppState>((set) => ({
       const nextActiveSessionIds = state.activeLiveChat2SessionIds.filter(
         (activeSessionId) => activeSessionId !== sessionId,
       )
+      const nextRecentClosedSessionIds =
+        state.liveChat2RecentClosedSessionIds.filter(
+          (recentClosedSessionId) => recentClosedSessionId !== sessionId,
+        )
       const nextSessionTimings = { ...state.liveChat2SessionTimings }
       const nextUnanswered = {
         ...state.liveChat2UnansweredSinceBySessionId,
@@ -1566,6 +1682,7 @@ export const useAppStore = create<AppState>((set) => ({
 
       return {
         activeLiveChat2SessionIds: nextActiveSessionIds,
+        liveChat2RecentClosedSessionIds: nextRecentClosedSessionIds,
         liveChat2ClosedSessionIds: state.liveChat2ClosedSessionIds.includes(
           sessionId,
         )
@@ -1573,7 +1690,7 @@ export const useAppStore = create<AppState>((set) => ({
           : [sessionId, ...state.liveChat2ClosedSessionIds].slice(0, 30),
         liveChat2FocusSessionId:
           state.liveChat2FocusSessionId === sessionId
-            ? nextActiveSessionIds[0] ?? null
+            ? nextActiveSessionIds[0] ?? nextRecentClosedSessionIds[0] ?? null
             : state.liveChat2FocusSessionId,
         liveChat2ReadSessionIds: state.liveChat2ReadSessionIds.filter(
           (readSessionId) => readSessionId !== sessionId,
@@ -1589,6 +1706,7 @@ export const useAppStore = create<AppState>((set) => ({
     endReasonName = 'Normal',
   ) =>
     set((state) => {
+      const { maxEndedSessionRetention } = getLiveChat2CapacityLimits()
       const now = Date.now()
       const time = formatCurrentLiveChat2Time()
       const currentMessages = state.liveChat2MessagesBySessionId[sessionId]
@@ -1612,9 +1730,36 @@ export const useAppStore = create<AppState>((set) => ({
       const nextUnanswered = {
         ...state.liveChat2UnansweredSinceBySessionId,
       }
+      const nextSessionTimings = { ...state.liveChat2SessionTimings }
       delete nextUnanswered[sessionId]
+      delete nextSessionTimings[sessionId]
+
+      const nextRecentClosedSessionIds = [
+        sessionId,
+        ...state.liveChat2RecentClosedSessionIds.filter(
+          (recentClosedSessionId) => recentClosedSessionId !== sessionId,
+        ),
+      ]
+      const evictedRecentClosedSessionIds = nextRecentClosedSessionIds.slice(
+        maxEndedSessionRetention,
+      )
+      const retainedRecentClosedSessionIds = nextRecentClosedSessionIds.slice(
+        0,
+        maxEndedSessionRetention,
+      )
+      const nextClosedSessionIds = [
+        ...evictedRecentClosedSessionIds,
+        ...state.liveChat2ClosedSessionIds.filter(
+          (closedSessionId) =>
+            closedSessionId !== sessionId &&
+            !evictedRecentClosedSessionIds.includes(closedSessionId),
+        ),
+      ].slice(0, 30)
 
       return {
+        activeLiveChat2SessionIds: state.activeLiveChat2SessionIds.filter(
+          (activeSessionId) => activeSessionId !== sessionId,
+        ),
         liveChat2LastMessageOverrides: {
           ...state.liveChat2LastMessageOverrides,
           [sessionId]: {
@@ -1652,6 +1797,13 @@ export const useAppStore = create<AppState>((set) => ({
             status: 'ended',
           },
         },
+        liveChat2ClosedSessionIds: nextClosedSessionIds,
+        liveChat2FocusSessionId:
+          state.liveChat2FocusSessionId === sessionId
+            ? sessionId
+            : state.liveChat2FocusSessionId,
+        liveChat2RecentClosedSessionIds: retainedRecentClosedSessionIds,
+        liveChat2SessionTimings: nextSessionTimings,
         liveChat2UnansweredSinceBySessionId: nextUnanswered,
       }
     }),
@@ -1726,6 +1878,7 @@ export const useAppStore = create<AppState>((set) => ({
           : state.activeWorkspaceTabKey,
       isLiveChat2TabOpen: false,
       liveChat2ClosedSessionIds: [],
+      liveChat2RecentClosedSessionIds: [],
       liveChat2DraftMessages: {},
       liveChat2FocusSessionId: null,
       liveChat2LastMessageOverrides: {},

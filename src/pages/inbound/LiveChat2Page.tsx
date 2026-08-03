@@ -123,6 +123,9 @@ export function LiveChat2Page() {
   const liveChat2ClosedSessionIds = useAppStore(
     (state) => state.liveChat2ClosedSessionIds,
   )
+  const liveChat2RecentClosedSessionIds = useAppStore(
+    (state) => state.liveChat2RecentClosedSessionIds,
+  )
   const liveChat2DraftMessages = useAppStore(
     (state) => state.liveChat2DraftMessages,
   )
@@ -316,6 +319,28 @@ export function LiveChat2Page() {
     ],
   )
 
+  const recentClosedSessions = useMemo(
+    () =>
+      liveChat2RecentClosedSessionIds
+        .map((sessionId) => liveChat2SessionById[sessionId])
+        .filter((session): session is LiveChat2Session => Boolean(session))
+        .map(createSessionView),
+    [
+      liveChat2RecentClosedSessionIds,
+      liveChat2SessionById,
+      createSessionView,
+    ],
+  )
+
+  const currentSessions = useMemo(
+    () =>
+      sortSessions(
+        [...serviceSessions, ...recentClosedSessions],
+        liveChat2SortMode,
+      ),
+    [liveChat2SortMode, recentClosedSessions, serviceSessions],
+  )
+
   const historySessions = useMemo(() => {
     const historyIds = [
       ...liveChat2ClosedSessionIds,
@@ -326,18 +351,22 @@ export function LiveChat2Page() {
     const uniqueHistoryIds = Array.from(new Set(historyIds))
 
     return uniqueHistoryIds
+      .filter(
+        (sessionId) => !liveChat2RecentClosedSessionIds.includes(sessionId),
+      )
       .map((sessionId) => liveChat2SessionById[sessionId])
       .filter((session): session is LiveChat2Session => Boolean(session))
       .map(createSessionView)
       .sort((first, second) => getMessageTimestamp(second) - getMessageTimestamp(first))
   }, [
     liveChat2ClosedSessionIds,
+    liveChat2RecentClosedSessionIds,
     liveChat2SessionById,
     createSessionView,
   ])
 
   const visibleWorkspaceSessions =
-    customerPanelView === 'history' ? historySessions : serviceSessions
+    customerPanelView === 'history' ? historySessions : currentSessions
   const activeSession =
     visibleWorkspaceSessions.find(
       (session) => session.id === liveChat2FocusSessionId,
@@ -446,15 +475,14 @@ export function LiveChat2Page() {
     endReasonName = 'Normal',
   ) => {
     endLiveChat2Session(sessionId, 'agent', baseMessages, endReasonName)
-    closeLiveChat2Session(sessionId)
   }
 
   const leadPanel = (
     <LiveChat2CustomerPanel
       activeSessionId={activeSession?.id ?? ''}
       collapsed={isCustomerPanelCollapsed}
+      currentSessions={currentSessions}
       historySessions={historySessions}
-      serviceSessions={serviceSessions}
       sortMode={liveChat2SortMode}
       view={customerPanelView}
       onCloseSession={closeLiveChat2Session}

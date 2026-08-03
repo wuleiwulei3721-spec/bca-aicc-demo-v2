@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Design System
 
-Last updated: 2026-07-29 14:38 +08:00
+Last updated: 2026-07-31 15:17 +08:00
 
 This document records the current implemented visual rules. It should be treated as the design baseline for future pages and components.
 
@@ -72,6 +72,7 @@ The toolbar is operational and compact:
 - Hang Up uses danger styling.
 - Hang Up can use a compact split-button when abnormal end reasons are available: the main danger action stays on the left, and the right caret opens those reasons.
 - Hold uses selected / active styling.
+- The Ready / Not Ready control remains visible in the toolbar. During the first default-Not Ready sign-in, its Ready state is visibly disabled until a Voice or Video Incoming popup unlocks the ordinary toggle behavior; disabled Ready keeps the same visual on hover and must not suggest clickability.
 - More actions are behind an ellipsis menu; Settings is temporarily hidden from the toolbar More menu.
 - At narrow desktop widths, toolbar actions use their existing icons and tooltips while their text labels and call context are hidden to preserve the right-side controls.
 - Shared operation feedback uses `OperationNotice`: a compact English success/error banner directly below the toolbar, centered without covering the call controls, auto-hiding after four seconds. Transfer and other workspace operation failures reuse this component; do not create page-specific toast styles or use the default Ant message position for operational outcomes.

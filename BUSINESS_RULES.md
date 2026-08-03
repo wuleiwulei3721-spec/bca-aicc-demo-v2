@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-07-29 15:54 +08:00
+Last updated: 2026-08-01 16:45 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -36,7 +36,7 @@ Implemented status model:
 - Sign In uses `Call Management > Global Control Configuration > Status after Sign-in`; its default is `Not Ready`.
 - The current demo has fixed internal full-channel capability. Voice/video and text handoffs are gated only by `Ready` state and active-service guards; no sign-in-mode mismatch warning is shown.
 - A Not Ready sign-in opens no Live Chat service or default customer session. The first switch to Ready opens the fixed `Live Chat` tab and seeds default live chat demo sessions.
-- Saving or resetting Global Control Configuration changes the status applied by the next sign-in in the current browser session. Refresh resets the demo configuration to its mock defaults.
+- Saving or resetting Global Control Configuration changes the status applied by the next sign-in and immediately synchronizes the Live Chat ended-session retention limit in the current browser session. Refresh resets the demo configuration to its mock defaults.
 - Global Control `System Idle Log-out Timeout` is a system-session inactivity setting. `Auto Log-out Warning Lead Time` defines how long before that timeout the system warns the agent. Neither setting represents or changes the agent toolbar `Sign Out` action.
 
 ### Profile Menu
@@ -75,8 +75,9 @@ Implemented status model:
 ### Ready
 
 - `Ready` means the agent can receive compatible interactions.
-- After signing in as `Not Ready`, the agent changes to `Ready` from the profile menu. The call toolbar does not provide a Ready / Not Ready control.
-- Once the agent is `Ready`, the profile menu does not allow a manual return to `Not Ready`; the agent can select an active AUX reason instead. Selecting Ready while in Pre-AUX cancels the pending AUX request.
+- The call toolbar shows the `Not Ready` / `Ready` status button after signing in. A Not Ready sign-in can use its first click to enter Ready and seed the default Live Chat demo sessions.
+- After that first Ready transition, the Ready toolbar button remains visible but cannot return to Not Ready until a Voice or Video Incoming popup has appeared. PSTN, BankApp Voice, and BankApp Video Incoming popups unlock normal two-way Ready / Not Ready toolbar toggling for the rest of the signed-in session. Text-channel sessions do not unlock it.
+- If Global Control signs the agent in as Ready, the toolbar is immediately two-way toggleable. The profile menu remains status-specific and does not expose a manual Not Ready item. Selecting Ready while in Pre-AUX cancels the pending AUX request.
 - Returning to Ready clears After Call Work and call handoff warnings.
 
 ### Not Ready
@@ -85,7 +86,7 @@ Implemented status model:
 - The agent can select an active Busy Reason to enter AUX from any Not Ready state, whether it was entered manually or by After Call Work.
 - After a normal Hang Up, the agent temporarily enters `Not Ready` as After Call Work.
 - After Call Work auto-returns to `Ready` after the saved `Call Management > Global Control Configuration > Auto Cancel ACW Duration`; the mock default is 10 seconds. If the agent selected an AUX reason during the call and is in Pre-AUX, the same timer completes by entering that pending AUX reason instead.
-- Selecting an AUX reason during After Call Work cancels its timer and preserves the ended voice/video workspace so the agent can finish CRM editing before manually returning to Ready.
+- Selecting an AUX reason during After Call Work while any customer service remains active enters `Pre-AUX - {reason}` and keeps the ACW timer running from the original Hang Up time. When that configured duration ends, the agent automatically enters the selected AUX reason.
 
 ### AUX
 
@@ -188,6 +189,7 @@ Conversation transfer modal:
 - Tabs: `Transfer Agent`, `Transfer Skill`.
 - No `Transfer Number` or `Transfer IVR` tab.
 - Agent row actions: `Transfer`, `Conference`.
+- In Live Chat, an ordinary Agent can transfer only to `SPV` or `TL` targets. TL and all other roles retain access to all transfer-agent targets.
 
 Current demo behavior:
 
@@ -286,7 +288,7 @@ Verification:
 - BankApp Voice / VoIP uses `KBV` for both logged-in and guest customers.
 - BankApp text / Live Chat for logged-in BankApp customers shows a compact `PIN` action on the Customer Information card.
 - BankApp text / Live Chat guest customers do not show a verification action in the current demo.
-- BankApp PIN verification sets the card status to `Verifying`, opens the mock secure PIN page in the BankApp customer demo, and updates the card to `Verified` or `Verification Failed` from the simulated callback result.
+- BankApp PIN verification sets the card status to `Verifying`, opens the mock secure PIN page in the BankApp customer demo, and updates the card to `Verified` or `Verification Failed` from the simulated callback result. Hovering the failed status icon shows the returned demo reason: `PIN input is incorrect`. After the third failed attempt, the disabled `PIN` action shows the verification-limit reason on hover.
 - The PIN page represents a BCA-provided client page. In the demo, Netinfo initiates the PIN verification request and BCA returns the result to Netinfo.
 - PIN can be requested up to 3 times. While waiting, after success, and after the third failed attempt, the `PIN` action is disabled.
 - WhatsApp, BankApp video, Webchat, and unsupported channels do not show a verification action in the current demo.
@@ -305,7 +307,13 @@ Verification V2 is the current KBV model.
 
 Rule matching:
 
-- Rules match by enabled channel code, skill queue, and customer segment.
+- Rules match by enabled channel code, skill queue, customer segment, and, for HaloApp, the first received login status.
+- Rules containing HaloApp must set `HaloApp Login Status` to `Same for Both`, `Logged In`, or `Not Logged In`. `Same for Both` applies to either first-call status; Phone-only rules show no HaloApp login status.
+- Perbankan has a HaloApp-only `Logged In` rule requiring 1 Mandatory plus 2 Dynamic correct answers (3 total); its 5-answer `Not Logged In` configuration (1 Mandatory, 2 Dynamic, 2 Static) is combined with Phone in one multi-channel rule. Phone ignores the HaloApp-only login-status condition.
+- Kartu Kredit has a HaloApp-only `Logged In` rule requiring 3 correct answers; its 4-answer `Not Logged In` configuration is combined with Phone in one multi-channel rule.
+- Other HaloApp skills use `Same for Both` and retain their existing question configuration for logged-in and guest customers.
+- HaloApp login status is captured from the first Voice handoff, is not editable by the agent, and remains fixed when KBV is reopened in the same interaction. A future real-time HaloApp status callback requires a separate re-verification policy.
+- Enabled rules may not overlap on a channel, skill queue, customer segment, and applicable HaloApp login status. Disabled duplicate configurations are allowed.
 - Customer segment is inferred from profile but can be adjusted in the agent modal.
 - Skill can be adjusted in the agent verification tab or management preview modal.
 - Scenario selector is shown only when the matched rule has multiple scenarios.
@@ -313,6 +321,7 @@ Rule matching:
 Rule model:
 
 - A rule contains channel codes, skill queue, customer segments, status, and scenarios.
+- HaloApp rules additionally contain a single login-status applicability value. Management List and query support this value, and Copy opens a deep-copied Add Rule draft without persisting it.
 - A scenario contains question blocks.
 - Question block types include:
   - `Mandatory`
@@ -345,6 +354,7 @@ Preview:
 
 - Management Preview reuses the same verification modal.
 - In Preview, Skill and Customer Segment are read-only.
+- Preview questions are read-only: Correct, Wrong, Skip, and verification-result actions are hidden; only Close is available.
 - Preview does not save rules or customer verification state.
 
 ## 11. Customer Journey Rules
@@ -423,6 +433,8 @@ Customer list:
 - Supports channel filters: All, WhatsApp, BankApp, Webchat.
 - All filter toggles all channels on/off.
 - Supports sorting by access time or message time.
+- Current combines active service sessions up to `Global Control Configuration > Max Digital Media Services` (default 3) with recently ended Live Chat sessions up to `Max Live Chat Ended Session Retention` (default 10). The list remains unified and follows the selected sort mode.
+- A newly ended session replaces the Current retained session with the earliest end time when the configured ended-session retention limit has been reached; the replaced session moves to History.
 - Active conversations show elapsed service time.
 - History conversations show ended time.
 - Star colors remain local compatibility state, but the customer list star marker UI is hidden.
@@ -443,15 +455,13 @@ Conversation:
 - Header shows channel icon, customer name, and service duration.
 - Active session actions: `Transfer`, `End Service`.
 - Customer-ended session action: `Close`.
-- Active Webchat sessions show a static floating `Customer is typing` indicator above the agent composer in the current demo.
-- The typing indicator does not participate in the composer height, so typing state changes should not resize the agent input area.
-- Webchat typing is not connected to customer-side Webchat Demo input events or screenshots.
 - Sending a message appends a current-agent message in local state.
 - End Service main action keeps the confirmation modal, then records a normal agent end after confirmation.
 - End Service shows the `Abnormal End Reason` caret only when at least one active abnormal reason applies to DM. When none applies, End Service remains a normal single button and retains its confirmation modal.
 - Selecting an abnormal End Service reason ends the session immediately without another confirmation.
-- End Service adds a system message, marks session ended, then moves it to History.
-- Close removes the active session and adds it to closed history.
+- End Service adds a system message, marks the session ended, removes it from the active-service count, and retains it in Current for CRM editing.
+- Close moves an ended Current session to History. History keeps the current CRM workspace behavior without an additional disconnect prompt or restriction.
+- New Live Chat handoffs are admitted only while the number of active service sessions is below the configured `Max Digital Media Services` limit. When all slots are occupied, the customer remains in the simulated queue and no new workspace session is created.
 
 Message Record:
 
@@ -616,23 +626,25 @@ Hidden / redirected:
 
 ### Blacklist
 
-- Entries contain Channel, Identifier, Restriction Policy, Validity Days, Remark, Created Date, Created By.
+- Entries contain Channel, Country Code, Identifier, Restriction Policy, Validity Days, Reason, Status, Created Date, Created By. The list shows the stored Country Code for Phone entries and `-` for every other channel; Phone Identifier displays the actual Phone Number without repeating its Country Code.
 - Restriction policies:
   - Block Access.
   - Prohibit Transfer to Agent.
-- Batch Add is the only local demo creation action. Channel is required and supports multiple selections; Identifier is required. Saving creates one record for every selected Channel + Identifier combination.
+- Batch Add is the only local demo creation action. Channel and Reason are required. Non-Phone channels support multiple selections and create one record for every selected Channel + Identifier combination.
+- Phone is a dedicated batch mode and cannot be mixed with other channels. Country Code defaults to editable `062`; Country Code and Phone Number are required, while actual Phone Number values remain exactly as entered.
+- Batch Add exposes a Status switch that defaults to Enabled; its selected value applies to every record generated by that submission. The Status list cell also combines an inline switch with an Enabled/Disabled label; switching updates a record immediately without confirmation. Disabled records remain visible and searchable but are not treated as effective blacklist records for future consumers. The current demo has no customer-flow blacklist consumer.
 - Delete supports selected rows and confirmation.
 - Store is local front-end state.
 
 ### Priority List
 
-- Entries contain Channel, Identifier, Match Rule, Remark, Created Date, Created By.
+- Entries contain Channel, Identifier, Match Rule, Reason, Created Date, Created By.
 - Match rules:
   - Exact Match.
   - Partial Match.
 - Search supports Channel, Identifier, and Match Rule.
 - Empty Match Rule means all match rules.
-- Batch Add uses manually selected Match Rule.
+- Batch Add uses manually selected Match Rule; Reason is required.
 - Duplicate check uses `Channel + normalized Identifier + Match Rule`.
 - Exact and Partial rules for the same identifier can coexist.
 - Store is local front-end state.
@@ -763,8 +775,10 @@ Important rules:
 - AppStore and PlayStore support Non-DM only.
 - Channels Edit Channel media type selector shows all configured media types; the current channel's selected media types determine which Business Config tabs are shown.
 - Channels DM Business Config shows `Queue Configuration` immediately after `Access Configuration`.
-- `Queue Configuration` contains `Outside Service Hours Message`, `Queue Waiting Message`, and `Queue Timeout Message`.
-- `Queue Waiting Message` does not support estimated-wait dynamic parameters in the current demo.
+- `Queue Configuration` contains `Outside Service Hours Message`, `Queue Waiting Message`, `Long Queue Waiting Time (sec)`, `Long Queue Waiting Message`, `Queue Timeout (sec)`, and `Queue Timeout Message`.
+- `Queue Waiting Message` supports the `{queuePosition}` dynamic parameter. Estimated-wait dynamic parameters remain unsupported.
+- `Long Queue Waiting Time (sec)` defaults to `180`; empty or `0` disables the long-wait prompt.
+- `Queue Timeout (sec)` defaults to `360` and accepts values from `0` to `60000`.
 - Channels DM and Non-DM Business Config can each select one fixed `New Customer Alert Sound` and preview it. Clearing the selection means no alert sound for that channel/media pair.
 - New customer alert sounds play once for a new DM or Non-DM interaction. Playback is gated by the existing agent-level `System prompt sound` setting.
 - Voice and Video do not expose this configuration and continue to use OpenEye ringing.

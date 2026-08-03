@@ -246,7 +246,7 @@ export const verificationV2QuestionBank: VerificationV2Question[] = [
   ),
 ]
 
-export const verificationV2Rules: VerificationV2Rule[] = [
+const baseVerificationV2Rules: VerificationV2Rule[] = [
   {
     channelCodes: ['PHONE'],
     customerSegments: ['regular'],
@@ -874,4 +874,33 @@ export const verificationV2Rules: VerificationV2Rule[] = [
     status: 'enabled',
     updatedAt: '2026-06-12 15:30',
   },
+]
+
+const haloAppRegisteredRuleIds = new Set([
+  'v2-bankapp-perbankan-registered',
+  'v2-bankapp-card-regular',
+])
+
+const phoneAndHaloAppGuestRuleIds = new Set([
+  'v2-phone-perbankan-regular',
+  'v2-phone-card-regular',
+])
+
+export const verificationV2Rules: VerificationV2Rule[] = [
+  ...baseVerificationV2Rules.map((rule) =>
+    phoneAndHaloAppGuestRuleIds.has(rule.id)
+      ? {
+          ...rule,
+          channelCodes: ['PHONE', 'BANKAPP'],
+          haloAppLoginStatus: 'guest',
+        }
+      : rule.channelCodes.includes('BANKAPP')
+      ? {
+          ...rule,
+          haloAppLoginStatus: haloAppRegisteredRuleIds.has(rule.id)
+            ? 'registered'
+            : 'all',
+        }
+      : rule,
+  ),
 ]

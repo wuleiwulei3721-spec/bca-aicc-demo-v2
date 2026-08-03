@@ -64,6 +64,7 @@ export const unidentifiedTicketingHistory: TicketHistoryItem[] = []
 export const bankAppVoiceCustomer: CustomerInformation = {
   accessChannel: 'BankApp Voice',
   accessDuration: '00:12',
+  bankAppLoginStatus: 'registered',
   profile: {
     avatarInitials: 'SA',
     avatarUrl: '',
@@ -79,6 +80,7 @@ export const bankAppVoiceCustomer: CustomerInformation = {
 export const bankAppVoiceGuestCustomer: CustomerInformation = {
   accessChannel: 'BankApp Voice',
   accessDuration: '00:12',
+  bankAppLoginStatus: 'guest',
   profile: {
     avatarInitials: 'GU',
     avatarUrl: '',

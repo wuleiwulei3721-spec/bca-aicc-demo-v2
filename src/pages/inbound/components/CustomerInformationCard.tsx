@@ -322,6 +322,12 @@ export function CustomerInformationCard({
               : verificationStatus
   const effectiveVerificationStatus =
     verificationAction === 'pin' ? pinVerificationStatus : verificationStatus
+  const pinVerificationFailureReason =
+    verificationAction === 'pin' &&
+    (bankAppPinVerificationStatus === 'failed' ||
+      bankAppPinVerificationStatus === 'locked')
+      ? 'PIN input is incorrect.'
+      : undefined
   const {
     consume: consumeOutboundApproval,
     isApproved: isOutboundApproved,
@@ -355,6 +361,10 @@ export function CustomerInformationCard({
     () => ({
       channelCode: getDefaultVerificationV2ChannelCode(customer.accessChannel),
       customerSegment: getCustomerSegmentFromProfile(profile.customerType),
+      haloAppLoginStatus:
+        customer.accessChannel === 'BankApp Voice'
+          ? customer.bankAppLoginStatus
+          : undefined,
       organizationSegment: 'none',
       skillQueueCode: getDefaultVerificationV2SkillQueueCode(
         customer.accessChannel,
@@ -362,7 +372,13 @@ export function CustomerInformationCard({
       ),
       scenarioId: 'default',
     }),
-    [accessMenuName, customer.accessChannel, profile.customerType, routeMenuName],
+    [
+      accessMenuName,
+      customer.accessChannel,
+      customer.bankAppLoginStatus,
+      profile.customerType,
+      routeMenuName,
+    ],
   )
   const effectiveVerificationV2Conditions =
     verificationConditions ?? initialVerificationV2Conditions
@@ -499,6 +515,7 @@ export function CustomerInformationCard({
         }
         verifyButtonLabel={verifyButtonLabel}
         verifyButtonTitle={verifyButtonTitle}
+        verificationFailureReason={pinVerificationFailureReason}
         onOpenCallFlow={() => setIsCallFlowOpen(true)}
         onOpenSpecialHandling={
           isCrmIdentified

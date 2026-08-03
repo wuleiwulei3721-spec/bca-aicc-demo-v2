@@ -74,9 +74,12 @@ export interface ChannelMediaBusinessConfig {
   minScanIntervalSeconds: number
   newCustomerAlertSound: string
   outsideServiceHoursMessage: string
+  longQueueWaitingMessage: string
+  longQueueWaitingSeconds: number
   preTimeoutReminderMessage: string
   preTimeoutReminderMinutes: number
   queueTimeoutMessage: string
+  queueTimeoutSeconds: number
   queueWaitingMessage: string
   webchatRecallLimitSeconds: number
 }

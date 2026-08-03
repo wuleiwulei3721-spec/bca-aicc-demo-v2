@@ -2,6 +2,7 @@
   ArrowDownOutlined,
   ArrowUpOutlined,
   BookOutlined,
+  CopyOutlined,
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
@@ -37,6 +38,7 @@ import {
 import { useAppStore, useRoutingConfigStore } from '../../store'
 import type {
   VerificationV2CustomerSegment,
+  VerificationV2HaloAppLoginStatus,
   VerificationV2Question,
   VerificationV2QuestionBlock,
   VerificationV2QuestionBlockType,
@@ -61,6 +63,8 @@ import {
   verificationV2BaseGroupOrder,
   verificationV2CustomerSegmentLabels,
   verificationV2CustomerSegmentOptions,
+  verificationV2HaloAppLoginStatusLabels,
+  verificationV2HaloAppLoginStatusOptions,
   verificationV2QuestionBlockTypeLabels,
 } from '../../utils/verificationRuleV2'
 
@@ -84,6 +88,7 @@ interface QuestionBankFilters {
 interface RuleFilters {
   channelCodes: string[]
   customerSegments: VerificationV2CustomerSegment[]
+  haloAppLoginStatus: '' | VerificationV2HaloAppLoginStatus
   skillQueueCodes: string[]
   status: '' | VerificationV2RuleStatus
 }
@@ -116,6 +121,7 @@ const defaultQuestionBankFilters: QuestionBankFilters = {
 const defaultRuleFilters: RuleFilters = {
   channelCodes: [],
   customerSegments: [],
+  haloAppLoginStatus: '',
   skillQueueCodes: [],
   status: '',
 }
@@ -248,6 +254,16 @@ function getRuleValidationErrors(rule: VerificationV2Rule) {
     errors.push('Channel is required.')
   }
 
+  const hasHaloAppChannel = rule.channelCodes.includes('BANKAPP')
+
+  if (hasHaloAppChannel && !rule.haloAppLoginStatus) {
+    errors.push('HaloApp Login Status is required.')
+  }
+
+  if (!hasHaloAppChannel && rule.haloAppLoginStatus) {
+    errors.push('HaloApp Login Status is only available for HaloApp rules.')
+  }
+
   if (!rule.skillQueueCode) {
     errors.push('Skill Queue is required.')
   }
@@ -322,6 +338,36 @@ function getRuleValidationErrors(rule: VerificationV2Rule) {
   })
 
   return errors
+}
+
+function rulesOverlap(
+  firstRule: VerificationV2Rule,
+  secondRule: VerificationV2Rule,
+) {
+  if (firstRule.skillQueueCode !== secondRule.skillQueueCode) {
+    return false
+  }
+
+  const sharedChannels = firstRule.channelCodes.filter((channelCode) =>
+    secondRule.channelCodes.includes(channelCode),
+  )
+  const sharedSegments = firstRule.customerSegments.some((segment) =>
+    secondRule.customerSegments.includes(segment),
+  )
+
+  if (sharedChannels.length === 0 || !sharedSegments) {
+    return false
+  }
+
+  return sharedChannels.some(
+    (channelCode) =>
+      channelCode !== 'BANKAPP' ||
+      !firstRule.haloAppLoginStatus ||
+      !secondRule.haloAppLoginStatus ||
+      firstRule.haloAppLoginStatus === 'all' ||
+      secondRule.haloAppLoginStatus === 'all' ||
+      firstRule.haloAppLoginStatus === secondRule.haloAppLoginStatus,
+  )
 }
 
 export function VerificationRuleV2Page() {
@@ -452,6 +498,13 @@ export function VerificationRuleV2Page() {
           return false
         }
 
+        if (
+          ruleFilters.haloAppLoginStatus &&
+          rule.haloAppLoginStatus !== ruleFilters.haloAppLoginStatus
+        ) {
+          return false
+        }
+
         if (ruleFilters.status && rule.status !== ruleFilters.status) {
           return false
         }
@@ -461,7 +514,19 @@ export function VerificationRuleV2Page() {
     [ruleFilters, verificationV2Rules],
   )
   const ruleValidationErrors = ruleDraft
-    ? getRuleValidationErrors(ruleDraft)
+    ? [
+        ...getRuleValidationErrors(ruleDraft),
+        ...(ruleDraft.status === 'enabled'
+          ? verificationV2Rules.some(
+              (rule) =>
+                rule.id !== ruleDraft.id &&
+                rule.status === 'enabled' &&
+                rulesOverlap(ruleDraft, rule),
+            )
+            ? ['An enabled verification rule already overlaps these conditions.']
+            : []
+          : []),
+      ]
     : []
   const isRuleViewMode = ruleMode === 'view'
   const draftScenarios = ruleDraft
@@ -599,6 +664,7 @@ export function VerificationRuleV2Page() {
     setRuleFilters({
       channelCodes: [...ruleFilterDraft.channelCodes],
       customerSegments: [...ruleFilterDraft.customerSegments],
+      haloAppLoginStatus: ruleFilterDraft.haloAppLoginStatus,
       skillQueueCodes: [...ruleFilterDraft.skillQueueCodes],
       status: ruleFilterDraft.status,
     })
@@ -630,6 +696,22 @@ export function VerificationRuleV2Page() {
       getNextRuleSequence(verificationV2Rules) + 1,
     )
     const defaultScenario = getDefaultVerificationV2Scenario(nextRule)
+    setRuleDraft(nextRule)
+    setActiveScenarioId(defaultScenario?.id ?? 'default')
+  }
+
+  const copyRule = (rule: VerificationV2Rule) => {
+    const copiedRule = cloneVerificationV2Rule(rule)
+    const nextRule = {
+      ...copiedRule,
+      id: `v2-rule-${String(
+        getNextRuleSequence(verificationV2Rules) + 1,
+      ).padStart(3, '0')}`,
+    }
+    const defaultScenario = getDefaultVerificationV2Scenario(nextRule)
+
+    setRuleMode('create')
+    setRuleSubmitAttempted(false)
     setRuleDraft(nextRule)
     setActiveScenarioId(defaultScenario?.id ?? 'default')
   }
@@ -1034,6 +1116,15 @@ export function VerificationRuleV2Page() {
       ),
     },
     {
+      key: 'haloAppLoginStatus',
+      title: 'HaloApp Login Status',
+      width: 144,
+      render: (_, rule) =>
+        rule.haloAppLoginStatus
+          ? verificationV2HaloAppLoginStatusLabels[rule.haloAppLoginStatus]
+          : '-',
+    },
+    {
       key: 'correctRequired',
       title: 'Correct Required',
       width: 104,
@@ -1081,7 +1172,7 @@ export function VerificationRuleV2Page() {
       fixed: 'right',
       key: 'actions',
       title: 'Actions',
-      width: 112,
+      width: 144,
       render: (_, rule) => (
         <div className="verification-rules-page__row-actions">
           <button
@@ -1098,6 +1189,15 @@ export function VerificationRuleV2Page() {
           >
             <EditOutlined />
           </button>
+          <Tooltip title="Copy rule">
+            <button
+              aria-label={`Copy ${rule.id}`}
+              type="button"
+              onClick={() => copyRule(rule)}
+            >
+              <CopyOutlined />
+            </button>
+          </Tooltip>
           <button
             aria-label={`Delete ${rule.id}`}
             type="button"
@@ -1278,6 +1378,7 @@ export function VerificationRuleV2Page() {
       ? {
           channelCode: previewRule.channelCodes[0] ?? 'PHONE',
           customerSegment: previewRule.customerSegments[0] ?? 'regular',
+          haloAppLoginStatus: previewRule.haloAppLoginStatus,
           organizationSegment: 'none' as const,
           scenarioId: activeScenario?.id ?? previewDefaultScenario.id,
           skillQueueCode: previewRule.skillQueueCode,
@@ -1305,6 +1406,7 @@ export function VerificationRuleV2Page() {
           previewRule.id,
           previewInitialConditions.channelCode,
           previewInitialConditions.customerSegment,
+          previewInitialConditions.haloAppLoginStatus ?? 'none',
           previewInitialConditions.skillQueueCode,
           previewInitialConditions.scenarioId,
           previewRule.customerSegments.join(','),
@@ -1390,6 +1492,24 @@ export function VerificationRuleV2Page() {
                   }
                 />
               </AdminFilterField>
+              <AdminFilterField label="HaloApp Login Status" width={180}>
+                <Select
+                  options={[
+                    { label: 'All', value: '' },
+                    ...verificationV2HaloAppLoginStatusOptions,
+                  ]}
+                  value={ruleFilterDraft.haloAppLoginStatus}
+                  onChange={(haloAppLoginStatus) =>
+                    setRuleFilterDraft((currentDraft) => ({
+                      ...currentDraft,
+                      haloAppLoginStatus:
+                        haloAppLoginStatus as
+                          | ''
+                          | VerificationV2HaloAppLoginStatus,
+                    }))
+                  }
+                />
+              </AdminFilterField>
               <AdminFilterField label="Status" width={150}>
                 <Select
                   options={ruleStatusOptions}
@@ -1428,7 +1548,7 @@ export function VerificationRuleV2Page() {
           dataSource={filteredRules}
           pagination={{}}
           rowKey="id"
-          horizontalScroll={1080}
+          horizontalScroll={1240}
         />
       </BaseCard>
 
@@ -1496,7 +1616,14 @@ export function VerificationRuleV2Page() {
                     mode="multiple"
                     options={activeChannelOptions}
                     value={ruleDraft.channelCodes}
-                    onChange={(channelCodes) => patchRuleDraft({ channelCodes })}
+                    onChange={(channelCodes) =>
+                      patchRuleDraft({
+                        channelCodes,
+                        haloAppLoginStatus: channelCodes.includes('BANKAPP')
+                          ? ruleDraft.haloAppLoginStatus ?? 'all'
+                          : undefined,
+                      })
+                    }
                   />
                 </AdminFormField>
                 <AdminFormField label="Skill Queue" required>
@@ -1527,6 +1654,21 @@ export function VerificationRuleV2Page() {
                     }
                   />
                 </AdminFormField>
+                {ruleDraft.channelCodes.includes('BANKAPP') && (
+                  <AdminFormField label="HaloApp Login Status" required>
+                    <Select
+                      disabled={isRuleViewMode}
+                      options={verificationV2HaloAppLoginStatusOptions}
+                      value={ruleDraft.haloAppLoginStatus}
+                      onChange={(haloAppLoginStatus) =>
+                        patchRuleDraft({
+                          haloAppLoginStatus:
+                            haloAppLoginStatus as VerificationV2HaloAppLoginStatus,
+                        })
+                      }
+                    />
+                  </AdminFormField>
+                )}
                 <AdminFormField
                   className="verification-rule-v2-modal__switch-field"
                   label="Status"
@@ -1826,6 +1968,7 @@ export function VerificationRuleV2Page() {
             key={previewKey}
             initialConditions={previewInitialConditions}
             questionBank={verificationV2QuestionBank}
+            readonlyActions
             readonlyConditions
             rules={[previewRule]}
             variant="compact"

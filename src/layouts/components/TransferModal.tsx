@@ -10,7 +10,7 @@ import {
   SearchInput,
 } from '../../components'
 import { transferAgents, transferSkills } from '../../mock/transfer'
-import { useCallManagementStore } from '../../store'
+import { useAuthStore, useCallManagementStore } from '../../store'
 import type {
   CommonNumberEntry,
   TransferAgent,
@@ -34,6 +34,7 @@ interface TransferModalProps {
 }
 
 type TransferModalVariant = 'call' | 'conversation'
+type TransferAgentScope = 'all' | 'leaders-only'
 
 const conversationPrimaryAgentActions = ['Transfer', 'Conference']
 const allFilterValue = 'all'
@@ -66,6 +67,7 @@ function ConversationAgentActions({ onComplete }: { onComplete: () => void }) {
 }
 
 function TransferAgentTab({
+  agentScope,
   consultedAgentId,
   variant,
   onConferenceWithAgent,
@@ -73,6 +75,7 @@ function TransferAgentTab({
   onTransferToAgent,
   onComplete,
 }: {
+  agentScope: TransferAgentScope
   consultedAgentId?: string | null
   variant: TransferModalVariant
   onConferenceWithAgent?: (agent: TransferAgent) => void
@@ -83,15 +86,23 @@ function TransferAgentTab({
   const [keyword, setKeyword] = useState('')
   const [skillQueue, setSkillQueue] = useState(allFilterValue)
 
+  const visibleAgents = useMemo(
+    () =>
+      transferAgents.filter(
+        (agent) => agentScope === 'all' || agent.marker === 'SPV' || agent.marker === 'TL',
+      ),
+    [agentScope],
+  )
+
   const skillQueueOptions = useMemo(
-    () => Array.from(new Set(transferAgents.map((agent) => agent.skillName))),
-    [],
+    () => Array.from(new Set(visibleAgents.map((agent) => agent.skillName))),
+    [visibleAgents],
   )
 
   const filteredAgents = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLowerCase()
 
-    return transferAgents
+    return visibleAgents
       .filter((agent) => {
         const matchesKeyword =
           !normalizedKeyword ||
@@ -113,7 +124,7 @@ function TransferAgentTab({
 
         return priority(left) - priority(right)
       })
-  }, [keyword, skillQueue, variant])
+  }, [keyword, skillQueue, variant, visibleAgents])
 
   const columns: ColumnsType<TransferAgent> = [
     {
@@ -468,12 +479,18 @@ export function TransferModal({
   onTransferToNumberFailed,
   onTransferToSkill,
 }: TransferModalProps) {
+  const authSession = useAuthStore((state) => state.session)
+  const agentScope: TransferAgentScope =
+    variant === 'conversation' && authSession?.role === 'agent'
+      ? 'leaders-only'
+      : 'all'
   const items = [
     {
       key: 'agent',
       label: 'Transfer Agent',
       children: (
         <TransferAgentTab
+          agentScope={agentScope}
           consultedAgentId={consultedAgentId}
           variant={variant}
           onComplete={onClose}

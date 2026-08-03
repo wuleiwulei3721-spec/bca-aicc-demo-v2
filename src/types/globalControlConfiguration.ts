@@ -8,7 +8,8 @@ export interface GlobalControlConfiguration {
   autoCancelAcwSeconds: number
   idleAutoLogOutMinutes: number
   idleWarningMinutes: number
-  maxTextMediaServices: number
+  maxDigitalMediaServices: number
+  maxLiveChatEndedSessionRetention: number
   defaultSkillQueueCode: string
   signInDefaultStatus: GlobalControlSignInStatus
 }

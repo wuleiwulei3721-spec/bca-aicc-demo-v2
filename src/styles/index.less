@@ -7176,6 +7176,13 @@ a {
   color: #435772;
 }
 
+.aicc-toolbar-button--ready:disabled,
+.aicc-toolbar-button--ready:disabled:hover {
+  background: var(--aicc-success);
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(31, 157, 103, 0.18);
+}
+
 .aicc-timeline-flow {
   display: grid;
   min-width: 0;
@@ -11368,87 +11375,6 @@ button.inbound-list-row .inbound-list-row__title {
   gap: 7px;
 }
 
-.livechat2-typing-indicator {
-  display: inline-flex;
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 16px;
-  z-index: 4;
-  width: fit-content;
-  max-width: calc(100% - 32px);
-  align-items: center;
-  padding: 4px 8px;
-  border: 1px solid #dbe7f5;
-  border-radius: 999px;
-  background: #f5f9ff;
-  color: var(--aicc-text-secondary);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 16px;
-  pointer-events: none;
-  gap: 6px;
-  box-shadow: 0 8px 18px rgba(24, 74, 138, 0.12);
-}
-
-.livechat2-typing-dots {
-  display: inline-flex;
-  width: 3ch;
-  color: var(--aicc-primary);
-  font-weight: 800;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.livechat2-typing-dots span {
-  width: 1ch;
-  animation: livechat2-typing-dot-visibility 1.6s steps(1, end) infinite;
-  opacity: 0;
-}
-
-.livechat2-typing-dots span:nth-child(2) {
-  animation-name: livechat2-typing-dot-visibility-2;
-}
-
-.livechat2-typing-dots span:nth-child(3) {
-  animation-name: livechat2-typing-dot-visibility-3;
-}
-
-@keyframes livechat2-typing-dot-visibility {
-  0%,
-  24.99% {
-    opacity: 0;
-  }
-
-  25%,
-  100% {
-    opacity: 1;
-  }
-}
-
-@keyframes livechat2-typing-dot-visibility-2 {
-  0%,
-  49.99% {
-    opacity: 0;
-  }
-
-  50%,
-  100% {
-    opacity: 1;
-  }
-}
-
-@keyframes livechat2-typing-dot-visibility-3 {
-  0%,
-  74.99% {
-    opacity: 0;
-  }
-
-  75%,
-  100% {
-    opacity: 1;
-  }
-}
-
 .livechat2-composer__quote {
   display: flex;
   align-items: center;
@@ -13599,6 +13525,11 @@ button.inbound-list-row .inbound-list-row__title {
   padding: 5px 0;
   border-bottom: 1px solid rgba(237, 242, 248, 0.86);
   background: transparent;
+}
+
+.inbound-verification-workflow--compact.inbound-verification-workflow--readonly-actions
+  .inbound-verification-list__row {
+  grid-template-columns: 22px minmax(0, 1fr);
 }
 
 .inbound-verification-workflow--compact

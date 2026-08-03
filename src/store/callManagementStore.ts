@@ -15,6 +15,7 @@ import { defaultSensitiveWordEntries } from '../mock/sensitiveWords'
 import { defaultSessionEndReasonEntries } from '../mock/sessionEndReasons'
 import type {
   BlacklistEntry,
+  BlacklistStatus,
   BusyReason,
   CallRecord,
   CallRecordSummary,
@@ -85,6 +86,7 @@ interface CallManagementStore {
   sensitiveWordEntries: SensitiveWordEntry[]
   sessionEndReasonEntries: SessionEndReasonEntry[]
   updateCallRecordSummary: (recordId: string, summary: CallRecordSummary) => void
+  updateBlacklistEntryStatus: (id: string, status: BlacklistStatus) => void
   updateGlobalControlConfiguration: (
     configuration: GlobalControlConfiguration,
   ) => void
@@ -386,6 +388,12 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
               },
             }
           : record,
+      ),
+    })),
+  updateBlacklistEntryStatus: (id, status) =>
+    set((state) => ({
+      blacklistEntries: state.blacklistEntries.map((entry) =>
+        entry.id === id ? { ...entry, status } : entry,
       ),
     })),
   updateGlobalControlConfiguration: (configuration) =>

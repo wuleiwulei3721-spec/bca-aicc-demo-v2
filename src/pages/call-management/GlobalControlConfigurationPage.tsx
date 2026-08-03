@@ -3,7 +3,7 @@ import { Alert, InputNumber, Select } from 'antd'
 import { useMemo, useState } from 'react'
 import { BaseButton, BaseCard, PageContainer } from '../../components'
 import { defaultGlobalControlConfiguration } from '../../mock/globalControlConfiguration'
-import { useCallManagementStore } from '../../store'
+import { useAppStore, useCallManagementStore } from '../../store'
 import { useRoutingConfigStore } from '../../store/routingConfigStore'
 import type {
   GlobalControlAnswerMode,
@@ -106,6 +106,9 @@ export function GlobalControlConfigurationPage() {
   const resetGlobalControlConfiguration = useCallManagementStore(
     (state) => state.resetGlobalControlConfiguration,
   )
+  const syncLiveChat2RetentionLimit = useAppStore(
+    (state) => state.syncLiveChat2RetentionLimit,
+  )
   const [config, setConfig] = useState<GlobalControlConfiguration>(
     () => ({ ...savedConfiguration }),
   )
@@ -170,8 +173,12 @@ export function GlobalControlConfigurationPage() {
       )
     }
 
-    if (config.maxTextMediaServices <= 0) {
-      errors.push('Max DM Media Services must be greater than 0.')
+    if (config.maxDigitalMediaServices <= 0) {
+      errors.push('Max Digital Media Services must be greater than 0.')
+    }
+
+    if (config.maxLiveChatEndedSessionRetention <= 0) {
+      errors.push('Max Live Chat Ended Session Retention must be greater than 0.')
     }
 
     if (!config.defaultSkillQueueCode) {
@@ -192,12 +199,14 @@ export function GlobalControlConfigurationPage() {
 
     const nextSavedAt = formatSavedTime(new Date())
     updateGlobalControlConfiguration(config)
+    syncLiveChat2RetentionLimit()
     setSavedAt(nextSavedAt)
     setSavedNotice(`Global control configuration saved at ${nextSavedAt}.`)
   }
 
   const handleReset = () => {
     resetGlobalControlConfiguration()
+    syncLiveChat2RetentionLimit()
     setConfig({ ...defaultGlobalControlConfiguration })
     const nextSavedAt = formatSavedTime(new Date())
     setSavedAt(nextSavedAt)
@@ -312,14 +321,22 @@ export function GlobalControlConfigurationPage() {
             </div>
           </BaseCard>
 
-          <BaseCard compact title="DM Media Capacity">
-            <div className="global-control-config__row global-control-config__row--single">
+          <BaseCard compact title="Digital Media Capacity">
+            <div className="global-control-config__row">
               <NumberField
-                label="Max DM Media Services"
+                label="Max Digital Media Services"
                 unit="items"
-                value={config.maxTextMediaServices}
+                value={config.maxDigitalMediaServices}
                 onChange={(value) =>
-                  updateConfig('maxTextMediaServices', value)
+                  updateConfig('maxDigitalMediaServices', value)
+                }
+              />
+              <NumberField
+                label="Max Live Chat Ended Session Retention"
+                unit="items"
+                value={config.maxLiveChatEndedSessionRetention}
+                onChange={(value) =>
+                  updateConfig('maxLiveChatEndedSessionRetention', value)
                 }
               />
             </div>

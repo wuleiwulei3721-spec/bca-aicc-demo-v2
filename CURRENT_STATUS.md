@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-07-29 15:54 +08:00
+Last updated: 2026-08-01 16:45 +08:00
 
 ## 1. Overall Status
 
@@ -55,11 +55,12 @@ This repository is still a demo application:
 - Profile menu follows explicit Unsigned / Not Ready / Ready / Pre-AUX / AUX state branches, with current status displayed beside the team name.
 - Status after Sign-in is shared Global Control Configuration, defaults to Not Ready, and applies to the next sign-in in the current browser session.
 - Global Control labels `System Idle Log-out Timeout` and `Auto Log-out Warning Lead Time` distinguish the system timeout from its pre-log-out warning and from the agent toolbar Sign Out action.
+- Global Control `Digital Media Capacity` configures active service capacity through `Max Digital Media Services` (default 3) and Live Chat Current ended-session retention through `Max Live Chat Ended Session Retention` (default 10).
 - Header Log Out first blocks active call, Live Chat, or Live Chat 2 services; when no service is active, it blocks signed-in Ready and Pre-AUX states until the agent switches to Not Ready or AUX. Unsigned, Not Ready, and AUX states then use a confirmation dialog.
 - Idle system log-out monitors Unsigned, Not Ready, and AUX states, resets on window activity or warning dismissal, shows a pre-expiry warning, and returns to Login at the configured timeout.
 - Sign out confirmation and active-service block.
 - AUX reason menu from Busy Reason.
-- All Not Ready states expose Busy Reason AUX options; in After Call Work, choosing one cancels the saved Global Control countdown so agents can extend CRM editing time.
+- All Not Ready states expose Busy Reason AUX options; if a customer service remains active during After Call Work, choosing one displays Pre-AUX while the saved Global Control countdown continues and then automatically enters AUX.
 - Agent Settings entry separated at the bottom of the profile menu with system prompt sound on/off control.
 
 ## 5. Completed Agent and Call Toolbar
@@ -69,8 +70,8 @@ This repository is still a demo application:
 - Call statuses: Idle, Incoming, Talking, Hold.
 - Answer, Hold, Transfer, Hang Up.
 - Hang Up uses a split-button only when its current media has an active abnormal end reason; otherwise it remains the normal single Hang Up action.
-- Agent state transitions are managed from the profile menu: Not Ready can become Ready; Ready can enter AUX but cannot manually return to Not Ready.
-- Voice/video After Call Work remains Not Ready until its configured automatic Ready transition. When the agent chose AUX during the call, the header profile retains Pre-AUX through ACW while the toolbar timer displays Not Ready, then the state automatically enters AUX.
+- The toolbar restores the Ready / Not Ready button. Default Not Ready sign-in can enter Ready once, then keeps Ready visible but locked until a Voice or Video Incoming popup occurs; thereafter it supports normal two-way toggling for that signed-in session. Default Ready sign-in is immediately toggleable.
+- Voice/video After Call Work remains Not Ready until its configured automatic Ready transition. When the agent chooses AUX during the call or ACW while another service remains active, the header profile retains Pre-AUX through ACW while the toolbar timer displays Not Ready, then the state automatically enters AUX without restarting the saved countdown.
 - Timer display.
 - Global Control `Auto Cancel ACW Duration` drives the next voice/video After Call Work timer.
 - Toolbar More menu currently exposes Outbound Call; toolbar display settings are hidden from the More menu.
@@ -112,6 +113,7 @@ This repository is still a demo application:
 - Customer Information verification action is channel-aware: PSTN and BankApp Voice use compact `KBV`; logged-in BankApp text uses compact `PIN`; BankApp text guest, Webchat text, and unsupported channels hide the action.
 - Guest customer information is channel-aware: text-channel guests keep the entered name / phone / email with customer ID shown as `-`, while BankApp voice / video guests show generated `Guest-06290001`-style names, the entered phone number, and `-` for unavailable fields.
 - Customer Verification V2 right-side tab for KBV.
+- KBV V2 captures HaloApp Voice login status from the first handoff. All HaloApp rules expose `Same for Both` / `Logged In` / `Not Logged In` in management; Perbankan and Kartu Kredit use HaloApp-only logged-in 3-answer rules plus multi-channel Phone/HaloApp-not-logged-in 5- and 4-answer rules respectively, while other skills retain one `Same for Both` configuration. Rule rows support Copy and prevent overlapping enabled conditions.
 - Call Flow Detail modal.
 - Send Email modal.
 - CRM-backed read-only customer contact display with an `IdcardOutlined` `All Contact Details` header viewer. Its grouped left-channel/right-value list supports multi-value and empty CRM states while reusing the legacy editor's channel icons. Legacy Contact Management DEMO is local-only and disabled by default.
@@ -144,7 +146,7 @@ This repository is still a demo application:
 ## 9. Completed Live Chat Workspace
 
 - Formal `Live Chat` tab uses the `LiveChat2Page` implementation.
-- Current / History customer list.
+- Current / History customer list. Current unifies active service sessions up to the Global Control `Max Digital Media Services` limit (default 3) and recently ended Live Chat sessions up to `Max Live Chat Ended Session Retention` (default 10) for continued CRM editing; Close or the next retention-capacity eviction moves an ended session to History.
 - Unified WhatsApp / BankApp / Webchat customer list; channel filter controls are hidden for the three-channel demo.
 - Customer panel collapse / expand.
 - Access-time and message-time sorting.
@@ -153,12 +155,12 @@ This repository is still a demo application:
 - SLA / unanswered state with a horizontal unanswered progress bar in expanded and collapsed customer list states.
 - Live Chat workspace tab aggregates unanswered warning and breach customer counts with compact colored badges.
 - Conversation workspace.
-- Webchat active conversations show a static floating `Customer is typing` indicator above the agent composer for demo purposes.
 - Send message local state.
-- End Service / Close session behavior.
+- End Service retains the completed session in Current without counting it as active service; Close moves it to History while keeping existing CRM behavior.
+- New Live Chat handoffs stop at the configured `Max Digital Media Services` limit and remain in the customer-side simulated queue when capacity is full.
 - End Service uses a split-button only when DM has an active abnormal end reason; otherwise it remains the normal confirmation-based End Service action.
 - Customer-ended mock session handling.
-- Transfer modal from conversation.
+- Transfer modal from conversation; ordinary Agents see only SPV and TL transfer targets, while TL and other roles see all targets.
 - Quick Replies right-side tab.
 - Public Phrases in Quick Replies are sourced from Call Management common phrase configuration.
 - Agent replies are blocked before sending when they match Call Management sensitive words.
@@ -176,7 +178,7 @@ This repository is still a demo application:
 - Voice handoff to Agent Workspace.
 - Video handoff to Agent Workspace.
 - Live Chat handoff to Live Chat workspace.
-- PIN verification can be opened from the agent Customer Information card for logged-in BankApp text customers; the displayed PIN page is marked as BCA-owned and returns success / failed results to Netinfo.
+- PIN verification can be opened from the agent Customer Information card for logged-in BankApp text customers; the displayed PIN page is marked as BCA-owned and returns success / failed results to Netinfo. Hovering the failed verification status shows the PIN input error; when locked, the disabled PIN action shows the attempt-limit reason.
 - Voice client screenshots retain keypad capability for IVR transfer scenarios.
 
 ## 11. Completed WhatsApp Demo
@@ -251,8 +253,8 @@ Implemented behaviors:
 - Verification Rule V2 Question Bank.
 - Rule preview using agent verification modal.
 - Scenario-based KBV question model.
-- Blacklist required-channel multi-channel Identifier batch add / delete.
-- Priority list add / batch add / delete.
+- Blacklist required-channel batch add with a Status switch defaulting to Enabled, dedicated editable `062` Phone country code / phone number mode, a Country Code list column (`-` for non-Phone channels), inline enabled/disabled list Status switch, status filtering, Reason, and delete.
+- Priority list add / batch add / delete with required Reason.
 - Priority Match Rule filtering.
 - Common phrase category and phrase CRUD.
 - Common phrase batch move between categories.
@@ -304,7 +306,7 @@ Implemented behaviors:
 - Routing Config media type options include Voice, Video, DM, and Non-DM.
 - Instagram, LinkedIn, Facebook, X, Tik Tok, and YouTube support DM plus Non-DM; AppStore and PlayStore support Non-DM only.
 - Channels Edit Channel media type selector shows all configured media types, while selected values drive the Business Config tabs.
-- DM channel Business Config includes Queue Configuration for outside-service-hours, queue waiting, and queue timeout messages.
+- DM channel Business Config includes Queue Configuration for outside-service-hours, queue waiting (with `{queuePosition}`), long-wait threshold/message, and queue timeout threshold/message.
 - DM and Non-DM Business Config both support selecting and previewing a fixed new-customer alert sound; the selected sound plays once on a new matching interaction when System prompt sound is enabled.
 - Voice and Video Business Config do not show an alert-sound configuration and continue to use OpenEye ringing.
 - Channels Business Config Agent Service warning and breach threshold labels include colored status dots that reuse Live Chat SLA warning and breach colors.

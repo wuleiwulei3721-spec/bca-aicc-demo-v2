@@ -653,11 +653,15 @@ const defaultChannelBusinessConfigByMedia: Record<
     newCustomerAlertSound: '',
     outsideServiceHoursMessage:
       'Sorry, we are currently outside service hours.',
+    longQueueWaitingMessage:
+      'All agents are currently busy. Thank you for your patience.',
+    longQueueWaitingSeconds: 180,
     preTimeoutReminderMessage:
       'We have not received your reply. This conversation will close in {reminderMinutes} minute(s).',
     preTimeoutReminderMinutes: 1,
     queueTimeoutMessage:
       'All agents are currently busy. Please try again later.',
+    queueTimeoutSeconds: 360,
     queueWaitingMessage: 'All agents are currently busy. Please wait.',
     webchatRecallLimitSeconds: 120,
   },
@@ -683,11 +687,15 @@ const defaultChannelBusinessConfigByMedia: Record<
     minScanIntervalSeconds: 30,
     outsideServiceHoursMessage:
       'Sorry, we are currently outside service hours.',
+    longQueueWaitingMessage:
+      'All agents are currently busy. Thank you for your patience.',
+    longQueueWaitingSeconds: 180,
     preTimeoutReminderMessage:
       'We have not received your reply. This conversation will close in {reminderMinutes} minute(s).',
     preTimeoutReminderMinutes: 1,
     queueTimeoutMessage:
       'All agents are currently busy. Please try again later.',
+    queueTimeoutSeconds: 360,
     queueWaitingMessage: 'All agents are currently busy. Please wait.',
     webchatRecallLimitSeconds: 120,
   },
@@ -713,11 +721,15 @@ const defaultChannelBusinessConfigByMedia: Record<
     minScanIntervalSeconds: 30,
     outsideServiceHoursMessage:
       'Sorry, we are currently outside service hours.',
+    longQueueWaitingMessage:
+      'All agents are currently busy. Thank you for your patience.',
+    longQueueWaitingSeconds: 180,
     preTimeoutReminderMessage:
       'We have not received your reply. This conversation will close in {reminderMinutes} minute(s).',
     preTimeoutReminderMinutes: 1,
     queueTimeoutMessage:
       'All agents are currently busy. Please try again later.',
+    queueTimeoutSeconds: 360,
     queueWaitingMessage: 'All agents are currently busy. Please wait.',
     webchatRecallLimitSeconds: 120,
   },
@@ -743,11 +755,15 @@ const defaultChannelBusinessConfigByMedia: Record<
     minScanIntervalSeconds: 30,
     outsideServiceHoursMessage:
       'Sorry, we are currently outside service hours.',
+    longQueueWaitingMessage:
+      'All agents are currently busy. Thank you for your patience.',
+    longQueueWaitingSeconds: 180,
     preTimeoutReminderMessage:
       'We have not received your reply. This conversation will close in {reminderMinutes} minute(s).',
     preTimeoutReminderMinutes: 1,
     queueTimeoutMessage:
       'All agents are currently busy. Please try again later.',
+    queueTimeoutSeconds: 360,
     queueWaitingMessage: 'All agents are currently busy. Please wait.',
     webchatRecallLimitSeconds: 120,
   },
@@ -796,6 +812,7 @@ const channelBusinessVariablesByField: Partial<
   ],
   customerTimeoutNotice: ['{customerName}'],
   preTimeoutReminderMessage: ['{reminderMinutes}'],
+  queueWaitingMessage: ['{queuePosition}'],
 }
 
 export function ChannelTypesPage() {
@@ -1212,12 +1229,24 @@ export function ChannelsPage() {
               config.outsideServiceHoursMessage,
             ],
             ['Queue Waiting Message', config.queueWaitingMessage],
+            ['Long Queue Waiting Message', config.longQueueWaitingMessage],
             ['Queue Timeout Message', config.queueTimeoutMessage],
           ].forEach(([label, value]) => {
             if (!String(value).trim()) {
               errors.push(`DM ${label} is required.`)
             }
           })
+
+          if (
+            config.queueTimeoutSeconds < 0 ||
+            config.queueTimeoutSeconds > 60000
+          ) {
+            errors.push('DM Queue Timeout must be between 0 and 60000 seconds.')
+          }
+
+          if (config.longQueueWaitingSeconds < 0) {
+            errors.push('DM Long Queue Waiting Time cannot be negative.')
+          }
         }
       })
     }
@@ -1412,6 +1441,7 @@ export function ChannelsPage() {
     label: string,
     min = 1,
     severity?: 'breach' | 'warning',
+    max?: number,
   ) => {
     const config =
       draft.businessConfig[mediaCode] ??
@@ -1436,6 +1466,7 @@ export function ChannelsPage() {
         </span>
         <InputNumber
           min={min}
+          max={max}
           value={Number(config[field] ?? 0)}
           onChange={(value) =>
             updateBusinessConfig(mediaCode, field, Number(value) || 0)
@@ -1787,6 +1818,27 @@ export function ChannelsPage() {
                   'Queue Waiting Message',
                   2,
                   true,
+                )}
+                {renderBusinessNumberField(
+                  mediaCode,
+                  'longQueueWaitingSeconds',
+                  'Long Queue Waiting Time (sec)',
+                  0,
+                )}
+                {renderBusinessMessageField(
+                  mediaCode,
+                  'longQueueWaitingMessage',
+                  'Long Queue Waiting Message',
+                  2,
+                  true,
+                )}
+                {renderBusinessNumberField(
+                  mediaCode,
+                  'queueTimeoutSeconds',
+                  'Queue Timeout (sec)',
+                  0,
+                  undefined,
+                  60000,
                 )}
                 {renderBusinessMessageField(
                   mediaCode,

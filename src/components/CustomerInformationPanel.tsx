@@ -5,7 +5,7 @@ import {
   IdcardOutlined,
   MailOutlined,
 } from '@ant-design/icons'
-import { Avatar } from 'antd'
+import { Avatar, Tooltip } from 'antd'
 import type { CustomerInformation, VerificationStatus } from '../types'
 import { BaseCard } from './BaseCard'
 import { BaseButton } from './BaseButton'
@@ -33,6 +33,7 @@ export interface CustomerInformationPanelProps {
   verifyButtonDisabled?: boolean
   verifyButtonLabel?: string
   verifyButtonTitle?: string
+  verificationFailureReason?: string
   verificationStatus?: VerificationStatus
 }
 
@@ -80,6 +81,7 @@ export function CustomerInformationPanel({
   verifyButtonDisabled = false,
   verifyButtonLabel = 'Verify',
   verifyButtonTitle,
+  verificationFailureReason,
   verificationStatus,
 }: CustomerInformationPanelProps) {
   const [internalVerificationStatus] = useState(customer.verificationStatus)
@@ -219,22 +221,47 @@ export function CustomerInformationPanel({
           >
             {accessChannelNode ?? defaultAccessChannelNode}
           </button>
-          <StatusBadge
-            className="aicc-customer-info__verification"
-            label={badge.label}
-            size="small"
-            status={badge.status}
-          />
-          {onVerify && (
-            <BaseButton
-              disabled={verifyButtonDisabled}
+          {verificationFailureReason ? (
+            <Tooltip title={verificationFailureReason}>
+              <span
+                className="aicc-customer-info__verification"
+                title={verificationFailureReason}
+              >
+                <StatusBadge
+                  label={badge.label}
+                  size="small"
+                  status={badge.status}
+                />
+              </span>
+            </Tooltip>
+          ) : (
+            <StatusBadge
+              className="aicc-customer-info__verification"
+              label={badge.label}
               size="small"
-              title={verifyButtonTitle}
-              type="primary"
-              onClick={onVerify}
-            >
-              {verifyButtonLabel}
-            </BaseButton>
+              status={badge.status}
+            />
+          )}
+          {onVerify && (
+            verifyButtonDisabled && verifyButtonTitle ? (
+              <Tooltip title={verifyButtonTitle}>
+                <span title={verifyButtonTitle}>
+                  <BaseButton disabled size="small" type="primary">
+                    {verifyButtonLabel}
+                  </BaseButton>
+                </span>
+              </Tooltip>
+            ) : (
+              <BaseButton
+                disabled={verifyButtonDisabled}
+                size="small"
+                title={verifyButtonTitle}
+                type="primary"
+                onClick={onVerify}
+              >
+                {verifyButtonLabel}
+              </BaseButton>
+            )
           )}
         </div>
         {accessRouteHintNode && (

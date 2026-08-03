@@ -37,7 +37,7 @@ import type {
 const BANKAPP_LIVE_CHAT_SESSION_ID = 'live-chat-002'
 const WEBCHAT_LIVE_CHAT_SESSION_ID = 'live-chat-003'
 const WHATSAPP_LIVE_CHAT_SESSION_ID = 'live-chat-001'
-type HandoffWarningReason = 'active-call' | 'not-ready'
+type HandoffWarningReason = 'active-call' | 'capacity' | 'not-ready'
 
 type CustomerAppDemoVariant = 'bankapp' | 'webchat' | 'whatsapp'
 
@@ -638,6 +638,8 @@ export function BankAppDemoPage({
   const handoffWarningMessage =
     handoffWarningReason === 'active-call'
       ? 'Please hang up the current call and wait until the agent is Ready before routing this interaction to Agent Workspace.'
+      : handoffWarningReason === 'capacity'
+        ? 'All Live Chat service slots are occupied. The customer remains in queue.'
       : 'Agent must be Ready before routing this interaction to Agent Workspace.'
 
   const triggerAgentWorkspace = (activateWorkspace = false) => {
@@ -647,14 +649,19 @@ export function BankAppDemoPage({
         return false
       }
 
-      setHandoffWarningReason(null)
-      requestLiveChatWorkspace(
+      const wasAdmitted = requestLiveChatWorkspace(
         config.liveChatSessionId,
         activateWorkspace,
         variant === 'bankapp' || variant === 'webchat'
           ? customerType
           : undefined,
       )
+      if (!wasAdmitted) {
+        setHandoffWarningReason('capacity')
+        return false
+      }
+
+      setHandoffWarningReason(null)
       return true
     }
 

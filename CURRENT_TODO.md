@@ -1,13 +1,12 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-07-29 14:38 +08:00
+Last updated: 2026-08-01 10:58 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
 ## P0 - Customer Confirmation and Demo Acceptance
 
 - Confirm remaining KBV / Customer Verification V2 policy:
-  - whether authenticated channels need fewer questions,
   - whether `Berurut` must be strictly enforced,
   - whether agents can modify Skill / Customer Segment,
   - whether reason logging is required when conditions change.
@@ -42,7 +41,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 
 ## P1 - Manual Verification Before Customer Demo
 
-- Verify `/` login, single-action Sign In, configured Status after Sign-in, profile-menu Ready transition, Pre-AUX cancellation, Pre-AUX profile display during ACW, ACW-to-pending-AUX transition, AUX, Sign Out, and Log Out guards.
+- Verify `/` login, single-action Sign In, configured Status after Sign-in, first-Ready toolbar lock, Voice/Video Incoming toolbar unlock, Pre-AUX cancellation, Pre-AUX profile display during ACW, ACW-to-pending-AUX transition, AUX, Sign Out, and Log Out guards.
 - Verify the profile menu state matrix: Unsigned shows Sign In / Settings; all Not Ready states show Ready, AUX reasons, and Sign Out; Ready shows AUX reasons only; Pre-AUX hides Sign Out; AUX restores Sign Out; the team line shows the formatted current status.
 - Verify Channels Business Config: DM and Non-DM can select and preview each of the five new-customer alert sounds; Voice and Video have no alert-sound field; a new matching interaction plays once only while the existing System prompt sound switch is enabled; unconfigured channels remain silent.
 - Verify default Not Ready sign-in creates no default Live Chat service; the first switch to Ready opens Live Chat and seeds its default demo sessions.
@@ -63,7 +62,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Transfer IVR shows enabled Common Number entries only,
   - Hang Up main action enters After Call Work for the saved Global Control duration (10 seconds by default), then Ready,
   - selecting AUX from a manually selected Not Ready state enters AUX and does not auto-return to Ready,
-  - selecting AUX during ACW cancels its timer and retains the ended call CRM workspace until Ready,
+  - selecting AUX during ACW with an active Live Chat keeps Pre-AUX visible, preserves the original ACW countdown, and enters that AUX reason when the timer ends,
   - the next successful Voice or Video incoming interaction closes all ended Voice / Video tabs and their CRM workspaces,
   - Hang Up caret appears only when the current Voice/Video media has an active abnormal reason; otherwise the normal Hang Up button has no caret.
   - `888888 / 888888` Transfer modal shows Agent, Skill, and IVR only; its external outbound requests need approval. `666666 / 666666` (TL Maya Lestari) shows `Transfer Number`, enables direct Transfer after entering a number, does not show Request Approval for external outbound, and preserves the `000` failure path. In Outbound Call > Call Agent, verify Agent only sees SPV/TL and TL sees all agents.
@@ -98,20 +97,21 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Verify Haloapp V1.8 screenshots with the product/customer team, especially text client, voice keypad, video no-keypad, PIN, desktop-share, and satisfaction pages.
 - Verify Live Chat workspace:
   - fixed Live Chat tab opens after digital-capable sign-in,
-  - Current / History views,
+  - Current: active services up to Global Control `Max Digital Media Services` (default 3) plus the most recently ended Live Chat sessions up to `Max Live Chat Ended Session Retention` (default 10); the next end evicts the earliest-ended retained session to History when the retention limit is reached,
   - unified three-channel customer list,
   - sorting,
   - hidden star marker behavior,
   - unread count,
   - SLA timer and unanswered progress bar,
   - Send message,
-  - End Service / Close,
+  - End Service retains the ended session in Current and removes it from active-service guards; Close moves it to History,
   - End Service main action keeps the confirmation modal,
   - End Service caret appears only when DM has an active abnormal reason; otherwise the normal End Service confirmation flow has no caret,
   - Message Record,
   - Quick Replies,
   - Sensitive Word send blocking,
-  - Transfer.
+  - Transfer: ordinary Agent sees only SPV/TL transfer targets; TL sees all targets.
+  - New customer handoff remains in queue when the configured `Max Digital Media Services` slots are occupied.
 - Verify Online Chat / text-channel story:
   - BankApp Live Chat handoff,
   - WhatsApp Demo handoff,
@@ -139,9 +139,9 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - satisfaction rating.
 - Verify Call Management:
   - Verification Rules,
-  - Global Control Configuration Save / Reset and its effect on the next sign-in,
-  - Blacklist,
-  - Priority List,
+  - Global Control Configuration Save / Reset, its effect on the next sign-in, and DM active-service / ended-session-retention limits,
+  - Blacklist: Batch Add Status switch defaults to Enabled and saves its selected state, enabled/disabled status filter and inline Status switch, Phone-only country-code (`062` default, editable) / local-number batch mode with a Country Code list column (`-` for non-Phone channels), Reason required, and non-Phone multi-channel Identifier batch behavior,
+  - Priority List: Reason required and existing duplicate / match-rule behavior,
   - Common Phrase,
   - Common Link,
   - Common Number,

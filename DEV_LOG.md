@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-07-29 17:05 +08:00
+最后更新：2026-08-01 16:45 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,278 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-08-01 16:45 +08:00 - HaloApp PIN 失败原因提示
+
+修改页面或文件：
+
+- `src/components/CustomerInformationPanel.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`DEV_LOG.md`
+
+修改原因：
+
+- HaloApp 已登录客户在 Live Chat 弹屏的 PIN 验证失败后，需要让坐席可通过悬浮失败状态图标查看失败原因。
+
+修改结果：
+
+- PIN 入口仍仅对已登录的 BankApp 文本 / Live Chat 客户显示。
+- PIN 失败状态悬浮显示 `PIN input is incorrect.`；第三次失败锁定时，置灰的 `PIN` 按钮悬浮提示已达到验证次数上限。
+- Tooltip 触发容器保留客户信息访问条原有的右对齐布局，失败徽标与 `PIN` 按钮维持靠右排列。
+
+回滚说明：
+
+- 移除客户信息卡片的失败原因 Tooltip 传参和渲染即可恢复原仅显示 `Failed` 的状态。
+
+当前风险点：
+
+- 失败原因仍是前端模拟回调文案；接入实际 BCA PIN 服务后应使用其受控错误码映射，避免暴露敏感验证细节。
+
+### 2026-08-01 10:58 +08:00 - Global Control 数字媒体与 Live Chat 容量命名澄清
+
+修改页面或文件：
+
+- `src/types/globalControlConfiguration.ts`
+- `src/mock/globalControlConfiguration.ts`
+- `src/pages/call-management/GlobalControlConfigurationPage.tsx`
+- `src/store/appStore.ts`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户澄清最大服务数覆盖全部数字媒体（私信与非私信），而结束会话保留仅适用于 Live Chat 弹屏的 Current 列表。
+
+修改结果：
+
+- `DM Media Capacity` 更名为 `Digital Media Capacity`，服务数参数更名为 `Max Digital Media Services`，结束会话参数更名为 `Max Live Chat Ended Session Retention`。
+- 配置字段同步更名为 `maxDigitalMediaServices` 与 `maxLiveChatEndedSessionRetention`；默认值和已有容量行为保持不变。
+- 社媒与邮件不使用 Live Chat Current / History 的结束会话保留机制。
+
+验证：
+
+- `npm run lint`、`npm run build` 和 `git diff --check` 已通过；构建仅有既有 large chunk warning。
+- 浏览器烟测已确认 `Digital Media Capacity` 及两项新命名显示正确，默认值保持为 3 和 10，单位均为 `items`。
+
+回滚说明：
+
+- 恢复原参数显示名及对应的配置字段名即可回退；数值与容量行为无需迁移。
+
+当前风险点：
+
+- 数字媒体最大服务数当前由已接入的 Live Chat 工作区消费；社媒与邮件尚未接入统一的活动服务计数模型。
+
+### 2026-08-01 09:53 +08:00 - 渠道管理排队配置补齐
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/types/routingConfiguration.ts`
+- `src/mock/routingConfiguration.ts`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求补齐 Routing Config > Channels > Business Config 中当前 Demo 缺少的排队位置动态提示、长时间排队与秒级超时配置。
+
+修改结果：
+
+- 保留既有非人工服务时间、排队与超时提示语，排队提示语新增 `{queuePosition}` 可插入动态参数。
+- 新增长时间排队时长（默认 `180` 秒，`0` 表示不触发）及安抚提示语。
+- 新增排队超时时长（默认 `360` 秒，范围 `0` 至 `60000`）及输入校验。
+
+回滚说明：
+
+- 移除新增字段、默认值、校验和排队配置控件即可恢复原三项提示语配置。
+
+当前风险点：
+
+- 当前仅保存为前端内存 mock 配置；真实排队引擎接入时仍需实现参数替换与实际触发逻辑。
+
+### 2026-07-31 16:36 +08:00 - Global Control DM 结束会话保留配置
+
+修改页面或文件：
+
+- `src/types/globalControlConfiguration.ts`
+- `src/mock/globalControlConfiguration.ts`
+- `src/pages/call-management/GlobalControlConfigurationPage.tsx`
+- `src/store/appStore.ts`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求将 Live Chat 最大结束服务保留数配置化，并放在 Global Control 的 DM Media Capacity 中，默认值为 10。
+
+修改结果：
+
+- 新增必填字段 `Max DM Ended Session Retention`，单位为 items，默认值为 10，最小值为 1。
+- Live Chat 的服务中容量和结束会话保留容量分别读取 `Max DM Media Services` 与新字段；保存或重置后，超出新保留上限的最早结束会话立即移入 History。
+- 下调服务中容量不会强制结束既有服务，只限制后续新接入。
+
+验证：
+
+- `npm run lint`、`npm run build` 和 `git diff --check` 已通过；构建仅有既有 large chunk warning。
+- 浏览器烟测已确认 `DM Media Capacity` 中的新字段带必填标识与 `items` 单位，默认值为 10；保存后显示成功提示。
+
+回滚说明：
+
+- 移除 Global Control 新字段和 Store 的配置读取，将 Live Chat 容量恢复为固定默认值即可回退。
+
+当前风险点：
+
+- 当前配置仅在前端内存中生效；刷新页面后会恢复 mock 默认值，真实环境需要由后端保存并向渠道路由同步。
+
+### 2026-07-31 16:18 +08:00 - Live Chat Current 服务与最近结束会话分层
+
+修改页面或文件：
+
+- `src/store/appStore.ts`
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求 Current 在最多三路正在服务会话之外，保留最近结束的十个会话以便继续编辑 CRM；End Service 不应直接进入 History。
+
+修改结果：
+
+- Store 将服务中、Current 最近结束保留和 History 分离。结束会话退出服务计数后留在 Current；Close 才转入 History；第十一条结束会话会淘汰结束时间最早的保留会话至 History。
+- Current 保持统一列表并沿用既有排序。History 的 CRM 页面不新增提示或限制。
+- 所有 Live Chat 接入入口限制为三路服务中会话；容量已满时 BankApp/Webchat/WhatsApp 客户停留在模拟队列并显示容量提示。
+
+验证：
+
+- `npm run lint`、`npm run build` 和 `git diff --check` 已通过；构建仅有既有 large chunk warning。
+- 浏览器烟测确认默认 Current 同时展示服务中和已结束保留会话；End Service 后会话仍在 Current 并显示 Close；Close 后 Current 数量减少、History 数量增加。
+
+回滚说明：
+
+- 移除 `liveChat2RecentClosedSessionIds` 及容量处理，并恢复 End Service 后直接调用 Close 的旧流程即可回退。
+
+当前风险点：
+
+- 当前为前端 mock 队列和 CRM 连接；真实渠道网关需要提供队列容量、结束事件及 CRM 会话绑定接口。
+
+### 2026-07-31 15:48 +08:00 - Live Chat typing removal and transfer scope
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/layouts/components/TransferModal.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求移除 Live Chat 来电弹屏中的客户正在输入展示；普通坐席的 Live Chat 转坐席不得选择普通坐席。
+
+修改结果：
+
+- 移除了 Webchat 静态 `Customer is typing` 指示器及其样式。
+- Live Chat 转坐席中，普通 Agent 仅显示 SPV、TL；TL 和其他角色保留全部坐席目标。语音转接范围不变。
+
+验证：
+
+- `npm run lint`、`npm run build` 和 `git diff --check` 已通过；构建仅有既有 large chunk warning。
+- 浏览器烟测已确认普通 Agent (`888888`) 的 Live Chat 转接列表为 2 名（SPV、TL），TL (`666666`) 的列表为完整 6 名，并确认当前会话没有 `Customer is typing` 提示。
+
+回滚说明：
+
+- 恢复 Live Chat typing 节点与样式，并移除 `TransferModal` 的 conversation 角色过滤即可回退。
+
+当前风险点：
+
+- 当前角色与转接目标均为前端 mock；真实接入时需要由权限与组织层级服务返回目标范围。
+
+### 2026-07-31 15:17 +08:00 - 保持 ACW 中的 Pre-AUX 倒计时
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DESIGN_SYSTEM.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户确认：ACW 期间若 Live Chat 仍在服务，选择 AUX 显示 Pre-AUX 正确；但原实现清除了 ACW 标记，导致计时无法在到期后自动进入 AUX。首次 Ready 锁定按钮的 hover 反馈也不应暗示可点击。
+
+修改结果：
+
+- Pre-AUX 在 ACW 中保留原始倒计时起点，到期后自动进入所选 AUX，不会因 Live Chat 仍在服务而永久停留在 Pre-AUX。
+- 禁用的 Ready 维持禁用态视觉，不再在 hover 时切换为默认按钮样式。
+
+验证：
+
+- 已运行 `npm run lint`、`npm run build` 和 `git diff --check`，均通过；构建仅有既有 large chunk warning。
+- Browser smoke 已确认 ACW 中选择 Busy Reason 后状态显示为 `Pre-AUX - Break`；浏览器自动化客户端在等待完整倒计时期间受到自身网络遥测超时影响，完整的 Pre-AUX 到 AUX 视觉回归仍需在正常浏览器会话中补验。
+
+回滚说明：
+
+- 删除 `preserveAfterCallWork` 选项及其原始计时差值计算，即可恢复此前进入 Pre-AUX 时取消 ACW 的行为。
+
+当前风险点：
+
+- ACW 与 Live Chat 并行状态仍为前端会话内模拟，后端 CTI / 数字渠道事件需要真实集成后再校验。
+
+### 2026-07-31 14:45 +08:00 - 恢复首次签入话务条状态按钮
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DESIGN_SYSTEM.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户澄清：不是移除话务条的 Ready / Not Ready 按钮，而是默认 Not Ready 的首次签入只能先切换到 Ready；出现 Voice 或 Video Incoming 弹屏后，才恢复该按钮的双向切换。
+
+修改结果：
+
+- 恢复话务条 Ready / Not Ready 按钮。默认 Not Ready 签入时，首次切至 Ready 后按钮保持可见但禁用；PSTN、BankApp Voice 或 BankApp Video Incoming 弹屏后，本次签入会话恢复 Ready / Not Ready 双向切换。
+- 默认 Ready 签入不受首次限制；文字渠道及首次切换时创建的默认 Live Chat 会话不解除限制。
+- 已运行 `npm run lint`、`npm run build` 和 `git diff --check`，均通过。浏览器烟测确认默认 Not Ready 签入、首次 Ready 禁用、默认 Live Chat 不解锁、PSTN Incoming 后解锁及 Ready -> Not Ready -> Ready 往返切换。
+
+回滚说明：
+
+- 如需恢复无首次限制的旧行为，删除 `BasicLayout` 中的首次切换锁定状态及 `AgentToolbar` 的 disabled 传参即可；不影响 Pre-AUX、AUX、ACW 或交接就绪状态逻辑。
+
+当前风险点：
+
+- 当前规则为前端 session 内状态；刷新、Sign Out 或下一次 Sign In 会重新开始首次签入限制。
+
+### 2026-07-30 16:20 +08:00 - KBV HaloApp 登录状态规则
+
+修改页面或文件：
+
+- `src/types/verificationRuleV2.ts`、`src/utils/verificationRuleV2.ts`、`src/mock/verificationRuleV2.ts`
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `src/mock/inbound.ts`、`src/pages/inbound/components/CustomerInformationCard.tsx`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户确认 HaloApp Voice 的首次登录状态应作为 KBV 规则条件；仅 Perbankan 和 Kartu Kredit对已登录/未登录采用不同正确题数，其余技能维持同一套配置。
+
+修改结果：
+
+- 管理台为全部含 HaloApp 的规则提供 `Same for Both`、`Logged In`、`Not Logged In` 单选字段、列表/查询展示、Copy 操作和启用规则重叠拦截。
+- Perbankan 与 Kartu Kredit各保留 HaloApp 已登录 3 题专用规则；未登录规则分别为 5/4 题，并与相同配置的 Phone 合并为多渠道规则。其他 HaloApp 规则显式为 `Same for Both`。
+- HaloApp Voice 的 mock 客户数据携带首次 `registered / guest` 状态，坐席 KBV 自动匹配且不向坐席暴露状态编辑入口。
+- 管理台 Customer Verification Preview 设为只读：隐藏每题 Correct/Wrong/Skip 与验证结果操作，仅保留 Close；实际坐席 KBV 操作不变。
+
+验证：
+
+- `npm run lint`、`npm run build`、规则解析检查已通过；构建仅有既有 large chunk warning。
+- 浏览器确认 Verification Rules 的登录状态字段、列表、Copy 深拷贝表单和启用规则重叠拦截；Registered HaloApp Voice 可进入 KBV 工作台。
+
+回滚说明：
+
+- 移除 KBV 规则登录状态字段、两条 Phone/HaloApp 未登录合并配置、管理台列/筛选/Copy 和坐席初始条件传递即可回滚。
+
+当前风险：
+
+- 当前为前端 mock；HaloApp 登录状态仅在首次来话提供。若未来接入可信的通话中登录状态回调，需另行确认是否重置或重新执行 KBV。
 
 ### 2026-07-29 17:05 +08:00 - 渠道新客户提示音
 
@@ -5054,6 +5326,141 @@ Historical entries are preserved in archive files without content rewrites. Use 
 当前风险点：
 
 - 黑名单仍为本地前端演示数据，刷新页面会重置。
+
+### 2026-08-01 11:13 +08:00 - 黑名单批量新增支持状态选择
+
+修改页面或文件：
+
+- `src/pages/call-management/BlacklistManagementPage.tsx`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求黑名单新增弹窗也提供状态字段，并默认启用。
+
+修改结果：
+
+- `Batch Add Blacklist` 在 Restriction Policy 后提供 Status 开关，默认显示 Enabled。
+- 保存时每条由本次批量新增生成的记录均采用该开关所选状态，不再固定写入 Enabled。
+- 列表现有的 Status 开关和状态筛选保持不变。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅有既有 large chunk warning。
+- 浏览器烟测已通过：新增弹窗默认显示已启用；切换为 Disabled 并保存后，新建 Bankapp 记录在列表中显示 Disabled。
+
+回滚说明：
+
+- 移除 Batch Add 的 Status 字段并将保存状态恢复固定为 `Active`，即可回退。
+
+当前风险点：
+
+- 黑名单仍为本地前端演示数据，刷新页面会重置。
+
+### 2026-08-01 11:20 +08:00 - 黑名单列表独立显示国家码
+
+修改页面或文件：
+
+- `src/pages/call-management/BlacklistManagementPage.tsx`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求黑名单列表显示 Country Code 字段，且非 Phone 渠道固定显示 `-`。
+
+修改结果：
+
+- 列表在 Channel 后新增 Country Code 列。
+- Phone 记录显示保存的国家码，其他渠道显示 `-`；Phone Identifier 仅显示实际号码，避免重复国家码。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅有既有 large chunk warning。
+- 浏览器烟测已通过：Phone 记录的 Country Code 显示 `062` 且 Identifier 仅显示实际号码；WhatsApp 与 Bankapp 记录的 Country Code 显示 `-`。
+
+回滚说明：
+
+- 移除 Country Code 列并恢复 Phone Identifier 拼接展示即可回退。
+
+当前风险点：
+
+- 黑名单仍为本地前端演示数据，刷新页面会重置。
+
+### 2026-07-31 14:29 +08:00 - 黑名单状态列改为直观开关
+
+修改页面或文件：
+
+- `src/pages/call-management/BlacklistManagementPage.tsx`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户要求移除黑名单行尾的启用/禁用按钮，改为直接在 Status 栏展示并操作状态。
+
+修改结果：
+
+- 删除 Actions 列及 Enable / Disable 按钮。
+- Status 列改为紧凑开关加 Enabled / Disabled 文案，切换后立即更新当前演示状态并保留成功反馈和状态筛选。
+- 该客户确认的 Blacklist 例外允许状态开关出现在列表中；其他管理页仍遵循既有开关位于表单/弹窗内的规则。
+
+验证：
+
+- `npm run lint`、`npm run build` 已通过；构建仅有既有 large chunk warning。
+- Browser smoke 已通过：Blacklist 表格不再显示 Actions 列；Status 单元格同时显示开关与 Enabled / Disabled 文案，点击原 Disabled Phone 记录的开关后立即变为 Enabled 并显示成功反馈。
+
+回滚说明：
+
+- 恢复 StatusBadge 与固定右侧 Actions 列中的 Enable / Disable 按钮即可回退。
+
+当前风险点：
+
+- 黑名单状态仍为本地前端演示状态，刷新页面会重置。
+
+### 2026-07-30 18:48 +08:00 - 黑名单状态、Phone 专用录入与 Reason 对齐
+
+修改页面或文件：
+
+- `src/pages/call-management/BlacklistManagementPage.tsx`
+- `src/pages/call-management/PriorityListManagementPage.tsx`
+- `src/types/blacklist.ts`、`src/types/priorityList.ts`
+- `src/mock/blacklist.ts`、`src/mock/priorityList.ts`
+- `src/store/callManagementStore.ts`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户确认黑名单需要逐条启用/禁用，Phone 需要国家码和实际号码分开录入，且黑名单与优先名单的 Remark 统一改为必填 Reason。
+
+修改结果：
+
+- 黑名单新增 Status 筛选、StatusBadge 与逐条 Enable / Disable 操作；新记录默认 Enabled，禁用记录保留在管理列表中。
+- Phone 是独立批量模式，国家码默认 `062` 且可修改；Phone 与其他渠道不能同批，实际电话号码按原样保存。非 Phone 维持多渠道 Identifier 批量新增。
+- 黑名单与优先名单的类型、mock、表格、弹窗、校验与保存字段统一从 `remark` 改为必填 `reason`。
+
+验证：
+
+- `npm run lint`、`npm run build` 已通过；构建仅有既有 large chunk warning。
+- Browser smoke 已通过：Blacklist 显示 Status / Reason 列、逐条 Enable 后显示成功反馈、Enabled 筛选可用；Phone 默认 `062` 可改为 `063`，两个实际号码新增为两条独立 Phone 记录，其他渠道选项处于禁用状态。
+- Browser smoke 已通过：Priority List 显示 Reason 列和必填字段；空提交同时提示 Channel、Identifier 和 Reason 必填。
+
+回滚说明：
+
+- 恢复黑名单的无状态单一 Identifier 数据模型和两个页面的 `remark` 字段即可回退。
+
+当前风险点：
+
+- 黑名单状态目前只在管理页生效；当前前端演示尚未在来话、转接或客户流程中消费黑名单规则。
 
 ### 2026-07-29 22:15 +08:00 - Customer Production Release
 
