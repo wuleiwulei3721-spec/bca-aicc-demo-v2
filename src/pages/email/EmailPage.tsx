@@ -4,16 +4,23 @@ import {
   CloseOutlined,
   DeleteOutlined,
   EditOutlined,
+  FilePdfOutlined,
   FileTextOutlined,
+  FilterOutlined,
   ForwardOutlined,
   InboxOutlined,
+  LinkOutlined,
   MailOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
   ReloadOutlined,
   RobotOutlined,
   RollbackOutlined,
+  SaveOutlined,
   SearchOutlined,
   SendOutlined,
   UserOutlined,
+  WarningFilled,
 } from '@ant-design/icons'
 import {
   Badge,
@@ -27,10 +34,9 @@ import {
 } from 'antd'
 import type { MenuProps } from 'antd'
 import type { ReactNode } from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   BaseButton,
-  BaseModal,
   StatusBadge,
 } from '../../components'
 import { useNow } from '../../hooks/useNow'
@@ -46,7 +52,9 @@ import type {
   EmailComposeDraft,
   EmailFolder,
   EmailIgnoreReason,
+  EmailLanguage,
   EmailMessage,
+  EmailStatus,
 } from '../../types'
 import {
   CONVERSATION_TAB_KEY,
@@ -56,6 +64,27 @@ import {
 import { LeftColumn } from '../inbound/components/LeftColumn'
 
 const BANK_EMAIL_ACCOUNT = 'contact@bank1.demo'
+const BANK_PUBLIC_WEBSITE = 'https://www.bca.co.id'
+const TEAM_LEADER_EMAIL = 'tl.budi.kartika@bank1.demo'
+const AGENT_NAME = 'Budi Kartika'
+const DEFAULT_EMAIL_LANGUAGE: EmailLanguage = 'ID'
+
+const emailLanguageOptions: Array<{ label: string; value: EmailLanguage }> = [
+  { label: 'ID', value: 'ID' },
+  { label: 'EN', value: 'EN' },
+]
+
+const emailStatusOptions: Array<{ label: string; value: EmailStatus }> = [
+  { label: 'Open', value: 'open' },
+  { label: 'Pending', value: 'pending' },
+  { label: 'Closed', value: 'closed' },
+]
+
+const emailStatusLabels: Record<EmailStatus, string> = {
+  closed: 'Closed',
+  open: 'Open',
+  pending: 'Pending',
+}
 
 const folderDefinitions: Array<{
   icon: ReactNode
@@ -65,7 +94,7 @@ const folderDefinitions: Array<{
   { icon: <InboxOutlined />, key: 'inbox', label: 'Inbox' },
   { icon: <SendOutlined />, key: 'sent', label: 'Sent' },
   { icon: <FileTextOutlined />, key: 'drafts', label: 'Drafts' },
-  { icon: <DeleteOutlined />, key: 'trash', label: 'Trash' },
+  { icon: <DeleteOutlined />, key: 'trash', label: 'No Reply' },
 ]
 
 const cwuBusinessTypeOptions = [
@@ -121,6 +150,54 @@ function getEmailText(html: string) {
   const template = document.createElement('template')
   template.innerHTML = sanitizeEmailHtml(html)
   return (template.content.textContent ?? '').replace(/\s+/g, ' ').trim()
+}
+
+function stripEmailSignature(html: string) {
+  return sanitizeEmailHtml(html)
+    .replace(
+      /<section class="email-signature"[\s\S]*?<\/section>/gi,
+      '',
+    )
+    .trim()
+}
+
+function formatSignatureDate(date = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date)
+}
+
+function createEmailSignature(language: EmailLanguage) {
+  const dateLabel = language === 'EN' ? 'Date' : 'Tanggal'
+  const regards = language === 'EN' ? 'Regards' : 'Salam'
+
+  return `
+    <section class="email-signature" data-public-mailbox="${BANK_EMAIL_ACCOUNT}" data-language="${language}">
+      <p>${regards},</p>
+      <p><strong>${AGENT_NAME}</strong><br>BANK 1 Customer Service</p>
+      <p>${dateLabel}: ${formatSignatureDate()}</p>
+      <p>
+        <img src="/favicon.svg" alt="BANK 1" width="28" height="28" />
+        <a href="${BANK_PUBLIC_WEBSITE}" target="_blank" rel="noreferrer">${BANK_PUBLIC_WEBSITE}</a>
+      </p>
+    </section>
+  `
+}
+
+function buildEmailBody(bodyHtml: string, language: EmailLanguage) {
+  return `${stripEmailSignature(bodyHtml)}${createEmailSignature(language)}`
+}
+
+function getTemplateBody(templateId: string | undefined, language: EmailLanguage) {
+  const template = emailTemplates.find((item) => item.id === templateId)
+
+  if (!template) {
+    return ''
+  }
+
+  return template.localizedBodyHtml?.[language] ?? template.bodyHtml
 }
 
 function formatMailboxTime(timestamp: number) {
@@ -185,12 +262,22 @@ function getHandlingBadge(email: EmailMessage) {
     )
   }
 
+  if (email.handlingStatus === 'failed') {
+    return <StatusBadge label="Send failed" size="small" status="failed" />
+  }
+
   if (email.handlingStatus === 'draft') {
     return <StatusBadge label="Draft" size="small" status="neutral" />
   }
 
   if (email.handlingStatus === 'sent') {
-    return <StatusBadge label="Sent" size="small" status="success" />
+    return (
+      <StatusBadge
+        label={email.emailStatus ? emailStatusLabels[email.emailStatus] : 'Sent'}
+        size="small"
+        status={email.emailStatus === 'closed' ? 'success' : 'selected'}
+      />
+    )
   }
 
   if (email.cwu) {
@@ -208,10 +295,13 @@ function createComposeDraft(
 
   if (mode === 'draft' && source) {
     const forwardSourceMessageId = source.forwardSourceMessageId
+    const language = source.language ?? DEFAULT_EMAIL_LANGUAGE
 
     return {
       bodyHtml: source.bodyHtml,
       draftMessageId: source.id,
+      emailStatus: source.emailStatus,
+      language,
       mode: forwardSourceMessageId ? 'forward' : mode,
       receiver: source.receiver,
       sender: source.sender,
@@ -223,7 +313,8 @@ function createComposeDraft(
 
   if (mode === 'reply' && source) {
     return {
-      bodyHtml: '',
+      bodyHtml: createEmailSignature(DEFAULT_EMAIL_LANGUAGE),
+      language: DEFAULT_EMAIL_LANGUAGE,
       mode,
       receiver: source.sender,
       sender: BANK_EMAIL_ACCOUNT,
@@ -235,9 +326,11 @@ function createComposeDraft(
 
   if (mode === 'forward' && source) {
     return {
-      bodyHtml: `<p></p><blockquote><strong>Forwarded message</strong><br>${sanitizeEmailHtml(source.bodyHtml)}</blockquote>`,
+      bodyHtml: `${createEmailSignature(DEFAULT_EMAIL_LANGUAGE)}<blockquote><strong>Forwarded message</strong><br>${sanitizeEmailHtml(source.bodyHtml)}</blockquote>`,
+      emailStatus: 'pending',
+      language: DEFAULT_EMAIL_LANGUAGE,
       mode,
-      receiver: '',
+      receiver: TEAM_LEADER_EMAIL,
       sender: BANK_EMAIL_ACCOUNT,
       sourceMessageId: source.id,
       subject: `FW: ${replySubject}`,
@@ -246,7 +339,8 @@ function createComposeDraft(
   }
 
   return {
-    bodyHtml: '',
+    bodyHtml: createEmailSignature(DEFAULT_EMAIL_LANGUAGE),
+    language: DEFAULT_EMAIL_LANGUAGE,
     mode: 'new',
     receiver: source?.customer.profile.email ?? '',
     sender: BANK_EMAIL_ACCOUNT,
@@ -255,33 +349,128 @@ function createComposeDraft(
   }
 }
 
-interface EmailComposeModalContentProps {
+interface EmailComposePanelContentProps {
   draft: EmailComposeDraft
+  onAutoSave: (draft: EmailComposeDraft) => EmailComposeDraft
   onCancel: () => void
+  onChange: (draft: EmailComposeDraft) => void
   onSave: (draft: EmailComposeDraft) => void
   onSend: (draft: EmailComposeDraft) => void
+  onSendSurvey: (draft: EmailComposeDraft) => void
 }
 
-function EmailComposeModalContent({
+function EmailComposePanelContent({
   draft,
+  onAutoSave,
   onCancel,
+  onChange,
   onSave,
   onSend,
-}: EmailComposeModalContentProps) {
+  onSendSurvey,
+}: EmailComposePanelContentProps) {
   const [fields, setFields] = useState<EmailComposeDraft>(() => ({ ...draft }))
   const [error, setError] = useState('')
+  const [templateAttachmentError, setTemplateAttachmentError] = useState('')
+  const [templateConfigOpen, setTemplateConfigOpen] = useState(false)
+  const [autoSaveLabel, setAutoSaveLabel] = useState('')
   const editorRef = useRef<HTMLDivElement>(null)
+  const autoSaveTimerRef = useRef<number | null>(null)
+  const lastAutoSavedSignatureRef = useRef('')
 
-  const readEditorHtml = () =>
-    sanitizeEmailHtml(editorRef.current?.innerHTML ?? fields.bodyHtml)
+  const readEditorHtml = useCallback(
+    () => sanitizeEmailHtml(editorRef.current?.innerHTML ?? fields.bodyHtml),
+    [fields.bodyHtml],
+  )
 
-  const submit = (action: 'save' | 'send') => {
-    const nextDraft = {
+  const updateFields = (patch: Partial<EmailComposeDraft>) => {
+    setFields((current) => {
+      const next = { ...current, ...patch }
+      onChange(next)
+      return next
+    })
+  }
+
+  const normalizedDraft = useCallback(
+    () => ({
       ...fields,
       bodyHtml: readEditorHtml(),
       receiver: fields.receiver.trim(),
       subject: fields.subject.trim(),
+    }),
+    [fields, readEditorHtml],
+  )
+
+  useEffect(
+    () => () => {
+      if (autoSaveTimerRef.current) {
+        window.clearTimeout(autoSaveTimerRef.current)
+      }
+    },
+    [],
+  )
+
+  useEffect(() => {
+    const nextDraft = normalizedDraft()
+    const signature = JSON.stringify({
+      attachmentName: nextDraft.attachmentName,
+      bodyHtml: nextDraft.bodyHtml,
+      emailStatus: nextDraft.emailStatus,
+      language: nextDraft.language,
+      receiver: nextDraft.receiver,
+      subject: nextDraft.subject,
+      templateId: nextDraft.templateId,
+    })
+
+    if (
+      signature === lastAutoSavedSignatureRef.current ||
+      (!nextDraft.receiver && !nextDraft.subject && !getEmailText(nextDraft.bodyHtml))
+    ) {
+      return
     }
+
+    if (autoSaveTimerRef.current) {
+      window.clearTimeout(autoSaveTimerRef.current)
+    }
+
+    autoSaveTimerRef.current = window.setTimeout(() => {
+      const savedDraft = onAutoSave(nextDraft)
+      lastAutoSavedSignatureRef.current = JSON.stringify({
+        attachmentName: savedDraft.attachmentName,
+        bodyHtml: savedDraft.bodyHtml,
+        emailStatus: savedDraft.emailStatus,
+        language: savedDraft.language,
+        receiver: savedDraft.receiver,
+        subject: savedDraft.subject,
+        templateId: savedDraft.templateId,
+      })
+      if (savedDraft.draftMessageId !== fields.draftMessageId) {
+        setFields(savedDraft)
+        onChange(savedDraft)
+      }
+      setAutoSaveLabel(`Autosaved ${formatMailboxTime(Date.now())}`)
+    }, 1200)
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        window.clearTimeout(autoSaveTimerRef.current)
+      }
+    }
+  }, [
+    fields.attachmentName,
+    fields.bodyHtml,
+    fields.emailStatus,
+    fields.language,
+    fields.receiver,
+    fields.subject,
+    fields.templateId,
+    fields.draftMessageId,
+    normalizedDraft,
+    onAutoSave,
+    onChange,
+  ])
+
+  const submit = (action: 'save' | 'send') => {
+    const nextDraft = normalizedDraft()
 
     if (action === 'send' && !nextDraft.receiver) {
       setError('Receiver is required before sending.')
@@ -295,6 +484,11 @@ function EmailComposeModalContent({
 
     if (action === 'send' && !getEmailText(nextDraft.bodyHtml)) {
       setError('Email content is required before sending.')
+      return
+    }
+
+    if (action === 'send' && !nextDraft.emailStatus) {
+      setError('Select an email status before sending.')
       return
     }
 
@@ -312,25 +506,53 @@ function EmailComposeModalContent({
       return
     }
 
-    const nextHtml = template.bodyHtml
-    setFields((current) =>
-      ({
-        ...current,
-        bodyHtml: nextHtml,
-        templateId,
-      }),
+    const nextHtml = buildEmailBody(
+      template.localizedBodyHtml?.[fields.language] ?? template.bodyHtml,
+      fields.language,
     )
+    updateFields({
+      attachmentName: template.attachmentName,
+      bodyHtml: nextHtml,
+      templateId,
+    })
     if (editorRef.current) {
       editorRef.current.innerHTML = nextHtml
     }
   }
 
+  const changeLanguage = (language: EmailLanguage) => {
+    const templateBody = getTemplateBody(fields.templateId, language)
+    const nextHtml = buildEmailBody(templateBody || fields.bodyHtml, language)
+
+    updateFields({
+      bodyHtml: nextHtml,
+      language,
+    })
+    if (editorRef.current) {
+      editorRef.current.innerHTML = nextHtml
+    }
+  }
+
+  const chooseTemplateAttachment = (fileList: FileList | null) => {
+    const file = fileList?.[0]
+
+    if (!file) {
+      return
+    }
+
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      setTemplateAttachmentError('Only PDF attachments can be selected.')
+      return
+    }
+
+    setTemplateAttachmentError('')
+    updateFields({ attachmentName: file.name })
+  }
+
   const runEditorCommand = (command: string) => {
     editorRef.current?.focus()
     document.execCommand(command)
-    setFields((current) =>
-      ({ ...current, bodyHtml: readEditorHtml() }),
-    )
+    updateFields({ bodyHtml: readEditorHtml() })
   }
 
   const title =
@@ -341,29 +563,31 @@ function EmailComposeModalContent({
         : fields.mode === 'draft'
           ? 'Edit Draft'
           : 'New Email'
+  const canSendSurvey = fields.emailStatus === 'closed'
 
   return (
-    <BaseModal
-      centered
-      destroyOnHidden
-      className="email-compose-modal"
-      kind="email"
-      open
-      title={title}
-      width={980}
-      onCancel={onCancel}
-    >
+    <section className="email-compose-inline" aria-label={title}>
+      <header className="email-compose-inline__header">
+        <div>
+          <MailOutlined />
+          <strong>{title}</strong>
+          {autoSaveLabel && <span>{autoSaveLabel}</span>}
+        </div>
+        <BaseButton icon={<CloseOutlined />} size="small" onClick={onCancel}>
+          Close
+        </BaseButton>
+      </header>
+
       <div className="email-compose">
         <div className="email-compose__fields">
           <label>
             <span>Receiver</span>
             <Input
+              disabled={fields.mode === 'forward'}
               placeholder="customer@example.com"
               value={fields.receiver}
               onChange={(event) =>
-                setFields((current) =>
-                  ({ ...current, receiver: event.target.value }),
-                )
+                updateFields({ receiver: event.target.value })
               }
             />
           </label>
@@ -372,24 +596,26 @@ function EmailComposeModalContent({
             <Input
               value={fields.subject}
               onChange={(event) =>
-                setFields((current) =>
-                  ({ ...current, subject: event.target.value }),
-                )
+                updateFields({ subject: event.target.value })
               }
             />
           </label>
           <label>
             <span>Sender</span>
-            <Select
-              options={[
-                { label: BANK_EMAIL_ACCOUNT, value: BANK_EMAIL_ACCOUNT },
-                { label: 'priority@bank1.demo', value: 'priority@bank1.demo' },
-              ]}
+            <Input
+              disabled
               value={fields.sender}
-              onChange={(sender) =>
-                setFields((current) =>
-                  ({ ...current, sender }),
-                )
+            />
+          </label>
+          <label>
+            <span>Email Status</span>
+            <Select
+              allowClear
+              options={emailStatusOptions}
+              placeholder="Select status before sending"
+              value={fields.emailStatus}
+              onChange={(emailStatus) =>
+                updateFields({ emailStatus: emailStatus as EmailStatus | undefined })
               }
             />
           </label>
@@ -406,9 +632,31 @@ function EmailComposeModalContent({
               onChange={(templateId) => {
                 if (templateId) {
                   applyTemplate(templateId)
+                } else {
+                  updateFields({ templateId: undefined })
                 }
               }}
             />
+          </label>
+          <label>
+            <span>Language</span>
+            <div className="email-compose__language-switch">
+              {emailLanguageOptions.map((option) => (
+                <button
+                  aria-pressed={fields.language === option.value}
+                  className={
+                    fields.language === option.value
+                      ? 'email-compose__language-switch-item--active'
+                      : ''
+                  }
+                  key={option.value}
+                  type="button"
+                  onClick={() => changeLanguage(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </label>
         </div>
 
@@ -434,7 +682,52 @@ function EmailComposeModalContent({
                 {label}
               </button>
             ))}
+            <span className="email-compose__toolbar-divider" />
+            <button
+              aria-label="Template config"
+              title="Template config"
+              type="button"
+              onMouseDown={(event) => {
+                event.preventDefault()
+                setTemplateConfigOpen((open) => !open)
+              }}
+            >
+              <FilePdfOutlined />
+            </button>
           </div>
+          {templateConfigOpen && (
+            <div className="email-compose__template-config">
+              <div>
+                <strong>Template Config</strong>
+                <span>EN / ID template content and PDF attachment only.</span>
+              </div>
+              <label>
+                <span>Template language</span>
+                <Select
+                  options={emailLanguageOptions}
+                  value={fields.language}
+                  onChange={(language) => changeLanguage(language)}
+                />
+              </label>
+              <label>
+                <span>Attachment</span>
+                <input
+                  accept="application/pdf,.pdf"
+                  type="file"
+                  onChange={(event) => chooseTemplateAttachment(event.target.files)}
+                />
+              </label>
+              {fields.attachmentName && (
+                <em>
+                  <FilePdfOutlined />
+                  {fields.attachmentName}
+                </em>
+              )}
+              {templateAttachmentError && (
+                <small>{templateAttachmentError}</small>
+              )}
+            </div>
+          )}
           <div
             aria-label="Email content"
             className="email-compose__editor"
@@ -443,13 +736,28 @@ function EmailComposeModalContent({
             ref={editorRef}
             role="textbox"
             suppressContentEditableWarning
-            onInput={() => setError('')}
+            onInput={() => {
+              setError('')
+              updateFields({ bodyHtml: readEditorHtml() })
+            }}
           />
         </div>
 
         {error && <div className="email-compose__error">{error}</div>}
 
-        <footer className="aicc-modal-footer email-compose__footer">
+        <footer className="email-compose__footer">
+          {fields.mode === 'forward' && (
+            <span className="email-compose__forward-note">
+              Forwarding is limited to your TL: {TEAM_LEADER_EMAIL}
+            </span>
+          )}
+          <BaseButton
+            disabled={!canSendSurvey}
+            variant="secondary"
+            onClick={() => onSendSurvey(normalizedDraft())}
+          >
+            Send Survey
+          </BaseButton>
           <BaseButton variant="secondary" onClick={onCancel}>
             Cancel
           </BaseButton>
@@ -457,6 +765,7 @@ function EmailComposeModalContent({
             Save Draft
           </BaseButton>
           <BaseButton
+            disabled={!fields.emailStatus}
             icon={<SendOutlined />}
             variant="primary"
             onClick={() => submit('send')}
@@ -465,16 +774,16 @@ function EmailComposeModalContent({
           </BaseButton>
         </footer>
       </div>
-    </BaseModal>
+    </section>
   )
 }
 
-interface EmailComposeModalProps
-  extends Omit<EmailComposeModalContentProps, 'draft'> {
+interface EmailComposePanelProps
+  extends Omit<EmailComposePanelContentProps, 'draft'> {
   draft: EmailComposeDraft | null
 }
 
-function EmailComposeModal({ draft, ...props }: EmailComposeModalProps) {
+function EmailComposePanel({ draft, ...props }: EmailComposePanelProps) {
   if (!draft) {
     return null
   }
@@ -486,7 +795,7 @@ function EmailComposeModal({ draft, ...props }: EmailComposeModalProps) {
     draft.threadId,
   ].join(':')
 
-  return <EmailComposeModalContent draft={draft} key={composeKey} {...props} />
+  return <EmailComposePanelContent draft={draft} key={composeKey} {...props} />
 }
 
 interface MailboxPanelProps {
@@ -495,10 +804,13 @@ interface MailboxPanelProps {
   now: number
   searchValue: string
   selectedMessageId: string | null
+  sentStatusFilter: EmailStatus | 'all'
   onFolderChange: (folder: EmailFolder) => void
+  onCompose: () => void
   onRefresh: () => void
   onSearchChange: (value: string) => void
   onSelectMessage: (messageId: string) => void
+  onSentStatusFilterChange: (status: EmailStatus | 'all') => void
 }
 
 function MailboxPanel({
@@ -507,11 +819,15 @@ function MailboxPanel({
   now,
   searchValue,
   selectedMessageId,
+  sentStatusFilter,
+  onCompose,
   onFolderChange,
   onRefresh,
   onSearchChange,
   onSelectMessage,
+  onSentStatusFilterChange,
 }: MailboxPanelProps) {
+  const [foldersCollapsed, setFoldersCollapsed] = useState(false)
   const folderCounts = useMemo(
     () =>
       folderDefinitions.reduce<Record<EmailFolder, number>>(
@@ -528,6 +844,13 @@ function MailboxPanel({
   const normalizedSearch = searchValue.trim().toLowerCase()
   const visibleMessages = messages
     .filter((message) => message.folder === activeFolder)
+    .filter((message) => {
+      if (activeFolder !== 'sent' || sentStatusFilter === 'all') {
+        return true
+      }
+
+      return message.emailStatus === sentStatusFilter
+    })
     .filter((message) => {
       if (!normalizedSearch) {
         return true
@@ -548,7 +871,22 @@ function MailboxPanel({
 
   return (
     <aside className="email-mailbox-panel" aria-label="Email mailbox">
-      <div className="email-mailbox-panel__folders">
+      <div
+        className={[
+          'email-mailbox-panel__folders',
+          foldersCollapsed ? 'email-mailbox-panel__folders--collapsed' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        <button
+          aria-label={foldersCollapsed ? 'Expand folders' : 'Collapse folders'}
+          className="email-mailbox-panel__folder-toggle"
+          type="button"
+          onClick={() => setFoldersCollapsed((collapsed) => !collapsed)}
+        >
+          {foldersCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+        </button>
         {folderDefinitions.map((folder) => (
           <button
             aria-pressed={activeFolder === folder.key}
@@ -594,7 +932,28 @@ function MailboxPanel({
             <ReloadOutlined />
           </button>
         </Tooltip>
+        <Tooltip title="Compose email">
+          <button aria-label="Compose email" type="button" onClick={onCompose}>
+            <EditOutlined />
+          </button>
+        </Tooltip>
       </div>
+
+      {activeFolder === 'sent' && (
+        <div className="email-mailbox-panel__sent-filter">
+          <FilterOutlined />
+          <Select
+            options={[
+              { label: 'All Status', value: 'all' },
+              ...emailStatusOptions,
+            ]}
+            value={sentStatusFilter}
+            onChange={(status) =>
+              onSentStatusFilterChange(status as EmailStatus | 'all')
+            }
+          />
+        </div>
+      )}
 
       <div className="email-mailbox-panel__list">
         {visibleMessages.length > 0 ? (
@@ -621,6 +980,27 @@ function MailboxPanel({
                 <span className="email-list-item__topline">
                   <strong>{displayContact}</strong>
                   {email.hasAttachment && <span title="Attachment">&#128206;</span>}
+                  {email.folder === 'drafts' && (
+                    <span
+                      className={[
+                        'email-list-item__draft-state',
+                        email.handlingStatus === 'failed'
+                          ? 'email-list-item__draft-state--failed'
+                          : 'email-list-item__draft-state--draft',
+                      ].join(' ')}
+                      title={
+                        email.handlingStatus === 'failed'
+                          ? 'Send failed'
+                          : 'Draft saved'
+                      }
+                    >
+                      {email.handlingStatus === 'failed' ? (
+                        <WarningFilled />
+                      ) : (
+                        <SaveOutlined />
+                      )}
+                    </span>
+                  )}
                   <time>{formatMailboxTime(email.sentAt)}</time>
                 </span>
                 <span className="email-list-item__subject">{email.subject}</span>
@@ -637,6 +1017,9 @@ function MailboxPanel({
                   <span className="email-list-item__handled">
                     No reply: {email.ignoreReason}
                   </span>
+                )}
+                {email.handlingStatus === 'failed' && (
+                  <span className="email-list-item__failed">Send failed</span>
                 )}
               </button>
             )
@@ -697,24 +1080,66 @@ function EmailCustomerContext({
 
 interface EmailThreadPanelProps {
   activeMessageId: string | null
+  allMessages: EmailMessage[]
+  searchValue: string
   threadMessages: EmailMessage[]
   onSelect: (messageId: string) => void
+  onSearchChange: (value: string) => void
 }
 
 function EmailThreadPanel({
   activeMessageId,
+  allMessages,
+  searchValue,
   threadMessages,
   onSelect,
+  onSearchChange,
 }: EmailThreadPanelProps) {
+  const normalizedSearch = searchValue.trim().toLowerCase()
+  const visibleMessages = (normalizedSearch ? allMessages : threadMessages)
+    .filter((email) => {
+      if (!normalizedSearch) {
+        return true
+      }
+
+      return [
+        email.sender,
+        email.receiver,
+        email.subject,
+        email.preview,
+        getEmailText(email.bodyHtml),
+        email.customer.profile.name,
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(normalizedSearch)
+    })
+    .sort((first, second) => second.sentAt - first.sentAt)
+
   return (
     <aside className="email-thread-panel" aria-label="Email thread record">
       <header>
+        <span className="email-thread-panel__link-label">
+          <LinkOutlined />
+          Link
+        </span>
         <FileTextOutlined />
         <strong>Record</strong>
-        <span>{threadMessages.length}</span>
+        <span>{visibleMessages.length}</span>
       </header>
+      <div className="email-thread-panel__search">
+        <Input
+          allowClear
+          aria-label="Search all email records"
+          placeholder="Search all records"
+          prefix={<SearchOutlined />}
+          type="search"
+          value={searchValue}
+          onChange={(event) => onSearchChange(event.target.value)}
+        />
+      </div>
       <div className="email-thread-panel__list">
-        {threadMessages.map((email) => (
+        {visibleMessages.map((email) => (
           <button
             className={activeMessageId === email.id ? 'email-thread-item--active' : ''}
             key={email.id}
@@ -790,7 +1215,7 @@ function EmailDetail({
               trigger={['click']}
             >
               <BaseButton danger size="small">
-                Ignore
+                No Reply
               </BaseButton>
             </Dropdown>
           </>
@@ -807,7 +1232,7 @@ function EmailDetail({
         )}
         {email.folder === 'trash' && (
           <BaseButton icon={<RollbackOutlined />} size="small" variant="primary" onClick={onRecover}>
-            Recover
+            Restore
           </BaseButton>
         )}
         {getHandlingBadge(email)}
@@ -860,6 +1285,10 @@ export function EmailPage() {
     'email-inbox-001',
   )
   const [searchValue, setSearchValue] = useState('')
+  const [sentStatusFilter, setSentStatusFilter] = useState<EmailStatus | 'all'>(
+    'all',
+  )
+  const [threadSearchValue, setThreadSearchValue] = useState('')
   const [crmWorkspace, setCrmWorkspace] = useState<{
     activeKey: string
     tabs: CrmWorkspaceTab[]
@@ -906,6 +1335,7 @@ export function EmailPage() {
 
   const selectMessage = (messageId: string) => {
     setSelectedMessageId(messageId)
+    setComposeDraft(null)
     setMessages((current) =>
       current.map((email) =>
         email.id === messageId
@@ -926,6 +1356,8 @@ export function EmailPage() {
       .sort((first, second) => second.sentAt - first.sentAt)[0]
     setActiveFolder(folder)
     setSearchValue('')
+    setSentStatusFilter('all')
+    setComposeDraft(null)
     setSelectedMessageId(firstMessage?.id ?? null)
     setCrmWorkspace((current) => ({
       ...current,
@@ -973,17 +1405,21 @@ export function EmailPage() {
     const bodyHtml = sanitizeEmailHtml(draft.bodyHtml)
     return {
       id: draft.draftMessageId ?? `email-draft-${Date.now()}`,
+      attachmentName: draft.attachmentName,
       bodyHtml,
       customer: {
         ...customer,
         profile: { ...customer.profile },
       },
       direction: 'outbound',
+      emailStatus: draft.emailStatus,
       folder: 'drafts',
       forwardSourceMessageId:
         draft.mode === 'forward' ? draft.sourceMessageId : undefined,
+      hasAttachment: Boolean(draft.attachmentName),
       handlingStatus: 'draft',
       isRead: true,
+      language: draft.language,
       preview: getEmailText(bodyHtml).slice(0, 96) || 'Empty draft',
       receiver: draft.receiver,
       sender: draft.sender,
@@ -1011,42 +1447,46 @@ export function EmailPage() {
     showNotice('Draft saved in the Drafts folder.')
   }
 
+  const autoSaveComposeDraft = (draft: EmailComposeDraft) => {
+    const draftMessage = createDraftMessage(draft)
+    const savedDraft = {
+      ...draft,
+      autoSavedAt: draftMessage.sentAt,
+      bodyHtml: draftMessage.bodyHtml,
+      draftMessageId: draftMessage.id,
+    }
+
+    setMessages((current) => {
+      const withoutExistingDraft = current.filter(
+        (email) => email.id !== draftMessage.id,
+      )
+      return [...withoutExistingDraft, draftMessage]
+    })
+
+    setComposeDraft(savedDraft)
+    return savedDraft
+  }
+
+  const sendSatisfactionSurvey = (draft: EmailComposeDraft) => {
+    if (draft.emailStatus !== 'closed') {
+      showNotice('Set Email Status to Closed before sending the survey.', 'info')
+      return
+    }
+
+    showNotice('Satisfaction survey sent for the closed email.', 'info')
+  }
+
   const sendComposeDraft = (draft: EmailComposeDraft) => {
     const source = draft.sourceMessageId
       ? messages.find((email) => email.id === draft.sourceMessageId)
       : selectedEmail
-
-    if (draft.mode === 'forward') {
-      const removedMessageIds = new Set(
-        [draft.sourceMessageId, draft.draftMessageId].filter(
-          (messageId): messageId is string => Boolean(messageId),
-        ),
-      )
-      const nextMessage = messages
-        .filter(
-          (email) =>
-            email.folder === activeFolder && !removedMessageIds.has(email.id),
-        )
-        .sort((first, second) => second.sentAt - first.sentAt)[0]
-
-      setMessages((current) =>
-        current.filter((email) => !removedMessageIds.has(email.id)),
-      )
-      setComposeDraft(null)
-      setSelectedMessageId(nextMessage?.id ?? null)
-      setCrmWorkspace((current) => ({
-        ...current,
-        activeKey: CONVERSATION_TAB_KEY,
-      }))
-      showNotice('Email forwarded and removed from the mailbox.', 'info')
-      return
-    }
 
     const draftMessage = createDraftMessage(draft)
     const sentMessage: EmailMessage = {
       ...draftMessage,
       id: `email-sent-${Date.now()}`,
       folder: 'sent',
+      hasAttachment: Boolean(draft.attachmentName),
       handlingStatus: 'sent',
       sentAt: Date.now(),
     }
@@ -1058,6 +1498,7 @@ export function EmailPage() {
           draft.mode === 'reply' && email.id === source?.id
             ? {
                 ...email,
+                emailStatus: draft.emailStatus,
                 handlingStatus: 'replied',
                 isRead: true,
                 repliedAt: Date.now(),
@@ -1099,7 +1540,7 @@ export function EmailPage() {
       ),
     )
     setActiveFolder('trash')
-    showNotice(`Email moved to Trash: ${reason}.`, 'info')
+    showNotice(`Email marked as No Reply: ${reason}.`, 'info')
   }
 
   const recoverEmail = () => {
@@ -1122,7 +1563,7 @@ export function EmailPage() {
       ),
     )
     setActiveFolder(recoveredFolder)
-    showNotice('Email recovered to Inbox.')
+    showNotice('Email restored to the mailbox.')
   }
 
   const openCwu = () => {
@@ -1178,25 +1619,40 @@ export function EmailPage() {
 
   const mailContent = (
     <div className="email-mail-workspace">
-      <EmailDetail
-        email={selectedEmail}
-        now={now}
-        onEditDraft={() =>
-          selectedEmail && setComposeDraft(createComposeDraft('draft', selectedEmail))
-        }
-        onForward={() =>
-          selectedEmail && setComposeDraft(createComposeDraft('forward', selectedEmail))
-        }
-        onIgnore={ignoreEmail}
-        onRecover={recoverEmail}
-        onReply={() =>
-          selectedEmail && setComposeDraft(createComposeDraft('reply', selectedEmail))
-        }
-      />
+      {composeDraft ? (
+        <EmailComposePanel
+          draft={composeDraft}
+          onAutoSave={autoSaveComposeDraft}
+          onCancel={() => setComposeDraft(null)}
+          onChange={setComposeDraft}
+          onSave={saveComposeDraft}
+          onSend={sendComposeDraft}
+          onSendSurvey={sendSatisfactionSurvey}
+        />
+      ) : (
+        <EmailDetail
+          email={selectedEmail}
+          now={now}
+          onEditDraft={() =>
+            selectedEmail && setComposeDraft(createComposeDraft('draft', selectedEmail))
+          }
+          onForward={() =>
+            selectedEmail && setComposeDraft(createComposeDraft('forward', selectedEmail))
+          }
+          onIgnore={ignoreEmail}
+          onRecover={recoverEmail}
+          onReply={() =>
+            selectedEmail && setComposeDraft(createComposeDraft('reply', selectedEmail))
+          }
+        />
+      )}
       <EmailThreadPanel
+        allMessages={messages}
         activeMessageId={selectedMessageId}
+        searchValue={threadSearchValue}
         threadMessages={threadMessages}
         onSelect={selectMessage}
+        onSearchChange={setThreadSearchValue}
       />
     </div>
   )
@@ -1219,6 +1675,10 @@ export function EmailPage() {
         now={now}
         searchValue={searchValue}
         selectedMessageId={selectedMessageId}
+        sentStatusFilter={sentStatusFilter}
+        onCompose={() =>
+          setComposeDraft(createComposeDraft('new', selectedEmail ?? undefined))
+        }
         onFolderChange={changeFolder}
         onRefresh={() => {
           setSearchValue('')
@@ -1226,6 +1686,7 @@ export function EmailPage() {
         }}
         onSearchChange={setSearchValue}
         onSelectMessage={selectMessage}
+        onSentStatusFilterChange={setSentStatusFilter}
       />
 
       <EmailCustomerContext
@@ -1259,13 +1720,6 @@ export function EmailPage() {
           setCrmWorkspace((current) => ({ ...current, activeKey }))
         }
         onCloseTab={closeCrmTab}
-      />
-
-      <EmailComposeModal
-        draft={composeDraft}
-        onCancel={() => setComposeDraft(null)}
-        onSave={saveComposeDraft}
-        onSend={sendComposeDraft}
       />
 
       <Drawer

@@ -10,12 +10,17 @@ export type EmailHandlingStatus =
   | 'replied'
   | 'ignored'
   | 'draft'
+  | 'failed'
   | 'sent'
   | 'trashed'
 
 export type EmailIgnoreReason = 'AD' | 'Spam' | 'Sales Email'
 
 export type EmailComposeMode = 'new' | 'reply' | 'forward' | 'draft'
+
+export type EmailLanguage = 'EN' | 'ID'
+
+export type EmailStatus = 'open' | 'pending' | 'closed'
 
 export interface EmailCwuRegistration {
   businessTypes: string[]
@@ -35,11 +40,14 @@ export interface EmailMessage {
   subject: string
   preview: string
   bodyHtml: string
+  attachmentName?: string
+  language?: EmailLanguage
   sentAt: number
   customer: CustomerInformation
   hasAttachment?: boolean
   isRead: boolean
   ignoreReason?: EmailIgnoreReason
+  emailStatus?: EmailStatus
   repliedAt?: number
   slaStartedAt?: number
   slaStoppedAt?: number
@@ -51,13 +59,19 @@ export interface EmailMessage {
 export interface EmailTemplate {
   id: string
   name: string
+  attachmentName?: string
   subjectPrefix?: string
   bodyHtml: string
+  localizedBodyHtml?: Partial<Record<EmailLanguage, string>>
 }
 
 export interface EmailComposeDraft {
+  attachmentName?: string
+  autoSavedAt?: number
   bodyHtml: string
   draftMessageId?: string
+  emailStatus?: EmailStatus
+  language: EmailLanguage
   mode: EmailComposeMode
   receiver: string
   sender: string
