@@ -1741,6 +1741,11 @@ export function EmailPage() {
     }
 
     const bodyHtml = sanitizeEmailHtml(draft.bodyHtml)
+    const shouldTrackDraftSla =
+      (draft.mode === 'reply' || (draft.mode === 'draft' && source?.folder === 'drafts')) &&
+      Boolean(source?.slaStartedAt) &&
+      !source?.slaStoppedAt
+
     return {
       id: draft.draftMessageId ?? `email-draft-${Date.now()}`,
       attachmentName: draft.attachmentName,
@@ -1761,6 +1766,8 @@ export function EmailPage() {
       preview: getEmailText(bodyHtml).slice(0, 96) || 'Empty draft',
       receiver: draft.receiver,
       sender: draft.sender,
+      slaStartedAt: shouldTrackDraftSla ? source?.slaStartedAt : undefined,
+      slaTargetSeconds: shouldTrackDraftSla ? source?.slaTargetSeconds : undefined,
       sentAt: Date.now(),
       subject: draft.subject || '(No subject)',
       threadId: draft.threadId,
