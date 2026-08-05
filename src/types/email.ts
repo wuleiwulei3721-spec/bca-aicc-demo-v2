@@ -12,11 +12,12 @@ export type EmailHandlingStatus =
   | 'draft'
   | 'failed'
   | 'sent'
+  | 'transferred'
   | 'trashed'
 
 export type EmailIgnoreReason = 'AD' | 'Spam' | 'Sales Email'
 
-export type EmailComposeMode = 'new' | 'reply' | 'forward' | 'draft'
+export type EmailComposeMode = 'new' | 'reply' | 'transfer' | 'draft'
 
 export type EmailLanguage = 'EN' | 'ID'
 
@@ -53,7 +54,7 @@ export interface EmailMessage {
   slaStoppedAt?: number
   slaTargetSeconds?: number
   cwu?: EmailCwuRegistration
-  forwardSourceMessageId?: string
+  transferSourceMessageId?: string
 }
 
 export interface EmailTemplate {

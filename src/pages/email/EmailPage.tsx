@@ -7,13 +7,14 @@ import {
   FilePdfOutlined,
   FileTextOutlined,
   FilterOutlined,
-  ForwardOutlined,
   InboxOutlined,
+  LeftOutlined,
   LinkOutlined,
   MailOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   ReloadOutlined,
+  RightOutlined,
   RobotOutlined,
   RollbackOutlined,
   SaveOutlined,
@@ -105,6 +106,28 @@ const emailCommonLinks = [
     id: 'bca-mobile-help',
     title: 'BCA Mobile Support',
   },
+]
+
+const transferAgents = [
+  {
+    employeeId: 'AICC1025',
+    extension: '81025',
+    id: 'tl-arif-prasetyo',
+    name: 'Arif Prasetyo',
+    role: 'TL',
+    skillName: 'Debit Card',
+    status: 'Ready',
+  },
+]
+
+const transferSkillOptions = [
+  { label: 'All skill Name', value: 'all' },
+  { label: 'Debit Card', value: 'Debit Card' },
+]
+
+const transferStatusOptions = [
+  { label: 'All status', value: 'all' },
+  { label: 'Ready', value: 'Ready' },
 ]
 
 const folderDefinitions: Array<{
@@ -301,6 +324,10 @@ function getHandlingBadge(email: EmailMessage) {
     )
   }
 
+  if (email.handlingStatus === 'transferred') {
+    return <StatusBadge label="Transferred" size="small" status="selected" />
+  }
+
   if (email.cwu) {
     return <StatusBadge label="Ticket saved" size="small" status="selected" />
   }
@@ -312,10 +339,10 @@ function createComposeDraft(
   mode: EmailComposeDraft['mode'],
   source?: EmailMessage,
 ): EmailComposeDraft {
-  const replySubject = source?.subject.replace(/^(RE|FW):\s*/i, '') ?? ''
+  const replySubject = source?.subject.replace(/^(RE|FW|TR):\s*/i, '') ?? ''
 
   if (mode === 'draft' && source) {
-    const forwardSourceMessageId = source.forwardSourceMessageId
+    const transferSourceMessageId = source.transferSourceMessageId
     const language = source.language ?? DEFAULT_EMAIL_LANGUAGE
 
     return {
@@ -323,10 +350,10 @@ function createComposeDraft(
       draftMessageId: source.id,
       emailStatus: source.emailStatus,
       language,
-      mode: forwardSourceMessageId ? 'forward' : mode,
+      mode: transferSourceMessageId ? 'transfer' : mode,
       receiver: source.receiver,
       sender: source.sender,
-      sourceMessageId: forwardSourceMessageId ?? source.id,
+      sourceMessageId: transferSourceMessageId ?? source.id,
       subject: source.subject,
       threadId: source.threadId,
     }
@@ -345,16 +372,16 @@ function createComposeDraft(
     }
   }
 
-  if (mode === 'forward' && source) {
+  if (mode === 'transfer' && source) {
     return {
-      bodyHtml: `${createEmailSignature(DEFAULT_EMAIL_LANGUAGE)}<blockquote><strong>Forwarded message</strong><br>${sanitizeEmailHtml(source.bodyHtml)}</blockquote>`,
+      bodyHtml: `${createEmailSignature(DEFAULT_EMAIL_LANGUAGE)}<blockquote><strong>Transferred message</strong><br>${sanitizeEmailHtml(source.bodyHtml)}</blockquote>`,
       emailStatus: 'pending',
       language: DEFAULT_EMAIL_LANGUAGE,
       mode,
       receiver: TEAM_LEADER_EMAIL,
       sender: BANK_EMAIL_ACCOUNT,
       sourceMessageId: source.id,
-      subject: `FW: ${replySubject}`,
+      subject: `TR: ${replySubject}`,
       threadId: source.threadId,
     }
   }
@@ -583,8 +610,8 @@ function EmailComposePanelContent({
   const title =
     fields.mode === 'reply'
       ? 'Reply Email'
-      : fields.mode === 'forward'
-        ? 'Forward Email'
+      : fields.mode === 'transfer'
+        ? 'Transfer Email'
         : fields.mode === 'draft'
           ? 'Edit Draft'
           : 'New Email'
@@ -634,7 +661,7 @@ function EmailComposePanelContent({
           <label>
             <span>Receiver</span>
             <Input
-              disabled={fields.mode === 'forward'}
+              disabled={fields.mode === 'transfer'}
               placeholder="customer@example.com"
               value={fields.receiver}
               onChange={(event) =>
@@ -798,9 +825,9 @@ function EmailComposePanelContent({
 
         {!isModal && (
           <footer className="email-compose__footer">
-            {fields.mode === 'forward' && (
-              <span className="email-compose__forward-note">
-                Forwarding is limited to your TL: {TEAM_LEADER_EMAIL}
+            {fields.mode === 'transfer' && (
+              <span className="email-compose__transfer-note">
+                Transfer is limited to your TL: {TEAM_LEADER_EMAIL}
               </span>
             )}
             <BaseButton
@@ -1089,6 +1116,11 @@ function MailboxPanel({
                     No reply: {email.ignoreReason}
                   </span>
                 )}
+                {email.handlingStatus === 'transferred' && (
+                  <span className="email-list-item__transferred">
+                    Transferred to TL
+                  </span>
+                )}
                 {email.handlingStatus === 'failed' && (
                   <span className="email-list-item__failed">Send failed</span>
                 )}
@@ -1300,24 +1332,168 @@ function EmailThreadPanel({
   )
 }
 
+interface EmailTransferModalProps {
+  open: boolean
+  onClose: () => void
+  onTransfer: (agent: (typeof transferAgents)[number]) => void
+}
+
+function EmailTransferModal({
+  open,
+  onClose,
+  onTransfer,
+}: EmailTransferModalProps) {
+  const [searchValue, setSearchValue] = useState('')
+  const [skillName, setSkillName] = useState('all')
+  const [status, setStatus] = useState('all')
+
+  if (!open) {
+    return null
+  }
+
+  const normalizedSearch = searchValue.trim().toLowerCase()
+  const visibleAgents = transferAgents.filter((agent) => {
+    const matchesSearch =
+      !normalizedSearch ||
+      [agent.employeeId, agent.name]
+        .join(' ')
+        .toLowerCase()
+        .includes(normalizedSearch)
+    const matchesSkill = skillName === 'all' || agent.skillName === skillName
+    const matchesStatus = status === 'all' || agent.status === status
+
+    return matchesSearch && matchesSkill && matchesStatus
+  })
+
+  const resetFilters = () => {
+    setSearchValue('')
+    setSkillName('all')
+    setStatus('all')
+  }
+
+  return (
+    <div className="email-transfer-modal-overlay" role="presentation">
+      <section className="email-transfer-modal" aria-label="Transfer">
+        <header>
+          <h2>Transfer</h2>
+          <button aria-label="Close transfer modal" type="button" onClick={onClose}>
+            <CloseOutlined />
+          </button>
+        </header>
+
+        <div className="email-transfer-modal__filters">
+          <button aria-label="Reset transfer filters" type="button" onClick={resetFilters}>
+            <ReloadOutlined />
+          </button>
+          <Input
+            allowClear
+            aria-label="Search employee"
+            placeholder="Employee ID or Name"
+            prefix={<SearchOutlined />}
+            type="search"
+            value={searchValue}
+            onChange={(event) => setSearchValue(event.target.value)}
+          />
+          <Select
+            aria-label="Skill name"
+            options={transferSkillOptions}
+            value={skillName}
+            onChange={setSkillName}
+          />
+          <Select
+            aria-label="Agent status"
+            options={transferStatusOptions}
+            value={status}
+            onChange={setStatus}
+          />
+          <BaseButton icon={<SearchOutlined />} variant="primary">
+            Srh
+          </BaseButton>
+        </div>
+
+        <div className="email-transfer-modal__table">
+          <div className="email-transfer-modal__table-head">
+            <span>Employee ID</span>
+            <span>Name</span>
+            <span>Skill Name</span>
+            <span>Extension</span>
+            <span>Extension</span>
+            <span>Actions</span>
+          </div>
+          {visibleAgents.length > 0 ? (
+            visibleAgents.map((agent) => (
+              <div className="email-transfer-modal__table-row" key={agent.id}>
+                <span>{agent.employeeId}</span>
+                <span>
+                  {agent.name}
+                  <em>{agent.role}</em>
+                </span>
+                <span>{agent.skillName}</span>
+                <span>{agent.extension}</span>
+                <span>
+                  <i />
+                  {agent.status}
+                </span>
+                <span>
+                  <button type="button" onClick={() => onTransfer(agent)}>
+                    <SendOutlined />
+                    Transfer
+                  </button>
+                </span>
+              </div>
+            ))
+          ) : (
+            <div className="email-transfer-modal__empty">
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No transfer agent found" />
+            </div>
+          )}
+        </div>
+
+        <footer className="email-transfer-modal__pager">
+          <span>Total: {visibleAgents.length} items</span>
+          <span>Per page</span>
+          <Select
+            aria-label="Items per page"
+            options={[{ label: '10', value: '10' }]}
+            value="10"
+          />
+          <span>items</span>
+          <div>
+            <button aria-label="Previous page" disabled type="button">
+              <LeftOutlined />
+            </button>
+            <button aria-current="page" type="button">1</button>
+            <button aria-label="Next page" disabled type="button">
+              <RightOutlined />
+            </button>
+          </div>
+          <span>Go to</span>
+          <Input aria-label="Go to page" value="1" readOnly />
+          <span>page</span>
+        </footer>
+      </section>
+    </div>
+  )
+}
+
 interface EmailDetailProps {
   email: EmailMessage | null
   now: number
   onEditDraft: () => void
-  onForward: () => void
   onIgnore: (reason: EmailIgnoreReason) => void
   onRecover: () => void
   onReply: () => void
+  onTransfer: () => void
 }
 
 function EmailDetail({
   email,
   now,
   onEditDraft,
-  onForward,
   onIgnore,
   onRecover,
   onReply,
+  onTransfer,
 }: EmailDetailProps) {
   if (!email) {
     return (
@@ -1333,14 +1509,18 @@ function EmailDetail({
     { key: 'Spam', label: 'Spam' },
     { key: 'Sales Email', label: 'Sales Email' },
   ]
+  const canHandleInboxEmail =
+    email.folder === 'inbox' &&
+    email.handlingStatus !== 'ignored' &&
+    email.handlingStatus !== 'transferred'
 
   return (
     <article className="email-detail">
       <div className="email-detail__actions">
-        {email.folder === 'inbox' && email.handlingStatus !== 'ignored' && (
+        {canHandleInboxEmail && (
           <>
-            <BaseButton icon={<ForwardOutlined />} size="small" onClick={onForward}>
-              Forward
+            <BaseButton icon={<SendOutlined />} size="small" onClick={onTransfer}>
+              Transfer
             </BaseButton>
             <span className="email-detail__actions-spacer" />
             <BaseButton size="small" variant="primary" onClick={onReply}>
@@ -1361,8 +1541,8 @@ function EmailDetail({
           </>
         )}
         {email.folder === 'sent' && (
-          <BaseButton icon={<ForwardOutlined />} size="small" onClick={onForward}>
-            Forward
+          <BaseButton icon={<SendOutlined />} size="small" onClick={onTransfer}>
+            Transfer
           </BaseButton>
         )}
         {email.folder === 'drafts' && (
@@ -1440,6 +1620,7 @@ export function EmailPage() {
   const [composeDraft, setComposeDraft] = useState<EmailComposeDraft | null>(null)
   const [composeModalDraft, setComposeModalDraft] =
     useState<EmailComposeDraft | null>(null)
+  const [isTransferOpen, setIsTransferOpen] = useState(false)
   const [isCwuOpen, setIsCwuOpen] = useState(false)
   const [cwuBusinessTypes, setCwuBusinessTypes] = useState<string[]>([])
   const [cwuSummary, setCwuSummary] = useState('')
@@ -1490,6 +1671,7 @@ export function EmailPage() {
     setSelectedMessageId(messageId)
     setComposeDraft(null)
     setComposeModalDraft(null)
+    setIsTransferOpen(false)
     setMessages((current) =>
       current.map((email) =>
         email.id === messageId
@@ -1513,6 +1695,7 @@ export function EmailPage() {
     setSentStatusFilter('all')
     setComposeDraft(null)
     setComposeModalDraft(null)
+    setIsTransferOpen(false)
     setSelectedMessageId(firstMessage?.id ?? null)
     setCrmWorkspace((current) => ({
       ...current,
@@ -1569,8 +1752,8 @@ export function EmailPage() {
       direction: 'outbound',
       emailStatus: draft.emailStatus,
       folder: 'drafts',
-      forwardSourceMessageId:
-        draft.mode === 'forward' ? draft.sourceMessageId : undefined,
+      transferSourceMessageId:
+        draft.mode === 'transfer' ? draft.sourceMessageId : undefined,
       hasAttachment: Boolean(draft.attachmentName),
       handlingStatus: 'draft',
       isRead: true,
@@ -1676,6 +1859,40 @@ export function EmailPage() {
       activeKey: CONVERSATION_TAB_KEY,
     }))
     showNotice('Email sent and added to the conversation record.')
+  }
+
+  const openTransferModal = () => {
+    if (!selectedEmail) {
+      showNotice('Select an email before transferring.', 'info')
+      return
+    }
+
+    setComposeDraft(null)
+    setComposeModalDraft(null)
+    setIsTransferOpen(true)
+  }
+
+  const transferEmail = (agent: (typeof transferAgents)[number]) => {
+    if (!selectedEmail) {
+      return
+    }
+
+    const transferredAt = Date.now()
+
+    setMessages((current) =>
+      current.map((email) =>
+        email.id === selectedEmail.id
+          ? {
+              ...email,
+              handlingStatus: 'transferred',
+              isRead: true,
+              slaStoppedAt: email.slaStoppedAt ?? transferredAt,
+            }
+          : email,
+      ),
+    )
+    setIsTransferOpen(false)
+    showNotice(`Email transferred to ${agent.name} (${agent.role}).`)
   }
 
   const ignoreEmail = (reason: EmailIgnoreReason) => {
@@ -1796,14 +2013,12 @@ export function EmailPage() {
           onEditDraft={() =>
             selectedEmail && setComposeDraft(createComposeDraft('draft', selectedEmail))
           }
-          onForward={() =>
-            selectedEmail && setComposeDraft(createComposeDraft('forward', selectedEmail))
-          }
           onIgnore={ignoreEmail}
           onRecover={recoverEmail}
           onReply={() =>
             selectedEmail && setComposeDraft(createComposeDraft('reply', selectedEmail))
           }
+          onTransfer={openTransferModal}
         />
       )}
       <EmailThreadPanel
@@ -1897,6 +2112,14 @@ export function EmailPage() {
         onSend={sendComposeDraft}
         onSendSurvey={sendSatisfactionSurvey}
       />
+
+      {isTransferOpen && (
+        <EmailTransferModal
+          open
+          onClose={() => setIsTransferOpen(false)}
+          onTransfer={transferEmail}
+        />
+      )}
 
       <Drawer
         destroyOnHidden
