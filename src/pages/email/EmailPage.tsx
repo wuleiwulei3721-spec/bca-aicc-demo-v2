@@ -800,6 +800,7 @@ function EmailComposePanel({ draft, ...props }: EmailComposePanelProps) {
 
 interface MailboxPanelProps {
   activeFolder: EmailFolder
+  collapsed: boolean
   messages: EmailMessage[]
   now: number
   searchValue: string
@@ -807,6 +808,7 @@ interface MailboxPanelProps {
   sentStatusFilter: EmailStatus | 'all'
   onFolderChange: (folder: EmailFolder) => void
   onCompose: () => void
+  onCollapsedChange: (collapsed: boolean) => void
   onRefresh: () => void
   onSearchChange: (value: string) => void
   onSelectMessage: (messageId: string) => void
@@ -815,19 +817,20 @@ interface MailboxPanelProps {
 
 function MailboxPanel({
   activeFolder,
+  collapsed,
   messages,
   now,
   searchValue,
   selectedMessageId,
   sentStatusFilter,
   onCompose,
+  onCollapsedChange,
   onFolderChange,
   onRefresh,
   onSearchChange,
   onSelectMessage,
   onSentStatusFilterChange,
 }: MailboxPanelProps) {
-  const [foldersCollapsed, setFoldersCollapsed] = useState(false)
   const folderCounts = useMemo(
     () =>
       folderDefinitions.reduce<Record<EmailFolder, number>>(
@@ -870,22 +873,30 @@ function MailboxPanel({
     .sort((first, second) => second.sentAt - first.sentAt)
 
   return (
-    <aside className="email-mailbox-panel" aria-label="Email mailbox">
+    <aside
+      className={[
+        'email-mailbox-panel',
+        collapsed ? 'email-mailbox-panel--collapsed' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      aria-label="Email mailbox"
+    >
       <div
         className={[
           'email-mailbox-panel__folders',
-          foldersCollapsed ? 'email-mailbox-panel__folders--collapsed' : '',
+          collapsed ? 'email-mailbox-panel__folders--collapsed' : '',
         ]
           .filter(Boolean)
           .join(' ')}
       >
         <button
-          aria-label={foldersCollapsed ? 'Expand folders' : 'Collapse folders'}
+          aria-label={collapsed ? 'Expand folders' : 'Collapse folders'}
           className="email-mailbox-panel__folder-toggle"
           type="button"
-          onClick={() => setFoldersCollapsed((collapsed) => !collapsed)}
+          onClick={() => onCollapsedChange(!collapsed)}
         >
-          {foldersCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
         </button>
         {folderDefinitions.map((folder) => (
           <button
@@ -930,11 +941,6 @@ function MailboxPanel({
         <Tooltip title="Refresh mailbox">
           <button aria-label="Refresh mailbox" type="button" onClick={onRefresh}>
             <ReloadOutlined />
-          </button>
-        </Tooltip>
-        <Tooltip title="Compose email">
-          <button aria-label="Compose email" type="button" onClick={onCompose}>
-            <EditOutlined />
           </button>
         </Tooltip>
       </div>
@@ -1027,6 +1033,19 @@ function MailboxPanel({
         ) : (
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No email found" />
         )}
+      </div>
+      <div className="email-mailbox-panel__compose-footer">
+        <button
+          aria-label="Compose email"
+          className="email-mailbox-panel__sendmail-button"
+          type="button"
+          onClick={onCompose}
+        >
+          <span>
+            <MailOutlined />
+          </span>
+          <strong>Sendmail</strong>
+        </button>
       </div>
     </aside>
   )
@@ -1285,6 +1304,7 @@ export function EmailPage() {
     'email-inbox-001',
   )
   const [searchValue, setSearchValue] = useState('')
+  const [isMailboxCollapsed, setIsMailboxCollapsed] = useState(false)
   const [sentStatusFilter, setSentStatusFilter] = useState<EmailStatus | 'all'>(
     'all',
   )
@@ -1658,7 +1678,15 @@ export function EmailPage() {
   )
 
   return (
-    <section className="email-page" aria-label="Email channel workspace">
+    <section
+      className={[
+        'email-page',
+        isMailboxCollapsed ? 'email-page--mailbox-collapsed' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      aria-label="Email channel workspace"
+    >
       {notice && (
         <div className={`email-page__notice email-page__notice--${notice.tone}`}>
           <CheckCircleFilled />
@@ -1671,6 +1699,7 @@ export function EmailPage() {
 
       <MailboxPanel
         activeFolder={activeFolder}
+        collapsed={isMailboxCollapsed}
         messages={messages}
         now={now}
         searchValue={searchValue}
@@ -1679,6 +1708,7 @@ export function EmailPage() {
         onCompose={() =>
           setComposeDraft(createComposeDraft('new', selectedEmail ?? undefined))
         }
+        onCollapsedChange={setIsMailboxCollapsed}
         onFolderChange={changeFolder}
         onRefresh={() => {
           setSearchValue('')
