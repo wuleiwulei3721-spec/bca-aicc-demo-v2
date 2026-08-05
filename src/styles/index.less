@@ -16356,14 +16356,14 @@ button.inbound-list-row .inbound-list-row__title {
 
 /* Email channel workspace */
 .email-page {
-  --email-border: #dfe7f2;
+  --email-border: #d9dee7;
   --email-border-light: #edf2f7;
   --email-danger: #f04438;
   --email-placeholder: #9ca3af;
   --email-primary: #1769e0;
   --email-primary-hover: #1473e6;
   --email-primary-soft: #edf6ff;
-  --email-radius-control: 8px;
+  --email-radius-control: 6px;
   --email-radius-panel: 8px;
   --email-success: #12b886;
   --email-text: #1f2a3b;
@@ -16414,8 +16414,51 @@ button.inbound-list-row .inbound-list-row__title {
 .email-transfer-modal .ant-input-affix-wrapper-focused,
 .email-transfer-modal .ant-select:hover .ant-select-selector,
 .email-transfer-modal .ant-select-focused .ant-select-selector {
-  border-color: #8bbcff !important;
+  border-color: var(--email-primary) !important;
   box-shadow: none !important;
+}
+
+.email-page .ant-input-affix-wrapper,
+.email-page .ant-select-single .ant-select-selector,
+.email-transfer-modal .ant-input-affix-wrapper,
+.email-transfer-modal .ant-select-single .ant-select-selector {
+  height: 32px;
+  min-height: 32px;
+  border-color: var(--email-border);
+  border-radius: var(--email-radius-control);
+  background: #ffffff;
+  box-shadow: none;
+  color: var(--email-text);
+  font-size: 14px;
+}
+
+.email-page .ant-input,
+.email-page .ant-select-selection-item,
+.email-page .ant-select-selection-placeholder,
+.email-transfer-modal .ant-input,
+.email-transfer-modal .ant-select-selection-item,
+.email-transfer-modal .ant-select-selection-placeholder {
+  color: var(--email-text);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.email-page .ant-input::placeholder,
+.email-page .ant-select-selection-placeholder,
+.email-transfer-modal .ant-input::placeholder,
+.email-transfer-modal .ant-select-selection-placeholder {
+  color: var(--email-placeholder);
+}
+
+.email-page :where(.ant-input-prefix, .ant-select-arrow, button) .anticon,
+.email-transfer-modal :where(.ant-input-prefix, .ant-select-arrow, button) .anticon {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .email-page .aicc-button.ant-btn,
@@ -16670,7 +16713,7 @@ button.inbound-list-row .inbound-list-row__title {
 .email-mailbox-panel__search .ant-input-affix-wrapper {
   height: 32px;
   padding: 0 10px;
-  border-color: #e5e8ef;
+  border-color: var(--email-border);
   border-radius: var(--email-radius-control);
   background: #ffffff;
   box-shadow: none;
@@ -16678,14 +16721,15 @@ button.inbound-list-row .inbound-list-row__title {
 
 .email-mailbox-panel__search .ant-input-prefix {
   margin-right: 8px;
-  color: var(--email-text);
+  color: var(--email-text-secondary);
   font-size: 16px;
 }
 
 .email-mailbox-panel__search .ant-input {
   color: var(--email-text);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
 }
 
 .email-mailbox-panel__search .ant-input::placeholder {
@@ -16698,35 +16742,45 @@ button.inbound-list-row .inbound-list-row__title {
   height: 32px;
   place-items: center;
   padding: 0;
-  border: 1px solid #e5e8ef;
+  border: 1px solid var(--email-border);
   border-radius: var(--email-radius-control);
   background: #ffffff;
-  color: var(--email-text);
+  color: var(--email-text-secondary);
   cursor: pointer;
-  font-size: 15px;
+  font-size: 16px;
 }
 
 .email-mailbox-panel__search > button:hover,
 .email-mailbox-panel__search > button:focus-visible {
-  border-color: #9bc8ff;
-  color: var(--email-primary-hover);
+  border-color: var(--email-primary);
+  background: #ffffff;
+  color: var(--email-primary);
   outline: 0;
 }
 
 .email-mailbox-panel__sent-filter {
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr);
+  grid-template-columns: 16px minmax(0, 1fr);
   align-items: center;
-  padding: 0 8px 10px;
+  padding: 0 12px 12px;
   border-bottom: 1px solid var(--email-border-light);
   color: var(--email-text-secondary);
-  gap: 6px;
+  gap: 8px;
 }
 
 .email-mailbox-panel__sent-filter .ant-select-selector {
+  height: 32px;
   min-height: 32px;
   border-color: var(--email-border);
   border-radius: var(--email-radius-control);
+  font-size: 14px;
+}
+
+.email-mailbox-panel__sent-filter > .anticon {
+  width: 16px;
+  height: 16px;
+  color: var(--email-text-secondary);
+  font-size: 16px;
 }
 
 .email-mailbox-panel__list {
@@ -17351,14 +17405,16 @@ button.inbound-list-row .inbound-list-row__title {
 
 .email-thread-panel__search .ant-input-affix-wrapper {
   height: 32px;
-  border-color: #e5e8ef;
+  padding: 0 10px;
+  border-color: var(--email-border);
   border-radius: var(--email-radius-control);
   box-shadow: none;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .email-thread-panel__search .ant-input-prefix {
-  color: var(--email-text);
+  margin-right: 8px;
+  color: var(--email-text-secondary);
   font-size: 16px;
 }
 
@@ -17641,12 +17697,12 @@ button.inbound-list-row .inbound-list-row__title {
 }
 
 .email-transfer-modal-overlay {
-  --email-border: #dfe7f2;
+  --email-border: #d9dee7;
   --email-border-light: #edf2f7;
   --email-placeholder: #9ca3af;
   --email-primary: #1769e0;
   --email-primary-soft: #edf6ff;
-  --email-radius-control: 8px;
+  --email-radius-control: 6px;
   --email-radius-panel: 8px;
   --email-success: #12b886;
   --email-text: #1f2a3b;
@@ -17734,14 +17790,15 @@ button.inbound-list-row .inbound-list-row__title {
   border: 1px solid var(--email-border);
   border-radius: var(--email-radius-control);
   background: #ffffff;
-  color: var(--email-text);
+  color: var(--email-text-secondary);
   cursor: pointer;
-  font-size: 17px;
+  font-size: 16px;
 }
 
 .email-transfer-modal__filters > button:not(.aicc-button):hover,
 .email-transfer-modal__filters > button:not(.aicc-button):focus-visible {
-  border-color: #a7c7f4;
+  border-color: var(--email-primary);
+  background: #ffffff;
   color: var(--email-primary);
   outline: 0;
 }
@@ -17749,6 +17806,7 @@ button.inbound-list-row .inbound-list-row__title {
 .email-transfer-modal__filters .ant-input-affix-wrapper,
 .email-transfer-modal__filters .ant-select-selector {
   height: 32px;
+  min-height: 32px;
   border-color: var(--email-border);
   border-radius: var(--email-radius-control);
   color: var(--email-text);
@@ -17769,7 +17827,7 @@ button.inbound-list-row .inbound-list-row__title {
 
 .email-transfer-modal__filters .ant-input-prefix {
   margin-right: 8px;
-  color: #33445b;
+  color: var(--email-text-secondary);
   font-size: 16px;
 }
 
@@ -17901,6 +17959,7 @@ button.inbound-list-row .inbound-list-row__title {
 .email-transfer-modal__pager .ant-select-selector,
 .email-transfer-modal__pager .ant-input {
   height: 32px;
+  min-height: 32px;
   border-color: var(--email-border);
   border-radius: var(--email-radius-control);
   color: var(--email-text);
@@ -18256,7 +18315,7 @@ button.inbound-list-row .inbound-list-row__title {
 
 .email-cwu-form .ant-input {
   border-color: #dfe7f2;
-  border-radius: 8px;
+  border-radius: 6px;
   color: #1f2a3b;
   font-size: 14px;
 }
