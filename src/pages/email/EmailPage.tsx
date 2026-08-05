@@ -86,6 +86,27 @@ const emailStatusLabels: Record<EmailStatus, string> = {
   pending: 'Pending',
 }
 
+const emailCommonLinks = [
+  {
+    description: 'Public BCA service and product information.',
+    href: BANK_PUBLIC_WEBSITE,
+    id: 'bca-official',
+    title: 'BCA Official Website',
+  },
+  {
+    description: 'Credit card dispute process and required documents.',
+    href: 'https://www.bca.co.id/en/Individu/produk/Kartu-Kredit',
+    id: 'credit-card-dispute',
+    title: 'Credit Card Dispute Guide',
+  },
+  {
+    description: 'BCA mobile activation and troubleshooting reference.',
+    href: 'https://www.bca.co.id/en/Individu/layanan/e-banking/BCA-Mobile',
+    id: 'bca-mobile-help',
+    title: 'BCA Mobile Support',
+  },
+]
+
 const folderDefinitions: Array<{
   icon: ReactNode
   key: EmailFolder
@@ -349,6 +370,8 @@ function createComposeDraft(
   }
 }
 
+type EmailComposeSurface = 'inline' | 'modal'
+
 interface EmailComposePanelContentProps {
   draft: EmailComposeDraft
   onAutoSave: (draft: EmailComposeDraft) => EmailComposeDraft
@@ -357,6 +380,7 @@ interface EmailComposePanelContentProps {
   onSave: (draft: EmailComposeDraft) => void
   onSend: (draft: EmailComposeDraft) => void
   onSendSurvey: (draft: EmailComposeDraft) => void
+  surface?: EmailComposeSurface
 }
 
 function EmailComposePanelContent({
@@ -367,6 +391,7 @@ function EmailComposePanelContent({
   onSave,
   onSend,
   onSendSurvey,
+  surface = 'inline',
 }: EmailComposePanelContentProps) {
   const [fields, setFields] = useState<EmailComposeDraft>(() => ({ ...draft }))
   const [error, setError] = useState('')
@@ -564,19 +589,45 @@ function EmailComposePanelContent({
           ? 'Edit Draft'
           : 'New Email'
   const canSendSurvey = fields.emailStatus === 'closed'
+  const isModal = surface === 'modal'
 
   return (
-    <section className="email-compose-inline" aria-label={title}>
-      <header className="email-compose-inline__header">
-        <div>
-          <MailOutlined />
-          <strong>{title}</strong>
-          {autoSaveLabel && <span>{autoSaveLabel}</span>}
-        </div>
-        <BaseButton icon={<CloseOutlined />} size="small" onClick={onCancel}>
-          Close
-        </BaseButton>
-      </header>
+    <section
+      className={isModal ? 'email-compose-modal-panel' : 'email-compose-inline'}
+      aria-label={title}
+    >
+      {isModal ? (
+        <header className="email-compose-modal-panel__toolbar">
+          <div className="email-compose-modal-panel__actions">
+            <BaseButton
+              disabled={!fields.emailStatus}
+              size="small"
+              variant="primary"
+              onClick={() => submit('send')}
+            >
+              Send
+            </BaseButton>
+            <BaseButton size="small" variant="secondary" onClick={() => submit('save')}>
+              Save
+            </BaseButton>
+            {autoSaveLabel && <span>{autoSaveLabel}</span>}
+          </div>
+          <button aria-label="Close compose modal" type="button" onClick={onCancel}>
+            <CloseOutlined />
+          </button>
+        </header>
+      ) : (
+        <header className="email-compose-inline__header">
+          <div>
+            <MailOutlined />
+            <strong>{title}</strong>
+            {autoSaveLabel && <span>{autoSaveLabel}</span>}
+          </div>
+          <BaseButton icon={<CloseOutlined />} size="small" onClick={onCancel}>
+            Close
+          </BaseButton>
+        </header>
+      )}
 
       <div className="email-compose">
         <div className="email-compose__fields">
@@ -745,34 +796,36 @@ function EmailComposePanelContent({
 
         {error && <div className="email-compose__error">{error}</div>}
 
-        <footer className="email-compose__footer">
-          {fields.mode === 'forward' && (
-            <span className="email-compose__forward-note">
-              Forwarding is limited to your TL: {TEAM_LEADER_EMAIL}
-            </span>
-          )}
-          <BaseButton
-            disabled={!canSendSurvey}
-            variant="secondary"
-            onClick={() => onSendSurvey(normalizedDraft())}
-          >
-            Send Survey
-          </BaseButton>
-          <BaseButton variant="secondary" onClick={onCancel}>
-            Cancel
-          </BaseButton>
-          <BaseButton variant="secondary" onClick={() => submit('save')}>
-            Save Draft
-          </BaseButton>
-          <BaseButton
-            disabled={!fields.emailStatus}
-            icon={<SendOutlined />}
-            variant="primary"
-            onClick={() => submit('send')}
-          >
-            Send
-          </BaseButton>
-        </footer>
+        {!isModal && (
+          <footer className="email-compose__footer">
+            {fields.mode === 'forward' && (
+              <span className="email-compose__forward-note">
+                Forwarding is limited to your TL: {TEAM_LEADER_EMAIL}
+              </span>
+            )}
+            <BaseButton
+              disabled={!canSendSurvey}
+              variant="secondary"
+              onClick={() => onSendSurvey(normalizedDraft())}
+            >
+              Send Survey
+            </BaseButton>
+            <BaseButton variant="secondary" onClick={onCancel}>
+              Cancel
+            </BaseButton>
+            <BaseButton variant="secondary" onClick={() => submit('save')}>
+              Save Draft
+            </BaseButton>
+            <BaseButton
+              disabled={!fields.emailStatus}
+              icon={<SendOutlined />}
+              variant="primary"
+              onClick={() => submit('send')}
+            >
+              Send
+            </BaseButton>
+          </footer>
+        )}
       </div>
     </section>
   )
@@ -796,6 +849,18 @@ function EmailComposePanel({ draft, ...props }: EmailComposePanelProps) {
   ].join(':')
 
   return <EmailComposePanelContent draft={draft} key={composeKey} {...props} />
+}
+
+function EmailComposeModal({ draft, ...props }: EmailComposePanelProps) {
+  if (!draft) {
+    return null
+  }
+
+  return (
+    <div className="email-compose-modal-overlay" role="presentation">
+      <EmailComposePanel draft={draft} surface="modal" {...props} />
+    </div>
+  )
 }
 
 interface MailboxPanelProps {
@@ -1106,6 +1171,8 @@ interface EmailThreadPanelProps {
   onSearchChange: (value: string) => void
 }
 
+type EmailThreadPanelTab = 'record' | 'link'
+
 function EmailThreadPanel({
   activeMessageId,
   allMessages,
@@ -1114,6 +1181,7 @@ function EmailThreadPanel({
   onSelect,
   onSearchChange,
 }: EmailThreadPanelProps) {
+  const [activeTab, setActiveTab] = useState<EmailThreadPanelTab>('record')
   const normalizedSearch = searchValue.trim().toLowerCase()
   const visibleMessages = (normalizedSearch ? allMessages : threadMessages)
     .filter((email) => {
@@ -1134,47 +1202,100 @@ function EmailThreadPanel({
         .includes(normalizedSearch)
     })
     .sort((first, second) => second.sentAt - first.sentAt)
+  const visibleLinks = emailCommonLinks.filter((link) => {
+    if (!normalizedSearch) {
+      return true
+    }
+
+    return [link.title, link.description, link.href]
+      .join(' ')
+      .toLowerCase()
+      .includes(normalizedSearch)
+  })
 
   return (
     <aside className="email-thread-panel" aria-label="Email thread record">
       <header>
-        <span className="email-thread-panel__link-label">
-          <LinkOutlined />
-          Link
-        </span>
-        <FileTextOutlined />
-        <strong>Record</strong>
-        <span>{visibleMessages.length}</span>
+        <div className="email-thread-panel__tabs" role="tablist" aria-label="Email side panel">
+          <button
+            aria-selected={activeTab === 'record'}
+            className={
+              activeTab === 'record'
+                ? 'email-thread-panel__tab email-thread-panel__tab--active'
+                : 'email-thread-panel__tab'
+            }
+            role="tab"
+            type="button"
+            onClick={() => setActiveTab('record')}
+          >
+            <FileTextOutlined />
+            Record
+            <span>{visibleMessages.length}</span>
+          </button>
+          <button
+            aria-selected={activeTab === 'link'}
+            className={
+              activeTab === 'link'
+                ? 'email-thread-panel__tab email-thread-panel__tab--active'
+                : 'email-thread-panel__tab'
+            }
+            role="tab"
+            type="button"
+            onClick={() => setActiveTab('link')}
+          >
+            <LinkOutlined />
+            Link
+            <span>{visibleLinks.length}</span>
+          </button>
+        </div>
       </header>
       <div className="email-thread-panel__search">
         <Input
           allowClear
-          aria-label="Search all email records"
-          placeholder="Search all records"
+          aria-label={
+            activeTab === 'record'
+              ? 'Search all email records'
+              : 'Search common links'
+          }
+          placeholder={
+            activeTab === 'record' ? 'Search all records' : 'Search common links'
+          }
           prefix={<SearchOutlined />}
           type="search"
           value={searchValue}
           onChange={(event) => onSearchChange(event.target.value)}
         />
       </div>
-      <div className="email-thread-panel__list">
-        {visibleMessages.map((email) => (
-          <button
-            className={activeMessageId === email.id ? 'email-thread-item--active' : ''}
-            key={email.id}
-            type="button"
-            onClick={() => onSelect(email.id)}
-          >
-            <span>
-              {email.direction === 'outbound' ? <SendOutlined /> : <UserOutlined />}
-              <strong>{email.sender}</strong>
-              <time>{formatMailboxTime(email.sentAt)}</time>
-            </span>
-            <em>{email.subject}</em>
-            <small>{email.preview}</small>
-          </button>
-        ))}
-      </div>
+      {activeTab === 'record' ? (
+        <div className="email-thread-panel__list" role="tabpanel">
+          {visibleMessages.map((email) => (
+            <button
+              className={activeMessageId === email.id ? 'email-thread-item--active' : ''}
+              key={email.id}
+              type="button"
+              onClick={() => onSelect(email.id)}
+            >
+              <span>
+                {email.direction === 'outbound' ? <SendOutlined /> : <UserOutlined />}
+                <strong>{email.sender}</strong>
+                <time>{formatMailboxTime(email.sentAt)}</time>
+              </span>
+              <em>{email.subject}</em>
+              <small>{email.preview}</small>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="email-thread-panel__links" role="tabpanel">
+          {visibleLinks.map((link) => (
+            <a href={link.href} key={link.id} rel="noreferrer" target="_blank">
+              <strong>{link.title}</strong>
+              <span>{link.description}</span>
+              <small>{link.href.replace(/^https?:\/\//, '')}</small>
+            </a>
+          ))}
+        </div>
+      )}
     </aside>
   )
 }
@@ -1317,6 +1438,8 @@ export function EmailPage() {
     tabs: [],
   })
   const [composeDraft, setComposeDraft] = useState<EmailComposeDraft | null>(null)
+  const [composeModalDraft, setComposeModalDraft] =
+    useState<EmailComposeDraft | null>(null)
   const [isCwuOpen, setIsCwuOpen] = useState(false)
   const [cwuBusinessTypes, setCwuBusinessTypes] = useState<string[]>([])
   const [cwuSummary, setCwuSummary] = useState('')
@@ -1353,9 +1476,20 @@ export function EmailPage() {
     noticeTimerRef.current = window.setTimeout(() => setNotice(null), 2600)
   }
 
+  const openComposeModal = () => {
+    if (!selectedEmail) {
+      showNotice('Select an email before composing a proactive email.', 'info')
+      return
+    }
+
+    setComposeDraft(null)
+    setComposeModalDraft(createComposeDraft('new', selectedEmail))
+  }
+
   const selectMessage = (messageId: string) => {
     setSelectedMessageId(messageId)
     setComposeDraft(null)
+    setComposeModalDraft(null)
     setMessages((current) =>
       current.map((email) =>
         email.id === messageId
@@ -1378,6 +1512,7 @@ export function EmailPage() {
     setSearchValue('')
     setSentStatusFilter('all')
     setComposeDraft(null)
+    setComposeModalDraft(null)
     setSelectedMessageId(firstMessage?.id ?? null)
     setCrmWorkspace((current) => ({
       ...current,
@@ -1458,6 +1593,7 @@ export function EmailPage() {
       return [...withoutExistingDraft, draftMessage]
     })
     setComposeDraft(null)
+    setComposeModalDraft(null)
     setActiveFolder('drafts')
     setSelectedMessageId(draftMessage.id)
     setCrmWorkspace((current) => ({
@@ -1467,7 +1603,10 @@ export function EmailPage() {
     showNotice('Draft saved in the Drafts folder.')
   }
 
-  const autoSaveComposeDraft = (draft: EmailComposeDraft) => {
+  const autoSaveComposeDraft = (
+    draft: EmailComposeDraft,
+    setActiveDraft: (draft: EmailComposeDraft) => void,
+  ) => {
     const draftMessage = createDraftMessage(draft)
     const savedDraft = {
       ...draft,
@@ -1483,7 +1622,7 @@ export function EmailPage() {
       return [...withoutExistingDraft, draftMessage]
     })
 
-    setComposeDraft(savedDraft)
+    setActiveDraft(savedDraft)
     return savedDraft
   }
 
@@ -1529,6 +1668,7 @@ export function EmailPage() {
         .concat(sentMessage),
     )
     setComposeDraft(null)
+    setComposeModalDraft(null)
     setSelectedMessageId(sentMessage.id)
     setActiveFolder('sent')
     setCrmWorkspace((current) => ({
@@ -1642,7 +1782,7 @@ export function EmailPage() {
       {composeDraft ? (
         <EmailComposePanel
           draft={composeDraft}
-          onAutoSave={autoSaveComposeDraft}
+          onAutoSave={(draft) => autoSaveComposeDraft(draft, setComposeDraft)}
           onCancel={() => setComposeDraft(null)}
           onChange={setComposeDraft}
           onSave={saveComposeDraft}
@@ -1705,9 +1845,7 @@ export function EmailPage() {
         searchValue={searchValue}
         selectedMessageId={selectedMessageId}
         sentStatusFilter={sentStatusFilter}
-        onCompose={() =>
-          setComposeDraft(createComposeDraft('new', selectedEmail ?? undefined))
-        }
+        onCompose={openComposeModal}
         onCollapsedChange={setIsMailboxCollapsed}
         onFolderChange={changeFolder}
         onRefresh={() => {
@@ -1722,9 +1860,7 @@ export function EmailPage() {
       <EmailCustomerContext
         activeEmail={selectedEmail}
         now={now}
-        onCompose={() =>
-          setComposeDraft(createComposeDraft('new', selectedEmail ?? undefined))
-        }
+        onCompose={openComposeModal}
         onOpenCrm={openCrm}
       />
 
@@ -1750,6 +1886,16 @@ export function EmailPage() {
           setCrmWorkspace((current) => ({ ...current, activeKey }))
         }
         onCloseTab={closeCrmTab}
+      />
+
+      <EmailComposeModal
+        draft={composeModalDraft}
+        onAutoSave={(draft) => autoSaveComposeDraft(draft, setComposeModalDraft)}
+        onCancel={() => setComposeModalDraft(null)}
+        onChange={setComposeModalDraft}
+        onSave={saveComposeDraft}
+        onSend={sendComposeDraft}
+        onSendSurvey={sendSatisfactionSurvey}
       />
 
       <Drawer
