@@ -37,6 +37,8 @@ const WHATSAPP_DEMO_TAB_KEY = 'whatsapp-demo'
 const EMAIL_TAB_KEY = 'email'
 const SOCIAL_MEDIA_TAB_KEY = 'social-media'
 const LIVE_CHAT_TAB_KEY = 'live-chat'
+const EMAIL_TAB_WARNING_SECONDS = 29 * 60 + 59
+const EMAIL_TAB_BREACH_SECONDS = 39 * 60 + 59
 const staticLiveChat2SessionById = Object.fromEntries(
   liveChat2Sessions.map((session) => [session.id, session]),
 ) as Record<string, LiveChat2Session>
@@ -44,6 +46,8 @@ const staticLiveChat2SessionById = Object.fromEntries(
 interface WorkspaceTabLabelProps {
   durationEndedAt?: number | null
   durationStartedAt?: number | null
+  emailBreachElapsedSeconds?: number
+  emailWarningElapsedSeconds?: number
   flashScope?: 'label' | 'tab'
   icon?: ReactNode
   isFlashing?: boolean
@@ -100,9 +104,19 @@ function getLongestDurationTiming(
   })
 }
 
+function formatCompactDuration(seconds: number) {
+  const safeSeconds = Math.max(0, Math.floor(seconds))
+  const minutes = Math.floor(safeSeconds / 60)
+  const remainingSeconds = safeSeconds % 60
+
+  return `${minutes}m${String(remainingSeconds).padStart(2, '0')}s`
+}
+
 function WorkspaceTabLabel({
   durationEndedAt,
   durationStartedAt,
+  emailBreachElapsedSeconds,
+  emailWarningElapsedSeconds,
   flashScope = 'label',
   icon,
   isFlashing = false,
@@ -143,6 +157,18 @@ function WorkspaceTabLabel({
       {unreadCount > 0 && (
         <span className="workspace-tab-label__unread">
           {unreadCount > 99 ? '99+' : unreadCount}
+        </span>
+      )}
+      {emailWarningElapsedSeconds !== undefined && (
+        <span className="workspace-tab-label__email-alert workspace-tab-label__email-alert--warning">
+          <span>1</span>
+          <time>({formatCompactDuration(emailWarningElapsedSeconds)})</time>
+        </span>
+      )}
+      {emailBreachElapsedSeconds !== undefined && (
+        <span className="workspace-tab-label__email-alert workspace-tab-label__email-alert--breach">
+          <span>2</span>
+          <time>({formatCompactDuration(emailBreachElapsedSeconds)})</time>
         </span>
       )}
       {(unansweredWarningCount > 0 || unansweredBreachCount > 0) && (
@@ -476,7 +502,14 @@ export function AgentWorkspace() {
       items.push({
         key: EMAIL_TAB_KEY,
         closable: true,
-        label: <WorkspaceTabLabel label="Email" now={now} />,
+        label: (
+          <WorkspaceTabLabel
+            emailBreachElapsedSeconds={EMAIL_TAB_BREACH_SECONDS}
+            emailWarningElapsedSeconds={EMAIL_TAB_WARNING_SECONDS}
+            label="Email"
+            now={now}
+          />
+        ),
         children: activeKey === EMAIL_TAB_KEY ? <EmailPage /> : null,
       })
     }
