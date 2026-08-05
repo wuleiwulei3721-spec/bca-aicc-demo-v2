@@ -91,20 +91,33 @@ export const emailTemplates: EmailTemplate[] = [
   {
     id: 'template-dispute-follow-up',
     name: 'Transaction dispute follow-up',
+    attachmentName: 'dispute-follow-up.pdf',
     bodyHtml:
       '<p>Halo Bapak/Ibu,</p><p>Terima kasih telah menghubungi BANK 1. Laporan sanggahan transaksi Anda telah kami terima dan akan kami tindak lanjuti sesuai prosedur.</p><p>Salam,<br>BANK 1 Customer Service</p>',
+    localizedBodyHtml: {
+      EN: '<p>Dear Customer,</p><p>Thank you for contacting BANK 1. Your transaction dispute report has been received and will be followed up according to our procedure.</p>',
+      ID: '<p>Halo Bapak/Ibu,</p><p>Terima kasih telah menghubungi BANK 1. Laporan sanggahan transaksi Anda telah kami terima dan akan kami tindak lanjuti sesuai prosedur.</p>',
+    },
   },
   {
     id: 'template-document-request',
     name: 'Document request',
     bodyHtml:
       '<p>Halo Bapak/Ibu,</p><p>Mohon melengkapi dokumen pendukung agar permintaan dapat diproses lebih lanjut.</p><p>Salam,<br>BANK 1 Customer Service</p>',
+    localizedBodyHtml: {
+      EN: '<p>Dear Customer,</p><p>Please complete the supporting documents so your request can be processed further.</p>',
+      ID: '<p>Halo Bapak/Ibu,</p><p>Mohon melengkapi dokumen pendukung agar permintaan dapat diproses lebih lanjut.</p>',
+    },
   },
   {
     id: 'template-general-response',
     name: 'General service response',
     bodyHtml:
       '<p>Halo Bapak/Ibu,</p><p>Terima kasih telah menghubungi BANK 1. Permintaan Anda sedang kami proses.</p><p>Salam,<br>BANK 1 Customer Service</p>',
+    localizedBodyHtml: {
+      EN: '<p>Dear Customer,</p><p>Thank you for contacting BANK 1. Your request is being processed by our service team.</p>',
+      ID: '<p>Halo Bapak/Ibu,</p><p>Terima kasih telah menghubungi BANK 1. Permintaan Anda sedang kami proses.</p>',
+    },
   },
 ]
 
@@ -186,6 +199,7 @@ export function createEmailDemoMessages(now = Date.now()): EmailMessage[] {
       folder: 'sent',
       direction: 'outbound',
       handlingStatus: 'sent',
+      emailStatus: 'closed',
       sender: 'contact@bank1.demo',
       receiver: 'dimas.abimanyu@example.com',
       subject: 'RE: Disputed credit card transaction',
@@ -210,6 +224,22 @@ export function createEmailDemoMessages(now = Date.now()): EmailMessage[] {
         '<p>Halo Ibu Siti,</p><p>Terima kasih telah menghubungi BANK 1. Kami sedang memeriksa status perangkat Anda.</p>',
       sentAt: minutesAgo(18),
       customer: cloneCustomer(sitiCustomer),
+      isRead: true,
+    },
+    {
+      id: 'email-draft-failed-001',
+      threadId: 'email-thread-limit',
+      folder: 'drafts',
+      direction: 'outbound',
+      handlingStatus: 'failed',
+      sender: 'contact@bank1.demo',
+      receiver: 'agus.wijaya@example.com',
+      subject: 'RE: Credit card limit increase request',
+      preview: 'Previous send attempt failed. Please review and resend...',
+      bodyHtml:
+        '<p>Halo Bapak Agus,</p><p>Previous send attempt failed. Please review the requested limit information before resending.</p>',
+      sentAt: minutesAgo(8),
+      customer: cloneCustomer(agusCustomer),
       isRead: true,
     },
     {
