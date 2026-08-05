@@ -18,7 +18,6 @@ export type ExternalOperationApprovalStatus =
   | 'pending'
   | 'approved'
   | 'rejected'
-  | 'expired'
   | 'cancelled'
   | 'consumed'
 
@@ -33,7 +32,6 @@ export interface ExternalOperationApproval extends ExternalOperationApprovalScop
   agentAvatarUrl: string
   agentName: string
   createdAt: number
-  expiresAt: number
   id: string
   reviewNote?: string
   resolvedAt?: number
@@ -46,7 +44,6 @@ export type ExternalOperationApprovalEventKind =
   | 'cancelled'
   | 'consumed'
   | 'created'
-  | 'expired'
   | 'rejected'
 
 export interface ExternalOperationApprovalEvent {

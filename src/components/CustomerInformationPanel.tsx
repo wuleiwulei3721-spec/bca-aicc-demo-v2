@@ -29,6 +29,7 @@ export interface CustomerInformationPanelProps {
   onSendEmail?: () => void
   onStartOutbound?: () => void
   onVerify?: () => void
+  isDirectOutbound?: boolean
   outboundRequestStatus?: CustomerOutboundRequestStatus
   verifyButtonDisabled?: boolean
   verifyButtonLabel?: string
@@ -77,6 +78,7 @@ export function CustomerInformationPanel({
   onSendEmail,
   onStartOutbound,
   onVerify,
+  isDirectOutbound = false,
   outboundRequestStatus = 'idle',
   verifyButtonDisabled = false,
   verifyButtonLabel = 'Verify',
@@ -92,8 +94,10 @@ export function CustomerInformationPanel({
     outboundRequestStatus === 'requesting'
       ? 'Requesting...'
       : outboundRequestStatus === 'approved'
-        ? 'Outbound'
-        : 'Request Approval'
+        ? 'Call'
+        : isDirectOutbound
+          ? 'Call'
+          : 'Request Approval'
   const handleOutboundClick =
     outboundRequestStatus === 'approved'
       ? onStartOutbound
@@ -170,11 +174,7 @@ export function CustomerInformationPanel({
                       outboundRequestStatus === 'requesting' ||
                       !handleOutboundClick
                     }
-                    title={
-                      outboundRequestStatus === 'approved'
-                        ? 'Start outbound call'
-                        : 'Request TL approval for outbound call'
-                    }
+                    aria-label={outboundRequestLabel}
                     type="button"
                     onClick={handleOutboundClick}
                   >

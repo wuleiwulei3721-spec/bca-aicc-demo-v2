@@ -1,4 +1,10 @@
-import { useCallback, useMemo, useSyncExternalStore } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+} from 'react'
 import { headerAgentProfile } from '../mock/agent'
 import { useAuthStore } from '../store'
 import type {
@@ -35,6 +41,21 @@ export function useExternalOperationApproval(
       scope.type,
     ],
   )
+  const previousScopeRef = useRef(stableScope)
+
+  useEffect(() => {
+    const previousScope = previousScopeRef.current
+    const scopeChanged =
+      previousScope.customerId !== stableScope.customerId ||
+      previousScope.outboundReason !== stableScope.outboundReason ||
+      previousScope.targetNumber !== stableScope.targetNumber ||
+      previousScope.type !== stableScope.type
+
+    if (scopeChanged) {
+      releaseExternalOperationApproval(previousScope)
+      previousScopeRef.current = stableScope
+    }
+  }, [stableScope])
   const approvals = useSyncExternalStore(
     subscribeExternalOperationApprovals,
     getExternalOperationApprovalsSnapshot,
@@ -71,10 +92,6 @@ export function useExternalOperationApproval(
       }),
     [session?.avatarUrl, session?.displayName, stableScope],
   )
-  const release = useCallback(
-    () => releaseExternalOperationApproval(stableScope),
-    [stableScope],
-  )
   const consume = useCallback(
     () => consumeExternalOperationApproval(stableScope),
     [stableScope],
@@ -85,7 +102,6 @@ export function useExternalOperationApproval(
     consume,
     isApproved: status === 'approved',
     isPending: status === 'pending',
-    release,
     request,
     status,
   }

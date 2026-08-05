@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-08-01 16:45 +08:00
+Last updated: 2026-08-05 09:45 +08:00
 
 ## 1. Overall Status
 
@@ -75,7 +75,7 @@ This repository is still a demo application:
 - Timer display.
 - Global Control `Auto Cancel ACW Duration` drives the next voice/video After Call Work timer.
 - Toolbar More menu currently exposes Outbound Call; toolbar display settings are hidden from the More menu.
-- Outbound Call and Customer Information customer-phone outbound require `Miss Information` or `Financial Risk`. Ordinary Agents require TL approval; TL selects the reason and calls directly. The Call Number form uses aligned, icon-free controls.
+- Outbound Call and Customer Information customer-phone outbound require `Miss Information` or `Financial Risk`. Ordinary Agents require TL approval; TL selects the reason and calls directly. The Customer Information phone action is `Request Approval` only for ordinary Agents and `Call` for TL. Both approved Call actions create and focus a new `Outbound Call` customer workspace carrying the dialed number, then enter the same `Talking` state. The Call Number form uses aligned, icon-free controls.
 - Ordinary Agents see only SPV and TL entries in `Outbound Call > Call Agent`; TL-and-above accounts see the full list.
 - Call identification and Skill display during call lifecycle.
 - Active-call and not-ready handoff warnings.
@@ -92,7 +92,7 @@ This repository is still a demo application:
 - Customer and local profiles expose the Email workspace entry below WhatsApp.
 - Customer and local profiles expose the Social Media workspace entry immediately below Email.
 - Fixed Live Chat tab.
-- Dynamic PSTN / Voice Call tabs.
+- Dynamic PSTN / Voice Call / Outbound Call tabs.
 - Dynamic Video Call tabs.
 - Closable workspace page tabs for visible Call Management, Routing Config, local-only Employee Management, and local-only Design System pages.
 - Duplicate management page tabs are prevented by stable `page:*` tab keys.
@@ -117,7 +117,7 @@ This repository is still a demo application:
 - Call Flow Detail modal.
 - Send Email modal.
 - CRM-backed read-only customer contact display with an `IdcardOutlined` `All Contact Details` header viewer. Its grouped left-channel/right-value list supports multi-value and empty CRM states while reusing the legacy editor's channel icons. Legacy Contact Management DEMO is local-only and disabled by default.
-- Two Demo login identities: `888888 / 888888` is Agent Budi Kartika (`EMP-10027`) and `666666 / 666666` is TL Maya Santoso (`EMP-10108`) with a distinct female avatar. Both use the same workbench; TL receives `transfer:external-number`, which displays `Transfer Number` with direct transfer. Ordinary Agent Call Agent lists are limited to SPV and TL records; TL sees all records. Only ordinary-Agent external outbound and customer-phone calls create TL approvals. Pending requests share one masked TL simulation window and are processed as a FIFO queue, with the centered approval Modal displaying the current item, queue count, two-minute timeout, and optional TL note. A single real request appends one TL-page-only mock follow-up so the two-item queue can be demonstrated.
+- Two Demo login identities: `888888 / 888888` is Agent Budi Kartika (`EMP-10027`) and `666666 / 666666` is TL Maya Santoso (`EMP-10108`) with a distinct female avatar. Both use the same workbench; TL receives `transfer:external-number`, which displays `Transfer Number` with direct transfer. Ordinary Agent Call Agent lists are limited to SPV and TL records; TL sees all records. Only ordinary-Agent external outbound and customer-phone calls create TL approvals. Pending requests remain valid when the seat closes its originating modal to handle other work; only a number or Reason change, execution, or Log Out makes the prior request unusable. Pending requests share one masked TL simulation window and are processed as a FIFO queue, with the centered approval Modal displaying the current item, remaining-queue count, and optional TL note without a countdown; it closes after the final item is resolved. A real first request creates one TL-page-only mock follow-up after five seconds if it remains pending. Both seat-side entries show `Requesting...` while pending, and the Customer Information request action appears only while its phone row is hovered or keyboard-focused. The result modal uses concise `Approval Granted` or `Approval Rejected` copy, keeps Outbound, number, and Reason on its primary row, places optional Note beneath it, and stays open until manually closed.
 - Customer Journey.
 - Ticketing History.
 - Next Best Action.
@@ -155,6 +155,7 @@ This repository is still a demo application:
 - SLA / unanswered state with a horizontal unanswered progress bar in expanded and collapsed customer list states.
 - Live Chat workspace tab aggregates unanswered warning and breach customer counts with compact colored badges.
 - Conversation workspace.
+- Conversation header keeps only the total service duration; unanswered reminder timing remains in the customer list.
 - Send message local state.
 - End Service retains the completed session in Current without counting it as active service; Close moves it to History while keeping existing CRM behavior.
 - New Live Chat handoffs stop at the configured `Max Digital Media Services` limit and remain in the customer-side simulated queue when capacity is full.

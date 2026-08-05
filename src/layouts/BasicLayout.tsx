@@ -394,6 +394,12 @@ export function BasicLayout() {
   const customerOutboundCallRequestId = useAppStore(
     (state) => state.customerOutboundCallRequestId,
   )
+  const customerOutboundCallNumber = useAppStore(
+    (state) => state.customerOutboundCallNumber,
+  )
+  const requestCustomerOutboundCall = useAppStore(
+    (state) => state.requestCustomerOutboundCall,
+  )
   const setVoiceVideoHandoffReadiness = useAppStore(
     (state) => state.setVoiceVideoHandoffReadiness,
   )
@@ -1014,17 +1020,17 @@ export function BasicLayout() {
     ],
   )
 
-  const startTalkingCall = useCallback(() => {
+  const startTalkingCall = useCallback((interactionId = currentCallInteractionId, channel = activeCallChannel) => {
     const now = Date.now()
     setCallTiming({
       ...initialCallTiming,
       talkingStartedAt: now,
     })
     setIsAfterCallWork(false)
-    if (currentCallInteractionId) {
-      markCallInteractionActive(currentCallInteractionId)
+    if (interactionId) {
+      markCallInteractionActive(interactionId)
     }
-    setOpenEyeVideoWindowVisible(activeCallChannel === 'video')
+    setOpenEyeVideoWindowVisible(channel === 'video')
     updateCallStatus('Talking')
   }, [
     activeCallChannel,
@@ -1066,10 +1072,34 @@ export function BasicLayout() {
       return
     }
 
-    const timer = window.setTimeout(startTalkingCall, 0)
+    const timer = window.setTimeout(() => {
+      setIsInitialReadyToggleLocked(false)
+      setCallTiming(initialCallTiming)
+      setActiveCallChannel('voice')
+      setIsAfterCallWork(false)
+      setOpenEyeVideoWindowVisible(false)
+      resetBankAppVideoDesktopShare()
+      const interactionId = createCallInteraction(
+        'voice',
+        'outbound',
+        true,
+        undefined,
+        undefined,
+        customerOutboundCallNumber ?? undefined,
+      )
+      startTalkingCall(interactionId, 'voice')
+    }, 0)
 
     return () => window.clearTimeout(timer)
-  }, [agentStatus, customerOutboundCallRequestId, startTalkingCall])
+  }, [
+    agentStatus,
+    createCallInteraction,
+    customerOutboundCallNumber,
+    customerOutboundCallRequestId,
+    resetBankAppVideoDesktopShare,
+    setOpenEyeVideoWindowVisible,
+    startTalkingCall,
+  ])
 
   useEffect(() => {
     if (
@@ -1415,6 +1445,13 @@ export function BasicLayout() {
       return { label: 'IVR:', value: '08123456789' }
     }
 
+    if (currentCallInteraction.source === 'outbound') {
+      return {
+        label: 'Outbound:',
+        value: currentCallInteraction.outboundNumber ?? '-',
+      }
+    }
+
     if (
       currentCallInteraction.source === 'bankapp-voice' ||
       currentCallInteraction.source === 'bankapp-video'
@@ -1489,6 +1526,7 @@ export function BasicLayout() {
             onHangUp={handleHangUp}
             onHoldToggle={handleHoldToggle}
             onReadyToggle={handleReadyToggle}
+            onRequestOutboundCall={requestCustomerOutboundCall}
             onTransferNotice={showTransferNotice}
           />
         )}

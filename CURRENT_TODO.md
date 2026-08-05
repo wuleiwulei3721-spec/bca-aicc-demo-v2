@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-08-01 10:58 +08:00
+Last updated: 2026-08-05 09:45 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -75,7 +75,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - KBV-approved CRM CIS identity refresh, including valid response, unknown/empty CIS, mismatched correlation ID, foreign origin, and timeout handling,
   - unidentified PSTN minimum-card state: anonymous caller number, `-` email/CIS, KBV retained, and no CRM-dependent actions before a valid CIS response,
   - CRM-backed read-only all-channel contact viewer, including multi-value and empty-channel states after CIS refresh; confirm CRM write authority, audit, field ownership, validation, and failure handling before any customer-facing contact editing is added,
-  - customer-phone TL outbound approval: Request Approval opens the compact Reason modal, Reason is required, popup request includes the reason, approve/reject supports an optional generic note, timeout hides the TL surface, the agent result popup lasts five seconds, and authorization is single-use.
+  - customer-phone outbound: Agent `Request Approval` opens the compact Reason modal, Reason is required, popup request includes the reason, approve/reject supports an optional generic note, pending status is `Requesting...`, the agent result popup remains until manually closed, and authorization is single-use. TL sees `Call` on the card, selects a Reason, then uses `Call` in the same modal for a direct outbound call.
   - Send Email,
   - Call Flow Detail,
   - Customer Verification V2.
@@ -83,7 +83,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - `/screenshots/crm-workspace.jpg`,
   - `/screenshots/assistant-workspace.jpg`,
   - fallback does not appear unless intentionally testing missing images.
-- Verify both outbound entries: `Miss Information` or `Financial Risk` must be selected before Request Approval is enabled; the TL popup carries the entered number and selected reason, Call/Outbound stays disabled until approval, changing either value requires a new approval, and an approved authorization is consumed after execution or released when the originating surface closes.
+- Verify both outbound entries: `Miss Information` or `Financial Risk` must be selected before Request Approval is enabled; both entries show `Requesting...` while pending, the Customer Information phone action is hover/focus-only with its full label visible and no native browser tooltip, the TL popup carries the entered number and selected reason without a countdown then closes after its last decision, Call stays disabled until approval, closing the originating surface preserves the same pending or approved request, changing either value requires a new approval, Log Out clears unused approvals, and either approved Call action consumes its authorization, opens a new `Outbound Call` customer workspace carrying the dialed number, then enters `Talking`.
 - Verify Ticketing History / Next Best Action / Quick Action:
   - click opens CRM dynamic tabs,
   - dynamic tabs can close,
@@ -102,7 +102,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - sorting,
   - hidden star marker behavior,
   - unread count,
-  - SLA timer and unanswered progress bar,
+  - customer-list SLA reminder and unanswered progress bar; Conversation header shows only total service duration,
   - Send message,
   - End Service retains the ended session in Current and removes it from active-service guards; Close moves it to History,
   - End Service main action keeps the confirmation modal,

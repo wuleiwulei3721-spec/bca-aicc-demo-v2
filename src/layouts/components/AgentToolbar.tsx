@@ -15,6 +15,7 @@ import { BaseModal, PhoneIcon, ToolbarButton } from '../../components'
 import type {
   AgentStatus,
   CallStatus,
+  ExternalOperationApproval,
   SessionEndReasonEntry,
   CommonNumberEntry,
   TransferAgent,
@@ -24,7 +25,6 @@ import { formatDuration } from '../../utils/duration'
 import { OutboundCallModal } from './OutboundCallModal'
 import { TransferModal } from './TransferModal'
 import {
-  getExternalOperationApprovalDescription,
   subscribeExternalOperationApprovalEvents,
 } from '../../utils/outboundApproval'
 
@@ -36,9 +36,35 @@ export interface TransferNotice {
 }
 
 interface ApprovalNotice {
-  description: string
+  approval: ExternalOperationApproval
   title: string
-  tone: 'approved' | 'expired' | 'rejected'
+  tone: 'approved' | 'rejected'
+}
+
+function getOutboundReasonLabel(approval: ExternalOperationApproval) {
+  return approval.outboundReason === 'financial-risk'
+    ? 'Financial Risk'
+    : 'Miss Information'
+}
+
+function ApprovalResultDetails({ approval }: { approval: ExternalOperationApproval }) {
+  return (
+    <div className="aicc-approval-result-modal__details">
+      <div className="aicc-approval-result-modal__request">
+        <span>Outbound</span>
+        <strong>{approval.targetNumber}</strong>
+        <span className="aicc-approval-result-modal__reason-tag">
+          {getOutboundReasonLabel(approval)}
+        </span>
+      </div>
+      {approval.reviewNote && (
+        <div className="aicc-approval-result-modal__note">
+          <span>Note:</span>
+          <span>{approval.reviewNote}</span>
+        </div>
+      )}
+    </div>
+  )
 }
 
 interface CallIdentification {
@@ -65,6 +91,7 @@ interface AgentToolbarProps {
   onHangUp: (endReasonName?: string) => void
   onHoldToggle: () => void
   onReadyToggle: () => void
+  onRequestOutboundCall: (phoneNumber: string) => void
   onTransferNotice: (notice: TransferNotice) => void
 }
 
@@ -87,6 +114,7 @@ export function AgentToolbar({
   onHangUp,
   onHoldToggle,
   onReadyToggle,
+  onRequestOutboundCall,
   onTransferNotice,
 }: AgentToolbarProps) {
   const [now, setNow] = useState(() => Date.now())
@@ -113,44 +141,27 @@ export function AgentToolbar({
   useEffect(
     () =>
       subscribeExternalOperationApprovalEvents((event) => {
-        if (!['approved', 'rejected', 'expired'].includes(event.kind)) {
+        if (!['approved', 'rejected'].includes(event.kind)) {
           return
         }
 
         const { approval } = event
         const result =
           event.kind === 'approved'
-            ? 'TL approval granted'
-            : event.kind === 'rejected'
-              ? 'TL approval rejected'
-              : 'TL approval timed out'
+            ? 'Approval Granted'
+            : 'Approval Rejected'
         const tone: ApprovalNotice['tone'] =
           event.kind === 'approved'
             ? 'approved'
-            : event.kind === 'rejected'
-              ? 'rejected'
-              : 'expired'
-        const note = approval.reviewNote
-          ? ` Note: ${approval.reviewNote}`
-          : ''
+            : 'rejected'
         setApprovalNotice({
-          description: `${getExternalOperationApprovalDescription(approval)}.${note}`,
+          approval,
           title: result,
           tone,
         })
       }),
     [],
   )
-
-  useEffect(() => {
-    if (!approvalNotice) {
-      return undefined
-    }
-
-    const timer = window.setTimeout(() => setApprovalNotice(null), 5000)
-
-    return () => window.clearTimeout(timer)
-  }, [approvalNotice])
 
   const isIncoming = callStatus === 'Incoming'
   const isInCall = callStatus === 'Talking' || callStatus === 'Hold'
@@ -445,6 +456,10 @@ export function AgentToolbar({
         open={isOutboundOpen}
         requiresOutboundApproval={requiresOutboundApproval}
         onClose={() => setIsOutboundOpen(false)}
+        onCallNumber={(phoneNumber) => {
+          setIsOutboundOpen(false)
+          onRequestOutboundCall(phoneNumber)
+        }}
       />
       <BaseModal
         className={`aicc-approval-result-modal aicc-approval-result-modal--${approvalNotice?.tone ?? 'approved'}`}
@@ -472,9 +487,7 @@ export function AgentToolbar({
         onCancel={() => setApprovalNotice(null)}
       >
         {approvalNotice && (
-          <p className="aicc-approval-result-modal__description">
-            {approvalNotice.description}
-          </p>
+          <ApprovalResultDetails approval={approvalNotice.approval} />
         )}
       </BaseModal>
     </>

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { authenticateDemoLogin } from '../mock/auth'
 import type { AuthSession, LoginPayload, LoginResult } from '../types'
+import { clearExternalOperationApprovals } from '../utils/outboundApproval'
 
 const AUTH_SESSION_STORAGE_KEY = 'bank1-aicc-auth-session'
 
@@ -24,12 +25,14 @@ function readStoredSession() {
 
     if (!isSessionValid(session)) {
       window.sessionStorage.removeItem(AUTH_SESSION_STORAGE_KEY)
+      clearExternalOperationApprovals()
       return null
     }
 
     return session
   } catch {
     window.sessionStorage.removeItem(AUTH_SESSION_STORAGE_KEY)
+    clearExternalOperationApprovals()
     return null
   }
 }
@@ -71,6 +74,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     return result
   },
   logout: () => {
+    clearExternalOperationApprovals()
     clearStoredSession()
     set({ session: null })
   },

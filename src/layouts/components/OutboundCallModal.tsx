@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import { Input, message, Select, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -22,6 +22,7 @@ interface OutboundCallModalProps {
   callAgentScope: 'all' | 'leaders-only'
   open: boolean
   onClose: () => void
+  onCallNumber: (phoneNumber: string) => void
   requiresOutboundApproval: boolean
 }
 
@@ -43,35 +44,22 @@ function renderAgentStatus(status: TransferAgentStatus) {
 }
 
 function CallNumberTab({
-  open,
-  onComplete,
+  onCallNumber,
   requiresOutboundApproval,
 }: {
-  open: boolean
-  onComplete: () => void
+  onCallNumber: (phoneNumber: string) => void
   requiresOutboundApproval: boolean
 }) {
   const [phoneNumber, setPhoneNumber] = useState('')
   const [outboundReason, setOutboundReason] =
     useState<ExternalOutboundReason | null>(null)
   const normalizedPhoneNumber = phoneNumber.trim()
-  const previousOpenRef = useRef(open)
-  const { consume, isApproved, isPending, release, request, status } =
+  const { consume, isApproved, isPending, request, status } =
     useExternalOperationApproval({
       outboundReason: outboundReason ?? undefined,
       targetNumber: normalizedPhoneNumber,
       type: 'outbound-number',
     })
-
-  useEffect(() => {
-    if (previousOpenRef.current && !open) {
-      release()
-    }
-
-    previousOpenRef.current = open
-  }, [open, release])
-
-  useEffect(() => () => release(), [release])
 
   const handleRequestApproval = () => {
     if (
@@ -158,7 +146,7 @@ function CallNumberTab({
             if (requiresOutboundApproval) {
               consume()
             }
-            onComplete()
+            onCallNumber(normalizedPhoneNumber)
           }}
         >
           Call
@@ -300,6 +288,7 @@ export function OutboundCallModal({
   callAgentScope,
   open,
   onClose,
+  onCallNumber,
   requiresOutboundApproval,
 }: OutboundCallModalProps) {
   const items = [
@@ -308,9 +297,8 @@ export function OutboundCallModal({
       label: 'Call Number',
       children: (
         <CallNumberTab
-          open={open}
           requiresOutboundApproval={requiresOutboundApproval}
-          onComplete={onClose}
+          onCallNumber={onCallNumber}
         />
       ),
     },

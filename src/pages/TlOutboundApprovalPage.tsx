@@ -1,36 +1,59 @@
 import { Avatar, Input } from 'antd'
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { BaseButton, BaseModal } from '../components'
 import type { ExternalOperationApproval } from '../types'
 import {
   approveExternalOperationApproval,
-  getExternalOperationApprovalDescription,
   getExternalOperationApprovalsSnapshot,
   rejectExternalOperationApproval,
   subscribeExternalOperationApprovals,
 } from '../utils/outboundApproval'
 
-function formatRemainingTime(expiresAt: number, now: number) {
-  const seconds = Math.max(0, Math.ceil((expiresAt - now) / 1000))
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
-
-  return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`
+function getOutboundReasonLabel(approval: ExternalOperationApproval) {
+  return approval.outboundReason === 'financial-risk'
+    ? 'Financial Risk'
+    : 'Miss Information'
 }
 
-const demoQueuedApproval: ExternalOperationApproval = {
-  agentAvatarUrl:
-    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
-  agentName: 'Siti Rahmawati',
-  createdAt: 0,
-  expiresAt: Number.MAX_SAFE_INTEGER,
-  id: 'tl-approval-demo-queue-item',
-  outboundReason: 'financial-risk',
-  status: 'pending',
-  targetNumber: '081298700456',
-  type: 'outbound-number',
-  updatedAt: 0,
+function ApprovalRequestDetails({
+  approval,
+}: {
+  approval: ExternalOperationApproval
+}) {
+  return (
+    <div className="tl-outbound-approval-modal__request">
+      <div className="tl-outbound-approval-modal__request-main">
+        <span>Outbound</span>
+        <strong>{approval.targetNumber}</strong>
+      </div>
+      <span className="tl-outbound-approval-modal__reason-tag">
+        {getOutboundReasonLabel(approval)}
+      </span>
+    </div>
+  )
+}
+
+const demoFollowupDelayMs = 5 * 1000
+
+function createDemoQueuedApproval(createdAt: number): ExternalOperationApproval {
+  return {
+    agentAvatarUrl:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
+    agentName: 'Siti Rahmawati',
+    createdAt,
+    id: `tl-approval-demo-queue-item-${createdAt}`,
+    outboundReason: 'financial-risk',
+    status: 'pending',
+    targetNumber: '081298700456',
+    type: 'outbound-number',
+    updatedAt: createdAt,
+  }
 }
 
 export function TlOutboundApprovalPage() {
@@ -41,9 +64,10 @@ export function TlOutboundApprovalPage() {
     getExternalOperationApprovalsSnapshot,
     () => [],
   )
-  const [now, setNow] = useState(() => Date.now())
   const [reviewNote, setReviewNote] = useState('')
-  const [showDemoFollowup, setShowDemoFollowup] = useState(false)
+  const [demoFollowup, setDemoFollowup] =
+    useState<ExternalOperationApproval | null>(null)
+  const [initialRequestId] = useState(requestId)
   const pendingApprovals = useMemo(
     () =>
       approvals
@@ -55,27 +79,39 @@ export function TlOutboundApprovalPage() {
     approvals.find(
       (item) => item.id === requestId && item.status === 'pending',
     ) ?? null
-  const shouldAppendDemoFollowup =
-    pendingApprovals.length === 1 && !showDemoFollowup
-  const approval =
-    pendingApprovals[0] ??
-    (showDemoFollowup ? demoQueuedApproval : requestedApproval)
+  const initialPendingApproval = pendingApprovals.find(
+    (item) => item.id === initialRequestId,
+  )
+  const approval = pendingApprovals[0] ?? demoFollowup ?? requestedApproval
   const queuedApprovals = [
     ...pendingApprovals.slice(1),
-    ...(shouldAppendDemoFollowup ? [demoQueuedApproval] : []),
+    ...(demoFollowup ? [demoFollowup] : []),
   ]
-  const isDemoApproval = approval?.id === demoQueuedApproval.id
-  const approvalCount =
-    pendingApprovals.length + (shouldAppendDemoFollowup || showDemoFollowup ? 1 : 0)
+  const isDemoApproval = approval?.id === demoFollowup?.id
 
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 1000)
+    if (
+      !initialPendingApproval ||
+      pendingApprovals.length !== 1 ||
+      demoFollowup
+    ) {
+      return undefined
+    }
 
-    return () => window.clearInterval(timer)
-  }, [])
+    const timer = window.setTimeout(
+      () => setDemoFollowup(createDemoQueuedApproval(Date.now())),
+      demoFollowupDelayMs,
+    )
 
-  const closePopupAfterResolution = () => {
-    if (!window.opener || queuedApprovals.length > 0) {
+    return () => window.clearTimeout(timer)
+  }, [demoFollowup, initialPendingApproval, pendingApprovals.length])
+
+  const closePopupAfterResolution = (resolvedApprovalId: string) => {
+    const hasNextApproval =
+      pendingApprovals.some((item) => item.id !== resolvedApprovalId) ||
+      (demoFollowup !== null && demoFollowup.id !== resolvedApprovalId)
+
+    if (hasNextApproval) {
       return
     }
 
@@ -88,17 +124,14 @@ export function TlOutboundApprovalPage() {
     }
 
     if (isDemoApproval) {
-      setShowDemoFollowup(false)
-      closePopupAfterResolution()
+      setDemoFollowup(null)
+      closePopupAfterResolution(approval.id)
       return
     }
 
-    if (shouldAppendDemoFollowup) {
-      setShowDemoFollowup(true)
-    }
     approveExternalOperationApproval(approval.id, reviewNote)
     setReviewNote('')
-    closePopupAfterResolution()
+    closePopupAfterResolution(approval.id)
   }
 
   const handleReject = () => {
@@ -107,17 +140,14 @@ export function TlOutboundApprovalPage() {
     }
 
     if (isDemoApproval) {
-      setShowDemoFollowup(false)
-      closePopupAfterResolution()
+      setDemoFollowup(null)
+      closePopupAfterResolution(approval.id)
       return
     }
 
-    if (shouldAppendDemoFollowup) {
-      setShowDemoFollowup(true)
-    }
     rejectExternalOperationApproval(approval.id, reviewNote)
     setReviewNote('')
-    closePopupAfterResolution()
+    closePopupAfterResolution(approval.id)
   }
 
   return (
@@ -150,12 +180,9 @@ export function TlOutboundApprovalPage() {
             <>
               <span>Approval</span>
               <span className="tl-outbound-approval-modal__header-meta">
-                {approvalCount > 1 && (
-                  <span>{showDemoFollowup ? 2 : 1} of {approvalCount}</span>
+                {queuedApprovals.length > 0 && (
+                  <span>{queuedApprovals.length} more pending</span>
                 )}
-                <time>
-                  Expires in {formatRemainingTime(approval.expiresAt, now)}
-                </time>
               </span>
             </>
           ) : null
@@ -170,21 +197,13 @@ export function TlOutboundApprovalPage() {
               </Avatar>
               <strong>{approval.agentName}</strong>
             </div>
-            <p className="tl-outbound-approval-modal__description">
-              {getExternalOperationApprovalDescription(approval)}
-            </p>
+            <ApprovalRequestDetails approval={approval} />
             <Input
               maxLength={100}
               placeholder="Add note (optional)"
               value={reviewNote}
               onChange={(event) => setReviewNote(event.target.value)}
             />
-            {queuedApprovals.length > 0 && (
-              <div className="tl-outbound-approval-modal__queue">
-                <span>{queuedApprovals.length} more pending</span>
-                <p>{getExternalOperationApprovalDescription(queuedApprovals[0])}</p>
-              </div>
-            )}
             <footer className="tl-outbound-approval-modal__actions">
               <BaseButton variant="secondary" onClick={handleReject}>
                 Reject

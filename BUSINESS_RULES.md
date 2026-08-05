@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-08-01 16:45 +08:00
+Last updated: 2026-08-05 09:45 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -60,7 +60,7 @@ Implemented status model:
 - Header `Log Out` ends the system session and returns to `/login`; it is separate from the agent media `Sign Out` action.
 - Log Out first checks for an active call, Live Chat, or Live Chat 2 service. When one exists, it is blocked with `You have active customer service in progress. Please finish or close it before logging out.`
 - When the agent is signed in and is neither `Not Ready` nor AUX, including `Ready` and `Pre-AUX`, Log Out is blocked with: `To prevent new customer work from being assigned while you log out, change your status to Not Ready or AUX before logging out.`
-- `Unsigned`, `Not Ready`, and AUX statuses show the `Confirm Log Out` confirmation. Confirming clears agent service state, clears the auth session, and returns to the login page.
+- `Unsigned`, `Not Ready`, and AUX statuses show the `Confirm Log Out` confirmation. Confirming clears agent service state, clears the auth session and any pending or unused external-operation approval, and returns to the login page.
 - Idle monitoring applies only while status is `Unsigned`, `Not Ready`, or AUX. It resets whenever the agent enters one of those statuses, leaves that scope, closes the warning, or performs a window activity such as focus, pointer movement/click, keyboard input, scrolling, or touch input.
 - At `System Idle Log-out Timeout - Auto Log-out Warning Lead Time`, the demo shows `Session Expiring`; closing the dialog or choosing `Continue Working` resets the timer. At the full timeout, the demo automatically logs out.
 - This is a current-window front-end demo only. It does not provide server session invalidation, multi-tab synchronization, or a backend authentication revocation flow.
@@ -203,19 +203,20 @@ Outbound Call is available from the toolbar More menu.
 Outbound modal:
 
 - Tabs: `Call Number`, `Call Agent`.
-- Call Number accepts a phone number and requires one fixed reason: `Miss Information` or `Financial Risk`. Ordinary Agents see `Request Approval` and can Call only after TL approval for the exact number-and-reason request. TL-and-above accounts select the same reason but Call directly and do not see a Request Approval action.
+- Call Number accepts a phone number and requires one fixed reason: `Miss Information` or `Financial Risk`. Ordinary Agents see `Request Approval` and can Call only after TL approval for the exact number-and-reason request. TL-and-above accounts select the same reason but Call directly and do not see a Request Approval action. A completed Call Number action uses the same outbound request event as Customer Information: it creates and focuses a new `Outbound Call` voice workspace carrying the dialed number, then the toolbar enters `Talking`.
 - Call Agent supports name / employee ID search and skill queue filtering. Ordinary Agents can only view SPV and TL records; TL-and-above roles can view all records.
 - Agent row action is `Call`.
 
-Customer Information customer-phone outbound uses the same role rule. Its compact card action opens an `Outbound Reason` modal; ordinary Agents select `Miss Information` or `Financial Risk` before creating the request, while TL-and-above selects the reason and directly unlocks Outbound.
+Customer Information customer-phone outbound uses the same role rule. Its compact card action opens an `Outbound Reason` modal. Ordinary Agents see `Request Approval` and select `Miss Information` or `Financial Risk` before creating the request; TL-and-above sees `Call`, selects the reason, then clicks `Call` in that modal to directly create the outbound call.
 
 ### External Number TL Approval
 
-- The approval scope is a single action and target: toolbar outbound number plus its selected reason, or Customer Information customer phone number plus its selected reason. Editing the number or outbound reason, or closing the originating modal releases a pending or approved authorization; executing the original operation consumes it.
+- The approval scope is a single action and target: toolbar outbound number plus its selected reason, or Customer Information customer phone number plus its selected reason. Editing the number or outbound reason releases a pending or approved authorization; closing the originating modal does not. A pending request or unused approval remains available while the agent handles other work, then is reused only for the original exact-number action. Executing the original operation consumes it, and Log Out clears all pending or unused approvals.
 - An ordinary Agent creates a pending request and opens or reuses one same-origin `/tl-outbound-approval` popup from the click event. If the browser blocks the popup, the request is cancelled and the agent is told to allow popups before retrying.
-- The TL popup uses the customer-provided complete TL dashboard screenshot as a contained foreground image, so the BANK 1 header, left navigation, and dashboard edge are not cropped. A light mask blocks the static dashboard while approval is active. The approval surface reuses the shared light-blue `BaseModal` title with one white body, is centered in the TL viewport, and has an `Approval` title with a right-aligned countdown. Its body contains only the small agent avatar/name, relevant request description including the required outbound reason, an optional generic note, Approve / Reject actions, and a compact next-item indicator when another request is queued.
-- The optional note can accompany either Approve or Reject and is included in the agent notification. Approve enables only the original exact-number action. Reject returns the originating entry to a requestable state. Timeout expires the request and hides the TL approval surface without a result card.
-- Approval records are synchronized between same-origin browser windows with `BroadcastChannel` and `localStorage` so pending state survives refresh in the current browser. The TL window processes pending requests FIFO; resolving a current request advances to the next and only closes the popup after the final item. When exactly one real request is open, the TL page appends one local-only simulated follow-up item to make the two-item queue visible in the Demo; it does not create a seat-side authorization or notification. Agent approval result popups reuse a non-masked `BaseModal` at the bottom-right, are manually closable, and disappear after five seconds.
+- The TL popup uses the customer-provided complete TL dashboard screenshot as a contained foreground image, so the BANK 1 header, left navigation, and dashboard edge are not cropped. A light mask blocks the static dashboard while approval is active. The approval surface reuses the shared light-blue `BaseModal` title with one white body, is centered in the TL viewport, and has an `Approval` title with compact remaining-queue progress. Its body contains only the small agent avatar/name, relevant request details including the required outbound reason, an optional generic note, and Approve / Reject actions.
+- TL request details use the compact `Outbound {number}` format with the selected Reason as a separate tag. Customer ID is not displayed and the Demo does not perform a customer lookup from the outbound number.
+- The optional note can accompany either Approve or Reject and is included in the agent notification. Approve enables only the original exact-number action. Reject returns the originating entry to a requestable state. There is no approval countdown or automatic timeout; a request remains pending until TL resolves it, the target number or Reason changes, or the agent logs out.
+- Approval records are synchronized between same-origin browser windows with `BroadcastChannel` and `localStorage` so pending state survives refresh in the current browser. The TL window processes pending requests FIFO; resolving a current request advances to the next and closes the popup after the final item. When the initial real request remains pending for five seconds, the TL page creates one local-only simulated follow-up item to make the queue visible in the Demo; it does not create a seat-side authorization or notification. If the first request is resolved before five seconds, the follow-up is never created. Both outbound entries render pending approval as `Requesting...`; Customer Information exposes its Request Approval, Requesting, or Call action only while its phone row is hovered or receives keyboard focus. Agent result popups reuse a non-masked `BaseModal` at the bottom-right, use `Approval Granted` or `Approval Rejected` titles, retain Outbound, number, and Reason on the primary row, render optional Note below it, and remain visible until the agent closes them.
 - This is a front-end Demo simulation only. It does not create a real TL queue, permission check, backend audit record, or cross-device approval workflow.
 
 No real dialer integration exists.
@@ -452,7 +453,7 @@ Workspace tab:
 
 Conversation:
 
-- Header shows channel icon, customer name, and service duration.
+- Header shows channel icon, customer name, and service duration. It does not duplicate the unanswered reminder timer shown in the customer list.
 - Active session actions: `Transfer`, `End Service`.
 - Customer-ended session action: `Close`.
 - Sending a message appends a current-agent message in local state.

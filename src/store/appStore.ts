@@ -43,7 +43,10 @@ export type BankAppPinVerificationStatus =
 export type BankAppVideoShareState = 'idle' | 'sharing'
 export type CallInteractionKind = 'voice' | 'video'
 export type CallInteractionPhase = 'incoming' | 'active' | 'ended'
-export type CallInteractionSource = InboundPopupSource | VideoCallPopupSource
+export type CallInteractionSource =
+  | InboundPopupSource
+  | VideoCallPopupSource
+  | 'outbound'
 export interface CallTransferContext {
   sourceAgentEmployeeId: string
   sourceAgentName: string
@@ -91,6 +94,7 @@ export interface CallInteraction {
   flashUntil: number
   id: string
   kind: CallInteractionKind
+  outboundNumber?: string
   phase: CallInteractionPhase
   skillDisplayName: string
   source: CallInteractionSource
@@ -419,6 +423,10 @@ function getCallInteractionTitle(
     return 'Video Call'
   }
 
+  if (source === 'outbound') {
+    return 'Outbound Call'
+  }
+
   return source === 'bankapp-voice' ? 'Voice Call' : 'PSTN'
 }
 
@@ -448,6 +456,7 @@ interface AppState {
   currentCallInteractionId: string | null
   currentMonitoringHomeViewKey: MonitoringHomeViewKey
   currentMonitoringMonitorViewKey: MonitoringMonitorViewKey
+  customerOutboundCallNumber: string | null
   customerOutboundCallRequestId: number
   digitalHandoffReadiness: DigitalHandoffReadiness
   isBankAppDemoTabOpen: boolean
@@ -508,6 +517,7 @@ interface AppState {
     activate?: boolean,
     bankAppCustomerType?: BankAppCustomerType,
     transferContext?: CallTransferContext,
+    outboundNumber?: string,
   ) => string
   markCallInteractionActive: (interactionId: string) => void
   markCallInteractionEnded: (
@@ -545,7 +555,7 @@ interface AppState {
     activate?: boolean,
     bankAppCustomerType?: BankAppCustomerType,
   ) => boolean
-  requestCustomerOutboundCall: () => void
+  requestCustomerOutboundCall: (phoneNumber: string) => void
   requestMonitoringMonitorWorkspace: (
     viewKey?: MonitoringMonitorViewKey,
   ) => void
@@ -632,6 +642,7 @@ export const useAppStore = create<AppState>((set) => ({
   currentCallInteractionId: null,
   currentMonitoringHomeViewKey: defaultMonitoringHomeViewKey,
   currentMonitoringMonitorViewKey: defaultMonitoringMonitorViewKey,
+  customerOutboundCallNumber: null,
   customerOutboundCallRequestId: 0,
   digitalHandoffReadiness: 'not-ready',
   isBankAppDemoTabOpen: false,
@@ -833,6 +844,7 @@ export const useAppStore = create<AppState>((set) => ({
     activate = true,
     bankAppCustomerType,
     transferContext,
+    outboundNumber,
   ) => {
     let createdId = ''
 
@@ -864,6 +876,7 @@ export const useAppStore = create<AppState>((set) => ({
         flashUntil: now + INTERACTION_FLASH_MS,
         id,
         kind,
+        outboundNumber: source === 'outbound' ? outboundNumber : undefined,
         phase: 'incoming',
         skillDisplayName: getCallInteractionSkillDisplayName(),
         source,
@@ -1324,8 +1337,9 @@ export const useAppStore = create<AppState>((set) => ({
 
     return wasAdmitted
   },
-  requestCustomerOutboundCall: () =>
+  requestCustomerOutboundCall: (phoneNumber) =>
     set((state) => ({
+      customerOutboundCallNumber: phoneNumber,
       customerOutboundCallRequestId:
         state.customerOutboundCallRequestId + 1,
     })),

@@ -14,7 +14,18 @@ interface InboundPageProps {
 
 export function InboundPage({ interaction }: InboundPageProps) {
   const isBankAppVoice = interaction.source === 'bankapp-voice'
-  const customer = isBankAppVoice
+  const isOutbound = interaction.source === 'outbound'
+  const customer = isOutbound
+    ? {
+        ...unidentifiedInboundCustomer,
+        accessDuration: '00:00',
+        profile: {
+          ...unidentifiedInboundCustomer.profile,
+          name: 'Outbound Customer',
+          phoneNumber: interaction.outboundNumber ?? '-',
+        },
+      }
+    : isBankAppVoice
     ? interaction.bankAppCustomerType === 'guest'
       ? bankAppVoiceGuestCustomer
       : bankAppVoiceCustomer
@@ -24,9 +35,13 @@ export function InboundPage({ interaction }: InboundPageProps) {
     <InteractionWorkspace
       ariaLabel="Inbound call workspace"
       customer={customer}
-      initialJourney={isBankAppVoice ? undefined : unidentifiedCustomerJourney}
-      initialTickets={isBankAppVoice ? undefined : unidentifiedTicketingHistory}
-      showIvrJourney
+      initialJourney={
+        isBankAppVoice || isOutbound ? undefined : unidentifiedCustomerJourney
+      }
+      initialTickets={
+        isBankAppVoice || isOutbound ? undefined : unidentifiedTicketingHistory
+      }
+      showIvrJourney={!isOutbound}
       transferContext={interaction.transferContext}
     />
   )

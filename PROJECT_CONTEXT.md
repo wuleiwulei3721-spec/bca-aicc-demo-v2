@@ -196,7 +196,7 @@ The toolbar supports:
 - Ready / Not Ready toggle.
 - Timer display.
 - More menu for Outbound Call; toolbar Settings is temporarily hidden.
-- Ordinary Agent external outbound number and Customer Information outbound actions require one TL approval per target before their original action is enabled. Both external outbound entries require `Miss Information` or `Financial Risk`; TL selects the same reason but calls directly. `Transfer Number` is a TL-and-above permission, hidden from `888888` and available to `666666` without additional approval.
+- Ordinary Agent external outbound number and Customer Information outbound actions require one TL approval per target before their original action is enabled. Both external outbound entries require `Miss Information` or `Financial Risk`; TL selects the same reason but calls directly. A completed external Call creates and focuses a dynamic `Outbound Call` customer workspace with the dialed number, then enters `Talking`. `Transfer Number` is a TL-and-above permission, hidden from `888888` and available to `666666` without additional approval.
 - In `Outbound Call > Call Agent`, ordinary Agents see only SPV and TL records; TL-and-above roles see the complete agent list.
 - `Channel Simulation > Transferred Call` is local-only and opens a PSTN receiving-seat preview with source-agent transfer metadata; it is a local demo visualization, not a real routed call.
 - Call identification display: `IVR: {ANI Number}` for PSTN and `HaloApp: {BCAID}` / `HaloApp: Guest` for HaloApp voice and video; the current HaloApp BCAID mock is `00012345`. Future Webchat voice/video follows `Webchat: {BCAID}` / `Webchat: Guest-0001`.

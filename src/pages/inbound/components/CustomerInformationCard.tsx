@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { EditOutlined, IdcardOutlined } from '@ant-design/icons'
 import { message, Select } from 'antd'
 import {
@@ -332,7 +332,6 @@ export function CustomerInformationCard({
     consume: consumeOutboundApproval,
     isApproved: isOutboundApproved,
     isPending: isOutboundApprovalPending,
-    release: releaseOutboundApproval,
     request: requestOutboundApprovalRequest,
   } = useExternalOperationApproval({
     customerId: profile.cisNumber,
@@ -382,8 +381,6 @@ export function CustomerInformationCard({
   )
   const effectiveVerificationV2Conditions =
     verificationConditions ?? initialVerificationV2Conditions
-
-  useEffect(() => () => releaseOutboundApproval(), [releaseOutboundApproval])
 
   const openVerification = () => {
     if (verificationAction === 'pin') {
@@ -446,6 +443,8 @@ export function CustomerInformationCard({
 
     if (!requiresOutboundApproval) {
       setIsOutboundReasonModalOpen(false)
+      requestCustomerOutboundCall(profile.phoneNumber)
+      setOutboundReason(null)
       return
     }
 
@@ -464,7 +463,7 @@ export function CustomerInformationCard({
       if (requiresOutboundApproval) {
         consumeOutboundApproval()
       }
-      requestCustomerOutboundCall()
+      requestCustomerOutboundCall(profile.phoneNumber)
       setOutboundReason(null)
     }
   }
@@ -508,6 +507,7 @@ export function CustomerInformationCard({
             </div>
           ) : undefined
         }
+        isDirectOutbound={!requiresOutboundApproval}
         outboundRequestStatus={outboundRequestStatus}
         verificationStatus={effectiveVerificationStatus}
         verifyButtonDisabled={
@@ -537,7 +537,7 @@ export function CustomerInformationCard({
         open={isOutboundReasonModalOpen}
         reason={outboundReason}
         submitting={isOutboundApprovalPending}
-        submitLabel={requiresOutboundApproval ? 'Request Approval' : 'Continue'}
+        submitLabel={requiresOutboundApproval ? 'Request Approval' : 'Call'}
         onCancel={cancelOutboundReasonModal}
         onReasonChange={setOutboundReason}
         onSubmit={requestOutboundApproval}

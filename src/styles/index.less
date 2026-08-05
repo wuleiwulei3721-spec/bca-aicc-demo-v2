@@ -886,6 +886,16 @@ a {
   background: #ffffff !important;
 }
 
+.aicc-outbound-number__field .ant-input:-webkit-autofill,
+.aicc-outbound-number__field .ant-input:-webkit-autofill:hover,
+.aicc-outbound-number__field .ant-input:-webkit-autofill:focus,
+.aicc-outbound-number__field .ant-input:autofill {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: var(--aicc-text) !important;
+  background: #ffffff !important;
+  caret-color: var(--aicc-text);
+}
+
 .aicc-outbound-number--direct .aicc-outbound-number__field {
   grid-template-columns: 116px minmax(180px, 1fr) 160px 80px;
 }
@@ -7381,10 +7391,10 @@ a {
   display: none;
   align-items: center;
   justify-content: center;
-  min-width: 0;
-  max-width: 92px;
-  height: 20px;
-  padding: 0 5px;
+  min-width: 118px;
+  max-width: 148px;
+  height: 22px;
+  padding: 0 8px;
   border: 1px solid #d8e6f8;
   border-radius: var(--aicc-radius-sm);
   background: #f8fbff;
@@ -7406,11 +7416,9 @@ a {
 }
 
 .aicc-customer-info__phone-row:hover
-  .aicc-customer-info__outbound-request--idle,
+  .aicc-customer-info__outbound-request,
 .aicc-customer-info__phone-row:focus-within
-  .aicc-customer-info__outbound-request--idle,
-.aicc-customer-info__outbound-request--requesting,
-.aicc-customer-info__outbound-request--approved {
+  .aicc-customer-info__outbound-request {
   display: inline-flex;
 }
 
@@ -7435,6 +7443,9 @@ a {
 .aicc-customer-info__outbound-request--approved,
 .aicc-customer-info__outbound-request--approved:hover,
 .aicc-customer-info__outbound-request--approved:focus-visible {
+  min-width: 66px;
+  max-width: none;
+  padding: 0 8px;
   border-color: var(--aicc-success);
   background: var(--aicc-success);
   color: #ffffff;
@@ -9956,7 +9967,6 @@ button.inbound-list-row .inbound-list-row__title {
 .livechat2-session-card__action-row,
 .livechat2-conversation__identity,
 .livechat2-conversation__duration,
-.livechat2-conversation__unanswered,
 .livechat2-conversation__actions,
 .livechat2-composer__toolbar,
 .livechat2-composer__tools,
@@ -10547,7 +10557,7 @@ button.inbound-list-row .inbound-list-row__title {
   white-space: nowrap;
 }
 
-.livechat2-conversation__identity > span:not(.livechat2-conversation__channel-icon):not(.livechat2-conversation__duration):not(.livechat2-conversation__unanswered) {
+.livechat2-conversation__identity > span:not(.livechat2-conversation__channel-icon):not(.livechat2-conversation__duration) {
   overflow: hidden;
   color: var(--aicc-text-secondary);
   font-size: 11px;
@@ -10556,8 +10566,7 @@ button.inbound-list-row .inbound-list-row__title {
   white-space: nowrap;
 }
 
-.livechat2-conversation__duration,
-.livechat2-conversation__unanswered {
+.livechat2-conversation__duration {
   display: inline-flex;
   align-items: center;
   flex: 0 0 auto;
@@ -10566,14 +10575,6 @@ button.inbound-list-row .inbound-list-row__title {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   gap: 4px;
-}
-
-.livechat2-conversation__unanswered--warning {
-  color: var(--aicc-livechat-sla-warning);
-}
-
-.livechat2-conversation__unanswered--breach {
-  color: var(--aicc-livechat-sla-breach);
 }
 
 .livechat2-conversation__actions {
@@ -18532,6 +18533,17 @@ button.inbound-list-row .inbound-list-row__title {
   background: #ffffff !important;
 }
 
+.aicc-approval-result-modal .ant-modal-content,
+.aicc-approval-result-modal .ant-modal-container,
+.aicc-approval-result-modal .ant-modal-body,
+.aicc-approval-result-modal .aicc-modal__body,
+.inbound-customer-outbound-reason-modal .ant-modal-content,
+.inbound-customer-outbound-reason-modal .ant-modal-container,
+.inbound-customer-outbound-reason-modal .ant-modal-body,
+.inbound-customer-outbound-reason-modal .aicc-modal__body {
+  background: #ffffff !important;
+}
+
 .tl-outbound-approval-modal .ant-modal-content {
   box-shadow: var(--aicc-shadow-modal);
 }
@@ -18591,12 +18603,49 @@ button.inbound-list-row .inbound-list-row__title {
   white-space: nowrap;
 }
 
-.tl-outbound-approval-modal__description {
-  margin: 0;
-  color: var(--aicc-text);
+.tl-outbound-approval-modal__request {
+  display: grid;
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.tl-outbound-approval-modal__request-main {
+  display: inline-flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.tl-outbound-approval-modal__request-main > span {
+  color: var(--aicc-text-secondary);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 18px;
+}
+
+.tl-outbound-approval-modal__request-main strong {
+  overflow: hidden;
+  color: var(--aicc-text);
+  font-size: 14px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-outbound-approval-modal__reason-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 7px;
+  border: 1px solid #cddff6;
+  border-radius: var(--aicc-radius-sm);
+  background: #f3f8ff;
+  color: var(--aicc-primary-strong);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  white-space: nowrap;
 }
 
 .tl-outbound-approval-modal .ant-input {
@@ -18604,30 +18653,6 @@ button.inbound-list-row .inbound-list-row__title {
   background: #ffffff;
   font-size: 12px;
   line-height: 28px;
-}
-
-.tl-outbound-approval-modal__queue {
-  display: grid;
-  padding-top: 8px;
-  border-top: 1px solid var(--aicc-border-light);
-  gap: 2px;
-}
-
-.tl-outbound-approval-modal__queue > span {
-  color: var(--aicc-text-secondary);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 16px;
-}
-
-.tl-outbound-approval-modal__queue p {
-  overflow: hidden;
-  margin: 0;
-  color: var(--aicc-text);
-  font-size: 11px;
-  line-height: 16px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .tl-outbound-approval-modal__actions {
@@ -18665,11 +18690,66 @@ button.inbound-list-row .inbound-list-row__title {
   gap: 7px;
 }
 
-.aicc-approval-result-modal__description {
-  margin: 0;
+.aicc-approval-result-modal__details {
+  display: grid;
+  gap: 7px;
+  background: #ffffff;
+}
+
+.aicc-approval-result-modal__request {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.aicc-approval-result-modal__request > span:first-child,
+.aicc-approval-result-modal__note > span:first-child {
   color: var(--aicc-text-secondary);
   font-size: 12px;
+  font-weight: 700;
   line-height: 18px;
+}
+
+.aicc-approval-result-modal__request strong {
+  color: var(--aicc-text);
+  font-size: 14px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.aicc-approval-result-modal__reason-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 2px 7px;
+  border: 1px solid #cddff6;
+  border-radius: var(--aicc-radius-sm);
+  background: #f3f8ff;
+  color: var(--aicc-primary-strong);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.aicc-approval-result-modal__note {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 4px;
+  color: var(--aicc-text);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.aicc-approval-result-modal__note > span:first-child {
+  white-space: nowrap;
+}
+
+.aicc-approval-result-modal__note > span:last-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .aicc-approval-result-modal--approved .aicc-approval-result-modal__title,
@@ -18680,11 +18760,6 @@ button.inbound-list-row .inbound-list-row__title {
 .aicc-approval-result-modal--rejected .aicc-approval-result-modal__title,
 .aicc-approval-result-modal--rejected .aicc-approval-result-modal__title .anticon {
   color: var(--aicc-danger);
-}
-
-.aicc-approval-result-modal--expired .aicc-approval-result-modal__title,
-.aicc-approval-result-modal--expired .aicc-approval-result-modal__title .anticon {
-  color: var(--aicc-warning);
 }
 
 .social-media-page {

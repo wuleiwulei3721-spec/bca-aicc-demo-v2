@@ -5,8 +5,6 @@ import type {
   ExternalOperationApprovalScope,
 } from '../types'
 
-export const OUTBOUND_APPROVAL_TIMEOUT_MS = 2 * 60 * 1000
-
 const storageKey = 'bank1-aicc-external-operation-approvals'
 const broadcastChannelName = 'bank1-aicc-external-operation-approvals'
 const retentionMs = 30 * 60 * 1000
@@ -17,7 +15,6 @@ type ApprovalEventListener = (event: ExternalOperationApprovalEvent) => void
 
 let approvals = readApprovals()
 let broadcastChannel: BroadcastChannel | null = null
-let expiryTimer: number | null = null
 const listeners = new Set<ApprovalListener>()
 const eventListeners = new Set<ApprovalEventListener>()
 
@@ -58,7 +55,6 @@ function isExternalOperationApproval(
     typeof approval.targetNumber === 'string' &&
     typeof approval.status === 'string' &&
     typeof approval.createdAt === 'number' &&
-    typeof approval.expiresAt === 'number' &&
     typeof approval.updatedAt === 'number'
   )
 }
@@ -154,7 +150,7 @@ function resolveApproval(
   id: string,
   status: Extract<
     ExternalOperationApproval['status'],
-    'approved' | 'cancelled' | 'consumed' | 'expired' | 'rejected'
+    'approved' | 'cancelled' | 'consumed' | 'rejected'
   >,
   reviewNote?: string,
 ) {
@@ -191,25 +187,6 @@ function resolveApproval(
   return nextApproval
 }
 
-function expirePendingApprovals() {
-  const now = Date.now()
-  const expiredApprovals = approvals.filter(
-    (approval) => approval.status === 'pending' && approval.expiresAt <= now,
-  )
-
-  expiredApprovals.forEach((approval) => {
-    resolveApproval(approval.id, 'expired')
-  })
-}
-
-function ensureExpiryTimer() {
-  if (typeof window === 'undefined' || expiryTimer !== null) {
-    return
-  }
-
-  expiryTimer = window.setInterval(expirePendingApprovals, 1000)
-}
-
 function createApprovalId() {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
     return crypto.randomUUID()
@@ -219,7 +196,6 @@ function createApprovalId() {
 }
 
 export function subscribeExternalOperationApprovals(listener: ApprovalListener) {
-  ensureExpiryTimer()
   getBroadcastChannel()
   listeners.add(listener)
 
@@ -229,7 +205,6 @@ export function subscribeExternalOperationApprovals(listener: ApprovalListener) 
 export function subscribeExternalOperationApprovalEvents(
   listener: ApprovalEventListener,
 ) {
-  ensureExpiryTimer()
   getBroadcastChannel()
   eventListeners.add(listener)
 
@@ -237,20 +212,16 @@ export function subscribeExternalOperationApprovalEvents(
 }
 
 export function getExternalOperationApprovalsSnapshot() {
-  expirePendingApprovals()
   return approvals
 }
 
 export function getExternalOperationApproval(id: string) {
-  expirePendingApprovals()
   return approvals.find((approval) => approval.id === id) ?? null
 }
 
 export function getExternalOperationApprovalForScope(
   scope: ExternalOperationApprovalScope,
 ) {
-  expirePendingApprovals()
-
   return (
     approvals
       .filter((approval) => scopeMatches(approval, scope))
@@ -268,7 +239,6 @@ export function requestExternalOperationApproval(
   const approval: ExternalOperationApproval = {
     ...input,
     createdAt: now,
-    expiresAt: now + OUTBOUND_APPROVAL_TIMEOUT_MS,
     id: createApprovalId(),
     status: 'pending',
     updatedAt: now,
@@ -323,22 +293,12 @@ export function consumeExternalOperationApproval(
   return resolveApproval(approval.id, 'consumed')
 }
 
-export function getExternalOperationApprovalDescription(
-  approval: ExternalOperationApproval,
-) {
-  const reason = approval.outboundReason
-    ? ` (Reason: ${
-        approval.outboundReason === 'financial-risk'
-          ? 'Financial Risk'
-          : 'Miss Information'
-      })`
-    : ''
-
-  if (approval.type === 'customer-outbound') {
-    return `Requesting outbound call to customer ${approval.customerId ?? '-'}: ${approval.targetNumber}${reason}`
-  }
-
-  return `Requesting outbound call to external number: ${approval.targetNumber}${reason}`
+export function clearExternalOperationApprovals() {
+  approvals
+    .filter((approval) =>
+      approval.status === 'pending' || approval.status === 'approved',
+    )
+    .forEach((approval) => resolveApproval(approval.id, 'cancelled'))
 }
 
 if (typeof window !== 'undefined') {
@@ -347,5 +307,4 @@ if (typeof window !== 'undefined') {
       reloadApprovals()
     }
   })
-  ensureExpiryTimer()
 }

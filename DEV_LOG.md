@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-08-03 10:28 +08:00
+最后更新：2026-08-05 09:45 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,286 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-08-05 09:45 +08:00 - TL 客户外呼 Reason 弹框直接 Call
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DEV_LOG.md`
+
+修改原因：
+
+- TL 在 Customer Information 选择外呼 Reason 后不应再关闭弹框并回到客户卡片进行第二次操作。
+
+修改结果：
+
+- TL 的 Reason 弹框主操作统一为 `Call`；选定 Reason 后点击该按钮直接发起既有外呼事件，创建并进入新的 `Outbound Call` 客户弹屏工作区。
+- Customer Information 卡片仅对普通 Agent 显示 `Request Approval`；TL 在相同位置直接显示 `Call`，随后在 Reason 弹框确认外呼。
+- 普通 Agent 保持 `Request Approval` 与 TL 审批流程不变。
+
+验证：
+
+- `npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` 通过；构建仅保留既有 bundle 大小提示。
+- 浏览器烟测：使用 `666666 / 666666` 登录并进入 TL 的 Outbound Call，确认填入号码和 Reason 后只提供直接 `Call` 动作，不出现审批申请入口。Customer Information 的 TL 分支复用同一外呼事件，并由静态类型检查覆盖。
+
+回滚说明：
+
+- 恢复 TL 弹框主操作文案为 `Continue`，并移除直接调用外呼事件即可。
+
+当前风险：
+
+- 仍是本地 Demo 外呼模拟，不执行真实 CTI 建呼或客户号码反查。
+
+### 2026-08-05 09:30 +08:00 - 外呼创建独立客户弹屏工作区
+
+修改页面或文件：
+
+- `src/store/appStore.ts`
+- `src/layouts/BasicLayout.tsx`
+- `src/layouts/components/AgentToolbar.tsx`、`src/layouts/components/OutboundCallModal.tsx`
+- `src/pages/inbound/InboundPage.tsx`、`src/pages/inbound/components/CustomerInformationCard.tsx`
+- `PROJECT_CONTEXT.md`、`BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求外呼接通时与来电处理一致，必须打开一个新的客户弹屏工作区，而不能只更新话务条状态。
+
+修改结果：
+
+- 外呼事件携带目标号码并创建 `outbound` 语音交互，生成并激活新的 `Outbound Call` 页签。
+- 外呼客户弹屏展示 `Outbound Customer` 与所拨号码；话务条显示 `Outbound: {number}`，并立即进入 `Talking`。既有结束通话、ACW 和页签生命周期复用原语音交互逻辑。
+
+验证：
+
+- `npm run lint`、`npx tsc --noEmit`、`npm run build` 通过；构建仅保留既有 bundle 大小提示。
+- 浏览器烟测：`666666 / 666666` 直接外呼 `081298700456` 后，话务条显示 `Outbound: 081298700456` 与 `Talking`，并激活新建的 `Outbound Call` 客户工作区；卡片显示 `Outbound Customer` 与所拨号码。
+
+回滚说明：
+
+- 恢复仅递增外呼请求 ID 的事件，并移除 `outbound` 交互来源与号码字段即可。
+
+当前风险：
+
+- 弹屏使用安全的匿名 `Outbound Customer` mock，不执行真实号码反查、CRM 匹配或 CTI 建呼。
+
+### 2026-08-04 18:25 +08:00 - 工具栏外呼接入通话状态机
+
+修改页面或文件：
+
+- `src/layouts/components/OutboundCallModal.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 工具栏的批准后 Call 仅关闭了 Outbound Modal，未触发话务条通话状态；Customer Information 的 hover Call 因复用申请按钮最小宽度而显得过宽。
+
+修改结果：
+
+- Call Number 和 Customer Information 统一发出既有 `requestCustomerOutboundCall` 事件，随后进入 `Talking` 状态。
+- 绿色客户卡片 Call 使用紧凑内容宽度；Request Approval 保持较宽尺寸以完整显示申请文案。
+
+验证：
+
+- `npm run lint`、`npx tsc --noEmit`、`npm run build` 通过；构建仅保留既有 bundle 大小提示。
+- Call Number 回调接入 Customer Information 已使用的 `requestCustomerOutboundCall` store action，后续由 `BasicLayout` 既有 effect 调用 `startTalkingCall`。
+
+回滚说明：
+
+- 移除 OutboundCallModal 的 `onCallNumber` 回调并恢复客户 Call 的共享最小宽度即可。
+
+当前风险：
+
+- 两个入口仍是前端 Demo 的同一外呼状态事件，不包含真实拨号、CTI 或号码校验。
+
+### 2026-08-04 18:05 +08:00 - 审批窗口收口与客户号码悬浮操作
+
+修改页面或文件：
+
+- `src/pages/TlOutboundApprovalPage.tsx`
+- `src/components/CustomerInformationPanel.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`DESIGN_SYSTEM.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求 TL 处理完全部审批后关闭窗口；客户信息卡号码操作不能挤压号码或截断按钮文字；结果 Note 不能影响 Outbound 和 Reason 的首行布局。
+
+修改结果：
+
+- 最后一项批准或拒绝后，TL 页面无条件尝试关闭窗口；存在队列时继续显示下一项。
+- Customer Information 的 Request Approval、Requesting 和 Call 均仅在号码行悬浮或键盘聚焦时显示，按钮宽度可完整展示文案，且不再有浏览器原生 hover 提示。
+- 结果 Modal 的首行固定显示 Outbound、号码与 Reason，Note 固定为下一行并允许仅备注内容自然换行。
+
+验证：
+
+- `npm run lint`、`npx tsc --noEmit`、`npm run build` 通过；构建仅保留既有 bundle 大小提示。
+- 静态检查确认 TL 以“当前项之外是否还有下一项”判断关闭，不会把最后一个模拟项误计入队列；客户号码操作使用 scoped hover/focus 选择器。
+
+回滚说明：
+
+- 恢复 TL 的 opener 判断、客户号码常驻操作状态与 Note 同行布局即可。
+
+当前风险：
+
+- 浏览器只允许脚本关闭由脚本打开的窗口；用户手工直接访问 TL 路由时，浏览器可能阻止 `window.close()`，但审批流程已结束并隐藏 Modal。
+
+### 2026-08-04 17:40 +08:00 - 审批结果信息行与纯白内容区
+
+修改页面或文件：
+
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/components/CustomerInformationPanel.tsx`
+- `src/styles/index.less`
+- `DESIGN_SYSTEM.md`、`CURRENT_TODO.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求审批结果的 Note 不单独占据一行；客户资料卡审批通过后的操作名称统一为 `Call`，并消除坐席结果与客户外呼 Reason 弹框的灰白嵌套背景。
+
+修改结果：
+
+- 审批结果按 `Outbound + 号码 + Reason + Note` 同行展示，备注只有在空间不足时才自然换行。
+- 客户资料卡批准后的绿色操作改为 `Call`；坐席结果与 Customer Information `Outbound Reason` Modal 均保持浅蓝标题和纯白内容区。
+
+验证：
+
+- `npm run lint`、`npx tsc --noEmit`、`npm run build` 通过；构建仅保留既有 bundle 大小提示。
+- 采用已验证的 scoped Modal 样式，不影响 TL 审批、工具栏 Outbound、Transfer 或 Internal Chat 的既有外观。
+
+回滚说明：
+
+- 恢复 Note 的独立区块、`Outbound` 按钮文案及对应 Modal 内容背景即可。
+
+当前风险：
+
+- 长备注会按可用宽度换行，未在结果弹框中额外截断，避免丢失 TL 留言。
+
+### 2026-08-04 17:15 +08:00 - 外呼审批跨工作续留并移除超时
+
+修改页面或文件：
+
+- `src/types/outboundApproval.ts`
+- `src/utils/outboundApproval.ts`、`src/hooks/useExternalOperationApproval.ts`
+- `src/store/authStore.ts`
+- `src/layouts/components/OutboundCallModal.tsx`、`src/layouts/components/AgentToolbar.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`、`src/pages/TlOutboundApprovalPage.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DESIGN_SYSTEM.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户确认坐席在审批期间可能需要关闭外呼面板处理来话，申请不能因此消失；同时取消两分钟审批倒计时和自动超时，以收敛 Demo 流程。
+
+修改结果：
+
+- 关闭工具栏外呼或客户资料卡相关面板不再释放待审或未使用授权；两个入口均显示 `Requesting...`。号码或 Reason 变更才会使旧申请失效，执行外呼仍单次消耗，Log Out 会清理待审和未使用授权。
+- 删除审批 `expiresAt`、`expired` 状态、TL 倒计时和超时结果；TL 请求保持待审，直到 Approve、Reject 或坐席登出。队列仍在首笔待审五秒后模拟一笔后续申请。
+
+验证：
+
+- `npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` 均通过；构建仅保留既有 bundle 大小提示。
+- 浏览器烟测：`888888 / 888888` 发起外呼审批后显示 `Requesting...`；关闭并重开 Outbound Call 后待审状态保留；Log Out 后返回 Login。TL 页面代码确认无倒计时或自动超时路径。
+
+回滚说明：
+
+- 恢复审批模型的过期字段和定时器，并恢复外呼面板关闭时的释放副作用即可。
+
+当前风险：
+
+- 无后台 SLA 或超期处理时，真实生产系统仍需由审批工作台、通知和审计服务处理长期未决申请；本 Demo 只保留人工决定或登出清理。
+
+### 2026-08-04 16:45 +08:00 - 坐席审批结果提示收敛
+
+修改页面或文件：
+
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DESIGN_SYSTEM.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求坐席侧审批结果去除冗余 `TL` 标识，内容与 TL 审批面板采用一致的简洁信息结构；备注独立换行显示，结果不能自动消失。
+
+修改结果：
+
+- 结果标题统一为 `Approval Granted`、`Approval Rejected` 或 `Approval Timed Out`。
+- 内容按 `Outbound`、号码、Reason 标签和可选 `Note` 分层，长备注可换行；右下角 `BaseModal` 仅在坐席主动关闭后消失。
+
+验证：
+
+- `npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` 均通过；构建仅保留既有 bundle 大小提示。
+
+回滚说明：
+
+- 恢复 `AgentToolbar` 的旧描述文本与五秒定时器即可。
+
+当前风险：
+
+- 这是前端 Demo 的同浏览器结果提示，不代表后台审批留痕或跨设备通知能力。
+
+### 2026-08-04 16:20 +08:00 - TL 审批延迟队列演示
+
+修改页面或文件：
+
+- `src/pages/TlOutboundApprovalPage.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求审批队列符合实际到达顺序：第一笔先单独审批，五秒后才模拟下一笔排队；每笔倒计时都必须从自身创建时开始计算两分钟。
+
+修改结果：
+
+- 初始审批只显示当前一笔。若五秒后仍待审，TL 页面才创建本地模拟后续项；标题显示 `N more pending`，不显示总数或重复正文提示。
+- 模拟后续项拥有独立两分钟超时；首笔在五秒内被处理且 TL 窗口关闭时，不会创建后续项。TL 说明保留 `Outbound {number}` 与独立 Reason 标签，不显示 Customer ID。
+
+验证：
+
+- `npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` 均通过；构建仅保留既有 bundle 大小提示。
+
+回滚说明：
+
+- 移除延迟 follow-up effect 并恢复单笔审批窗口关闭逻辑即可。
+
+当前风险：
+
+- 后续项仅用于 TL 页面演示，不是实际坐席申请或后端审批队列。
+
+### 2026-08-03 15:52 +08:00 - Live Chat Conversation 提醒计时去重
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户确认 Conversation 标题栏无需重复展示未回复提醒时间，左侧客户列表已有该提醒；标题栏仅保留会话总服务时长。
+
+修改结果：
+
+- 移除了 Conversation 标题栏的橙色未回复提醒图标与计时。
+- 左侧客户列表的 SLA 提醒时间和未回复进度条保持不变，Conversation 标题栏继续显示总服务时长。
+
+验证：
+
+- `npm run lint`、`npm run build` 和 `git diff --check` 已通过；构建仅有既有 large chunk warning。
+- 浏览器烟测已确认 Conversation 标题仅显示总服务时长，左侧客户列表仍显示未回复提醒时间和 SLA 进度条。
+
+回滚说明：
+
+- 恢复 Conversation 标题栏的 `livechat2-conversation__unanswered` 节点及样式即可回退。
+
+当前风险点：
+
+- 当前 SLA 提醒仍为前端本地计时；真实渠道应由服务端事件和 SLA 规则提供一致的时间基准。
 
 ### 2026-08-03 10:28 +08:00 - Customer Production Release
 
