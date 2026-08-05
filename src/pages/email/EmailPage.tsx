@@ -34,7 +34,7 @@ import {
   Tooltip,
 } from 'antd'
 import type { MenuProps } from 'antd'
-import type { ReactNode } from 'react'
+import type { PointerEvent, ReactNode } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   BaseButton,
@@ -963,6 +963,86 @@ function MailboxPanel({
         .includes(normalizedSearch)
     })
     .sort((first, second) => second.sentAt - first.sentAt)
+  const [sendmailOffset, setSendmailOffset] = useState({ x: 0, y: 0 })
+  const sendmailDragRef = useRef<{
+    dragged: boolean
+    originX: number
+    originY: number
+    pointerId: number | null
+    startX: number
+    startY: number
+  }>({
+    dragged: false,
+    originX: 0,
+    originY: 0,
+    pointerId: null,
+    startX: 0,
+    startY: 0,
+  })
+
+  const clampSendmailOffset = (value: number, min: number, max: number) =>
+    Math.min(max, Math.max(min, value))
+
+  const handleSendmailPointerDown = (event: PointerEvent<HTMLButtonElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) {
+      return
+    }
+
+    sendmailDragRef.current = {
+      dragged: false,
+      originX: sendmailOffset.x,
+      originY: sendmailOffset.y,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+    }
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  const handleSendmailPointerMove = (event: PointerEvent<HTMLButtonElement>) => {
+    const dragState = sendmailDragRef.current
+    if (dragState.pointerId !== event.pointerId) {
+      return
+    }
+
+    const deltaX = event.clientX - dragState.startX
+    const deltaY = event.clientY - dragState.startY
+    if (Math.abs(deltaX) + Math.abs(deltaY) > 4) {
+      dragState.dragged = true
+    }
+
+    const horizontalLimit = collapsed ? 5 : 98
+    const upwardLimit = collapsed ? 420 : 360
+    setSendmailOffset({
+      x: clampSendmailOffset(
+        dragState.originX + deltaX,
+        -horizontalLimit,
+        horizontalLimit,
+      ),
+      y: clampSendmailOffset(dragState.originY + deltaY, -upwardLimit, 10),
+    })
+  }
+
+  const handleSendmailPointerUp = (event: PointerEvent<HTMLButtonElement>) => {
+    const dragState = sendmailDragRef.current
+    if (dragState.pointerId !== event.pointerId) {
+      return
+    }
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    dragState.pointerId = null
+  }
+
+  const handleSendmailClick = () => {
+    if (sendmailDragRef.current.dragged) {
+      sendmailDragRef.current.dragged = false
+      return
+    }
+
+    onCompose()
+  }
 
   return (
     <aside
@@ -986,7 +1066,10 @@ function MailboxPanel({
           aria-label={collapsed ? 'Expand folders' : 'Collapse folders'}
           className="email-mailbox-panel__folder-toggle"
           type="button"
-          onClick={() => onCollapsedChange(!collapsed)}
+          onClick={() => {
+            setSendmailOffset({ x: 0, y: 0 })
+            onCollapsedChange(!collapsed)
+          }}
         >
           {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
         </button>
@@ -1004,18 +1087,16 @@ function MailboxPanel({
             onClick={() => onFolderChange(folder.key)}
           >
             <Badge
-              count={folder.key === 'inbox' ? folderCounts.inbox : 0}
-              offset={[4, -2]}
+              className={`email-folder-button__badge email-folder-button__badge--${folder.key}`}
+              count={folderCounts[folder.key]}
+              offset={[4, -3]}
               size="small"
             >
               <span className={`email-folder-button__icon email-folder-button__icon--${folder.key}`}>
                 {folder.icon}
               </span>
             </Badge>
-            <span>{folder.label}</span>
-            {folder.key !== 'inbox' && folderCounts[folder.key] > 0 && (
-              <small>{folderCounts[folder.key]}</small>
-            )}
+            <span className="email-folder-button__label">{folder.label}</span>
           </button>
         ))}
       </div>
@@ -1135,8 +1216,14 @@ function MailboxPanel({
         <button
           aria-label="Compose email"
           className="email-mailbox-panel__sendmail-button"
+          style={{
+            transform: `translate(${sendmailOffset.x}px, ${sendmailOffset.y}px)`,
+          }}
           type="button"
-          onClick={onCompose}
+          onClick={handleSendmailClick}
+          onPointerDown={handleSendmailPointerDown}
+          onPointerMove={handleSendmailPointerMove}
+          onPointerUp={handleSendmailPointerUp}
         >
           <span>
             <MailOutlined />
