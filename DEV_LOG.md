@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-08-05 09:45 +08:00
+最后更新：2026-08-05 18:55 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,32 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-08-05 18:55 +08:00 - Vercel 生产发布外呼 TL 审批演示
+
+发布提交：
+
+- `20f3411` - `feat: refine outbound TL approval demo`
+
+发布命令：
+
+- `npx vercel --prod --yes --scope wl-demo-s-projects --build-env VITE_APP_VISIBILITY_PROFILE=customer --build-env VITE_ENABLE_ADMIN_MENUS=true`
+
+发布结果：
+
+- Production deployment: `https://netinfo-aicc-demo-v2-2tggl3x8a-wl-demo-s-projects.vercel.app`
+- Production alias: `https://netinfo-aicc-demo-v2.vercel.app`
+- Vercel Inspect: `https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/5nBAyxDnT3ikKUCUU8C4cVxWaeCy`
+- 使用 `VITE_APP_VISIBILITY_PROFILE=customer`；本地维护模块保持隐藏。
+
+验证：
+
+- 发布前 `npm run lint`、`npx tsc --noEmit`、`npm run build`、`git diff --check` 通过。
+- 干净发布工作目录的 customer profile 构建与 Vercel production build 通过；仅保留既有 bundle 大小提示。
+
+回滚说明：
+
+- 在 Vercel 将正式 alias 切回上一条稳定生产部署，或重新部署前一已验证 Git 提交。
 
 ### 2026-08-05 09:45 +08:00 - TL 客户外呼 Reason 弹框直接 Call
 
