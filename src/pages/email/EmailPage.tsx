@@ -65,6 +65,7 @@ import { LeftColumn } from '../inbound/components/LeftColumn'
 
 const BANK_EMAIL_ACCOUNT = 'contact@bank1.demo'
 const BANK_PUBLIC_WEBSITE = 'https://www.bca.co.id'
+const BANK_SIGNATURE_IMAGE = '/email-assets/bank-service-counter.jpg'
 const TEAM_LEADER_EMAIL = 'tl.budi.kartika@bank1.demo'
 const AGENT_NAME = 'Budi Kartika'
 const DEFAULT_EMAIL_LANGUAGE: EmailLanguage = 'ID'
@@ -222,7 +223,7 @@ function createEmailSignature(language: EmailLanguage) {
       <p><strong>${AGENT_NAME}</strong><br>BANK 1 Customer Service</p>
       <p>${dateLabel}: ${formatSignatureDate()}</p>
       <p>
-        <img src="/favicon.svg" alt="BANK 1" width="28" height="28" />
+        <img src="${BANK_SIGNATURE_IMAGE}" alt="BANK 1 banking service" width="28" height="28" />
         <a href="${BANK_PUBLIC_WEBSITE}" target="_blank" rel="noreferrer">${BANK_PUBLIC_WEBSITE}</a>
       </p>
     </section>
