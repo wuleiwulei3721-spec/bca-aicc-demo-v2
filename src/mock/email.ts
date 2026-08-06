@@ -69,6 +69,9 @@ const disputeBody = `
     <strong>Sanggahan Transaksi Kartu Kredit BANK 1</strong>
     <span>Service request received through the Email channel</span>
   </section>
+  <figure class="email-message-rich__bank-image">
+    <img src="/email-assets/bank-service-counter.jpg" alt="BANK 1 service counter" />
+  </figure>
   <section class="email-message-rich__transaction">
     <div><span>Merchant</span><strong>AMAZON.COM DIGITAL</strong></div>
     <div><span>Date</span><strong>17 July 2026</strong></div>
