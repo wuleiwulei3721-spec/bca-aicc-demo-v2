@@ -16978,12 +16978,13 @@ button.inbound-list-row .inbound-list-row__title {
 
 .email-list-item--unread::before {
   position: absolute;
-  top: 17px;
-  left: 6px;
-  width: 4px;
-  height: 4px;
+  top: 14px;
+  left: 9px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #d64545;
+  box-shadow: 0 0 0 1px rgba(214, 69, 69, 0.08);
   content: '';
 }
 
@@ -16996,6 +16997,10 @@ button.inbound-list-row .inbound-list-row__title {
   font-size: 11px;
   font-weight: 650;
   gap: 6px;
+}
+
+.email-list-item--unread .email-list-item__topline {
+  padding-left: 10px;
 }
 
 .email-list-item__topline strong {
