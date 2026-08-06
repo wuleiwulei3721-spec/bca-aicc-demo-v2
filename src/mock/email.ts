@@ -225,6 +225,8 @@ export function createEmailDemoMessages(now = Date.now()): EmailMessage[] {
       sentAt: minutesAgo(18),
       customer: cloneCustomer(sitiCustomer),
       isRead: true,
+      slaStartedAt: minutesAgo(40),
+      slaTargetSeconds: 40 * 60,
     },
     {
       id: 'email-draft-failed-001',
@@ -241,6 +243,8 @@ export function createEmailDemoMessages(now = Date.now()): EmailMessage[] {
       sentAt: minutesAgo(8),
       customer: cloneCustomer(agusCustomer),
       isRead: true,
+      slaStartedAt: minutesAgo(30),
+      slaTargetSeconds: 40 * 60,
     },
     {
       id: 'email-trash-001',

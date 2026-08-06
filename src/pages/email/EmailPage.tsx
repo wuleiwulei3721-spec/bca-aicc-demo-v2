@@ -24,7 +24,6 @@ import {
   WarningFilled,
 } from '@ant-design/icons'
 import {
-  Badge,
   Checkbox,
   Drawer,
   Dropdown,
@@ -76,15 +75,15 @@ const emailLanguageOptions: Array<{ label: string; value: EmailLanguage }> = [
 ]
 
 const emailStatusOptions: Array<{ label: string; value: EmailStatus }> = [
-  { label: 'Open', value: 'open' },
-  { label: 'Pending', value: 'pending' },
-  { label: 'Closed', value: 'closed' },
+  { label: 'In progress', value: 'open' },
+  { label: 'Monitoring', value: 'pending' },
+  { label: 'Close', value: 'closed' },
 ]
 
 const emailStatusLabels: Record<EmailStatus, string> = {
-  closed: 'Closed',
-  open: 'Open',
-  pending: 'Pending',
+  closed: 'Close',
+  open: 'In progress',
+  pending: 'Monitoring',
 }
 
 const emailCommonLinks = [
@@ -1086,16 +1085,14 @@ function MailboxPanel({
             type="button"
             onClick={() => onFolderChange(folder.key)}
           >
-            <Badge
-              className={`email-folder-button__badge email-folder-button__badge--${folder.key}`}
-              count={folderCounts[folder.key]}
-              offset={[4, -3]}
-              size="small"
-            >
-              <span className={`email-folder-button__icon email-folder-button__icon--${folder.key}`}>
-                {folder.icon}
+            <span className={`email-folder-button__icon email-folder-button__icon--${folder.key}`}>
+              {folder.icon}
+            </span>
+            {folderCounts[folder.key] > 0 && (
+              <span className={`email-folder-button__count email-folder-button__count--${folder.key}`}>
+                {folderCounts[folder.key]}
               </span>
-            </Badge>
+            )}
             <span className="email-folder-button__label">{folder.label}</span>
           </button>
         ))}
@@ -1186,10 +1183,12 @@ function MailboxPanel({
                 <span className="email-list-item__preview">{email.preview}</span>
                 {sla && (
                   <span className={`email-list-item__sla email-list-item__sla--${sla.tone}`}>
-                    <span className="email-list-item__sla-track">
-                      <span style={{ width: `${sla.progress}%` }} />
-                    </span>
                     <time>{formatElapsed(sla.elapsedSeconds)}</time>
+                  </span>
+                )}
+                {sla && (
+                  <span className={`email-list-item__sla-track email-list-item__sla-track--${sla.tone}`}>
+                    <span style={{ width: `${sla.progress}%` }} />
                   </span>
                 )}
                 {email.handlingStatus === 'ignored' && (
