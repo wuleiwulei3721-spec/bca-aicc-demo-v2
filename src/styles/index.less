@@ -16807,19 +16807,29 @@ button.inbound-list-row .inbound-list-row__title {
   place-items: center;
   padding: 0;
   border: 1px solid var(--email-border);
-  border-radius: var(--email-radius-control);
+  border-radius: 8px;
   background: #ffffff;
-  color: var(--email-text-secondary);
+  color: var(--email-text);
   cursor: pointer;
-  font-size: 16px;
+  font-size: 18px;
+  line-height: 1;
+  opacity: 1;
+  box-shadow: 0 1px 2px rgba(31, 42, 59, 0.04);
 }
 
 .email-mailbox-panel__search > button:hover,
 .email-mailbox-panel__search > button:focus-visible {
-  border-color: var(--email-primary);
-  background: #ffffff;
-  color: var(--email-primary);
+  border-color: #b9c6d8;
+  background: #f8fbff;
+  color: var(--email-text);
   outline: 0;
+}
+
+.email-mailbox-panel__search > button .anticon,
+.email-transfer-modal__filters > button:not(.aicc-button) .anticon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .email-mailbox-panel__sent-filter {
@@ -17876,7 +17886,7 @@ button.inbound-list-row .inbound-list-row__title {
 .email-transfer-modal__filters {
   display: grid;
   flex: 0 0 auto;
-  grid-template-columns: 32px minmax(190px, 1fr) minmax(150px, 0.72fr) minmax(140px, 0.68fr) 64px;
+  grid-template-columns: 40px minmax(190px, 1fr) minmax(150px, 0.72fr) minmax(140px, 0.68fr) 64px;
   align-items: center;
   padding: 14px 20px;
   gap: 8px;
@@ -17884,22 +17894,25 @@ button.inbound-list-row .inbound-list-row__title {
 
 .email-transfer-modal__filters > button:not(.aicc-button) {
   display: inline-grid;
-  width: 32px;
+  width: 40px;
   height: 32px;
   place-items: center;
   border: 1px solid var(--email-border);
-  border-radius: var(--email-radius-control);
+  border-radius: 8px;
   background: #ffffff;
-  color: var(--email-text-secondary);
+  color: var(--email-text);
   cursor: pointer;
-  font-size: 16px;
+  font-size: 18px;
+  line-height: 1;
+  opacity: 1;
+  box-shadow: 0 1px 2px rgba(31, 42, 59, 0.04);
 }
 
 .email-transfer-modal__filters > button:not(.aicc-button):hover,
 .email-transfer-modal__filters > button:not(.aicc-button):focus-visible {
-  border-color: var(--email-primary);
-  background: #ffffff;
-  color: var(--email-primary);
+  border-color: #b9c6d8;
+  background: #f8fbff;
+  color: var(--email-text);
   outline: 0;
 }
 
@@ -18605,6 +18618,18 @@ button.inbound-list-row .inbound-list-row__title {
   border-radius: var(--email-radius-control);
   background: #ffffff;
   color: var(--email-text-secondary);
+}
+
+.email-mailbox-panel__search > button,
+.email-transfer-modal__filters > button:not(.aicc-button) {
+  width: 40px;
+  height: 32px;
+  border-radius: 8px;
+  color: var(--email-text);
+  font-size: 18px;
+  line-height: 1;
+  opacity: 1;
+  box-shadow: 0 1px 2px rgba(31, 42, 59, 0.04);
 }
 
 .email-mailbox-panel__list {
