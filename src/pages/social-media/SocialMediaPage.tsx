@@ -6,20 +6,22 @@ import {
   EyeOutlined,
   ExportOutlined,
   LeftOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
   MessageOutlined,
   MoreOutlined,
-  PaperClipOutlined,
   PoweroffOutlined,
   SendOutlined,
-  SmileOutlined,
   StarFilled,
 } from '@ant-design/icons'
-import { BaseButton } from '../../components'
+import { BaseButton, CustomerInformationPanel } from '../../components'
 import { useNow } from '../../hooks/useNow'
+import type { CustomerInformation } from '../../types'
+import { AssistantPanel } from '../inbound/components/AssistantPanel'
 
 type SocialMediaView = 'conversation' | 'post-detail'
 type SocialMediaWorkbenchTab = 'crm' | 'conversation'
-type SocialMediaThreadTab = 'comments' | 'mentions'
+type SocialMediaThreadTab = 'comments' | 'customer'
 type SocialMediaChannel =
   | 'facebook'
   | 'instagram'
@@ -146,6 +148,16 @@ const CWU_GROUPED_DROPDOWN_INDEX = 0
 const CWU_FLAT_DROPDOWN_INDEX = 1
 const CWU_INITIAL_FORM_INDEX = 2
 const CWU_SELECTED_FORM_INDEX = 3
+const SOCIAL_MEDIA_POST_URLS: Record<SocialMediaChannel, string> = {
+  appstore: 'https://www.apple.com/app-store/',
+  facebook: 'https://www.facebook.com/',
+  googleplay: 'https://play.google.com/store',
+  instagram: 'https://www.instagram.com/',
+  linkedin: 'https://www.linkedin.com/',
+  tiktok: 'https://www.tiktok.com/',
+  x: 'https://x.com/',
+  youtube: 'https://www.youtube.com/',
+}
 
 const channelOptions: SocialMediaFilterOption<SocialMediaChannel>[] = [
   {
@@ -584,6 +596,10 @@ function getPostContextLabel(item: SocialMediaItem) {
     default:
       return 'Original Post Context'
   }
+}
+
+function openSocialMediaPostPage(item: SocialMediaItem) {
+  window.open(SOCIAL_MEDIA_POST_URLS[item.channel], '_blank', 'noopener,noreferrer')
 }
 
 function getSourceContextLabel(item: SocialMediaItem) {
@@ -1061,7 +1077,161 @@ function HighlightedMentionText({ text }: { text: string }) {
   )
 }
 
+const socialQuickReplyTemplates = [
+  'Thanks for reaching out. We are checking this with the related team now.',
+  'Please share the reference number through the secure channel so we can continue.',
+  'We have received your comment and will keep you updated in this conversation.',
+  'Your request has been marked as handled. Thank you for contacting BANK 1.',
+]
+
+function getCustomerInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('')
+}
+
+function getSocialCustomerInformation(
+  item: SocialMediaItem,
+  progressLabel: string,
+): CustomerInformation {
+  const numericId = Number(item.id.replace(/\D/g, '')) || 1
+  const emailName =
+    item.customer
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '.')
+      .replace(/^\.+|\.+$/g, '') || 'customer'
+
+  return {
+    accessChannel: 'Webchat',
+    accessDuration: progressLabel,
+    profile: {
+      avatarInitials: getCustomerInitials(item.customer),
+      avatarUrl: item.avatarSrc,
+      name: item.customer,
+      phoneNumber: `08782510${String(200 + numericId).padStart(3, '0')}`,
+      email: `${emailName}@example.com`,
+      cisNumber: `00000${String(780000 + numericId * 37)}`,
+      customerType: numericId <= 2 ? 'Priority Customer' : 'Regular Customer',
+    },
+    verificationStatus: 'Verified',
+  }
+}
+
+function getAssignedThreadComment(comments: SocialMediaThreadComment[]) {
+  return comments.find((comment) => comment.showActions) ?? comments[0] ?? null
+}
+
+function getThreadEmptyCopy(tab: SocialMediaThreadTab) {
+  if (tab === 'customer') {
+    return {
+      title: 'No customer comments',
+      description: 'This customer has no comments in the current post.',
+    }
+  }
+
+  return {
+    title: 'No assigned comment',
+    description: 'No comment has been assigned to this agent.',
+  }
+}
+
+function SocialCustomerContext({
+  item,
+  progressLabel,
+}: {
+  item: SocialMediaItem
+  progressLabel: string
+}) {
+  const customer = getSocialCustomerInformation(item, progressLabel)
+  const channel = getChannelOption(item.channel)
+
+  return (
+    <aside className="social-media-page__customer-panel" aria-label="Customer information">
+      <CustomerInformationPanel
+        accessChannelNode={
+          <span className="social-media-page__customer-access-node">
+            <SocialChannelMark channel={item.channel} />
+            <span>{channel.label}</span>
+            <span className="social-media-page__customer-access-time">
+              {progressLabel}
+            </span>
+          </span>
+        }
+        className="social-media-page__customer-card"
+        customer={customer}
+        verificationStatus="Verified"
+      />
+
+      <section className="social-media-page__customer-context-card">
+        <header>
+          <strong>Customer Journey</strong>
+        </header>
+        <div className="social-media-page__customer-context-list">
+          <span>
+            <SocialChannelMark channel={item.channel} />
+            Social request
+            <em>Today</em>
+          </span>
+          <span>
+            <SocialChannelMark channel="facebook" />
+            Card benefits
+            <em>22 Dec</em>
+          </span>
+          <span>
+            <SocialChannelMark channel="instagram" />
+            Payment dispute
+            <em>14 Dec</em>
+          </span>
+        </div>
+      </section>
+
+      <section className="social-media-page__customer-context-card">
+        <header>
+          <strong>Ticketing History</strong>
+        </header>
+        <div className="social-media-page__customer-context-list">
+          <span>
+            Card replacement
+            <em>CRM000154</em>
+          </span>
+          <span>
+            Limit request
+            <em>CRM000153</em>
+          </span>
+        </div>
+      </section>
+
+      <section className="social-media-page__customer-context-card">
+        <header>
+          <strong>Next Best Action</strong>
+        </header>
+        <div className="social-media-page__customer-action-list">
+          <button type="button">Check card activation</button>
+          <button type="button">Create follow-up ticket</button>
+          <button type="button">Use secure channel</button>
+        </div>
+      </section>
+    </aside>
+  )
+}
+
+function SocialQuickReplyPanel() {
+  return (
+    <div className="social-media-page__quick-replies">
+      {socialQuickReplyTemplates.map((template) => (
+        <button key={template} type="button">
+          {template}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function SocialMediaPage() {
+  const [isQueueCollapsed, setIsQueueCollapsed] = useState(false)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [searchValue, setSearchValue] = useState('')
   const [selectedChannels, setSelectedChannels] =
@@ -1092,6 +1262,18 @@ export function SocialMediaPage() {
   )
   const [pageStartedAt] = useState(() => Date.now())
   const now = useNow(true)
+  const assistantExtraTabs = useMemo(
+    () => [
+      {
+        key: 'quick-replies',
+        title: 'Quick Reply',
+        icon: <MessageOutlined />,
+        closable: false,
+        children: <SocialQuickReplyPanel />,
+      },
+    ],
+    [],
+  )
 
   const filteredItems = useMemo(() => {
     const query = searchValue.trim().toLowerCase()
@@ -1109,6 +1291,17 @@ export function SocialMediaPage() {
       return matchesChannel && matchesType && matchesSearch
     })
   }, [searchValue, selectedChannels, selectedTypes])
+  const collapsedQueueItems = useMemo(
+    () =>
+      filteredItems.map((item) => ({
+        channel: getChannelOption(item.channel),
+        count: item.unread,
+        id: item.id,
+        isActive: item.id === activeItemId,
+        label: `${item.customer} ${getChannelOption(item.channel).label}`,
+      })),
+    [activeItemId, filteredItems],
+  )
 
   const activeItem =
     filteredItems.find((item) => item.id === activeItemId) ??
@@ -1127,13 +1320,21 @@ export function SocialMediaPage() {
   const activeChatDraft = activeItem ? (chatDrafts[activeItem.id] ?? '') : ''
   const activeChatReply = activeItem ? chatReplies[activeItem.id] : ''
   const activeThreadComments = activeItem ? getThreadComments(activeItem) : []
+  const assignedThreadComment = getAssignedThreadComment(activeThreadComments)
   const visibleThreadComments =
-    activeThreadTab === 'mentions'
-      ? activeThreadComments.filter((comment) => comment.isMention)
-      : activeThreadComments
+    activeThreadTab === 'comments'
+      ? assignedThreadComment
+        ? [assignedThreadComment]
+        : []
+      : activeItem
+        ? activeThreadComments.filter(
+            (comment) => comment.customer === activeItem.customer,
+          )
+        : []
   const activeThreadReplyTarget = activeThreadReplyId
     ? visibleThreadComments.find((comment) => comment.id === activeThreadReplyId)
     : null
+  const activeThreadEmptyCopy = getThreadEmptyCopy(activeThreadTab)
   const activeThreadDraft = activeThreadReplyId
     ? (threadDrafts[activeThreadReplyId] ?? '')
     : ''
@@ -1223,8 +1424,58 @@ export function SocialMediaPage() {
   const areAllTypesSelected = selectedTypes.length === allTypeKeys.length
 
   return (
-    <section className="social-media-page" aria-label="Social Media">
+    <section
+      className={`social-media-page${
+        isQueueCollapsed ? ' social-media-page--queue-collapsed' : ''
+      }`}
+      aria-label="Social Media"
+    >
       <aside className="social-media-page__queue-panel">
+        {isQueueCollapsed ? (
+          <>
+            <button
+              aria-label="Expand Social Media conversations"
+              className="social-media-page__queue-collapse-button social-media-page__queue-collapse-button--collapsed"
+              title="Expand"
+              type="button"
+              onClick={() => setIsQueueCollapsed(false)}
+            >
+              <MenuUnfoldOutlined />
+            </button>
+            <div className="social-media-page__queue-collapsed-rail">
+              {collapsedQueueItems.length > 0 ? (
+                collapsedQueueItems.map((item) => (
+                  <button
+                    key={item.id}
+                    aria-label={`Open ${item.label}`}
+                    className={`social-media-page__queue-collapsed-item${
+                      item.isActive
+                        ? ' social-media-page__queue-collapsed-item--active'
+                        : ''
+                    }`}
+                    title={item.label}
+                    type="button"
+                    onClick={() => {
+                      setActiveItemId(item.id)
+                      setView('conversation')
+                      setActiveWorkbenchTab('conversation')
+                      setActiveThreadTab('comments')
+                      setActiveThreadReplyId(null)
+                    }}
+                  >
+                    <img alt="" aria-hidden="true" src={item.channel.logoSrc} />
+                    {item.count > 0 ? <em>{item.count}</em> : null}
+                  </button>
+                ))
+              ) : (
+                <span className="social-media-page__queue-collapsed-empty">
+                  No data
+                </span>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
         <div className="social-media-page__queue-toolbar">
           <label className="social-media-page__search-field">
             <SearchGlyph />
@@ -1262,6 +1513,15 @@ export function SocialMediaPage() {
             }}
           >
             <RefreshGlyph />
+          </button>
+          <button
+            aria-label="Collapse Social Media conversations"
+            className="social-media-page__svg-icon-button social-media-page__queue-collapse-button"
+            title="Collapse"
+            type="button"
+            onClick={() => setIsQueueCollapsed(true)}
+          >
+            <MenuFoldOutlined />
           </button>
         </div>
 
@@ -1459,7 +1719,26 @@ export function SocialMediaPage() {
             </div>
           )}
         </div>
+          </>
+        )}
       </aside>
+
+      {activeItem ? (
+        <SocialCustomerContext
+          item={activeItem}
+          progressLabel={activeReplyProgress?.label ?? '0m00s'}
+        />
+      ) : (
+        <aside
+          className="social-media-page__customer-panel social-media-page__customer-panel--empty"
+          aria-label="Customer information"
+        >
+          <div className="social-media-page__empty">
+            <strong>No customer selected</strong>
+            <span>Choose a social media item.</span>
+          </div>
+        </aside>
+      )}
 
       <main className="social-media-page__workbench">
         <div className="social-media-page__workbench-tabs">
@@ -1803,11 +2082,6 @@ export function SocialMediaPage() {
                       }}
                     />
                     <div className="social-media-page__chat-composer-toolbar">
-                      <span className="social-media-page__chat-composer-tools">
-                        <SmileOutlined />
-                        <PaperClipOutlined />
-                        <ClockCircleOutlined />
-                      </span>
                       <BaseButton
                         icon={<SendOutlined />}
                         variant="primary"
@@ -1847,11 +2121,11 @@ export function SocialMediaPage() {
                         {getPostContextLabel(activeItem)}
                       </span>
                       <BaseButton
-                        aria-label="Open selected Social Media post detail"
+                        aria-label="Open selected Social Media post page"
                         className="social-media-page__view-post"
                         icon={<EyeOutlined />}
                         variant="primary"
-                        onClick={() => setView('post-detail')}
+                        onClick={() => openSocialMediaPostPage(activeItem)}
                       >
                         View
                       </BaseButton>
@@ -1872,7 +2146,7 @@ export function SocialMediaPage() {
                             <div className="social-media-page__review-actions">
                               <span>{REVIEW_DISPLAY_DATE}</span>
                               <button type="button">Reply</button>
-                              <button type="button">Mark as Handled</button>
+                              <button type="button">No Reply</button>
                             </div>
                           </div>
                           {activeItemTimedProgress ? (
@@ -1911,11 +2185,6 @@ export function SocialMediaPage() {
                           }}
                         />
                         <div className="social-media-page__review-composer-toolbar">
-                          <span className="social-media-page__review-composer-tools">
-                            <SmileOutlined />
-                            <PaperClipOutlined />
-                            <ClockCircleOutlined />
-                          </span>
                           <BaseButton
                             icon={<SendOutlined />}
                             variant="primary"
@@ -1946,39 +2215,30 @@ export function SocialMediaPage() {
                           Comments
                         </button>
                         <button
-                          aria-pressed={activeThreadTab === 'mentions'}
+                          aria-pressed={activeThreadTab === 'customer'}
                           className={`social-media-page__thread-tab${
-                            activeThreadTab === 'mentions'
+                            activeThreadTab === 'customer'
                               ? ' social-media-page__thread-tab--active'
                               : ''
                           }`}
                           type="button"
                           onClick={() => {
-                            setActiveThreadTab('mentions')
+                            setActiveThreadTab('customer')
                             setActiveThreadReplyId(null)
                           }}
                         >
-                          <span aria-hidden="true">@</span>
-                          Mentions
+                          <MessageOutlined />
+                          Customer Comments
                         </button>
-                        {activeThreadTab === 'mentions' ? (
-                          <button
-                            className="social-media-page__pin-mention-button"
-                            type="button"
-                          >
-                            PIN THE MENTION
-                          </button>
-                        ) : (
-                          <BaseButton
-                            className="social-media-page__pin-button"
-                            icon={<MoreOutlined />}
-                            title="More"
-                          />
-                        )}
+                        <BaseButton
+                          className="social-media-page__pin-button"
+                          icon={<MoreOutlined />}
+                          title="More"
+                        />
                       </div>
 
                       <div className="social-media-page__message-list">
-                        {visibleThreadComments.map((comment, index) => {
+                        {visibleThreadComments.map((comment) => {
                           const sentThreadReply = threadReplies[comment.id]
                           const renderedAgentReply =
                             comment.agentReply ?? sentThreadReply
@@ -1986,7 +2246,7 @@ export function SocialMediaPage() {
                             comment.id,
                           )
                           const showProgress =
-                            index === 0 &&
+                            comment.id === assignedThreadComment?.id &&
                             !renderedAgentReply &&
                             !isHandled &&
                             activeItemTimedProgress
@@ -2078,7 +2338,7 @@ export function SocialMediaPage() {
                                       }
                                     >
                                       <CheckCircleFilled />
-                                      {isHandled ? 'Handled' : 'Mark as Handled'}
+                                      No Reply
                                     </button>
                                   </div>
                                 ) : (
@@ -2125,8 +2385,8 @@ export function SocialMediaPage() {
 
                         {visibleThreadComments.length === 0 ? (
                           <div className="social-media-page__empty">
-                            <strong>No mentions</strong>
-                            <span>This post has no support mentions.</span>
+                            <strong>{activeThreadEmptyCopy.title}</strong>
+                            <span>{activeThreadEmptyCopy.description}</span>
                           </div>
                         ) : null}
                       </div>
@@ -2150,11 +2410,6 @@ export function SocialMediaPage() {
                             }}
                           />
                           <div className="social-media-page__thread-composer-toolbar">
-                            <span className="social-media-page__thread-composer-tools">
-                              <SmileOutlined />
-                              <PaperClipOutlined />
-                              <ClockCircleOutlined />
-                            </span>
                             <BaseButton
                               icon={<SendOutlined />}
                               variant="primary"
@@ -2178,6 +2433,10 @@ export function SocialMediaPage() {
           </section>
         )}
       </main>
+
+      <aside className="social-media-page__assistant-panel" aria-label="Agent tools">
+        <AssistantPanel extraTabs={assistantExtraTabs} />
+      </aside>
 
     </section>
   )
