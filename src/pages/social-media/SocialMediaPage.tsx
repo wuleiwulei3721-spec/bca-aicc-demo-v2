@@ -37,6 +37,7 @@ type SocialMediaSourceContext =
   | 'customer-post-mention'
   | 'third-party-comment-mention'
 type ReplyProgressTone = 'active' | 'warning' | 'expired'
+type SocialThreadStatus = 'On Progress' | 'Monitoring' | 'Closed'
 
 type SocialMediaCommentMedia =
   | {
@@ -148,6 +149,11 @@ const CWU_GROUPED_DROPDOWN_INDEX = 0
 const CWU_FLAT_DROPDOWN_INDEX = 1
 const CWU_INITIAL_FORM_INDEX = 2
 const CWU_SELECTED_FORM_INDEX = 3
+const socialThreadStatusOptions: SocialThreadStatus[] = [
+  'Closed',
+  'On Progress',
+  'Monitoring',
+]
 const SOCIAL_MEDIA_POST_URLS: Record<SocialMediaChannel, string> = {
   appstore: 'https://www.apple.com/app-store/',
   facebook: 'https://www.facebook.com/',
@@ -1162,7 +1168,6 @@ function SocialCustomerContext({
         }
         className="social-media-page__customer-card"
         customer={customer}
-        verificationStatus="Verified"
       />
 
       <section className="social-media-page__customer-context-card">
@@ -1254,6 +1259,9 @@ export function SocialMediaPage() {
   const [threadReplies, setThreadReplies] = useState<Record<string, string>>(
     {},
   )
+  const [threadStatuses, setThreadStatuses] = useState<
+    Record<string, SocialThreadStatus>
+  >({})
   const [handledThreadCommentIds, setHandledThreadCommentIds] = useState<
     string[]
   >([])
@@ -2245,6 +2253,8 @@ export function SocialMediaPage() {
                           const isHandled = handledThreadCommentIds.includes(
                             comment.id,
                           )
+                          const threadStatus =
+                            threadStatuses[comment.id] ?? 'On Progress'
                           const showProgress =
                             comment.id === assignedThreadComment?.id &&
                             !renderedAgentReply &&
@@ -2340,6 +2350,33 @@ export function SocialMediaPage() {
                                       <CheckCircleFilled />
                                       No Reply
                                     </button>
+                                    {activeItem.type === 'cmts' ? (
+                                      <label className="social-media-page__message-status-select">
+                                        <span>Status</span>
+                                        <select
+                                          aria-label={`Set status for ${comment.customer} comment`}
+                                          value={threadStatus}
+                                          onChange={(event) =>
+                                            setThreadStatuses((current) => ({
+                                              ...current,
+                                              [comment.id]: event.target
+                                                .value as SocialThreadStatus,
+                                            }))
+                                          }
+                                        >
+                                          {socialThreadStatusOptions.map(
+                                            (status) => (
+                                              <option
+                                                key={status}
+                                                value={status}
+                                              >
+                                                {status}
+                                              </option>
+                                            ),
+                                          )}
+                                        </select>
+                                      </label>
+                                    ) : null}
                                   </div>
                                 ) : (
                                   <span>{comment.date}</span>
