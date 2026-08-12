@@ -923,6 +923,7 @@ function MailboxPanel({
   onSelectMessage,
   onSentStatusFilterChange,
 }: MailboxPanelProps) {
+  const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false)
   const folderCounts = useMemo(
     () =>
       folderDefinitions.reduce<Record<EmailFolder, number>>(
@@ -940,11 +941,11 @@ function MailboxPanel({
   const visibleMessages = messages
     .filter((message) => message.folder === activeFolder)
     .filter((message) => {
-      if (activeFolder !== 'sent' || sentStatusFilter === 'all') {
+      if (sentStatusFilter === 'all') {
         return true
       }
 
-      return message.emailStatus === sentStatusFilter
+      return (message.emailStatus ?? 'open') === sentStatusFilter
     })
     .filter((message) => {
       if (!normalizedSearch) {
@@ -1109,16 +1110,35 @@ function MailboxPanel({
           value={searchValue}
           onChange={(event) => onSearchChange(event.target.value)}
         />
+        <Tooltip title="Filter email">
+          <button
+            aria-label="Filter email"
+            aria-pressed={isStatusFilterOpen}
+            className={
+              isStatusFilterOpen
+                ? 'email-mailbox-panel__toolbar-button email-mailbox-panel__toolbar-button--active'
+                : 'email-mailbox-panel__toolbar-button'
+            }
+            type="button"
+            onClick={() => setIsStatusFilterOpen((current) => !current)}
+          >
+            <FilterOutlined />
+          </button>
+        </Tooltip>
         <Tooltip title="Refresh mailbox">
-          <button aria-label="Refresh mailbox" type="button" onClick={onRefresh}>
+          <button
+            aria-label="Refresh mailbox"
+            className="email-mailbox-panel__toolbar-button"
+            type="button"
+            onClick={onRefresh}
+          >
             <ReloadOutlined />
           </button>
         </Tooltip>
       </div>
 
-      {activeFolder === 'sent' && (
+      {isStatusFilterOpen && (
         <div className="email-mailbox-panel__sent-filter">
-          <FilterOutlined />
           <div className="email-mailbox-panel__status-chips">
             {[
               { label: 'All', value: 'all' },
