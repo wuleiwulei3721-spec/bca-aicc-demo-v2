@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useCallback, useMemo, useState } from 'react'
 import {
   CheckCircleFilled,
   ClockCircleOutlined,
@@ -22,6 +22,7 @@ import { AssistantPanel } from '../inbound/components/AssistantPanel'
 type SocialMediaView = 'conversation' | 'post-detail'
 type SocialMediaWorkbenchTab = 'crm' | 'conversation'
 type SocialMediaThreadTab = 'comments' | 'customer'
+type SocialMediaQueueScope = 'current' | 'history'
 type SocialMediaChannel =
   | 'facebook'
   | 'instagram'
@@ -38,6 +39,7 @@ type SocialMediaSourceContext =
   | 'third-party-comment-mention'
 type ReplyProgressTone = 'active' | 'warning' | 'expired'
 type SocialThreadStatus = 'On Progress' | 'Monitoring' | 'Closed'
+type SocialWorkStatus = 'on-progress' | 'monitoring' | 'closed'
 
 type SocialMediaCommentMedia =
   | {
@@ -153,6 +155,15 @@ const socialThreadStatusOptions: SocialThreadStatus[] = [
   'Closed',
   'On Progress',
   'Monitoring',
+]
+const socialStatusFilterOptions: Array<{
+  label: string
+  value: SocialWorkStatus | 'all'
+}> = [
+  { label: 'All', value: 'all' },
+  { label: 'On Progress', value: 'on-progress' },
+  { label: 'Monitoring', value: 'monitoring' },
+  { label: 'Closed', value: 'closed' },
 ]
 const SOCIAL_MEDIA_POST_URLS: Record<SocialMediaChannel, string> = {
   appstore: 'https://www.apple.com/app-store/',
@@ -1130,6 +1141,10 @@ function getAssignedThreadComment(comments: SocialMediaThreadComment[]) {
   return comments.find((comment) => comment.showActions) ?? comments[0] ?? null
 }
 
+function getAssignedThreadCommentId(item: SocialMediaItem) {
+  return getAssignedThreadComment(getThreadComments(item))?.id
+}
+
 function getThreadEmptyCopy(tab: SocialMediaThreadTab) {
   if (tab === 'customer') {
     return {
@@ -1239,10 +1254,18 @@ export function SocialMediaPage() {
   const [isQueueCollapsed, setIsQueueCollapsed] = useState(false)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [searchValue, setSearchValue] = useState('')
+  const [activeQueueScope, setActiveQueueScope] =
+    useState<SocialMediaQueueScope>('current')
   const [selectedChannels, setSelectedChannels] =
     useState<SocialMediaChannel[]>(allChannelKeys)
   const [selectedTypes, setSelectedTypes] =
     useState<SocialMediaType[]>(allTypeKeys)
+  const [selectedStatuses, setSelectedStatuses] =
+    useState<SocialWorkStatus[]>([
+      'on-progress',
+      'monitoring',
+      'closed',
+    ])
   const [activeItemId, setActiveItemId] = useState(defaultSocialMediaItemId)
   const [view, setView] = useState<SocialMediaView>('conversation')
   const [activeWorkbenchTab, setActiveWorkbenchTab] =
@@ -1283,12 +1306,72 @@ export function SocialMediaPage() {
     [],
   )
 
+  const hasThreadResolutionForItem = useCallback(
+    (item: SocialMediaItem) => {
+      const commentIdPrefix = `${item.id}-`
+
+      return (
+        Object.keys(threadReplies).some((commentId) =>
+          commentId.startsWith(commentIdPrefix),
+        ) ||
+        handledThreadCommentIds.some((commentId) =>
+          commentId.startsWith(commentIdPrefix),
+        )
+      )
+    },
+    [handledThreadCommentIds, threadReplies],
+  )
+
+  const getItemWorkStatus = useCallback(
+    (item: SocialMediaItem): SocialWorkStatus => {
+      const assignedCommentId = getAssignedThreadCommentId(item)
+      const commentStatus = assignedCommentId
+        ? threadStatuses[assignedCommentId]
+        : undefined
+      const isThreadResolved = hasThreadResolutionForItem(item)
+      const isReplySent =
+        (item.type === 'reviews' && Boolean(reviewReplies[item.id])) ||
+        (item.type === 'chats' && Boolean(chatReplies[item.id])) ||
+        isThreadResolved
+
+      if (isReplySent || item.status === 'replied') {
+        return 'closed'
+      }
+
+      if (commentStatus === 'Monitoring') {
+        return 'monitoring'
+      }
+
+      if (commentStatus === 'Closed') {
+        return 'closed'
+      }
+
+      if (item.status === 'review') {
+        return 'monitoring'
+      }
+
+      return 'on-progress'
+    },
+    [
+      chatReplies,
+      hasThreadResolutionForItem,
+      reviewReplies,
+      threadStatuses,
+    ],
+  )
+
   const filteredItems = useMemo(() => {
     const query = searchValue.trim().toLowerCase()
 
     return socialMediaItems.filter((item) => {
       const matchesChannel = selectedChannels.includes(item.channel)
       const matchesType = selectedTypes.includes(item.type)
+      const itemWorkStatus = getItemWorkStatus(item)
+      const matchesStatus = selectedStatuses.includes(itemWorkStatus)
+      const matchesScope =
+        activeQueueScope === 'history'
+          ? itemWorkStatus === 'closed'
+          : itemWorkStatus !== 'closed'
       const matchesSearch =
         !query ||
         [item.customer, item.handle, item.preview, item.queue, item.title]
@@ -1296,9 +1379,22 @@ export function SocialMediaPage() {
           .toLowerCase()
           .includes(query)
 
-      return matchesChannel && matchesType && matchesSearch
+      return (
+        matchesChannel &&
+        matchesType &&
+        matchesStatus &&
+        matchesScope &&
+        matchesSearch
+      )
     })
-  }, [searchValue, selectedChannels, selectedTypes])
+  }, [
+    activeQueueScope,
+    getItemWorkStatus,
+    searchValue,
+    selectedChannels,
+    selectedStatuses,
+    selectedTypes,
+  ])
   const collapsedQueueItems = useMemo(
     () =>
       filteredItems.map((item) => ({
@@ -1346,18 +1442,6 @@ export function SocialMediaPage() {
   const activeThreadDraft = activeThreadReplyId
     ? (threadDrafts[activeThreadReplyId] ?? '')
     : ''
-  const hasThreadResolutionForItem = (item: SocialMediaItem) => {
-    const commentIdPrefix = `${item.id}-`
-
-    return (
-      Object.keys(threadReplies).some((commentId) =>
-        commentId.startsWith(commentIdPrefix),
-      ) ||
-      handledThreadCommentIds.some((commentId) =>
-        commentId.startsWith(commentIdPrefix),
-      )
-    )
-  }
   const activeItemHasThreadResolution = activeItem
     ? hasThreadResolutionForItem(activeItem)
     : false
@@ -1430,6 +1514,14 @@ export function SocialMediaPage() {
   const areAllChannelsSelected =
     selectedChannels.length === allChannelKeys.length
   const areAllTypesSelected = selectedTypes.length === allTypeKeys.length
+  const areAllStatusesSelected =
+    selectedStatuses.length === socialStatusFilterOptions.length - 1
+  const currentQueueCount = socialMediaItems.filter(
+    (item) => getItemWorkStatus(item) !== 'closed',
+  ).length
+  const historyQueueCount = socialMediaItems.filter(
+    (item) => getItemWorkStatus(item) === 'closed',
+  ).length
 
   return (
     <section
@@ -1515,6 +1607,7 @@ export function SocialMediaPage() {
               setSearchValue('')
               setSelectedChannels(allChannelKeys)
               setSelectedTypes(allTypeKeys)
+              setSelectedStatuses(['on-progress', 'monitoring', 'closed'])
               setView('conversation')
               setActiveThreadTab('comments')
               setActiveThreadReplyId(null)
@@ -1530,6 +1623,39 @@ export function SocialMediaPage() {
             onClick={() => setIsQueueCollapsed(true)}
           >
             <MenuFoldOutlined />
+          </button>
+        </div>
+
+        <div className="social-media-page__queue-scope-tabs">
+          <button
+            aria-pressed={activeQueueScope === 'current'}
+            className={
+              activeQueueScope === 'current'
+                ? 'social-media-page__queue-scope-tab social-media-page__queue-scope-tab--active'
+                : 'social-media-page__queue-scope-tab'
+            }
+            type="button"
+            onClick={() => {
+              setActiveQueueScope('current')
+              setActiveThreadReplyId(null)
+            }}
+          >
+            Current <span>{currentQueueCount}</span>
+          </button>
+          <button
+            aria-pressed={activeQueueScope === 'history'}
+            className={
+              activeQueueScope === 'history'
+                ? 'social-media-page__queue-scope-tab social-media-page__queue-scope-tab--active'
+                : 'social-media-page__queue-scope-tab'
+            }
+            type="button"
+            onClick={() => {
+              setActiveQueueScope('history')
+              setActiveThreadReplyId(null)
+            }}
+          >
+            History <span>{historyQueueCount}</span>
           </button>
         </div>
 
@@ -1634,6 +1760,47 @@ export function SocialMediaPage() {
                     }
                   >
                     <SocialTypeChip active={isActive} type={option.key} />
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="social-media-page__filter-row social-media-page__filter-row--status">
+              {socialStatusFilterOptions.map((option) => {
+                const isActive =
+                  option.value === 'all'
+                    ? areAllStatusesSelected
+                    : selectedStatuses.includes(option.value)
+
+                return (
+                  <button
+                    key={option.value}
+                    aria-pressed={isActive}
+                    className={`social-media-page__status-filter-chip${
+                      isActive
+                        ? ' social-media-page__status-filter-chip--active'
+                        : ''
+                    }`}
+                    type="button"
+                    onClick={() => {
+                      if (option.value === 'all') {
+                        setSelectedStatuses(
+                          areAllStatusesSelected
+                            ? []
+                            : ['on-progress', 'monitoring', 'closed'],
+                        )
+                        return
+                      }
+
+                      setSelectedStatuses((current) =>
+                        current.length ===
+                        socialStatusFilterOptions.length - 1
+                          ? [option.value]
+                          : toggleValue(current, option.value),
+                      )
+                    }}
+                  >
+                    {option.label}
                   </button>
                 )
               })}
@@ -2351,8 +2518,11 @@ export function SocialMediaPage() {
                                       No Reply
                                     </button>
                                     {activeItem.type === 'cmts' ? (
-                                      <label className="social-media-page__message-status-select">
-                                        <span>Status</span>
+                                      <label
+                                        className={`social-media-page__message-status-select social-media-page__message-status-select--${threadStatus
+                                          .toLowerCase()
+                                          .replace(/\s+/g, '-')}`}
+                                      >
                                         <select
                                           aria-label={`Set status for ${comment.customer} comment`}
                                           value={threadStatus}

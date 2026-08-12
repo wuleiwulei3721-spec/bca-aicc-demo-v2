@@ -16842,19 +16842,50 @@ button.inbound-list-row .inbound-list-row__title {
   gap: 8px;
 }
 
-.email-mailbox-panel__sent-filter .ant-select-selector {
-  height: 32px;
-  min-height: 32px;
-  border-color: var(--email-border);
-  border-radius: var(--email-radius-control);
-  font-size: 14px;
-}
-
 .email-mailbox-panel__sent-filter > .anticon {
   width: 16px;
   height: 16px;
   color: var(--email-text-secondary);
   font-size: 16px;
+}
+
+.email-mailbox-panel__status-chips {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.email-mailbox-panel__status-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.email-mailbox-panel__status-chip {
+  display: inline-flex;
+  height: 24px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border: 1px solid #b9d7ff;
+  border-radius: 6px;
+  background: #edf6ff;
+  color: #1473e6;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 22px;
+}
+
+.email-mailbox-panel__status-chip:hover,
+.email-mailbox-panel__status-chip:focus-visible,
+.email-mailbox-panel__status-chip--active {
+  border-color: #1473e6;
+  background: #e7f2ff;
+  color: #0f65d8;
+  outline: 0;
 }
 
 .email-mailbox-panel__list {
@@ -17712,24 +17743,24 @@ button.inbound-list-row .inbound-list-row__title {
 .email-compose-modal-panel {
   display: flex;
   overflow: hidden;
-  width: min(1340px, calc(100vw - 100px));
-  height: min(764px, calc(100vh - 110px));
+  width: min(1180px, calc(100vw - 96px));
+  height: min(720px, calc(100vh - 96px));
   min-width: 720px;
   min-height: 560px;
   flex-direction: column;
   border: 1px solid rgba(223, 231, 242, 0.92);
-  border-radius: var(--email-radius-panel);
+  border-radius: 8px;
   background: #ffffff;
-  box-shadow: 0 18px 44px rgba(5, 18, 34, 0.22);
+  box-shadow: 0 18px 40px rgba(5, 18, 34, 0.2);
 }
 
 .email-compose-modal-panel__toolbar {
   display: flex;
-  min-height: 56px;
+  min-height: 50px;
   flex: 0 0 auto;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 20px;
+  padding: 8px 18px;
   border-bottom: 1px solid var(--email-border-light);
 }
 
@@ -17741,10 +17772,11 @@ button.inbound-list-row .inbound-list-row__title {
 }
 
 .email-compose-modal-panel__actions .aicc-button {
-  height: 28px;
-  min-width: 68px;
+  height: 26px;
+  min-width: 62px;
   border-radius: 6px;
   font-size: 12px;
+  font-weight: 500;
 }
 
 .email-compose-modal-panel__actions span {
@@ -17780,24 +17812,24 @@ button.inbound-list-row .inbound-list-row__title {
 
 .email-compose-modal-panel .email-compose__fields {
   grid-template-columns: minmax(0, 1fr);
-  padding: 12px 20px 10px;
-  gap: 10px;
+  padding: 10px 20px 8px;
+  gap: 8px;
 }
 
 .email-compose-modal-panel .email-compose__fields label {
-  grid-template-columns: 86px minmax(0, 1fr);
+  grid-template-columns: 84px minmax(0, 1fr);
 }
 
 .email-compose-modal-panel .email-compose__editor-shell {
   flex: 1 1 auto;
-  margin: 10px 20px 18px;
+  margin: 8px 20px 16px;
 }
 
 .email-compose-modal-panel .email-compose__editor {
   min-height: 0;
-  padding: 14px 16px;
-  font-size: 13px;
-  line-height: 21px;
+  padding: 13px 16px;
+  font-size: 12px;
+  line-height: 20px;
 }
 
 .email-compose-modal-panel .email-compose__error {
@@ -18135,7 +18167,7 @@ button.inbound-list-row .inbound-list-row__title {
 
 .email-compose__fields label > span {
   color: var(--email-text);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
 }
 
@@ -18145,7 +18177,7 @@ button.inbound-list-row .inbound-list-row__title {
   border-color: var(--email-border);
   border-radius: 6px;
   color: var(--email-text);
-  font-size: 14px;
+  font-size: 12px;
   box-shadow: none;
 }
 
@@ -18196,12 +18228,12 @@ button.inbound-list-row .inbound-list-row__title {
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--email-border-light);
-  border-radius: var(--email-radius-panel);
+  border-radius: 8px;
 }
 
 .email-compose__toolbar {
   display: flex;
-  min-height: 38px;
+  min-height: 34px;
   flex: 0 0 auto;
   align-items: center;
   padding: 5px 8px;
@@ -18212,8 +18244,8 @@ button.inbound-list-row .inbound-list-row__title {
 
 .email-compose__toolbar button {
   display: inline-grid;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   place-items: center;
   padding: 0;
   border: 0;
@@ -18221,7 +18253,7 @@ button.inbound-list-row .inbound-list-row__title {
   background: transparent;
   color: var(--email-text-secondary);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 650;
 }
 
@@ -19382,12 +19414,67 @@ button.inbound-list-row .inbound-list-row__title {
 
 .social-media-page__queue-toolbar {
   display: grid;
-  min-height: 58px;
+  min-height: 56px;
   grid-template-columns: minmax(0, 1fr) 32px 32px 32px;
   gap: 8px;
   align-items: center;
   padding: 12px;
   border-bottom: 1px solid var(--social-border-light);
+}
+
+.social-media-page__queue-scope-tabs {
+  display: flex;
+  min-height: 36px;
+  flex: 0 0 auto;
+  align-items: flex-end;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--social-border-light);
+  background: #fff;
+  gap: 18px;
+}
+
+.social-media-page__queue-scope-tab {
+  position: relative;
+  display: inline-flex;
+  height: 36px;
+  align-items: center;
+  gap: 4px;
+  padding: 0 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--social-text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+}
+
+.social-media-page__queue-scope-tab span {
+  color: inherit;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.social-media-page__queue-scope-tab::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: transparent;
+  content: '';
+}
+
+.social-media-page__queue-scope-tab:hover,
+.social-media-page__queue-scope-tab:focus-visible,
+.social-media-page__queue-scope-tab--active {
+  color: var(--social-primary);
+  outline: 0;
+}
+
+.social-media-page__queue-scope-tab--active::after {
+  background: var(--social-primary);
 }
 
 .social-media-page__search-field {
@@ -19571,6 +19658,38 @@ button.inbound-list-row .inbound-list-row__title {
 
 .social-media-page__filter-row::-webkit-scrollbar {
   display: none;
+}
+
+.social-media-page__filter-row--status {
+  min-height: 24px;
+  padding-top: 1px;
+}
+
+.social-media-page__status-filter-chip {
+  display: inline-flex;
+  height: 24px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border: 1px solid #b9d7ff;
+  border-radius: 6px;
+  background: #edf6ff;
+  color: #1473e6;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 22px;
+  white-space: nowrap;
+}
+
+.social-media-page__status-filter-chip:hover,
+.social-media-page__status-filter-chip:focus-visible,
+.social-media-page__status-filter-chip--active {
+  border-color: #1473e6;
+  background: #e7f2ff;
+  color: #0f65d8;
+  outline: 0;
 }
 
 .social-media-page__filter-title {
@@ -21187,38 +21306,47 @@ button.inbound-list-row .inbound-list-row__title {
 
 .social-media-page__message-status-select {
   display: inline-flex;
-  height: 24px;
+  height: 22px;
   align-items: center;
-  gap: 6px;
   margin-left: 2px;
-  color: var(--social-text-tertiary);
+  border: 1px solid #d5e5ff;
+  border-radius: 999px;
+  background: #f7fbff;
+  color: var(--social-primary);
   font-size: 11px;
-  font-weight: 650;
-  line-height: 22px;
-}
-
-.social-media-page__message-status-select span {
-  color: var(--social-text-tertiary);
+  font-weight: 600;
+  line-height: 20px;
 }
 
 .social-media-page__message-status-select select {
-  width: 112px;
-  height: 24px;
-  padding: 0 22px 0 8px;
-  border: 1px solid var(--social-border);
-  border-radius: var(--social-control-radius);
+  width: auto;
+  height: 20px;
+  min-width: 90px;
+  padding: 0 20px 0 8px;
+  border: 0;
   outline: none;
-  background-color: #fff;
-  color: var(--social-text-secondary);
+  background-color: transparent;
+  color: inherit;
   cursor: pointer;
   font: inherit;
-  line-height: 22px;
+  line-height: 20px;
 }
 
 .social-media-page__message-status-select select:hover,
 .social-media-page__message-status-select select:focus {
-  border-color: #9bc8ff;
-  box-shadow: 0 0 0 2px rgba(30, 123, 226, 0.08);
+  box-shadow: none;
+}
+
+.social-media-page__message-status-select--closed {
+  border-color: #b7ebd9;
+  background: #f2fcfa;
+  color: #00b578;
+}
+
+.social-media-page__message-status-select--monitoring {
+  border-color: #ffd9a8;
+  background: #fff7ed;
+  color: #ff8200;
 }
 
 .social-media-page__live-comment {
