@@ -1119,16 +1119,28 @@ function MailboxPanel({
       {activeFolder === 'sent' && (
         <div className="email-mailbox-panel__sent-filter">
           <FilterOutlined />
-          <Select
-            options={[
-              { label: 'All Status', value: 'all' },
+          <div className="email-mailbox-panel__status-chips">
+            {[
+              { label: 'All', value: 'all' },
               ...emailStatusOptions,
-            ]}
-            value={sentStatusFilter}
-            onChange={(status) =>
-              onSentStatusFilterChange(status as EmailStatus | 'all')
-            }
-          />
+            ].map((option) => (
+              <button
+                key={option.value}
+                aria-pressed={sentStatusFilter === option.value}
+                className={
+                  sentStatusFilter === option.value
+                    ? 'email-mailbox-panel__status-chip email-mailbox-panel__status-chip--active'
+                    : 'email-mailbox-panel__status-chip'
+                }
+                type="button"
+                onClick={() =>
+                  onSentStatusFilterChange(option.value as EmailStatus | 'all')
+                }
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
