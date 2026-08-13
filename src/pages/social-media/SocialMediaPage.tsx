@@ -1776,7 +1776,7 @@ export function SocialMediaPage() {
                   <button
                     key={option.value}
                     aria-pressed={isActive}
-                    className={`social-media-page__status-filter-chip${
+                    className={`social-media-page__status-filter-chip social-media-page__status-filter-chip--${option.value}${
                       isActive
                         ? ' social-media-page__status-filter-chip--active'
                         : ''

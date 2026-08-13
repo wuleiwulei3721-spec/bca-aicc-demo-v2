@@ -16761,11 +16761,15 @@ button.inbound-list-row .inbound-list-row__title {
   display: grid;
   min-height: 58px;
   flex: 0 0 auto;
-  grid-template-columns: minmax(0, 1fr) 32px 32px;
+  grid-template-columns: minmax(0, 1fr) 32px;
   align-items: center;
   padding: 12px;
   border-bottom: 1px solid var(--email-border-light);
   gap: 8px;
+}
+
+.email-mailbox-panel__search--with-filter {
+  grid-template-columns: minmax(0, 1fr) 32px 32px;
 }
 
 .email-mailbox-panel--collapsed .email-mailbox-panel__search,
@@ -16835,19 +16839,18 @@ button.inbound-list-row .inbound-list-row__title {
 
 .email-mailbox-panel__sent-filter {
   display: flex;
-  min-height: 34px;
+  min-height: 36px;
   align-items: center;
   padding: 0 12px 10px;
   border-bottom: 1px solid var(--email-border-light);
   color: var(--email-text-secondary);
-  gap: 4px;
 }
 
 .email-mailbox-panel__status-chips {
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -16858,27 +16861,44 @@ button.inbound-list-row .inbound-list-row__title {
 
 .email-mailbox-panel__status-chip {
   display: inline-flex;
-  height: 24px;
+  height: 25px;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  padding: 0 8px;
-  border: 1px solid #88bdff;
-  border-radius: 6px;
-  background: #ffffff;
+  padding: 0;
+  border: 1px solid #a4c2ff;
+  border-radius: 7.1px;
+  background: #edf5ff;
   color: var(--email-primary);
   cursor: pointer;
-  font-size: 11px;
+  font-size: 12.87px;
   font-weight: 500;
-  line-height: 22px;
+  line-height: 15.84px;
   white-space: nowrap;
+}
+
+.email-mailbox-panel__status-chip--all {
+  width: 26px;
+  height: 26px;
+}
+
+.email-mailbox-panel__status-chip--open {
+  width: 90px;
+}
+
+.email-mailbox-panel__status-chip--pending {
+  width: 78px;
+}
+
+.email-mailbox-panel__status-chip--closed {
+  width: 66px;
 }
 
 .email-mailbox-panel__status-chip:hover,
 .email-mailbox-panel__status-chip:focus-visible,
 .email-mailbox-panel__status-chip--active {
-  border-color: var(--email-primary);
-  background: #edf6ff;
+  border-color: #0080fe;
+  background: #edf5ff;
   color: var(--email-primary);
   outline: 0;
 }
@@ -19664,35 +19684,52 @@ button.inbound-list-row .inbound-list-row__title {
 }
 
 .social-media-page__filter-row--status {
-  min-height: 24px;
+  min-height: 26px;
   align-items: center;
   padding-top: 1px;
-  gap: 4px;
+  gap: 5px;
 }
 
 .social-media-page__status-filter-chip {
   display: inline-flex;
-  height: 24px;
+  height: 25px;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  padding: 0 8px;
-  border: 1px solid #88bdff;
-  border-radius: 6px;
-  background: #ffffff;
+  padding: 0;
+  border: 1px solid #a4c2ff;
+  border-radius: 7.1px;
+  background: #edf5ff;
   color: var(--social-primary);
   cursor: pointer;
-  font-size: 11px;
+  font-size: 12.87px;
   font-weight: 500;
-  line-height: 22px;
+  line-height: 15.84px;
   white-space: nowrap;
+}
+
+.social-media-page__status-filter-chip--all {
+  width: 26px;
+  height: 26px;
+}
+
+.social-media-page__status-filter-chip--on-progress {
+  width: 90px;
+}
+
+.social-media-page__status-filter-chip--monitoring {
+  width: 78px;
+}
+
+.social-media-page__status-filter-chip--closed {
+  width: 66px;
 }
 
 .social-media-page__status-filter-chip:hover,
 .social-media-page__status-filter-chip:focus-visible,
 .social-media-page__status-filter-chip--active {
-  border-color: var(--social-primary);
-  background: #edf6ff;
+  border-color: #0080fe;
+  background: #edf5ff;
   color: var(--social-primary);
   outline: 0;
 }
