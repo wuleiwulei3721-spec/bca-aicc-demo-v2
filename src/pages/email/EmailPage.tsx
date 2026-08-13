@@ -941,11 +941,11 @@ function MailboxPanel({
   const visibleMessages = messages
     .filter((message) => message.folder === activeFolder)
     .filter((message) => {
-      if (sentStatusFilter === 'all') {
+      if (activeFolder !== 'sent' || sentStatusFilter === 'all') {
         return true
       }
 
-      return (message.emailStatus ?? 'open') === sentStatusFilter
+      return message.emailStatus === sentStatusFilter
     })
     .filter((message) => {
       if (!normalizedSearch) {
@@ -1085,7 +1085,12 @@ function MailboxPanel({
               .join(' ')}
             key={folder.key}
             type="button"
-            onClick={() => onFolderChange(folder.key)}
+            onClick={() => {
+              onFolderChange(folder.key)
+              if (folder.key !== 'sent') {
+                setIsStatusFilterOpen(false)
+              }
+            }}
           >
             <span className={`email-folder-button__icon email-folder-button__icon--${folder.key}`}>
               {folder.icon}
@@ -1100,7 +1105,16 @@ function MailboxPanel({
         ))}
       </div>
 
-      <div className="email-mailbox-panel__search">
+      <div
+        className={[
+          'email-mailbox-panel__search',
+          activeFolder === 'sent'
+            ? 'email-mailbox-panel__search--with-filter'
+            : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
         <Input
           allowClear
           aria-label="Search email"
@@ -1110,21 +1124,23 @@ function MailboxPanel({
           value={searchValue}
           onChange={(event) => onSearchChange(event.target.value)}
         />
-        <Tooltip title="Filter email">
-          <button
-            aria-label="Filter email"
-            aria-pressed={isStatusFilterOpen}
-            className={
-              isStatusFilterOpen
-                ? 'email-mailbox-panel__toolbar-button email-mailbox-panel__toolbar-button--active'
-                : 'email-mailbox-panel__toolbar-button'
-            }
-            type="button"
-            onClick={() => setIsStatusFilterOpen((current) => !current)}
-          >
-            <FilterOutlined />
-          </button>
-        </Tooltip>
+        {activeFolder === 'sent' && (
+          <Tooltip title="Filter email">
+            <button
+              aria-label="Filter email"
+              aria-pressed={isStatusFilterOpen}
+              className={
+                isStatusFilterOpen
+                  ? 'email-mailbox-panel__toolbar-button email-mailbox-panel__toolbar-button--active'
+                  : 'email-mailbox-panel__toolbar-button'
+              }
+              type="button"
+              onClick={() => setIsStatusFilterOpen((current) => !current)}
+            >
+              <FilterOutlined />
+            </button>
+          </Tooltip>
+        )}
         <Tooltip title="Refresh mailbox">
           <button
             aria-label="Refresh mailbox"
@@ -1137,7 +1153,7 @@ function MailboxPanel({
         </Tooltip>
       </div>
 
-      {isStatusFilterOpen && (
+      {activeFolder === 'sent' && isStatusFilterOpen && (
         <div className="email-mailbox-panel__sent-filter">
           <div className="email-mailbox-panel__status-chips">
             {[
@@ -1149,8 +1165,8 @@ function MailboxPanel({
                 aria-pressed={sentStatusFilter === option.value}
                 className={
                   sentStatusFilter === option.value
-                    ? 'email-mailbox-panel__status-chip email-mailbox-panel__status-chip--active'
-                    : 'email-mailbox-panel__status-chip'
+                    ? `email-mailbox-panel__status-chip email-mailbox-panel__status-chip--${option.value} email-mailbox-panel__status-chip--active`
+                    : `email-mailbox-panel__status-chip email-mailbox-panel__status-chip--${option.value}`
                 }
                 type="button"
                 onClick={() =>
