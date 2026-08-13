@@ -16836,18 +16836,18 @@ button.inbound-list-row .inbound-list-row__title {
 .email-mailbox-panel__sent-filter {
   display: flex;
   min-height: 34px;
-  align-items: flex-end;
-  padding: 0 12px 8px;
+  align-items: center;
+  padding: 0 12px 10px;
   border-bottom: 1px solid var(--email-border-light);
   color: var(--email-text-secondary);
-  gap: 14px;
+  gap: 4px;
 }
 
 .email-mailbox-panel__status-chips {
   display: flex;
   min-width: 0;
-  align-items: flex-end;
-  gap: 14px;
+  align-items: center;
+  gap: 4px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -16857,44 +16857,30 @@ button.inbound-list-row .inbound-list-row__title {
 }
 
 .email-mailbox-panel__status-chip {
-  position: relative;
   display: inline-flex;
-  height: 28px;
+  height: 24px;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  padding: 0 0 2px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: var(--email-text-secondary);
+  padding: 0 8px;
+  border: 1px solid #88bdff;
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--email-primary);
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 18px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 22px;
   white-space: nowrap;
-}
-
-.email-mailbox-panel__status-chip::after {
-  position: absolute;
-  right: 0;
-  bottom: -1px;
-  left: 0;
-  height: 2px;
-  border-radius: 999px;
-  background: transparent;
-  content: '';
 }
 
 .email-mailbox-panel__status-chip:hover,
 .email-mailbox-panel__status-chip:focus-visible,
 .email-mailbox-panel__status-chip--active {
+  border-color: var(--email-primary);
+  background: #edf6ff;
   color: var(--email-primary);
   outline: 0;
-}
-
-.email-mailbox-panel__status-chip--active::after {
-  background: var(--email-primary);
 }
 
 .email-mailbox-panel__list {
@@ -19678,51 +19664,37 @@ button.inbound-list-row .inbound-list-row__title {
 }
 
 .social-media-page__filter-row--status {
-  min-height: 30px;
-  align-items: flex-end;
-  padding-top: 0;
-  gap: 14px;
+  min-height: 24px;
+  align-items: center;
+  padding-top: 1px;
+  gap: 4px;
 }
 
 .social-media-page__status-filter-chip {
-  position: relative;
   display: inline-flex;
-  height: 28px;
+  height: 24px;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  padding: 0 0 2px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: var(--social-text-secondary);
+  padding: 0 8px;
+  border: 1px solid #88bdff;
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--social-primary);
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 18px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 22px;
   white-space: nowrap;
-}
-
-.social-media-page__status-filter-chip::after {
-  position: absolute;
-  right: 0;
-  bottom: -1px;
-  left: 0;
-  height: 2px;
-  border-radius: 999px;
-  background: transparent;
-  content: '';
 }
 
 .social-media-page__status-filter-chip:hover,
 .social-media-page__status-filter-chip:focus-visible,
 .social-media-page__status-filter-chip--active {
+  border-color: var(--social-primary);
+  background: #edf6ff;
   color: var(--social-primary);
   outline: 0;
-}
-
-.social-media-page__status-filter-chip--active::after {
-  background: var(--social-primary);
 }
 
 .social-media-page__filter-title {
