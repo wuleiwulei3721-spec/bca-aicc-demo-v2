@@ -78,6 +78,7 @@ export interface EmailComposeDraft {
   language: EmailLanguage
   mode: EmailComposeMode
   receiver: string
+  receiverLocked?: boolean
   sender: string
   sourceMessageId?: string
   subject: string

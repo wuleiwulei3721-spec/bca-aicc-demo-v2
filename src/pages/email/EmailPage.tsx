@@ -76,14 +76,14 @@ const emailLanguageOptions: Array<{ label: string; value: EmailLanguage }> = [
 ]
 
 const emailStatusOptions: Array<{ label: string; value: EmailStatus }> = [
-  { label: 'In progress', value: 'open' },
   { label: 'Monitoring', value: 'pending' },
+  { label: 'On Progress', value: 'open' },
   { label: 'Close', value: 'closed' },
 ]
 
 const emailStatusLabels: Record<EmailStatus, string> = {
   closed: 'Close',
-  open: 'In progress',
+  open: 'On Progress',
   pending: 'Monitoring',
 }
 
@@ -328,6 +328,7 @@ function getHandlingBadge(email: EmailMessage) {
 function createComposeDraft(
   mode: EmailComposeDraft['mode'],
   source?: EmailMessage,
+  options: { receiverLocked?: boolean } = {},
 ): EmailComposeDraft {
   const replySubject = source?.subject.replace(/^(RE|FW|TR):\s*/i, '') ?? ''
 
@@ -342,6 +343,7 @@ function createComposeDraft(
       language,
       mode: transferSourceMessageId ? 'transfer' : mode,
       receiver: source.receiver,
+      receiverLocked: options.receiverLocked,
       sender: source.sender,
       sourceMessageId: transferSourceMessageId ?? source.id,
       subject: source.subject,
@@ -355,6 +357,7 @@ function createComposeDraft(
       language: DEFAULT_EMAIL_LANGUAGE,
       mode,
       receiver: source.sender,
+      receiverLocked: options.receiverLocked,
       sender: BANK_EMAIL_ACCOUNT,
       sourceMessageId: source.id,
       subject: `RE: ${replySubject}`,
@@ -369,6 +372,7 @@ function createComposeDraft(
       language: DEFAULT_EMAIL_LANGUAGE,
       mode,
       receiver: TEAM_LEADER_EMAIL,
+      receiverLocked: options.receiverLocked,
       sender: BANK_EMAIL_ACCOUNT,
       sourceMessageId: source.id,
       subject: `TR: ${replySubject}`,
@@ -381,6 +385,7 @@ function createComposeDraft(
     language: DEFAULT_EMAIL_LANGUAGE,
     mode: 'new',
     receiver: source?.customer.profile.email ?? '',
+    receiverLocked: options.receiverLocked,
     sender: BANK_EMAIL_ACCOUNT,
     subject: '',
     threadId: `email-thread-new-${Date.now()}`,
@@ -534,6 +539,11 @@ function EmailComposePanelContent({
       return
     }
 
+    if (action === 'send' && !nextDraft.templateId) {
+      setError('Select a template and language before sending.')
+      return
+    }
+
     setError('')
     if (action === 'save') {
       onSave(nextDraft)
@@ -607,6 +617,7 @@ function EmailComposePanelContent({
           : 'New Email'
   const canSendSurvey = fields.emailStatus === 'closed'
   const isModal = surface === 'modal'
+  const canEditBody = Boolean(fields.templateId) || fields.mode === 'draft'
 
   return (
     <section
@@ -651,7 +662,7 @@ function EmailComposePanelContent({
           <label>
             <span>Receiver</span>
             <Input
-              disabled={fields.mode === 'transfer'}
+              disabled={fields.mode === 'transfer' || fields.receiverLocked}
               placeholder="customer@example.com"
               value={fields.receiver}
               onChange={(event) =>
@@ -739,6 +750,7 @@ function EmailComposePanelContent({
             ].map(([command, label, titleText]) => (
               <button
                 aria-label={titleText}
+                disabled={!canEditBody}
                 key={command}
                 title={titleText}
                 type="button"
@@ -753,6 +765,7 @@ function EmailComposePanelContent({
             <span className="email-compose__toolbar-divider" />
             <button
               aria-label="Template config"
+              disabled={!canEditBody}
               title="Template config"
               type="button"
               onMouseDown={(event) => {
@@ -798,13 +811,19 @@ function EmailComposePanelContent({
           )}
           <div
             aria-label="Email content"
-            className="email-compose__editor"
-            contentEditable
+            aria-disabled={!canEditBody}
+            className={`email-compose__editor${
+              canEditBody ? '' : ' email-compose__editor--disabled'
+            }`}
+            contentEditable={canEditBody}
             dangerouslySetInnerHTML={{ __html: fields.bodyHtml }}
             ref={editorRef}
             role="textbox"
             suppressContentEditableWarning
             onInput={() => {
+              if (!canEditBody) {
+                return
+              }
               setError('')
               updateFields({ bodyHtml: readEditorHtml() })
             }}
@@ -1801,14 +1820,16 @@ export function EmailPage() {
     noticeTimerRef.current = window.setTimeout(() => setNotice(null), 2600)
   }
 
-  const openComposeModal = () => {
+  const openComposeModal = (receiverLocked = false) => {
     if (!selectedEmail) {
       showNotice('Select an email before composing a proactive email.', 'info')
       return
     }
 
     setComposeDraft(null)
-    setComposeModalDraft(createComposeDraft('new', selectedEmail))
+    setComposeModalDraft(
+      createComposeDraft('new', selectedEmail, { receiverLocked }),
+    )
   }
 
   const selectMessage = (messageId: string) => {
@@ -2192,7 +2213,7 @@ export function EmailPage() {
         searchValue={searchValue}
         selectedMessageId={selectedMessageId}
         sentStatusFilter={sentStatusFilter}
-        onCompose={openComposeModal}
+        onCompose={() => openComposeModal(false)}
         onCollapsedChange={setIsMailboxCollapsed}
         onFolderChange={changeFolder}
         onRefresh={() => {
@@ -2207,7 +2228,7 @@ export function EmailPage() {
       <EmailCustomerContext
         activeEmail={selectedEmail}
         now={now}
-        onCompose={openComposeModal}
+        onCompose={() => openComposeModal(true)}
         onOpenCrm={openCrm}
       />
 
