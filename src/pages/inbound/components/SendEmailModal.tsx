@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { CloseOutlined, SendOutlined } from '@ant-design/icons'
 import { Input, Select } from 'antd'
 import { BaseButton } from '../../../components'
@@ -63,6 +63,19 @@ function getEmailComposePopupContainer(triggerNode: HTMLElement) {
   )
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function textToEmailHtml(value: string) {
+  return escapeHtml(value).replace(/\n/g, '<br />')
+}
+
 interface SendEmailModalProps {
   customerEmail: string
   open: boolean
@@ -76,16 +89,28 @@ export function SendEmailModal({
 }: SendEmailModalProps) {
   const [emailStatus, setEmailStatus] = useState<EmailStatus | undefined>()
   const [templateId, setTemplateId] = useState<string | undefined>()
-  const [language, setLanguage] = useState<EmailLanguage | undefined>()
+  const [language, setLanguage] = useState<EmailLanguage>('ID')
   const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const editorRef = useRef<HTMLDivElement>(null)
 
   const selectedTemplate = useMemo(
     () => customerEmailTemplates.find((template) => template.id === templateId),
     [templateId],
   )
   const canEditMessage = Boolean(selectedTemplate && language)
+
+  useEffect(() => {
+    if (!open || !editorRef.current) {
+      return
+    }
+
+    const nextHtml = textToEmailHtml(message)
+    if (editorRef.current.innerHTML !== nextHtml) {
+      editorRef.current.innerHTML = nextHtml
+    }
+  }, [message, open])
 
   if (!open) {
     return null
@@ -94,7 +119,7 @@ export function SendEmailModal({
   const resetAndClose = () => {
     setEmailStatus(undefined)
     setTemplateId(undefined)
-    setLanguage(undefined)
+    setLanguage('ID')
     setSubject('')
     setMessage('')
     setError('')
@@ -108,7 +133,7 @@ export function SendEmailModal({
 
     setTemplateId(nextTemplateId)
     setSubject(template?.subject ?? '')
-    setMessage(template && language ? template.body[language] : '')
+    setMessage(template ? template.body[language] : '')
     setError('')
   }
 
@@ -244,20 +269,27 @@ export function SendEmailModal({
                 </button>
               ))}
             </div>
-            <textarea
+            <div
               aria-label="Email content"
+              aria-disabled={!canEditMessage}
               className={`email-compose__editor customer-email-compose__textarea${
                 canEditMessage ? '' : ' email-compose__editor--disabled'
               }`}
-              disabled={!canEditMessage}
-              placeholder={
+              contentEditable={canEditMessage}
+              data-placeholder={
                 canEditMessage
                   ? 'Type message to customer'
                   : 'Select a template and language before composing'
               }
-              value={message}
-              onChange={(event) => {
-                setMessage(event.target.value)
+              dangerouslySetInnerHTML={{ __html: textToEmailHtml(message) }}
+              ref={editorRef}
+              role="textbox"
+              suppressContentEditableWarning
+              onInput={() => {
+                if (!canEditMessage) {
+                  return
+                }
+                setMessage(editorRef.current?.innerText ?? '')
                 setError('')
               }}
             />
