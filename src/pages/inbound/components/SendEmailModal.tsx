@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { CloseOutlined, SendOutlined } from '@ant-design/icons'
+import { CloseOutlined, FilePdfOutlined, SendOutlined } from '@ant-design/icons'
 import { Input, Select } from 'antd'
 import { BaseButton } from '../../../components'
+import { emailTemplates } from '../../../mock/email'
 import type { EmailLanguage, EmailStatus } from '../../../types'
 
 const BANK_EMAIL_ACCOUNT = 'contact@bank1.demo'
+const BANK_PUBLIC_WEBSITE = 'https://www.bca.co.id'
+const BANK_SIGNATURE_IMAGE = '/email-assets/bank-service-counter.jpg'
+const AGENT_NAME = 'Budi Kartika'
+const DEFAULT_EMAIL_LANGUAGE: EmailLanguage = 'ID'
 
 const customerEmailStatusOptions: Array<{ label: string; value: EmailStatus }> = [
   { label: 'Monitoring', value: 'pending' },
@@ -17,45 +22,6 @@ const customerEmailLanguageOptions: Array<{ label: string; value: EmailLanguage 
   { label: 'EN', value: 'EN' },
 ]
 
-const customerEmailTemplates = [
-  {
-    id: 'card-replacement',
-    label: 'Card Replacement',
-    subject: 'Card replacement follow-up',
-    body: {
-      EN: 'Dear Customer, we have received your card replacement request. Please review the required documents and visit the nearest branch for completion.',
-      ID: 'Halo Bapak/Ibu, kami telah menerima permintaan penggantian kartu Anda. Mohon meninjau dokumen yang diperlukan dan datang ke cabang terdekat untuk penyelesaian.',
-    },
-  },
-  {
-    id: 'credit-card-activation',
-    label: 'Credit Card Activation',
-    subject: 'Credit card activation support',
-    body: {
-      EN: 'Dear Customer, your credit card activation request has been recorded. Please follow the secure activation steps shared by BANK 1.',
-      ID: 'Halo Bapak/Ibu, permintaan aktivasi kartu kredit Anda telah kami catat. Mohon mengikuti langkah aktivasi aman yang dibagikan BANK 1.',
-    },
-  },
-  {
-    id: 'application-follow-up',
-    label: 'Application Follow-up',
-    subject: 'Application follow-up',
-    body: {
-      EN: 'Dear Customer, we are following up on your application status. Our team will update you once the review process is completed.',
-      ID: 'Halo Bapak/Ibu, kami sedang menindaklanjuti status pengajuan Anda. Tim kami akan memberikan pembaruan setelah proses peninjauan selesai.',
-    },
-  },
-  {
-    id: 'lost-card-assistance',
-    label: 'Lost Card Assistance',
-    subject: 'Lost card assistance',
-    body: {
-      EN: 'Dear Customer, we have noted your lost card report. For your security, the card will remain blocked while the replacement process is arranged.',
-      ID: 'Halo Bapak/Ibu, laporan kartu hilang Anda telah kami catat. Demi keamanan, kartu akan tetap diblokir selama proses penggantian disiapkan.',
-    },
-  },
-]
-
 function getEmailComposePopupContainer(triggerNode: HTMLElement) {
   return (
     (triggerNode.closest('.email-compose-modal-panel') as HTMLElement | null) ??
@@ -63,17 +29,80 @@ function getEmailComposePopupContainer(triggerNode: HTMLElement) {
   )
 }
 
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
+function sanitizeEmailHtml(html: string) {
+  const template = document.createElement('template')
+  template.innerHTML = html
+
+  template.content
+    .querySelectorAll('script, style, iframe, object, embed')
+    .forEach((element) => element.remove())
+
+  template.content.querySelectorAll('*').forEach((element) => {
+    Array.from(element.attributes).forEach((attribute) => {
+      const name = attribute.name.toLowerCase()
+      const value = attribute.value.trim().toLowerCase()
+
+      if (
+        name.startsWith('on') ||
+        ((name === 'href' || name === 'src') && value.startsWith('javascript:'))
+      ) {
+        element.removeAttribute(attribute.name)
+      }
+    })
+  })
+
+  return template.innerHTML
 }
 
-function textToEmailHtml(value: string) {
-  return escapeHtml(value).replace(/\n/g, '<br />')
+function getEmailText(html: string) {
+  const template = document.createElement('template')
+  template.innerHTML = sanitizeEmailHtml(html)
+  return (template.content.textContent ?? '').replace(/\s+/g, ' ').trim()
+}
+
+function stripEmailSignature(html: string) {
+  return sanitizeEmailHtml(html)
+    .replace(/<section class="email-signature"[\s\S]*?<\/section>/gi, '')
+    .trim()
+}
+
+function formatSignatureDate(date = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date)
+}
+
+function createEmailSignature(language: EmailLanguage) {
+  const dateLabel = language === 'EN' ? 'Date' : 'Tanggal'
+  const regards = language === 'EN' ? 'Regards' : 'Salam'
+
+  return `
+    <section class="email-signature" data-public-mailbox="${BANK_EMAIL_ACCOUNT}" data-language="${language}">
+      <p>${regards},</p>
+      <p><strong>${AGENT_NAME}</strong><br>BANK 1 Customer Service</p>
+      <p>${dateLabel}: ${formatSignatureDate()}</p>
+      <p>
+        <img src="${BANK_SIGNATURE_IMAGE}" alt="BANK 1 banking service" width="28" height="28" />
+        <a href="${BANK_PUBLIC_WEBSITE}" target="_blank" rel="noreferrer">${BANK_PUBLIC_WEBSITE}</a>
+      </p>
+    </section>
+  `
+}
+
+function buildEmailBody(bodyHtml: string, language: EmailLanguage) {
+  return `${stripEmailSignature(bodyHtml)}${createEmailSignature(language)}`
+}
+
+function getTemplateBody(templateId: string | undefined, language: EmailLanguage) {
+  const template = emailTemplates.find((item) => item.id === templateId)
+
+  if (!template) {
+    return ''
+  }
+
+  return template.localizedBodyHtml?.[language] ?? template.bodyHtml
 }
 
 interface SendEmailModalProps {
@@ -89,28 +118,30 @@ export function SendEmailModal({
 }: SendEmailModalProps) {
   const [emailStatus, setEmailStatus] = useState<EmailStatus | undefined>()
   const [templateId, setTemplateId] = useState<string | undefined>()
-  const [language, setLanguage] = useState<EmailLanguage>('ID')
+  const [language, setLanguage] = useState<EmailLanguage>(DEFAULT_EMAIL_LANGUAGE)
   const [subject, setSubject] = useState('')
-  const [message, setMessage] = useState('')
+  const [bodyHtml, setBodyHtml] = useState(() =>
+    createEmailSignature(DEFAULT_EMAIL_LANGUAGE),
+  )
   const [error, setError] = useState('')
   const editorRef = useRef<HTMLDivElement>(null)
 
   const selectedTemplate = useMemo(
-    () => customerEmailTemplates.find((template) => template.id === templateId),
+    () => emailTemplates.find((template) => template.id === templateId),
     [templateId],
   )
   const canEditMessage = Boolean(selectedTemplate && language)
+  const selectPopupClassName = 'email-compose-select-dropdown'
 
   useEffect(() => {
     if (!open || !editorRef.current) {
       return
     }
 
-    const nextHtml = textToEmailHtml(message)
-    if (editorRef.current.innerHTML !== nextHtml) {
-      editorRef.current.innerHTML = nextHtml
+    if (editorRef.current.innerHTML !== bodyHtml) {
+      editorRef.current.innerHTML = bodyHtml
     }
-  }, [message, open])
+  }, [bodyHtml, open])
 
   if (!open) {
     return null
@@ -119,28 +150,42 @@ export function SendEmailModal({
   const resetAndClose = () => {
     setEmailStatus(undefined)
     setTemplateId(undefined)
-    setLanguage('ID')
+    setLanguage(DEFAULT_EMAIL_LANGUAGE)
     setSubject('')
-    setMessage('')
+    setBodyHtml(createEmailSignature(DEFAULT_EMAIL_LANGUAGE))
     setError('')
     onClose()
   }
 
   const applyTemplate = (nextTemplateId: string | undefined) => {
-    const template = customerEmailTemplates.find(
-      (item) => item.id === nextTemplateId,
-    )
+    const template = emailTemplates.find((item) => item.id === nextTemplateId)
 
     setTemplateId(nextTemplateId)
-    setSubject(template?.subject ?? '')
-    setMessage(template ? template.body[language] : '')
+    setBodyHtml(
+      template
+        ? buildEmailBody(getTemplateBody(template.id, language), language)
+        : createEmailSignature(language),
+    )
     setError('')
   }
 
   const changeLanguage = (nextLanguage: EmailLanguage) => {
     setLanguage(nextLanguage)
-    setMessage(selectedTemplate ? selectedTemplate.body[nextLanguage] : '')
+    setBodyHtml(
+      selectedTemplate
+        ? buildEmailBody(
+            getTemplateBody(selectedTemplate.id, nextLanguage),
+            nextLanguage,
+          )
+        : createEmailSignature(nextLanguage),
+    )
     setError('')
+  }
+
+  const runEditorCommand = (command: string) => {
+    editorRef.current?.focus()
+    document.execCommand(command)
+    setBodyHtml(sanitizeEmailHtml(editorRef.current?.innerHTML ?? bodyHtml))
   }
 
   const handleSend = () => {
@@ -159,7 +204,7 @@ export function SendEmailModal({
       return
     }
 
-    if (!message.trim()) {
+    if (!getEmailText(bodyHtml)) {
       setError('Email content is required before sending.')
       return
     }
@@ -204,7 +249,11 @@ export function SendEmailModal({
               <Input
                 placeholder="Enter email subject"
                 value={subject}
-                onChange={(event) => setSubject(event.target.value)}
+                onBlur={() => setSubject((value) => value.trim())}
+                onChange={(event) => {
+                  setSubject(event.target.value)
+                  setError('')
+                }}
               />
             </label>
             <label>
@@ -217,6 +266,7 @@ export function SendEmailModal({
                 allowClear
                 getPopupContainer={getEmailComposePopupContainer}
                 options={customerEmailStatusOptions}
+                popupClassName={selectPopupClassName}
                 placeholder="Select status before sending"
                 value={emailStatus}
                 onChange={(value) => {
@@ -230,10 +280,11 @@ export function SendEmailModal({
               <Select
                 allowClear
                 getPopupContainer={getEmailComposePopupContainer}
-                options={customerEmailTemplates.map((template) => ({
-                  label: template.label,
+                options={emailTemplates.map((template) => ({
+                  label: template.name,
                   value: template.id,
                 }))}
+                popupClassName={selectPopupClassName}
                 placeholder="Select a response template"
                 value={templateId}
                 onChange={applyTemplate}
@@ -263,11 +314,36 @@ export function SendEmailModal({
 
           <div className="email-compose__editor-shell">
             <div className="email-compose__toolbar" aria-label="Email formatting toolbar">
-              {['B', 'I', 'U', '\u2022', '\u2261'].map((item) => (
-                <button disabled={!canEditMessage} key={item} type="button">
-                  {item}
+              {[
+                ['bold', 'B', 'Bold'],
+                ['italic', 'I', 'Italic'],
+                ['underline', 'U', 'Underline'],
+                ['insertUnorderedList', '\u2022', 'Bulleted list'],
+                ['justifyLeft', '\u2261', 'Align left'],
+              ].map(([command, label, titleText]) => (
+                <button
+                  aria-label={titleText}
+                  disabled={!canEditMessage}
+                  key={command}
+                  title={titleText}
+                  type="button"
+                  onMouseDown={(event) => {
+                    event.preventDefault()
+                    runEditorCommand(command)
+                  }}
+                >
+                  {label}
                 </button>
               ))}
+              <span className="email-compose__toolbar-divider" />
+              <button
+                aria-label="Template config"
+                disabled={!canEditMessage}
+                title="Template config"
+                type="button"
+              >
+                <FilePdfOutlined />
+              </button>
             </div>
             <div
               aria-label="Email content"
@@ -281,7 +357,7 @@ export function SendEmailModal({
                   ? 'Type message to customer'
                   : 'Select a template and language before composing'
               }
-              dangerouslySetInnerHTML={{ __html: textToEmailHtml(message) }}
+              dangerouslySetInnerHTML={{ __html: bodyHtml }}
               ref={editorRef}
               role="textbox"
               suppressContentEditableWarning
@@ -289,7 +365,7 @@ export function SendEmailModal({
                 if (!canEditMessage) {
                   return
                 }
-                setMessage(editorRef.current?.innerText ?? '')
+                setBodyHtml(sanitizeEmailHtml(editorRef.current?.innerHTML ?? ''))
                 setError('')
               }}
             />
