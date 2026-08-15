@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-08-15 11:59 +08:00
+最后更新：2026-08-15 12:34 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,38 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-08-15 12:34 +08:00 - customer 生产发布
+
+修改页面或文件：
+
+- 生产部署 `https://netinfo-aicc-demo-v2.vercel.app`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 发布当前已合并并推送至 `main` 的 Routing Config 与工作台更新。
+
+修改结果：
+
+- 已部署提交 `e633475`（基于 `a5671f3` 功能发布提交）。
+- 生产地址：`https://netinfo-aicc-demo-v2.vercel.app`
+- Vercel Inspect：`https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/35JwAPK8pytRghVHuEeGRNMgziHy`
+- 部署命令：`vercel --prod --yes --build-env VITE_APP_VISIBILITY_PROFILE=customer`。
+- 构建环境：`VITE_APP_VISIBILITY_PROFILE=customer`。
+
+验证：
+
+- 发布前 `npm run lint`、`npm run build` 通过；构建仅保留既有 large chunk warning。
+- Vercel production build 通过；正式地址 HTTP 返回 `200`。
+
+回滚说明：
+
+- 在 Vercel 将 production alias 指回上一稳定部署，或将 `main` 回退至 `14a656d` 后重新部署。
+
+当前风险点：
+
+- 当前项目仍使用前端 mock 数据；生产环境不连接真实客户或路由后端。
 
 ### 2026-08-15 11:57 +08:00 - Channels 空业务配置提示与 Email Non-DM 媒体修正
 
