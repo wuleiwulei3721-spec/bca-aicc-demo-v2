@@ -177,7 +177,6 @@ const textBusinessConfig: ChannelMediaBusinessConfig = {
   customerNoReplyTimeoutMinutes: 5,
   customerTimeoutNotice:
     'We did not receive your reply. The service has been closed automatically. Please contact us again if you need help.',
-  exceptionWorkTimePlanCode: '',
   maxConcurrentAccess: 50,
   minScanIntervalSeconds: 30,
   newCustomerAlertSound: 'new-customer-alert-01.wav',
@@ -191,7 +190,6 @@ const textBusinessConfig: ChannelMediaBusinessConfig = {
   queueTimeoutMessage: 'All agents are currently busy. Please try again later.',
   queueTimeoutSeconds: 360,
   queueWaitingMessage: 'All agents are currently busy. Please wait.',
-  webchatRecallLimitSeconds: 120,
 }
 
 const voiceBusinessConfig: ChannelMediaBusinessConfig = {
@@ -312,7 +310,7 @@ export const channelTypes: ChannelType[] = [
     channelTypeName: 'Email',
     licenseStatus: 'Licensed',
     status: 'Active',
-    supportedMediaTypes: ['TEXT'],
+    supportedMediaTypes: ['NON_DM'],
   },
   {
     accessParameterFields: [
@@ -449,10 +447,7 @@ export const channels: Channel[] = [
   {
     accessConfig: {},
     businessConfig: {
-      VOICE: {
-        ...voiceBusinessConfig,
-        exceptionWorkTimePlanCode: 'WTP_3_WRONG_INPUT_ZH',
-      },
+      VOICE: voiceBusinessConfig,
     },
     channelCode: 'PHONE',
     channelId: '101',
@@ -518,12 +513,12 @@ export const channels: Channel[] = [
       smtpPort: '587',
       smtpSecurity: 'STARTTLS',
     },
-    businessConfig: buildBusinessConfig(['TEXT']),
+    businessConfig: buildBusinessConfig(['NON_DM']),
     channelCode: 'EMAIL',
     channelId: '401',
     channelName: 'Email Contact',
     channelTypeCode: 'EMAIL',
-    mediaTypes: ['TEXT'],
+    mediaTypes: ['NON_DM'],
     status: 'Active',
   },
   {
@@ -538,12 +533,12 @@ export const channels: Channel[] = [
       smtpPort: '465',
       smtpSecurity: 'SSL',
     },
-    businessConfig: buildBusinessConfig(['TEXT']),
+    businessConfig: buildBusinessConfig(['NON_DM']),
     channelCode: 'EMAIL_PRIORITY',
     channelId: '402',
     channelName: 'Email Priority',
     channelTypeCode: 'EMAIL',
-    mediaTypes: ['TEXT'],
+    mediaTypes: ['NON_DM'],
     status: 'Active',
   },
   {
@@ -751,20 +746,20 @@ export const channelMediaSettings: ChannelMedia[] = [
   },
   {
     channelCode: 'EMAIL',
-    channelMediaCode: 'EMAIL_TEXT',
+    channelMediaCode: 'EMAIL_NON_DM',
     extensionConfig: 'Mailbox polling, async case creation',
     maxConcurrency: 50,
-    mediaCode: 'TEXT',
+    mediaCode: 'NON_DM',
     minScanIntervalSeconds: 30,
     scanMode: 'polling',
     status: 'Active',
   },
   {
     channelCode: 'EMAIL_PRIORITY',
-    channelMediaCode: 'EMAIL_PRIORITY_TEXT',
+    channelMediaCode: 'EMAIL_PRIORITY_NON_DM',
     extensionConfig: 'Priority mailbox polling with dedicated mail servers',
     maxConcurrency: 50,
-    mediaCode: 'TEXT',
+    mediaCode: 'NON_DM',
     minScanIntervalSeconds: 60,
     scanMode: 'polling',
     status: 'Active',

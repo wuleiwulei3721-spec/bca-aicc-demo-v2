@@ -301,6 +301,15 @@ export function clearExternalOperationApprovals() {
     .forEach((approval) => resolveApproval(approval.id, 'cancelled'))
 }
 
+export function releaseExternalOperationApprovals() {
+  approvals
+    .filter(
+      (approval) =>
+        ['pending', 'approved'].includes(approval.status),
+    )
+    .forEach((approval) => resolveApproval(approval.id, 'cancelled'))
+}
+
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', (event) => {
     if (event.key === storageKey) {

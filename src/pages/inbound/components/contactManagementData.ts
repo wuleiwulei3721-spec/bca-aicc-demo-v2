@@ -13,6 +13,17 @@ export const CONTACT_SECTIONS = [
   },
 ] as const
 
+export const CUSTOMER_CONTACT_DETAIL_SECTIONS = [
+  {
+    title: 'Communication Channels',
+    types: ['Phone', 'WhatsApp', 'BankApp', 'Email'],
+  },
+  {
+    title: 'Social Media',
+    types: ['Facebook', 'Instagram', 'X', 'TikTok', 'LinkedIn'],
+  },
+] as const
+
 export type ContactType =
   (typeof CONTACT_SECTIONS)[number]['types'][number]
 

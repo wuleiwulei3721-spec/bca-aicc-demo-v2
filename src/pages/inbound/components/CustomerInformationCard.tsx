@@ -9,6 +9,7 @@ import {
 } from '../../../components'
 import { isLocalContactEditingEnabled } from '../../../config/moduleVisibility'
 import { useExternalOperationApproval } from '../../../hooks/useExternalOperationApproval'
+import { useOutboundEligibility } from '../../../contexts/outboundEligibility'
 import { callFlowDetail } from '../../../mock/inbound'
 import { useAppStore, useAuthStore } from '../../../store'
 import type { CallTransferContext } from '../../../store'
@@ -142,6 +143,7 @@ function hasCrmCustomerIdentity(cisNumber: string) {
 }
 
 interface CustomerOutboundReasonModalProps {
+  canSubmit: boolean
   open: boolean
   reason: ExternalOutboundReason | null
   submitLabel: string
@@ -154,6 +156,7 @@ interface CustomerOutboundReasonModalProps {
 function CustomerOutboundReasonModal({
   open,
   reason,
+  canSubmit,
   submitLabel,
   submitting,
   onCancel,
@@ -184,7 +187,7 @@ function CustomerOutboundReasonModal({
             Cancel
           </BaseButton>
           <BaseButton
-            disabled={!reason || submitting}
+            disabled={!reason || submitting || !canSubmit}
             type="primary"
             onClick={onSubmit}
           >
@@ -254,7 +257,7 @@ function ContactEditingDemo({
 }
 
 export function CustomerInformationCard({
-  accessMenuLabel = 'Access Menu',
+  accessMenuLabel = 'Business Menu Selection Record',
   accessMenuName,
   customer,
   onSendEmail,
@@ -286,8 +289,10 @@ export function CustomerInformationCard({
   const verificationV2Rules = useAppStore(
     (state) => state.verificationV2Rules,
   )
+  const { hasOutboundAccess } = useOutboundEligibility()
   const { profile } = customer
   const isCrmIdentified = hasCrmCustomerIdentity(profile.cisNumber)
+  const hasOutboundNumber = profile.phoneNumber.trim().length > 0
   const customerKey = [
     customer.accessChannel,
     profile.cisNumber,
@@ -459,7 +464,11 @@ export function CustomerInformationCard({
   }
 
   const startApprovedOutboundCall = () => {
-    if ((requiresOutboundApproval && isOutboundApproved) || (!requiresOutboundApproval && outboundReason)) {
+    if (
+      hasOutboundAccess &&
+      ((requiresOutboundApproval && isOutboundApproved) ||
+        (!requiresOutboundApproval && outboundReason))
+    ) {
       if (requiresOutboundApproval) {
         consumeOutboundApproval()
       }
@@ -522,18 +531,32 @@ export function CustomerInformationCard({
             ? () => setIsSpecialHandlingOpen(true)
             : undefined
         }
-        onRequestOutbound={isCrmIdentified ? openOutboundReasonModal : undefined}
+        onRequestOutbound={
+          hasOutboundNumber && (requiresOutboundApproval || hasOutboundAccess)
+            ? openOutboundReasonModal
+            : undefined
+        }
         onSendEmail={
           isCrmIdentified
             ? onSendEmail ?? (() => setIsEmailModalOpen(true))
             : undefined
         }
         onStartOutbound={
-          isCrmIdentified ? startApprovedOutboundCall : undefined
+          hasOutboundNumber && hasOutboundAccess
+            ? startApprovedOutboundCall
+            : undefined
+        }
+        outboundDisabledTitle={
+          hasOutboundNumber &&
+          !hasOutboundAccess &&
+          (!requiresOutboundApproval || outboundRequestStatus === 'approved')
+            ? 'Switch to outbound AUX'
+            : undefined
         }
         onVerify={verificationAction === 'none' ? undefined : openVerification}
       />
       <CustomerOutboundReasonModal
+        canSubmit={requiresOutboundApproval || hasOutboundAccess}
         open={isOutboundReasonModalOpen}
         reason={outboundReason}
         submitting={isOutboundApprovalPending}

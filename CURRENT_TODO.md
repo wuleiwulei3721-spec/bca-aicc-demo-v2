@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-08-05 09:45 +08:00
+Last updated: 2026-08-15 10:47 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -65,7 +65,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - selecting AUX during ACW with an active Live Chat keeps Pre-AUX visible, preserves the original ACW countdown, and enters that AUX reason when the timer ends,
   - the next successful Voice or Video incoming interaction closes all ended Voice / Video tabs and their CRM workspaces,
   - Hang Up caret appears only when the current Voice/Video media has an active abnormal reason; otherwise the normal Hang Up button has no caret.
-  - `888888 / 888888` Transfer modal shows Agent, Skill, and IVR only; its external outbound requests need approval. `666666 / 666666` (TL Maya Lestari) shows `Transfer Number`, enables direct Transfer after entering a number, does not show Request Approval for external outbound, and preserves the `000` failure path. In Outbound Call > Call Agent, verify Agent only sees SPV/TL and TL sees all agents.
+  - `888888 / 888888` Transfer modal shows Agent, Skill, and IVR only; its external outbound requests need approval. In voice `Transfer Agent` and Outbound Call > Call Agent, verify Agent only sees SPV/TL and no ordinary-agent data. `666666 / 666666` (TL Maya Lestari) shows `Transfer Number`, enables direct Transfer after entering a number, does not show Request Approval for external outbound, preserves the `000` failure path, and sees all transfer / outbound agent targets.
   - Local-only `Channel Simulation > Transferred Call` opens a receiving-seat PSTN preview with a green source-transfer icon after the customer channel duration.
 - Verify toolbar call context:
   - PSTN shows IVR and Skill,
@@ -75,9 +75,9 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - KBV-approved CRM CIS identity refresh, including valid response, unknown/empty CIS, mismatched correlation ID, foreign origin, and timeout handling,
   - unidentified PSTN minimum-card state: anonymous caller number, `-` email/CIS, KBV retained, and no CRM-dependent actions before a valid CIS response,
   - CRM-backed read-only all-channel contact viewer, including multi-value and empty-channel states after CIS refresh; confirm CRM write authority, audit, field ownership, validation, and failure handling before any customer-facing contact editing is added,
-  - customer-phone outbound: Agent `Request Approval` opens the compact Reason modal, Reason is required, popup request includes the reason, approve/reject supports an optional generic note, pending status is `Requesting...`, the agent result popup remains until manually closed, and authorization is single-use. TL sees `Call` on the card, selects a Reason, then uses `Call` in the same modal for a direct outbound call.
+  - customer-phone outbound: every nonempty customer phone number can start the flow, including before KBV / CRM identity. Agent `Request Approval` opens the compact Reason modal, Reason is required, popup request includes the reason, approve/reject supports an optional generic note, pending status is `Requesting...`, the agent result popup remains until manually closed, and authorization is single-use. TL sees compact `Call` on the card, selects a Reason, then uses `Call` in the same modal for a direct outbound call.
   - Send Email,
-  - Call Flow Detail,
+  - Call Flow Detail: PSTN shows IVR Journey; BankApp Voice / Video and digital channels show Business Menu Selection Record only, with the customer-selected business name. Transfer History is always present and includes the current in-progress agent record with `-` duration / transfer time.
   - Customer Verification V2.
 - Verify CRM and Assistant screenshot rendering:
   - `/screenshots/crm-workspace.jpg`,
@@ -88,6 +88,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - click opens CRM dynamic tabs,
   - dynamic tabs can close,
   - tab labels remain compact.
+- Verify shared CRM Ticket registration in PSTN, voice/video, Live Chat, and Email: Product / Category multi-select, editable Summary / Note, One-Click Generation draft refresh, Confirm save feedback, form reset, consecutive ticket creation, and inbound Ticketing History append.
 - Verify Video Popup Workspace:
   - BankApp Video opens Video Call tab,
   - OpenEye floating window appears only during connected active video,
@@ -110,7 +111,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Message Record,
   - Quick Replies,
   - Sensitive Word send blocking,
-  - Transfer: ordinary Agent sees only SPV/TL transfer targets; TL sees all targets.
+  - Transfer: ordinary Agent sees only SPV/TL transfer targets with no ordinary-agent data; TL sees all targets.
   - New customer handoff remains in queue when the configured `Max Digital Media Services` slots are occupied.
 - Verify Online Chat / text-channel story:
   - BankApp Live Chat handoff,
@@ -140,7 +141,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Verify Call Management:
   - Verification Rules,
   - Global Control Configuration Save / Reset, its effect on the next sign-in, and DM active-service / ended-session-retention limits,
-  - Blacklist: Batch Add Status switch defaults to Enabled and saves its selected state, enabled/disabled status filter and inline Status switch, Phone-only country-code (`062` default, editable) / local-number batch mode with a Country Code list column (`-` for non-Phone channels), Reason required, and non-Phone multi-channel Identifier batch behavior,
+  - Blacklist: Batch Add Status switch defaults to Enabled and saves its selected state, enabled/disabled status filter and inline Status switch, Phone-only country-code (`062` default, editable) / local-number batch mode with a Country Code list column (`-` for non-Phone channels), fixed non-Phone `Prohibit Transfer to Agent` policy, duplicate preview/skip, Reason required, and non-Phone multi-channel Identifier batch behavior,
   - Priority List: Reason required and existing duplicate / match-rule behavior,
   - Common Phrase,
   - Common Link,
@@ -148,12 +149,11 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Sensitive Word,
   - Busy Reason,
   - Abnormal End Reasons query, add, edit, disable, and delete, with two active DM defaults and no default Voice/Video reason,
-  - Interaction Log 30 mock records, default current-day Date Range paging, Call Type list/filter (`Customer` / `Transfer` / `Conference`), Rating Score list/filter (`1`-`5` and PSTN `-`), numeric QM Score third-party detail preview and non-interactive empty score, View-only Actions, Voice left media playback / middle transcript / right CWU plus Satisfaction detail, Video left replay / middle transcript / right CWU plus Satisfaction detail, DM conversation / right CWU plus Satisfaction detail, and read-only CWU detail,
+- Interaction Log 30 mock records, default current-day Date Range paging, Call Type list/filter (`Customer` / `Transfer` / `Conference`), Rating Score list/filter (`1`-`5` and PSTN `-`), numeric QM Score third-party detail preview and non-interactive empty score, View-only Actions, Voice left media playback / middle transcript / right Ticket-and-Summary scroll card plus Satisfaction detail, Video left replay / middle transcript / right Ticket-and-Summary scroll card plus Satisfaction detail, DM conversation / right Ticket-and-Summary scroll card plus Satisfaction detail, and read-only CWU detail,
   - Login Log 19 seeded records across the default seven-day range, keyword, Time Range, Operation, Log Out Type filters, live Login / manual Log Out / idle Log Out records, and seeded System records.
 - Verify Routing Config:
   - Routing Config visible by default,
   - Channels Phone Accounts disabled,
-  - Webchat recall field only on Webchat DM business config,
   - Skill Queues Access Code appears after VDN in list columns and Add / Edit / View forms, Keyword can search Access Code, and required validation works,
   - Skill Routing Rules batch behavior,
   - Site Access Volume ratio validation,

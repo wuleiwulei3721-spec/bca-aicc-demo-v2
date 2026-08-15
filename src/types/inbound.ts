@@ -34,6 +34,9 @@ export type CustomerCrmContacts = Partial<
 >
 
 export type JourneyChannel =
+  | 'Phone'
+  | 'BankApp'
+  | 'Webchat'
   | 'Email'
   | 'X'
   | 'Instagram'
@@ -229,6 +232,7 @@ export interface InteractionConversationMessage {
 }
 
 export interface CustomerJourneyItem {
+  callRecordId?: string
   id: string
   channel: JourneyChannel
   summary: string

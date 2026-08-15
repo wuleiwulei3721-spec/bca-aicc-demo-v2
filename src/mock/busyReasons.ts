@@ -52,6 +52,7 @@ export const defaultBusyReasons: BusyReason[] = [
     productivityType: 'Productive',
     remark: 'Callback activity for Finrisk case handling.',
     status: 'Active',
+    supportsOutbound: true,
     updatedAt: '2026-06-25 16:40',
     updatedBy: 'Admin',
   },
@@ -61,6 +62,7 @@ export const defaultBusyReasons: BusyReason[] = [
     productivityType: 'Non-Productive',
     remark: 'Callback activity for misinformation case follow-up.',
     status: 'Active',
+    supportsOutbound: true,
     updatedAt: '2026-06-25 16:40',
     updatedBy: 'Admin',
   },
@@ -181,4 +183,4 @@ export const defaultBusyReasons: BusyReason[] = [
     updatedAt: '2026-06-09 09:30',
     updatedBy: 'Admin',
   },
-]
+].map((reason) => ({ supportsOutbound: false, ...reason }))

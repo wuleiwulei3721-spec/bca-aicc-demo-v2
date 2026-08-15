@@ -36,6 +36,7 @@ import {
   type MonitoringScreenshotView,
 } from '../mock/monitoring'
 import { useIdleLogout } from '../hooks/useIdleLogout'
+import { OutboundEligibilityContext } from '../contexts/outboundEligibility'
 import {
   useAppStore,
   useAuthStore,
@@ -69,6 +70,7 @@ import {
 import { AgentToolbar } from './components/AgentToolbar'
 import { InternalChatModal } from './components/InternalChatModal'
 import { OperationNotice } from '../components'
+import { releaseExternalOperationApprovals } from '../utils/outboundApproval'
 
 const { Header, Sider, Content } = Layout
 
@@ -288,8 +290,7 @@ export function BasicLayout() {
   const recordLoginLog = useCallManagementStore((state) => state.recordLoginLog)
   const canTransferToNumber =
     authSession?.permissions.includes('transfer:external-number') ?? false
-  const callAgentScope =
-    authSession?.role === 'agent' ? 'leaders-only' : 'all'
+  const busyReasons = useCallManagementStore((state) => state.busyReasons)
   const sessionEndReasonEntries = useCallManagementStore(
     (state) => state.sessionEndReasonEntries,
   )
@@ -336,6 +337,9 @@ export function BasicLayout() {
   const bankAppVideoCallActivateWorkspace = useAppStore(
     (state) => state.bankAppVideoCallActivateWorkspace,
   )
+  const bankAppVideoBusinessMenuName = useAppStore(
+    (state) => state.bankAppVideoBusinessMenuName,
+  )
   const bankAppVideoCallRequestId = useAppStore(
     (state) => state.bankAppVideoCallRequestId,
   )
@@ -344,6 +348,9 @@ export function BasicLayout() {
   )
   const bankAppVoiceCallActivateWorkspace = useAppStore(
     (state) => state.bankAppVoiceCallActivateWorkspace,
+  )
+  const bankAppVoiceBusinessMenuName = useAppStore(
+    (state) => state.bankAppVoiceBusinessMenuName,
   )
   const bankAppVoiceCallRequestId = useAppStore(
     (state) => state.bankAppVoiceCallRequestId,
@@ -406,6 +413,19 @@ export function BasicLayout() {
   const [agentStatus, setAgentStatus] = useState<AgentStatus>(
     headerAgentProfile.status,
   )
+  const outboundBusyReasons = useMemo(
+    () =>
+      busyReasons.filter(
+        (reason) => reason.status === 'Active' && reason.supportsOutbound,
+      ),
+    [busyReasons],
+  )
+  const hasOutboundAccess =
+    outboundBusyReasons.length > 0 &&
+    isAuxStatus(agentStatus) &&
+    outboundBusyReasons.some(
+      (reason) => reason.busyReasonName === getAuxReason(agentStatus),
+    )
   const [statusStartedAt, setStatusStartedAt] = useState(() => Date.now())
   const [callStatus, setCallStatus] = useState<CallStatus>('Idle')
   const [callStatusStartedAt, setCallStatusStartedAt] = useState(() =>
@@ -526,6 +546,14 @@ export function BasicLayout() {
         : status
 
     setAgentStatus(nextStatus)
+    const hasNextOutboundAccess =
+      isAuxStatus(nextStatus) &&
+      outboundBusyReasons.some(
+        (reason) => reason.busyReasonName === getAuxReason(nextStatus),
+      )
+    if (!hasNextOutboundAccess) {
+      releaseExternalOperationApprovals()
+    }
     if (!options.preserveAfterCallWork) {
       setStatusStartedAt(Date.now())
     }
@@ -598,7 +626,14 @@ export function BasicLayout() {
     resetBankAppVideoDesktopShare,
     setLiveChatTabOpen,
     setOpenEyeVideoWindowVisible,
+    outboundBusyReasons,
   ])
+
+  useEffect(() => {
+    if (!hasOutboundAccess) {
+      releaseExternalOperationApprovals()
+    }
+  }, [hasOutboundAccess])
 
   const updateCallStatus = useCallback((status: CallStatus) => {
     setCallStatus(status)
@@ -948,6 +983,7 @@ export function BasicLayout() {
       activateWorkspace = true,
       bankAppCustomerType?: BankAppCustomerType,
       transferContext?: CallTransferContext,
+      businessMenuName?: string,
     ) => {
       if (voiceVideoHandoffReadiness !== 'available') {
         showCallHandoffNotice(voiceVideoHandoffReadiness)
@@ -967,6 +1003,8 @@ export function BasicLayout() {
         activateWorkspace,
         bankAppCustomerType,
         transferContext,
+        undefined,
+        businessMenuName,
       )
       updateCallStatus('Incoming')
     },
@@ -986,6 +1024,7 @@ export function BasicLayout() {
       source?: VideoCallPopupSource,
       activateWorkspace = true,
       bankAppCustomerType?: BankAppCustomerType,
+      businessMenuName?: string,
     ) => {
       if (voiceVideoHandoffReadiness !== 'available') {
         showCallHandoffNotice(voiceVideoHandoffReadiness)
@@ -1006,6 +1045,9 @@ export function BasicLayout() {
         source ?? 'standard',
         activateWorkspace,
         bankAppCustomerType,
+        undefined,
+        undefined,
+        businessMenuName,
       )
       updateCallStatus('Incoming')
     },
@@ -1114,9 +1156,12 @@ export function BasicLayout() {
       'bankapp-voice',
       bankAppVoiceCallActivateWorkspace,
       bankAppVoiceCustomerType,
+      undefined,
+      bankAppVoiceBusinessMenuName,
     )
   }, [
     bankAppVoiceCallActivateWorkspace,
+    bankAppVoiceBusinessMenuName,
     bankAppVoiceCallRequestId,
     bankAppVoiceCustomerType,
     triggerVoiceInboundCall,
@@ -1135,9 +1180,11 @@ export function BasicLayout() {
       'bankapp-video',
       bankAppVideoCallActivateWorkspace,
       bankAppVideoCustomerType,
+      bankAppVideoBusinessMenuName,
     )
   }, [
     bankAppVideoCallActivateWorkspace,
+    bankAppVideoBusinessMenuName,
     bankAppVideoCallRequestId,
     bankAppVideoCustomerType,
     triggerVideoInboundCall,
@@ -1499,6 +1546,11 @@ export function BasicLayout() {
   const effectiveOpenMenuKeys = openMenuKeys
 
   return (
+    <OutboundEligibilityContext.Provider
+      value={{
+        hasOutboundAccess,
+      }}
+    >
     <Layout className="aicc-app-shell">
       <Header className="aicc-header">
         <div className="aicc-header__brand">
@@ -1507,8 +1559,8 @@ export function BasicLayout() {
         {isSignedIn && (
           <AgentToolbar
             agentStatus={agentStatus}
-            callAgentScope={callAgentScope}
             requiresOutboundApproval={authSession?.role === 'agent'}
+            hasOutboundAccess={hasOutboundAccess}
             canTransferToNumber={canTransferToNumber}
             callStatus={callStatus}
             canTransfer={activeCallChannel !== 'video'}
@@ -1738,5 +1790,6 @@ export function BasicLayout() {
         </Content>
       </Layout>
     </Layout>
+    </OutboundEligibilityContext.Provider>
   )
 }

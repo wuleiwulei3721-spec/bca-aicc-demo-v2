@@ -1,8 +1,31 @@
 # Decision Log
 
-Last updated: 2026-08-05 09:30 +08:00
+Last updated: 2026-08-13 16:00 +08:00
 
 This document records important product and system design decisions that can be confirmed from the current codebase, project documents, `DEV_LOG.md`, and readable Git history. It intentionally omits bug fixes, visual micro-adjustments, temporary test data, copy-only tweaks, and implementation details that do not affect product direction.
+
+--------------------------------------------------
+
+Decision ID:
+DEC-044
+
+Module:
+Customer Outbound / Busy Reason
+
+Decision:
+Outbound calling requires an active Busy Reason configured for outbound. The DEMO defaults `Callback Finrisk` and `Callback Misinform` to this eligibility. `Miss Information` and `Financial Risk` remain per-call business reasons for customer numbers. Ordinary Agents request TL/SPV approval for customer numbers; TL-and-above accounts call those numbers directly. Call Agent always exposes only TL/SPV targets and requires the same outbound AUX, but does not use external-number approval.
+
+Reason:
+The customer requires callback work to be explicitly separated from normal AUX use, while retaining existing per-call business attribution and approval demonstration.
+
+Impact:
+Busy Reason maintains `Support Outbound` as a list-level setting supporting multiple active reasons. Customer outbound approval remains valid while the agent moves between eligible AUX reasons, and becomes invalid only after the agent leaves the eligible set or the eligible configuration is removed. Future backend integration must enforce the same status, role, approval, and audit constraints server-side.
+
+Status:
+Implemented as front-end Demo behavior
+
+Source:
+Customer annotation and confirmed plan on 2026-08-13; Code: `src/pages/call-management/BusyReasonManagementPage.tsx`, `src/layouts/components/OutboundCallModal.tsx`, `src/pages/inbound/components/CustomerInformationCard.tsx`, `src/utils/outboundApproval.ts`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `DEV_LOG.md`
 
 --------------------------------------------------
 
@@ -134,7 +157,7 @@ Reason:
 The previous Customer Information-only three-second automatic approval did not make the TL role or decision visible in customer demonstrations. A separate TL popup makes the authorization step understandable while preserving the existing agent workbench and no-backend demo boundary.
 
 Impact:
-The same-browser demo stores and synchronizes ordinary-Agent outbound and customer-phone approval records with localStorage and BroadcastChannel. Both approval scopes include the selected reason, so changing the number or reason invalidates the previous authorization. Closing the originating modal does not cancel the request, allowing the agent to handle an incoming interaction and return to the same exact-number approval; Log Out clears pending and unused approvals. Customer Information opens a compact Reason modal before it creates its request and uses the same `Requesting...` pending copy as toolbar outbound. A completed Call from either entry creates and focuses a new `Outbound Call` voice workspace carrying the dialed number, then enters `Talking`. TL can approve or reject with an optional generic note; there is no countdown or automatic approval timeout. The TL account's direct external outbound and Transfer Number permissions are documented separately in DEC-042. The TL popup reuses one window, overlays the supplied complete dashboard screenshot with a light mask, and processes pending requests FIFO through a single centered light-blue-header/white-body Modal; agent results use a compact non-masked `BaseModal` in the bottom-right corner. This is not a production approval, routing, permission, audit, or cross-device contract; a real integration must replace the local transport and introduce TL identity, authorization, persistence, and audit requirements.
+The same-browser demo stores and synchronizes ordinary-Agent outbound and customer-phone approval records with localStorage and BroadcastChannel. Both approval scopes include the selected reason, so changing the number or reason invalidates the previous authorization. Closing the originating modal does not cancel the request, allowing the agent to handle an incoming interaction and return to the same exact-number approval; Log Out clears pending and unused approvals. Any Customer Information card with a nonempty phone number can initiate outbound without waiting for KBV or CRM identity; the card opens a compact Reason modal and uses the same `Requesting...` pending copy as toolbar outbound. A completed Call from either entry creates and focuses a new `Outbound Call` voice workspace carrying the dialed number, then enters `Talking`. TL can approve or reject with an optional generic note; there is no countdown or automatic approval timeout. The TL account's direct external outbound and Transfer Number permissions are documented separately in DEC-042. The TL popup reuses one window, overlays the supplied complete dashboard screenshot with a light mask, and processes pending requests FIFO through a single centered light-blue-header/white-body Modal; agent results use a compact non-masked `BaseModal` in the bottom-right corner. This is not a production approval, routing, permission, audit, or cross-device contract; a real integration must replace the local transport and introduce TL identity, authorization, persistence, and audit requirements.
 
 Status:
 Implemented

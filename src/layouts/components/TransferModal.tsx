@@ -481,7 +481,7 @@ export function TransferModal({
 }: TransferModalProps) {
   const authSession = useAuthStore((state) => state.session)
   const agentScope: TransferAgentScope =
-    variant === 'conversation' && authSession?.role === 'agent'
+    authSession?.role === 'agent'
       ? 'leaders-only'
       : 'all'
   const items = [

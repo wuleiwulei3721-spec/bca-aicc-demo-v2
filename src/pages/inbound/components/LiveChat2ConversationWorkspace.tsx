@@ -4,7 +4,6 @@ import {
   CaretDownOutlined,
   CloseOutlined,
   ClockCircleOutlined,
-  ExclamationCircleOutlined,
   FileImageOutlined,
   FolderOpenOutlined,
   GlobalOutlined,
@@ -664,23 +663,6 @@ export function LiveChat2ConversationWorkspace({
             <ClockCircleOutlined />
             {formatDuration(session.elapsedSeconds)}
           </span>
-          {session.unansweredSeconds !== null && !isEnded && (
-            <span
-              aria-label={`Unanswered ${formatDuration(session.unansweredSeconds)}`}
-              className={[
-                'livechat2-conversation__unanswered',
-                session.slaState !== 'normal'
-                  ? `livechat2-conversation__unanswered--${session.slaState}`
-                  : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              title={`Unanswered ${formatDuration(session.unansweredSeconds)}`}
-            >
-              <ExclamationCircleOutlined />
-              {formatDuration(session.unansweredSeconds)}
-            </span>
-          )}
         </div>
 
         {!readOnly && (

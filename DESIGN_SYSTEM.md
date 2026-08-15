@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Design System
 
-Last updated: 2026-08-04 18:05 +08:00
+Last updated: 2026-08-05 19:05 +08:00
 
 This document records the current implemented visual rules. It should be treated as the design baseline for future pages and components.
 
@@ -130,7 +130,7 @@ General rules:
 - Search controls and action buttons inside modals should align to the same height.
 - Long modal content should scroll inside the modal body, not push footer actions off-screen.
 - Admin modal footers should use `AdminModalFooter`.
-- External approval results use a compact, non-masked `BaseModal` fixed to the bottom-right corner, manually closable and retained until closed; keep `Outbound + number + Reason` on the first row and optional `Note` on a naturally wrapping second row, so long remarks cannot disturb the primary approval context. Both this result Modal and the Customer Information `Outbound Reason` Modal use a light-blue header with one uninterrupted white content body. Customer-number approval actions appear only while their phone row is hovered or receives keyboard focus, and must have room for their complete label. Use `Request Approval` only for an approval-required role; the direct TL action is labeled `Call`.
+- External approval results use a compact, non-masked `BaseModal` fixed to the bottom-right corner, manually closable and retained until closed; keep `Outbound + number + Reason` on the first row and optional `Note` on a naturally wrapping second row, so long remarks cannot disturb the primary approval context. Both this result Modal and the Customer Information `Outbound Reason` Modal use a light-blue header with one uninterrupted white content body. A nonempty customer phone number exposes the outbound action only while its phone row is hovered or receives keyboard focus. Use `Request Approval` only for an approval-required role; the direct TL action is a compact content-width `Call` button.
 - TL approval reuses the shared light-blue Modal header with one uninterrupted white body, is centered over a light mask, and blocks the static simulation dashboard while a decision is pending. Multiple pending approvals use one centered Modal with compact remaining-queue progress rather than stacked dialogs; do not add a countdown or automatic timeout state.
 
 ## 7. Tab Design Principles

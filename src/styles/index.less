@@ -3156,27 +3156,12 @@ a {
   gap: 10px;
 }
 
-.call-record-query__summary-panel--cwu {
+.call-record-query__summary-panel--tickets {
   flex: 1 1 auto;
 }
 
 .call-record-query__summary-panel--satisfaction {
   flex: 0 0 210px;
-}
-
-.call-record-query__cwu-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.call-record-query__cwu-ticket-no {
-  color: var(--aicc-text-secondary);
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 20px;
-  white-space: nowrap;
 }
 
 .call-record-query__summary-card {
@@ -3203,7 +3188,7 @@ a {
   gap: 6px;
 }
 
-.call-record-query__satisfaction-fields > div > span {
+.call-record-query__field-label {
   color: var(--aicc-text-secondary);
   font-size: 13px;
   font-weight: 650;
@@ -3247,35 +3232,19 @@ a {
   line-height: 22px;
 }
 
-.call-record-query__cwu-fields {
+.call-record-query__ticket-content {
   display: grid;
-  gap: 0;
+  gap: 10px;
 }
 
-.call-record-query__cwu-fields > div {
+.call-record-query__ticket-entry,
+.call-record-query__ticket-summary {
   display: grid;
   gap: 6px;
-  padding: 0;
 }
 
-.call-record-query__cwu-fields > div + div {
-  padding-top: 16px;
-}
-
-.call-record-query__cwu-fields > div > span {
-  color: var(--aicc-text-secondary);
-  font-size: 13px;
-  font-weight: 650;
-  line-height: 20px;
-}
-
-.call-record-query__cwu-fields strong {
-  color: var(--aicc-text);
-  font-size: 13px;
-  line-height: 20px;
-}
-
-.call-record-query__cwu-fields p {
+.call-record-query__ticket-summary p,
+.call-record-query__ticket-empty {
   margin: 0;
   color: var(--aicc-text-secondary);
   font-size: 13px;
@@ -3440,6 +3409,70 @@ a {
 }
 
 .priority-list-management__duplicate-row:last-child > span {
+  border-bottom: 0;
+}
+
+.blacklist-management__save-warning.ant-alert {
+  width: fit-content;
+  max-width: 100%;
+  padding: 7px 10px;
+  border-radius: var(--aicc-radius-sm);
+}
+
+.blacklist-management__duplicate-panel {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.blacklist-management__duplicate-panel .ant-alert {
+  padding: 7px 10px;
+  border-radius: var(--aicc-radius-sm);
+}
+
+.blacklist-management__duplicate-table {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  overflow: auto;
+  border: 1px solid var(--aicc-border);
+  border-radius: var(--aicc-radius-sm);
+  background: var(--aicc-surface);
+  grid-template-columns:
+    minmax(76px, 0.68fr)
+    minmax(84px, 0.76fr)
+    minmax(110px, 1fr)
+    minmax(160px, 1.46fr)
+    minmax(72px, 0.64fr)
+    minmax(82px, 0.72fr);
+}
+
+.blacklist-management__duplicate-row {
+  display: contents;
+}
+
+.blacklist-management__duplicate-table > strong,
+.blacklist-management__duplicate-row > span {
+  overflow: hidden;
+  min-width: 0;
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(219, 229, 241, 0.76);
+  color: var(--aicc-text);
+  font-size: 12px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.blacklist-management__duplicate-table > strong {
+  background: var(--aicc-surface-l2);
+  color: var(--aicc-text-secondary);
+  font-weight: 750;
+}
+
+.blacklist-management__duplicate-row:last-child > span {
   border-bottom: 0;
 }
 
@@ -7457,6 +7490,14 @@ a {
   color: #ffffff !important;
 }
 
+.aicc-customer-info__outbound-request--direct,
+.aicc-customer-info__outbound-request--direct:hover,
+.aicc-customer-info__outbound-request--direct:focus-visible {
+  min-width: 56px;
+  max-width: none;
+  padding: 0 8px;
+}
+
 .aicc-customer-info__fact-action {
   width: fit-content;
   max-width: 100%;
@@ -9112,11 +9153,10 @@ a {
 }
 
 .inbound-journey-row {
-  grid-template-columns: 24px minmax(0, 1fr) 20px 42px;
+  grid-template-columns: 24px minmax(0, 1fr) 42px;
 }
 
-.inbound-journey-channel,
-.inbound-journey-result {
+.inbound-journey-channel {
   display: inline-grid;
   width: 20px;
   height: 20px;
@@ -9129,6 +9169,24 @@ a {
   border: 1px solid #d8e1ee;
   background: #f7faff;
   color: #475569;
+}
+
+.inbound-journey-channel--phone {
+  border-color: #c8d8ef;
+  background: #f1f6ff;
+  color: #1769e0;
+}
+
+.inbound-journey-channel--bankapp {
+  border-color: #c9e2d1;
+  background: #eff9f1;
+  color: #287d4f;
+}
+
+.inbound-journey-channel--webchat {
+  border-color: #cbddea;
+  background: #f3f8fc;
+  color: #27617d;
 }
 
 .inbound-journey-channel--instagram {
@@ -9159,18 +9217,6 @@ a {
   border-color: #cfe0f7;
   background: #f1f7ff;
   color: #1769e0;
-}
-
-.inbound-journey-result {
-  font-size: 14px;
-}
-
-.inbound-journey-result--success {
-  color: var(--aicc-success);
-}
-
-.inbound-journey-result--failed {
-  color: var(--aicc-danger);
 }
 
 .inbound-ticket-row {
@@ -18420,101 +18466,164 @@ button.inbound-list-row .inbound-list-row__title {
   font-weight: 650;
 }
 
-.email-page .email-cwu-drawer {
-  position: absolute;
+.aicc-ticket-modal-wrap {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 84px 24px 24px;
 }
 
-.email-cwu-drawer .ant-drawer-header {
-  min-height: 48px;
-  padding: 10px 14px;
-  border-bottom: 1px solid #edf2f7;
+.aicc-ticket-modal-wrap .aicc-ticket-modal.ant-modal {
+  top: auto;
+  margin: 0;
+  padding-bottom: 0;
+}
+
+.aicc-ticket-modal {
+  display: flex;
+  max-height: calc(100vh - 108px);
+  overflow: hidden;
+  border: 1px solid rgba(178, 194, 215, 0.72);
+  border-radius: var(--aicc-radius);
+  flex-direction: column;
+  background: #ffffff;
+  box-shadow: var(--aicc-shadow-modal);
+}
+
+.aicc-ticket-modal .ant-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 16px;
   background: #ffffff;
 }
 
-.email-cwu-drawer .ant-drawer-title {
-  color: #1f2a3b;
-  font-family: Arial, sans-serif;
-  font-size: 16px;
-  font-weight: 700;
+.aicc-ticket-modal .aicc-modal__body {
+  min-height: 0;
 }
 
-.email-cwu-drawer .ant-drawer-body {
-  padding: 14px;
-  background: #fcfcfc;
-}
-
-.email-cwu-form {
+.aicc-ticket-form {
   display: flex;
   height: 100%;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
-.email-cwu-form > section,
-.email-cwu-form > label {
+.aicc-ticket-form > section,
+.aicc-ticket-form > label {
   display: flex;
   flex-direction: column;
+  gap: 6px;
+}
+
+.aicc-ticket-form > section > span,
+.aicc-ticket-form > label > span {
+  color: var(--aicc-text);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.aicc-ticket-form .ant-input {
+  border-color: var(--aicc-border-strong);
+  border-radius: 6px;
+  color: var(--aicc-text);
+  font-size: 12px;
+}
+
+.aicc-ticket-form .ant-input {
+  line-height: 18px;
+}
+
+.aicc-ticket-form .ant-input::placeholder {
+  color: var(--aicc-text-tertiary);
+}
+
+.aicc-ticket-form__select .ant-select-selector {
+  min-height: var(--aicc-control-height-sm) !important;
+  height: auto !important;
+  padding: 2px 6px !important;
+  border-color: var(--aicc-border-strong) !important;
+  border-radius: 6px !important;
+}
+
+.aicc-ticket-form__select.ant-select-multiple .ant-select-selection-overflow {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.aicc-ticket-form__select.ant-select-multiple .ant-select-selection-item {
+  display: inline-flex;
+  max-width: 100%;
+  height: auto;
+  min-height: 20px;
+  margin-block: 2px;
+  align-items: center;
+  line-height: 16px;
+  white-space: normal;
+}
+
+.aicc-ticket-select-option {
+  display: flex;
+  align-items: center;
+  min-width: 0;
   gap: 8px;
 }
 
-.email-cwu-form > section > span,
-.email-cwu-form > label > span {
-  color: #1f2a3b;
-  font-size: 14px;
-  font-weight: 500;
+.aicc-ticket-select-option .ant-checkbox {
+  flex: 0 0 auto;
+  pointer-events: none;
 }
 
-.email-cwu-form .ant-checkbox-group {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 8px;
-}
-
-.email-cwu-form .ant-checkbox-wrapper {
+.aicc-ticket-select-option > span:last-child {
   min-width: 0;
-  color: #475569;
-  font-size: 14px;
-  line-height: 20px;
+  overflow-wrap: anywhere;
 }
 
-.email-cwu-form .ant-input {
-  border-color: #dfe7f2;
-  border-radius: 6px;
-  color: #1f2a3b;
-  font-size: 14px;
-}
-
-.email-cwu-form .ant-input::placeholder {
-  color: #9ca3af;
-}
-
-.email-cwu-form__generate {
+.aicc-ticket-form__generate {
   display: inline-flex;
   align-self: flex-start;
   align-items: center;
+  margin-top: 2px;
   padding: 0;
   border: 0;
   background: transparent;
-  color: #1769e0;
+  color: var(--aicc-primary);
   cursor: pointer;
-  font-size: 9px;
-  font-weight: 650;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
   gap: 5px;
 }
 
-.email-cwu-form__generate:hover,
-.email-cwu-form__generate:focus-visible {
-  color: #0f5bd0;
-  text-decoration: underline;
+.aicc-ticket-form__generate:hover,
+.aicc-ticket-form__generate:focus-visible {
+  color: var(--aicc-primary);
   outline: 0;
 }
 
-.email-cwu-form > footer {
+.aicc-ticket-form__sparkle {
+  color: #7b5de5;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.aicc-ticket-form__field-error {
+  color: #c73737;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.aicc-ticket-modal .ant-modal-footer {
+  margin: 0;
+  padding: 10px 16px;
+  border-top: 1px solid var(--aicc-border);
+  background: #ffffff;
+}
+
+.aicc-ticket-modal__footer {
   display: flex;
-  margin-top: auto;
   justify-content: flex-end;
-  padding-top: 12px;
-  border-top: 1px solid #edf2f7;
   gap: 8px;
 }
 
@@ -19040,6 +19149,20 @@ button.inbound-list-row .inbound-list-row__title {
 .email-transfer-modal .ant-empty-description {
   color: var(--email-placeholder);
   font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .aicc-ticket-modal-wrap {
+    padding: 56px 12px 12px;
+  }
+
+  .aicc-ticket-modal-wrap .aicc-ticket-modal.ant-modal {
+    width: calc(100vw - 24px) !important;
+  }
+
+  .aicc-ticket-modal {
+    max-height: calc(100vh - 68px);
+  }
 }
 
 @media (max-width: 1366px) {

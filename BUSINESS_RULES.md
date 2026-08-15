@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-08-05 09:45 +08:00
+Last updated: 2026-08-15 11:59 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -171,7 +171,7 @@ Call transfer modal:
 - Normal-agent tabs: `Transfer Agent`, `Transfer Skill`, `Transfer IVR`.
 - Transfer Agent supports search by name or employee ID.
 - Transfer Agent can filter by skill queue.
-- Call transfer displays only `Ready` agents. `SPV` and `TL` agents are ordered before regular agents.
+- Call transfer displays only `Ready` agents. Ordinary Agents can view only `SPV` and `TL` transfer targets; TL and all other roles can view all targets. `SPV` and `TL` agents are ordered before regular agents.
 - Call transfer defaults to `Consult` enabled and `Transfer` / `Conference` disabled.
 - Selecting `Consult` immediately enters the demo consultation state: the selected row becomes red `Cancel Consult`, other rows cannot start a consultation, and only the selected row enables `Transfer` / `Conference`.
 - Closing the transfer modal or selecting `Cancel Consult` restores the default call-transfer actions. The call toolbar does not change during consultation.
@@ -189,7 +189,7 @@ Conversation transfer modal:
 - Tabs: `Transfer Agent`, `Transfer Skill`.
 - No `Transfer Number` or `Transfer IVR` tab.
 - Agent row actions: `Transfer`, `Conference`.
-- In Live Chat, an ordinary Agent can transfer only to `SPV` or `TL` targets. TL and all other roles retain access to all transfer-agent targets.
+- Ordinary Agents can transfer only to `SPV` or `TL` targets. TL and all other roles retain access to all transfer-agent targets.
 
 Current demo behavior:
 
@@ -203,15 +203,15 @@ Outbound Call is available from the toolbar More menu.
 Outbound modal:
 
 - Tabs: `Call Number`, `Call Agent`.
-- Call Number accepts a phone number and requires one fixed reason: `Miss Information` or `Financial Risk`. Ordinary Agents see `Request Approval` and can Call only after TL approval for the exact number-and-reason request. TL-and-above accounts select the same reason but Call directly and do not see a Request Approval action. A completed Call Number action uses the same outbound request event as Customer Information: it creates and focuses a new `Outbound Call` voice workspace carrying the dialed number, then the toolbar enters `Talking`.
-- Call Agent supports name / employee ID search and skill queue filtering. Ordinary Agents can only view SPV and TL records; TL-and-above roles can view all records.
+- Call Number accepts a phone number and requires one business reason: `Miss Information` or `Financial Risk`. Ordinary Agents may request TL/SPV approval from any agent status, but can Call only after approval while in an active AUX reason configured with `Support Outbound`. TL-and-above accounts must be in an eligible AUX before calling directly. A completed Call Number action uses the same outbound request event as Customer Information: it creates and focuses a new `Outbound Call` voice workspace carrying the dialed number, then the toolbar enters `Talking`.
+- Call Agent supports name / employee ID search and skill queue filtering, and shows only SPV and TL records for every role. It requires an active AUX reason configured with `Support Outbound` before calling; external-number approval does not apply.
 - Agent row action is `Call`.
 
-Customer Information customer-phone outbound uses the same role rule. Its compact card action opens an `Outbound Reason` modal. Ordinary Agents see `Request Approval` and select `Miss Information` or `Financial Risk` before creating the request; TL-and-above sees `Call`, selects the reason, then clicks `Call` in that modal to directly create the outbound call.
+Customer Information customer-phone outbound uses the same eligible AUX and role rule. Any Customer Information card with a nonempty phone number lets an ordinary Agent request TL/SPV approval without first changing AUX; the post-approval Call action is disabled until the agent enters an eligible AUX. TL-and-above calls directly only from an eligible AUX. It does not require KBV completion or CRM identity. Its `Outbound Reason` modal keeps `Miss Information` and `Financial Risk` as per-call business reasons.
 
 ### External Number TL Approval
 
-- The approval scope is a single action and target: toolbar outbound number plus its selected reason, or Customer Information customer phone number plus its selected reason. Editing the number or outbound reason releases a pending or approved authorization; closing the originating modal does not. A pending request or unused approval remains available while the agent handles other work, then is reused only for the original exact-number action. Executing the original operation consumes it, and Log Out clears all pending or unused approvals.
+- The approval scope is a single action and target: toolbar outbound number plus its selected reason, or Customer Information customer phone number plus its selected reason. Editing the number or business reason releases a pending or approved authorization. Leaving all AUX reasons configured for outbound, or disabling the last such reason, also releases it. Switching between eligible outbound AUX reasons does not release approval. Closing the originating modal does not. A pending request or unused approval remains available only while the agent remains in an eligible outbound AUX, then is reused only for the original exact-number action. Executing the original operation consumes it, and Log Out clears all pending or unused approvals. AUX reason is an agent-status gate and audit detail, not an approval display field.
 - An ordinary Agent creates a pending request and opens or reuses one same-origin `/tl-outbound-approval` popup from the click event. If the browser blocks the popup, the request is cancelled and the agent is told to allow popups before retrying.
 - The TL popup uses the customer-provided complete TL dashboard screenshot as a contained foreground image, so the BANK 1 header, left navigation, and dashboard edge are not cropped. A light mask blocks the static dashboard while approval is active. The approval surface reuses the shared light-blue `BaseModal` title with one white body, is centered in the TL viewport, and has an `Approval` title with compact remaining-queue progress. Its body contains only the small agent avatar/name, relevant request details including the required outbound reason, an optional generic note, and Approve / Reject actions.
 - TL request details use the compact `Outbound {number}` format with the selected Reason as a separate tag. Customer ID is not displayed and the Demo does not perform a customer lookup from the outbound number.
@@ -298,8 +298,8 @@ Verification:
 
 Call Flow Detail:
 
-- Voice / IVR contexts show IVR Journey.
-- Text and non-IVR contexts can suppress IVR Journey.
+- Only PSTN telephone calls show IVR Journey, recording the IVR nodes selected before routing.
+- BankApp Voice, BankApp Video, and digital channels do not show IVR Journey. Their Call Flow Detail shows `Business Menu Selection Record`, recording the business menu selected by the customer before routing. Transfer History is always visible: it includes completed upstream transfers when present and the current agent's in-progress service record with `-` for unavailable duration and transfer time.
 - Live Chat can show transfer history.
 
 ## 10. Customer Verification V2 Rules
@@ -366,10 +366,11 @@ Customer Journey:
 - Sorts by date descending.
 - Collapsed state shows 2 items.
 - Expanded state shows up to 10 items.
-- Clicking an item opens `Interaction Detail`.
-- Detail modal shows customer/agent conversation and summary sections.
+- Phone, BankApp, Webchat, and WhatsApp rows show all Categories of the current interaction's first Ticket after the channel icon. A missing Ticket or Category renders `-`; long Category text is ellipsized without a hover expansion. Journey rows do not show a success or failure result icon.
+- Clicking Phone, BankApp, Webchat, or WhatsApp opens the same channel-media detail modal used by Interaction Log. Voice, Video, and DM therefore keep their corresponding playback or conversation presentation.
+- Email and Social Media rows continue to open `Interaction Detail`, which shows customer/agent conversation and summary sections.
 
-Channels shown in journey include Email, X, Instagram, TikTok, and WhatsApp.
+Channels shown in journey include Phone, BankApp, Webchat, WhatsApp, Email, X, Instagram, and TikTok.
 
 ## 12. Ticketing History Rules
 
@@ -591,7 +592,7 @@ WhatsApp demo is chat-only in the current implementation.
 - Save Draft creates or updates a Drafts item. Sending a normal edited draft removes the draft and creates a Sent item; sending a saved Forward draft removes both the draft and its original source without creating a Sent item.
 - Ignore reasons are `AD`, `Spam`, and `Sales Email`. Ignore marks the email `No reply`, stops SLA, and moves it from Inbox to Trash.
 - Trash Recover returns the pre-seeded or ignored trashed email to its original folder and clears the ignore marker.
-- The customer-visible Email panel is named `Ticket`. It requires at least one Business Type and a Summary; One-Click Generation creates an editable local summary before confirmation. The existing internal CWU mock field remains unchanged.
+- The customer-visible Email panel is named `Ticket`. It shares the four-field Ticket Registration component: Product, Category, Summary, and Note are required. Product and Category use searchable multi-select dropdowns that retain every selected value visibly in the expanded control. Summary is limited to 250 characters and shows its current length; Note uses the same editor height. One-Click Generation creates an editable local draft before confirmation. The existing internal CWU mock field remains unchanged.
 - Email verification is not shown because no confirmed Email verification channel rule exists.
 - Email directly reuses Live Chat's `CrmPanel`; CRM uses the same current screenshot and Email uses the same tab styling as Conversation. Legacy full-system Email design screenshots are not embedded.
 - No real mailbox, SMTP, attachment upload, routing, permission, audit, template deployment, record inquiry, or Ticket backend integration exists.
@@ -627,12 +628,13 @@ Hidden / redirected:
 
 ### Blacklist
 
-- Entries contain Channel, Country Code, Identifier, Restriction Policy, Validity Days, Reason, Status, Created Date, Created By. The list shows the stored Country Code for Phone entries and `-` for every other channel; Phone Identifier displays the actual Phone Number without repeating its Country Code.
+- Entries contain Channel, Country Code, Identifier, Restriction Policy, Reason, Status, Created Date, Created By. The list shows the stored Country Code for Phone entries and `-` for every other channel; Phone Identifier displays the actual Phone Number without repeating its Country Code.
 - Restriction policies:
   - Block Access.
   - Prohibit Transfer to Agent.
-- Batch Add is the only local demo creation action. Channel and Reason are required. Non-Phone channels support multiple selections and create one record for every selected Channel + Identifier combination.
-- Phone is a dedicated batch mode and cannot be mixed with other channels. Country Code defaults to editable `062`; Country Code and Phone Number are required, while actual Phone Number values remain exactly as entered.
+- Batch Add is the only local demo creation action. Channel and Reason are required. Non-Phone channels support multiple selections and create one record for every selected Channel + Identifier combination. Their Restriction Policy is fixed to `Prohibit Transfer to Agent` and is displayed disabled in the form.
+- Phone is a dedicated batch mode and cannot be mixed with other channels. Country Code defaults to editable `062`; Country Code and Phone Number are required, while actual Phone Number values remain exactly as entered. Phone can select either Restriction Policy.
+- Batch Add previews existing duplicate records and skips them on save. The common preview columns are Channel, Country Code, Identifier, Restriction Policy, Status, and Existing No. Phone duplication uses Channel + Country Code + Phone Number + Restriction Policy; non-Phone duplication uses Channel + Identifier. Status does not alter duplicate matching.
 - Batch Add exposes a Status switch that defaults to Enabled; its selected value applies to every record generated by that submission. The Status list cell also combines an inline switch with an Enabled/Disabled label; switching updates a record immediately without confirmation. Disabled records remain visible and searchable but are not treated as effective blacklist records for future consumers. The current demo has no customer-flow blacklist consumer.
 - Delete supports selected rows and confirmation.
 - Store is local front-end state.
@@ -654,6 +656,8 @@ Hidden / redirected:
 
 - Active busy reasons appear as AUX options in the agent profile menu.
 - Each Busy Reason has a `Productivity Type`: `Productive` or `Non-Productive`. The classification is maintained for future agent-status and report statistics, without changing the current AUX flow.
+- Busy Reason management lists `Support Outbound` as a read-only status and maintains it in the edit modal. Multiple active reasons can support customer outbound calls; disabled reasons cannot support outbound calls. The DEMO defaults `Callback Finrisk` and `Callback Misinform` to enabled outbound support.
+- Customer-number outbound is available only while the agent is in an active eligible outbound AUX; the selected external outbound reason remains separate from the agent-status reason.
 - Busy Reason management supports keyword, productivity type, and status filtering, plus reason, productivity type, status, and remark editing. It does not use a default-reason configuration.
 - Store is local front-end state.
 
@@ -747,7 +751,7 @@ Hidden / redirected:
 - Video records use a three-column detail layout: left `Video Recording Playback`, middle `Auto Transcript`, and right read-only CWU. The replay is an OpenEye-style vertical replay with two video panes and a playback bar; it should not include the live-call buttons, labels, or icons from the OpenEye call screen.
 - DM records use a two-column detail layout: conversation-style bubbles with speaker, avatar, and time on the left, and read-only CWU on the right. DM details do not show an empty media column.
 - Detail modal does not add a CRM or customer-detail card in the current scope; customer and service metadata stay in the list-level fields.
-- Detail modal right side uses separate bordered read-only Ticket and Satisfaction panels. Ticket places the Ticket No. in the title row. Satisfaction shows static stars plus the final `Rating Score` number when available, then the optional feedback content. Field labels use title case rather than forced uppercase.
+- Detail modal right side uses a single bordered read-only Ticket and Summary panel plus a separate Satisfaction panel. Each Ticket shows a CRM-style Ticket ID and one or more Category tags; Ticket entries and the single AI-generated, read-only service Summary are separated by divider lines within the same scrollable panel. Satisfaction shows static stars plus the final `Rating Score` number when available, then the optional feedback content. Field labels use title case rather than forced uppercase.
 - CWU Registration summary is mandatory in the current demo, so the list and filters do not expose Summary Status or Summary Time.
 - Interaction Log exposes only the View action. CWU edit entry points and the Edit CWU modal are not shown in the current demo.
 - Store is local front-end state.
@@ -771,20 +775,20 @@ Important rules:
 
 - Channels has Phone account management disabled.
 - Routing Config media types include Voice, Video, DM, and Non-DM.
-- Non-DM represents social non-direct-message scenarios such as comments, replies, mentions, and app-store reviews.
+- Non-DM represents non-direct-message scenarios such as social comments, replies, mentions, app-store reviews, and Email mailbox interactions.
 - Instagram, LinkedIn, Facebook, X, Tik Tok, and YouTube support DM plus Non-DM media.
-- AppStore and PlayStore support Non-DM only.
+- Email, AppStore, and PlayStore support Non-DM only.
 - Channels Edit Channel media type selector shows all configured media types; the current channel's selected media types determine which Business Config tabs are shown.
-- Channels DM Business Config shows `Queue Configuration` immediately after `Access Configuration`.
+- A media type with no available Business Config fields shows the standard `No configuration available for this media type.` information prompt instead of an empty configuration section.
+- Channels DM and non-Phone Voice / Video Business Config show `Queue Configuration` immediately after `Access Configuration` when access configuration is available.
 - `Queue Configuration` contains `Outside Service Hours Message`, `Queue Waiting Message`, `Long Queue Waiting Time (sec)`, `Long Queue Waiting Message`, `Queue Timeout (sec)`, and `Queue Timeout Message`.
+- Non-Phone Voice / Video Queue Configuration includes only `Outside Service Hours Message`, `Queue Waiting Message`, `Queue Timeout (sec)`, and `Queue Timeout Message`; long-wait threshold and message remain DM-only.
 - `Queue Waiting Message` supports the `{queuePosition}` dynamic parameter. Estimated-wait dynamic parameters remain unsupported.
 - `Long Queue Waiting Time (sec)` defaults to `180`; empty or `0` disables the long-wait prompt.
 - `Queue Timeout (sec)` defaults to `360` and accepts values from `0` to `60000`.
 - Channels DM and Non-DM Business Config can each select one fixed `New Customer Alert Sound` and preview it. Clearing the selection means no alert sound for that channel/media pair.
 - New customer alert sounds play once for a new DM or Non-DM interaction. Playback is gated by the existing agent-level `System prompt sound` setting.
-- Voice and Video do not expose this configuration and continue to use OpenEye ringing.
-- Webchat DM Business Config shows `Webchat Message Recall Limit (sec)`.
-- Non-Webchat text channels do not show that Webchat-specific field.
+- Voice and Video do not expose new-customer alert sound configuration and continue to use OpenEye ringing.
 - Channels Business Config `Agent Service Configuration` keeps the existing `Agent No Reply Warning (sec)` and `Agent No Reply Breach (sec)` labels, and uses colored dots matching Live Chat SLA warning and breach colors to clarify the threshold severity.
 - Business Types include `Source Business Code`.
 - Skill Queues require `Access Code`; it appears after `VDN` in list columns and Add / Edit / View forms. Keyword search includes Access Code.
@@ -817,3 +821,12 @@ Current implemented language mix:
   - English UI with Indonesian business data.
 
 Do not introduce old customer brand names into visible UI or handoff docs.
+
+## 27. Ticket Registration Rules
+
+- The CRM workspace Ticket action is available in inbound voice, video, and digital interaction workspaces, as well as Email.
+- Ticket Registration has four editable fields: searchable multi-select `Product` and `Category`, plus `Summary` and `Note`. All four fields are required. Selected Product and Category values remain fully visible in the naturally expanding control rather than collapsing into a `+N` tag. Summary has a 250-character limit with a visible count; Note uses the same editor height.
+- Opening Ticket prepares an editable AI-assisted draft. `One-Click Generation` prepares a new deterministic demo draft on every click; it does not call a real AI service in this front-end demo.
+- `Confirm` simulates saving the current ticket to CRM, clears the form, retains the right-side Ticket modal, and supports consecutive ticket creation. In interaction workspaces, the newly saved ticket immediately appears in Ticketing History.
+- All shared Ticket saves, including Email, use the shared success notice below the agent toolbar. Email does not retain a separate `Ticket saved` status badge after confirmation.
+- Ticket records remain in browser-memory mock state only. Real CRM API, authentication, audit, validation, and persistence contracts are not implemented.

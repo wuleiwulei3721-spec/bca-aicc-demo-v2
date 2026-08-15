@@ -206,6 +206,19 @@ export function BusyReasonManagementPage() {
       width: 120,
     },
     {
+      dataIndex: 'supportsOutbound',
+      title: 'Support Outbound',
+      width: 160,
+      render: (value: boolean) => (
+        <StatusBadge
+          dot
+          label={value ? 'Enabled' : 'Disabled'}
+          size="small"
+          status={value ? 'success' : 'disabled'}
+        />
+      ),
+    },
+    {
       dataIndex: 'remark',
       ellipsis: true,
       title: 'Remark',
@@ -308,7 +321,7 @@ export function BusyReasonManagementPage() {
             dataSource={filteredReasons}
             pagination={{}}
             rowKey="busyReasonId"
-            horizontalScroll={1170}
+            horizontalScroll={1350}
           />
         </BaseCard>
       <AdminModal
@@ -375,6 +388,24 @@ export function BusyReasonManagementPage() {
                     }
                   />
                   <em>{draft.status === 'Active' ? 'Enabled' : 'Disabled'}</em>
+                </span>
+              </label>
+              <label className="global-control-config__field">
+                <span>Support Outbound</span>
+                <span className="busy-reason-config__switch-row">
+                  <Switch
+                    checked={draft.supportsOutbound}
+                    disabled={draft.status !== 'Active'}
+                    size="small"
+                    onChange={(checked) =>
+                      updateDraft('supportsOutbound', checked)
+                    }
+                  />
+                  <em>
+                    {draft.supportsOutbound && draft.status === 'Active'
+                      ? 'Enabled'
+                      : 'Disabled'}
+                  </em>
                 </span>
               </label>
               <label className="global-control-config__field busy-reason-config__field--full">

@@ -14,6 +14,7 @@ interface InboundPageProps {
 
 export function InboundPage({ interaction }: InboundPageProps) {
   const isBankAppVoice = interaction.source === 'bankapp-voice'
+  const isPstn = interaction.source === 'pstn'
   const isOutbound = interaction.source === 'outbound'
   const customer = isOutbound
     ? {
@@ -34,6 +35,8 @@ export function InboundPage({ interaction }: InboundPageProps) {
   return (
     <InteractionWorkspace
       ariaLabel="Inbound call workspace"
+      accessMenuLabel="Business Menu Selection Record"
+      accessMenuName={interaction.businessMenuName}
       customer={customer}
       initialJourney={
         isBankAppVoice || isOutbound ? undefined : unidentifiedCustomerJourney
@@ -41,7 +44,7 @@ export function InboundPage({ interaction }: InboundPageProps) {
       initialTickets={
         isBankAppVoice || isOutbound ? undefined : unidentifiedTicketingHistory
       }
-      showIvrJourney={!isOutbound}
+      showIvrJourney={isPstn}
       transferContext={interaction.transferContext}
     />
   )

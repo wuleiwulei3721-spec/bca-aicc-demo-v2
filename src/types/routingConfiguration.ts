@@ -69,7 +69,6 @@ export interface ChannelMediaBusinessConfig {
   assignedAgentGreeting: string
   customerNoReplyTimeoutMinutes: number
   customerTimeoutNotice: string
-  exceptionWorkTimePlanCode: string
   maxConcurrentAccess: number
   minScanIntervalSeconds: number
   newCustomerAlertSound: string
@@ -81,7 +80,6 @@ export interface ChannelMediaBusinessConfig {
   queueTimeoutMessage: string
   queueTimeoutSeconds: number
   queueWaitingMessage: string
-  webchatRecallLimitSeconds: number
 }
 
 export type ChannelBusinessConfig = Partial<

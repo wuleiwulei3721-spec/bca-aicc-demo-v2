@@ -25,6 +25,9 @@ export type EmailStatus = 'open' | 'pending' | 'closed'
 
 export interface EmailCwuRegistration {
   businessTypes: string[]
+  category: string[]
+  note: string
+  product: string[]
   summary: string
   registeredAt: number
 }

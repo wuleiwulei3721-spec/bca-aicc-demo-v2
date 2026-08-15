@@ -38,8 +38,11 @@ export function VideoCallPage({
 
   return (
     <InteractionWorkspace
+      accessMenuLabel="Business Menu Selection Record"
+      accessMenuName={interaction.businessMenuName}
       ariaLabel="Video call workspace"
       customer={customer}
+      showIvrJourney={false}
       overlay={
         isCurrentActive && showOpenEyeVideoWindow ? (
           <OpenEyeVideoWindow

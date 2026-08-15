@@ -15,7 +15,6 @@ import {
   MenuUnfoldOutlined,
   ReloadOutlined,
   RightOutlined,
-  RobotOutlined,
   RollbackOutlined,
   SaveOutlined,
   SearchOutlined,
@@ -24,6 +23,7 @@ import {
   WarningFilled,
 } from '@ant-design/icons'
 import {
+  Badge,
   Checkbox,
   Drawer,
   Dropdown,
@@ -37,8 +37,11 @@ import type { PointerEvent, ReactNode } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   BaseButton,
+  OperationNotice,
   StatusBadge,
+  TicketRegistrationDrawer,
 } from '../../components'
+import type { TicketRegistrationDraft } from '../../components'
 import { useNow } from '../../hooks/useNow'
 import { createEmailDemoMessages, emailTemplates } from '../../mock/email'
 import {
@@ -141,14 +144,6 @@ const folderDefinitions: Array<{
   { icon: <DeleteOutlined />, key: 'trash', label: 'No Reply' },
 ]
 
-const cwuBusinessTypeOptions = [
-  'Credit Card',
-  'Investment',
-  'Wealth Management',
-  'Account Opening',
-  'Others',
-]
-
 function cloneMessages(messages: EmailMessage[]) {
   return messages.map((email) => ({
     ...email,
@@ -160,6 +155,8 @@ function cloneMessages(messages: EmailMessage[]) {
       ? {
           ...email.cwu,
           businessTypes: [...email.cwu.businessTypes],
+          category: [...(email.cwu.category ?? [])],
+          product: [...(email.cwu.product ?? email.cwu.businessTypes)],
         }
       : undefined,
   }))
@@ -326,10 +323,6 @@ function getHandlingBadge(email: EmailMessage) {
 
   if (email.handlingStatus === 'transferred') {
     return <StatusBadge label="Transferred" size="small" status="selected" />
-  }
-
-  if (email.cwu) {
-    return <StatusBadge label="Ticket saved" size="small" status="selected" />
   }
 
   return null
@@ -1757,9 +1750,13 @@ export function EmailPage() {
     useState<EmailComposeDraft | null>(null)
   const [isTransferOpen, setIsTransferOpen] = useState(false)
   const [isCwuOpen, setIsCwuOpen] = useState(false)
-  const [cwuBusinessTypes, setCwuBusinessTypes] = useState<string[]>([])
-  const [cwuSummary, setCwuSummary] = useState('')
-  const [cwuError, setCwuError] = useState('')
+  const [ticketSaveNotice, setTicketSaveNotice] = useState<{
+    id: number
+    message: string | null
+  }>({
+    id: 0,
+    message: null,
+  })
   const [notice, setNotice] = useState<{ text: string; tone: 'success' | 'info' } | null>(null)
   const noticeTimerRef = useRef<number | null>(null)
   const hasRunningSla = messages.some(
@@ -1775,6 +1772,21 @@ export function EmailPage() {
     },
     [],
   )
+
+  useEffect(() => {
+    if (!ticketSaveNotice.message) {
+      return undefined
+    }
+
+    const noticeId = ticketSaveNotice.id
+    const timer = window.setTimeout(() => {
+      setTicketSaveNotice((current) =>
+        current.id === noticeId ? { ...current, message: null } : current,
+      )
+    }, 4000)
+
+    return () => window.clearTimeout(timer)
+  }, [ticketSaveNotice.id, ticketSaveNotice.message])
 
   const selectedEmail =
     messages.find((email) => email.id === selectedMessageId) ?? null
@@ -2086,35 +2098,11 @@ export function EmailPage() {
   }
 
   const openCwu = () => {
-    setCwuBusinessTypes(selectedEmail?.cwu?.businessTypes ?? [])
-    setCwuSummary(selectedEmail?.cwu?.summary ?? '')
-    setCwuError('')
     setIsCwuOpen(true)
   }
 
-  const generateCwuSummary = () => {
+  const confirmCwu = (draft: TicketRegistrationDraft) => {
     if (!selectedEmail) {
-      return
-    }
-
-    setCwuSummary(
-      `Customer contacted BANK 1 by Email regarding "${selectedEmail.subject}". The request was reviewed and recorded for follow-up by the assigned service team.`,
-    )
-    setCwuError('')
-  }
-
-  const confirmCwu = () => {
-    if (!selectedEmail) {
-      return
-    }
-
-    if (cwuBusinessTypes.length === 0) {
-      setCwuError('Select at least one Business Type.')
-      return
-    }
-
-    if (!cwuSummary.trim()) {
-      setCwuError('Summary is required.')
       return
     }
 
@@ -2124,16 +2112,21 @@ export function EmailPage() {
           ? {
               ...email,
               cwu: {
-                businessTypes: [...cwuBusinessTypes],
+                businessTypes: [...draft.product],
+                category: [...draft.category],
+                note: draft.note,
+                product: [...draft.product],
                 registeredAt: Date.now(),
-                summary: cwuSummary.trim(),
+                summary: draft.summary,
               },
             }
           : email,
       ),
     )
-    setIsCwuOpen(false)
-    showNotice('Ticket saved.')
+    setTicketSaveNotice({
+      id: Date.now(),
+      message: 'Ticket saved to CRM.',
+    })
   }
 
   const mailContent = (
@@ -2230,7 +2223,6 @@ export function EmailPage() {
         tabBarExtraContent={
           <BaseButton
             disabled={!selectedEmail}
-            icon={<RobotOutlined />}
             size="small"
             variant="primary"
             onClick={openCwu}
@@ -2263,48 +2255,13 @@ export function EmailPage() {
         />
       )}
 
-      <Drawer
-        destroyOnHidden
-        getContainer={false}
+      <TicketRegistrationDrawer
+        contextLabel={selectedEmail?.subject}
         open={isCwuOpen}
-        rootClassName="email-cwu-drawer"
-        size={380}
-        title="Ticket"
         onClose={() => setIsCwuOpen(false)}
-      >
-        <div className="email-cwu-form">
-          <section>
-            <span>Business Type</span>
-            <Checkbox.Group
-              options={cwuBusinessTypeOptions}
-              value={cwuBusinessTypes}
-              onChange={(values) => setCwuBusinessTypes(values as string[])}
-            />
-          </section>
-          <label>
-            <span>Summary</span>
-            <Input.TextArea
-              placeholder="Enter the service summary"
-              rows={9}
-              value={cwuSummary}
-              onChange={(event) => {
-                setCwuSummary(event.target.value)
-                setCwuError('')
-              }}
-            />
-          </label>
-          <button className="email-cwu-form__generate" type="button" onClick={generateCwuSummary}>
-            <RobotOutlined /> One-Click Generation
-          </button>
-          {cwuError && <div className="email-cwu-form__error">{cwuError}</div>}
-          <footer>
-            <BaseButton onClick={() => setIsCwuOpen(false)}>Cancel</BaseButton>
-            <BaseButton variant="primary" onClick={confirmCwu}>
-              Confirm
-            </BaseButton>
-          </footer>
-        </div>
-      </Drawer>
+        onConfirm={confirmCwu}
+      />
+      <OperationNotice message={ticketSaveNotice.message} tone="success" />
     </section>
   )
 }

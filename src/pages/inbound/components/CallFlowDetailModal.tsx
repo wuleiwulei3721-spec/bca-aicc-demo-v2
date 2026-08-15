@@ -1,5 +1,6 @@
 import { BaseButton, BaseModal, TimelineFlow } from '../../../components'
 import { callFlowDetail } from '../../../mock/inbound'
+import { useAuthStore } from '../../../store'
 
 interface CallFlowDetailModalProps {
   accessMenuLabel?: string
@@ -11,16 +12,27 @@ interface CallFlowDetailModalProps {
 }
 
 export function CallFlowDetailModal({
-  accessMenuLabel = 'Access Menu',
+  accessMenuLabel = 'Business Menu Selection Record',
   accessMenuName,
   open,
   showIvrJourney = true,
   showTransferHistory,
   onClose,
 }: CallFlowDetailModalProps) {
-  const shouldShowTransferHistory =
-    (showTransferHistory ?? showIvrJourney) &&
-    callFlowDetail.transferHistory.length > 0
+  const authSession = useAuthStore((state) => state.session)
+  const completedTransferHistory =
+    showIvrJourney || showTransferHistory ? callFlowDetail.transferHistory : []
+  const transferHistory = [
+    ...completedTransferHistory,
+    {
+      agentId: authSession?.employeeId ?? 'Current Agent',
+      agentSkill: accessMenuName ?? 'Credit Card Service',
+      id: `current-agent-${authSession?.employeeId ?? 'session'}`,
+      serviceDuration: '-',
+      transferAgent: authSession?.displayName ?? 'Current Agent',
+      transferTime: '-',
+    },
+  ]
 
   return (
     <BaseModal
@@ -67,36 +79,32 @@ export function CallFlowDetailModal({
           </section>
         ) : null}
 
-        {shouldShowTransferHistory ? (
-          <section className="aicc-modal-section inbound-call-flow__section">
-            <div className="aicc-modal-section__header inbound-call-flow__section-header">
-              <span className="aicc-modal-section__title">
-                Transfer History
-              </span>
-              <strong className="aicc-modal-section__meta">
-                {callFlowDetail.transferHistory.length} records
-              </strong>
+        <section className="aicc-modal-section inbound-call-flow__section">
+          <div className="aicc-modal-section__header inbound-call-flow__section-header">
+            <span className="aicc-modal-section__title">Transfer History</span>
+            <strong className="aicc-modal-section__meta">
+              {transferHistory.length} records
+            </strong>
+          </div>
+          <div className="inbound-call-flow__transfers">
+            <div className="inbound-call-flow__transfer-head">
+              <span>Agent ID</span>
+              <span>Agent Name</span>
+              <span>Skill</span>
+              <span>Service Duration</span>
+              <span>Transfer Time</span>
             </div>
-            <div className="inbound-call-flow__transfers">
-              <div className="inbound-call-flow__transfer-head">
-                <span>Agent ID</span>
-                <span>Agent Name</span>
-                <span>Skill</span>
-                <span>Service Duration</span>
-                <span>Transfer Time</span>
+            {transferHistory.map((item) => (
+              <div className="inbound-call-flow__transfer-row" key={item.id}>
+                <span>{item.agentId}</span>
+                <strong>{item.transferAgent}</strong>
+                <span>{item.agentSkill}</span>
+                <span>{item.serviceDuration}</span>
+                <span>{item.transferTime}</span>
               </div>
-              {callFlowDetail.transferHistory.map((item) => (
-                <div className="inbound-call-flow__transfer-row" key={item.id}>
-                  <span>{item.agentId}</span>
-                  <strong>{item.transferAgent}</strong>
-                  <span>{item.agentSkill}</span>
-                  <span>{item.serviceDuration}</span>
-                  <span>{item.transferTime}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-        ) : null}
+            ))}
+          </div>
+        </section>
         <footer className="aicc-modal-footer inbound-call-flow__footer">
           <BaseButton onClick={onClose}>Close</BaseButton>
         </footer>

@@ -17,5 +17,4 @@ export interface BlacklistEntry {
   reason: string
   restrictionPolicy: BlacklistRestrictionPolicy
   status: BlacklistStatus
-  validityDays: number | null
 }

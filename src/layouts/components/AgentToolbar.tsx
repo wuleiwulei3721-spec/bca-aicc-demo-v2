@@ -75,12 +75,12 @@ interface CallIdentification {
 interface AgentToolbarProps {
   agentStatus: AgentStatus
   baseElapsedSeconds: number | null
-  callAgentScope?: 'all' | 'leaders-only'
   callIdentification?: CallIdentification | null
   callSkillDisplayName?: string | null
   callStatus: CallStatus
   canTransfer?: boolean
   canTransferToNumber?: boolean
+  hasOutboundAccess?: boolean
   requiresOutboundApproval?: boolean
   sessionEndReasons?: SessionEndReasonEntry[]
   readyToggleDisabled?: boolean
@@ -98,12 +98,12 @@ interface AgentToolbarProps {
 export function AgentToolbar({
   agentStatus,
   baseElapsedSeconds,
-  callAgentScope = 'all',
   callIdentification,
   callSkillDisplayName,
   callStatus,
   canTransfer = true,
   canTransferToNumber = false,
+  hasOutboundAccess = false,
   requiresOutboundApproval = true,
   sessionEndReasons = [],
   readyToggleDisabled = false,
@@ -452,7 +452,7 @@ export function AgentToolbar({
         />
       )}
       <OutboundCallModal
-        callAgentScope={callAgentScope}
+        hasOutboundAccess={hasOutboundAccess}
         open={isOutboundOpen}
         requiresOutboundApproval={requiresOutboundApproval}
         onClose={() => setIsOutboundOpen(false)}

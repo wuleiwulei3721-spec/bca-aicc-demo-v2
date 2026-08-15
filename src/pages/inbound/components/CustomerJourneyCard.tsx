@@ -1,18 +1,20 @@
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
-  CheckCircleFilled,
-  CloseCircleFilled,
   DownOutlined,
+  GlobalOutlined,
   InstagramFilled,
   MailOutlined,
+  MobileOutlined,
   TikTokFilled,
   WhatsAppOutlined,
   XOutlined,
 } from '@ant-design/icons'
 import { Space, Tag, Tooltip } from 'antd'
-import { BaseModal, StatusBadge } from '../../../components'
+import { BaseModal, PhoneIcon, StatusBadge } from '../../../components'
+import { useCallManagementStore } from '../../../store'
 import type { CustomerJourneyItem, JourneyChannel } from '../../../types'
+import { CallRecordDetailModal } from '../../call-management/CallRecordDetailModal'
 import { ChannelTag } from './ChannelTag'
 import { SectionCard } from './SectionCard'
 
@@ -42,6 +44,9 @@ function parseJourneyDate(date: string) {
 
 function renderChannelIcon(channel: JourneyChannel) {
   const iconMap: Record<JourneyChannel, ReactNode> = {
+    Phone: <PhoneIcon />,
+    BankApp: <MobileOutlined />,
+    Webchat: <GlobalOutlined />,
     Email: <MailOutlined />,
     X: <XOutlined />,
     Instagram: <InstagramFilled />,
@@ -62,27 +67,18 @@ function renderChannelIcon(channel: JourneyChannel) {
   )
 }
 
-function renderResultIcon(result: CustomerJourneyItem['result']) {
-  const isSuccess = result === 'Success'
-
-  return (
-    <Tooltip title={result}>
-      <span
-        className={
-          isSuccess
-            ? 'inbound-journey-result inbound-journey-result--success'
-            : 'inbound-journey-result inbound-journey-result--failed'
-        }
-      >
-        {isSuccess ? <CheckCircleFilled /> : <CloseCircleFilled />}
-      </span>
-    </Tooltip>
-  )
-}
-
 export function CustomerJourneyCard({ items }: CustomerJourneyCardProps) {
   const [expanded, setExpanded] = useState(false)
   const [activeItem, setActiveItem] = useState<CustomerJourneyItem | null>(null)
+  const [activeRecordId, setActiveRecordId] = useState<string | null>(null)
+  const callRecords = useCallManagementStore((state) => state.callRecords)
+  const callRecordsById = useMemo(
+    () => new Map(callRecords.map((record) => [record.id, record])),
+    [callRecords],
+  )
+  const activeRecord = activeRecordId
+    ? callRecordsById.get(activeRecordId) ?? null
+    : null
 
   const visibleItems = useMemo(() => {
     const sortedItems = [...items].sort(
@@ -104,21 +100,34 @@ export function CustomerJourneyCard({ items }: CustomerJourneyCardProps) {
       >
         <div className="inbound-journey-list">
           {visibleItems.length > 0 ? (
-            visibleItems.map((item) => (
-              <button
-                className="inbound-compact-row inbound-compact-row--button inbound-journey-row"
-                key={item.id}
-                type="button"
-                onClick={() => setActiveItem(item)}
-              >
-                {renderChannelIcon(item.channel)}
-                <span className="inbound-compact-row__main">
-                  {item.summary}
-                </span>
-                {renderResultIcon(item.result)}
-                <span className="inbound-compact-row__date">{item.date}</span>
-              </button>
-            ))
+            visibleItems.map((item) => {
+              const callRecord = item.callRecordId
+                ? callRecordsById.get(item.callRecordId)
+                : null
+              const summary = item.callRecordId
+                ? callRecord?.summary.tickets[0]?.categories.join(', ') || '-'
+                : item.summary
+
+              return (
+                <button
+                  className="inbound-compact-row inbound-compact-row--button inbound-journey-row"
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    if (item.callRecordId && callRecord) {
+                      setActiveRecordId(item.callRecordId)
+                      return
+                    }
+
+                    setActiveItem(item)
+                  }}
+                >
+                  {renderChannelIcon(item.channel)}
+                  <span className="inbound-compact-row__main">{summary}</span>
+                  <span className="inbound-compact-row__date">{item.date}</span>
+                </button>
+              )
+            })
           ) : (
             <div className="inbound-empty-state">
               Customer journey is not loaded.
@@ -193,6 +202,10 @@ export function CustomerJourneyCard({ items }: CustomerJourneyCardProps) {
           </div>
         )}
       </BaseModal>
+      <CallRecordDetailModal
+        record={activeRecord}
+        onClose={() => setActiveRecordId(null)}
+      />
     </>
   )
 }

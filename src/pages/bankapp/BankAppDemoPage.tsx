@@ -550,7 +550,7 @@ export function BankAppDemoPage({
   const [contactMethod, setContactMethod] =
     useState<BankAppContactMethod>(config.defaultContactMethod)
   const [businessType, setBusinessType] =
-    useState<BankAppBusinessType>('mobile-login')
+    useState<BankAppBusinessType>('card-issue')
   const [demoStep, setDemoStep] = useState<BankAppDemoStep>(() =>
     getInitialDemoStep(variant, 'registered'),
   )
@@ -672,12 +672,20 @@ export function BankAppDemoPage({
 
     if (effectiveContactMethod === 'voice') {
       setHandoffWarningReason(null)
-      requestBankAppVoiceCall(activateWorkspace, customerType)
+      requestBankAppVoiceCall(
+        activateWorkspace,
+        customerType,
+        selectedBusiness.label,
+      )
       return true
     }
 
     setHandoffWarningReason(null)
-    requestBankAppVideoCall(activateWorkspace, customerType)
+    requestBankAppVideoCall(
+      activateWorkspace,
+      customerType,
+      selectedBusiness.label,
+    )
     return true
   }
 

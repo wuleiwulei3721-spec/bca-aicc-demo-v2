@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { OperationNotice } from '../../components'
+import {
+  BaseButton,
+  OperationNotice,
+  TicketRegistrationDrawer,
+} from '../../components'
+import type { TicketRegistrationDraft } from '../../components'
 import {
   customerJourney,
   lookupCustomerByCis,
@@ -84,6 +89,14 @@ export function InteractionWorkspace({
     values: CustomerVerificationPanelConfig['initialConditions']
   } | null>(null)
   const [crmRefreshError, setCrmRefreshError] = useState<{
+    id: number
+    message: string | null
+  }>({
+    id: 0,
+    message: null,
+  })
+  const [isTicketOpen, setIsTicketOpen] = useState(false)
+  const [ticketSaveNotice, setTicketSaveNotice] = useState<{
     id: number
     message: string | null
   }>({
@@ -239,6 +252,38 @@ export function InteractionWorkspace({
     }
   }, [])
 
+  const saveTicket = useCallback(
+    (draft: TicketRegistrationDraft) => {
+      const ticketNumber = `CRM${String(Date.now()).slice(-6)}`
+      const createdTicket: TicketHistoryItem = {
+        createdDate: new Date().toISOString().slice(0, 10),
+        id: `ticket-${ticketNumber}`,
+        ticketNumber,
+        ticketType: draft.category.join(', '),
+      }
+
+      setIdentityOverride((current) => {
+        const currentData =
+          current?.sourceKey === sourceCustomerKey
+            ? current.data
+            : sourceIdentityData
+
+        return {
+          data: {
+            ...currentData,
+            tickets: [createdTicket, ...currentData.tickets],
+          },
+          sourceKey: sourceCustomerKey,
+        }
+      })
+      setTicketSaveNotice({
+        id: Date.now(),
+        message: 'Ticket saved to CRM.',
+      })
+    },
+    [sourceCustomerKey, sourceIdentityData],
+  )
+
   const showCrmRefreshError = useCallback(() => {
     setCrmRefreshError((current) => ({
       id: current.id + 1,
@@ -336,6 +381,21 @@ export function InteractionWorkspace({
     return () => window.clearTimeout(timer)
   }, [crmRefreshError.id, crmRefreshError.message])
 
+  useEffect(() => {
+    if (!ticketSaveNotice.message) {
+      return undefined
+    }
+
+    const noticeId = ticketSaveNotice.id
+    const timer = window.setTimeout(() => {
+      setTicketSaveNotice((current) =>
+        current.id === noticeId ? { ...current, message: null } : current,
+      )
+    }, 4000)
+
+    return () => window.clearTimeout(timer)
+  }, [ticketSaveNotice.id, ticketSaveNotice.message])
+
   const handleVerificationFinish = useCallback(
     (status: VerificationStatus) => {
       setVerificationStatusOverride({ sourceKey: sourceCustomerKey, status })
@@ -415,6 +475,15 @@ export function InteractionWorkspace({
           conversation={conversation}
           conversationContent={conversationContent}
           conversationKey={conversationKey}
+          tabBarExtraContent={
+            <BaseButton
+              size="small"
+              variant="primary"
+              onClick={() => setIsTicketOpen(true)}
+            >
+              Ticket
+            </BaseButton>
+          }
           workspaceTabs={crmWorkspace.tabs}
           onActiveKeyChange={(activeKey) =>
             setCrmWorkspace((current) => ({ ...current, activeKey }))
@@ -443,6 +512,13 @@ export function InteractionWorkspace({
         />
       </section>
       <OperationNotice message={crmRefreshError.message} tone="error" />
+      <OperationNotice message={ticketSaveNotice.message} tone="success" />
+      <TicketRegistrationDrawer
+        contextLabel={conversation?.session.intent ?? accessMenuName}
+        open={isTicketOpen}
+        onClose={() => setIsTicketOpen(false)}
+        onConfirm={saveTicket}
+      />
       {overlay}
     </>
   )

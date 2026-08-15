@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Project Context
 
-Last updated: 2026-07-29 15:54 +08:00
+Last updated: 2026-08-05 19:05 +08:00
 Repository path: `D:\03projects\bca-aicc-demo-v2`
 
 ## 1. Project Name
@@ -196,7 +196,7 @@ The toolbar supports:
 - Ready / Not Ready toggle.
 - Timer display.
 - More menu for Outbound Call; toolbar Settings is temporarily hidden.
-- Ordinary Agent external outbound number and Customer Information outbound actions require one TL approval per target before their original action is enabled. Both external outbound entries require `Miss Information` or `Financial Risk`; TL selects the same reason but calls directly. A completed external Call creates and focuses a dynamic `Outbound Call` customer workspace with the dialed number, then enters `Talking`. `Transfer Number` is a TL-and-above permission, hidden from `888888` and available to `666666` without additional approval.
+- Ordinary Agent external outbound number and Customer Information outbound actions require one TL approval per target before their original action is enabled. Both external outbound entries require `Miss Information` or `Financial Risk`; any nonempty Customer Information phone number can initiate that flow without KBV / CRM identity, while TL selects the same reason and calls directly. A completed external Call creates and focuses a dynamic `Outbound Call` customer workspace with the dialed number, then enters `Talking`. `Transfer Number` is a TL-and-above permission, hidden from `888888` and available to `666666` without additional approval.
 - In `Outbound Call > Call Agent`, ordinary Agents see only SPV and TL records; TL-and-above roles see the complete agent list.
 - `Channel Simulation > Transferred Call` is local-only and opens a PSTN receiving-seat preview with source-agent transfer metadata; it is a local demo visualization, not a real routed call.
 - Call identification display: `IVR: {ANI Number}` for PSTN and `HaloApp: {BCAID}` / `HaloApp: Guest` for HaloApp voice and video; the current HaloApp BCAID mock is `00012345`. Future Webchat voice/video follows `Webchat: {BCAID}` / `Webchat: Guest-0001`.

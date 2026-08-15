@@ -34,7 +34,7 @@ export const bankAppBusinessOptions: BankAppBusinessOption[] = [
   },
   {
     id: 'card-issue',
-    label: 'Card Issue',
+    label: 'Credit Card',
     labelId: 'Layanan Kartu',
     description: 'Debit or credit card block, unlock, or replacement request.',
     guestSkill: 'Card Information',

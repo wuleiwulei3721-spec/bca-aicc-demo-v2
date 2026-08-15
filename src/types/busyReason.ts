@@ -7,6 +7,7 @@ export interface BusyReason {
   productivityType: BusyReasonProductivityType
   remark: string
   status: BusyReasonStatus
+  supportsOutbound: boolean
   updatedAt: string
   updatedBy: string
 }

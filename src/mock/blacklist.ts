@@ -12,7 +12,6 @@ export const defaultBlacklistEntries: BlacklistEntry[] = [
     reason: 'Fraud risk review pending across all service channels.',
     restrictionPolicy: 'block-access',
     status: 'Active',
-    validityDays: 30,
   },
   {
     channel: 'Phone',
@@ -25,7 +24,6 @@ export const defaultBlacklistEntries: BlacklistEntry[] = [
     reason: 'Keep the customer in IVR self-service during cooling-off.',
     restrictionPolicy: 'block-transfer-to-agent',
     status: 'Disabled',
-    validityDays: null,
   },
   {
     channel: 'WhatsApp',
@@ -36,7 +34,6 @@ export const defaultBlacklistEntries: BlacklistEntry[] = [
     reason: 'Repeated spam message pattern, retain digital containment.',
     restrictionPolicy: 'block-transfer-to-agent',
     status: 'Active',
-    validityDays: 7,
   },
   {
     channel: 'Bankapp',
@@ -45,8 +42,7 @@ export const defaultBlacklistEntries: BlacklistEntry[] = [
     id: 'BL004',
     identifier: '00012345',
     reason: 'Temporary access block while customer risk review is open.',
-    restrictionPolicy: 'block-access',
+    restrictionPolicy: 'block-transfer-to-agent',
     status: 'Active',
-    validityDays: 14,
   },
 ]

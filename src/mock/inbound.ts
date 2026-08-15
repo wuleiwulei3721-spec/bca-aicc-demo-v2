@@ -1186,8 +1186,51 @@ export const verificationQuestions: VerificationQuestion[] =
 
 export const customerJourney: CustomerJourneyItem[] = [
   {
+    id: 'journey-011',
+    channel: 'Phone',
+    callRecordId: 'call-record-001',
+    summary: 'Credit Card',
+    result: 'Success',
+    date: '30 Dec',
+    communicationDetail:
+      'Customer requested card activation status and delivery confirmation by phone.',
+    summaryNotes: 'Customer was guided to the BankApp card activation menu.',
+    resolutionResult: 'Card activation path confirmed.',
+    followUpNotes: 'No follow-up required.',
+    conversation: [],
+  },
+  {
+    id: 'journey-012',
+    channel: 'BankApp',
+    callRecordId: 'call-record-021',
+    summary: 'Mobile Banking',
+    result: 'Success',
+    date: '29 Dec',
+    communicationDetail:
+      'Customer requested help with BankApp transaction notifications.',
+    summaryNotes: 'Notification settings were reviewed during the service.',
+    resolutionResult: 'Transaction alert setting enabled.',
+    followUpNotes: 'Customer confirmed the setting.',
+    conversation: [],
+  },
+  {
+    id: 'journey-013',
+    channel: 'Webchat',
+    callRecordId: 'call-record-023',
+    summary: 'Branch Service',
+    result: 'Failed',
+    date: '28 Dec',
+    communicationDetail:
+      'Customer asked about branch operating hours through Webchat.',
+    summaryNotes: 'The branch search path was shared before inactivity timeout.',
+    resolutionResult: 'Session ended after customer inactivity.',
+    followUpNotes: 'No follow-up required.',
+    conversation: [],
+  },
+  {
     id: 'journey-001',
     channel: 'WhatsApp',
+    callRecordId: 'call-record-026',
     summary: 'Card Unlock',
     result: 'Success',
     date: '24 Sep',
@@ -1364,6 +1407,7 @@ export const customerJourney: CustomerJourneyItem[] = [
   {
     id: 'journey-006',
     channel: 'WhatsApp',
+    callRecordId: 'call-record-030',
     summary: 'Account Statement',
     result: 'Success',
     date: '19 Nov',

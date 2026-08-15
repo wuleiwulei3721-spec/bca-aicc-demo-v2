@@ -29,6 +29,7 @@ export interface CustomerInformationPanelProps {
   onSendEmail?: () => void
   onStartOutbound?: () => void
   onVerify?: () => void
+  outboundDisabledTitle?: string
   isDirectOutbound?: boolean
   outboundRequestStatus?: CustomerOutboundRequestStatus
   verifyButtonDisabled?: boolean
@@ -78,6 +79,7 @@ export function CustomerInformationPanel({
   onSendEmail,
   onStartOutbound,
   onVerify,
+  outboundDisabledTitle,
   isDirectOutbound = false,
   outboundRequestStatus = 'idle',
   verifyButtonDisabled = false,
@@ -162,19 +164,19 @@ export function CustomerInformationPanel({
                   <PhoneIcon />
                   {profile.phoneNumber}
                 </span>
-                {(onRequestOutbound || onStartOutbound) && (
+                {(onRequestOutbound || onStartOutbound || outboundDisabledTitle) && (
                   <button
                     className={[
                       'aicc-customer-info__outbound-request',
                       `aicc-customer-info__outbound-request--${outboundRequestStatus}`,
+                      isDirectOutbound &&
+                        'aicc-customer-info__outbound-request--direct',
                     ]
                       .filter(Boolean)
                       .join(' ')}
-                    disabled={
-                      outboundRequestStatus === 'requesting' ||
-                      !handleOutboundClick
-                    }
+                    disabled={outboundRequestStatus === 'requesting' || !handleOutboundClick}
                     aria-label={outboundRequestLabel}
+                    title={outboundDisabledTitle}
                     type="button"
                     onClick={handleOutboundClick}
                   >

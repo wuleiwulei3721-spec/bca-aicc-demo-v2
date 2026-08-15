@@ -1,17 +1,11 @@
-import {
-  EyeOutlined,
-  PauseCircleOutlined,
-  PlayCircleOutlined,
-  StarFilled,
-} from '@ant-design/icons'
+import { EyeOutlined } from '@ant-design/icons'
 import { DatePicker, Input, Select } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   AdminFilterField,
   AdminModal,
-  AdminModalFooter,
   AdminPage,
   AdminTable,
   AdminToolbar,
@@ -27,16 +21,12 @@ import type {
   CallRecordRatingScore,
   ServiceEndedBy,
 } from '../../types'
+import { CallRecordDetailModal } from './CallRecordDetailModal'
 
 const { RangePicker } = DatePicker
-const OPEN_EYE_REPLAY_SRC =
-  '/screenshots/haloapp-v18/openeye-video-replay.png'
-const SCREEN_RECORDING_REPLAY_SRC =
-  '/screenshots/interaction-log/pstn-active-call-screen.png'
 const QM_DETAIL_REPLAY_SRC = '/screenshots/interaction-log/qm-detail.png'
 
 type CallRecordDateRange = [Dayjs, Dayjs]
-type CallRecordPlaybackSource = 'screen' | 'video' | 'voice'
 
 interface CallRecordFilters {
   callType: 'All' | CallRecordCallType
@@ -128,13 +118,6 @@ function formatDuration(durationSeconds: number) {
     .join(':')
 }
 
-function formatPlaybackClock(durationSeconds: number) {
-  const minutes = Math.floor(durationSeconds / 60)
-  const seconds = durationSeconds % 60
-
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
-}
-
 function formatQueueName(queueName: string) {
   return queueName.trim() || '-'
 }
@@ -158,9 +141,11 @@ function createSearchText(record: CallRecord) {
     record.endedBy,
     record.ratingScore?.toString() ?? '',
     record.ratingFeedback ?? '',
-    record.summary.businessTypes.join(' '),
     record.summary.description,
-    record.summary.ticketNo,
+    record.summary.tickets.map((ticket) => ticket.id).join(' '),
+    record.summary.tickets
+      .flatMap((ticket) => ticket.categories)
+      .join(' '),
   ]
     .join(' ')
     .toLowerCase()
@@ -184,70 +169,6 @@ function recordMatchesFilters(record: CallRecord, filters: CallRecordFilters) {
   )
 }
 
-function getPlaybackProgressPercent(record: CallRecord, playbackSeconds: number) {
-  if (record.durationSeconds <= 0) {
-    return 0
-  }
-
-  return Math.min(100, (playbackSeconds / record.durationSeconds) * 100)
-}
-
-function getSpeakerName(record: CallRecord, speaker: CallRecord['transcript'][number]['speaker']) {
-  if (speaker === 'Agent') {
-    return record.agentName
-  }
-
-  if (speaker === 'Customer') {
-    return record.customerName
-  }
-
-  return 'System'
-}
-
-function getSpeakerInitials(name: string) {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase()
-}
-
-function renderTranscriptLine(record: CallRecord, line: CallRecord['transcript'][number]) {
-  const speakerName = getSpeakerName(record, line.speaker)
-
-  if (line.speaker === 'System') {
-    return (
-      <div className="call-record-query__chat-system" key={line.id}>
-        <span>{line.time}</span>
-        <p>{line.text}</p>
-      </div>
-    )
-  }
-
-  return (
-    <article
-      className={[
-        'call-record-query__chat-message',
-        `call-record-query__chat-message--${line.speaker.toLowerCase()}`,
-      ].join(' ')}
-      key={line.id}
-    >
-      <div className="call-record-query__chat-avatar">
-        {getSpeakerInitials(speakerName)}
-      </div>
-      <div className="call-record-query__chat-main">
-        <div className="call-record-query__chat-meta">
-          <strong>{speakerName}</strong>
-          <span>{line.time}</span>
-        </div>
-        <p className="call-record-query__chat-bubble">{line.text}</p>
-      </div>
-    </article>
-  )
-}
-
 export function CallRecordQueryPage() {
   const callRecords = useCallManagementStore((state) => state.callRecords)
   const [appliedFilters, setAppliedFilters] = useState<CallRecordFilters>(() =>
@@ -256,11 +177,6 @@ export function CallRecordQueryPage() {
   const [draftFilters, setDraftFilters] = useState<CallRecordFilters>(() =>
     createDefaultFilters(),
   )
-  const [playbackRecordId, setPlaybackRecordId] = useState<string | null>(null)
-  const [playbackSource, setPlaybackSource] =
-    useState<CallRecordPlaybackSource | null>(null)
-  const [isPlaybackRunning, setIsPlaybackRunning] = useState(false)
-  const [playbackSeconds, setPlaybackSeconds] = useState(0)
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null)
   const [qmDetailRecordId, setQmDetailRecordId] = useState<string | null>(
     null,
@@ -289,45 +205,11 @@ export function CallRecordQueryPage() {
     [appliedFilters, callRecords],
   )
 
-  const isPlaybackPlaying =
-    Boolean(selectedRecord) &&
-    playbackRecordId === selectedRecord?.id &&
-    Boolean(playbackSource) &&
-    isPlaybackRunning
-
-  useEffect(() => {
-    if (!selectedRecord || !isPlaybackPlaying) {
-      return undefined
-    }
-
-    const timer = window.setInterval(() => {
-      setPlaybackSeconds((currentSeconds) => {
-        if (currentSeconds >= selectedRecord.durationSeconds) {
-          window.clearInterval(timer)
-          setIsPlaybackRunning(false)
-          return selectedRecord.durationSeconds
-        }
-
-        return Math.min(currentSeconds + 1, selectedRecord.durationSeconds)
-      })
-    }, 1000)
-
-    return () => window.clearInterval(timer)
-  }, [isPlaybackPlaying, selectedRecord])
-
   const openDetail = (record: CallRecord) => {
-    setPlaybackRecordId(null)
-    setPlaybackSource(null)
-    setIsPlaybackRunning(false)
-    setPlaybackSeconds(0)
     setSelectedRecordId(record.id)
   }
 
   const closeDetail = () => {
-    setPlaybackRecordId(null)
-    setPlaybackSource(null)
-    setIsPlaybackRunning(false)
-    setPlaybackSeconds(0)
     setSelectedRecordId(null)
   }
 
@@ -353,86 +235,6 @@ export function CallRecordQueryPage() {
     setDraftFilters(nextFilters)
     setAppliedFilters(nextFilters)
   }
-
-  const togglePlayback = (record: CallRecord, source: CallRecordPlaybackSource) => {
-    if (playbackRecordId === record.id && playbackSource === source) {
-      if (isPlaybackRunning) {
-        setIsPlaybackRunning(false)
-        return
-      }
-
-      if (playbackSeconds >= record.durationSeconds) {
-        setPlaybackSeconds(0)
-      }
-
-      setIsPlaybackRunning(true)
-      return
-    }
-
-    if (
-      playbackRecordId !== record.id ||
-      playbackSource !== source ||
-      playbackSeconds >= record.durationSeconds
-    ) {
-      setPlaybackSeconds(0)
-    }
-
-    setPlaybackRecordId(record.id)
-    setPlaybackSource(source)
-    setIsPlaybackRunning(true)
-  }
-
-  const renderPlayerControls = (
-    record: CallRecord,
-    source: CallRecordPlaybackSource,
-  ) => {
-    const isCurrentPlayerPlaying =
-      playbackRecordId === record.id &&
-      playbackSource === source &&
-      isPlaybackRunning
-    const isCurrentPlayer =
-      playbackRecordId === record.id && playbackSource === source
-    const currentSeconds = isCurrentPlayer ? playbackSeconds : 0
-
-    return (
-      <div className="call-record-query__player-controls">
-        <button
-          aria-label={isCurrentPlayerPlaying ? 'Pause playback' : 'Play playback'}
-          type="button"
-          onClick={() => togglePlayback(record, source)}
-        >
-          {isCurrentPlayerPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
-        </button>
-        <div className="call-record-query__player-progress">
-          <span
-            style={{
-              width: `${getPlaybackProgressPercent(record, currentSeconds)}%`,
-            }}
-          />
-        </div>
-        <strong>
-          {formatPlaybackClock(currentSeconds)} /{' '}
-          {formatPlaybackClock(record.durationSeconds)}
-        </strong>
-      </div>
-    )
-  }
-
-  const renderTranscriptLog = (
-    record: CallRecord,
-    modifierClassName?: string,
-  ) => (
-    <div
-      className={[
-        'call-record-query__chat-log',
-        modifierClassName ?? '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
-      {record.transcript.map((line) => renderTranscriptLine(record, line))}
-    </div>
-  )
 
   const columns: ColumnsType<CallRecord> = [
     {
@@ -551,99 +353,6 @@ export function CallRecordQueryPage() {
       width: 74,
     },
   ]
-
-  const renderCwuPanel = (record: CallRecord) => (
-    <div className="call-record-query__summary-stack">
-      <section className="call-record-query__summary-panel call-record-query__summary-panel--cwu">
-        <div className="call-record-query__column-title call-record-query__cwu-title">
-          <span>Ticket</span>
-          <span className="call-record-query__cwu-ticket-no">
-            {record.summary.ticketNo}
-          </span>
-        </div>
-        <div className="call-record-query__summary-card call-record-query__cwu-card">
-          <div className="call-record-query__cwu-fields">
-            <div>
-              <span>Business Type</span>
-              <div className="call-record-query__business-tags">
-                {record.summary.businessTypes.length > 0 ? (
-                  record.summary.businessTypes.map((businessType) => (
-                    <span
-                      className="call-record-query__business-tag"
-                      key={businessType}
-                    >
-                      {businessType}
-                    </span>
-                  ))
-                ) : (
-                  <strong>-</strong>
-                )}
-              </div>
-            </div>
-            <div>
-              <span>Summary</span>
-              <p>{record.summary.description}</p>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section className="call-record-query__summary-panel call-record-query__summary-panel--satisfaction">
-        <div className="call-record-query__column-title">
-          Satisfaction
-        </div>
-        <div className="call-record-query__satisfaction-fields">
-          <div>
-            <span>Rating Score</span>
-            {record.ratingScore === null ? (
-              <strong>-</strong>
-            ) : (
-              <div
-                aria-label={`${record.ratingScore} out of 5 stars`}
-                className="call-record-query__rating-score"
-                role="img"
-              >
-                {Array.from({ length: 5 }, (_, index) => (
-                  <StarFilled
-                    className={
-                      index < record.ratingScore
-                        ? 'call-record-query__rating-star--filled'
-                        : 'call-record-query__rating-star'
-                    }
-                    key={index}
-                  />
-                ))}
-                <strong>{record.ratingScore}</strong>
-              </div>
-            )}
-          </div>
-          <div>
-            <span>Feedback</span>
-            <p>{record.ratingFeedback ?? '-'}</p>
-          </div>
-        </div>
-      </section>
-    </div>
-  )
-  const detailModalWidth =
-    selectedRecord?.mediaType === 'Voice'
-      ? 1320
-      : selectedRecord?.mediaType === 'Video'
-        ? 1180
-        : 960
-  const detailClassName = [
-    'call-record-query__detail',
-    selectedRecord?.mediaType === 'Voice'
-      ? 'call-record-query__detail--voice'
-      : '',
-    selectedRecord?.mediaType === 'Video'
-      ? 'call-record-query__detail--video'
-      : '',
-    selectedRecord?.mediaType === 'DM'
-      ? 'call-record-query__detail--dm'
-      : '',
-  ]
-    .filter(Boolean)
-    .join(' ')
 
   return (
     <AdminPage
@@ -764,102 +473,7 @@ export function CallRecordQueryPage() {
           rowKey="id"
         />
       </BaseCard>
-      <AdminModal
-        destroyOnClose
-        className="call-record-query__detail-modal"
-        open={Boolean(selectedRecord)}
-        title={
-          selectedRecord
-            ? `Interaction Log Detail - ${selectedRecord.recordNo}`
-            : 'Interaction Log Detail'
-        }
-        width={detailModalWidth}
-        onCancel={closeDetail}
-      >
-        {selectedRecord && (
-          <div className={detailClassName}>
-            {selectedRecord.mediaType === 'Voice' ? (
-              <>
-                <section className="call-record-query__media-panel call-record-query__media-panel--voice">
-                  <section className="call-record-query__playback-section">
-                    <div className="call-record-query__column-title">
-                      Voice Recording Playback
-                    </div>
-                    <div className="call-record-query__media-player call-record-query__media-player--voice">
-                      {renderPlayerControls(selectedRecord, 'voice')}
-                    </div>
-                  </section>
-                  <section className="call-record-query__playback-section call-record-query__playback-section--screen">
-                    <div className="call-record-query__column-title">
-                      Screen Recording Playback
-                    </div>
-                    <div className="call-record-query__media-player call-record-query__media-player--screen">
-                      <div className="call-record-query__screen-replay">
-                        <img
-                          alt="Agent screen recording replay"
-                          draggable={false}
-                          src={SCREEN_RECORDING_REPLAY_SRC}
-                        />
-                      </div>
-                      {renderPlayerControls(selectedRecord, 'screen')}
-                    </div>
-                  </section>
-                </section>
-                <section className="call-record-query__content-panel">
-                  <div className="call-record-query__column-title">
-                    Auto Transcript
-                  </div>
-                  {renderTranscriptLog(selectedRecord)}
-                </section>
-                {renderCwuPanel(selectedRecord)}
-              </>
-            ) : selectedRecord.mediaType === 'Video' ? (
-              <>
-                <section className="call-record-query__media-panel call-record-query__media-panel--video">
-                  <div className="call-record-query__column-title">
-                    Video Recording Playback
-                  </div>
-                  <div className="call-record-query__media-player call-record-query__media-player--video">
-                    <div className="call-record-query__openeye-replay">
-                      <img
-                        alt="OpenEye video replay"
-                        draggable={false}
-                        src={OPEN_EYE_REPLAY_SRC}
-                      />
-                    </div>
-                    {renderPlayerControls(selectedRecord, 'video')}
-                  </div>
-                </section>
-                <section className="call-record-query__content-panel">
-                  <div className="call-record-query__column-title">
-                    Auto Transcript
-                  </div>
-                  {renderTranscriptLog(selectedRecord)}
-                </section>
-                {renderCwuPanel(selectedRecord)}
-              </>
-            ) : (
-              <>
-                <section className="call-record-query__content-panel">
-                  <div className="call-record-query__column-title">
-                    Conversation
-                  </div>
-                  {renderTranscriptLog(
-                    selectedRecord,
-                    'call-record-query__chat-log--dm',
-                  )}
-                </section>
-                {renderCwuPanel(selectedRecord)}
-              </>
-            )}
-          </div>
-        )}
-        <AdminModalFooter>
-          <BaseButton variant="secondary" onClick={closeDetail}>
-            Close
-          </BaseButton>
-        </AdminModalFooter>
-      </AdminModal>
+      <CallRecordDetailModal record={selectedRecord} onClose={closeDetail} />
       <AdminModal
         centered
         closable={false}

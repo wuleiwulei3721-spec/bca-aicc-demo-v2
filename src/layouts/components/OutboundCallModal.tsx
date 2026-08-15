@@ -19,8 +19,8 @@ import type {
 } from '../../types'
 
 interface OutboundCallModalProps {
-  callAgentScope: 'all' | 'leaders-only'
   open: boolean
+  hasOutboundAccess: boolean
   onClose: () => void
   onCallNumber: (phoneNumber: string) => void
   requiresOutboundApproval: boolean
@@ -44,9 +44,11 @@ function renderAgentStatus(status: TransferAgentStatus) {
 }
 
 function CallNumberTab({
+  hasOutboundAccess,
   onCallNumber,
   requiresOutboundApproval,
 }: {
+  hasOutboundAccess: boolean
   onCallNumber: (phoneNumber: string) => void
   requiresOutboundApproval: boolean
 }) {
@@ -119,7 +121,10 @@ function CallNumberTab({
           <AppButton
             className="aicc-outbound-number__approval"
             disabled={
-              !normalizedPhoneNumber || !outboundReason || isPending || isApproved
+              !normalizedPhoneNumber ||
+              !outboundReason ||
+              isPending ||
+              isApproved
             }
             onClick={handleRequestApproval}
           >
@@ -128,12 +133,15 @@ function CallNumberTab({
         )}
         <AppButton
           disabled={
+            !hasOutboundAccess ||
             !normalizedPhoneNumber ||
             !outboundReason ||
             (requiresOutboundApproval && !isApproved)
           }
           title={
-            !outboundReason
+            !hasOutboundAccess
+              ? 'Switch to outbound AUX'
+              : !outboundReason
               ? 'Select a reason before requesting TL approval'
               : !requiresOutboundApproval
                 ? 'Call external number'
@@ -157,22 +165,20 @@ function CallNumberTab({
 }
 
 function CallAgentTab({
-  callAgentScope,
+  hasOutboundAccess,
   onComplete,
 }: {
-  callAgentScope: OutboundCallModalProps['callAgentScope']
+  hasOutboundAccess: boolean
   onComplete: () => void
 }) {
   const [keyword, setKeyword] = useState('')
   const [skillQueue, setSkillQueue] = useState(allFilterValue)
   const visibleAgents = useMemo(
     () =>
-      callAgentScope === 'leaders-only'
-        ? transferAgents.filter(
-            (agent) => agent.marker === 'SPV' || agent.marker === 'TL',
-          )
-        : transferAgents,
-    [callAgentScope],
+      transferAgents.filter(
+        (agent) => agent.marker === 'SPV' || agent.marker === 'TL',
+      ),
+    [],
   )
 
   const skillQueueOptions = useMemo(
@@ -238,7 +244,12 @@ function CallAgentTab({
       width: 74,
       render: () => (
         <div className="aicc-transfer-row-actions">
-          <AppButton size="small" onClick={onComplete}>
+          <AppButton
+            disabled={!hasOutboundAccess}
+            size="small"
+            title={!hasOutboundAccess ? 'Switch to outbound AUX' : undefined}
+            onClick={onComplete}
+          >
             Call
           </AppButton>
         </div>
@@ -285,7 +296,7 @@ function CallAgentTab({
 }
 
 export function OutboundCallModal({
-  callAgentScope,
+  hasOutboundAccess,
   open,
   onClose,
   onCallNumber,
@@ -297,6 +308,7 @@ export function OutboundCallModal({
       label: 'Call Number',
       children: (
         <CallNumberTab
+          hasOutboundAccess={hasOutboundAccess}
           requiresOutboundApproval={requiresOutboundApproval}
           onCallNumber={onCallNumber}
         />
@@ -306,7 +318,10 @@ export function OutboundCallModal({
       key: 'agent',
       label: 'Call Agent',
       children: (
-        <CallAgentTab callAgentScope={callAgentScope} onComplete={onClose} />
+        <CallAgentTab
+          hasOutboundAccess={hasOutboundAccess}
+          onComplete={onClose}
+        />
       ),
     },
   ]

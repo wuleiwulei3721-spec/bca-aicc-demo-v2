@@ -2,7 +2,7 @@ import { BaseButton, BaseModal } from '../../../components'
 import type { CustomerCrmContacts } from '../../../types'
 import { ContactChannelIcon } from './ContactChannelIcon'
 import {
-  CONTACT_SECTIONS,
+  CUSTOMER_CONTACT_DETAIL_SECTIONS,
 } from './contactManagementData'
 
 interface CustomerContactDetailsModalProps {
@@ -28,7 +28,7 @@ export function CustomerContactDetailsModal({
     >
       <div className="inbound-contact-details">
         <div className="inbound-contact-details__sections">
-          {CONTACT_SECTIONS.map((section) => (
+          {CUSTOMER_CONTACT_DETAIL_SECTIONS.map((section) => (
             <section
               className="aicc-modal-section inbound-contact-details__section"
               key={section.title}

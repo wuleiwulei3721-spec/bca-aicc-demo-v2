@@ -27,10 +27,14 @@ export interface CallRecordTranscriptLine {
   time: string
 }
 
+export interface CallRecordTicket {
+  categories: string[]
+  id: string
+}
+
 export interface CallRecordSummary {
-  businessTypes: string[]
   description: string
-  ticketNo: string
+  tickets: CallRecordTicket[]
 }
 
 export interface CallRecord {

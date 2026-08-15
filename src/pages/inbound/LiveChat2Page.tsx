@@ -563,13 +563,11 @@ export function LiveChat2Page() {
       : []),
   ]
   const activeSessionAccessMenuName =
-    activeSession.channel === 'BankApp'
-      ? activeSession.lastMenuName ?? activeSession.intent
-      : undefined
+    activeSession.lastMenuName ?? activeSession.intent
 
   return (
     <InteractionWorkspace
-      accessMenuLabel="BankApp Menu"
+      accessMenuLabel="Business Menu Selection Record"
       accessMenuName={activeSessionAccessMenuName}
       ariaLabel="Live Chat workspace"
       assistantActiveKey={rightPanelActiveKey}

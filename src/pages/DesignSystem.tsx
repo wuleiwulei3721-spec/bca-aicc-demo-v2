@@ -37,6 +37,11 @@ import {
 } from '../mock/inbound'
 import { ChannelTag } from './inbound/components/ChannelTag'
 
+const journeyPreviewLabels: Record<string, string> = {
+  'journey-011': 'Credit Card Activation, Credit Card Billing',
+  'journey-012': '-',
+}
+
 const colors = [
   ['Primary Blue', '#1769E0', 'Primary CTA, active toolbar, key links'],
   ['Gradient Blue', '#0B4FA8 to #1686CF', 'Global header, high-emphasis shell'],
@@ -262,14 +267,15 @@ export function DesignSystem() {
             <BaseCard compact expandable expanded title="Customer Journey">
               <div className="design-list-demo">
                 {customerJourney.slice(0, 2).map((item) => (
-                  <button className="inbound-compact-row" key={item.id} type="button">
+                  <button
+                    className="inbound-compact-row inbound-journey-row"
+                    key={item.id}
+                    type="button"
+                  >
                     <ChannelTag compact value={item.channel} />
-                    <span className="inbound-compact-row__main">{item.summary}</span>
-                    <StatusBadge
-                      label={item.result}
-                      size="small"
-                      status={item.result === 'Success' ? 'success' : 'failed'}
-                    />
+                    <span className="inbound-compact-row__main">
+                      {journeyPreviewLabels[item.id] ?? item.summary}
+                    </span>
                     <span className="inbound-compact-row__date">{item.date}</span>
                   </button>
                 ))}

@@ -1,5 +1,5 @@
 import { PlusOutlined } from '@ant-design/icons'
-import { Alert, Input, InputNumber, Select, Switch } from 'antd'
+import { Alert, Input, Select, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useMemo, useState } from 'react'
 import {
@@ -42,7 +42,16 @@ interface BlacklistDraft {
   reason: string
   restrictionPolicy: BlacklistRestrictionPolicy
   status: BlacklistStatus
-  validityDays: number | null
+}
+
+interface BlacklistDuplicateRow {
+  channel: string
+  countryCode: string
+  existingNo: number
+  identifier: string
+  key: string
+  restrictionPolicy: BlacklistRestrictionPolicy
+  status: BlacklistStatus
 }
 
 const defaultFilters: BlacklistFilters = {
@@ -60,7 +69,6 @@ const defaultDraft: BlacklistDraft = {
   reason: '',
   restrictionPolicy: 'block-transfer-to-agent',
   status: 'Active',
-  validityDays: null,
 }
 
 const restrictionPolicyLabels: Record<BlacklistRestrictionPolicy, string> = {
@@ -112,6 +120,39 @@ function parseIdentifiers(value: string) {
     .filter(Boolean)
 }
 
+function normalizeIdentifier(value: string) {
+  return value.trim().toLowerCase()
+}
+
+function getUniqueIdentifiers(identifiers: string[]) {
+  const seenIdentifiers = new Set<string>()
+
+  return identifiers.filter((identifier) => {
+    const normalizedIdentifier = normalizeIdentifier(identifier)
+
+    if (seenIdentifiers.has(normalizedIdentifier)) {
+      return false
+    }
+
+    seenIdentifiers.add(normalizedIdentifier)
+    return true
+  })
+}
+
+function getDuplicateKey(
+  channel: string,
+  countryCode: string,
+  identifier: string,
+  restrictionPolicy: BlacklistRestrictionPolicy,
+) {
+  const normalizedChannel = channel.trim().toLowerCase()
+  const normalizedIdentifier = normalizeIdentifier(identifier)
+
+  return normalizedChannel === 'phone'
+    ? `${normalizedChannel}::${normalizeIdentifier(countryCode)}::${normalizedIdentifier}::${restrictionPolicy}`
+    : `${normalizedChannel}::${normalizedIdentifier}`
+}
+
 function getIdentifierDisplay(entry: BlacklistEntry) {
   return entry.identifier
 }
@@ -147,6 +188,7 @@ export function BlacklistManagementPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [modalMode, setModalMode] = useState<BlacklistModalMode>(null)
   const [notice, setNotice] = useState('')
+  const [saveWarning, setSaveWarning] = useState('')
   const [selectedEntryIds, setSelectedEntryIds] = useState<string[]>([])
   const [submitAttempted, setSubmitAttempted] = useState(false)
 
@@ -220,6 +262,76 @@ export function BlacklistManagementPage() {
     [draft.identifiers, draft.phoneNumbers, isPhoneMode],
   )
 
+  const existingBlacklistKeys = useMemo(() => {
+    const existingKeys = new Map<string, BlacklistDuplicateRow>()
+
+    blacklistEntries.forEach((entry, index) => {
+      const key = getDuplicateKey(
+        entry.channel,
+        entry.countryCode ?? '',
+        entry.identifier,
+        entry.restrictionPolicy,
+      )
+
+      existingKeys.set(key, {
+        channel: entry.channel,
+        countryCode: entry.channel === 'Phone' ? entry.countryCode || '-' : '-',
+        existingNo: index + 1,
+        identifier: entry.identifier,
+        key,
+        restrictionPolicy: entry.restrictionPolicy,
+        status: entry.status,
+      })
+    })
+
+    return existingKeys
+  }, [blacklistEntries])
+
+  const duplicateRows = useMemo(() => {
+    if (!modalMode || draft.channels.length === 0) {
+      return []
+    }
+
+    const countryCode = isPhoneMode ? draft.countryCode.trim() : ''
+    const restrictionPolicy = isPhoneMode
+      ? draft.restrictionPolicy
+      : 'block-transfer-to-agent'
+
+    return getUniqueIdentifiers(parsedIdentifiers).flatMap((identifier) =>
+      draft.channels.flatMap((channel) => {
+        const key = getDuplicateKey(
+          channel,
+          countryCode,
+          identifier,
+          restrictionPolicy,
+        )
+        const existingRecord = existingBlacklistKeys.get(key)
+
+        return existingRecord
+          ? [
+              {
+                channel,
+                countryCode: isPhoneMode ? countryCode || '-' : '-',
+                existingNo: existingRecord.existingNo,
+                identifier,
+                key,
+                restrictionPolicy,
+                status: existingRecord.status,
+              },
+            ]
+          : []
+      }),
+    )
+  }, [
+    draft.channels,
+    draft.countryCode,
+    draft.restrictionPolicy,
+    existingBlacklistKeys,
+    isPhoneMode,
+    modalMode,
+    parsedIdentifiers,
+  ])
+
   const validationErrors = useMemo(() => {
     if (!modalMode) {
       return []
@@ -276,6 +388,21 @@ export function BlacklistManagementPage() {
       [key]: value,
     }))
     setNotice('')
+    setSaveWarning('')
+  }
+
+  const handleChannelChange = (channels: BlacklistChannel[]) => {
+    const nextIsPhoneMode = channels.includes('Phone')
+
+    setDraft((currentDraft) => ({
+      ...currentDraft,
+      channels,
+      restrictionPolicy: nextIsPhoneMode
+        ? currentDraft.restrictionPolicy
+        : 'block-transfer-to-agent',
+    }))
+    setNotice('')
+    setSaveWarning('')
   }
 
   const createDefaultDraft = (): BlacklistDraft => ({ ...defaultDraft })
@@ -285,12 +412,14 @@ export function BlacklistManagementPage() {
     setModalMode('batch')
     setSubmitAttempted(false)
     setNotice('')
+    setSaveWarning('')
   }
 
   const closeModal = () => {
     setDraft(createDefaultDraft())
     setModalMode(null)
     setSubmitAttempted(false)
+    setSaveWarning('')
   }
 
   const handleSearch = () => {
@@ -312,39 +441,66 @@ export function BlacklistManagementPage() {
     }
 
     const uniqueChannels = Array.from(new Set(draft.channels))
-    const uniqueIdentifiers = Array.from(new Set(parsedIdentifiers))
+    const uniqueIdentifiers = getUniqueIdentifiers(parsedIdentifiers)
     const baseSequence = getNextSequence(blacklistEntries)
     const createdAt = formatSavedTime(new Date())
     const createdBy = authSession?.displayName ?? 'Admin'
     const countryCode = draft.countryCode.trim()
     const reason = draft.reason.trim()
-    const nextEntries: BlacklistEntry[] = uniqueChannels.flatMap(
-      (channel, channelIndex) =>
-        uniqueIdentifiers.map((identifier, identifierIndex) => ({
+    const restrictionPolicy = isPhoneMode
+      ? draft.restrictionPolicy
+      : 'block-transfer-to-agent'
+    const nextEntries: BlacklistEntry[] = []
+
+    uniqueChannels.forEach((channel) => {
+      uniqueIdentifiers.forEach((identifier) => {
+        const key = getDuplicateKey(
+          channel,
+          countryCode,
+          identifier,
+          restrictionPolicy,
+        )
+
+        if (existingBlacklistKeys.has(key)) {
+          return
+        }
+
+        nextEntries.push({
           channel,
           countryCode: isPhoneMode ? countryCode : undefined,
           createdAt,
           createdBy,
-          id: `BL${String(
-            baseSequence +
-              channelIndex * uniqueIdentifiers.length +
-              identifierIndex +
-              1,
-          ).padStart(3, '0')}`,
+          id: `BL${String(baseSequence + nextEntries.length + 1).padStart(
+            3,
+            '0',
+          )}`,
           identifier,
           phoneNumber: isPhoneMode ? identifier : undefined,
           reason,
-          restrictionPolicy: draft.restrictionPolicy,
+          restrictionPolicy,
           status: draft.status,
-          validityDays: draft.validityDays,
-        })),
-    )
+        })
+      })
+    })
+
+    if (nextEntries.length === 0) {
+      setSaveWarning('All selected identifiers already exist.')
+      return
+    }
 
     addBlacklistEntries(nextEntries)
     setNotice(
       nextEntries.length === 1
-        ? 'Blacklist identifier added.'
-        : `${nextEntries.length} blacklist identifiers added.`,
+        ? `Blacklist identifier added.${
+            duplicateRows.length > 0
+              ? ` ${duplicateRows.length} duplicate record(s) skipped.`
+              : ''
+          }`
+        : `${nextEntries.length} blacklist identifiers added.${
+            duplicateRows.length > 0
+              ? ` ${duplicateRows.length} duplicate record(s) skipped.`
+              : ''
+          }`,
     )
     closeModal()
   }
@@ -420,12 +576,6 @@ export function BlacklistManagementPage() {
         restrictionPolicyLabels[value],
       title: 'Restriction Policy',
       width: 156,
-    },
-    {
-      dataIndex: 'validityDays',
-      render: (value: number | null) => value ?? 'Permanent',
-      title: 'Validity Days',
-      width: 104,
     },
     {
       dataIndex: 'reason',
@@ -601,14 +751,19 @@ export function BlacklistManagementPage() {
                 options={channelFormOptions}
                 placeholder="Select channels"
                 value={draft.channels}
-                onChange={(value) => updateDraft('channels', value)}
+                onChange={handleChannelChange}
               />
             </AdminFormField>
             <label className="routing-config-crud-modal__field">
               <span>Restriction Policy</span>
               <Select
+                disabled={!isPhoneMode}
                 options={formRestrictionPolicyOptions}
-                value={draft.restrictionPolicy}
+                value={
+                  isPhoneMode
+                    ? draft.restrictionPolicy
+                    : 'block-transfer-to-agent'
+                }
                 onChange={(value) => updateDraft('restrictionPolicy', value)}
               />
             </label>
@@ -668,18 +823,6 @@ export function BlacklistManagementPage() {
                 />
               </AdminFormField>
             )}
-            <label className="routing-config-crud-modal__field">
-              <span>Validity Days</span>
-              <InputNumber
-                min={1}
-                placeholder="Permanent if blank"
-                value={draft.validityDays ?? undefined}
-                onChange={(value) =>
-                  updateDraft('validityDays', value ?? null)
-                }
-              />
-              <small>Leave blank for permanent validity.</small>
-            </label>
             <AdminFormField label="Reason" required fullWidth>
               <Input.TextArea
                 rows={3}
@@ -688,6 +831,41 @@ export function BlacklistManagementPage() {
               />
             </AdminFormField>
           </div>
+          {saveWarning && (
+            <Alert
+              showIcon
+              className="blacklist-management__save-warning"
+              message={saveWarning}
+              type="warning"
+            />
+          )}
+          {duplicateRows.length > 0 && (
+            <div className="blacklist-management__duplicate-panel">
+              <Alert
+                showIcon
+                message="Duplicate records will be skipped automatically."
+                type="info"
+              />
+              <div className="blacklist-management__duplicate-table">
+                <strong>Channel</strong>
+                <strong>Country Code</strong>
+                <strong>Identifier</strong>
+                <strong>Restriction Policy</strong>
+                <strong>Status</strong>
+                <strong>Existing No.</strong>
+                {duplicateRows.map((row) => (
+                  <div className="blacklist-management__duplicate-row" key={row.key}>
+                    <span>{row.channel}</span>
+                    <span>{row.countryCode}</span>
+                    <span>{row.identifier}</span>
+                    <span>{restrictionPolicyLabels[row.restrictionPolicy]}</span>
+                    <span>{row.status === 'Active' ? 'Enabled' : 'Disabled'}</span>
+                    <span>{row.existingNo}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         <AdminModalFooter>
           <BaseButton variant="secondary" onClick={closeModal}>

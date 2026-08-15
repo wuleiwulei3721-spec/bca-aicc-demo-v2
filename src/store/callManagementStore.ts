@@ -111,7 +111,10 @@ function cloneCallRecords() {
     ...record,
     summary: {
       ...record.summary,
-      businessTypes: [...record.summary.businessTypes],
+      tickets: record.summary.tickets.map((ticket) => ({
+        ...ticket,
+        categories: [...ticket.categories],
+      })),
     },
     transcript: record.transcript.map((line) => ({ ...line })),
   }))
@@ -384,7 +387,10 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
               ...record,
               summary: {
                 ...summary,
-                businessTypes: [...summary.businessTypes],
+                tickets: summary.tickets.map((ticket) => ({
+                  ...ticket,
+                  categories: [...ticket.categories],
+                })),
               },
             }
           : record,
@@ -435,7 +441,11 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
     })),
   upsertBusyReason: (busyReason) =>
     set((state) => {
-      const nextReason = { ...busyReason }
+      const nextReason = {
+        ...busyReason,
+        supportsOutbound:
+          busyReason.status === 'Active' && busyReason.supportsOutbound,
+      }
       const existingIndex = state.busyReasons.findIndex(
         (reason) => reason.busyReasonId === nextReason.busyReasonId,
       )

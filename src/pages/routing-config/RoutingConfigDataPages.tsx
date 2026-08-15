@@ -647,7 +647,6 @@ const defaultChannelBusinessConfigByMedia: Record<
     customerNoReplyTimeoutMinutes: 5,
     customerTimeoutNotice:
       'We did not receive your reply. The service has been closed automatically. Please contact us again if you need help.',
-    exceptionWorkTimePlanCode: '',
     maxConcurrentAccess: 50,
     minScanIntervalSeconds: 30,
     newCustomerAlertSound: '',
@@ -663,7 +662,6 @@ const defaultChannelBusinessConfigByMedia: Record<
       'All agents are currently busy. Please try again later.',
     queueTimeoutSeconds: 360,
     queueWaitingMessage: 'All agents are currently busy. Please wait.',
-    webchatRecallLimitSeconds: 120,
   },
   NON_DM: {
     accessSuccessWelcomeMessage:
@@ -682,7 +680,6 @@ const defaultChannelBusinessConfigByMedia: Record<
     customerNoReplyTimeoutMinutes: 5,
     customerTimeoutNotice:
       'We did not receive your reply. The service has been closed automatically. Please contact us again if you need help.',
-    exceptionWorkTimePlanCode: '',
     maxConcurrentAccess: 50,
     minScanIntervalSeconds: 30,
     outsideServiceHoursMessage:
@@ -697,7 +694,6 @@ const defaultChannelBusinessConfigByMedia: Record<
       'All agents are currently busy. Please try again later.',
     queueTimeoutSeconds: 360,
     queueWaitingMessage: 'All agents are currently busy. Please wait.',
-    webchatRecallLimitSeconds: 120,
   },
   VIDEO: {
     accessSuccessWelcomeMessage:
@@ -716,7 +712,6 @@ const defaultChannelBusinessConfigByMedia: Record<
     customerNoReplyTimeoutMinutes: 5,
     customerTimeoutNotice:
       'We did not receive your reply. The service has been closed automatically. Please contact us again if you need help.',
-    exceptionWorkTimePlanCode: '',
     maxConcurrentAccess: 50,
     minScanIntervalSeconds: 30,
     outsideServiceHoursMessage:
@@ -731,7 +726,6 @@ const defaultChannelBusinessConfigByMedia: Record<
       'All agents are currently busy. Please try again later.',
     queueTimeoutSeconds: 360,
     queueWaitingMessage: 'All agents are currently busy. Please wait.',
-    webchatRecallLimitSeconds: 120,
   },
   VOICE: {
     accessSuccessWelcomeMessage:
@@ -750,7 +744,6 @@ const defaultChannelBusinessConfigByMedia: Record<
     customerNoReplyTimeoutMinutes: 5,
     customerTimeoutNotice:
       'We did not receive your reply. The service has been closed automatically. Please contact us again if you need help.',
-    exceptionWorkTimePlanCode: '',
     maxConcurrentAccess: 50,
     minScanIntervalSeconds: 30,
     outsideServiceHoursMessage:
@@ -765,7 +758,6 @@ const defaultChannelBusinessConfigByMedia: Record<
       'All agents are currently busy. Please try again later.',
     queueTimeoutSeconds: 360,
     queueWaitingMessage: 'All agents are currently busy. Please wait.',
-    webchatRecallLimitSeconds: 120,
   },
 }
 
@@ -990,8 +982,6 @@ export function ChannelsPage() {
     channelTypes,
     mediaOptions,
     routingRules,
-    workingTimePlans,
-    workTimeOptions,
   } = useRoutingLookups()
   const [appliedFilters, setAppliedFilters] = useState({
     channelTypeCode: '',
@@ -1033,8 +1023,6 @@ export function ChannelsPage() {
   const [businessMediaCode, setBusinessMediaCode] =
     useState<MediaTypeCode>('TEXT')
   const [notice, setNotice] = useState<string | null>(null)
-  const [previewWorkingTimePlan, setPreviewWorkingTimePlan] =
-    useState<WorkingTimePlan | null>(null)
   const [selectedAccount, setSelectedAccount] =
     useState<ChannelAccount | null>(null)
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null)
@@ -1050,10 +1038,6 @@ export function ChannelsPage() {
   const mediaLabelByValue = useMemo(
     () => new Map(mediaOptions.map((option) => [option.value, option.label])),
     [mediaOptions],
-  )
-  const workingTimePlanByCode = useMemo(
-    () => new Map(workingTimePlans.map((plan) => [plan.planCode, plan])),
-    [workingTimePlans],
   )
   const channelTypeByCode = useMemo(
     () =>
@@ -1098,7 +1082,6 @@ export function ChannelsPage() {
     setModalMode(null)
     setSelectedChannel(null)
     setNotice(null)
-    setPreviewWorkingTimePlan(null)
     setSubmitAttempted(false)
   }
   const updateDraft = <Key extends keyof Channel>(
@@ -1475,40 +1458,6 @@ export function ChannelsPage() {
       </label>
     )
   }
-  const renderExceptionWorkTimePlanField = (mediaCode: MediaTypeCode) => {
-    const config =
-      draft.businessConfig[mediaCode] ??
-      createDefaultChannelBusinessConfig(mediaCode)
-    const rawValue = String(config.exceptionWorkTimePlanCode ?? '')
-    const previewPlan = workingTimePlanByCode.get(rawValue)
-
-    return (
-      <label className="routing-config-crud-modal__field routing-config-channel-business__work-time-field">
-        <span>Exception Working Time Plan</span>
-        <div className="routing-config-channel-business__work-time-control">
-          <Select
-            options={workTimeOptions}
-            value={rawValue}
-            onChange={(value) =>
-              updateBusinessConfig(
-                mediaCode,
-                'exceptionWorkTimePlanCode',
-                value as never,
-              )
-            }
-          />
-          {previewPlan && (
-            <BaseButton
-              variant="secondary"
-              onClick={() => setPreviewWorkingTimePlan(previewPlan)}
-            >
-              Preview
-            </BaseButton>
-          )}
-        </div>
-      </label>
-    )
-  }
   const previewNewCustomerAlertSound = (sound: string) => {
     if (!sound) {
       return
@@ -1731,13 +1680,13 @@ export function ChannelsPage() {
   const renderBusinessMediaForm = (mediaCode: MediaTypeCode) => {
     const isText = mediaCode === 'TEXT'
     const isNonDm = mediaCode === 'NON_DM'
-    const isWebchatText = draft.channelCode === 'WEBCHAT' && isText
-    const isPhoneVoice =
-      draft.channelTypeCode === 'PHONE' && mediaCode === 'VOICE'
+    const isNonPhoneVoiceOrVideo =
+      draft.channelTypeCode !== 'PHONE' &&
+      (mediaCode === 'VOICE' || mediaCode === 'VIDEO')
+    const hasQueueConfiguration = isText || isNonPhoneVoiceOrVideo
     const channelType = channelTypeByCode.get(draft.channelTypeCode)
     const usesSocialAccessCapacity = channelType?.category === 'social'
-    const hasAccessConfiguration =
-      usesSocialAccessCapacity || isPhoneVoice || isText
+    const hasAccessConfiguration = usesSocialAccessCapacity || isText
 
     if (isNonDm) {
       return (
@@ -1754,7 +1703,7 @@ export function ChannelsPage() {
       )
     }
 
-    if (!hasAccessConfiguration && !isText) {
+    if (!hasAccessConfiguration && !hasQueueConfiguration) {
       return (
         <div className="routing-config-channel-business">
           <Alert
@@ -1786,7 +1735,6 @@ export function ChannelsPage() {
                   'minScanIntervalSeconds',
                   'Min Scan Interval Seconds',
                 )}
-              {isPhoneVoice && renderExceptionWorkTimePlanField(mediaCode)}
               {isText &&
                 renderBusinessMessageField(
                   mediaCode,
@@ -1798,57 +1746,61 @@ export function ChannelsPage() {
             </div>
           </section>
         )}
-        {isText && (
-          <>
-            <section className="routing-config-media-rule-modal__section">
-              <header>
-                <strong>Queue Configuration</strong>
-              </header>
-              <div className="routing-config-crud-modal__section-grid">
-                {renderBusinessMessageField(
-                  mediaCode,
-                  'outsideServiceHoursMessage',
-                  'Outside Service Hours Message',
-                  2,
-                  true,
-                )}
-                {renderBusinessMessageField(
-                  mediaCode,
-                  'queueWaitingMessage',
-                  'Queue Waiting Message',
-                  2,
-                  true,
-                )}
-                {renderBusinessNumberField(
+        {hasQueueConfiguration && (
+          <section className="routing-config-media-rule-modal__section">
+            <header>
+              <strong>Queue Configuration</strong>
+            </header>
+            <div className="routing-config-crud-modal__section-grid">
+              {renderBusinessMessageField(
+                mediaCode,
+                'outsideServiceHoursMessage',
+                'Outside Service Hours Message',
+                2,
+                true,
+              )}
+              {renderBusinessMessageField(
+                mediaCode,
+                'queueWaitingMessage',
+                'Queue Waiting Message',
+                2,
+                true,
+              )}
+              {isText &&
+                renderBusinessNumberField(
                   mediaCode,
                   'longQueueWaitingSeconds',
                   'Long Queue Waiting Time (sec)',
                   0,
                 )}
-                {renderBusinessMessageField(
+              {isText &&
+                renderBusinessMessageField(
                   mediaCode,
                   'longQueueWaitingMessage',
                   'Long Queue Waiting Message',
                   2,
                   true,
                 )}
-                {renderBusinessNumberField(
-                  mediaCode,
-                  'queueTimeoutSeconds',
-                  'Queue Timeout (sec)',
-                  0,
-                  undefined,
-                  60000,
-                )}
-                {renderBusinessMessageField(
-                  mediaCode,
-                  'queueTimeoutMessage',
-                  'Queue Timeout Message',
-                  2,
-                  true,
-                )}
-              </div>
-            </section>
+              {renderBusinessNumberField(
+                mediaCode,
+                'queueTimeoutSeconds',
+                'Queue Timeout (sec)',
+                0,
+                undefined,
+                60000,
+              )}
+              {renderBusinessMessageField(
+                mediaCode,
+                'queueTimeoutMessage',
+                'Queue Timeout Message',
+                2,
+                true,
+              )}
+            </div>
+          </section>
+        )}
+        {isText && (
+          <>
             <section className="routing-config-media-rule-modal__section">
               <header>
                 <strong>New Customer Alert</strong>
@@ -1940,12 +1892,6 @@ export function ChannelsPage() {
                 <strong>Agent Service Configuration</strong>
               </header>
               <div className="routing-config-crud-modal__section-grid">
-                {isWebchatText &&
-                  renderBusinessNumberField(
-                    mediaCode,
-                    'webchatRecallLimitSeconds',
-                    'Webchat Message Recall Limit (sec)',
-                  )}
                 {renderBusinessNumberField(
                   mediaCode,
                   'agentNoReplyWarningSeconds',
@@ -2498,26 +2444,6 @@ export function ChannelsPage() {
               Save
             </BaseButton>
           )}
-        </div>
-      </AdminModal>
-      <AdminModal
-        className="routing-config-crud-modal routing-config-working-time-modal"
-        kind="detail"
-        open={Boolean(previewWorkingTimePlan)}
-        title="View Working Time Plan"
-        width={1080}
-        onCancel={() => setPreviewWorkingTimePlan(null)}
-      >
-        {previewWorkingTimePlan && (
-          <WorkingTimePlanPreviewContent plan={previewWorkingTimePlan} />
-        )}
-        <div className="routing-config-crud-modal__footer">
-          <BaseButton
-            variant="secondary"
-            onClick={() => setPreviewWorkingTimePlan(null)}
-          >
-            Close
-          </BaseButton>
         </div>
       </AdminModal>
     </AdminPage>

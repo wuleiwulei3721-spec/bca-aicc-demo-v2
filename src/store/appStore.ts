@@ -88,6 +88,7 @@ export interface NewCustomerAlert {
 
 export interface CallInteraction {
   bankAppCustomerType?: BankAppCustomerType
+  businessMenuName?: string
   endedBy: ServiceEndedBy | null
   endedAt: number | null
   endReasonName: string | null
@@ -440,6 +441,7 @@ interface AppState {
   activeLiveChatSessionIds: string[]
   activeLiveChat2SessionIds: string[]
   bankAppVideoCallActivateWorkspace: boolean
+  bankAppVideoBusinessMenuName: string | null
   bankAppVideoCallRequestId: number
   bankAppVideoCustomerType: BankAppCustomerType
   bankAppPinVerificationAttempts: number
@@ -447,6 +449,7 @@ interface AppState {
   bankAppPinVerificationStatus: BankAppPinVerificationStatus
   bankAppVideoShareState: BankAppVideoShareState
   bankAppVoiceCallActivateWorkspace: boolean
+  bankAppVoiceBusinessMenuName: string | null
   bankAppVoiceCallRequestId: number
   bankAppVoiceCustomerType: BankAppCustomerType
   callInteractionOrder: string[]
@@ -518,6 +521,7 @@ interface AppState {
     bankAppCustomerType?: BankAppCustomerType,
     transferContext?: CallTransferContext,
     outboundNumber?: string,
+    businessMenuName?: string,
   ) => string
   markCallInteractionActive: (interactionId: string) => void
   markCallInteractionEnded: (
@@ -535,10 +539,12 @@ interface AppState {
   requestBankAppVideoCall: (
     activate?: boolean,
     customerType?: BankAppCustomerType,
+    businessMenuName?: string,
   ) => void
   requestBankAppVoiceCall: (
     activate?: boolean,
     customerType?: BankAppCustomerType,
+    businessMenuName?: string,
   ) => void
   requestLiveChat2Workspace: (
     sessionIds: string[],
@@ -626,6 +632,7 @@ export const useAppStore = create<AppState>((set) => ({
   activeLiveChatSessionIds: [],
   activeLiveChat2SessionIds: [],
   bankAppVideoCallActivateWorkspace: false,
+  bankAppVideoBusinessMenuName: null,
   bankAppVideoCallRequestId: 0,
   bankAppVideoCustomerType: 'registered',
   bankAppPinVerificationAttempts: 0,
@@ -633,6 +640,7 @@ export const useAppStore = create<AppState>((set) => ({
   bankAppPinVerificationStatus: 'idle',
   bankAppVideoShareState: 'idle',
   bankAppVoiceCallActivateWorkspace: false,
+  bankAppVoiceBusinessMenuName: null,
   bankAppVoiceCallRequestId: 0,
   bankAppVoiceCustomerType: 'registered',
   callInteractionOrder: [],
@@ -845,6 +853,7 @@ export const useAppStore = create<AppState>((set) => ({
     bankAppCustomerType,
     transferContext,
     outboundNumber,
+    businessMenuName,
   ) => {
     let createdId = ''
 
@@ -869,6 +878,10 @@ export const useAppStore = create<AppState>((set) => ({
         bankAppCustomerType:
           source === 'bankapp-voice' || source === 'bankapp-video'
             ? bankAppCustomerType ?? 'registered'
+            : undefined,
+        businessMenuName:
+          source === 'bankapp-voice' || source === 'bankapp-video'
+            ? businessMenuName
             : undefined,
         endedBy: null,
         endedAt: null,
@@ -1062,15 +1075,25 @@ export const useAppStore = create<AppState>((set) => ({
       verificationRules: cloneVerificationRules(),
     }),
   resetVerificationRuleV2: () => set(cloneVerificationRuleV2State()),
-  requestBankAppVideoCall: (activate = false, customerType = 'registered') =>
+  requestBankAppVideoCall: (
+    activate = false,
+    customerType = 'registered',
+    businessMenuName,
+  ) =>
     set((state) => ({
       bankAppVideoCallActivateWorkspace: activate,
+      bankAppVideoBusinessMenuName: businessMenuName ?? null,
       bankAppVideoCustomerType: customerType,
       bankAppVideoCallRequestId: state.bankAppVideoCallRequestId + 1,
     })),
-  requestBankAppVoiceCall: (activate = false, customerType = 'registered') =>
+  requestBankAppVoiceCall: (
+    activate = false,
+    customerType = 'registered',
+    businessMenuName,
+  ) =>
     set((state) => ({
       bankAppVoiceCallActivateWorkspace: activate,
+      bankAppVoiceBusinessMenuName: businessMenuName ?? null,
       bankAppVoiceCustomerType: customerType,
       bankAppVoiceCallRequestId: state.bankAppVoiceCallRequestId + 1,
     })),
