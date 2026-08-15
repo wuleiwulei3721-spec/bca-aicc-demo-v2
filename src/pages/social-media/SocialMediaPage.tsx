@@ -2725,7 +2725,7 @@ export function SocialMediaPage() {
             </header>
             <div className="social-media-page__confirm-body">
               <ExclamationCircleFilled />
-              <p>确认将该评论标记为 No Reply 吗？</p>
+              <p>Are you sure you want to mark this comment as No Reply?</p>
             </div>
             <footer>
               <BaseButton variant="secondary" onClick={closeNoReplyConfirm}>

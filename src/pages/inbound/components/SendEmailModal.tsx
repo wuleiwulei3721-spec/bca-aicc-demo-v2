@@ -56,6 +56,13 @@ const customerEmailTemplates = [
   },
 ]
 
+function getEmailComposePopupContainer(triggerNode: HTMLElement) {
+  return (
+    (triggerNode.closest('.email-compose-modal-panel') as HTMLElement | null) ??
+    document.body
+  )
+}
+
 interface SendEmailModalProps {
   customerEmail: string
   open: boolean
@@ -183,6 +190,7 @@ export function SendEmailModal({
               <span>Email Status</span>
               <Select
                 allowClear
+                getPopupContainer={getEmailComposePopupContainer}
                 options={customerEmailStatusOptions}
                 placeholder="Select status before sending"
                 value={emailStatus}
@@ -196,6 +204,7 @@ export function SendEmailModal({
               <span>Template</span>
               <Select
                 allowClear
+                getPopupContainer={getEmailComposePopupContainer}
                 options={customerEmailTemplates.map((template) => ({
                   label: template.label,
                   value: template.id,

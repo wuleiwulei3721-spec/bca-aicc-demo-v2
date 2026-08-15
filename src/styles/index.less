@@ -17939,6 +17939,28 @@ button.inbound-list-row .inbound-list-row__title {
   color: #c5ced8 !important;
 }
 
+.email-compose-modal-panel
+  .email-compose__fields
+  :where(.ant-input, .ant-select-selector):hover {
+  border-color: #a4c2ff !important;
+}
+
+.email-compose-modal-panel
+  .email-compose__fields
+  :where(.ant-input:focus, .ant-input-focused),
+.email-compose-modal-panel
+  .email-compose__fields
+  .ant-select-focused
+  .ant-select-selector {
+  border-color: #1e7be2 !important;
+  outline: 0 !important;
+  box-shadow: 0 0 0 1px rgba(30, 123, 226, 0.14) !important;
+}
+
+.email-compose-modal-panel .ant-select-dropdown {
+  z-index: 1301;
+}
+
 .email-transfer-modal-overlay {
   --email-border: #d8dee8;
   --email-border-light: #edf2f7;

@@ -87,6 +87,13 @@ const emailStatusLabels: Record<EmailStatus, string> = {
   pending: 'Monitoring',
 }
 
+function getEmailComposePopupContainer(triggerNode: HTMLElement) {
+  return (
+    (triggerNode.closest('.email-compose-modal-panel') as HTMLElement | null) ??
+    document.body
+  )
+}
+
 const emailCommonLinks = [
   {
     description: 'Public BCA service and product information.',
@@ -690,6 +697,7 @@ function EmailComposePanelContent({
             <span>Email Status</span>
             <Select
               allowClear
+              getPopupContainer={getEmailComposePopupContainer}
               options={emailStatusOptions}
               placeholder="Select status before sending"
               value={fields.emailStatus}
@@ -702,6 +710,7 @@ function EmailComposePanelContent({
             <span>Template</span>
             <Select
               allowClear
+              getPopupContainer={getEmailComposePopupContainer}
               options={emailTemplates.map((template) => ({
                 label: template.name,
                 value: template.id,
@@ -785,6 +794,7 @@ function EmailComposePanelContent({
               <label>
                 <span>Template language</span>
                 <Select
+                  getPopupContainer={getEmailComposePopupContainer}
                   options={emailLanguageOptions}
                   value={fields.language}
                   onChange={(language) => changeLanguage(language)}
