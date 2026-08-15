@@ -18,6 +18,7 @@ import { BaseButton, CustomerInformationPanel } from '../../components'
 import { useNow } from '../../hooks/useNow'
 import type { CustomerInformation } from '../../types'
 import { AssistantPanel } from '../inbound/components/AssistantPanel'
+import { SendEmailModal } from '../inbound/components/SendEmailModal'
 
 type SocialMediaView = 'conversation' | 'post-detail'
 type SocialMediaWorkbenchTab = 'crm' | 'conversation'
@@ -118,8 +119,6 @@ const DEFAULT_REVIEW_REPLY =
 const CHAT_DISPLAY_DATE = 'TODAY, 23 SEP 2025'
 const DEFAULT_CHAT_REPLY =
   'Thanks for the detailed feedback. We will share this with the product team and follow up once the update is reviewed.'
-const DEFAULT_THREAD_REPLY =
-  'Thanks for reaching out. We will continue the follow-up from here and keep the case updated.'
 const LONG_CHAT_MESSAGE =
   "Could you introduce a new feature that allows me to copy all the text highlighted and marked with a single click? After reading the entire book, I really want to copy all the highlighted content and collect it. The toolbar for highlighting annotations in the current version is really not as user-friendly as the old version (with black background and graphical symbols). The current options for selecting colors, deleting annotations, and copying are too awkward. I'm completely unaccustomed to the text-based toolbar. The icon-based toolbar in the old version was much better. Please change it back to the old version! I don't know if it's just my illusion, but the color of the highlighted annotations has become darker, which makes me feel uncomfortable compared to the old version. The visual effect of the highlighted border turning into an arc is not good at all. Please restore it to the original right angle. Really, really, it will affect my reading mood and efficiency. Why is the cross to exit reading set in the top right corner? I'm used to exiting from the top left corner and can't accept it at all. The page and progress display during reading are also extremely unaccustomed. Please, please change it back to the old version. The old version is much more comfortable! Please, please change it back to the old version. It really affects my reading mood!!"
 const SOCIAL_MEDIA_MENTION_HANDLE = '@BCA'
@@ -152,19 +151,40 @@ const CWU_FLAT_DROPDOWN_INDEX = 1
 const CWU_INITIAL_FORM_INDEX = 2
 const CWU_SELECTED_FORM_INDEX = 3
 const socialThreadStatusOptions: SocialThreadStatus[] = [
-  'Closed',
   'On Progress',
   'Monitoring',
+  'Closed',
 ]
 const socialStatusFilterOptions: Array<{
   label: string
-  value: SocialWorkStatus | 'all'
+  value: SocialWorkStatus
 }> = [
-  { label: 'All', value: 'all' },
   { label: 'On Progress', value: 'on-progress' },
   { label: 'Monitoring', value: 'monitoring' },
-  { label: 'Closed', value: 'closed' },
+  { label: 'Close', value: 'closed' },
 ]
+
+function getSocialThreadStatusLabel(status: SocialThreadStatus) {
+  return status === 'Closed' ? 'Close' : status
+}
+
+function getWorkStatusFromThreadStatus(
+  status: SocialThreadStatus | undefined,
+): SocialWorkStatus | undefined {
+  if (status === 'Monitoring') {
+    return 'monitoring'
+  }
+
+  if (status === 'Closed') {
+    return 'closed'
+  }
+
+  if (status === 'On Progress') {
+    return 'on-progress'
+  }
+
+  return undefined
+}
 const SOCIAL_MEDIA_POST_URLS: Record<SocialMediaChannel, string> = {
   appstore: 'https://www.apple.com/app-store/',
   facebook: 'https://www.facebook.com/',
@@ -1166,6 +1186,7 @@ function SocialCustomerContext({
   item: SocialMediaItem
   progressLabel: string
 }) {
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
   const customer = getSocialCustomerInformation(item, progressLabel)
   const channel = getChannelOption(item.channel)
 
@@ -1183,6 +1204,13 @@ function SocialCustomerContext({
         }
         className="social-media-page__customer-card"
         customer={customer}
+        hideVerificationStatus
+        onSendEmail={() => setIsEmailModalOpen(true)}
+      />
+      <SendEmailModal
+        customerEmail={customer.profile.email}
+        open={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
       />
 
       <section className="social-media-page__customer-context-card">
@@ -1285,6 +1313,9 @@ export function SocialMediaPage() {
   const [threadStatuses, setThreadStatuses] = useState<
     Record<string, SocialThreadStatus>
   >({})
+  const [threadReplyStatuses, setThreadReplyStatuses] = useState<
+    Record<string, SocialThreadStatus>
+  >({})
   const [handledThreadCommentIds, setHandledThreadCommentIds] = useState<
     string[]
   >([])
@@ -1328,21 +1359,13 @@ export function SocialMediaPage() {
       const commentStatus = assignedCommentId
         ? threadStatuses[assignedCommentId]
         : undefined
-      const isThreadResolved = hasThreadResolutionForItem(item)
-      const isReplySent =
-        (item.type === 'reviews' && Boolean(reviewReplies[item.id])) ||
-        (item.type === 'chats' && Boolean(chatReplies[item.id])) ||
-        isThreadResolved
+      const threadWorkStatus = getWorkStatusFromThreadStatus(commentStatus)
 
-      if (isReplySent || item.status === 'replied') {
-        return 'closed'
+      if (threadWorkStatus) {
+        return threadWorkStatus
       }
 
-      if (commentStatus === 'Monitoring') {
-        return 'monitoring'
-      }
-
-      if (commentStatus === 'Closed') {
+      if (item.status === 'replied') {
         return 'closed'
       }
 
@@ -1353,9 +1376,6 @@ export function SocialMediaPage() {
       return 'on-progress'
     },
     [
-      chatReplies,
-      hasThreadResolutionForItem,
-      reviewReplies,
       threadStatuses,
     ],
   )
@@ -1370,8 +1390,8 @@ export function SocialMediaPage() {
       const matchesStatus = selectedStatuses.includes(itemWorkStatus)
       const matchesScope =
         activeQueueScope === 'history'
-          ? itemWorkStatus === 'closed'
-          : itemWorkStatus !== 'closed'
+          ? itemWorkStatus === 'monitoring'
+          : itemWorkStatus === 'on-progress'
       const matchesSearch =
         !query ||
         [item.customer, item.handle, item.preview, item.queue, item.title]
@@ -1442,6 +1462,11 @@ export function SocialMediaPage() {
   const activeThreadDraft = activeThreadReplyId
     ? (threadDrafts[activeThreadReplyId] ?? '')
     : ''
+  const activeThreadReplyStatus = activeThreadReplyId
+    ? (threadReplyStatuses[activeThreadReplyId] ??
+      threadStatuses[activeThreadReplyId] ??
+      'On Progress')
+    : 'On Progress'
   const activeItemHasThreadResolution = activeItem
     ? hasThreadResolutionForItem(activeItem)
     : false
@@ -1498,29 +1523,44 @@ export function SocialMediaPage() {
       return
     }
 
-    const replyText = activeThreadDraft.trim() || DEFAULT_THREAD_REPLY
+    const replyText = activeThreadDraft.trim()
+
+    if (!replyText) {
+      window.alert('请先回复客户')
+      return
+    }
 
     setThreadReplies((current) => ({
       ...current,
       [activeThreadReplyId]: replyText,
+    }))
+    setThreadStatuses((current) => ({
+      ...current,
+      [activeThreadReplyId]: activeThreadReplyStatus,
     }))
     setThreadDrafts((current) => ({
       ...current,
       [activeThreadReplyId]: '',
     }))
     setActiveThreadReplyId(null)
+
+    if (activeThreadReplyStatus === 'Monitoring') {
+      setActiveQueueScope('history')
+    }
+
+    if (activeThreadReplyStatus === 'Closed') {
+      setActiveQueueScope('current')
+    }
   }
 
   const areAllChannelsSelected =
     selectedChannels.length === allChannelKeys.length
   const areAllTypesSelected = selectedTypes.length === allTypeKeys.length
-  const areAllStatusesSelected =
-    selectedStatuses.length === socialStatusFilterOptions.length - 1
   const currentQueueCount = socialMediaItems.filter(
-    (item) => getItemWorkStatus(item) !== 'closed',
+    (item) => getItemWorkStatus(item) === 'on-progress',
   ).length
   const historyQueueCount = socialMediaItems.filter(
-    (item) => getItemWorkStatus(item) === 'closed',
+    (item) => getItemWorkStatus(item) === 'monitoring',
   ).length
 
   return (
@@ -1767,10 +1807,7 @@ export function SocialMediaPage() {
 
             <div className="social-media-page__filter-row social-media-page__filter-row--status">
               {socialStatusFilterOptions.map((option) => {
-                const isActive =
-                  option.value === 'all'
-                    ? areAllStatusesSelected
-                    : selectedStatuses.includes(option.value)
+                const isActive = selectedStatuses.includes(option.value)
 
                 return (
                   <button
@@ -1783,18 +1820,9 @@ export function SocialMediaPage() {
                     }`}
                     type="button"
                     onClick={() => {
-                      if (option.value === 'all') {
-                        setSelectedStatuses(
-                          areAllStatusesSelected
-                            ? []
-                            : ['on-progress', 'monitoring', 'closed'],
-                        )
-                        return
-                      }
-
                       setSelectedStatuses((current) =>
                         current.length ===
-                        socialStatusFilterOptions.length - 1
+                        socialStatusFilterOptions.length
                           ? [option.value]
                           : toggleValue(current, option.value),
                       )
@@ -2420,8 +2448,6 @@ export function SocialMediaPage() {
                           const isHandled = handledThreadCommentIds.includes(
                             comment.id,
                           )
-                          const threadStatus =
-                            threadStatuses[comment.id] ?? 'On Progress'
                           const showProgress =
                             comment.id === assignedThreadComment?.id &&
                             !renderedAgentReply &&
@@ -2491,9 +2517,16 @@ export function SocialMediaPage() {
                                     <span>{comment.date}</span>
                                     <button
                                       type="button"
-                                      onClick={() =>
+                                      onClick={() => {
                                         setActiveThreadReplyId(comment.id)
-                                      }
+                                        setThreadReplyStatuses((current) => ({
+                                          ...current,
+                                          [comment.id]:
+                                            current[comment.id] ??
+                                            threadStatuses[comment.id] ??
+                                            'On Progress',
+                                        }))
+                                      }}
                                     >
                                       <CommentOutlined />
                                       Reply
@@ -2505,48 +2538,30 @@ export function SocialMediaPage() {
                                           : ''
                                       }
                                       type="button"
-                                      onClick={() =>
+                                      onClick={() => {
+                                        if (
+                                          !window.confirm(
+                                            '确认将该评论标记为 No Reply 吗？',
+                                          )
+                                        ) {
+                                          return
+                                        }
+
                                         setHandledThreadCommentIds(
                                           (current) =>
                                             current.includes(comment.id)
                                               ? current
                                               : [...current, comment.id],
                                         )
-                                      }
+                                        setThreadStatuses((current) => ({
+                                          ...current,
+                                          [comment.id]: 'Closed',
+                                        }))
+                                      }}
                                     >
                                       <CheckCircleFilled />
                                       No Reply
                                     </button>
-                                    {activeItem.type === 'cmts' ? (
-                                      <label
-                                        className={`social-media-page__message-status-select social-media-page__message-status-select--${threadStatus
-                                          .toLowerCase()
-                                          .replace(/\s+/g, '-')}`}
-                                      >
-                                        <select
-                                          aria-label={`Set status for ${comment.customer} comment`}
-                                          value={threadStatus}
-                                          onChange={(event) =>
-                                            setThreadStatuses((current) => ({
-                                              ...current,
-                                              [comment.id]: event.target
-                                                .value as SocialThreadStatus,
-                                            }))
-                                          }
-                                        >
-                                          {socialThreadStatusOptions.map(
-                                            (status) => (
-                                              <option
-                                                key={status}
-                                                value={status}
-                                              >
-                                                {status}
-                                              </option>
-                                            ),
-                                          )}
-                                        </select>
-                                      </label>
-                                    ) : null}
                                   </div>
                                 ) : (
                                   <span>{comment.date}</span>
@@ -2617,6 +2632,30 @@ export function SocialMediaPage() {
                             }}
                           />
                           <div className="social-media-page__thread-composer-toolbar">
+                            <label
+                              className={`social-media-page__thread-composer-status social-media-page__thread-composer-status--${activeThreadReplyStatus
+                                .toLowerCase()
+                                .replace(/\s+/g, '-')}`}
+                            >
+                              <span>Status</span>
+                              <select
+                                aria-label={`Set reply status for ${activeThreadReplyTarget.customer}`}
+                                value={activeThreadReplyStatus}
+                                onChange={(event) =>
+                                  setThreadReplyStatuses((current) => ({
+                                    ...current,
+                                    [activeThreadReplyTarget.id]: event.target
+                                      .value as SocialThreadStatus,
+                                  }))
+                                }
+                              >
+                                {socialThreadStatusOptions.map((status) => (
+                                  <option key={status} value={status}>
+                                    {getSocialThreadStatusLabel(status)}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
                             <BaseButton
                               icon={<SendOutlined />}
                               variant="primary"

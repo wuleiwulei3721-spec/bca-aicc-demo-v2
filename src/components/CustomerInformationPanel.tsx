@@ -23,6 +23,7 @@ export interface CustomerInformationPanelProps {
   className?: string
   customer: CustomerInformation
   headerExtra?: ReactNode
+  hideVerificationStatus?: boolean
   onOpenCallFlow?: () => void
   onOpenSpecialHandling?: () => void
   onRequestOutbound?: () => void
@@ -72,6 +73,7 @@ export function CustomerInformationPanel({
   className,
   customer,
   headerExtra,
+  hideVerificationStatus = false,
   onOpenCallFlow,
   onOpenSpecialHandling,
   onRequestOutbound,
@@ -221,7 +223,7 @@ export function CustomerInformationPanel({
           >
             {accessChannelNode ?? defaultAccessChannelNode}
           </button>
-          {verificationFailureReason ? (
+          {!hideVerificationStatus && verificationFailureReason ? (
             <Tooltip title={verificationFailureReason}>
               <span
                 className="aicc-customer-info__verification"
@@ -234,14 +236,14 @@ export function CustomerInformationPanel({
                 />
               </span>
             </Tooltip>
-          ) : (
+          ) : !hideVerificationStatus ? (
             <StatusBadge
               className="aicc-customer-info__verification"
               label={badge.label}
               size="small"
               status={badge.status}
             />
-          )}
+          ) : null}
           {onVerify && (
             verifyButtonDisabled && verifyButtonTitle ? (
               <Tooltip title={verifyButtonTitle}>
