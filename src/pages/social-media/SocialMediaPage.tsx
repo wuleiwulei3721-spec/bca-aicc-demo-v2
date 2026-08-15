@@ -2,8 +2,10 @@ import { Fragment, useCallback, useMemo, useState } from 'react'
 import {
   CheckCircleFilled,
   ClockCircleOutlined,
+  CloseOutlined,
   CommentOutlined,
   EyeOutlined,
+  ExclamationCircleFilled,
   ExportOutlined,
   LeftOutlined,
   MenuFoldOutlined,
@@ -1319,6 +1321,10 @@ export function SocialMediaPage() {
   const [handledThreadCommentIds, setHandledThreadCommentIds] = useState<
     string[]
   >([])
+  const [pendingNoReplyCommentId, setPendingNoReplyCommentId] = useState<
+    string | null
+  >(null)
+  const [threadReplyError, setThreadReplyError] = useState('')
   const [activeThreadReplyId, setActiveThreadReplyId] = useState<string | null>(
     null,
   )
@@ -1526,10 +1532,11 @@ export function SocialMediaPage() {
     const replyText = activeThreadDraft.trim()
 
     if (!replyText) {
-      window.alert('请先回复客户')
+      setThreadReplyError('Please reply to the customer first.')
       return
     }
 
+    setThreadReplyError('')
     setThreadReplies((current) => ({
       ...current,
       [activeThreadReplyId]: replyText,
@@ -1551,6 +1558,27 @@ export function SocialMediaPage() {
     if (activeThreadReplyStatus === 'Closed') {
       setActiveQueueScope('current')
     }
+  }
+
+  const closeNoReplyConfirm = () => {
+    setPendingNoReplyCommentId(null)
+  }
+
+  const confirmNoReply = () => {
+    if (!pendingNoReplyCommentId) {
+      return
+    }
+
+    setHandledThreadCommentIds((current) =>
+      current.includes(pendingNoReplyCommentId)
+        ? current
+        : [...current, pendingNoReplyCommentId],
+    )
+    setThreadStatuses((current) => ({
+      ...current,
+      [pendingNoReplyCommentId]: 'Closed',
+    }))
+    setPendingNoReplyCommentId(null)
   }
 
   const areAllChannelsSelected =
@@ -2518,6 +2546,7 @@ export function SocialMediaPage() {
                                     <button
                                       type="button"
                                       onClick={() => {
+                                        setThreadReplyError('')
                                         setActiveThreadReplyId(comment.id)
                                         setThreadReplyStatuses((current) => ({
                                           ...current,
@@ -2538,26 +2567,9 @@ export function SocialMediaPage() {
                                           : ''
                                       }
                                       type="button"
-                                      onClick={() => {
-                                        if (
-                                          !window.confirm(
-                                            '确认将该评论标记为 No Reply 吗？',
-                                          )
-                                        ) {
-                                          return
-                                        }
-
-                                        setHandledThreadCommentIds(
-                                          (current) =>
-                                            current.includes(comment.id)
-                                              ? current
-                                              : [...current, comment.id],
-                                        )
-                                        setThreadStatuses((current) => ({
-                                          ...current,
-                                          [comment.id]: 'Closed',
-                                        }))
-                                      }}
+                                      onClick={() =>
+                                        setPendingNoReplyCommentId(comment.id)
+                                      }
                                     >
                                       <CheckCircleFilled />
                                       No Reply
@@ -2624,6 +2636,7 @@ export function SocialMediaPage() {
                             placeholder="Send message"
                             value={activeThreadDraft}
                             onChange={(event) => {
+                              setThreadReplyError('')
                               setThreadDrafts((current) => ({
                                 ...current,
                                 [activeThreadReplyTarget.id]:
@@ -2631,6 +2644,11 @@ export function SocialMediaPage() {
                               }))
                             }}
                           />
+                          {threadReplyError ? (
+                            <span className="social-media-page__thread-composer-error">
+                              {threadReplyError}
+                            </span>
+                          ) : null}
                           <div className="social-media-page__thread-composer-toolbar">
                             <label
                               className={`social-media-page__thread-composer-status social-media-page__thread-composer-status--${activeThreadReplyStatus
@@ -2683,6 +2701,43 @@ export function SocialMediaPage() {
       <aside className="social-media-page__assistant-panel" aria-label="Agent tools">
         <AssistantPanel extraTabs={assistantExtraTabs} />
       </aside>
+
+      {pendingNoReplyCommentId ? (
+        <div
+          className="social-media-page__confirm-overlay"
+          role="presentation"
+        >
+          <section
+            aria-labelledby="social-no-reply-title"
+            aria-modal="true"
+            className="social-media-page__confirm-modal"
+            role="dialog"
+          >
+            <header>
+              <h2 id="social-no-reply-title">No Reply?</h2>
+              <button
+                aria-label="Close no reply confirmation"
+                type="button"
+                onClick={closeNoReplyConfirm}
+              >
+                <CloseOutlined />
+              </button>
+            </header>
+            <div className="social-media-page__confirm-body">
+              <ExclamationCircleFilled />
+              <p>确认将该评论标记为 No Reply 吗？</p>
+            </div>
+            <footer>
+              <BaseButton variant="secondary" onClick={closeNoReplyConfirm}>
+                Cancel
+              </BaseButton>
+              <BaseButton variant="danger" onClick={confirmNoReply}>
+                Confirm
+              </BaseButton>
+            </footer>
+          </section>
+        </div>
+      ) : null}
 
     </section>
   )

@@ -144,6 +144,7 @@ export function SendEmailModal({
         <header className="email-compose-modal-panel__toolbar">
           <div className="email-compose-modal-panel__actions">
             <BaseButton
+              disabled={!emailStatus}
               icon={<SendOutlined />}
               size="small"
               variant="primary"
@@ -169,7 +170,6 @@ export function SendEmailModal({
             <label>
               <span>Subject</span>
               <Input
-                disabled={!canEditMessage}
                 placeholder="Enter email subject"
                 value={subject}
                 onChange={(event) => setSubject(event.target.value)}
@@ -253,25 +253,6 @@ export function SendEmailModal({
               }}
             />
           </div>
-
-          <section className="customer-email-compose__templates">
-            <header>
-              <strong>Quick Templates</strong>
-              <span>{customerEmailTemplates.length} templates</span>
-            </header>
-            <div>
-              {customerEmailTemplates.map((template) => (
-                <button
-                  className={template.id === templateId ? 'is-active' : ''}
-                  key={template.id}
-                  type="button"
-                  onClick={() => applyTemplate(template.id)}
-                >
-                  {template.label}
-                </button>
-              ))}
-            </div>
-          </section>
 
           {error ? <div className="email-compose__error">{error}</div> : null}
         </div>
