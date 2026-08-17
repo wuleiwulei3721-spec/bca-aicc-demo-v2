@@ -38,6 +38,7 @@ export type JourneyChannel =
   | 'BankApp'
   | 'Webchat'
   | 'Email'
+  | 'Facebook'
   | 'X'
   | 'Instagram'
   | 'TikTok'

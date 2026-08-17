@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useMemo, useState } from 'react'
 import { EditOutlined, IdcardOutlined } from '@ant-design/icons'
 import { message, Select } from 'antd'
@@ -38,6 +39,7 @@ import {
 import { SendEmailModal } from './SendEmailModal'
 
 interface CustomerInformationCardProps {
+  accessChannelNode?: ReactNode
   accessMenuLabel?: string
   accessMenuName?: string
   customer: CustomerInformation
@@ -257,6 +259,7 @@ function ContactEditingDemo({
 }
 
 export function CustomerInformationCard({
+  accessChannelNode,
   accessMenuLabel = 'Business Menu Selection Record',
   accessMenuName,
   customer,
@@ -481,16 +484,18 @@ export function CustomerInformationCard({
     <>
       <CustomerInformationPanel
         accessChannelNode={
-          <ChannelTag
-            compact
-            duration={customer.accessDuration}
-            transferredFrom={
-              transferContext
-                ? `${transferContext.sourceAgentName} (${transferContext.sourceAgentEmployeeId})`
-                : undefined
-            }
-            value={customer.accessChannel}
-          />
+          accessChannelNode ?? (
+            <ChannelTag
+              compact
+              duration={customer.accessDuration}
+              transferredFrom={
+                transferContext
+                  ? `${transferContext.sourceAgentName} (${transferContext.sourceAgentEmployeeId})`
+                  : undefined
+              }
+              value={customer.accessChannel}
+            />
+          )
         }
         className="inbound-section-card inbound-section-card--customer"
         customer={customer}
