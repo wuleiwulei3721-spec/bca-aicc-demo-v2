@@ -593,7 +593,7 @@ export function EmailComposeModal({ draft, ...props }: EmailComposePanelProps) {
   }
 
   return (
-    <div className="email-compose-modal-overlay" role="presentation">
+    <div className="email-page email-compose-modal-overlay" role="presentation">
       <EmailComposePanel draft={draft} surface="modal" {...props} />
     </div>
   )
