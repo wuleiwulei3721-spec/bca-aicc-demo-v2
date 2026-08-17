@@ -52,19 +52,12 @@ type SocialThreadStatus = 'On Progress' | 'Monitoring' | 'Closed'
 type SocialWorkStatus = 'on-progress' | 'monitoring' | 'closed'
 
 type SocialMediaCommentMedia =
-  | {
-      alt: string
-      caption: string
-      kind: 'image'
-      src: string
-    }
-  | {
-      caption: string
-      kind: 'video'
-      posterSrc: string
-      src: string
-      title: string
-    }
+  {
+    alt: string
+    caption: string
+    kind: 'image'
+    src: string
+  }
 
 interface SocialMediaFilterOption<T extends string> {
   activeButtonChrome?: boolean
@@ -152,9 +145,6 @@ const cwuWindows = [
   socialMediaAsset('cwu/cwu-window-3.svg'),
   socialMediaAsset('cwu/cwu-window-4.svg'),
 ]
-const COMMENT_VIDEO_LOOP_SECONDS = 3
-const scenicWaterfallVideoSrc =
-  'https://upload.wikimedia.org/wikipedia/commons/5/52/Video_%C5%A0%C3%BAtovsk%C3%BD_vodop%C3%A1d.webm'
 const CWU_GROUPED_DROPDOWN_INDEX = 0
 const CWU_FLAT_DROPDOWN_INDEX = 1
 const CWU_INITIAL_FORM_INDEX = 2
@@ -166,6 +156,10 @@ const socialThreadStatusOptions: SocialThreadStatus[] = [
 ]
 
 function getSocialThreadStatusLabel(status: SocialThreadStatus) {
+  if (status === 'On Progress') {
+    return 'In progressing'
+  }
+
   return status === 'Closed' ? 'Close' : status
 }
 
@@ -437,13 +431,6 @@ const socialMediaItems: SocialMediaItem[] = [
         caption: 'Image comment',
         kind: 'image',
         src: socialMediaAsset('comments/comment-image-05.png'),
-      },
-      {
-        caption: 'Short landscape video comment',
-        kind: 'video',
-        posterSrc: socialMediaAsset('comments/comment-image-05.png'),
-        src: scenicWaterfallVideoSrc,
-        title: 'Waterfall video comment',
       },
     ],
     customer: 'Rafi Aditya',
@@ -873,32 +860,7 @@ function CommentMediaAttachments({
           className="social-media-page__comment-media"
           key={`${mediaItem.kind}-${mediaItem.src}`}
         >
-          {mediaItem.kind === 'image' ? (
-            <img alt={mediaItem.alt} src={mediaItem.src} />
-          ) : (
-            <video
-              aria-label={mediaItem.title}
-              autoPlay
-              controls
-              muted
-              playsInline
-              poster={mediaItem.posterSrc}
-              preload="metadata"
-              onLoadedMetadata={(event) => {
-                event.currentTarget.currentTime = 0
-              }}
-              onTimeUpdate={(event) => {
-                if (
-                  event.currentTarget.currentTime >=
-                  COMMENT_VIDEO_LOOP_SECONDS
-                ) {
-                  event.currentTarget.currentTime = 0
-                }
-              }}
-            >
-              <source src={mediaItem.src} type="video/webm" />
-            </video>
-          )}
+          <img alt={mediaItem.alt} src={mediaItem.src} />
           <figcaption>{mediaItem.caption}</figcaption>
         </figure>
       ))}
@@ -1544,12 +1506,12 @@ export function SocialMediaPage() {
     ? getSocialThreadStatusLabel(activeAssignedThreadStatus)
     : activeItemIsComplete
       ? 'Close'
-      : 'Pending'
+      : 'In progressing'
   const activeConversationStatusModifier = activeAssignedThreadStatus
     ? activeAssignedThreadStatus.toLowerCase().replace(/\s+/g, '-')
     : activeItemIsComplete
       ? 'closed'
-      : 'pending'
+      : 'on-progress'
   const activeItemTimedProgress = activeItemIsComplete
     ? null
     : activeReplyProgress

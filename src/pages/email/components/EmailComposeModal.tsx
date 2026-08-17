@@ -3,18 +3,12 @@ import { Input, Select } from 'antd'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { BaseButton } from '../../../components'
 import { emailTemplates } from '../../../mock/email'
-import type { EmailComposeDraft, EmailLanguage, EmailStatus } from '../../../types'
+import type { EmailComposeDraft, EmailLanguage } from '../../../types'
 import { TEAM_LEADER_EMAIL, createEmailSignature } from './emailComposeModel'
 
 const emailLanguageOptions: Array<{ label: string; value: EmailLanguage }> = [
   { label: 'ID', value: 'ID' },
   { label: 'EN', value: 'EN' },
-]
-
-const emailStatusOptions: Array<{ label: string; value: EmailStatus }> = [
-  { label: 'Monitoring', value: 'pending' },
-  { label: 'On Progress', value: 'open' },
-  { label: 'Close', value: 'closed' },
 ]
 
 function getEmailComposePopupContainer(triggerNode: HTMLElement) {
@@ -102,7 +96,6 @@ interface EmailComposePanelContentProps {
   onSave: (draft: EmailComposeDraft) => void
   onSend: (draft: EmailComposeDraft) => void
   onSendSurvey: (draft: EmailComposeDraft) => void
-  showStatusField?: boolean
   surface?: EmailComposeSurface
 }
 
@@ -115,7 +108,6 @@ function EmailComposePanelContent({
   onSave,
   onSend,
   onSendSurvey,
-  showStatusField = true,
   surface = 'inline',
 }: EmailComposePanelContentProps) {
   const [fields, setFields] = useState<EmailComposeDraft>(() => ({ ...draft }))
@@ -237,11 +229,6 @@ function EmailComposePanelContent({
       return
     }
 
-    if (showStatusField && action === 'send' && !nextDraft.emailStatus) {
-      setError('Select an email status before sending.')
-      return
-    }
-
     if (action === 'send' && !nextDraft.templateId) {
       setError('Select a template and language before sending.')
       return
@@ -322,8 +309,7 @@ function EmailComposePanelContent({
   const isModal = surface === 'modal'
   const canEditBody =
     !bodyReadonly && (Boolean(fields.templateId) || fields.mode === 'draft')
-  const canSubmitSend =
-    Boolean(fields.templateId) && (!showStatusField || Boolean(fields.emailStatus))
+  const canSubmitSend = Boolean(fields.templateId)
 
   return (
     <section
@@ -390,21 +376,6 @@ function EmailComposePanelContent({
             <span>Sender</span>
             <Input disabled value={fields.sender} />
           </label>
-          {showStatusField ? (
-            <label>
-              <span>Email Status</span>
-              <Select
-                allowClear
-                getPopupContainer={getEmailComposePopupContainer}
-                options={emailStatusOptions}
-                placeholder="Select status before sending"
-                value={fields.emailStatus}
-                onChange={(emailStatus) =>
-                  updateFields({ emailStatus: emailStatus as EmailStatus | undefined })
-                }
-              />
-            </label>
-          ) : null}
           <label>
             <span>Template</span>
             <Select

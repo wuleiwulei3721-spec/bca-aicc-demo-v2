@@ -58,7 +58,6 @@ export function SendEmailModal({
       onSave={closeModal}
       onSend={closeModal}
       onSendSurvey={() => undefined}
-      showStatusField={false}
     />
   )
 }
