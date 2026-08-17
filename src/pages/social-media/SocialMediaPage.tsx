@@ -48,7 +48,7 @@ type SocialMediaSourceContext =
   | 'customer-post-mention'
   | 'third-party-comment-mention'
 type ReplyProgressTone = 'active' | 'warning' | 'expired'
-type SocialThreadStatus = 'On Progress' | 'Monitoring' | 'Closed'
+type SocialThreadStatus = 'In progressing' | 'Monitoring' | 'Closed'
 type SocialWorkStatus = 'on-progress' | 'monitoring' | 'closed'
 
 type SocialMediaCommentMedia =
@@ -150,17 +150,21 @@ const CWU_FLAT_DROPDOWN_INDEX = 1
 const CWU_INITIAL_FORM_INDEX = 2
 const CWU_SELECTED_FORM_INDEX = 3
 const socialThreadStatusOptions: SocialThreadStatus[] = [
-  'On Progress',
+  'In progressing',
   'Monitoring',
   'Closed',
 ]
 
 function getSocialThreadStatusLabel(status: SocialThreadStatus) {
-  if (status === 'On Progress') {
-    return 'In progressing'
+  return status === 'Closed' ? 'Close' : status
+}
+
+function getSocialThreadStatusModifier(status: SocialThreadStatus) {
+  if (status === 'In progressing') {
+    return 'on-progress'
   }
 
-  return status === 'Closed' ? 'Close' : status
+  return status.toLowerCase().replace(/\s+/g, '-')
 }
 
 function getWorkStatusFromThreadStatus(
@@ -174,7 +178,7 @@ function getWorkStatusFromThreadStatus(
     return 'closed'
   }
 
-  if (status === 'On Progress') {
+  if (status === 'In progressing') {
     return 'on-progress'
   }
 
@@ -1489,8 +1493,8 @@ export function SocialMediaPage() {
   const activeThreadReplyStatus = activeThreadReplyId
     ? (threadReplyStatuses[activeThreadReplyId] ??
       threadStatuses[activeThreadReplyId] ??
-      'On Progress')
-    : 'On Progress'
+      'In progressing')
+    : 'In progressing'
   const activeItemHasThreadResolution = activeItem
     ? hasThreadResolutionForItem(activeItem)
     : false
@@ -1508,7 +1512,7 @@ export function SocialMediaPage() {
       ? 'Close'
       : 'In progressing'
   const activeConversationStatusModifier = activeAssignedThreadStatus
-    ? activeAssignedThreadStatus.toLowerCase().replace(/\s+/g, '-')
+    ? getSocialThreadStatusModifier(activeAssignedThreadStatus)
     : activeItemIsComplete
       ? 'closed'
       : 'on-progress'
@@ -1604,7 +1608,7 @@ export function SocialMediaPage() {
       [commentId]: status,
     }))
 
-    if (status === 'On Progress') {
+    if (status === 'In progressing') {
       setActiveQueueScope('current')
     }
 
@@ -2493,7 +2497,7 @@ export function SocialMediaPage() {
                         {visibleThreadComments.map((comment) => {
                           const sentThreadReply = threadReplies[comment.id]
                           const sentThreadStatus =
-                            threadStatuses[comment.id] ?? 'On Progress'
+                            threadStatuses[comment.id] ?? 'In progressing'
                           const renderedAgentReply =
                             comment.agentReply ?? sentThreadReply
                           const isHandled = handledThreadCommentIds.includes(
@@ -2576,7 +2580,7 @@ export function SocialMediaPage() {
                                           [comment.id]:
                                             current[comment.id] ??
                                             threadStatuses[comment.id] ??
-                                            'On Progress',
+                                            'In progressing',
                                         }))
                                       }}
                                     >
@@ -2614,9 +2618,9 @@ export function SocialMediaPage() {
                                 ) : null}
                                 {sentThreadReply ? (
                                   <label
-                                    className={`social-media-page__thread-status-switch social-media-page__thread-status-switch--${sentThreadStatus
-                                      .toLowerCase()
-                                      .replace(/\s+/g, '-')}`}
+                                    className={`social-media-page__thread-status-switch social-media-page__thread-status-switch--${getSocialThreadStatusModifier(
+                                      sentThreadStatus,
+                                    )}`}
                                   >
                                     <span>Status</span>
                                     <select
@@ -2699,9 +2703,9 @@ export function SocialMediaPage() {
                           ) : null}
                           <div className="social-media-page__thread-composer-toolbar">
                             <label
-                              className={`social-media-page__thread-composer-status social-media-page__thread-composer-status--${activeThreadReplyStatus
-                                .toLowerCase()
-                                .replace(/\s+/g, '-')}`}
+                              className={`social-media-page__thread-composer-status social-media-page__thread-composer-status--${getSocialThreadStatusModifier(
+                                activeThreadReplyStatus,
+                              )}`}
                             >
                               <span>Status</span>
                               <select

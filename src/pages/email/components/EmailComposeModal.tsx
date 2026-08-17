@@ -305,7 +305,7 @@ function EmailComposePanelContent({
         : fields.mode === 'draft'
           ? 'Edit Draft'
           : 'New Email'
-  const canSendSurvey = fields.emailStatus === 'closed'
+  const canSendSurvey = true
   const isModal = surface === 'modal'
   const canEditBody =
     !bodyReadonly && (Boolean(fields.templateId) || fields.mode === 'draft')

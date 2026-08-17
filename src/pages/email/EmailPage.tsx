@@ -75,13 +75,13 @@ const DEFAULT_EMAIL_LANGUAGE: EmailLanguage = 'ID'
 
 const emailStatusOptions: Array<{ label: string; value: EmailStatus }> = [
   { label: 'Monitoring', value: 'pending' },
-  { label: 'On Progress', value: 'open' },
+  { label: 'In progressing', value: 'open' },
   { label: 'Close', value: 'closed' },
 ]
 
 const emailStatusLabels: Record<EmailStatus, string> = {
   closed: 'Close',
-  open: 'On Progress',
+  open: 'In progressing',
   pending: 'Monitoring',
 }
 
@@ -1449,12 +1449,7 @@ export function EmailPage() {
     return savedDraft
   }
 
-  const sendSatisfactionSurvey = (draft: EmailComposeDraft) => {
-    if (draft.emailStatus !== 'closed') {
-      showNotice('Set Email Status to Closed before sending the survey.', 'info')
-      return
-    }
-
+  const sendSatisfactionSurvey = () => {
     showNotice('Satisfaction survey sent for the closed email.', 'info')
   }
 
