@@ -11,7 +11,6 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   MessageOutlined,
-  MoreOutlined,
   PoweroffOutlined,
   SendOutlined,
   StarFilled,
@@ -164,14 +163,6 @@ const socialThreadStatusOptions: SocialThreadStatus[] = [
   'On Progress',
   'Monitoring',
   'Closed',
-]
-const socialStatusFilterOptions: Array<{
-  label: string
-  value: SocialWorkStatus
-}> = [
-  { label: 'On Progress', value: 'on-progress' },
-  { label: 'Monitoring', value: 'monitoring' },
-  { label: 'Close', value: 'closed' },
 ]
 
 function getSocialThreadStatusLabel(status: SocialThreadStatus) {
@@ -1364,12 +1355,6 @@ export function SocialMediaPage() {
     useState<SocialMediaChannel[]>(allChannelKeys)
   const [selectedTypes, setSelectedTypes] =
     useState<SocialMediaType[]>(allTypeKeys)
-  const [selectedStatuses, setSelectedStatuses] =
-    useState<SocialWorkStatus[]>([
-      'on-progress',
-      'monitoring',
-      'closed',
-    ])
   const [activeItemId, setActiveItemId] = useState(defaultSocialMediaItemId)
   const [view, setView] = useState<SocialMediaView>('conversation')
   const [activeWorkbenchTab, setActiveWorkbenchTab] =
@@ -1467,7 +1452,6 @@ export function SocialMediaPage() {
       const matchesChannel = selectedChannels.includes(item.channel)
       const matchesType = selectedTypes.includes(item.type)
       const itemWorkStatus = getItemWorkStatus(item)
-      const matchesStatus = selectedStatuses.includes(itemWorkStatus)
       const matchesScope =
         activeQueueScope === 'history'
           ? itemWorkStatus === 'monitoring'
@@ -1482,7 +1466,6 @@ export function SocialMediaPage() {
       return (
         matchesChannel &&
         matchesType &&
-        matchesStatus &&
         matchesScope &&
         matchesSearch
       )
@@ -1492,7 +1475,6 @@ export function SocialMediaPage() {
     getItemWorkStatus,
     searchValue,
     selectedChannels,
-    selectedStatuses,
     selectedTypes,
   ])
   const collapsedQueueItems = useMemo(
@@ -1555,6 +1537,19 @@ export function SocialMediaPage() {
     Boolean(activeReviewReply) ||
     Boolean(activeChatReply) ||
     activeItemHasThreadResolution
+  const activeAssignedThreadStatus = assignedThreadComment
+    ? threadStatuses[assignedThreadComment.id]
+    : undefined
+  const activeConversationStatusLabel = activeAssignedThreadStatus
+    ? getSocialThreadStatusLabel(activeAssignedThreadStatus)
+    : activeItemIsComplete
+      ? 'Close'
+      : 'Pending'
+  const activeConversationStatusModifier = activeAssignedThreadStatus
+    ? activeAssignedThreadStatus.toLowerCase().replace(/\s+/g, '-')
+    : activeItemIsComplete
+      ? 'closed'
+      : 'pending'
   const activeItemTimedProgress = activeItemIsComplete
     ? null
     : activeReplyProgress
@@ -1634,6 +1629,28 @@ export function SocialMediaPage() {
     }
 
     if (activeThreadReplyStatus === 'Closed') {
+      setActiveQueueScope('current')
+    }
+  }
+
+  const updateThreadStatus = (
+    commentId: string,
+    status: SocialThreadStatus,
+  ) => {
+    setThreadStatuses((current) => ({
+      ...current,
+      [commentId]: status,
+    }))
+
+    if (status === 'On Progress') {
+      setActiveQueueScope('current')
+    }
+
+    if (status === 'Monitoring') {
+      setActiveQueueScope('history')
+    }
+
+    if (status === 'Closed') {
       setActiveQueueScope('current')
     }
   }
@@ -1753,7 +1770,6 @@ export function SocialMediaPage() {
               setSearchValue('')
               setSelectedChannels(allChannelKeys)
               setSelectedTypes(allTypeKeys)
-              setSelectedStatuses(['on-progress', 'monitoring', 'closed'])
               setView('conversation')
               setActiveThreadTab('comments')
               setActiveThreadReplyId(null)
@@ -1911,34 +1927,6 @@ export function SocialMediaPage() {
               })}
             </div>
 
-            <div className="social-media-page__filter-row social-media-page__filter-row--status">
-              {socialStatusFilterOptions.map((option) => {
-                const isActive = selectedStatuses.includes(option.value)
-
-                return (
-                  <button
-                    key={option.value}
-                    aria-pressed={isActive}
-                    className={`social-media-page__status-filter-chip social-media-page__status-filter-chip--${option.value}${
-                      isActive
-                        ? ' social-media-page__status-filter-chip--active'
-                        : ''
-                    }`}
-                    type="button"
-                    onClick={() => {
-                      setSelectedStatuses((current) =>
-                        current.length ===
-                        socialStatusFilterOptions.length
-                          ? [option.value]
-                          : toggleValue(current, option.value),
-                      )
-                    }}
-                  >
-                    {option.label}
-                  </button>
-                )
-              })}
-            </div>
           </div>
         ) : null}
 
@@ -2323,18 +2311,15 @@ export function SocialMediaPage() {
                         <span className="social-media-page__conversation-type">
                           <SocialTypeChip active type={activeItem.type} />
                         </span>
-                        <span>
-                          {activeItemIsComplete ? (
-                            <>
-                              <CheckCircleFilled />
-                              Replied
-                            </>
+                        <span
+                          className={`social-media-page__conversation-status social-media-page__conversation-status--${activeConversationStatusModifier}`}
+                        >
+                          {activeConversationStatusModifier === 'closed' ? (
+                            <CheckCircleFilled />
                           ) : (
-                            <>
-                              <ClockCircleOutlined />
-                              Pending
-                            </>
+                            <ClockCircleOutlined />
                           )}
+                          {activeConversationStatusLabel}
                         </span>
                       </div>
                     </div>
@@ -2540,16 +2525,13 @@ export function SocialMediaPage() {
                           <MessageOutlined />
                           Customer Comments
                         </button>
-                        <BaseButton
-                          className="social-media-page__pin-button"
-                          icon={<MoreOutlined />}
-                          title="More"
-                        />
                       </div>
 
                       <div className="social-media-page__message-list">
                         {visibleThreadComments.map((comment) => {
                           const sentThreadReply = threadReplies[comment.id]
+                          const sentThreadStatus =
+                            threadStatuses[comment.id] ?? 'On Progress'
                           const renderedAgentReply =
                             comment.agentReply ?? sentThreadReply
                           const isHandled = handledThreadCommentIds.includes(
@@ -2667,6 +2649,31 @@ export function SocialMediaPage() {
                                       {comment.agentReply ? '2 hours ago' : 'Just now'}
                                     </span>
                                   </div>
+                                ) : null}
+                                {sentThreadReply ? (
+                                  <label
+                                    className={`social-media-page__thread-status-switch social-media-page__thread-status-switch--${sentThreadStatus
+                                      .toLowerCase()
+                                      .replace(/\s+/g, '-')}`}
+                                  >
+                                    <span>Status</span>
+                                    <select
+                                      aria-label={`Update status for ${comment.customer}`}
+                                      value={sentThreadStatus}
+                                      onChange={(event) =>
+                                        updateThreadStatus(
+                                          comment.id,
+                                          event.target.value as SocialThreadStatus,
+                                        )
+                                      }
+                                    >
+                                      {socialThreadStatusOptions.map((status) => (
+                                        <option key={status} value={status}>
+                                          {getSocialThreadStatusLabel(status)}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </label>
                                 ) : null}
                                 {comment.embeddedPost ? (
                                   <div className="social-media-page__embedded-post">

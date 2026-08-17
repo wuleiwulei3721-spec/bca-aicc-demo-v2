@@ -94,6 +94,7 @@ function formatMailboxTime(timestamp: number) {
 type EmailComposeSurface = 'inline' | 'modal'
 
 interface EmailComposePanelContentProps {
+  bodyReadonly?: boolean
   draft: EmailComposeDraft
   onAutoSave: (draft: EmailComposeDraft) => EmailComposeDraft
   onCancel: () => void
@@ -101,10 +102,12 @@ interface EmailComposePanelContentProps {
   onSave: (draft: EmailComposeDraft) => void
   onSend: (draft: EmailComposeDraft) => void
   onSendSurvey: (draft: EmailComposeDraft) => void
+  showStatusField?: boolean
   surface?: EmailComposeSurface
 }
 
 function EmailComposePanelContent({
+  bodyReadonly = false,
   draft,
   onAutoSave,
   onCancel,
@@ -112,6 +115,7 @@ function EmailComposePanelContent({
   onSave,
   onSend,
   onSendSurvey,
+  showStatusField = true,
   surface = 'inline',
 }: EmailComposePanelContentProps) {
   const [fields, setFields] = useState<EmailComposeDraft>(() => ({ ...draft }))
@@ -233,7 +237,7 @@ function EmailComposePanelContent({
       return
     }
 
-    if (action === 'send' && !nextDraft.emailStatus) {
+    if (showStatusField && action === 'send' && !nextDraft.emailStatus) {
       setError('Select an email status before sending.')
       return
     }
@@ -316,7 +320,10 @@ function EmailComposePanelContent({
           : 'New Email'
   const canSendSurvey = fields.emailStatus === 'closed'
   const isModal = surface === 'modal'
-  const canEditBody = Boolean(fields.templateId) || fields.mode === 'draft'
+  const canEditBody =
+    !bodyReadonly && (Boolean(fields.templateId) || fields.mode === 'draft')
+  const canSubmitSend =
+    Boolean(fields.templateId) && (!showStatusField || Boolean(fields.emailStatus))
 
   return (
     <section
@@ -327,7 +334,7 @@ function EmailComposePanelContent({
         <header className="email-compose-modal-panel__toolbar">
           <div className="email-compose-modal-panel__actions">
             <BaseButton
-              disabled={!fields.emailStatus}
+              disabled={!canSubmitSend}
               size="small"
               variant="primary"
               onClick={() => submit('send')}
@@ -383,19 +390,21 @@ function EmailComposePanelContent({
             <span>Sender</span>
             <Input disabled value={fields.sender} />
           </label>
-          <label>
-            <span>Email Status</span>
-            <Select
-              allowClear
-              getPopupContainer={getEmailComposePopupContainer}
-              options={emailStatusOptions}
-              placeholder="Select status before sending"
-              value={fields.emailStatus}
-              onChange={(emailStatus) =>
-                updateFields({ emailStatus: emailStatus as EmailStatus | undefined })
-              }
-            />
-          </label>
+          {showStatusField ? (
+            <label>
+              <span>Email Status</span>
+              <Select
+                allowClear
+                getPopupContainer={getEmailComposePopupContainer}
+                options={emailStatusOptions}
+                placeholder="Select status before sending"
+                value={fields.emailStatus}
+                onChange={(emailStatus) =>
+                  updateFields({ emailStatus: emailStatus as EmailStatus | undefined })
+                }
+              />
+            </label>
+          ) : null}
           <label>
             <span>Template</span>
             <Select
@@ -553,7 +562,7 @@ function EmailComposePanelContent({
               Save Draft
             </BaseButton>
             <BaseButton
-              disabled={!fields.emailStatus}
+              disabled={!canSubmitSend}
               icon={<SendOutlined />}
               variant="primary"
               onClick={() => submit('send')}
