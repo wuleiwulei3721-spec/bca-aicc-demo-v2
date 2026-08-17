@@ -17885,13 +17885,14 @@ button.inbound-list-row .inbound-list-row__title {
 
 .email-compose-modal-panel .email-compose__editor-shell {
   flex: 1 1 auto;
+  min-height: 400px;
   margin: 8px 20px 16px;
 }
 
 .email-compose-modal-panel .email-compose__editor {
   min-height: 0;
   padding: 13px 16px;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 20px;
 }
 
@@ -17902,8 +17903,8 @@ button.inbound-list-row .inbound-list-row__title {
 .email-compose__editor--disabled {
   border-color: #edf2f7 !important;
   background: #f8fafc !important;
-  color: #9ca3af !important;
-  cursor: not-allowed;
+  color: #475569 !important;
+  cursor: default;
   box-shadow: none !important;
 }
 
@@ -19913,57 +19914,6 @@ button.inbound-list-row .inbound-list-row__title {
   display: none;
 }
 
-.social-media-page__filter-row--status {
-  min-height: 26px;
-  align-items: center;
-  padding-top: 1px;
-  gap: 5px;
-}
-
-.social-media-page__status-filter-chip {
-  display: inline-flex;
-  height: 25px;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 1px solid #a4c2ff;
-  border-radius: 7.1px;
-  background: #edf5ff;
-  color: var(--social-primary);
-  cursor: pointer;
-  font-size: 12.87px;
-  font-weight: 500;
-  line-height: 15.84px;
-  white-space: nowrap;
-}
-
-.social-media-page__status-filter-chip--all {
-  width: 26px;
-  height: 26px;
-}
-
-.social-media-page__status-filter-chip--on-progress {
-  width: 90px;
-}
-
-.social-media-page__status-filter-chip--monitoring {
-  width: 78px;
-}
-
-.social-media-page__status-filter-chip--closed {
-  width: 66px;
-}
-
-.social-media-page__status-filter-chip:hover,
-.social-media-page__status-filter-chip:focus-visible,
-.social-media-page__status-filter-chip--active {
-  border-color: #0080fe;
-  background: #edf5ff;
-  color: var(--social-primary);
-  outline: 0;
-}
-
 .social-media-page__filter-title {
   flex: 0 0 100%;
   color: #6b778a;
@@ -20812,6 +20762,26 @@ button.inbound-list-row .inbound-list-row__title {
   background: transparent;
 }
 
+.social-media-page__conversation-tags > .social-media-page__conversation-status--on-progress {
+  background: #eaf2ff;
+  color: var(--social-primary);
+}
+
+.social-media-page__conversation-tags > .social-media-page__conversation-status--monitoring {
+  background: #fff7e8;
+  color: #ff8a00;
+}
+
+.social-media-page__conversation-tags > .social-media-page__conversation-status--closed {
+  background: #f2fcfa;
+  color: #00b578;
+}
+
+.social-media-page__conversation-tags > .social-media-page__conversation-status--pending {
+  background: #f2f6fb;
+  color: var(--social-text-tertiary);
+}
+
 .social-media-page__view-post {
   height: 28px;
   padding: 0 10px;
@@ -21371,13 +21341,6 @@ button.inbound-list-row .inbound-list-row__title {
   color: var(--social-primary);
 }
 
-.social-media-page__pin-button {
-  width: 28px;
-  height: 28px;
-  margin-left: auto;
-  padding: 0;
-}
-
 .social-media-page__pin-mention-button {
   height: 24px;
   margin-left: auto;
@@ -21500,6 +21463,53 @@ button.inbound-list-row .inbound-list-row__title {
 }
 
 .social-media-page__thread-composer-status--closed {
+  border-color: #b7ebd9;
+  background: #f2fcfa;
+  color: #00b578;
+}
+
+.social-media-page__thread-status-switch {
+  display: inline-flex;
+  width: fit-content;
+  height: 28px;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 0 8px;
+  border: 1px solid #cfe0ff;
+  border-radius: 7px;
+  background: #f7fbff;
+  color: var(--social-primary);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+}
+
+.social-media-page__thread-status-switch span {
+  color: #475569;
+  font-weight: 600;
+}
+
+.social-media-page__thread-status-switch select {
+  width: 108px;
+  min-width: 0;
+  height: 24px;
+  padding: 0 18px 0 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+
+.social-media-page__thread-status-switch--monitoring {
+  border-color: #ffd9a8;
+  background: #fff7ed;
+  color: #ff8200;
+}
+
+.social-media-page__thread-status-switch--closed {
   border-color: #b7ebd9;
   background: #f2fcfa;
   color: #00b578;

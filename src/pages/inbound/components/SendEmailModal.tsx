@@ -50,6 +50,7 @@ export function SendEmailModal({
 
   return (
     <EmailComposeModal
+      bodyReadonly
       draft={draft}
       onAutoSave={persistDraft}
       onCancel={closeModal}
@@ -57,6 +58,7 @@ export function SendEmailModal({
       onSave={closeModal}
       onSend={closeModal}
       onSendSurvey={() => undefined}
+      showStatusField={false}
     />
   )
 }
