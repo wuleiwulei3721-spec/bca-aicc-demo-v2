@@ -17257,10 +17257,6 @@ button.inbound-list-row .inbound-list-row__title {
   line-height: 18px;
 }
 
-.email-page .aicc-customer-info__verification {
-  display: none;
-}
-
 .email-customer-context--empty {
   align-items: center;
   justify-content: center;
@@ -17273,13 +17269,6 @@ button.inbound-list-row .inbound-list-row__title {
 .email-page .inbound-left-column {
   overflow: hidden;
   border-radius: 10px;
-}
-
-.email-page .inbound-section-card {
-  border: 1px solid var(--email-border);
-  border-radius: var(--email-radius-panel);
-  background: #ffffff;
-  box-shadow: none;
 }
 
 .email-mail-workspace {
@@ -18785,7 +18774,6 @@ button.inbound-list-row .inbound-list-row__title {
 }
 
 .email-mailbox-panel,
-.email-page .inbound-section-card,
 .email-mail-workspace {
   border-color: #dfe6f0;
   border-radius: var(--email-radius-panel);
@@ -20326,52 +20314,15 @@ button.inbound-list-row .inbound-list-row__title {
 
 .social-media-page__customer-panel {
   display: flex;
+  min-height: 0;
   flex-direction: column;
   gap: 10px;
-  overflow: auto;
+  overflow: hidden;
 }
 
-.social-media-page__customer-card {
-  flex: 0 0 auto;
-  border: 1px solid var(--social-border);
-  border-radius: var(--social-panel-radius);
-  background: #fff;
-  box-shadow: none;
-}
-
-.social-media-page__customer-card .aicc-customer-info__identity {
-  gap: 10px;
-}
-
-.social-media-page__customer-card .aicc-customer-info__verification {
-  display: none;
-}
-
-.social-media-page__customer-card .aicc-customer-info__avatar {
-  width: 52px;
-  height: 52px;
-  font-size: 16px;
-}
-
-.social-media-page__customer-card .aicc-customer-info__name {
-  color: var(--social-text);
-  font-size: 13px;
-  line-height: 20px;
-}
-
-.social-media-page__customer-card .aicc-customer-info__facts {
-  gap: 4px;
-}
-
-.social-media-page__customer-card .aicc-customer-info__facts span,
-.social-media-page__customer-card .aicc-customer-info__phone-value,
-.social-media-page__customer-card .aicc-customer-info__fact-action {
-  font-size: 11px;
-  line-height: 16px;
-}
-
-.social-media-page__customer-card .aicc-customer-info__access-strip {
-  gap: 6px;
+.social-media-page__customer-panel .inbound-left-column {
+  height: 100%;
+  min-height: 0;
 }
 
 .social-media-page__customer-access-node {

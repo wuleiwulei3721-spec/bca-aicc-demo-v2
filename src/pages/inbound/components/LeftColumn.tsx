@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type {
   CustomerInformation,
   CrmWorkspaceTab,
@@ -15,6 +16,7 @@ import { QuickActionCard } from './QuickActionCard'
 import { TicketingHistoryCard } from './TicketingHistoryCard'
 
 interface LeftColumnProps {
+  accessChannelNode?: ReactNode
   accessMenuLabel?: string
   accessMenuName?: string
   customer: CustomerInformation
@@ -33,6 +35,7 @@ interface LeftColumnProps {
 }
 
 export function LeftColumn({
+  accessChannelNode,
   accessMenuLabel,
   accessMenuName,
   customer,
@@ -53,6 +56,7 @@ export function LeftColumn({
     <div className="inbound-left-column">
       <div className="inbound-left-column__fixed">
         <CustomerInformationCard
+          accessChannelNode={accessChannelNode}
           accessMenuLabel={accessMenuLabel}
           accessMenuName={accessMenuName}
           customer={customer}

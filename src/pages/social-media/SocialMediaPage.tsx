@@ -16,11 +16,19 @@ import {
   SendOutlined,
   StarFilled,
 } from '@ant-design/icons'
-import { BaseButton, CustomerInformationPanel } from '../../components'
+import { BaseButton } from '../../components'
 import { useNow } from '../../hooks/useNow'
-import type { CustomerInformation } from '../../types'
+import type {
+  CrmWorkspaceTab,
+  CustomerInformation,
+  CustomerJourneyItem,
+  JourneyChannel,
+  NextBestActionItem,
+  QuickActionItem,
+  TicketHistoryItem,
+} from '../../types'
 import { AssistantPanel } from '../inbound/components/AssistantPanel'
-import { SendEmailModal } from '../inbound/components/SendEmailModal'
+import { LeftColumn } from '../inbound/components/LeftColumn'
 
 type SocialMediaView = 'conversation' | 'post-detail'
 type SocialMediaWorkbenchTab = 'crm' | 'conversation'
@@ -1159,6 +1167,122 @@ function getSocialCustomerInformation(
   }
 }
 
+const socialJourneyChannelMap: Partial<
+  Record<SocialMediaChannel, JourneyChannel>
+> = {
+  facebook: 'Facebook',
+  instagram: 'Instagram',
+  tiktok: 'TikTok',
+  x: 'X',
+}
+
+const socialTicketingHistory: TicketHistoryItem[] = [
+  {
+    createdDate: '22 Dec',
+    id: 'social-ticket-card-replacement',
+    ticketNumber: 'CRM000154',
+    ticketType: 'Card replacement',
+  },
+  {
+    createdDate: '14 Dec',
+    id: 'social-ticket-limit-request',
+    ticketNumber: 'CRM000153',
+    ticketType: 'Limit request',
+  },
+]
+
+const socialNextBestActions: NextBestActionItem[] = [
+  {
+    crmLink: '/crm/recommendations/card-activation',
+    id: 'social-nba-card-activation',
+    recommendedService: 'Check card activation',
+  },
+  {
+    crmLink: '/crm/recommendations/follow-up-ticket',
+    id: 'social-nba-follow-up-ticket',
+    recommendedService: 'Create follow-up ticket',
+  },
+  {
+    crmLink: '/crm/recommendations/secure-channel',
+    id: 'social-nba-secure-channel',
+    recommendedService: 'Use secure channel',
+  },
+]
+
+const socialQuickActions: QuickActionItem[] = [
+  {
+    crmLink: '/crm/quick-actions/unblock-bank-id',
+    id: 'social-quick-unblock-bank-id',
+    label: 'Buka Blokir BANK 1 ID',
+  },
+  {
+    crmLink: '/crm/quick-actions/two-question-verification',
+    id: 'social-quick-two-question',
+    label: 'Verifikasi Dua Pertanyaan',
+  },
+  {
+    crmLink: '/crm/quick-actions/card-replacement',
+    id: 'social-quick-card-replacement',
+    label: 'Penggantian Kartu',
+  },
+  {
+    crmLink: '/crm/quick-actions/five-question-verification',
+    id: 'social-quick-five-question',
+    label: 'Verifikasi Lima Pertanyaan',
+  },
+]
+
+function getSocialJourneyChannel(channel: SocialMediaChannel): JourneyChannel {
+  return socialJourneyChannelMap[channel] ?? 'Webchat'
+}
+
+function createSocialCustomerJourney(
+  item: SocialMediaItem,
+): CustomerJourneyItem[] {
+  const channel = getChannelOption(item.channel)
+
+  return [
+    {
+      channel: getSocialJourneyChannel(item.channel),
+      communicationDetail: `${item.customer} contacted ${channel.label} support for ${item.title.toLowerCase()}.`,
+      conversation: [],
+      date: 'Today',
+      followUpNotes: 'Continue handling in the assigned social media thread.',
+      id: `social-journey-${item.id}-request`,
+      resolutionResult: 'Assigned to current agent.',
+      result: 'Success',
+      summary: 'Social request',
+      summaryNotes: item.preview,
+    },
+    {
+      channel: 'Facebook',
+      communicationDetail:
+        'Customer asked about card benefits through a campaign comment.',
+      conversation: [],
+      date: '22 Dec',
+      followUpNotes: 'Share eligible campaign terms when needed.',
+      id: `social-journey-${item.id}-benefits`,
+      resolutionResult: 'Benefit details shared.',
+      result: 'Success',
+      summary: 'Card benefits',
+      summaryNotes: 'Card benefits',
+    },
+    {
+      channel: 'Instagram',
+      communicationDetail:
+        'Customer requested support for a payment dispute on social media.',
+      conversation: [],
+      date: '14 Dec',
+      followUpNotes: 'Monitor dispute confirmation after ticket creation.',
+      id: `social-journey-${item.id}-payment`,
+      resolutionResult: 'Payment dispute flow explained.',
+      result: 'Success',
+      summary: 'Payment dispute',
+      summaryNotes: 'Payment dispute',
+    },
+  ]
+}
+
 function getAssignedThreadComment(comments: SocialMediaThreadComment[]) {
   return comments.find((comment) => comment.showActions) ?? comments[0] ?? null
 }
@@ -1183,18 +1307,19 @@ function getThreadEmptyCopy(tab: SocialMediaThreadTab) {
 
 function SocialCustomerContext({
   item,
+  onOpenCrm,
   progressLabel,
 }: {
   item: SocialMediaItem
+  onOpenCrm: (tab: CrmWorkspaceTab) => void
   progressLabel: string
 }) {
-  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
   const customer = getSocialCustomerInformation(item, progressLabel)
   const channel = getChannelOption(item.channel)
 
   return (
     <aside className="social-media-page__customer-panel" aria-label="Customer information">
-      <CustomerInformationPanel
+      <LeftColumn
         accessChannelNode={
           <span className="social-media-page__customer-access-node">
             <SocialChannelMark channel={item.channel} />
@@ -1204,66 +1329,15 @@ function SocialCustomerContext({
             </span>
           </span>
         }
-        className="social-media-page__customer-card"
         customer={customer}
-        hideVerificationStatus
-        onSendEmail={() => setIsEmailModalOpen(true)}
+        journey={createSocialCustomerJourney(item)}
+        nextBestActions={socialNextBestActions}
+        quickActions={socialQuickActions}
+        tickets={socialTicketingHistory}
+        onOpenCrm={onOpenCrm}
+        onOpenVerification={() => undefined}
+        onVerificationFinish={() => undefined}
       />
-      <SendEmailModal
-        customerEmail={customer.profile.email}
-        open={isEmailModalOpen}
-        onClose={() => setIsEmailModalOpen(false)}
-      />
-
-      <section className="social-media-page__customer-context-card">
-        <header>
-          <strong>Customer Journey</strong>
-        </header>
-        <div className="social-media-page__customer-context-list">
-          <span>
-            <SocialChannelMark channel={item.channel} />
-            Social request
-            <em>Today</em>
-          </span>
-          <span>
-            <SocialChannelMark channel="facebook" />
-            Card benefits
-            <em>22 Dec</em>
-          </span>
-          <span>
-            <SocialChannelMark channel="instagram" />
-            Payment dispute
-            <em>14 Dec</em>
-          </span>
-        </div>
-      </section>
-
-      <section className="social-media-page__customer-context-card">
-        <header>
-          <strong>Ticketing History</strong>
-        </header>
-        <div className="social-media-page__customer-context-list">
-          <span>
-            Card replacement
-            <em>CRM000154</em>
-          </span>
-          <span>
-            Limit request
-            <em>CRM000153</em>
-          </span>
-        </div>
-      </section>
-
-      <section className="social-media-page__customer-context-card">
-        <header>
-          <strong>Next Best Action</strong>
-        </header>
-        <div className="social-media-page__customer-action-list">
-          <button type="button">Check card activation</button>
-          <button type="button">Create follow-up ticket</button>
-          <button type="button">Use secure channel</button>
-        </div>
-      </section>
     </aside>
   )
 }
@@ -1484,6 +1558,10 @@ export function SocialMediaPage() {
   const activeItemTimedProgress = activeItemIsComplete
     ? null
     : activeReplyProgress
+
+  const openSocialCrmWorkspace = useCallback(() => {
+    setActiveWorkbenchTab('crm')
+  }, [])
 
   const openCwuWindow = () => {
     setActiveCwuWindowIndex(CWU_INITIAL_FORM_INDEX)
@@ -1957,6 +2035,7 @@ export function SocialMediaPage() {
       {activeItem ? (
         <SocialCustomerContext
           item={activeItem}
+          onOpenCrm={openSocialCrmWorkspace}
           progressLabel={activeReplyProgress?.label ?? '0m00s'}
         />
       ) : (

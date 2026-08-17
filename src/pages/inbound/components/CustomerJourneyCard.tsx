@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   DownOutlined,
+  FacebookFilled,
   GlobalOutlined,
   InstagramFilled,
   MailOutlined,
@@ -38,6 +39,10 @@ const monthIndex: Record<string, number> = {
 }
 
 function parseJourneyDate(date: string) {
+  if (date === 'Today') {
+    return Date.now()
+  }
+
   const [day, month] = date.split(' ')
   return new Date(2026, monthIndex[month] ?? 0, Number(day)).getTime()
 }
@@ -48,6 +53,7 @@ function renderChannelIcon(channel: JourneyChannel) {
     BankApp: <MobileOutlined />,
     Webchat: <GlobalOutlined />,
     Email: <MailOutlined />,
+    Facebook: <FacebookFilled />,
     X: <XOutlined />,
     Instagram: <InstagramFilled />,
     TikTok: <TikTokFilled />,
