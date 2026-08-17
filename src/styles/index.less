@@ -17791,6 +17791,19 @@ button.inbound-list-row .inbound-list-row__title {
 }
 
 .email-compose-modal-overlay {
+  --email-border: #d8dee8;
+  --email-border-light: #edf2f7;
+  --email-placeholder: #9ca3af;
+  --email-primary: #1e7be2;
+  --email-primary-hover: #0f6ed4;
+  --email-primary-soft: #eaf4ff;
+  --email-radius-control: 6px;
+  --email-radius-panel: 10px;
+  --email-success: #10b981;
+  --email-text: #1f2a3b;
+  --email-text-secondary: #475569;
+  --email-text-tertiary: #7a879a;
+  --email-warning: #ff8a00;
   display: flex;
   position: fixed;
   z-index: 1200;
@@ -17897,38 +17910,12 @@ button.inbound-list-row .inbound-list-row__title {
   padding: 7px 20px 0;
 }
 
-.customer-email-compose-modal {
-  height: min(720px, calc(100vh - 96px));
-}
-
-.customer-email-compose {
-  min-height: 0;
-}
-
-.customer-email-compose__textarea {
-  width: 100%;
-  height: 100%;
-  border: 0 !important;
-  background: #ffffff;
-  font-family: Arial, sans-serif;
-  resize: none;
-  white-space: pre-wrap;
-  outline: 0 !important;
-  box-shadow: none !important;
-}
-
-.email-compose__editor--disabled,
-.customer-email-compose__textarea.email-compose__editor--disabled {
+.email-compose__editor--disabled {
   border-color: #edf2f7 !important;
   background: #f8fafc !important;
   color: #9ca3af !important;
   cursor: not-allowed;
   box-shadow: none !important;
-}
-
-.customer-email-compose__textarea:empty::before {
-  content: attr(data-placeholder);
-  color: #9ca3af;
 }
 
 .email-compose-modal-panel
@@ -22134,128 +22121,4 @@ button.inbound-list-row .inbound-list-row__title {
 *::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.52) !important;
   background-clip: padding-box !important;
-}
-
-.email-compose-select-dropdown {
-  z-index: 1301;
-}
-
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose-modal-panel__actions
-  .aicc-button.ant-btn-primary,
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose-modal-panel__actions
-  .aicc-button.ant-btn-primary:hover,
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose-modal-panel__actions
-  .aicc-button.ant-btn-primary:focus-visible {
-  border-color: var(--email-primary) !important;
-  background: var(--email-primary) !important;
-  color: #ffffff !important;
-}
-
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose-modal-panel__actions
-  .aicc-button.ant-btn-primary[disabled],
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose-modal-panel__actions
-  .aicc-button.ant-btn-primary[disabled]:hover,
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose-modal-panel__actions
-  .aicc-button.ant-btn-primary.ant-btn-disabled,
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose-modal-panel__actions
-  .aicc-button.ant-btn-primary.ant-btn-disabled:hover {
-  border-color: var(--email-primary) !important;
-  background: var(--email-primary) !important;
-  color: #ffffff !important;
-  opacity: 0.5 !important;
-}
-
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose-modal-panel__actions
-  .aicc-button.ant-btn-primary[disabled]
-  *,
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose-modal-panel__actions
-  .aicc-button.ant-btn-primary.ant-btn-disabled
-  * {
-  color: #ffffff !important;
-}
-
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose__fields
-  .ant-input,
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose__fields
-  .ant-input:hover,
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose__fields
-  .ant-input-status-error,
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose__fields
-  .ant-select-single
-  .ant-select-selector,
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose__fields
-  .ant-select-single
-  .ant-select-selector:hover {
-  height: 32px !important;
-  min-height: 32px !important;
-  border: 1px solid var(--email-border) !important;
-  border-radius: var(--email-radius-control) !important;
-  background: #ffffff !important;
-  color: var(--email-text) !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
-
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose__fields
-  .ant-input:focus,
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose__fields
-  .ant-input:focus-visible,
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose__fields
-  .ant-input-focused,
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose__fields
-  .ant-select-focused
-  .ant-select-selector {
-  border-color: var(--email-primary) !important;
-  box-shadow: 0 0 0 1px rgba(30, 123, 226, 0.14) !important;
-  outline: none !important;
-}
-
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose__fields
-  .ant-input[disabled],
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose__fields
-  .ant-input-disabled,
-.email-compose-modal-panel.customer-email-compose-modal
-  .email-compose__fields
-  .ant-select-disabled
-  .ant-select-selector {
-  border-color: #edf2f7 !important;
-  background: #f8fafc !important;
-  color: #64748b !important;
-  box-shadow: none !important;
-}
-
-.email-compose-modal-panel.customer-email-compose-modal .email-compose__editor,
-.email-compose-modal-panel.customer-email-compose-modal .email-compose__editor:hover,
-.email-compose-modal-panel.customer-email-compose-modal .email-compose__editor:focus,
-.email-compose-modal-panel.customer-email-compose-modal .email-compose__editor:focus-visible,
-.email-compose-modal-panel.customer-email-compose-modal .customer-email-compose__textarea,
-.email-compose-modal-panel.customer-email-compose-modal
-  .customer-email-compose__textarea:hover,
-.email-compose-modal-panel.customer-email-compose-modal
-  .customer-email-compose__textarea:focus,
-.email-compose-modal-panel.customer-email-compose-modal
-  .customer-email-compose__textarea:focus-visible {
-  border: 0 !important;
-  box-shadow: none !important;
-  outline: none !important;
 }
