@@ -29,6 +29,33 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
 
+### 2026-08-15 17:41 +08:00 - Transfer Number consultation flow
+
+Modified files or modules:
+
+- `src/layouts/components/TransferModal.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `DECISION_LOG.md`, `DEV_LOG.md`
+
+Reason:
+
+- The requested call-toolbar behavior requires external-number transfer to follow the same consultation-first flow as agent transfer.
+
+Result:
+
+- `Transfer Number` now requires `Consult` before `Transfer` or `Conference` becomes available.
+- The consulted number is locked with other transfer targets until `Cancel Consult`, transfer, or conference completes.
+- Number conference uses the existing conference lock on the toolbar. The deterministic `000` failure remains on the final transfer action.
+
+Rollback:
+
+- Restore the direct `Transfer` action in `TransferNumberTab` and remove the number consultation state from `AgentToolbar`.
+
+Current risk:
+
+- This remains a front-end-only consultation simulation without telephony signaling or real conference bridging.
+
 ### 2026-08-15 12:34 +08:00 - customer 生产发布
 
 修改页面或文件：

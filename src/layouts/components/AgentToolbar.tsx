@@ -123,6 +123,7 @@ export function AgentToolbar({
   const [consultedAgent, setConsultedAgent] = useState<TransferAgent | null>(
     null,
   )
+  const [consultedNumber, setConsultedNumber] = useState<string | null>(null)
   const [isConferenceActive, setIsConferenceActive] = useState(false)
   const [approvalNotice, setApprovalNotice] = useState<ApprovalNotice | null>(
     null,
@@ -188,7 +189,16 @@ export function AgentToolbar({
   }
   const closeTransferModal = () => {
     setConsultedAgent(null)
+    setConsultedNumber(null)
     setIsTransferOpen(false)
+  }
+  const handleConsultAgent = (agent: TransferAgent | null) => {
+    setConsultedNumber(null)
+    setConsultedAgent(agent)
+  }
+  const handleConsultNumber = (number: string | null) => {
+    setConsultedAgent(null)
+    setConsultedNumber(number)
   }
   const handleCallEnd = (endReasonName?: string) => {
     closeTransferModal()
@@ -204,10 +214,21 @@ export function AgentToolbar({
   }
   const handleConferenceWithAgent = (agent: TransferAgent) => {
     setConsultedAgent(null)
+    setConsultedNumber(null)
     setIsConferenceActive(true)
     setIsTransferOpen(false)
     onTransferNotice({
       message: `${agent.name} joined the conference.`,
+      tone: 'success',
+    })
+  }
+  const handleConferenceWithNumber = (number: string) => {
+    setConsultedAgent(null)
+    setConsultedNumber(null)
+    setIsConferenceActive(true)
+    setIsTransferOpen(false)
+    onTransferNotice({
+      message: `${number} joined the conference.`,
       tone: 'success',
     })
   }
@@ -435,10 +456,13 @@ export function AgentToolbar({
         <TransferModal
           canTransferToNumber={canTransferToNumber}
           consultedAgentId={consultedAgent?.id}
+          consultedNumber={consultedNumber}
           open={isTransferOpen}
           onClose={closeTransferModal}
           onConferenceWithAgent={handleConferenceWithAgent}
-          onConsultAgent={setConsultedAgent}
+          onConferenceWithNumber={handleConferenceWithNumber}
+          onConsultAgent={handleConsultAgent}
+          onConsultNumber={handleConsultNumber}
           onTransferToAgent={handleTransferToAgent}
           onTransferToIvr={handleTransferToIvr}
           onTransferToNumber={handleTransferToNumber}

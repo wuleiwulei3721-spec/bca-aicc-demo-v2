@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-08-15 11:59 +08:00
+Last updated: 2026-08-15 17:41 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -179,7 +179,7 @@ Call transfer modal:
 - A successful conference closes the modal and disables the toolbar Transfer button with native title `Transfer unavailable during conference`. The toolbar returns to its normal availability when the call ends.
 - The Transfer Agent table keeps a fixed 248px Actions column with compact cell padding so `Cancel Consult`, `Transfer`, and `Conference` remain adjacent without clipping or a stretched empty action area.
 - Transfer Skill supports search by skill name. Selecting Transfer is a release transfer: it closes the modal, ends the current call through ordinary Hang Up / ACW, and shows `Transferred to skill queue {Skill Name}.` below the toolbar.
-- `Transfer Number` is not visible to ordinary agents. `888888 / 888888` has no permission for it. `666666 / 666666` is the TL Demo account and has `transfer:external-number`, which displays the tab. The tab accepts a phone number and its `Transfer` action is enabled as soon as a number is entered; it does not require TL approval. A successful transfer closes the modal, ends the current call through ordinary Hang Up / ACW, and shows `Transferred to {Number}.` below the toolbar. Numbers ending in `000` deterministically simulate a failure, keep the modal open, and show `We couldn't complete the transfer. Please try again.`.
+- `Transfer Number` is not visible to ordinary agents. `888888 / 888888` has no permission for it. `666666 / 666666` is the TL Demo account and has `transfer:external-number`, which displays the tab. The agent must enter a number and select `Consult` before `Transfer` or `Conference` is enabled; while consulting, the number and other transfer targets are locked, and `Cancel Consult` restores the default state. It does not require TL approval. A successful transfer closes the modal, ends the current call through ordinary Hang Up / ACW, and shows `Transferred to {Number}.` below the toolbar. A successful conference closes the modal and disables toolbar Transfer until the call ends. Numbers ending in `000` deterministically simulate a failure at the final Transfer action, keep the modal open, and show `We couldn't complete the transfer. Please try again.`.
 - Transfer IVR lists enabled entries from `Call Management > Common Number`.
 - Transfer IVR row action is a release transfer: it closes the modal, ends the current call through ordinary Hang Up / ACW, and shows `Transferred to IVR {Name}.` below the toolbar.
 - Video calls do not expose the call Transfer action in the header toolbar.

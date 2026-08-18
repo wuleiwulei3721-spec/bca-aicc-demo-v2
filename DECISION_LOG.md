@@ -1,6 +1,6 @@
 # Decision Log
 
-Last updated: 2026-08-13 16:00 +08:00
+Last updated: 2026-08-15 17:41 +08:00
 
 This document records important product and system design decisions that can be confirmed from the current codebase, project documents, `DEV_LOG.md`, and readable Git history. It intentionally omits bug fixes, visual micro-adjustments, temporary test data, copy-only tweaks, and implementation details that do not affect product direction.
 
@@ -59,13 +59,13 @@ Module:
 Demo Authentication / Transfer Permission
 
 Decision:
-The Demo exposes two safe accounts in the same workbench: `888888 / 888888` is the ordinary Agent account, and `666666 / 666666` is the female TL account Maya Lestari. The TL account receives `transfer:external-number`, which exposes direct `Transfer Number` behavior, and calls external numbers directly after selecting the required reason. Ordinary Agents see only SPV and TL records in Call Agent; TL-and-above roles see the full Call Agent list.
+The Demo exposes two safe accounts in the same workbench: `888888 / 888888` is the ordinary Agent account, and `666666 / 666666` is the female TL account Maya Lestari. The TL account receives `transfer:external-number`, which exposes consultation-first `Transfer Number` behavior, and calls external numbers directly after selecting the required reason. Ordinary Agents see only SPV and TL records in Call Agent; TL-and-above roles see the full Call Agent list.
 
 Reason:
 The customer needs to demonstrate that external-number transfer is a TL-and-above operation while preserving the ordinary-agent transfer experience and without adding a separate TL application.
 
 Impact:
-The authenticated session carries the explicit permission and role scope to the toolbar and its dialogs. The TL account changes only the external outbound, `Transfer Number`, and Call Agent list visibility capabilities; it does not gain a TL dashboard, supervisor management features, backend authorization, or cross-device workflow. Every external outbound still requires one selected reason, `Miss Information` or `Financial Risk`, but only ordinary Agents create TL approval requests.
+The authenticated session carries the explicit permission and role scope to the toolbar and its dialogs. The TL account changes only the external outbound, `Transfer Number`, and Call Agent list visibility capabilities; number transfer requires the same Consult, Cancel Consult, Transfer, and Conference progression as agent transfer. It does not gain a TL dashboard, supervisor management features, backend authorization, or cross-device workflow. Every external outbound still requires one selected reason, `Miss Information` or `Financial Risk`, but only ordinary Agents create TL approval requests.
 
 Status:
 Implemented as front-end Demo behavior
