@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-08-15 12:34 +08:00
+最后更新：2026-08-18 14:54 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,38 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-08-18 14:54 +08:00 - Transfer Number consultation flow production deployment
+
+修改页面或文件：
+
+- 生产部署 `https://netinfo-aicc-demo-v2.vercel.app`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 发布 Transfer Number 咨询后转移或三方流程，以及与 Transfer Agent 对齐的按钮样式。
+
+修改结果：
+
+- 已部署提交 `88305c2`（`feat: require consultation for number transfer`）。
+- Vercel Inspect：`https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/4e5MZYNTRKDA5RNL1DMqN1HdWSZQ`。
+- 部署命令：`vercel --prod --yes --build-env VITE_APP_VISIBILITY_PROFILE=customer`。
+- 构建环境：`VITE_APP_VISIBILITY_PROFILE=customer`。
+
+验证：
+
+- 本地 `npm run lint`、`npm run build` 通过；构建仅保留既有 large chunk warning。
+- Vercel production build 通过，且正式别名已设置到 `https://netinfo-aicc-demo-v2.vercel.app`。
+- 当前工作站无法连接正式域名的 443 端口，HTTP 冒烟未完成；需在可访问 Vercel 的网络环境复核。
+
+回滚说明：
+
+- 在 Vercel 将 production alias 指回上一稳定部署，或将 `main` 回退至 `0cf2ea4` 后重新部署。
+
+当前风险点：
+
+- 当前项目仍使用前端 mock 数据；生产环境不连接真实客户或路由后端。
 
 ### 2026-08-15 17:41 +08:00 - Transfer Number consultation flow
 
