@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-08-19 20:09 +08:00
+最后更新：2026-08-19 20:12 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,37 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-08-19 20:12 +08:00 - Ticket Category / Product production deployment
+
+修改页面或文件：
+
+- Production deployment `dpl_7K4dHr81CBkAnNSrFPeZ3tCrcd6H`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 发布已验收的 Ticket Category-Product 联动、Customer Journey / Ticketing History / Interaction Log 展示统一，以及后续 Ticket 和 Interaction Log 视觉修正。
+
+修改结果：
+
+- 已部署提交 `8387930`（`feat: link ticket category and product`）。
+- 正式 URL：`https://netinfo-aicc-demo-v2.vercel.app`；兼容别名：`https://bca-aicc-demo-v2.vercel.app`。
+- Vercel Inspect：`https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/7K4dHr81CBkAnNSrFPeZ3tCrcd6H`。
+- 部署命令：`vercel --prod --yes --build-env VITE_APP_VISIBILITY_PROFILE=customer`；生产环境使用 `VITE_APP_VISIBILITY_PROFILE=customer`。
+
+验证：
+
+- 本地 `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check` 通过；构建仅保留既有 large chunk warning。
+- Vercel Inspect 显示 target `production`、status `Ready`，正式别名已绑定本次部署。
+
+回滚说明：
+
+- 回退 `8387930`，推送 `main` 后以同一 customer 环境重新部署；或在 Vercel 将正式别名指回上一稳定部署。
+
+当前风险点：
+
+- 当前 Ticket、Category-Product 映射和 Interaction Log 仍为前端 mock；真实 CRM 分类校验、持久化与审计仍依赖未来后端契约。
 
 ### 2026-08-19 20:08 +08:00 - Interaction Log Ticket Category 纯文本展示
 
