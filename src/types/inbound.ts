@@ -247,8 +247,9 @@ export interface CustomerJourneyItem {
 }
 
 export interface TicketHistoryItem {
+  caseCategory: string
   id: string
-  ticketType: string
+  product: string
   ticketNumber: string
   createdDate: string
 }

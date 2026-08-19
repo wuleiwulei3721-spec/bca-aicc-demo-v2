@@ -144,7 +144,7 @@ function createSearchText(record: CallRecord) {
     record.summary.description,
     record.summary.tickets.map((ticket) => ticket.id).join(' '),
     record.summary.tickets
-      .flatMap((ticket) => ticket.categories)
+      .map((ticket) => ticket.caseCategory)
       .join(' '),
   ]
     .join(' ')

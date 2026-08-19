@@ -113,7 +113,6 @@ function cloneCallRecords() {
       ...record.summary,
       tickets: record.summary.tickets.map((ticket) => ({
         ...ticket,
-        categories: [...ticket.categories],
       })),
     },
     transcript: record.transcript.map((line) => ({ ...line })),
@@ -389,7 +388,6 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
                 ...summary,
                 tickets: summary.tickets.map((ticket) => ({
                   ...ticket,
-                  categories: [...ticket.categories],
                 })),
               },
             }

@@ -1135,16 +1135,18 @@ const socialJourneyChannelMap: Partial<
 
 const socialTicketingHistory: TicketHistoryItem[] = [
   {
+    caseCategory: 'REQ/R005 GANTI KARTU/HILANG',
     createdDate: '22 Dec',
     id: 'social-ticket-card-replacement',
+    product: 'KARTU KREDIT BCA/AMEX PLATINUM',
     ticketNumber: 'CRM000154',
-    ticketType: 'Card replacement',
   },
   {
+    caseCategory: 'REQ/R009 NAIK LIMIT/SEMENTARA (BCNS)',
     createdDate: '14 Dec',
     id: 'social-ticket-limit-request',
+    product: 'KARTU KREDIT BCA REGULER',
     ticketNumber: 'CRM000153',
-    ticketType: 'Limit request',
   },
 ]
 

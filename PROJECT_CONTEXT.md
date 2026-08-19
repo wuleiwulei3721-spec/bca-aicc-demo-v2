@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Project Context
 
-Last updated: 2026-08-05 19:05 +08:00
+Last updated: 2026-08-19 19:04 +08:00
 Repository path: `D:\03projects\bca-aicc-demo-v2`
 
 ## 1. Project Name
@@ -314,7 +314,7 @@ The current Email demo supports:
 - Trash recovery returns a trashed or ignored mock email to its original folder.
 - The shared Customer Information, Customer Journey, Ticketing History, Next Best Action, and Quick Action column used by the other interaction workspaces; Email is shown as the access channel.
 - The shared Live Chat `CrmPanel`, including the same CRM screenshot, `CRM / Email` tab styling, and closable CRM business-detail tabs.
-- Ticket registration with Business Type, Summary, and one-click summary generation.
+- Ticket registration with linked single-select Category and Product, editable Summary / Note, and one-click draft generation.
 
 Email message and Ticket changes are local component state. Closing and reopening the Email tab or refreshing the application restores the default anonymized mock data. Email verification is not exposed because no Email verification rule is confirmed. Email Record Inquiry and Email Template Deploy remain separate future scope.
 

@@ -61,7 +61,7 @@ export function TicketingHistoryCard({
               onClick={() =>
                 onOpenCrm({
                   key: `ticket-${item.ticketNumber}`,
-                  title: item.ticketType,
+                  title: item.caseCategory,
                   kind: 'ticket',
                   crmLink: `/crm/tickets/${item.ticketNumber}`,
                   reference: item.ticketNumber,
@@ -70,7 +70,7 @@ export function TicketingHistoryCard({
                 })
               }
             >
-              <span className="inbound-ticket-type">{item.ticketType}</span>
+              <span className="inbound-ticket-type">{item.caseCategory}</span>
               <span className="inbound-ticket-row__meta">
                 <Tag className="inbound-neutral-tag inbound-ticket-row__number">
                   {item.ticketNumber}

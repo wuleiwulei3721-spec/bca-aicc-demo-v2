@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-08-15 10:47 +08:00
+Last updated: 2026-08-19 20:08 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -84,11 +84,11 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - `/screenshots/assistant-workspace.jpg`,
   - fallback does not appear unless intentionally testing missing images.
 - Verify both outbound entries: `Miss Information` or `Financial Risk` must be selected before Request Approval is enabled; both entries show `Requesting...` while pending, the Customer Information phone action is hover/focus-only with its full label visible and no native browser tooltip, the TL popup carries the entered number and selected reason without a countdown then closes after its last decision, Call stays disabled until approval, closing the originating surface preserves the same pending or approved request, changing either value requires a new approval, Log Out clears unused approvals, and either approved Call action consumes its authorization, opens a new `Outbound Call` customer workspace carrying the dialed number, then enters `Talking`.
-- Verify Ticketing History / Next Best Action / Quick Action:
+- Verify Ticketing History one-line-ellipsized Category / CRM Ticket ID / date display, then Next Best Action / Quick Action:
   - click opens CRM dynamic tabs,
   - dynamic tabs can close,
   - tab labels remain compact.
-- Verify shared CRM Ticket registration in PSTN, voice/video, Live Chat, and Email: Product / Category multi-select, editable Summary / Note, One-Click Generation draft refresh, Confirm save feedback, form reset, consecutive ticket creation, and inbound Ticketing History append.
+- Verify shared CRM Ticket registration in PSTN, voice/video, Live Chat, and Email: searchable single-select Category / Product linkage, long Category / Product values use standard one-line ellipsis with a right-aligned centered arrow, Product reset after Category changes, Summary 250 and Note 1000 character caps with normal-weight lower-right in-input counts, One-Click Generation draft refresh from the left side of the fixed footer, Confirm save feedback, form reset, consecutive ticket creation, and inbound Ticketing History append.
 - Verify Video Popup Workspace:
   - BankApp Video opens Video Call tab,
   - OpenEye floating window appears only during connected active video,
@@ -149,7 +149,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Sensitive Word,
   - Busy Reason,
   - Abnormal End Reasons query, add, edit, disable, and delete, with two active DM defaults and no default Voice/Video reason,
-- Interaction Log 30 mock records, default current-day Date Range paging, Call Type list/filter (`Customer` / `Transfer` / `Conference`), Rating Score list/filter (`1`-`5` and PSTN `-`), numeric QM Score third-party detail preview and non-interactive empty score, View-only Actions, Voice left media playback / middle transcript / right Ticket-and-Summary scroll card plus Satisfaction detail, Video left replay / middle transcript / right Ticket-and-Summary scroll card plus Satisfaction detail, DM conversation / right Ticket-and-Summary scroll card plus Satisfaction detail, and read-only CWU detail,
+- Interaction Log 30 mock records, default current-day Date Range paging, Call Type list/filter (`Customer` / `Transfer` / `Conference`), Rating Score list/filter (`1`-`5` and PSTN `-`), numeric QM Score third-party detail preview and non-interactive empty score, View-only Actions, Voice left media playback / middle transcript / right Ticket-and-Summary scroll card plus Satisfaction detail, Video left replay / middle transcript / right Ticket-and-Summary scroll card plus Satisfaction detail, DM conversation / right Ticket-and-Summary scroll card plus Satisfaction detail, each Ticket showing its CRM ID and plain Summary-style Category text, and read-only CWU detail,
   - Login Log 19 seeded records across the default seven-day range, keyword, Time Range, Operation, Log Out Type filters, live Login / manual Log Out / idle Log Out records, and seeded System records.
 - Verify Routing Config:
   - Routing Config visible by default,

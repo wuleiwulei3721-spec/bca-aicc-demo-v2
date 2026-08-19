@@ -232,17 +232,9 @@ export function CallRecordDetailModal({
                   <span className="call-record-query__field-label">
                     {ticket.id}
                   </span>
-                  <div className="call-record-query__business-tags">
-                    {ticket.categories.length > 0 ? (
-                      ticket.categories.map((category) => (
-                        <span className="call-record-query__business-tag" key={category}>
-                          {category}
-                        </span>
-                      ))
-                    ) : (
-                      <strong>-</strong>
-                    )}
-                  </div>
+                  <p className="call-record-query__ticket-category">
+                    {ticket.caseCategory}
+                  </p>
                 </article>
               ))
             ) : (

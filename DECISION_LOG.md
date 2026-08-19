@@ -1,8 +1,31 @@
 # Decision Log
 
-Last updated: 2026-08-15 17:41 +08:00
+Last updated: 2026-08-19 19:04 +08:00
 
 This document records important product and system design decisions that can be confirmed from the current codebase, project documents, `DEV_LOG.md`, and readable Git history. It intentionally omits bug fixes, visual micro-adjustments, temporary test data, copy-only tweaks, and implementation details that do not affect product direction.
+
+--------------------------------------------------
+
+Decision ID:
+DEC-045
+
+Module:
+Ticket Registration / Customer Journey / Interaction Log
+
+Decision:
+Ticket Category is the parent field for Product. A ticket stores exactly one Category and one Product; Product choices are restricted to the Category-Product mapping supplied by the customer. Customer Journey and Ticketing History present Category, while Interaction Log presents each Ticket's ID and one Category only.
+
+Reason:
+The customer confirmed that one Category may have multiple applicable Products, but agents must select only one Product per Ticket. Showing Product in the requested history surfaces would add detail where the business wants Category-level visibility.
+
+Impact:
+All current shared Ticket entry points use searchable single-select Category and Product controls. Changing Category clears Product. Interaction Log may continue to contain multiple Tickets per interaction, but every Ticket has one Category and one retained Product. The approved mapping source contains 103 Categories and 495 distinct Category-Product relationships after removal of one exact duplicate pair.
+
+Status:
+Implemented as front-end demo behavior
+
+Source:
+Customer-provided `Category and product.xlsx` on 2026-08-19; Code: `src/mock/ticketCategoryProducts.ts`, `src/components/TicketRegistrationDrawer.tsx`, `src/pages/inbound/components/CustomerJourneyCard.tsx`, `src/pages/call-management/CallRecordDetailModal.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `DESIGN_SYSTEM.md`
 
 --------------------------------------------------
 

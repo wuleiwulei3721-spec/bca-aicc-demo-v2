@@ -28,8 +28,9 @@ export interface CallRecordTranscriptLine {
 }
 
 export interface CallRecordTicket {
-  categories: string[]
+  caseCategory: string
   id: string
+  product: string
 }
 
 export interface CallRecordSummary {

@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-08-18 14:54 +08:00
+最后更新：2026-08-19 20:09 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,160 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-08-19 20:08 +08:00 - Interaction Log Ticket Category 纯文本展示
+
+修改页面或文件：
+
+- `src/pages/call-management/CallRecordDetailModal.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`
+
+修改原因：
+
+- 客户要求通话记录详情的 Ticket Category 移除胶囊样式，以避免长 Category 视觉拥挤，并与 Summary 正文保持一致。
+
+修改结果：
+
+- 每张 Interaction Log Ticket 保留 CRM Ticket ID；Category 改为普通文本段落，不再使用背景、边框、圆角或 Tag 布局。
+- Category 复用 Summary 的 13px、次级文字色、常规字重和 22px 行高，支持长文本自然换行。
+
+验证：
+
+- 本地浏览器烟测 `CR202607100006`：三张 Ticket 均显示 ID 与普通 Category 文本；Category 和 Summary 的计算背景、边框、圆角、颜色、字号、字重及行高一致。
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check` 通过；构建仅保留既有 large chunk warning。
+
+回滚说明：
+
+- 恢复 `call-record-query__business-tags` / `call-record-query__business-tag` 容器和对应 CSS，即可还原胶囊 Category。
+
+当前风险点：
+
+- Category 为前端 mock 的服务分类；真实 CRM 返回的极长连续字符仍需在后端和前端共同约束。
+
+### 2026-08-19 19:56 +08:00 - Ticket 标准 Select 与 History 省略展示修正
+
+修改页面或文件：
+
+- `src/components/TicketRegistrationDrawer.tsx`
+- `src/pages/inbound/components/TicketingHistoryCard.tsx`
+- `src/styles/index.less`
+- `DESIGN_SYSTEM.md`、`BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`
+
+修改原因：
+
+- 客户确认长 Category / Product 换行会造成下拉箭头错位和相邻字段高度不一致；Ticketing History 的 Category 也不应换行。
+
+修改结果：
+
+- Ticket Category / Product 恢复 Ant Design 6 的标准固定高度单行 Select，长值显示省略号，箭头固定在控件右侧并垂直居中。
+- Ticketing History Category 改为与 Customer Journey 一致的单行省略展示，CRM Ticket ID、日期和点击 CRM 行为保持不变。
+
+验证：
+
+- 本地浏览器 Ticket Modal 烟测：96 字符 Category 使用单行省略，两个 Select 固定 28px 高，箭头距右侧约 8px 且垂直居中。Ticketing History 的长 Category 为单行 15px 文本，`scrollWidth` 大于 `clientWidth` 时显示省略号。
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check` 通过；构建仅保留既有 large chunk warning。
+
+回滚说明：
+
+- 恢复 Ticket Select 的多行内容样式和 Ticketing History Category 的换行规则即可。
+
+当前风险点：
+
+- 单行省略保留浏览器原生 title 以查看完整选择值；真实 CRM 接入后仍应由服务端保存完整 Category / Product。
+
+### 2026-08-19 19:36 +08:00 - Ticket Modal 长文本与视觉层级统一
+
+修改页面或文件：
+
+- `src/components/TicketRegistrationDrawer.tsx`
+- `src/styles/index.less`
+- `DESIGN_SYSTEM.md`、`BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`
+
+修改原因：
+
+- 客户反馈长 Category / Product 会撑宽 Ticket 表单，且 Ticket Modal 存在灰白嵌套感，四个字段的文本 token 也不一致。
+
+修改结果：
+
+- 根据 Ant Design 6 实际 Select DOM，长选中值和下拉选项改为在控件内换行；字段与其父容器均允许收缩，480px Ticket Modal 不再被长值撑宽。
+- Ticket Modal 仅保留单层白色 `.ant-modal-container` 内容面；Category、Product、Summary、Note 的内容均使用 12px 主文字色和 18px 行高。
+
+验证：
+
+- 本地浏览器 Ticket Modal 烟测：96 字符 Category 与 56 字符 Product 均保持在控件宽度内，长 Product 换为两行；两个 Select 和两个 TextArea 的计算值均为 12px、`rgb(31, 42, 55)`、18px 行高；Modal container 与 body 均为白色。
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check` 通过；构建仅保留既有 large chunk warning。
+
+回滚说明：
+
+- 恢复 Ticket Select 的 Ant Design 默认单行截断规则及原 Modal 容器样式即可。
+
+当前风险点：
+
+- Category / Product 选中值可增高字段高度；在后续映射表新增更长的连续无分隔字符时，仍应复核移动端的多行布局。
+
+### 2026-08-19 19:11 +08:00 - Ticket 文本限制与页脚操作对齐
+
+修改页面或文件：
+
+- `src/components/TicketRegistrationDrawer.tsx`
+- `src/styles/index.less`
+- `DESIGN_SYSTEM.md`、`BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`
+
+修改原因：
+
+- 客户要求 Note 限制为 1000 字符，Summary 和 Note 的字数提示显示在输入框内右下角且不加粗，并将 One-Click Generation 与页脚操作同一行对齐。
+
+修改结果：
+
+- Summary 保持 250 字限制；Note 新增 1000 字限制，两个编辑框均显示 11px、常规字重的框内右下角计数，并保留底部输入留白。
+- One-Click Generation 移至固定 Ticket 页脚左侧，Cancel / Confirm 保持右侧操作组，三者垂直对齐。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check` 通过；构建仅保留既有 large chunk warning。
+- 本地浏览器 Ticket Modal 烟测：Note 的 DOM `maxlength` 为 `1000`，输入 1001 个字符后受控状态与计数均为 `1000 / 1000`；Summary / Note 计数均在编辑框内、为 11px 常规字重；One-Click Generation 位于右侧按钮组左方且共享同一垂直中心线。
+
+回滚说明：
+
+- 移除 Note 的 `maxLength` / `showCount`，并恢复原表单内的生成按钮与页脚对齐样式即可。
+
+当前风险点：
+
+- 当前实现为前端本地 Ticket draft；真实 CRM 接口接入时仍需在服务端同步校验 Summary / Note 的长度。
+
+### 2026-08-19 19:04 +08:00 - Ticket Category / Product 联动与历史展示统一
+
+修改页面或文件：
+
+- `src/mock/ticketCategoryProducts.ts`、`src/components/TicketRegistrationDrawer.tsx`
+- 入站 / Email Ticket 数据类型与 Ticketing History
+- Customer Journey、Interaction Log detail / mock records
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DESIGN_SYSTEM.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`
+
+修改原因：
+
+- 客户确认一个 Ticket 只能选择一个 Category 和一个 Product，Product 必须由 Category 过滤；Customer Journey、Ticketing History 与 Interaction Log 详情只展示 Category。
+
+修改结果：
+
+- 从客户提供的映射工作簿提取 103 个 Category 与 495 条去重 Category-Product 关系，保留工作簿顺序。
+- 所有共享 Ticket 入口改为可搜索单选；Product 在未选 Category 时禁用，并在 Category 变更时清空。
+- Customer Journey 汇总一个 Interaction Log 内全部 Tickets 的 Category；Ticketing History 显示 Category、CRM Ticket ID 和日期；Interaction Log 的每张 Ticket 显示单一 ID 与 Category。
+- Email CWU 与 Interaction Log mock 改为保存单一 Category / Product；Product 保留在数据中但不在历史与日志详情显示。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check` 通过；构建仅保留既有 large chunk warning。
+- 本地浏览器烟测 `http://127.0.0.1:5173/`：Category 搜索 `REQ/R036 AKTIFKAN USER ID` 后，原 Product 被清空；Product 搜索仅返回关联的 `JASA/MOBILE Perbankan BCA/IM3`。保存后 Ticketing History 显示 Category、CRM ID、日期；`CR202607100006` Interaction Log detail 显示三张独立 Ticket 的 ID 与单一 Category。
+
+回滚说明：
+
+- 回退本次提交中的 Ticket 映射配置、单值类型迁移及相关展示逻辑，即可恢复原独立多选模型。
+
+当前风险点：
+
+- 映射仍是前端静态 mock；客户后续更新 Category / Product 工作簿时，需要同步更新 `ticketCategoryProducts.ts`，真实 CRM 校验仍依赖未来后端契约。
 
 ### 2026-08-18 14:54 +08:00 - Transfer Number consultation flow production deployment
 

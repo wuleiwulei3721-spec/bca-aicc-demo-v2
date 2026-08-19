@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-08-15 17:41 +08:00
+Last updated: 2026-08-19 20:08 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -366,7 +366,7 @@ Customer Journey:
 - Sorts by date descending.
 - Collapsed state shows 2 items.
 - Expanded state shows up to 10 items.
-- Phone, BankApp, Webchat, and WhatsApp rows show all Categories of the current interaction's first Ticket after the channel icon. A missing Ticket or Category renders `-`; long Category text is ellipsized without a hover expansion. Journey rows do not show a success or failure result icon.
+- Phone, BankApp, Webchat, and WhatsApp rows show the Category of every Ticket linked to the current interaction after the channel icon, in Ticket order. A missing Ticket or Category renders `-`; long combined Category text is ellipsized without a hover expansion. Journey rows do not show a success or failure result icon.
 - Clicking Phone, BankApp, Webchat, or WhatsApp opens the same channel-media detail modal used by Interaction Log. Voice, Video, and DM therefore keep their corresponding playback or conversation presentation.
 - Email and Social Media rows continue to open `Interaction Detail`, which shows customer/agent conversation and summary sections.
 
@@ -379,6 +379,7 @@ Ticketing History:
 - Sorts tickets by created date descending.
 - Collapsed state shows 2 items.
 - Expanded state shows up to 10 items.
+- Each row shows the Ticket Category, CRM Ticket ID, and created date. Opening a row uses the Category as the dynamic CRM tab title.
 - Clicking a ticket opens a dynamic CRM workspace tab.
 - Dynamic CRM tab key uses the ticket number.
 - The tab includes ticket type, reference, CRM link, description, and a mock CRM detail form.
@@ -592,7 +593,7 @@ WhatsApp demo is chat-only in the current implementation.
 - Save Draft creates or updates a Drafts item. Sending a normal edited draft removes the draft and creates a Sent item; sending a saved Forward draft removes both the draft and its original source without creating a Sent item.
 - Ignore reasons are `AD`, `Spam`, and `Sales Email`. Ignore marks the email `No reply`, stops SLA, and moves it from Inbox to Trash.
 - Trash Recover returns the pre-seeded or ignored trashed email to its original folder and clears the ignore marker.
-- The customer-visible Email panel is named `Ticket`. It shares the four-field Ticket Registration component: Product, Category, Summary, and Note are required. Product and Category use searchable multi-select dropdowns that retain every selected value visibly in the expanded control. Summary is limited to 250 characters and shows its current length; Note uses the same editor height. One-Click Generation creates an editable local draft before confirmation. The existing internal CWU mock field remains unchanged.
+- The customer-visible Email panel is named `Ticket`. It shares the four-field Ticket Registration component: Category, Product, Summary, and Note are required. Category and Product are searchable single-select dropdowns; Product is disabled until Category is selected and is filtered to its configured Category relationship. Summary is limited to 250 characters and Note to 1000; each editor shows its normal-weight count inside the lower-right corner. One-Click Generation creates an editable local draft before confirmation from the left side of the fixed footer. The internal CWU mock stores the selected Category and Product as single values.
 - Email verification is not shown because no confirmed Email verification channel rule exists.
 - Email directly reuses Live Chat's `CrmPanel`; CRM uses the same current screenshot and Email uses the same tab styling as Conversation. Legacy full-system Email design screenshots are not embedded.
 - No real mailbox, SMTP, attachment upload, routing, permission, audit, template deployment, record inquiry, or Ticket backend integration exists.
@@ -751,7 +752,7 @@ Hidden / redirected:
 - Video records use a three-column detail layout: left `Video Recording Playback`, middle `Auto Transcript`, and right read-only CWU. The replay is an OpenEye-style vertical replay with two video panes and a playback bar; it should not include the live-call buttons, labels, or icons from the OpenEye call screen.
 - DM records use a two-column detail layout: conversation-style bubbles with speaker, avatar, and time on the left, and read-only CWU on the right. DM details do not show an empty media column.
 - Detail modal does not add a CRM or customer-detail card in the current scope; customer and service metadata stay in the list-level fields.
-- Detail modal right side uses a single bordered read-only Ticket and Summary panel plus a separate Satisfaction panel. Each Ticket shows a CRM-style Ticket ID and one or more Category tags; Ticket entries and the single AI-generated, read-only service Summary are separated by divider lines within the same scrollable panel. Satisfaction shows static stars plus the final `Rating Score` number when available, then the optional feedback content. Field labels use title case rather than forced uppercase.
+- Detail modal right side uses a single bordered read-only Ticket and Summary panel plus a separate Satisfaction panel. Each Ticket shows a CRM-style Ticket ID and exactly one plain Category text value, using the same body style as Summary; Product is retained in the mock Ticket data but is not shown. Ticket entries and the single AI-generated, read-only service Summary are separated by divider lines within the same scrollable panel. Satisfaction shows static stars plus the final `Rating Score` number when available, then the optional feedback content. Field labels use title case rather than forced uppercase.
 - CWU Registration summary is mandatory in the current demo, so the list and filters do not expose Summary Status or Summary Time.
 - Interaction Log exposes only the View action. CWU edit entry points and the Edit CWU modal are not shown in the current demo.
 - Store is local front-end state.
@@ -825,8 +826,8 @@ Do not introduce old customer brand names into visible UI or handoff docs.
 ## 27. Ticket Registration Rules
 
 - The CRM workspace Ticket action is available in inbound voice, video, and digital interaction workspaces, as well as Email.
-- Ticket Registration has four editable fields: searchable multi-select `Product` and `Category`, plus `Summary` and `Note`. All four fields are required. Selected Product and Category values remain fully visible in the naturally expanding control rather than collapsing into a `+N` tag. Summary has a 250-character limit with a visible count; Note uses the same editor height.
-- Opening Ticket prepares an editable AI-assisted draft. `One-Click Generation` prepares a new deterministic demo draft on every click; it does not call a real AI service in this front-end demo.
+- Ticket Registration has four editable fields: searchable single-select `Category` and `Product`, plus `Summary` and `Note`. All four fields are required. Product is disabled before Category selection, only shows products configured for the current Category, and clears when Category changes. Long Category / Product values use the standard fixed-height single-line ellipsis, without changing the Ticket Modal layout. Summary has a 250-character limit and Note has a 1000-character limit; both show normal-weight counts inside the lower-right of the editor.
+- Opening Ticket prepares an editable AI-assisted draft. `One-Click Generation` is placed on the left side of the fixed Ticket footer and prepares a new deterministic demo draft on every click; it does not call a real AI service in this front-end demo.
 - `Confirm` simulates saving the current ticket to CRM, clears the form, retains the right-side Ticket modal, and supports consecutive ticket creation. In interaction workspaces, the newly saved ticket immediately appears in Ticketing History.
 - All shared Ticket saves, including Email, use the shared success notice below the agent toolbar. Email does not retain a separate `Ticket saved` status badge after confirmation.
 - Ticket records remain in browser-memory mock state only. Real CRM API, authentication, audit, validation, and persistence contracts are not implemented.

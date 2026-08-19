@@ -3244,33 +3244,12 @@ a {
 }
 
 .call-record-query__ticket-summary p,
+.call-record-query__ticket-category,
 .call-record-query__ticket-empty {
   margin: 0;
   color: var(--aicc-text-secondary);
   font-size: 13px;
   line-height: 22px;
-}
-
-.call-record-query__business-tags {
-  display: flex;
-  min-width: 0;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.call-record-query__business-tag {
-  display: inline-flex;
-  align-items: center;
-  width: fit-content;
-  min-height: 24px;
-  padding: 2px 8px;
-  border: 1px solid #c7dbff;
-  border-radius: 999px;
-  background: #edf5ff;
-  color: var(--aicc-text);
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 18px;
 }
 
 @media (max-width: 1120px) {
@@ -9102,9 +9081,9 @@ a {
 }
 
 .inbound-ticket-list .inbound-compact-row {
-  align-items: start;
-  min-height: 32px;
-  padding: 6px 2px;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 2px;
 }
 
 .inbound-ticket-list .inbound-compact-row:last-child {
@@ -9225,12 +9204,14 @@ a {
 }
 
 .inbound-ticket-type {
+  display: block;
   min-width: 0;
+  overflow: hidden;
   color: var(--aicc-text);
   font-weight: 600;
   line-height: 15px;
-  white-space: normal;
-  word-break: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .inbound-ticket-row__meta {
@@ -18541,14 +18522,23 @@ button.inbound-list-row .inbound-list-row__title {
 }
 
 .aicc-ticket-modal {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.aicc-ticket-modal .ant-modal-container,
+.aicc-ticket-modal .ant-modal-body,
+.aicc-ticket-modal .aicc-modal__body {
+  background: #ffffff !important;
+}
+
+.aicc-ticket-modal .ant-modal-container {
   display: flex;
   max-height: calc(100vh - 108px);
   overflow: hidden;
-  border: 1px solid rgba(178, 194, 215, 0.72);
-  border-radius: var(--aicc-radius);
   flex-direction: column;
-  background: #ffffff;
-  box-shadow: var(--aicc-shadow-modal);
 }
 
 .aicc-ticket-modal .ant-modal-body {
@@ -18560,12 +18550,16 @@ button.inbound-list-row .inbound-list-row__title {
 }
 
 .aicc-ticket-modal .aicc-modal__body {
+  width: 100%;
   min-height: 0;
+  min-width: 0;
 }
 
 .aicc-ticket-form {
   display: flex;
+  width: 100%;
   height: 100%;
+  min-width: 0;
   flex-direction: column;
   gap: 12px;
 }
@@ -18573,6 +18567,9 @@ button.inbound-list-row .inbound-list-row__title {
 .aicc-ticket-form > section,
 .aicc-ticket-form > label {
   display: flex;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   flex-direction: column;
   gap: 6px;
 }
@@ -18584,67 +18581,98 @@ button.inbound-list-row .inbound-list-row__title {
   font-weight: 650;
 }
 
-.aicc-ticket-form .ant-input {
+.aicc-ticket-form .ant-input,
+.aicc-ticket-form__select.ant-select {
+  box-sizing: border-box;
   border-color: var(--aicc-border-strong);
   border-radius: 6px;
   color: var(--aicc-text);
   font-size: 12px;
-}
-
-.aicc-ticket-form .ant-input {
   line-height: 18px;
 }
 
-.aicc-ticket-form .ant-input::placeholder {
+.aicc-ticket-form .ant-input-textarea-show-count {
+  position: relative;
+}
+
+.aicc-ticket-form .ant-input-textarea-show-count .ant-input {
+  padding-bottom: 24px;
+}
+
+.aicc-ticket-form .ant-input-textarea-show-count .ant-input-suffix {
+  position: static;
+  width: auto;
+  margin: 0;
+  pointer-events: none;
+}
+
+.aicc-ticket-form .ant-input-textarea-show-count .ant-input-data-count {
+  position: absolute;
+  right: 8px;
+  bottom: 5px;
+  color: var(--aicc-text-tertiary);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.aicc-ticket-form .ant-input::placeholder,
+.aicc-ticket-form__select .ant-select-placeholder {
   color: var(--aicc-text-tertiary);
 }
 
-.aicc-ticket-form__select .ant-select-selector {
+.aicc-ticket-form__select {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.aicc-ticket-form__select.ant-select {
+  display: flex;
+  align-items: center;
   min-height: var(--aicc-control-height-sm) !important;
-  height: auto !important;
-  padding: 2px 6px !important;
+  height: var(--aicc-control-height-sm) !important;
+  padding: 0 8px !important;
   border-color: var(--aicc-border-strong) !important;
   border-radius: 6px !important;
 }
 
-.aicc-ticket-form__select.ant-select-multiple .ant-select-selection-overflow {
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.aicc-ticket-form__select.ant-select-multiple .ant-select-selection-item {
-  display: inline-flex;
+.aicc-ticket-form__select .ant-select-content {
+  display: block;
+  flex: 1 1 0;
+  min-width: 0;
   max-width: 100%;
-  height: auto;
-  min-height: 20px;
-  margin-block: 2px;
-  align-items: center;
-  line-height: 16px;
-  white-space: normal;
+  height: 18px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
-.aicc-ticket-select-option {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  gap: 8px;
+.aicc-ticket-form__select .ant-select-input,
+.aicc-ticket-form__select .ant-select-placeholder {
+  color: var(--aicc-text);
+  font-size: 12px;
+  line-height: 18px !important;
 }
 
-.aicc-ticket-select-option .ant-checkbox {
+.aicc-ticket-form__select .ant-select-placeholder {
+  color: var(--aicc-text-tertiary);
+}
+
+.aicc-ticket-form__select .ant-select-suffix {
   flex: 0 0 auto;
-  pointer-events: none;
-}
-
-.aicc-ticket-select-option > span:last-child {
-  min-width: 0;
-  overflow-wrap: anywhere;
+  align-self: center;
+  margin: 0;
+  color: var(--aicc-text-secondary);
 }
 
 .aicc-ticket-form__generate {
   display: inline-flex;
-  align-self: flex-start;
+  align-self: auto;
   align-items: center;
-  margin-top: 2px;
+  min-height: var(--aicc-control-height-sm);
+  margin: 0;
   padding: 0;
   border: 0;
   background: transparent;
@@ -18684,7 +18712,14 @@ button.inbound-list-row .inbound-list-row__title {
 
 .aicc-ticket-modal__footer {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.aicc-ticket-modal__actions {
+  display: flex;
+  margin-left: auto;
   gap: 8px;
 }
 

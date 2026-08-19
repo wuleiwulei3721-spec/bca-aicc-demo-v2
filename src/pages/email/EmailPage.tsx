@@ -149,9 +149,6 @@ function cloneMessages(messages: EmailMessage[]) {
     cwu: email.cwu
       ? {
           ...email.cwu,
-          businessTypes: [...email.cwu.businessTypes],
-          category: [...(email.cwu.category ?? [])],
-          product: [...(email.cwu.product ?? email.cwu.businessTypes)],
         }
       : undefined,
   }))
@@ -1593,10 +1590,9 @@ export function EmailPage() {
           ? {
               ...email,
               cwu: {
-                businessTypes: [...draft.product],
-                category: [...draft.category],
+                caseCategory: draft.caseCategory,
                 note: draft.note,
-                product: [...draft.product],
+                product: draft.product,
                 registeredAt: Date.now(),
                 summary: draft.summary,
               },

@@ -257,9 +257,10 @@ export function InteractionWorkspace({
       const ticketNumber = `CRM${String(Date.now()).slice(-6)}`
       const createdTicket: TicketHistoryItem = {
         createdDate: new Date().toISOString().slice(0, 10),
+        caseCategory: draft.caseCategory,
         id: `ticket-${ticketNumber}`,
+        product: draft.product,
         ticketNumber,
-        ticketType: draft.category.join(', '),
       }
 
       setIdentityOverride((current) => {

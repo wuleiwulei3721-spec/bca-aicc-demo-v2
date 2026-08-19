@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Design System
 
-Last updated: 2026-08-05 19:05 +08:00
+Last updated: 2026-08-19 19:56 +08:00
 
 This document records the current implemented visual rules. It should be treated as the design baseline for future pages and components.
 
@@ -106,6 +106,7 @@ Inbound left-column cards:
 - Journey / Ticket / NBA / Quick Action live in the scroll area.
 - Collapsed journey and ticket lists show the most recent two items.
 - Expanded journey and ticket lists show up to ten items.
+- Shared Ticket registration keeps the existing right-side modal shell with one white content surface, matching the Customer Information outbound-reason modal. Category and Product are searchable single-select controls; Product stays disabled until a Category is selected and only exposes products linked to that Category. Both use the standard fixed-height single-line Select layout: a long selected value is ellipsized and the arrow stays right-aligned and vertically centered. All four editable control values use 12px primary text with an 18px line height; Summary and Note counts sit inside the lower-right corner in normal 11px text. Ticketing History Category follows Customer Journey's one-line ellipsis rule. Summary is capped at 250 and Note at 1000. One-Click Generation occupies the left side of the fixed footer, aligned with the Cancel / Confirm action group on the right.
 
 ## 6. Modal Design Principles
 

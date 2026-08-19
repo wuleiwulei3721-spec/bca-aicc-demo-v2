@@ -111,7 +111,10 @@ export function CustomerJourneyCard({ items }: CustomerJourneyCardProps) {
                 ? callRecordsById.get(item.callRecordId)
                 : null
               const summary = item.callRecordId
-                ? callRecord?.summary.tickets[0]?.categories.join(', ') || '-'
+                ? callRecord?.summary.tickets
+                    .map((ticket) => ticket.caseCategory)
+                    .filter(Boolean)
+                    .join(', ') || '-'
                 : item.summary
 
               return (
