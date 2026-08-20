@@ -7974,10 +7974,17 @@ a {
   gap: 10px;
 }
 
+.inbound-page.inbound-page--pstn {
+  grid-template-columns:
+    270px
+    minmax(420px, 50fr)
+    minmax(300px, 30fr);
+}
+
 .inbound-page--live-chat {
   grid-template-columns:
-    minmax(236px, 17fr)
-    minmax(270px, 20fr)
+    270px
+    270px
     minmax(390px, 43fr)
     minmax(280px, 27fr);
 }
@@ -7985,7 +7992,7 @@ a {
 .inbound-page--live-chat-list-collapsed {
   grid-template-columns:
     56px
-    minmax(280px, 20fr)
+    270px
     minmax(420px, 50fr)
     minmax(300px, 30fr);
 }
@@ -9957,8 +9964,8 @@ button.inbound-list-row .inbound-list-row__title {
 
 .inbound-page--livechat2 {
   grid-template-columns:
-    minmax(236px, 17fr)
-    minmax(270px, 19fr)
+    270px
+    270px
     minmax(420px, 44fr)
     minmax(280px, 27fr);
 }
@@ -9966,7 +9973,7 @@ button.inbound-list-row .inbound-list-row__title {
 .inbound-page--livechat2-list-collapsed {
   grid-template-columns:
     56px
-    minmax(280px, 20fr)
+    270px
     minmax(420px, 50fr)
     minmax(300px, 30fr);
 }
@@ -16269,10 +16276,17 @@ button.inbound-list-row .inbound-list-row__title {
       minmax(260px, 30fr);
   }
 
+  .inbound-page.inbound-page--pstn {
+    grid-template-columns:
+      270px
+      minmax(360px, 48fr)
+      minmax(260px, 30fr);
+  }
+
   .inbound-page--live-chat {
     grid-template-columns:
-      minmax(190px, 16fr)
-      minmax(210px, 20fr)
+      270px
+      270px
       minmax(300px, 42fr)
       minmax(210px, 28fr);
   }
@@ -16280,15 +16294,15 @@ button.inbound-list-row .inbound-list-row__title {
   .inbound-page--live-chat-list-collapsed {
     grid-template-columns:
       56px
-      minmax(250px, 22fr)
+      270px
       minmax(340px, 48fr)
       minmax(230px, 30fr);
   }
 
   .inbound-page--livechat2 {
     grid-template-columns:
-      minmax(230px, 18fr)
-      minmax(230px, 22fr)
+      270px
+      270px
       minmax(330px, 42fr)
       minmax(230px, 28fr);
   }
@@ -16296,7 +16310,7 @@ button.inbound-list-row .inbound-list-row__title {
   .inbound-page--livechat2-list-collapsed {
     grid-template-columns:
       56px
-      minmax(250px, 22fr)
+      270px
       minmax(340px, 48fr)
       minmax(230px, 30fr);
   }
@@ -16405,8 +16419,8 @@ button.inbound-list-row .inbound-list-row__title {
   min-height: 0;
   padding: 0;
   grid-template-columns:
-    300px
-    300px
+    270px
+    270px
     minmax(500px, 1fr);
   background: #fcfcfc;
   color: var(--email-text);
@@ -16417,7 +16431,7 @@ button.inbound-list-row .inbound-list-row__title {
 .email-page--mailbox-collapsed {
   grid-template-columns:
     58px
-    300px
+    270px
     minmax(500px, 1fr);
 }
 
@@ -19311,14 +19325,14 @@ button.inbound-list-row .inbound-list-row__title {
 @media (max-width: 1366px) {
   .email-page {
     grid-template-columns:
-      286px
-      286px
+      270px
+      270px
       minmax(480px, 1fr);
     gap: 8px;
   }
 
   .email-page--mailbox-collapsed {
-    grid-template-columns: 58px 286px minmax(480px, 1fr);
+    grid-template-columns: 58px 270px minmax(480px, 1fr);
   }
 
   .email-mail-workspace {
@@ -19666,7 +19680,7 @@ button.inbound-list-row .inbound-list-row__title {
   width: 100%;
   min-width: 0;
   min-height: 0;
-  grid-template-columns: 280px 220px minmax(380px, 1fr) 260px;
+  grid-template-columns: 270px 270px minmax(380px, 1fr) 260px;
   gap: 10px;
   overflow: hidden;
   background: #fcfcfc;
@@ -19675,7 +19689,7 @@ button.inbound-list-row .inbound-list-row__title {
 }
 
 .social-media-page--queue-collapsed {
-  grid-template-columns: 44px 220px minmax(440px, 1fr) 260px;
+  grid-template-columns: 44px 270px minmax(440px, 1fr) 260px;
 }
 
 .social-media-page__queue-panel,
@@ -22040,7 +22054,7 @@ button.inbound-list-row .inbound-list-row__title {
 
 @media (max-width: 1360px) {
   .social-media-page {
-    grid-template-columns: 280px minmax(0, 1fr);
+    grid-template-columns: 270px minmax(0, 1fr);
   }
 
   .social-media-page--queue-collapsed {
