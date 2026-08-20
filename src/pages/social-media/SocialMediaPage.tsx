@@ -634,7 +634,7 @@ function openSocialMediaPostPage(item: SocialMediaItem) {
 function getSourceContextLabel(item: SocialMediaItem) {
   switch (getSourceContext(item)) {
     case 'bca-post-comment':
-      return 'BCA Post Comment'
+      return ''
     case 'customer-post-mention':
       return 'Customer Post Mention'
     case 'third-party-comment-mention':
@@ -1289,6 +1289,7 @@ function SocialCustomerContext({
           </span>
         }
         customer={customer}
+        hideVerificationStatus
         journey={createSocialCustomerJourney(item)}
         nextBestActions={socialNextBestActions}
         quickActions={socialQuickActions}

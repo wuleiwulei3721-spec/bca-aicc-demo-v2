@@ -43,6 +43,7 @@ interface CustomerInformationCardProps {
   accessMenuLabel?: string
   accessMenuName?: string
   customer: CustomerInformation
+  hideVerificationStatus?: boolean
   onSendEmail?: () => void
   onOpenVerification: (config: CustomerVerificationPanelConfig) => void
   onVerificationFinish: (status: VerificationStatus) => void
@@ -263,6 +264,7 @@ export function CustomerInformationCard({
   accessMenuLabel = 'Business Menu Selection Record',
   accessMenuName,
   customer,
+  hideVerificationStatus,
   onSendEmail,
   onOpenVerification,
   onVerificationFinish,
@@ -523,6 +525,7 @@ export function CustomerInformationCard({
         }
         isDirectOutbound={!requiresOutboundApproval}
         outboundRequestStatus={outboundRequestStatus}
+        hideVerificationStatus={hideVerificationStatus}
         verificationStatus={effectiveVerificationStatus}
         verifyButtonDisabled={
           verificationAction === 'pin' ? pinButtonDisabled : false

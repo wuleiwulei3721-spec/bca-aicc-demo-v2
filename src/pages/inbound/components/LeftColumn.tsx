@@ -24,6 +24,7 @@ interface LeftColumnProps {
   tickets: TicketHistoryItem[]
   nextBestActions: NextBestActionItem[]
   quickActions: QuickActionItem[]
+  hideVerificationStatus?: boolean
   onOpenCrm: (tab: CrmWorkspaceTab) => void
   onSendEmail?: () => void
   onOpenVerification: (config: CustomerVerificationPanelConfig) => void
@@ -43,6 +44,7 @@ export function LeftColumn({
   tickets,
   nextBestActions,
   quickActions,
+  hideVerificationStatus,
   onOpenCrm,
   onSendEmail,
   onOpenVerification,
@@ -60,6 +62,7 @@ export function LeftColumn({
           accessMenuLabel={accessMenuLabel}
           accessMenuName={accessMenuName}
           customer={customer}
+          hideVerificationStatus={hideVerificationStatus}
           onSendEmail={onSendEmail}
           showIvrJourney={showIvrJourney}
           showTransferHistory={showTransferHistory}
