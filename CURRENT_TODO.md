@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-08-19 20:08 +08:00
+Last updated: 2026-08-21 10:45 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -151,6 +151,12 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Abnormal End Reasons query, add, edit, disable, and delete, with two active DM defaults and no default Voice/Video reason,
 - Interaction Log 30 mock records, default current-day Date Range paging, Call Type list/filter (`Customer` / `Transfer` / `Conference`), Rating Score list/filter (`1`-`5` and PSTN `-`), numeric QM Score third-party detail preview and non-interactive empty score, View-only Actions, Voice left media playback / middle transcript / right Ticket-and-Summary scroll card plus Satisfaction detail, Video left replay / middle transcript / right Ticket-and-Summary scroll card plus Satisfaction detail, DM conversation / right Ticket-and-Summary scroll card plus Satisfaction detail, each Ticket showing its CRM ID and plain Summary-style Category text, and read-only CWU detail,
   - Login Log 19 seeded records across the default seven-day range, keyword, Time Range, Operation, Log Out Type filters, live Login / manual Log Out / idle Log Out records, and seeded System records.
+- Verify Social Media Interaction Log:
+  - `Social Media > Interaction Log` opens a closable workspace page tab and `/social-media/interaction-log` reuses it,
+  - mandatory Customer Contact Time range, channel/message type/account/agent/team/BCA account/ticket/duration/summary filters, Search, and Reset work,
+  - Agent Lookup fills the Agent Name filter,
+  - Alert `Yes` opens alert detail and View opens conversation plus Ticket detail,
+  - role-scoped mock visibility matches Agent versus TL/SPV/OM/RTFM expectations.
 - Verify Routing Config:
   - Routing Config visible by default,
   - Channels Phone Accounts disabled,
@@ -195,7 +201,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Add independent Email Record Inquiry list/detail scope when confirmed; do not fold it into Interaction Log.
 - Add Email Template Deploy CRUD and backend template integration when confirmed.
 - Add real mailbox/SMTP, attachment, routing, permission, audit, and CWU persistence contracts if Email moves beyond front-end demo state.
-- Define Social Media API, channel authentication, moderation, routing, delivery, audit, persistence, service-ending, and independent record-inquiry contracts before treating the Social Media workspace as a production integration.
+- Define Social Media API, channel authentication, moderation, routing, delivery, audit, persistence, service-ending, and backend Interaction Log query contracts before treating the Social Media workspace or Social Media Interaction Log as production integrations.
 - Add Webchat voice and video customer simulation if customer requires it.
 - Add Dashboard page if demo scope expands.
 - Add Supervisor page if demo scope expands.

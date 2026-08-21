@@ -1,8 +1,31 @@
 # Decision Log
 
-Last updated: 2026-08-19 19:04 +08:00
+Last updated: 2026-08-21 10:45 +08:00
 
 This document records important product and system design decisions that can be confirmed from the current codebase, project documents, `DEV_LOG.md`, and readable Git history. It intentionally omits bug fixes, visual micro-adjustments, temporary test data, copy-only tweaks, and implementation details that do not affect product direction.
+
+--------------------------------------------------
+
+Decision ID:
+DEC-046
+
+Module:
+Social Media Interaction Log
+
+Decision:
+Social Media records are delivered as a dedicated customer-visible `Social Media > Interaction Log` workspace page, opened through `/social-media/interaction-log`, rather than being added to `Call Management > Interaction Log`.
+
+Reason:
+The social media query model has distinct channel, message type, customer account, agent, team, social account, ticket, alert, and conversation-detail fields. Keeping it separate preserves the existing Call Management Interaction Log boundary for Phone, BankApp, Webchat, and WhatsApp service records while still giving the customer a working social history query entry.
+
+Impact:
+The new page is registered through the shared workspace page tab registry and is visible in the customer profile. It uses anonymized front-end mock data, role-scoped display rules, agent lookup, alert detail, and read-only conversation detail. Backend query, social API, audit, attachment, moderation, and quality-management contracts remain future work.
+
+Status:
+Implemented as front-end demo behavior
+
+Source:
+Customer request and 社媒会话查询 requirement document on 2026-08-21; Code: `src/pages/social-media/SocialMediaInteractionLogPage.tsx`, `src/mock/socialMediaInteractionLog.ts`, `src/types/socialMediaInteractionLog.ts`, `src/config/workspacePageTabs.tsx`, `src/layouts/BasicLayout.tsx`, `src/routes.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `PROJECT_CONTEXT.md`, `DEV_LOG.md`
 
 --------------------------------------------------
 

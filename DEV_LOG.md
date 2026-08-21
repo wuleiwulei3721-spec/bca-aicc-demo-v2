@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-08-19 20:12 +08:00
+最后更新：2026-08-21 10:45 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,43 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-08-21 10:45 +08:00 - Social Media Interaction Log 独立查询入口
+
+修改页面或文件：
+
+- `src/pages/social-media/SocialMediaInteractionLogPage.tsx`
+- `src/mock/socialMediaInteractionLog.ts`
+- `src/types/socialMediaInteractionLog.ts`
+- `src/config/workspacePageTabs.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/routes.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 根据 `社媒会话查询.docx` 和客户要求，在现有查询结果风格下补充 Social Media Interaction Log，并作为独立 Social Media 菜单入口展示，不混入 Call Management 的 Interaction Log。
+
+修改结果：
+
+- 新增 `Social Media > Interaction Log` 左侧菜单，路由为 `/social-media/interaction-log`，通过工作台页签打开并复用已打开页签。
+- 页面支持 Channel、Message Type、Customer Account、Agent Name、Team、BCA Account、Ticket Type、Customer Contact Time、Distribute to Agent Time、First Response Time、Response Duration、Summary 查询条件；Customer Contact Time 必填且默认最近七天，Response Duration 按 `HH:mm:ss` 校验。
+- 新增 Agent Lookup、Alert Details、View conversation / Ticket 详情弹窗。
+- 社媒记录使用前端匿名 mock 数据；OM、RTFM、SPV、TL 可看全部 mock 记录，普通 Agent 只看当前登录姓名匹配的记录。
+
+验证：
+
+- 本地 `pnpm run lint` 通过。
+- 本地 `pnpm run build` 通过；仅保留既有 Vite large chunk warning。
+
+回滚说明：
+
+- 移除新增 Social Media Interaction Log 页面、mock、类型、样式，并从 `workspacePageTabs`、`BasicLayout`、`routes`、`moduleVisibility` 中删除 `social-media` 模块和路由接线即可回滚。
+
+当前风险点：
+
+- 当前页面仅为前端 demo 查询；真实 Social Media API、权限、审计、附件、质检系统跳转、持久化和服务结束规则仍需后续后端契约确认。
 
 ### 2026-08-19 20:12 +08:00 - Ticket Category / Product production deployment
 

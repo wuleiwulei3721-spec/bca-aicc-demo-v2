@@ -8,6 +8,7 @@ export type ModuleVisibilityKey =
   | 'employee-management'
   | 'monitoring'
   | 'routing-config'
+  | 'social-media'
 
 const rawVisibilityProfile = String(
   import.meta.env.VITE_APP_VISIBILITY_PROFILE ?? 'customer',

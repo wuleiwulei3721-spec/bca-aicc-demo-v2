@@ -2,6 +2,7 @@ import {
   BranchesOutlined,
   CustomerServiceOutlined,
   IdcardOutlined,
+  MessageOutlined,
   SettingOutlined,
 } from '@ant-design/icons'
 import type { ReactNode } from 'react'
@@ -22,6 +23,7 @@ import {
   VerificationRuleV2Page,
 } from '../pages/call-management'
 import { EmployeeProfileManagementPage } from '../pages/employee-management'
+import { SocialMediaInteractionLogPage } from '../pages/social-media'
 import {
   BusinessTypesPage,
   ChannelsPage,
@@ -46,6 +48,7 @@ export interface WorkspacePageTabDefinition {
 const callManagementIcon = <CustomerServiceOutlined />
 const routingConfigIcon = <BranchesOutlined />
 const employeeManagementIcon = <IdcardOutlined />
+const socialMediaIcon = <MessageOutlined />
 const designSystemIcon = <SettingOutlined />
 
 export const workspacePageTabDefinitions: WorkspacePageTabDefinition[] = [
@@ -156,6 +159,15 @@ export const workspacePageTabDefinitions: WorkspacePageTabDefinition[] = [
     moduleKey: 'call-management',
     routePath: '/call-management/login-log',
     tabKey: 'page:call-management-login-log',
+  },
+  {
+    element: <SocialMediaInteractionLogPage />,
+    icon: socialMediaIcon,
+    label: 'Interaction Log',
+    menuKey: 'social-media-interaction-log',
+    moduleKey: 'social-media',
+    routePath: '/social-media/interaction-log',
+    tabKey: 'page:social-media-interaction-log',
   },
   {
     element: <VdnPage />,

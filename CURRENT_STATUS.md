@@ -1,10 +1,10 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-08-19 20:08 +08:00
+Last updated: 2026-08-21 10:45 +08:00
 
 ## 1. Overall Status
 
-The project is a mature front-end demo for BANK 1 AICC. It includes authentication, global shell, agent status and call toolbar, inbound voice workspace, BankApp, Webchat, and WhatsApp customer simulations, video demo, live chat workspace, static Monitoring screenshots, call management configuration, routing configuration, local-only employee management, and a local-only design system page. Visible management pages now open as closable workspace tabs so agents can switch back to active call, popup, and Live Chat tabs.
+The project is a mature front-end demo for BANK 1 AICC. It includes authentication, global shell, agent status and call toolbar, inbound voice workspace, BankApp, Webchat, and WhatsApp customer simulations, video demo, live chat workspace, static Monitoring screenshots, call management configuration, Social Media Interaction Log, routing configuration, local-only employee management, and a local-only design system page. Visible management pages now open as closable workspace tabs so agents can switch back to active call, popup, and Live Chat tabs.
 
 This repository is still a demo application:
 
@@ -91,10 +91,12 @@ This repository is still a demo application:
 - WhatsApp Demo tab.
 - Customer and local profiles expose the Email workspace entry below WhatsApp.
 - Customer and local profiles expose the Social Media workspace entry immediately below Email.
+- Customer profiles expose a separate `Social Media > Interaction Log` workspace-page entry.
 - Fixed Live Chat tab.
 - Dynamic PSTN / Voice Call / Outbound Call tabs.
 - Dynamic Video Call tabs.
 - Closable workspace page tabs for visible Call Management, Routing Config, local-only Employee Management, and local-only Design System pages.
+- Closable workspace page tab for the visible Social Media Interaction Log page.
 - Duplicate management page tabs are prevented by stable `page:*` tab keys.
 - Ended call tab close behavior.
 - A new voice/video interaction automatically removes all ended voice/video tabs and their embedded CRM workspaces, leaving only the latest call available for CRM editing.
@@ -228,7 +230,9 @@ This repository is still a demo application:
 - The standalone agent workspace provides search, channel and item-type filters, reply SLA progress, a queue for Chats / Comments / Mentions / Reviews, CRM preview, post detail, and local CWU prototype states.
 - Review items include a local draft and Send reply interaction. Queue, filters, drafts, replies, CWU, and active selection reset after refresh or closing/reopening the tab.
 - Demo data covers Facebook, Instagram, X, YouTube, LinkedIn, TikTok, App Store, and Google Play using anonymized mock content.
-- The workspace does not add real social API delivery, authentication, moderation, persistence, routing, service-ending behavior, or Social Media record inquiry.
+- The separate `Social Media > Interaction Log` page is customer-visible. It uses anonymized mock records for Twitter, Facebook, Instagram, YouTube, TikTok, and LinkedIn; supports channel, message type, customer account, agent, team, BCA account, ticket type, mandatory customer-contact time range, distribution time, first-response time, response-duration, and summary filters; exposes agent lookup; and provides alert and conversation detail modals.
+- Social Media Interaction Log applies current front-end role scoping: OM, RTFM, SPV, and TL can view all seeded records; ordinary agents see only records assigned to their session display name.
+- The Social Media workspace and Social Media Interaction Log do not add real social API delivery, authentication, moderation, persistence, routing, or service-ending behavior.
 
 ## 15. Completed Call Management
 
@@ -278,7 +282,7 @@ Implemented behaviors:
 - Interaction Log details use a consistent layout: Voice and Video show left media playback, middle transcript, and a read-only Ticket / Summary card plus Satisfaction panel on the right; DM shows conversation bubbles plus the same right-side panels without an empty media column. Each Ticket uses a CRM-style ID label and one plain Category text value styled like Summary; Product is retained but not displayed. Ticket entries and the single AI-generated service Summary are separated inside one scrollable card. Satisfaction shows stars and the final rating number without a denominator.
 - Interaction Log treats CWU summary as mandatory and read-only in the query page, so Summary Status, Summary Time, and edit actions are not exposed.
 - Interaction Log uses `Contact` for the customer-side identifier: phone and WhatsApp numbers, BankID for logged-in BankApp/Webchat, and guest IDs for guest Webchat.
-- Email and Social Media records are intentionally excluded from Interaction Log in the current scope.
+- Email and Social Media records are intentionally excluded from `Call Management > Interaction Log`; Social Media records are shown only in the separate `Social Media > Interaction Log` page.
 - Login Log records successful system Login plus manual and idle Log Out events in current demo memory. It defaults to the last seven calendar days, includes 19 seeded records across that period, and sorts Time descending. It filters combined Employee ID / Name keyword, Time Range, Operation, and Log Out Type; Login renders `-`, while manual and idle Log Out render `User` and `System` respectively.
 - Local store state for demo changes.
 
