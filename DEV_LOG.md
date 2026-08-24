@@ -63,6 +63,26 @@ Historical entries are preserved in archive files without content rewrites. Use 
 
 - 当前仍为 Zustand 内存 Demo；后端接口需要同步 Country Code 字段、Phone/非 Phone 渠道互斥和新的重复键规则。
 
+### 2026-08-24 11:55 +08:00 - Production 发布 63180ca
+
+发布信息：
+
+- 提交：`63180ca feat: update call management demo configuration`
+- 命令：`vercel deploy --prod --yes --build-env VITE_APP_VISIBILITY_PROFILE=customer`
+- 环境：`VITE_APP_VISIBILITY_PROFILE=customer`
+- 生产地址：`https://netinfo-aicc-demo-v2.vercel.app`
+- 部署详情：`https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/7EPake9NuSQfbUgaBWiYxsTUehZ7`
+
+验证结果：
+
+- 发布前 `git diff --check`、`npm run lint`、`npm run build` 通过；线上首页返回 HTTP 200。
+- Vercel 远端构建成功，仅保留既有 bundle size warning。
+
+回滚说明：
+
+- 可在 Vercel 部署详情中重新提升上一份生产部署；本次发布前的 Git 提交为 `e1e0cbe`。
+- 本次 GitHub `main` 推送因网络连接重置未完成，本地 `main` 当前领先 `origin/main` 两个提交（包含本发布记录）。
+
 ### 2026-08-20 14:55 +08:00 - 接收坐席转入提示
 
 修改页面或文件：
