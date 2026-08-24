@@ -260,12 +260,6 @@ export interface NextBestActionItem {
   crmLink: string
 }
 
-export interface QuickActionItem {
-  id: string
-  label: string
-  crmLink: string
-}
-
 export type CrmWorkspaceTabKind =
   | 'ticket'
   | 'next-best-action'

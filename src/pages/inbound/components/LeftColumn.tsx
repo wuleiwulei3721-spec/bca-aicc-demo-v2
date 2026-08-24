@@ -4,7 +4,6 @@ import type {
   CrmWorkspaceTab,
   CustomerJourneyItem,
   NextBestActionItem,
-  QuickActionItem,
   TicketHistoryItem,
 } from '../../../types'
 import type { CallTransferContext } from '../../../store'
@@ -23,7 +22,6 @@ interface LeftColumnProps {
   journey: CustomerJourneyItem[]
   tickets: TicketHistoryItem[]
   nextBestActions: NextBestActionItem[]
-  quickActions: QuickActionItem[]
   onOpenCrm: (tab: CrmWorkspaceTab) => void
   onSendEmail?: () => void
   onOpenVerification: (config: CustomerVerificationPanelConfig) => void
@@ -42,7 +40,6 @@ export function LeftColumn({
   journey,
   tickets,
   nextBestActions,
-  quickActions,
   onOpenCrm,
   onSendEmail,
   onOpenVerification,
@@ -73,7 +70,7 @@ export function LeftColumn({
         <CustomerJourneyCard items={journey} />
         <TicketingHistoryCard items={tickets} onOpenCrm={onOpenCrm} />
         <NextBestActionCard items={nextBestActions} onOpenCrm={onOpenCrm} />
-        <QuickActionCard items={quickActions} onOpenCrm={onOpenCrm} />
+        <QuickActionCard onOpenCrm={onOpenCrm} />
       </div>
     </div>
   )

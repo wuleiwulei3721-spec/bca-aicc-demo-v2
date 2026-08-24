@@ -11,6 +11,7 @@ import {
   defaultCommonPhraseEntries,
 } from '../mock/commonPhrases'
 import { defaultPriorityListEntries } from '../mock/priorityList'
+import { defaultQuickActionEntries } from '../mock/quickActions'
 import { defaultSensitiveWordEntries } from '../mock/sensitiveWords'
 import { defaultSessionEndReasonEntries } from '../mock/sessionEndReasons'
 import type {
@@ -28,6 +29,8 @@ import type {
   LoginLogLogoutType,
   LoginLogOperation,
   PriorityListEntry,
+  QuickActionEntry,
+  QuickActionReorderDirection,
   SensitiveWordEntry,
   SensitiveWordMatch,
   SessionEndMediaType,
@@ -41,6 +44,7 @@ interface CallManagementStore {
   addCommonLinkEntry: (entry: CommonLinkEntry) => void
   addCommonNumberEntry: (entry: CommonNumberEntry) => void
   addPriorityListEntries: (entries: PriorityListEntry[]) => void
+  addQuickActionEntry: (entry: QuickActionEntry) => void
   addSensitiveWordEntry: (entry: SensitiveWordEntry) => void
   addSessionEndReasonEntry: (entry: SessionEndReasonEntry) => void
   blacklistEntries: BlacklistEntry[]
@@ -56,6 +60,7 @@ interface CallManagementStore {
   deleteCommonLinkEntries: (ids: string[]) => void
   deleteCommonNumberEntries: (ids: string[]) => void
   deletePriorityListEntries: (ids: string[]) => void
+  deleteQuickActionEntries: (ids: string[], updatedBy: string) => void
   deleteSensitiveWordEntries: (ids: string[]) => void
   deleteSessionEndReasonEntries: (ids: string[]) => void
   findSensitiveWordMatches: (message: string) => SensitiveWordMatch[]
@@ -65,7 +70,13 @@ interface CallManagementStore {
   globalControlConfiguration: GlobalControlConfiguration
   loginLogs: LoginLogEntry[]
   moveCommonPhraseEntries: (phraseIds: string[], categoryId: string) => void
+  moveQuickActionEntry: (
+    id: string,
+    direction: QuickActionReorderDirection,
+    updatedBy: string,
+  ) => void
   priorityListEntries: PriorityListEntry[]
+  quickActionEntries: QuickActionEntry[]
   recordLoginLog: (entry: {
     employeeId: string
     employeeName: string
@@ -80,6 +91,7 @@ interface CallManagementStore {
   resetCommonPhrases: () => void
   resetGlobalControlConfiguration: () => void
   resetPriorityListEntries: () => void
+  resetQuickActionEntries: () => void
   resetSensitiveWordEntries: () => void
   resetSessionEndReasonEntries: () => void
   renameCommonPhraseCategory: (categoryId: string, categoryName: string) => void
@@ -93,6 +105,7 @@ interface CallManagementStore {
   updateCommonLinkEntry: (entry: CommonLinkEntry) => void
   updateCommonNumberEntry: (entry: CommonNumberEntry) => void
   updateCommonPhraseEntry: (entry: CommonPhraseEntry) => void
+  updateQuickActionEntry: (entry: QuickActionEntry) => void
   updateSensitiveWordEntry: (entry: SensitiveWordEntry) => void
   updateSessionEndReasonEntry: (entry: SessionEndReasonEntry) => void
   upsertBusyReason: (busyReason: BusyReason) => void
@@ -137,6 +150,10 @@ function cloneCommonPhraseEntries() {
 
 function clonePriorityListEntries() {
   return defaultPriorityListEntries.map((entry) => ({ ...entry }))
+}
+
+function cloneQuickActionEntries() {
+  return defaultQuickActionEntries.map((entry) => ({ ...entry }))
 }
 
 function cloneSensitiveWordEntries() {
@@ -196,6 +213,19 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
         ...state.priorityListEntries,
       ],
     })),
+  addQuickActionEntry: (entry) =>
+    set((state) => {
+      const orderedEntries = [...state.quickActionEntries].sort(
+        (first, second) => first.sortOrder - second.sortOrder,
+      )
+
+      return {
+        quickActionEntries: [
+          ...orderedEntries,
+          { ...entry, sortOrder: orderedEntries.length + 1 },
+        ],
+      }
+    }),
   addSensitiveWordEntry: (entry) =>
     set((state) => ({
       sensitiveWordEntries: [{ ...entry }, ...state.sensitiveWordEntries],
@@ -273,6 +303,24 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
         ),
       }
     }),
+  deleteQuickActionEntries: (ids, updatedBy) =>
+    set((state) => {
+      const idSet = new Set(ids)
+      const updatedAt = new Date().toISOString()
+      const remainingEntries = state.quickActionEntries
+        .filter((entry) => !idSet.has(entry.id))
+        .sort((first, second) => first.sortOrder - second.sortOrder)
+
+      return {
+        quickActionEntries: remainingEntries.map((entry, index) => {
+          const sortOrder = index + 1
+
+          return entry.sortOrder === sortOrder
+            ? entry
+            : { ...entry, sortOrder, updatedAt, updatedBy }
+        }),
+      }
+    }),
   deleteSensitiveWordEntries: (ids) =>
     set((state) => {
       const idSet = new Set(ids)
@@ -336,7 +384,47 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
         ),
       }
     }),
+  moveQuickActionEntry: (id, direction, updatedBy) =>
+    set((state) => {
+      const orderedEntries = [...state.quickActionEntries].sort(
+        (first, second) => first.sortOrder - second.sortOrder,
+      )
+      const sourceIndex = orderedEntries.findIndex((entry) => entry.id === id)
+
+      if (sourceIndex < 0) {
+        return state
+      }
+
+      const targetIndex =
+        direction === 'top'
+          ? 0
+          : direction === 'up'
+            ? Math.max(0, sourceIndex - 1)
+            : direction === 'down'
+              ? Math.min(orderedEntries.length - 1, sourceIndex + 1)
+              : orderedEntries.length - 1
+
+      if (sourceIndex === targetIndex) {
+        return state
+      }
+
+      const [movedEntry] = orderedEntries.splice(sourceIndex, 1)
+      orderedEntries.splice(targetIndex, 0, movedEntry)
+
+      const updatedAt = new Date().toISOString()
+
+      return {
+        quickActionEntries: orderedEntries.map((entry, index) => {
+          const sortOrder = index + 1
+
+          return entry.sortOrder === sortOrder
+            ? entry
+            : { ...entry, sortOrder, updatedAt, updatedBy }
+        }),
+      }
+    }),
   priorityListEntries: clonePriorityListEntries(),
+  quickActionEntries: cloneQuickActionEntries(),
   recordLoginLog: (entry) =>
     set((state) => ({
       loginLogs: [
@@ -364,6 +452,8 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
     set({ globalControlConfiguration: cloneGlobalControlConfiguration() }),
   resetPriorityListEntries: () =>
     set({ priorityListEntries: clonePriorityListEntries() }),
+  resetQuickActionEntries: () =>
+    set({ quickActionEntries: cloneQuickActionEntries() }),
   resetSensitiveWordEntries: () =>
     set({ sensitiveWordEntries: cloneSensitiveWordEntries() }),
   resetSessionEndReasonEntries: () =>
@@ -420,6 +510,12 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
         currentEntry.phraseId === entry.phraseId
           ? { ...entry }
           : currentEntry,
+      ),
+    })),
+  updateQuickActionEntry: (entry) =>
+    set((state) => ({
+      quickActionEntries: state.quickActionEntries.map((currentEntry) =>
+        currentEntry.id === entry.id ? { ...entry } : currentEntry,
       ),
     })),
   updateSensitiveWordEntry: (entry) =>

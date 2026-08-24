@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-08-19 20:08 +08:00
+Last updated: 2026-08-20 11:44 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -37,13 +37,13 @@ Implemented status model:
 - The current demo has fixed internal full-channel capability. Voice/video and text handoffs are gated only by `Ready` state and active-service guards; no sign-in-mode mismatch warning is shown.
 - A Not Ready sign-in opens no Live Chat service or default customer session. The first switch to Ready opens the fixed `Live Chat` tab and seeds default live chat demo sessions.
 - Saving or resetting Global Control Configuration changes the status applied by the next sign-in and immediately synchronizes the Live Chat ended-session retention limit in the current browser session. Refresh resets the demo configuration to its mock defaults.
-- Global Control `System Idle Log-out Timeout` is a system-session inactivity setting. `Auto Log-out Warning Lead Time` defines how long before that timeout the system warns the agent. Neither setting represents or changes the agent toolbar `Sign Out` action.
+- Global Control `System Idle Log-out Timeout` is a system-session inactivity setting. A value of `0` disables automatic log-out, so `Auto Log-out Warning Lead Time` is disabled, not validated, and not applied. When the timeout is greater than `0`, the warning lead time becomes required and must be greater than `0` and less than the timeout. Neither setting represents or changes the agent toolbar `Sign Out` action.
 
 ### Profile Menu
 
 - The profile team line displays the current agent status after ` | `. AUX and Pre-AUX display as `AUX: {reason}` and `Pre-AUX: {reason}`.
-- `Not Ready` menu: read-only current status, `Ready`, active Busy Reason entries as AUX options, `Sign Out`, `Settings`.
-- `Ready` menu: read-only current status, active Busy Reason entries as AUX options, `Settings`.
+- `Not Ready` menu: read-only current status, `Ready`, active AUX Reason entries as AUX options, `Sign Out`, `Settings`.
+- `Ready` menu: read-only current status, active AUX Reason entries as AUX options, `Settings`.
 - `Pre-AUX` menu: read-only current status, `Ready`, `Settings`. Sign Out is hidden while service is still draining.
 - `AUX` menu: read-only current status, `Ready`, `Sign Out`, `Settings`.
 - The profile menu does not show a separate `Signed in` item.
@@ -62,7 +62,7 @@ Implemented status model:
 - When the agent is signed in and is neither `Not Ready` nor AUX, including `Ready` and `Pre-AUX`, Log Out is blocked with: `To prevent new customer work from being assigned while you log out, change your status to Not Ready or AUX before logging out.`
 - `Unsigned`, `Not Ready`, and AUX statuses show the `Confirm Log Out` confirmation. Confirming clears agent service state, clears the auth session and any pending or unused external-operation approval, and returns to the login page.
 - Idle monitoring applies only while status is `Unsigned`, `Not Ready`, or AUX. It resets whenever the agent enters one of those statuses, leaves that scope, closes the warning, or performs a window activity such as focus, pointer movement/click, keyboard input, scrolling, or touch input.
-- At `System Idle Log-out Timeout - Auto Log-out Warning Lead Time`, the demo shows `Session Expiring`; closing the dialog or choosing `Continue Working` resets the timer. At the full timeout, the demo automatically logs out.
+- When `System Idle Log-out Timeout` is greater than `0`, the demo shows `Session Expiring` at `System Idle Log-out Timeout - Auto Log-out Warning Lead Time`; closing the dialog or choosing `Continue Working` resets the timer. At the full timeout, the demo automatically logs out. A timeout of `0` creates no timer, warning, or automatic log-out.
 - This is a current-window front-end demo only. It does not provide server session invalidation, multi-tab synchronization, or a backend authentication revocation flow.
 
 ### Login Log
@@ -83,15 +83,15 @@ Implemented status model:
 ### Not Ready
 
 - `Not Ready` means the agent cannot receive new customer interactions.
-- The agent can select an active Busy Reason to enter AUX from any Not Ready state, whether it was entered manually or by After Call Work.
+- The agent can select an active AUX Reason to enter AUX from any Not Ready state, whether it was entered manually or by After Call Work.
 - After a normal Hang Up, the agent temporarily enters `Not Ready` as After Call Work.
 - After Call Work auto-returns to `Ready` after the saved `Call Management > Global Control Configuration > Auto Cancel ACW Duration`; the mock default is 10 seconds. If the agent selected an AUX reason during the call and is in Pre-AUX, the same timer completes by entering that pending AUX reason instead.
 - Selecting an AUX reason during After Call Work while any customer service remains active enters `Pre-AUX - {reason}` and keeps the ACW timer running from the original Hang Up time. When that configured duration ends, the agent automatically enters the selected AUX reason.
 
 ### AUX
 
-- AUX reasons are loaded from `Busy Reason`.
-- Only active busy reasons appear in the profile menu.
+- AUX reasons are loaded from `AUX Reason Management`.
+- Only active AUX reasons appear in the profile menu.
 - If the agent selects AUX while active service exists, the status becomes `Pre-AUX - {reason}`.
 - When a voice or video call ends during Pre-AUX, the header profile retains `Pre-AUX - {reason}` while the call toolbar enters Not Ready After Call Work. The configured ACW duration then automatically enters the pending AUX reason. Other service types retain the direct Pre-AUX to AUX completion behavior.
 - AUX clears call state and live chat sessions when it becomes active. Ended voice/video workspace tabs remain available until a later voice/video interaction replaces them.
@@ -194,7 +194,7 @@ Conversation transfer modal:
 Current demo behavior:
 
 - Transfer feedback uses a shared English banner directly below the toolbar and auto-hides after four seconds. Every completed release / successful transfer reuses the current agent's ordinary Hang Up / ACW flow.
-- `Channel Simulation > Transferred Call` is a local-only receiving-seat preview and is hidden in the customer visibility profile. It creates a new PSTN interaction carrying source-agent transfer metadata and shows a green transfer icon after the channel duration. It does not open a second editable popup or send a backend event.
+- `Channel Simulation > Transferred Call` is a local-only receiving-seat preview and is hidden in the customer visibility profile. It creates a new PSTN interaction carrying source-agent transfer metadata, shows the receiving-seat feedback `Transferred from Maya Lestari.` below the toolbar for four seconds, and shows a green transfer icon after the channel duration. It does not open a second editable popup or send a backend event.
 
 ## 7. Outbound Rules
 
@@ -398,9 +398,10 @@ Next Best Action:
 
 Quick Action:
 
-- Shows compact action buttons.
-- Clicking an action opens a dynamic CRM workspace tab.
-- The tab is treated as a quick action form.
+- Shows compact action buttons sourced from `Call Management > Quick Action Management`.
+- All call, Email, and Social Media customer-context cards show only `Active` actions, ordered by stored display order.
+- Clicking an action opens or refreshes its dynamic CRM workspace tab. The configured Link Address is displayed as the tab reference and does not navigate or load an external URL.
+- The tab is treated as a local quick action mock form.
 
 ## 15. CRM Workspace Rules
 
@@ -616,9 +617,10 @@ Visible customer pages:
 - Priority List.
 - Common Phrase.
 - Common Link.
+- Quick Action Management.
 - Common Number.
 - Sensitive Word.
-- Busy Reason.
+- AUX Reason Management.
 - Abnormal End Reasons.
 - Interaction Log.
 
@@ -642,24 +644,24 @@ Hidden / redirected:
 
 ### Priority List
 
-- Entries contain Channel, Identifier, Match Rule, Reason, Created Date, Created By.
+- Entries contain Channel, optional Country Code for Phone, Identifier, Match Rule, Reason, Created Date, Created By.
 - Match rules:
   - Exact Match.
   - Partial Match.
 - Search supports Channel, Identifier, and Match Rule.
 - Empty Match Rule means all match rules.
-- Batch Add uses manually selected Match Rule; Reason is required.
-- Duplicate check uses `Channel + normalized Identifier + Match Rule`.
-- Exact and Partial rules for the same identifier can coexist.
+- Batch Add uses manually selected Match Rule; Reason is required. Phone is mutually exclusive with non-Phone channels, and selecting Phone shows required Country Code (default `062`) and Phone Number fields.
+- Phone duplicate check uses `Channel + normalized Country Code + normalized Identifier`; non-Phone duplicate check uses `Channel + normalized Identifier`. Match Rule does not participate in duplicate detection.
+- Phone Country Code is shown in the list; non-Phone entries render `-`.
 - Store is local front-end state.
 
-### Busy Reason
+### AUX Reason Management
 
-- Active busy reasons appear as AUX options in the agent profile menu.
-- Each Busy Reason has a `Productivity Type`: `Productive` or `Non-Productive`. The classification is maintained for future agent-status and report statistics, without changing the current AUX flow.
-- Busy Reason management lists `Support Outbound` as a read-only status and maintains it in the edit modal. Multiple active reasons can support customer outbound calls; disabled reasons cannot support outbound calls. The DEMO defaults `Callback Finrisk` and `Callback Misinform` to enabled outbound support.
+- Active AUX reasons appear as AUX options in the agent profile menu.
+- Each AUX Reason has a `Productivity Type`: `Productive` or `Non-Productive`. The classification is maintained for future agent-status and report statistics, without changing the current AUX flow.
+- AUX Reason Management lists `Support Outbound` as a read-only status and maintains it in the edit modal. Multiple active reasons can support customer outbound calls; disabled reasons cannot support outbound calls. The DEMO defaults `Callback Finrisk` and `Callback Misinform` to enabled outbound support.
 - Customer-number outbound is available only while the agent is in an active eligible outbound AUX; the selected external outbound reason remains separate from the agent-status reason.
-- Busy Reason management supports keyword, productivity type, and status filtering, plus reason, productivity type, status, and remark editing. It does not use a default-reason configuration.
+- AUX Reason Management supports keyword, productivity type, and status filtering, plus reason, productivity type, status, and remark editing. It does not use a default-reason configuration.
 - Store is local front-end state.
 
 ### Abnormal End Reasons
@@ -707,6 +709,17 @@ Hidden / redirected:
 - Website URL must start with `http://` or `https://`.
 - Shared voice, video, and Live Chat workspaces read Common Link data in the right-side `Common Links` tab.
 - Store is local front-end state.
+
+### Quick Action Management
+
+- Quick Action Management maintains shared customer-context quick actions for the current demo session. It is separate from Common Link, which remains a right-side external-reference list.
+- Entries contain Action Name, Link Address, Status, Remark, persistent display order, Modified By, and Modified Time. The list shows Order, Action Name, Link Address, Status, Remark, Modified By, Modified Time, and Actions.
+- Search supports Action Name and Status. Add, Edit, Delete, and order adjustment are local demo actions.
+- Action Name is unique after trim and lowercase normalization. Link Address is required and must start with `http://` or `https://`; duplicate addresses are allowed.
+- New entries default to `Active` and append to the last display position. Status is changed only in the Add/Edit modal. Disabled entries remain in management search results but do not appear in customer-context Quick Action cards.
+- Order is persisted as a normalized sequential value. The Actions column directly exposes icon-only Move to Top, Move Up, Move Down, and Move to Bottom controls; order changes are unavailable while applied search or status filters are active.
+- Create, edit, status, and reorder changes set `Modified By` to `Admin` and refresh Modified Time. This is demo-level last-modification metadata only, not a complete change-history ledger.
+- The store is local front-end state and resets to default mock entries after refresh. It does not load URLs, perform SSO, accept credentials, or add URL parameters.
 
 ### Common Number
 

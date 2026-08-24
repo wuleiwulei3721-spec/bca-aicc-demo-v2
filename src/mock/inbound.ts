@@ -6,7 +6,6 @@ import type {
   LiveChat2Session,
   LiveChatSession,
   NextBestActionItem,
-  QuickActionItem,
   TicketHistoryItem,
   VerificationBusinessTypeOption,
   VerificationRule,
@@ -1686,33 +1685,5 @@ export const nextBestActions: NextBestActionItem[] = [
     id: 'nba-004',
     recommendedService: 'Aktivasi BANK 1 Mobile',
     crmLink: '/crm/recommendations/travel-insurance',
-  },
-]
-
-export const quickActions: QuickActionItem[] = [
-  {
-    id: 'quick-001',
-    label: 'Buka Blokir BANK 1 ID',
-    crmLink: '/crm/quick-actions/unblock-abc-id',
-  },
-  {
-    id: 'quick-002',
-    label: 'Verifikasi Dua Pertanyaan',
-    crmLink: '/crm/quick-actions/two-questions',
-  },
-  {
-    id: 'quick-003',
-    label: 'Penggantian Kartu',
-    crmLink: '/crm/quick-actions/card-replacement',
-  },
-  {
-    id: 'quick-004',
-    label: 'Verifikasi Lima Pertanyaan',
-    crmLink: '/crm/quick-actions/five-questions',
-  },
-  {
-    id: 'quick-005',
-    label: 'Panduan Penggantian Kartu',
-    crmLink: '/crm/quick-actions/card-replacement-guide',
   },
 ]

@@ -21,6 +21,7 @@ import {
   BaseButton,
   BaseCard,
 } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import { useCallManagementStore } from '../../store'
 import type { CommonPhraseCategory, CommonPhraseEntry } from '../../types'
 
@@ -99,7 +100,7 @@ export function CommonPhraseManagementPage() {
   const [movePopoverOpen, setMovePopoverOpen] = useState(false)
   const [moveTargetCategoryId, setMoveTargetCategoryId] = useState('')
   const [newCategoryName, setNewCategoryName] = useState('')
-  const [notice, setNotice] = useState('')
+  const { notify } = useOperationFeedback()
   const [selectedCategoryId, setSelectedCategoryId] =
     useState(allCategoriesKey)
   const [selectedPhraseIds, setSelectedPhraseIds] = useState<string[]>([])
@@ -263,13 +264,12 @@ export function CommonPhraseManagementPage() {
     addCategory(category)
     setNewCategoryName('')
     setSelectedCategoryId(category.categoryId)
-    setNotice('Common phrase category added.')
+    notify('Common phrase category added.')
   }
 
   const startRenameCategory = (category: CommonPhraseCategory) => {
     setEditingCategoryId(category.categoryId)
     setEditingCategoryName(category.categoryName)
-    setNotice('')
   }
 
   const cancelRenameCategory = () => {
@@ -290,7 +290,7 @@ export function CommonPhraseManagementPage() {
 
     renameCategory(editingCategoryId, categoryName)
     cancelRenameCategory()
-    setNotice('Common phrase category renamed.')
+    notify('Common phrase category renamed.')
   }
 
   const confirmDeleteCategory = () => {
@@ -308,7 +308,7 @@ export function CommonPhraseManagementPage() {
       setSelectedCategoryId(allCategoriesKey)
     }
 
-    setNotice('Common phrase category and related phrases deleted.')
+    notify('Common phrase category and related phrases deleted.')
   }
 
   const updateDraft = <Key extends keyof CommonPhraseDraft>(
@@ -319,7 +319,6 @@ export function CommonPhraseManagementPage() {
       ...currentDraft,
       [key]: value,
     }))
-    setNotice('')
   }
 
   const openCreateModal = () => {
@@ -333,14 +332,12 @@ export function CommonPhraseManagementPage() {
     })
     setModalMode('create')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const openEditModal = (entry: CommonPhraseEntry) => {
     setDraft({ ...entry })
     setModalMode('edit')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const closeModal = () => {
@@ -365,10 +362,10 @@ export function CommonPhraseManagementPage() {
 
     if (modalMode === 'edit') {
       updateEntry(nextEntry)
-      setNotice('Common phrase updated.')
+      notify('Common phrase updated.')
     } else {
       addEntry(nextEntry)
-      setNotice('Common phrase added.')
+      notify('Common phrase added.')
     }
 
     closeModal()
@@ -384,7 +381,7 @@ export function CommonPhraseManagementPage() {
       currentIds.filter((phraseId) => phraseId !== deleteEntryTarget.phraseId),
     )
     setDeleteEntryTarget(null)
-    setNotice('Common phrase deleted.')
+    notify('Common phrase deleted.')
   }
 
   const handleSearch = () => {
@@ -408,7 +405,7 @@ export function CommonPhraseManagementPage() {
     ).length
 
     moveEntries(selectedPhraseIds, moveTargetCategoryId)
-    setNotice(
+    notify(
       movedCount === 1
         ? 'Selected common phrase moved.'
         : `${movedCount} selected common phrases moved.`,
@@ -486,7 +483,6 @@ export function CommonPhraseManagementPage() {
             type="button"
             onClick={() => {
               setDeleteEntryTarget(record)
-              setNotice('')
             }}
           >
             <DeleteOutlined />
@@ -503,14 +499,6 @@ export function CommonPhraseManagementPage() {
       className="common-phrase-management"
       title="Common Phrase"
     >
-      {notice && (
-        <Alert
-          showIcon
-          className="routing-config-page__notice"
-          message={notice}
-          type="success"
-        />
-      )}
       <div className="common-phrase-management__layout">
         <BaseCard compact className="common-phrase-management__categories">
           <div className="common-phrase-management__category-search">
@@ -602,7 +590,6 @@ export function CommonPhraseManagementPage() {
                           type="button"
                           onClick={() => {
                             setDeleteCategoryTarget(category)
-                            setNotice('')
                           }}
                         >
                           <DeleteOutlined />

@@ -16,6 +16,7 @@ import {
   AdminPage,
   AdminToolbar,
 } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import { routingProjectCode } from '../../mock/routingConfiguration'
 import { useRoutingConfigStore } from '../../store'
 import type {
@@ -169,10 +170,7 @@ export function SkillRoutingRulesPage() {
   const [targetQueueFilterDraft, setTargetQueueFilterDraft] = useState('ALL')
   const [ruleStatusFilter, setRuleStatusFilter] = useState('ALL')
   const [ruleStatusFilterDraft, setRuleStatusFilterDraft] = useState('ALL')
-  const [notice, setNotice] = useState<{
-    message: string
-    type: 'success' | 'warning'
-  } | null>(null)
+  const { notify } = useOperationFeedback()
   const [modalMode, setModalMode] = useState<RuleModalMode | null>(null)
   const [selectedRule, setSelectedRule] = useState<RoutingRule | null>(null)
   const [ruleDraft, setRuleDraft] = useState<RuleDraft>({
@@ -490,13 +488,11 @@ export function SkillRoutingRulesPage() {
     }
 
     setRoutingRules(nextRules)
-    setNotice({
-      message:
-        overwrittenCount > 0
-          ? `Batch rules applied. ${createdCount} new rule(s), ${overwrittenCount} duplicate rule(s) overwritten.`
-          : `Batch rules applied. ${createdCount} new rule(s) created.`,
-      type: 'success',
-    })
+    notify(
+      overwrittenCount > 0
+        ? `Batch rules applied. ${createdCount} new rule(s), ${overwrittenCount} duplicate rule(s) overwritten.`
+        : `Batch rules applied. ${createdCount} new rule(s) created.`,
+    )
     closeBatchModal()
   }
 
@@ -547,10 +543,7 @@ export function SkillRoutingRulesPage() {
           : rule,
       ),
     )
-    setNotice({
-      message: 'Routing rule updated locally for this demo session.',
-      type: 'success',
-    })
+    notify('Routing rule updated locally for this demo session.')
     closeRuleModal()
   }
 
@@ -562,10 +555,7 @@ export function SkillRoutingRulesPage() {
     setRoutingRules(
       routingRules.filter((rule) => rule.ruleCode !== selectedRule.ruleCode),
     )
-    setNotice({
-      message: 'Routing rule deleted locally for this demo session.',
-      type: 'success',
-    })
+    notify('Routing rule deleted locally for this demo session.')
     closeRuleModal()
   }
 
@@ -740,14 +730,6 @@ export function SkillRoutingRulesPage() {
   return (
     <AdminPage title="Skill Routing Rules">
       <section className="routing-config-page routing-config-rules">
-        {notice && (
-          <Alert
-            showIcon
-            className="routing-config-page__notice"
-            message={notice.message}
-            type={notice.type}
-          />
-        )}
 
         <BaseCard compact>
           <AdminToolbar

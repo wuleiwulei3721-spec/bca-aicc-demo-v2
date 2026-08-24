@@ -13,6 +13,7 @@ import {
   BaseButton,
   BaseCard,
 } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import {
   useAuthStore,
   useCallManagementStore,
@@ -187,7 +188,7 @@ export function BlacklistManagementPage() {
   const [draft, setDraft] = useState<BlacklistDraft>(defaultDraft)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [modalMode, setModalMode] = useState<BlacklistModalMode>(null)
-  const [notice, setNotice] = useState('')
+  const { notify } = useOperationFeedback()
   const [saveWarning, setSaveWarning] = useState('')
   const [selectedEntryIds, setSelectedEntryIds] = useState<string[]>([])
   const [submitAttempted, setSubmitAttempted] = useState(false)
@@ -387,7 +388,6 @@ export function BlacklistManagementPage() {
       ...currentDraft,
       [key]: value,
     }))
-    setNotice('')
     setSaveWarning('')
   }
 
@@ -401,7 +401,6 @@ export function BlacklistManagementPage() {
         ? currentDraft.restrictionPolicy
         : 'block-transfer-to-agent',
     }))
-    setNotice('')
     setSaveWarning('')
   }
 
@@ -411,7 +410,6 @@ export function BlacklistManagementPage() {
     setDraft(createDefaultDraft())
     setModalMode('batch')
     setSubmitAttempted(false)
-    setNotice('')
     setSaveWarning('')
   }
 
@@ -489,7 +487,7 @@ export function BlacklistManagementPage() {
     }
 
     addBlacklistEntries(nextEntries)
-    setNotice(
+    notify(
       nextEntries.length === 1
         ? `Blacklist identifier added.${
             duplicateRows.length > 0
@@ -515,7 +513,6 @@ export function BlacklistManagementPage() {
     }
 
     setDeleteConfirmOpen(true)
-    setNotice('')
   }
 
   const handleDeleteSelected = () => {
@@ -528,7 +525,7 @@ export function BlacklistManagementPage() {
     deleteBlacklistEntries(selectedEntryIds)
     setSelectedEntryIds([])
     setDeleteConfirmOpen(false)
-    setNotice(
+    notify(
       deletedCount === 1
         ? 'Selected blacklist record deleted.'
         : `${deletedCount} selected blacklist records deleted.`,
@@ -539,7 +536,7 @@ export function BlacklistManagementPage() {
     const nextStatus: BlacklistStatus = enabled ? 'Active' : 'Disabled'
 
     updateBlacklistEntryStatus(entry.id, nextStatus)
-    setNotice(
+    notify(
       `Blacklist record ${nextStatus === 'Active' ? 'enabled' : 'disabled'}.`,
     )
   }
@@ -615,14 +612,6 @@ export function BlacklistManagementPage() {
 
   return (
     <AdminPage className="blacklist-management" title="Blacklist">
-        {notice && (
-          <Alert
-            showIcon
-            className="routing-config-page__notice"
-            message={notice}
-            type="success"
-          />
-        )}
         <BaseCard compact>
           <AdminToolbar
             actions={

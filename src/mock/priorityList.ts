@@ -2,6 +2,7 @@ import type { PriorityListEntry } from '../types'
 
 interface PriorityListSeed {
   channels: string[]
+  countryCode?: string
   createdBy: string
   identifiers: string[]
   reason: string
@@ -16,6 +17,7 @@ const priorityListSeeds: PriorityListSeed[] = [
   },
   {
     channels: ['Phone'],
+    countryCode: '062',
     createdBy: 'Admin',
     identifiers: ['08129876543', '08123456789', '08122222222'],
     reason: 'Phone priority customer batch.',
@@ -50,6 +52,7 @@ export const defaultPriorityListEntries: PriorityListEntry[] =
       seed.identifiers.flatMap((identifier) =>
         seed.channels.map((channel) => ({
           channel,
+          countryCode: seed.countryCode,
           createdBy: seed.createdBy,
           identifier,
           matchRule: getSeedMatchRule(identifier),

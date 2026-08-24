@@ -20,6 +20,7 @@ import {
   BaseTabs,
   StatusBadge,
 } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import { employeeOrganizationUnits } from '../../mock/employeeManagement'
 import {
   useEmployeeManagementStore,
@@ -241,7 +242,7 @@ export function EmployeeProfileManagementPage() {
   const [filterDraft, setFilterDraft] =
     useState<EmployeeFilters>(defaultFilters)
   const [modalMode, setModalMode] = useState<EmployeeModalMode>(null)
-  const [notice, setNotice] = useState('')
+  const { notify } = useOperationFeedback()
   const [skillSettingsTarget, setSkillSettingsTarget] =
     useState<EmployeeProfile | null>(null)
   const [skillSettingsDraft, setSkillSettingsDraft] =
@@ -388,7 +389,6 @@ export function EmployeeProfileManagementPage() {
       ...currentDraft,
       [key]: value,
     }))
-    setNotice('')
   }
 
   const handleSearch = () => {
@@ -404,7 +404,6 @@ export function EmployeeProfileManagementPage() {
     setDraft(createDefaultDraft(employeeProfiles))
     setModalMode('create')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const openEditModal = (entry: EmployeeProfile) => {
@@ -414,7 +413,6 @@ export function EmployeeProfileManagementPage() {
     })
     setModalMode('edit')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const closeModal = () => {
@@ -466,7 +464,7 @@ export function EmployeeProfileManagementPage() {
     }
 
     upsertEmployeeProfile(nextEntry)
-    setNotice(
+    notify(
       modalMode === 'edit'
         ? 'Employee profile updated.'
         : 'Employee profile added.',
@@ -481,7 +479,6 @@ export function EmployeeProfileManagementPage() {
     }
     setSkillSettingsTarget(entry)
     setSkillSettingsDraft(nextEntry)
-    setNotice('')
   }
 
   const closeSkillSettings = () => {
@@ -528,7 +525,7 @@ export function EmployeeProfileManagementPage() {
     }
 
     upsertEmployeeProfile(skillSettingsDraft)
-    setNotice('Skill settings updated.')
+    notify('Skill settings updated.')
     closeSkillSettings()
   }
 
@@ -668,14 +665,6 @@ export function EmployeeProfileManagementPage() {
       className="employee-profile-management"
       title="Employee Profile"
     >
-      {notice && (
-        <Alert
-          showIcon
-          className="routing-config-page__notice"
-          message={notice}
-          type="success"
-        />
-      )}
       <BaseCard compact>
         <AdminToolbar
           actions={

@@ -17,6 +17,7 @@ import {
   GlobalControlConfigurationPage,
   LoginLogQueryPage,
   PriorityListManagementPage,
+  QuickActionManagementPage,
   SensitiveWordManagementPage,
   SessionEndReasonManagementPage,
   VerificationRuleV2Page,
@@ -104,6 +105,15 @@ export const workspacePageTabDefinitions: WorkspacePageTabDefinition[] = [
     tabKey: 'page:call-management-common-links',
   },
   {
+    element: <QuickActionManagementPage />,
+    icon: callManagementIcon,
+    label: 'Quick Action Management',
+    menuKey: 'call-management-quick-actions',
+    moduleKey: 'call-management',
+    routePath: '/call-management/quick-actions',
+    tabKey: 'page:call-management-quick-actions',
+  },
+  {
     element: <CommonNumberManagementPage />,
     icon: callManagementIcon,
     label: 'Common Number',
@@ -124,7 +134,7 @@ export const workspacePageTabDefinitions: WorkspacePageTabDefinition[] = [
   {
     element: <BusyReasonManagementPage />,
     icon: callManagementIcon,
-    label: 'Busy Reason',
+    label: 'AUX Reason Management',
     menuKey: 'call-management-busy-reasons',
     moduleKey: 'call-management',
     routePath: '/call-management/busy-reasons',

@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-08-19 20:08 +08:00
+Last updated: 2026-08-20 10:58 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -66,7 +66,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - the next successful Voice or Video incoming interaction closes all ended Voice / Video tabs and their CRM workspaces,
   - Hang Up caret appears only when the current Voice/Video media has an active abnormal reason; otherwise the normal Hang Up button has no caret.
   - `888888 / 888888` Transfer modal shows Agent, Skill, and IVR only; its external outbound requests need approval. In voice `Transfer Agent` and Outbound Call > Call Agent, verify Agent only sees SPV/TL and no ordinary-agent data. `666666 / 666666` (TL Maya Lestari) shows `Transfer Number`, enables direct Transfer after entering a number, does not show Request Approval for external outbound, preserves the `000` failure path, and sees all transfer / outbound agent targets.
-  - Local-only `Channel Simulation > Transferred Call` opens a receiving-seat PSTN preview with a green source-transfer icon after the customer channel duration.
+  - Local-only `Channel Simulation > Transferred Call` opens a receiving-seat PSTN preview with the `Transferred from Maya Lestari.` banner and a green source-transfer icon after the customer channel duration.
 - Verify toolbar call context:
   - PSTN shows IVR and Skill,
   - BankApp voice/video shows BankID and Skill,
@@ -88,6 +88,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - click opens CRM dynamic tabs,
   - dynamic tabs can close,
   - tab labels remain compact.
+  - Quick Action Management: route/menu workspace lifecycle, add/edit/delete validation, Enabled/Disabled visibility, direct icon reorder boundaries/filter guard, `Admin` / Modified Time values, compact no-horizontal-scroll table layout, and shared PSTN / BankApp / Email / Social Media display order.
 - Verify shared CRM Ticket registration in PSTN, voice/video, Live Chat, and Email: searchable single-select Category / Product linkage, long Category / Product values use standard one-line ellipsis with a right-aligned centered arrow, Product reset after Category changes, Summary 250 and Note 1000 character caps with normal-weight lower-right in-input counts, One-Click Generation draft refresh from the left side of the fixed footer, Confirm save feedback, form reset, consecutive ticket creation, and inbound Ticketing History append.
 - Verify Video Popup Workspace:
   - BankApp Video opens Video Call tab,
@@ -142,12 +143,13 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Verification Rules,
   - Global Control Configuration Save / Reset, its effect on the next sign-in, and DM active-service / ended-session-retention limits,
   - Blacklist: Batch Add Status switch defaults to Enabled and saves its selected state, enabled/disabled status filter and inline Status switch, Phone-only country-code (`062` default, editable) / local-number batch mode with a Country Code list column (`-` for non-Phone channels), fixed non-Phone `Prohibit Transfer to Agent` policy, duplicate preview/skip, Reason required, and non-Phone multi-channel Identifier batch behavior,
-  - Priority List: Reason required and existing duplicate / match-rule behavior,
+  - Priority List: Phone-only Country Code (`062` default) / Phone Number mode, mutually exclusive Phone and non-Phone channels, Country Code list column, Reason required, and duplicate validation by Phone `Channel + Country Code + Identifier` or non-Phone `Channel + Identifier` regardless of Match Rule,
   - Common Phrase,
   - Common Link,
+  - Quick Action Management,
   - Common Number,
   - Sensitive Word,
-  - Busy Reason,
+  - AUX Reason Management,
   - Abnormal End Reasons query, add, edit, disable, and delete, with two active DM defaults and no default Voice/Video reason,
 - Interaction Log 30 mock records, default current-day Date Range paging, Call Type list/filter (`Customer` / `Transfer` / `Conference`), Rating Score list/filter (`1`-`5` and PSTN `-`), numeric QM Score third-party detail preview and non-interactive empty score, View-only Actions, Voice left media playback / middle transcript / right Ticket-and-Summary scroll card plus Satisfaction detail, Video left replay / middle transcript / right Ticket-and-Summary scroll card plus Satisfaction detail, DM conversation / right Ticket-and-Summary scroll card plus Satisfaction detail, each Ticket showing its CRM ID and plain Summary-style Category text, and read-only CWU detail,
   - Login Log 19 seeded records across the default seven-day range, keyword, Time Range, Operation, Log Out Type filters, live Login / manual Log Out / idle Log Out records, and seeded System records.
@@ -217,7 +219,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - routing config,
   - blacklist,
   - priority list,
-  - busy reasons,
+  - AUX reasons,
   - live chat sessions,
   - session end reasons and ended-by/end-reason record fields,
   - CRM and assistant integration.

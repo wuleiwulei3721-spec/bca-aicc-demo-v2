@@ -23,7 +23,6 @@ import type {
   CustomerJourneyItem,
   JourneyChannel,
   NextBestActionItem,
-  QuickActionItem,
   TicketHistoryItem,
 } from '../../types'
 import { AssistantPanel } from '../inbound/components/AssistantPanel'
@@ -1168,29 +1167,6 @@ const socialNextBestActions: NextBestActionItem[] = [
   },
 ]
 
-const socialQuickActions: QuickActionItem[] = [
-  {
-    crmLink: '/crm/quick-actions/unblock-bank-id',
-    id: 'social-quick-unblock-bank-id',
-    label: 'Buka Blokir BANK 1 ID',
-  },
-  {
-    crmLink: '/crm/quick-actions/two-question-verification',
-    id: 'social-quick-two-question',
-    label: 'Verifikasi Dua Pertanyaan',
-  },
-  {
-    crmLink: '/crm/quick-actions/card-replacement',
-    id: 'social-quick-card-replacement',
-    label: 'Penggantian Kartu',
-  },
-  {
-    crmLink: '/crm/quick-actions/five-question-verification',
-    id: 'social-quick-five-question',
-    label: 'Verifikasi Lima Pertanyaan',
-  },
-]
-
 function getSocialJourneyChannel(channel: SocialMediaChannel): JourneyChannel {
   return socialJourneyChannelMap[channel] ?? 'Webchat'
 }
@@ -1291,7 +1267,6 @@ function SocialCustomerContext({
         customer={customer}
         journey={createSocialCustomerJourney(item)}
         nextBestActions={socialNextBestActions}
-        quickActions={socialQuickActions}
         tickets={socialTicketingHistory}
         onOpenCrm={onOpenCrm}
         onOpenVerification={() => undefined}

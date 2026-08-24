@@ -14,6 +14,7 @@ import {
   BaseCard,
   StatusBadge,
 } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import { useCallManagementStore } from '../../store'
 import type { CommonNumberEntry, CommonNumberStatus } from '../../types'
 
@@ -98,7 +99,7 @@ export function CommonNumberManagementPage() {
   const [filterDraft, setFilterDraft] =
     useState<CommonNumberFilters>(defaultFilters)
   const [modalMode, setModalMode] = useState<CommonNumberModalMode>(null)
-  const [notice, setNotice] = useState('')
+  const { notify } = useOperationFeedback()
   const [submitAttempted, setSubmitAttempted] = useState(false)
 
   const filteredEntries = useMemo(
@@ -170,7 +171,6 @@ export function CommonNumberManagementPage() {
       ...currentDraft,
       [key]: value,
     }))
-    setNotice('')
   }
 
   const handleSearch = () => {
@@ -186,14 +186,12 @@ export function CommonNumberManagementPage() {
     setDraft(defaultDraft)
     setModalMode('create')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const openEditModal = (entry: CommonNumberEntry) => {
     setDraft({ ...entry })
     setModalMode('edit')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const closeModal = () => {
@@ -222,10 +220,10 @@ export function CommonNumberManagementPage() {
 
     if (modalMode === 'edit') {
       updateEntry(nextEntry)
-      setNotice('Common number updated.')
+      notify('Common number updated.')
     } else {
       addEntry(nextEntry)
-      setNotice('Common number added.')
+      notify('Common number added.')
     }
 
     closeModal()
@@ -237,7 +235,7 @@ export function CommonNumberManagementPage() {
     }
 
     deleteEntries([deleteTarget.id])
-    setNotice('Common number deleted.')
+    notify('Common number deleted.')
     setDeleteTarget(null)
   }
 
@@ -289,7 +287,6 @@ export function CommonNumberManagementPage() {
             type="button"
             onClick={() => {
               setDeleteTarget(record)
-              setNotice('')
             }}
           >
             <DeleteOutlined />
@@ -306,14 +303,6 @@ export function CommonNumberManagementPage() {
       className="common-number-management"
       title="Common Number"
     >
-      {notice && (
-        <Alert
-          showIcon
-          className="routing-config-page__notice"
-          message={notice}
-          type="success"
-        />
-      )}
       <BaseCard compact>
         <AdminToolbar
           actions={

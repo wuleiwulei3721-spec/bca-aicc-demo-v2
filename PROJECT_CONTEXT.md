@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Project Context
 
-Last updated: 2026-08-19 19:04 +08:00
+Last updated: 2026-08-20 10:58 +08:00
 Repository path: `D:\03projects\bca-aicc-demo-v2`
 
 ## 1. Project Name
@@ -109,6 +109,7 @@ Current router structure:
 - `/call-management/priority-list`
 - `/call-management/common-phrases`
 - `/call-management/common-links`
+- `/call-management/quick-actions`
 - `/call-management/common-numbers`
 - `/call-management/sensitive-words`
 - `/call-management/busy-reasons`
@@ -336,9 +337,10 @@ Customer-visible Call Management pages:
 - Priority List.
 - Common Phrase.
 - Common Link.
+- Quick Action Management.
 - Common Number.
 - Sensitive Word.
-- Busy Reason.
+- AUX Reason Management.
 - Abnormal End Reasons.
 - Interaction Log.
 - Login Log.
@@ -461,6 +463,7 @@ Current behaviors:
 - Abnormal End Reasons for abnormal Voice / Video / DM service end reasons.
 - Interaction Log for current-agent Phone, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp history, with 30 mock records, Contact, Queue, Service Time, Ended By, End Reason, QM Score, playback/transcript details, and read-only mandatory CWU summary.
 - Common Number feeds enabled IVR transfer targets in the call Transfer modal.
+- Quick Action Management maintains global enabled quick actions, their display order, and `Admin` / Modified Time metadata for the shared customer-context cards in call, Email, and Social Media workspaces. A quick action continues to open the local CRM mock detail tab; its configured Link Address is a displayed business reference and does not navigate externally.
 - Sensitive word detection for Live Chat agent replies.
 - Routing Config pages listed above.
 - Admin CRUD component set.

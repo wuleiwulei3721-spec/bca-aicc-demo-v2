@@ -32,7 +32,7 @@ export function useIdleLogout({
   const scheduleIdleTimer = useCallback(() => {
     clearTimers()
 
-    if (!enabled) {
+    if (!enabled || timeoutMinutes <= 0) {
       return
     }
 
@@ -57,7 +57,7 @@ export function useIdleLogout({
   useEffect(() => {
     clearTimers()
 
-    if (!enabled) {
+    if (!enabled || timeoutMinutes <= 0) {
       return clearTimers
     }
 
@@ -85,10 +85,10 @@ export function useIdleLogout({
       })
       clearTimers()
     }
-  }, [clearTimers, enabled, resetIdleTimer])
+  }, [clearTimers, enabled, resetIdleTimer, timeoutMinutes])
 
   return {
     dismissWarning: resetIdleTimer,
-    warningOpen,
+    warningOpen: timeoutMinutes > 0 && warningOpen,
   }
 }

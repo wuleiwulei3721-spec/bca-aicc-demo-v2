@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Design System
 
-Last updated: 2026-08-19 19:56 +08:00
+Last updated: 2026-08-20 11:33 +08:00
 
 This document records the current implemented visual rules. It should be treated as the design baseline for future pages and components.
 
@@ -75,7 +75,8 @@ The toolbar is operational and compact:
 - The Ready / Not Ready control remains visible in the toolbar. During the first default-Not Ready sign-in, its Ready state is visibly disabled until a Voice or Video Incoming popup unlocks the ordinary toggle behavior; disabled Ready keeps the same visual on hover and must not suggest clickability.
 - More actions are behind an ellipsis menu; Settings is temporarily hidden from the toolbar More menu.
 - At narrow desktop widths, toolbar actions use their existing icons and tooltips while their text labels and call context are hidden to preserve the right-side controls.
-- Shared operation feedback uses `OperationNotice`: a compact English success/error banner directly below the toolbar, centered without covering the call controls, auto-hiding after four seconds. Transfer and other workspace operation failures reuse this component; do not create page-specific toast styles or use the default Ant message position for operational outcomes.
+- Shared operation feedback uses `OperationFeedbackProvider` and `OperationNotice`: a compact English `success`, `info`, or `error` banner directly below the Header, centered without covering the call controls. It shows only the latest non-blocking result, resets its timer when superseded, and auto-hides after four seconds. Transfer, Email, management configuration, workspace, and local Employee Management outcomes must call the shared feedback hook; do not create page-specific toast styles, title-level success Alerts, or use the default Ant message position for operational outcomes.
+- `OperationNotice` uses a polite live status region for success/info and an assertive alert for errors. Keep validation, duplicate-data guidance, sensitive-word blocks, association/delete guards, login errors, and service/SLA/new-customer warnings in their existing contextual Alert or modal forms. Keep destructive confirmation and approval results as dialogs; do not convert them into an auto-dismissed notice.
 - Do not show a success notice when the resulting state is already immediately visible in the workspace, such as a CRM-driven Customer Information refresh. Keep success feedback for actions whose completion would otherwise be unclear.
 
 Call context display:
@@ -295,9 +296,12 @@ Admin list rules:
 - First data field should not be artificially bold unless the design system says so.
 - Status columns use text badges, not switches.
 - Switches belong in add/edit modals.
+- Size columns for the target desktop workspace before enabling horizontal scroll. Long URLs, remarks, and other secondary text use one-line ellipsis; do not leave avoidable whitespace in one column while pushing essential fields or actions behind a horizontal scrollbar.
+- Use horizontal table scroll only when the confirmed minimum widths still cannot fit the target desktop workspace. In that case, keep the Actions column fixed right; otherwise do not set horizontal scroll or fixed table columns.
+- For manually ordered configuration lists, show Move to Top, Move Up, Move Down, and Move to Bottom as direct icon-only Actions controls with tooltips. Keep boundary and filtered-list controls disabled; do not introduce a page-specific dropdown ordering pattern.
+- Edit modals show requested editable fields only. Do not add created/modified information panels unless the management-page contract explicitly requires them.
 - Admin page content may scroll vertically inside the workspace for long lists; the browser page and left sider top search/collapse area must remain fixed.
 - Internal table vertical scroll is only for long tables inside modals.
-- Actions column should be fixed right when horizontal scroll is needed.
 - Complex filters may wrap, but Search / Reset stay in the query action group and Batch Add / Add stay in the right primary-action group.
 - Admin filter controls must use the shared 32px alignment for Input, Select, and Date/RangePicker controls; placeholders and selected values should be vertically centered.
 - Local-only management modules such as Employee Management must still use English UI text and the same admin layout contract as customer-visible management pages.

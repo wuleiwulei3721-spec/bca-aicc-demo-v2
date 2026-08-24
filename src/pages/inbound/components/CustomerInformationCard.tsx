@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useMemo, useState } from 'react'
 import { EditOutlined, IdcardOutlined } from '@ant-design/icons'
-import { message, Select } from 'antd'
+import { Select } from 'antd'
 import {
   BaseButton,
   BaseModal,
@@ -11,6 +11,7 @@ import {
 import { isLocalContactEditingEnabled } from '../../../config/moduleVisibility'
 import { useExternalOperationApproval } from '../../../hooks/useExternalOperationApproval'
 import { useOutboundEligibility } from '../../../contexts/outboundEligibility'
+import { useOperationFeedback } from '../../../contexts/operationFeedbackContext'
 import { callFlowDetail } from '../../../mock/inbound'
 import { useAppStore, useAuthStore } from '../../../store'
 import type { CallTransferContext } from '../../../store'
@@ -271,6 +272,7 @@ export function CustomerInformationCard({
   showTransferHistory,
   transferContext,
 }: CustomerInformationCardProps) {
+  const { notify } = useOperationFeedback()
   const requestCustomerOutboundCall = useAppStore(
     (state) => state.requestCustomerOutboundCall,
   )
@@ -459,7 +461,7 @@ export function CustomerInformationCard({
     const result = requestOutboundApprovalRequest()
 
     if (result.popupBlocked) {
-      message.error('TL approval window was blocked. Allow pop-ups and try again.')
+      notify('TL approval window was blocked. Allow pop-ups and try again.', 'error')
       return
     }
 

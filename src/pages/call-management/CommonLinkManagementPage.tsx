@@ -13,6 +13,7 @@ import {
   BaseButton,
   BaseCard,
 } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import { useCallManagementStore } from '../../store'
 import type { CommonLinkEntry } from '../../types'
 
@@ -82,7 +83,7 @@ export function CommonLinkManagementPage() {
   const [filterDraft, setFilterDraft] =
     useState<CommonLinkFilters>(defaultFilters)
   const [modalMode, setModalMode] = useState<CommonLinkModalMode>(null)
-  const [notice, setNotice] = useState('')
+  const { notify } = useOperationFeedback()
   const [submitAttempted, setSubmitAttempted] = useState(false)
 
   const filteredEntries = useMemo(
@@ -154,7 +155,6 @@ export function CommonLinkManagementPage() {
       ...currentDraft,
       [key]: value,
     }))
-    setNotice('')
   }
 
   const handleSearch = () => {
@@ -170,14 +170,12 @@ export function CommonLinkManagementPage() {
     setDraft(defaultDraft)
     setModalMode('create')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const openEditModal = (entry: CommonLinkEntry) => {
     setDraft({ ...entry })
     setModalMode('edit')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const closeModal = () => {
@@ -205,10 +203,10 @@ export function CommonLinkManagementPage() {
 
     if (modalMode === 'edit') {
       updateEntry(nextEntry)
-      setNotice('Common link updated.')
+      notify('Common link updated.')
     } else {
       addEntry(nextEntry)
-      setNotice('Common link added.')
+      notify('Common link added.')
     }
 
     closeModal()
@@ -220,7 +218,7 @@ export function CommonLinkManagementPage() {
     }
 
     deleteEntries([deleteTarget.id])
-    setNotice('Common link deleted.')
+    notify('Common link deleted.')
     setDeleteTarget(null)
   }
 
@@ -267,7 +265,6 @@ export function CommonLinkManagementPage() {
             type="button"
             onClick={() => {
               setDeleteTarget(record)
-              setNotice('')
             }}
           >
             <DeleteOutlined />
@@ -281,14 +278,6 @@ export function CommonLinkManagementPage() {
 
   return (
     <AdminPage className="common-link-management" title="Common Link">
-      {notice && (
-        <Alert
-          showIcon
-          className="routing-config-page__notice"
-          message={notice}
-          type="success"
-        />
-      )}
       <BaseCard compact>
         <AdminToolbar
           actions={

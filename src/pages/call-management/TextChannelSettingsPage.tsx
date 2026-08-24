@@ -18,6 +18,7 @@ import {
   PageContainer,
   StatusBadge,
 } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import {
   defaultTextChannelSettings,
   textChannelAlertRecipients,
@@ -197,7 +198,7 @@ export function TextChannelSettingsPage() {
     cloneDefaultConfig,
   )
   const [savedAt, setSavedAt] = useState('2026-06-01 14:30')
-  const [savedNotice, setSavedNotice] = useState<string | null>(null)
+  const { notify } = useOperationFeedback()
   const [status, setStatus] = useState<TextChannelSettingsStatus>('Draft')
 
   const validationErrors = useMemo(() => {
@@ -284,14 +285,13 @@ export function TextChannelSettingsPage() {
   const applySave = (nextStatus: TextChannelSettingsStatus) => {
     const nextSavedAt = formatSavedTime(new Date())
     setSavedAt(nextSavedAt)
-    setSavedNotice(
+    notify(
       nextStatus === 'Published'
         ? 'Configuration published for demo preview.'
         : 'Draft saved locally for this demo session.',
     )
     setStatus(nextStatus)
 
-    window.setTimeout(() => setSavedNotice(null), 3200)
   }
 
   const queueAlertColumns: ColumnsType<TextChannelQueueAlertConfig> = [
@@ -616,14 +616,6 @@ export function TextChannelSettingsPage() {
       title="Text Channel Settings"
     >
       <section className="text-channel-settings">
-        {savedNotice && (
-          <Alert
-            showIcon
-            className="text-channel-settings__notice"
-            message={savedNotice}
-            type="success"
-          />
-        )}
 
         {hasValidationErrors && (
           <Alert

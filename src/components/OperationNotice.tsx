@@ -1,9 +1,10 @@
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
+  InfoCircleOutlined,
 } from '@ant-design/icons'
 
-export type OperationNoticeTone = 'error' | 'success'
+export type OperationNoticeTone = 'error' | 'info' | 'success'
 
 interface OperationNoticeProps {
   message: string | null
@@ -17,11 +18,17 @@ export function OperationNotice({ message, tone }: OperationNoticeProps) {
 
   return (
     <div
-      aria-live="polite"
+      aria-live={tone === 'error' ? 'assertive' : 'polite'}
       className={`aicc-operation-notice aicc-operation-notice--${tone}`}
-      role="status"
+      role={tone === 'error' ? 'alert' : 'status'}
     >
-      {tone === 'success' ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
+      {tone === 'success' ? (
+        <CheckCircleOutlined />
+      ) : tone === 'error' ? (
+        <CloseCircleOutlined />
+      ) : (
+        <InfoCircleOutlined />
+      )}
       <span>{message}</span>
     </div>
   )

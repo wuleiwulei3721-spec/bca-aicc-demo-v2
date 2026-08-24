@@ -13,6 +13,7 @@ import {
   BaseButton,
   BaseCard,
 } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import {
   sensitiveWordCategoryLabels,
   sensitiveWordCategoryOptions,
@@ -84,7 +85,7 @@ export function SensitiveWordManagementPage() {
   const [filterDraft, setFilterDraft] =
     useState<SensitiveWordFilters>(defaultFilters)
   const [modalMode, setModalMode] = useState<SensitiveWordModalMode>(null)
-  const [notice, setNotice] = useState('')
+  const { notify } = useOperationFeedback()
   const [submitAttempted, setSubmitAttempted] = useState(false)
 
   const filteredEntries = useMemo(
@@ -136,7 +137,6 @@ export function SensitiveWordManagementPage() {
       ...currentDraft,
       [key]: value,
     }))
-    setNotice('')
   }
 
   const handleSearch = () => {
@@ -152,14 +152,12 @@ export function SensitiveWordManagementPage() {
     setDraft(defaultDraft)
     setModalMode('create')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const openEditModal = (entry: SensitiveWordEntry) => {
     setDraft({ ...entry })
     setModalMode('edit')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const closeModal = () => {
@@ -187,10 +185,10 @@ export function SensitiveWordManagementPage() {
 
     if (modalMode === 'edit') {
       updateEntry(nextEntry)
-      setNotice('Sensitive word updated.')
+      notify('Sensitive word updated.')
     } else {
       addEntry(nextEntry)
-      setNotice('Sensitive word added.')
+      notify('Sensitive word added.')
     }
 
     closeModal()
@@ -202,7 +200,7 @@ export function SensitiveWordManagementPage() {
     }
 
     deleteEntries([deleteTarget.id])
-    setNotice('Sensitive word deleted.')
+    notify('Sensitive word deleted.')
     setDeleteTarget(null)
   }
 
@@ -250,7 +248,6 @@ export function SensitiveWordManagementPage() {
             type="button"
             onClick={() => {
               setDeleteTarget(record)
-              setNotice('')
             }}
           >
             <DeleteOutlined />
@@ -267,14 +264,6 @@ export function SensitiveWordManagementPage() {
       className="sensitive-word-management"
       title="Sensitive Word"
     >
-      {notice && (
-        <Alert
-          showIcon
-          className="routing-config-page__notice"
-          message={notice}
-          type="success"
-        />
-      )}
       <BaseCard compact>
         <AdminToolbar
           actions={

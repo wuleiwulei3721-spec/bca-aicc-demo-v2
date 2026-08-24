@@ -1,6 +1,6 @@
 # Decision Log
 
-Last updated: 2026-08-19 19:04 +08:00
+Last updated: 2026-08-20 10:58 +08:00
 
 This document records important product and system design decisions that can be confirmed from the current codebase, project documents, `DEV_LOG.md`, and readable Git history. It intentionally omits bug fixes, visual micro-adjustments, temporary test data, copy-only tweaks, and implementation details that do not affect product direction.
 
@@ -33,16 +33,16 @@ Decision ID:
 DEC-044
 
 Module:
-Customer Outbound / Busy Reason
+Customer Outbound / AUX Reason
 
 Decision:
-Outbound calling requires an active Busy Reason configured for outbound. The DEMO defaults `Callback Finrisk` and `Callback Misinform` to this eligibility. `Miss Information` and `Financial Risk` remain per-call business reasons for customer numbers. Ordinary Agents request TL/SPV approval for customer numbers; TL-and-above accounts call those numbers directly. Call Agent always exposes only TL/SPV targets and requires the same outbound AUX, but does not use external-number approval.
+Outbound calling requires an active AUX Reason configured for outbound. The DEMO defaults `Callback Finrisk` and `Callback Misinform` to this eligibility. `Miss Information` and `Financial Risk` remain per-call business reasons for customer numbers. Ordinary Agents request TL/SPV approval for customer numbers; TL-and-above accounts call those numbers directly. Call Agent always exposes only TL/SPV targets and requires the same outbound AUX, but does not use external-number approval.
 
 Reason:
 The customer requires callback work to be explicitly separated from normal AUX use, while retaining existing per-call business attribution and approval demonstration.
 
 Impact:
-Busy Reason maintains `Support Outbound` as a list-level setting supporting multiple active reasons. Customer outbound approval remains valid while the agent moves between eligible AUX reasons, and becomes invalid only after the agent leaves the eligible set or the eligible configuration is removed. Future backend integration must enforce the same status, role, approval, and audit constraints server-side.
+AUX Reason maintains `Support Outbound` as a list-level setting supporting multiple active reasons. Customer outbound approval remains valid while the agent moves between eligible AUX reasons, and becomes invalid only after the agent leaves the eligible set or the eligible configuration is removed. Future backend integration must enforce the same status, role, approval, and audit constraints server-side.
 
 Status:
 Implemented as front-end Demo behavior
@@ -752,7 +752,7 @@ Module:
 Call Management
 
 Decision:
-Customer-visible Call Management scope currently includes Verification Rules, Global Control Configuration, Blacklist, Priority List, Common Phrase, Common Link, Common Number, Sensitive Word, Busy Reason, Abnormal End Reasons, and Interaction Log; hidden/legacy Call Management routes redirect to Verification Rules.
+Customer-visible Call Management scope currently includes Verification Rules, Global Control Configuration, Blacklist, Priority List, Common Phrase, Common Link, Common Number, Sensitive Word, AUX Reason Management, Abnormal End Reasons, and Interaction Log; hidden/legacy Call Management routes redirect to Verification Rules.
 
 Reason:
 The current demo exposes the management pages relevant to customer review and avoids leaving stale or unfinished configuration pages in the visible menu.
@@ -821,13 +821,13 @@ Module:
 Priority List
 
 Decision:
-Priority List matching is explicitly modeled as user-selected `Exact Match` or `Partial Match`; duplicate detection includes Channel, normalized Identifier, and Match Rule.
+Priority List matching is explicitly modeled as user-selected `Exact Match` or `Partial Match`. Phone entries include Country Code and use mutually exclusive Phone/non-Phone channel selection. Duplicate detection uses Channel + normalized Country Code + normalized Identifier for Phone and Channel + normalized Identifier for non-Phone; Match Rule does not participate in duplicate detection.
 
 Reason:
-The latest implementation and history simplified matching away from implicit email-domain behavior toward a more understandable rule that can be selected and filtered directly.
+The latest implementation and history simplified matching away from implicit email-domain behavior toward a more understandable rule that can be selected and filtered directly, while duplicate identity remains stable across Exact and Partial configurations.
 
 Impact:
-Backend implementation must use the same exact/partial semantics and duplicate key logic to avoid front-end/back-end mismatches.
+Backend implementation must use the same exact/partial semantics, Phone Country Code model, channel exclusivity, and duplicate key logic to avoid front-end/back-end mismatches.
 
 Status:
 Implemented
@@ -1118,6 +1118,29 @@ Implemented
 
 Source:
 Customer clarification on 2026-07-31; Code: `src/store/appStore.ts`, `src/pages/inbound/LiveChat2Page.tsx`, `src/pages/bankapp/BankAppDemoPage.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-038
+
+Module:
+Call Management / Customer Context
+
+Decision:
+Quick Action is a global Call Management configuration for all customer-context workspaces. It maintains Action Name, HTTP(S) Link Address, Remark, Active/Disabled status, stable display order, and last-modification metadata; it continues to open the existing local CRM mock detail tab instead of navigating externally.
+
+Reason:
+The customer requires configurable rather than hard-coded shortcuts, while preserving the current demo's CRM-tab workflow and avoiding an unapproved SSO, credential, URL-parameter, or external-navigation design.
+
+Impact:
+PSTN, BankApp Voice/Video, Email, and Social Media must read the same enabled actions in configured order. Common Link remains a separate right-side external-reference capability. Sorting uses constrained move commands with a stored normalized order; the audit fields provide demo-level last-change visibility only.
+
+Status:
+Implemented
+
+Source:
+Customer clarification on 2026-08-20; Code: `src/pages/call-management/QuickActionManagementPage.tsx`, `src/store/callManagementStore.ts`, `src/pages/inbound/components/QuickActionCard.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `PROJECT_CONTEXT.md`
 
 --------------------------------------------------
 

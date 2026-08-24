@@ -16,6 +16,7 @@ import {
   AdminTable,
   AdminPage,
 } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import { useRoutingConfigStore } from '../../store'
 import type {
   AccessSite,
@@ -973,6 +974,7 @@ export function ChannelTypesPage() {
 }
 
 export function ChannelsPage() {
+  const { notify } = useOperationFeedback()
   const channels = useRoutingConfigStore((state) => state.channels)
   const upsertEntity = useRoutingConfigStore((state) => state.upsertEntity)
   const deleteEntity = useRoutingConfigStore((state) => state.deleteEntity)
@@ -1325,6 +1327,11 @@ export function ChannelsPage() {
     }
 
     upsertEntity('channels', 'channelId', nextChannel)
+    notify(
+      modalMode === 'business'
+        ? 'Channel business configuration saved locally for this demo session.'
+        : 'Channel saved locally for this demo session.',
+    )
 
     closeModal()
   }
@@ -1397,6 +1404,7 @@ export function ChannelsPage() {
       credentialRef: accountDraft.credentialRef.trim(),
       purpose: accountDraft.purpose.trim(),
     })
+    notify('Channel account saved locally for this demo session.')
     closeAccountModal()
   }
   const handleAccountDelete = () => {
@@ -1416,6 +1424,7 @@ export function ChannelsPage() {
       'accountCode',
       selectedAccount.accountCode,
     )
+    notify('Channel account deleted locally for this demo session.')
     closeAccountModal()
   }
   const renderBusinessNumberField = (
@@ -2536,6 +2545,7 @@ function createDefaultMediaServiceRulePlan(
 }
 
 export function MediaServiceRulePlansPage() {
+  const { notify } = useOperationFeedback()
   const mediaServiceRulePlans = useRoutingConfigStore(
     (state) => state.mediaServiceRulePlans,
   )
@@ -2851,6 +2861,7 @@ export function MediaServiceRulePlansPage() {
     }
 
     upsertEntity('mediaServiceRulePlans', 'planCode', nextPlan)
+    notify('Media service rule plan saved locally for this demo session.')
     closeModal()
   }
   const handleDelete = () => {
@@ -2866,6 +2877,7 @@ export function MediaServiceRulePlansPage() {
     }
 
     deleteEntity('mediaServiceRulePlans', 'planCode', selectedPlan.planCode)
+    notify('Media service rule plan deleted locally for this demo session.')
     closeModal()
   }
   const isReadOnly = modalMode === 'delete' || modalMode === 'view'
@@ -3684,6 +3696,7 @@ function getSiteRatioTotal(ratioDraft: Record<string, number> = {}) {
 }
 
 export function SiteAccessVolumePage() {
+  const { notify } = useOperationFeedback()
   const siteAccessRatioGroups = useRoutingConfigStore(
     (state) => state.siteAccessRatioGroups,
   )
@@ -3706,7 +3719,6 @@ export function SiteAccessVolumePage() {
     useState<SiteAccessVolumeModalMode | null>(null)
   const [modalStatus, setModalStatus] =
     useState<RoutingConfigStatus>('Active')
-  const [notice, setNotice] = useState<string | null>(null)
   const [ratioDrafts, setRatioDrafts] = useState<SiteRatioDraftByMedia>({})
   const [selectedChannelCode, setSelectedChannelCode] = useState(
     channels[0]?.channelCode ?? '',
@@ -4033,7 +4045,6 @@ export function SiteAccessVolumePage() {
     setRatioDrafts(createChannelRatioDrafts(defaultChannelCode))
     setModalStatus('Active')
     setModalMode('add')
-    setNotice(null)
     setSubmitAttempted(false)
   }
 
@@ -4046,7 +4057,6 @@ export function SiteAccessVolumePage() {
     setRatioDrafts(createChannelRatioDrafts(row.channelCode))
     setModalStatus(row.status)
     setModalMode(mode)
-    setNotice(null)
     setSubmitAttempted(false)
   }
 
@@ -4101,7 +4111,7 @@ export function SiteAccessVolumePage() {
 
         upsertEntity('siteAccessRatioGroups', 'ratioGroupCode', nextRecord)
       })
-      setNotice('Site Access Volume saved locally for this demo session.')
+      notify('Site Access Volume saved locally for this demo session.')
       closeModal()
       return
     }
@@ -4124,7 +4134,7 @@ export function SiteAccessVolumePage() {
 
         upsertEntity('siteAccessRatioGroups', 'ratioGroupCode', nextRecord)
       })
-      setNotice('Site Access Volume saved locally for this demo session.')
+      notify('Site Access Volume saved locally for this demo session.')
       closeModal()
     }
   }
@@ -4143,7 +4153,7 @@ export function SiteAccessVolumePage() {
           group.ratioGroupCode,
         ),
       )
-    setNotice('Site Access Volume deleted locally for this demo session.')
+    notify('Site Access Volume deleted locally for this demo session.')
     closeModal()
   }
 
@@ -4161,14 +4171,6 @@ export function SiteAccessVolumePage() {
   return (
     <AdminPage title="Site Access Volume">
       <section className="routing-config-page">
-        {notice && (
-          <Alert
-            showIcon
-            className="routing-config-page__notice"
-            message={notice}
-            type="success"
-          />
-        )}
         <BaseCard compact>
           <div className="routing-config-page__admin-toolbar">
             <div className="routing-config-page__query-group">
@@ -4721,6 +4723,7 @@ function validateWorkingTimePlan(draft: WorkingTimePlan) {
 }
 
 export function WorkingTimePlansPage() {
+  const { notify } = useOperationFeedback()
   const workingTimePlans = useRoutingConfigStore(
     (state) => state.workingTimePlans,
   )
@@ -4739,7 +4742,6 @@ export function WorkingTimePlansPage() {
     createWorkingTimePlanDraft,
   )
   const [submitAttempted, setSubmitAttempted] = useState(false)
-  const [notice, setNotice] = useState('')
   const isReadOnly = modalMode === 'view'
   const isDeleteBlocked = Boolean(
     selectedPlan &&
@@ -4979,7 +4981,7 @@ export function WorkingTimePlansPage() {
     const nextRecord = normalizeWorkingTimePlan(draft, selectedPlan)
 
     upsertEntity('workingTimePlans', 'planCode', nextRecord)
-    setNotice('Working Time Plan saved locally for this demo session.')
+    notify('Working Time Plan saved locally for this demo session.')
     closeModal()
   }
 
@@ -4989,7 +4991,7 @@ export function WorkingTimePlansPage() {
     }
 
     deleteEntity('workingTimePlans', 'planCode', selectedPlan.planCode)
-    setNotice('Working Time Plan deleted locally for this demo session.')
+    notify('Working Time Plan deleted locally for this demo session.')
     closeModal()
   }
 
@@ -5525,14 +5527,6 @@ export function WorkingTimePlansPage() {
   return (
     <AdminPage title="Working Time Plans">
       <section className="routing-config-page">
-        {notice && (
-          <Alert
-            showIcon
-            className="routing-config-page__notice"
-            message={notice}
-            type="success"
-          />
-        )}
         <BaseCard compact>
           <div className="routing-config-page__admin-toolbar">
             <div className="routing-config-page__query-group">

@@ -2,6 +2,7 @@ import { ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { Alert, InputNumber, Select } from 'antd'
 import { useMemo, useState } from 'react'
 import { BaseButton, BaseCard, PageContainer } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import { defaultGlobalControlConfiguration } from '../../mock/globalControlConfiguration'
 import { useAppStore, useCallManagementStore } from '../../store'
 import { useRoutingConfigStore } from '../../store/routingConfigStore'
@@ -37,33 +38,45 @@ function formatSavedTime(date: Date) {
   return `${year}-${month}-${day} ${hour}:${minute}`
 }
 
-function normalizePositiveNumber(value: number | null, fallback: number) {
+function normalizeNumber(value: number | null, fallback: number, min: number) {
   if (typeof value !== 'number' || Number.isNaN(value)) {
     return fallback
   }
 
-  return Math.max(1, value)
+  return Math.max(min, value)
 }
 
 interface NumberFieldProps {
+  disabled?: boolean
   label: string
+  min?: number
+  required?: boolean
   unit: string
   value: number
   onChange: (value: number) => void
 }
 
-function NumberField({ label, onChange, unit, value }: NumberFieldProps) {
+function NumberField({
+  disabled = false,
+  label,
+  min = 1,
+  onChange,
+  required = true,
+  unit,
+  value,
+}: NumberFieldProps) {
   return (
     <label className="global-control-config__field">
       <span>
-        {label} <strong>*</strong>
+        {label} {required && <strong>*</strong>}
       </span>
       <div className="global-control-config__number-control">
         <InputNumber
-          min={1}
+          disabled={disabled}
+          min={min}
           value={value}
           onChange={(nextValue) =>
-            onChange(normalizePositiveNumber(nextValue, value))
+            onChange(normalizeNumber(nextValue, value, min))
           }
         />
         <em>{unit}</em>
@@ -113,7 +126,7 @@ export function GlobalControlConfigurationPage() {
     () => ({ ...savedConfiguration }),
   )
   const [savedAt, setSavedAt] = useState(formatSavedTime(new Date()))
-  const [savedNotice, setSavedNotice] = useState('')
+  const { notify } = useOperationFeedback()
   const activeSkillQueueOptions = useMemo(
     () =>
       skillQueues
@@ -137,7 +150,6 @@ export function GlobalControlConfigurationPage() {
       ...currentConfig,
       [key]: value,
     }))
-    setSavedNotice('')
   }
 
   const validationErrors = useMemo(() => {
@@ -159,18 +171,20 @@ export function GlobalControlConfigurationPage() {
       errors.push('Auto Cancel ACW Duration must be greater than 0 seconds.')
     }
 
-    if (config.idleAutoLogOutMinutes <= 0) {
-      errors.push('System Idle Log-out Timeout must be greater than 0 minutes.')
+    if (config.idleAutoLogOutMinutes < 0) {
+      errors.push('System Idle Log-out Timeout cannot be less than 0 minutes.')
     }
 
-    if (config.idleWarningMinutes <= 0) {
-      errors.push('Auto Log-out Warning Lead Time must be greater than 0 minutes.')
-    }
+    if (config.idleAutoLogOutMinutes > 0) {
+      if (config.idleWarningMinutes <= 0) {
+        errors.push('Auto Log-out Warning Lead Time must be greater than 0 minutes.')
+      }
 
-    if (config.idleWarningMinutes >= config.idleAutoLogOutMinutes) {
-      errors.push(
-        'Auto Log-out Warning Lead Time must be less than System Idle Log-out Timeout.',
-      )
+      if (config.idleWarningMinutes >= config.idleAutoLogOutMinutes) {
+        errors.push(
+          'Auto Log-out Warning Lead Time must be less than System Idle Log-out Timeout.',
+        )
+      }
     }
 
     if (config.maxDigitalMediaServices <= 0) {
@@ -201,7 +215,7 @@ export function GlobalControlConfigurationPage() {
     updateGlobalControlConfiguration(config)
     syncLiveChat2RetentionLimit()
     setSavedAt(nextSavedAt)
-    setSavedNotice(`Global control configuration saved at ${nextSavedAt}.`)
+    notify(`Global control configuration saved at ${nextSavedAt}.`)
   }
 
   const handleReset = () => {
@@ -210,7 +224,7 @@ export function GlobalControlConfigurationPage() {
     setConfig({ ...defaultGlobalControlConfiguration })
     const nextSavedAt = formatSavedTime(new Date())
     setSavedAt(nextSavedAt)
-    setSavedNotice(`Global control configuration reset at ${nextSavedAt}.`)
+    notify(`Global control configuration reset at ${nextSavedAt}.`)
   }
 
   return (
@@ -238,14 +252,6 @@ export function GlobalControlConfigurationPage() {
       title="Global Control Configuration"
     >
       <section className="global-control-config">
-        {savedNotice && (
-          <Alert
-            showIcon
-            className="global-control-config__notice"
-            message={savedNotice}
-            type="success"
-          />
-        )}
 
         {hasValidationErrors && (
           <Alert
@@ -306,6 +312,7 @@ export function GlobalControlConfigurationPage() {
             <div className="global-control-config__row">
               <NumberField
                 label="System Idle Log-out Timeout"
+                min={0}
                 unit="min"
                 value={config.idleAutoLogOutMinutes}
                 onChange={(value) =>
@@ -313,7 +320,9 @@ export function GlobalControlConfigurationPage() {
                 }
               />
               <NumberField
+                disabled={config.idleAutoLogOutMinutes === 0}
                 label="Auto Log-out Warning Lead Time"
+                required={config.idleAutoLogOutMinutes > 0}
                 unit="min"
                 value={config.idleWarningMinutes}
                 onChange={(value) => updateConfig('idleWarningMinutes', value)}

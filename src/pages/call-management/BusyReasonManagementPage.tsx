@@ -13,6 +13,7 @@ import {
   BaseCard,
   StatusBadge,
 } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import { useCallManagementStore } from '../../store'
 import type {
   BusyReason,
@@ -85,7 +86,7 @@ export function BusyReasonManagementPage() {
     useState<BusyReasonFilters>(defaultFilters)
   const [draft, setDraft] = useState<BusyReason | null>(null)
   const [modalMode, setModalMode] = useState<BusyReasonModalMode>(null)
-  const [notice, setNotice] = useState('')
+  const { notify } = useOperationFeedback()
   const [submitAttempted, setSubmitAttempted] = useState(false)
 
   const filteredReasons = useMemo(
@@ -120,7 +121,7 @@ export function BusyReasonManagementPage() {
     const trimmedName = draft.busyReasonName.trim()
 
     if (!trimmedName) {
-      errors.push('Busy Reason is required.')
+      errors.push('AUX Reason is required.')
     }
 
     return errors
@@ -138,14 +139,12 @@ export function BusyReasonManagementPage() {
           }
         : currentDraft,
     )
-    setNotice('')
   }
 
   const openEditModal = (record: BusyReason) => {
     setDraft({ ...record })
     setModalMode('edit')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const closeModal = () => {
@@ -179,7 +178,7 @@ export function BusyReasonManagementPage() {
     }
 
     upsertBusyReason(nextRecord)
-    setNotice('Busy reason saved.')
+    notify('AUX Reason saved.')
     closeModal()
   }
 
@@ -191,7 +190,7 @@ export function BusyReasonManagementPage() {
     },
     {
       dataIndex: 'busyReasonName',
-      title: 'Busy Reason',
+      title: 'AUX Reason',
       width: 180,
     },
     {
@@ -254,15 +253,7 @@ export function BusyReasonManagementPage() {
   ]
 
   return (
-    <AdminPage className="busy-reason-config" title="Busy Reason">
-        {notice && (
-          <Alert
-            showIcon
-            className="routing-config-page__notice"
-            message={notice}
-            type="success"
-          />
-        )}
+    <AdminPage className="busy-reason-config" title="AUX Reason Management">
         <BaseCard compact>
           <AdminToolbar
             actions={
@@ -279,7 +270,7 @@ export function BusyReasonManagementPage() {
               <>
                 <AdminFilterField label="Keyword" width={260}>
                   <Input
-                    placeholder="ID / Busy Reason / Remark"
+                  placeholder="ID / AUX Reason / Remark"
                     value={filterDraft.keyword}
                     onChange={(event) =>
                       setFilterDraft((currentDraft) => ({
@@ -327,7 +318,7 @@ export function BusyReasonManagementPage() {
       <AdminModal
         destroyOnClose
         open={modalMode === 'edit' && Boolean(draft)}
-        title="Edit Busy Reason"
+        title="Edit AUX Reason"
         width={720}
         onCancel={closeModal}
       >
@@ -355,7 +346,7 @@ export function BusyReasonManagementPage() {
               </label>
               <label className="global-control-config__field">
                 <span>
-                  Busy Reason <strong>*</strong>
+                  AUX Reason <strong>*</strong>
                 </span>
                 <Input
                   value={draft.busyReasonName}

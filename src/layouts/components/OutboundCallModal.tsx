@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
-import { Input, message, Select, Tag } from 'antd'
+import { Input, Select, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
   AppButton,
@@ -10,6 +10,7 @@ import {
   SearchInput,
 } from '../../components'
 import { useExternalOperationApproval } from '../../hooks/useExternalOperationApproval'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import { transferAgents } from '../../mock/transfer'
 import { externalOutboundReasonOptions } from '../../types'
 import type {
@@ -52,6 +53,7 @@ function CallNumberTab({
   onCallNumber: (phoneNumber: string) => void
   requiresOutboundApproval: boolean
 }) {
+  const { notify } = useOperationFeedback()
   const [phoneNumber, setPhoneNumber] = useState('')
   const [outboundReason, setOutboundReason] =
     useState<ExternalOutboundReason | null>(null)
@@ -77,7 +79,7 @@ function CallNumberTab({
     const result = request()
 
     if (result.popupBlocked) {
-      message.error('TL approval window was blocked. Allow pop-ups and try again.')
+      notify('TL approval window was blocked. Allow pop-ups and try again.', 'error')
     }
   }
 

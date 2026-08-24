@@ -1,5 +1,4 @@
 import {
-  CheckCircleFilled,
   ClockCircleOutlined,
   CloseOutlined,
   DeleteOutlined,
@@ -30,20 +29,19 @@ import {
 } from 'antd'
 import type { MenuProps } from 'antd'
 import type { PointerEvent, ReactNode } from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import {
   BaseButton,
-  OperationNotice,
   StatusBadge,
   TicketRegistrationDrawer,
 } from '../../components'
 import type { TicketRegistrationDraft } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import { useNow } from '../../hooks/useNow'
 import { createEmailDemoMessages } from '../../mock/email'
 import {
   customerJourney,
   nextBestActions,
-  quickActions,
   ticketingHistory,
 } from '../../mock/inbound'
 import type {
@@ -793,7 +791,6 @@ function EmailCustomerContext({
       customer={{ ...customer, accessChannel: 'Email' }}
       journey={customerJourney}
       nextBestActions={nextBestActions}
-      quickActions={quickActions}
       tickets={ticketingHistory}
       onOpenCrm={onOpenCrm}
       onOpenVerification={() => undefined}
@@ -1206,6 +1203,7 @@ function EmailDetail({
 }
 
 export function EmailPage() {
+  const { notify } = useOperationFeedback()
   const [messages, setMessages] = useState<EmailMessage[]>(() =>
     cloneMessages(createEmailDemoMessages()),
   )
@@ -1231,43 +1229,10 @@ export function EmailPage() {
     useState<EmailComposeDraft | null>(null)
   const [isTransferOpen, setIsTransferOpen] = useState(false)
   const [isCwuOpen, setIsCwuOpen] = useState(false)
-  const [ticketSaveNotice, setTicketSaveNotice] = useState<{
-    id: number
-    message: string | null
-  }>({
-    id: 0,
-    message: null,
-  })
-  const [notice, setNotice] = useState<{ text: string; tone: 'success' | 'info' } | null>(null)
-  const noticeTimerRef = useRef<number | null>(null)
   const hasRunningSla = messages.some(
     (email) => email.slaStartedAt && !email.slaStoppedAt,
   )
   const now = useNow(hasRunningSla)
-
-  useEffect(
-    () => () => {
-      if (noticeTimerRef.current) {
-        window.clearTimeout(noticeTimerRef.current)
-      }
-    },
-    [],
-  )
-
-  useEffect(() => {
-    if (!ticketSaveNotice.message) {
-      return undefined
-    }
-
-    const noticeId = ticketSaveNotice.id
-    const timer = window.setTimeout(() => {
-      setTicketSaveNotice((current) =>
-        current.id === noticeId ? { ...current, message: null } : current,
-      )
-    }, 4000)
-
-    return () => window.clearTimeout(timer)
-  }, [ticketSaveNotice.id, ticketSaveNotice.message])
 
   const selectedEmail =
     messages.find((email) => email.id === selectedMessageId) ?? null
@@ -1278,11 +1243,7 @@ export function EmailPage() {
     : []
 
   const showNotice = (text: string, tone: 'success' | 'info' = 'success') => {
-    if (noticeTimerRef.current) {
-      window.clearTimeout(noticeTimerRef.current)
-    }
-    setNotice({ text, tone })
-    noticeTimerRef.current = window.setTimeout(() => setNotice(null), 2600)
+    notify(text, tone)
   }
 
   const openComposeModal = (receiverLocked = false) => {
@@ -1600,10 +1561,7 @@ export function EmailPage() {
           : email,
       ),
     )
-    setTicketSaveNotice({
-      id: Date.now(),
-      message: 'Ticket saved to CRM.',
-    })
+    notify('Ticket saved to CRM.')
   }
 
   const mailContent = (
@@ -1654,16 +1612,6 @@ export function EmailPage() {
         .join(' ')}
       aria-label="Email channel workspace"
     >
-      {notice && (
-        <div className={`email-page__notice email-page__notice--${notice.tone}`}>
-          <CheckCircleFilled />
-          <span>{notice.text}</span>
-          <button aria-label="Dismiss notification" type="button" onClick={() => setNotice(null)}>
-            <CloseOutlined />
-          </button>
-        </div>
-      )}
-
       <MailboxPanel
         activeFolder={activeFolder}
         collapsed={isMailboxCollapsed}
@@ -1738,7 +1686,6 @@ export function EmailPage() {
         onClose={() => setIsCwuOpen(false)}
         onConfirm={confirmCwu}
       />
-      <OperationNotice message={ticketSaveNotice.message} tone="success" />
     </section>
   )
 }

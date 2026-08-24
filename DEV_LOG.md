@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-08-19 20:12 +08:00
+最后更新：2026-08-24 11:36 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,168 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-08-24 11:36 +08:00 - Priority List Phone Country Code / AUX Reason 文案
+
+修改页面或文件：
+
+- `src/pages/call-management/PriorityListManagementPage.tsx`
+- `src/types/priorityList.ts`
+- `src/mock/priorityList.ts`
+- `src/config/workspacePageTabs.tsx`
+- `src/pages/call-management/BusyReasonManagementPage.tsx`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`PROJECT_CONTEXT.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 按确认反馈补齐 Priority List 的 Phone 国家码和渠道互斥规则，并将重复校验改为不包含 Match Rule；同步管理菜单从 Busy Reason 改为 AUX Reason Management。
+
+修改结果：
+
+- Priority List Phone 模式默认国家码为 `062`，仅显示 Country Code / Phone Number；Phone 与非 Phone 渠道互斥，列表和重复预览显示 Country Code，非 Phone 显示 `-`。
+- 重复键改为 Phone `Channel + Country Code + Identifier`、非 Phone `Channel + Identifier`；Exact / Partial Match 仍保留为匹配行为，但不参与去重。
+- 菜单、Tab、页面标题、筛选提示、表格列、编辑弹窗和校验文案统一使用 `AUX Reason Management` / `AUX Reason`。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 通过；构建仅保留既有 bundle size warning。
+- 本地浏览器烟测通过：Phone 选择禁用 Bankapp，显示 Country Code / Phone Number；非 Phone 选择禁用 Phone；已有 Phone 号码在切换 Exact / Partial Match 后均显示重复预览；AUX Reason 菜单和页面文案正确。
+
+回滚说明：
+
+- 恢复 Priority List 页面、类型和 mock 的旧字段/重复键，并将 workspace tab 与 Busy Reason 页面可见文案恢复即可；不涉及黑名单新增默认值。
+
+当前风险点：
+
+- 当前仍为 Zustand 内存 Demo；后端接口需要同步 Country Code 字段、Phone/非 Phone 渠道互斥和新的重复键规则。
+
+### 2026-08-20 14:55 +08:00 - 接收坐席转入提示
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 用户确认转入坐席的简洁英文反馈使用 `Transferred from XXX`，并要求可通过本地 `Transferred Call` 菜单直接展示以便截图。
+
+修改结果：
+
+- 点击本地 `Channel Simulation > Transferred Call` 后，接收坐席弹屏显示已有转移标识，并在 Header 下方居中显示四秒 `Transferred from Maya Lestari.` 成功提示。
+- 坐席未处于可接听状态时仅保留既有来话状态拦截，不显示转入成功提示。
+
+验证：
+
+- `npm run lint`、`npm run build`、`git diff --check` 已通过；构建仅保留既有 large chunk warning。
+- 本地浏览器烟测已通过：以 Ready 坐席点击 `Channel Simulation > Transferred Call` 后，客户卡显示 `Transferred from Maya Lestari (AICC1088)` 标识，Header 下方同时显示 `Transferred from Maya Lestari.` 成功提示。
+
+回滚说明：
+
+- 移除 `test-transferred-voice` 菜单分支中的 `notify()` 调用即可恢复仅显示客户卡转移标识的预览。
+
+当前风险点：
+
+- 当前入口仅模拟接收坐席视角，不会创建真实跨坐席 CTI 事件或同步另一浏览器会话。
+
+### 2026-08-20 11:44 +08:00 - Global Control idle auto log-out disable value
+
+修改页面或文件：
+
+- `src/pages/call-management/GlobalControlConfigurationPage.tsx`
+- `src/hooks/useIdleLogout.ts`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户确认 Global Control 的 `System Idle Log-out Timeout` 配置为 `0` 时，系统不执行自动登出，因此不应验证 `Auto Log-out Warning Lead Time`。
+
+修改结果：
+
+- 自动登出时长字段允许输入 `0`；此时提醒时间字段禁用且不再显示必填标识。仅当该时长大于 `0` 时，才启用并验证提醒时间必须大于 `0` 且小于自动登出时长。
+- 闲置登出 Hook 在自动登出时长为 `0` 时清理计时器；不显示提醒弹窗，也不会触发自动登出。
+
+验证：
+
+- `npm run lint`、`npm run build`、`git diff --check` 通过；构建仅保留既有 bundle size warning。
+- 本地浏览器烟测：`System Idle Log-out Timeout` 可输入 `0`；将提醒时间设为 `999` 后保存仍可用，保存成功且未显示提醒时间校验。测试后已通过 Reset 恢复浏览器会话默认值 `30` / `10`。
+- 补充烟测：自动登出时长设为 `0` 时，提醒时间字段禁用且不再显示必填标识；恢复为正数后可重新编辑。测试后已重置默认值。
+
+回滚说明：
+
+- 恢复自动登出时长最小值为 `1`，并移除 Hook 对 `0` 的禁用分支，即可恢复原有必须启用自动登出的规则。
+
+当前风险点：
+
+- 当前行为仅覆盖浏览器内存中的前端演示配置；未来后端会话超时策略需采用同一 `0` 禁用语义。
+
+### 2026-08-20 11:33 +08:00 - Unified Operation Feedback
+
+修改页面或文件：
+
+- `src/contexts/operationFeedback.tsx`、`src/contexts/operationFeedbackContext.ts`、`src/components/OperationNotice.tsx`、`src/App.tsx`
+- Agent toolbar / CRM / Email、Call Management、Routing Config 与本地 Employee Management 页面
+- `src/styles/index.less`、`DESIGN_SYSTEM.md`、`CURRENT_STATUS.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 系统的非阻断操作结果原先分散在话务条下方、管理页标题下方、Email 页内及 Ant 默认 message 位置，影响坐席工作台的一致性和扫描效率。
+
+修改结果：
+
+- 新增全局 `OperationFeedbackProvider` 与 `useOperationFeedback()`；同一时刻仅显示最新反馈，固定在 Header 下方居中，成功、信息、失败均自动显示四秒。
+- 转移、CRM/工单、外呼审批窗口阻塞、Email、Call Management、Routing Config 和本地 Employee Management 的非阻断结果已迁移到该入口；删除管理页顶部成功 Alert 与 Email 专属右上角通知。
+- 表单校验、重复/关联限制、敏感词拦截、登录失败、实时服务预警、删除确认与审批结果保持原有上下文形式；`OperationNotice` 为成功/信息提供 polite status，为失败提供 assertive alert。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 通过；构建仅保留既有 Vite/Rolldown bundle size warning。
+- 本地浏览器烟测：Common Number 删除和编辑保存均在 Header 下方居中显示唯一全局反馈，删除确认 Modal 保持原样；四秒时长由全局 Provider 固定实现。浏览器自动化在后续重复交互时出现间歇性会话解析错误，未完成全部页面的截图级点击复查。
+
+回滚说明：
+
+- 移除 `OperationFeedbackProvider` 接入并恢复各页面原本局部 notice 状态即可回到分散提示方式；不影响业务状态、路由或 mock 数据模型。
+
+当前风险点：
+
+- 项目无自动化 UI 测试套件；后续新增操作结果必须使用共享 Hook，避免重新引入页面级 success Alert 或 Ant message。
+
+### 2026-08-20 10:58 +08:00 - Global Quick Action Management
+
+修改页面或文件：
+
+- `src/pages/call-management/QuickActionManagementPage.tsx`
+- `src/mock/quickActions.ts`、`src/types/quickAction.ts`、`src/store/callManagementStore.ts`
+- `src/pages/inbound/components/QuickActionCard.tsx`、Email、Social Media、workspace route/menu wiring
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求弹屏 Quick Action 不再硬编码，改由 Call Management 维护名称、链接地址、备注、状态、展示顺序及最后修改信息。
+- 客户确认配置在全部工作台共用，链接保持 CRM mock detail 的业务引用，不做真实跳转、SSO、账号或参数配置。
+
+修改结果：
+
+- 新增 `Call Management > Quick Action Management` 和 `/call-management/quick-actions` workspace route。
+- 管理页仅支持 Action Name / Status 查询，新增、编辑、删除、Enabled / Disabled、Order 以及 `Admin` / Modified Time；Action Name 按 trim + lowercase 唯一，Link Address 限制 HTTP(S) 且允许重复。
+- 排序使用持久化的 normalized order，并在 Actions 列直接提供图标化的置顶、上移、下移、置底；已应用查询或状态筛选时禁用排序。
+- 列宽收紧并依靠 URL / Remark 省略展示，当前桌面布局不使用横向滚动；Link Address 在新增 / 编辑弹窗中占满一行，弹窗不展示额外的创建或修改信息。
+- PSTN、BankApp Voice/Video、Email 和 Social Media 的 Quick Action card 统一读取启用项并按配置顺序显示。点击仅打开或刷新本地 CRM 动态 mock tab，显示 Link Address，不打开新浏览器页。
+
+验证：
+
+- 本地 `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check` 通过；构建仅保留既有 large chunk warning。
+- 浏览器烟测通过：Call Management 菜单与直达 `/call-management/quick-actions` 都打开同一 workspace tab；Move to Top 更新排序与 Modified By / Time，筛选后排序入口禁用；Enabled / Disabled 生效；Email 共享 Quick Action card 隐藏禁用项、按全局配置显示启用项，点击后只打开本地 CRM mock tab 且不新增浏览器页。
+- 在 1280px 浏览器视区复核：查询仅保留 Action Name / Status，表格及页面均无水平滚动；Actions 列直接显示四个排序图标与编辑、删除图标；编辑弹窗的 Link Address 占满一行，且不显示创建或最后修改信息。
+- 新页面已将 `destroyOnClose` / Alert `message` 替换为当前 Ant Design API，复测未新增本页的弃用告警；浏览器仍保留既有插件 telemetry 网络超时输出，与应用功能无关。
+
+回滚说明：
+
+- 移除 Quick Action Management route/menu/page/store，并恢复 `src/mock/inbound.ts` 与 Social Media 的静态 quick action 数组即可回到原先演示行为。
+
+当前风险点：
+
+- 数据仍是浏览器内存 mock，刷新即恢复默认项；Modified By / Time 不是完整审计历史。真实跳转、域名白名单、SSO 和参数映射需要独立后端与安全方案。
 
 ### 2026-08-19 20:12 +08:00 - Ticket Category / Product production deployment
 

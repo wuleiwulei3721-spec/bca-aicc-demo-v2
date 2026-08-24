@@ -2,15 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   BaseButton,
-  OperationNotice,
   TicketRegistrationDrawer,
 } from '../../components'
 import type { TicketRegistrationDraft } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import {
   customerJourney,
   lookupCustomerByCis,
   nextBestActions,
-  quickActions,
   ticketingHistory,
 } from '../../mock/inbound'
 import type {
@@ -80,6 +79,7 @@ export function InteractionWorkspace({
   showTransferHistory,
   transferContext,
 }: InteractionWorkspaceProps) {
+  const { notify } = useOperationFeedback()
   const [internalAssistantActiveKey, setInternalAssistantActiveKey] =
     useState('assistant')
   const [verificationPanelConfig, setVerificationPanelConfig] =
@@ -88,21 +88,7 @@ export function InteractionWorkspace({
     sourceKey: string
     values: CustomerVerificationPanelConfig['initialConditions']
   } | null>(null)
-  const [crmRefreshError, setCrmRefreshError] = useState<{
-    id: number
-    message: string | null
-  }>({
-    id: 0,
-    message: null,
-  })
   const [isTicketOpen, setIsTicketOpen] = useState(false)
-  const [ticketSaveNotice, setTicketSaveNotice] = useState<{
-    id: number
-    message: string | null
-  }>({
-    id: 0,
-    message: null,
-  })
   const pendingCrmCisRequestRef = useRef<{
     correlationId: string
     sourceKey: string
@@ -219,7 +205,7 @@ export function InteractionWorkspace({
     setCrmWorkspace((current) => ({
       activeKey: tab.key,
       tabs: current.tabs.some((item) => item.key === tab.key)
-        ? current.tabs
+        ? current.tabs.map((item) => (item.key === tab.key ? tab : item))
         : [...current.tabs, tab],
     }))
   }, [])
@@ -277,20 +263,14 @@ export function InteractionWorkspace({
           sourceKey: sourceCustomerKey,
         }
       })
-      setTicketSaveNotice({
-        id: Date.now(),
-        message: 'Ticket saved to CRM.',
-      })
+      notify('Ticket saved to CRM.')
     },
-    [sourceCustomerKey, sourceIdentityData],
+    [notify, sourceCustomerKey, sourceIdentityData],
   )
 
   const showCrmRefreshError = useCallback(() => {
-    setCrmRefreshError((current) => ({
-      id: current.id + 1,
-      message: 'CRM customer information could not be refreshed.',
-    }))
-  }, [])
+    notify('CRM customer information could not be refreshed.', 'error')
+  }, [notify])
 
   const requestCrmCis = useCallback(() => {
     if (pendingCrmCisRequestRef.current) {
@@ -367,36 +347,6 @@ export function InteractionWorkspace({
     return () => clearPendingCrmCisRequest()
   }, [clearPendingCrmCisRequest, sourceCustomerKey])
 
-  useEffect(() => {
-    if (!crmRefreshError.message) {
-      return undefined
-    }
-
-    const noticeId = crmRefreshError.id
-    const timer = window.setTimeout(() => {
-      setCrmRefreshError((current) =>
-        current.id === noticeId ? { ...current, message: null } : current,
-      )
-    }, 4000)
-
-    return () => window.clearTimeout(timer)
-  }, [crmRefreshError.id, crmRefreshError.message])
-
-  useEffect(() => {
-    if (!ticketSaveNotice.message) {
-      return undefined
-    }
-
-    const noticeId = ticketSaveNotice.id
-    const timer = window.setTimeout(() => {
-      setTicketSaveNotice((current) =>
-        current.id === noticeId ? { ...current, message: null } : current,
-      )
-    }, 4000)
-
-    return () => window.clearTimeout(timer)
-  }, [ticketSaveNotice.id, ticketSaveNotice.message])
-
   const handleVerificationFinish = useCallback(
     (status: VerificationStatus) => {
       setVerificationStatusOverride({ sourceKey: sourceCustomerKey, status })
@@ -461,7 +411,6 @@ export function InteractionWorkspace({
           customer={displayCustomer}
           journey={identityData.journey}
           nextBestActions={nextBestActions}
-          quickActions={quickActions}
           tickets={identityData.tickets}
           showIvrJourney={showIvrJourney}
           showTransferHistory={showTransferHistory}
@@ -512,8 +461,6 @@ export function InteractionWorkspace({
           onCloseExtraTab={onAssistantCloseExtraTab}
         />
       </section>
-      <OperationNotice message={crmRefreshError.message} tone="error" />
-      <OperationNotice message={ticketSaveNotice.message} tone="success" />
       <TicketRegistrationDrawer
         contextLabel={conversation?.session.intent ?? accessMenuName}
         open={isTicketOpen}

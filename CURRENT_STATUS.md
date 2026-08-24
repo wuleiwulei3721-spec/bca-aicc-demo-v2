@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-08-19 20:08 +08:00
+Last updated: 2026-08-20 11:44 +08:00
 
 ## 1. Overall Status
 
@@ -51,16 +51,17 @@ This repository is still a demo application:
 - Header Internal Chat entry.
 - Agent profile area.
 - Header uses separate brand, call-toolbar, and right-action regions; profile name and team/status text truncate within compact fixed widths.
+- A global `OperationFeedbackProvider` now renders the latest non-blocking operation result once, centered below the Header for four seconds. It covers transfer, CRM/ticket, Email, Call Management, Routing Config, and local Employee Management outcomes; contextual validation, warning, confirmation, and approval dialogs retain their original roles.
 - Single-action Sign In; the former service-mode selector is removed from the profile menu and header.
 - Profile menu follows explicit Unsigned / Not Ready / Ready / Pre-AUX / AUX state branches, with current status displayed beside the team name.
 - Status after Sign-in is shared Global Control Configuration, defaults to Not Ready, and applies to the next sign-in in the current browser session.
-- Global Control labels `System Idle Log-out Timeout` and `Auto Log-out Warning Lead Time` distinguish the system timeout from its pre-log-out warning and from the agent toolbar Sign Out action.
+- Global Control labels `System Idle Log-out Timeout` and `Auto Log-out Warning Lead Time` distinguish the system timeout from its pre-log-out warning and from the agent toolbar Sign Out action. A timeout value of `0` disables idle auto log-out and disables warning-lead-time validation and input.
 - Global Control `Digital Media Capacity` configures active service capacity through `Max Digital Media Services` (default 3) and Live Chat Current ended-session retention through `Max Live Chat Ended Session Retention` (default 10).
 - Header Log Out first blocks active call, Live Chat, or Live Chat 2 services; when no service is active, it blocks signed-in Ready and Pre-AUX states until the agent switches to Not Ready or AUX. Unsigned, Not Ready, and AUX states then use a confirmation dialog.
-- Idle system log-out monitors Unsigned, Not Ready, and AUX states, resets on window activity or warning dismissal, shows a pre-expiry warning, and returns to Login at the configured timeout.
+- When configured above `0`, idle system log-out monitors Unsigned, Not Ready, and AUX states, resets on window activity or warning dismissal, shows a pre-expiry warning, and returns to Login at the configured timeout. A value of `0` disables the timer and warning.
 - Sign out confirmation and active-service block.
-- AUX reason menu from Busy Reason.
-- All Not Ready states expose Busy Reason AUX options; if a customer service remains active during After Call Work, choosing one displays Pre-AUX while the saved Global Control countdown continues and then automatically enters AUX.
+- AUX reason menu from AUX Reason Management.
+- All Not Ready states expose AUX Reason options; if a customer service remains active during After Call Work, choosing one displays Pre-AUX while the saved Global Control countdown continues and then automatically enters AUX.
 - Agent Settings entry separated at the bottom of the profile menu with system prompt sound on/off control.
 
 ## 5. Completed Agent and Call Toolbar
@@ -122,7 +123,7 @@ This repository is still a demo application:
 - Ticketing History displays one-line-ellipsized Ticket Category, CRM Ticket ID, and created date; Ticket Category is also used as the dynamic CRM tab title.
 - Shared CRM Ticket modal for inbound voice, video, and digital workspaces: it uses the Transfer / Outbound dialog component and is positioned at the right side of the workspace. The compact `Ticket` header retains the light-blue title treatment, rounded modal frame, and standard right-side close. Its one white content surface matches the Customer Information outbound-reason modal. Product / Category / Summary / Note labels are bold; One-Click Generation remains normal weight. Category and Product are searchable single-select dropdowns, with Product disabled before Category and filtered by the supplied Category-Product mapping; long selected values use the standard fixed-height one-line ellipsis, with the arrow right-aligned and vertically centered. All four control values use 12px primary text and an 18px line height. Summary has a visible 250-character limit and Note has a 1000-character limit; both counts are normal-weight 11px text inside the lower-right of the editor. The white form body scrolls independently while One-Click Generation stays at the left of the fixed footer and Cancel / Confirm stay on the right. All four fields are required. Each opening and One-Click Generation prepares an editable valid mock draft. Confirm saves an in-memory CRM ticket, clears the open form for the next ticket, and adds it to Ticketing History.
 - Next Best Action.
-- Quick Action.
+- Quick Action uses globally configured enabled actions in persistent display order across call, Email, and Social Media workspaces; clicking refreshes or opens the local CRM mock detail tab with the configured Link Address as its reference.
 - Dynamic CRM business tabs.
 - CRM screenshot with fallback.
 - Assistant screenshot with fallback.
@@ -131,7 +132,7 @@ This repository is still a demo application:
 - Call Transfer modal includes Transfer IVR targets from Common Number.
 - Voice Transfer supports Ready-only agent filtering, Agent-only SPV/TL transfer-target visibility, SPV/TL priority ordering, consultation cancellation for agent and number targets, a compact Actions column, release transfer for skill / IVR, consultation-first number transfer with retryable deterministic failure, and conference mode that temporarily disables toolbar Transfer.
 - Active PSTN voice shows `IVR: 08123456789`; HaloApp voice/video shows `HaloApp: 00012345` for logged-in customers or `HaloApp: Guest` for guests.
-- Transfer success/failure uses an English banner below the toolbar. The local-only `Channel Simulation > Transferred Call` preview shows a green transfer icon after the channel duration without consuming customer-card action space.
+- Transfer success/failure uses an English banner below the toolbar. The local-only `Channel Simulation > Transferred Call` preview shows `Transferred from Maya Lestari.` on the receiving seat for four seconds, plus a green transfer icon after the channel duration without consuming customer-card action space.
 
 ## 8. Completed Video Call Workspace
 
@@ -240,9 +241,10 @@ Customer-visible pages:
 - Priority List.
 - Common Phrase.
 - Common Link.
+- Quick Action Management.
 - Common Number.
 - Sensitive Word.
-- Busy Reason.
+- AUX Reason Management.
 - Abnormal End Reasons.
 - Interaction Log.
 - Login Log.
@@ -256,18 +258,19 @@ Implemented behaviors:
 - Rule preview using agent verification modal.
 - Scenario-based KBV question model.
 - Blacklist required-channel batch add with a Status switch defaulting to Enabled, dedicated editable `062` Phone country code / phone number mode, a Country Code list column (`-` for non-Phone channels), fixed non-Phone `Prohibit Transfer to Agent` policy, duplicate preview/skip, inline enabled/disabled list Status switch, status filtering, Reason, and delete.
-- Priority list add / batch add / delete with required Reason.
+- Priority list add / batch add / delete with required Reason, Phone-only Country Code (`062` default) / Phone Number mode, mutually exclusive Phone and non-Phone channel selection, Country Code list column, and duplicate validation that excludes Match Rule.
 - Priority Match Rule filtering.
 - Common phrase category and phrase CRUD.
 - Common phrase batch move between categories.
 - Public phrase linkage into the Live Chat Quick Replies tab.
 - Common link CRUD for website name, website address, and remark.
 - Common Link feeds the shared right-side Common Links tab in voice, video, and Live Chat workspaces.
+- Quick Action Management CRUD for Action Name, Link Address, Status, Remark, display order, and `Admin` / Modified Time metadata. The compact customer-context Quick Action card reads enabled entries in configured order across call, Email, and Social Media workspaces without navigating externally.
 - Common number CRUD for IVR transfer target name, number, status, and remark.
 - Enabled common numbers feed the call Transfer modal `Transfer IVR` tab.
 - Sensitive word CRUD with fixed category dictionary.
 - Sensitive word detection in Live Chat agent reply sending.
-- Busy reason Productivity Type (`Productive` / `Non-Productive`) filtering and editing, plus a read-only list `Support Outbound` status maintained by a switch in the edit modal. `Callback Finrisk` and `Callback Misinform` are the active default customer-outbound AUX reasons; disabled reasons cannot be selected for outbound permission.
+- AUX Reason Management Productivity Type (`Productive` / `Non-Productive`) filtering and editing, plus a read-only list `Support Outbound` status maintained by a switch in the edit modal. `Callback Finrisk` and `Callback Misinform` are the active default customer-outbound AUX reasons; disabled reasons cannot be selected for outbound permission.
 - Abnormal End Reasons CRUD for configurable Voice, Video, and DM service end reasons, seeded with two active DM reasons only.
 - Abnormal End Reasons filters by Keyword, Applicable Media, and Status.
 - Interaction Log for current-agent Phone, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp records, seeded with 30 mock records.

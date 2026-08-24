@@ -14,6 +14,7 @@ import {
   BaseCard,
   StatusBadge,
 } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import { useCallManagementStore } from '../../store'
 import type {
   SessionEndMediaType,
@@ -139,7 +140,7 @@ export function SessionEndReasonManagementPage() {
   const [filterDraft, setFilterDraft] =
     useState<SessionEndReasonFilters>(defaultFilters)
   const [modalMode, setModalMode] = useState<SessionEndReasonModalMode>(null)
-  const [notice, setNotice] = useState('')
+  const { notify } = useOperationFeedback()
   const [submitAttempted, setSubmitAttempted] = useState(false)
 
   const filteredEntries = useMemo(
@@ -208,7 +209,6 @@ export function SessionEndReasonManagementPage() {
       ...currentDraft,
       [key]: value,
     }))
-    setNotice('')
   }
 
   const handleSearch = () => {
@@ -224,7 +224,6 @@ export function SessionEndReasonManagementPage() {
     setDraft(defaultDraft)
     setModalMode('create')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const openEditModal = (entry: SessionEndReasonEntry) => {
@@ -234,7 +233,6 @@ export function SessionEndReasonManagementPage() {
     })
     setModalMode('edit')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const closeModal = () => {
@@ -263,10 +261,10 @@ export function SessionEndReasonManagementPage() {
 
     if (modalMode === 'edit') {
       updateEntry(nextEntry)
-      setNotice('Session end reason updated.')
+      notify('Session end reason updated.')
     } else {
       addEntry(nextEntry)
-      setNotice('Session end reason added.')
+      notify('Session end reason added.')
     }
 
     closeModal()
@@ -278,7 +276,7 @@ export function SessionEndReasonManagementPage() {
     }
 
     deleteEntries([deleteTarget.id])
-    setNotice('Session end reason deleted.')
+    notify('Session end reason deleted.')
     setDeleteTarget(null)
   }
 
@@ -332,7 +330,6 @@ export function SessionEndReasonManagementPage() {
             type="button"
             onClick={() => {
               setDeleteTarget(record)
-              setNotice('')
             }}
           >
             <DeleteOutlined />
@@ -349,14 +346,6 @@ export function SessionEndReasonManagementPage() {
       className="session-end-reason-management"
       title="Abnormal End Reasons"
     >
-      {notice && (
-        <Alert
-          showIcon
-          className="routing-config-page__notice"
-          message={notice}
-          type="success"
-        />
-      )}
       <BaseCard compact>
         <AdminToolbar
           actions={
