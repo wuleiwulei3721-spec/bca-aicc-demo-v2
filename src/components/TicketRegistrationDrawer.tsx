@@ -1,4 +1,4 @@
-import { Input, Select } from 'antd'
+import { Select } from 'antd'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   getProductsForTicketCategory,
@@ -6,6 +6,7 @@ import {
 } from '../mock/ticketCategoryProducts'
 import { BaseButton } from './BaseButton'
 import { BaseModal } from './BaseModal'
+import { LimitedTextArea } from './LimitedTextArea'
 
 export interface TicketRegistrationDraft {
   caseCategory: string
@@ -181,7 +182,7 @@ export function TicketRegistrationDrawer({
         </section>
         <label>
           <span>Summary</span>
-          <Input.TextArea
+          <LimitedTextArea
             placeholder="Enter ticket summary"
             rows={5}
             maxLength={250}
@@ -199,7 +200,7 @@ export function TicketRegistrationDrawer({
         </label>
         <label>
           <span>Note</span>
-          <Input.TextArea
+          <LimitedTextArea
             placeholder="Enter agent note"
             rows={5}
             maxLength={1000}

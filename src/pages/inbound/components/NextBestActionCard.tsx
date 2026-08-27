@@ -26,29 +26,33 @@ export function NextBestActionCard({
       onHeaderClick={() => setExpanded((current) => !current)}
     >
       <div className="inbound-action-list">
-        {visibleItems.map((item) => (
-          <button
-            className="inbound-action-row"
-            key={item.id}
-            type="button"
-            onClick={() =>
-              onOpenCrm({
-                key: item.id,
-                title: item.recommendedService,
-                kind: 'next-best-action',
-                crmLink: item.crmLink,
-                reference: 'NBA',
-                description:
-                  'Rekomendasi layanan berikutnya berdasarkan profil dan aktivitas nasabah.',
-              })
-            }
-          >
-            <span className="inbound-action-service">
-              {item.recommendedService}
-            </span>
-            <ArrowRightOutlined className="inbound-ticket-row__hint" />
-          </button>
-        ))}
+        {visibleItems.length > 0 ? (
+          visibleItems.map((item) => (
+            <button
+              className="inbound-action-row"
+              key={item.id}
+              type="button"
+              onClick={() =>
+                onOpenCrm({
+                  key: item.id,
+                  title: item.recommendedService,
+                  kind: 'next-best-action',
+                  crmLink: item.crmLink,
+                  reference: 'NBA',
+                  description:
+                    'Rekomendasi layanan berikutnya berdasarkan profil dan aktivitas nasabah.',
+                })
+              }
+            >
+              <span className="inbound-action-service">
+                {item.recommendedService}
+              </span>
+              <ArrowRightOutlined className="inbound-ticket-row__hint" />
+            </button>
+          ))
+        ) : (
+          <div className="inbound-empty-state">No data available.</div>
+        )}
       </div>
     </SectionCard>
   )

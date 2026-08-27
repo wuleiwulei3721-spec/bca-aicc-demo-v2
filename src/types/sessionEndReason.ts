@@ -10,4 +10,6 @@ export interface SessionEndReasonEntry {
   reasonName: string
   remark: string
   status: SessionEndReasonStatus
+  updatedAt: string
+  updatedBy: string
 }

@@ -138,9 +138,7 @@ export function CustomerJourneyCard({ items }: CustomerJourneyCardProps) {
               )
             })
           ) : (
-            <div className="inbound-empty-state">
-              Customer journey is not loaded.
-            </div>
+            <div className="inbound-empty-state">No data available.</div>
           )}
         </div>
       </SectionCard>

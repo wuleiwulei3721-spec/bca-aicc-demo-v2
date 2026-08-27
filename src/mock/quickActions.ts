@@ -1,7 +1,7 @@
 import type { QuickActionEntry } from '../types'
+import { DEFAULT_AUDIT_ACTOR } from '../utils/audit'
 
-const DEFAULT_AUDIT_ACTOR = 'Admin'
-const DEFAULT_AUDIT_TIME = '2026-08-20T01:00:00.000Z'
+const DEFAULT_AUDIT_TIME = '2026-08-20 09:00:00'
 
 export const defaultQuickActionEntries: QuickActionEntry[] = [
   {

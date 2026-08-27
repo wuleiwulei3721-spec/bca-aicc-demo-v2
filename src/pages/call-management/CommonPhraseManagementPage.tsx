@@ -20,10 +20,15 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  LimitedTextArea,
 } from '../../components'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
-import { useCallManagementStore } from '../../store'
+import { useAuthStore, useCallManagementStore } from '../../store'
 import type { CommonPhraseCategory, CommonPhraseEntry } from '../../types'
+import {
+  formatAuditActor,
+  formatCallManagementDateTime,
+} from '../../utils/audit'
 
 type CommonPhraseModalMode = 'create' | 'edit' | null
 
@@ -40,6 +45,7 @@ interface CommonPhraseDraft {
 }
 
 const allCategoriesKey = '__all__'
+const COMMON_PHRASE_MAX_LENGTH = 100
 
 const defaultFilters: CommonPhraseFilters = {
   phraseText: '',
@@ -61,6 +67,7 @@ function createEntityId(prefix: string) {
 }
 
 export function CommonPhraseManagementPage() {
+  const authSession = useAuthStore((state) => state.session)
   const categories = useCallManagementStore(
     (state) => state.commonPhraseCategories,
   )
@@ -225,6 +232,10 @@ export function CommonPhraseManagementPage() {
 
     if (!phraseText) {
       errors.push('Common Phrase is required.')
+    } else if (phraseText.length > COMMON_PHRASE_MAX_LENGTH) {
+      errors.push(
+        `Common Phrase must be ${COMMON_PHRASE_MAX_LENGTH} characters or fewer.`,
+      )
     }
 
     if (!draft.categoryId || !categoryNameById.has(draft.categoryId)) {
@@ -358,6 +369,11 @@ export function CommonPhraseManagementPage() {
       phraseId: draft.phraseId ?? createEntityId('public-phrase'),
       phraseText: draft.phraseText.trim(),
       shortcutCode: draft.shortcutCode.trim(),
+      updatedAt: formatCallManagementDateTime(new Date()),
+      updatedBy: formatAuditActor(
+        authSession?.employeeId,
+        authSession?.displayName,
+      ),
     }
 
     if (modalMode === 'edit') {
@@ -404,7 +420,11 @@ export function CommonPhraseManagementPage() {
       (entry) => entry.categoryId !== moveTargetCategoryId,
     ).length
 
-    moveEntries(selectedPhraseIds, moveTargetCategoryId)
+    moveEntries(
+      selectedPhraseIds,
+      moveTargetCategoryId,
+      formatAuditActor(authSession?.employeeId, authSession?.displayName),
+    )
     notify(
       movedCount === 1
         ? 'Selected common phrase moved.'
@@ -450,20 +470,31 @@ export function CommonPhraseManagementPage() {
     {
       dataIndex: 'shortcutCode',
       title: 'Shortcut Code',
-      width: 150,
+      width: 100,
     },
     {
       dataIndex: 'phraseText',
       ellipsis: true,
       title: 'Common Phrase',
-      width: 420,
+      width: 280,
     },
     {
       dataIndex: 'categoryId',
       render: (categoryId: string) =>
         categoryNameById.get(categoryId) ?? 'Unknown Category',
       title: 'Category',
-      width: 180,
+      width: 96,
+    },
+    {
+      dataIndex: 'updatedAt',
+      render: (updatedAt: string) => formatCallManagementDateTime(updatedAt),
+      title: 'Updated Time',
+      width: 146,
+    },
+    {
+      dataIndex: 'updatedBy',
+      title: 'Updated By',
+      width: 170,
     },
     {
       fixed: 'right',
@@ -490,7 +521,7 @@ export function CommonPhraseManagementPage() {
         </div>
       ),
       title: 'Actions',
-      width: 96,
+      width: 86,
     },
   ]
 
@@ -707,7 +738,6 @@ export function CommonPhraseManagementPage() {
           <AdminTable<CommonPhraseEntry>
             columns={columns}
             dataSource={filteredEntries}
-            horizontalScroll={900}
             pagination={{}}
             rowKey="phraseId"
             rowSelection={{
@@ -762,7 +792,8 @@ export function CommonPhraseManagementPage() {
               />
             </AdminFormField>
             <AdminFormField label="Common Phrase" required fullWidth>
-              <Input.TextArea
+              <LimitedTextArea
+                maxLength={COMMON_PHRASE_MAX_LENGTH}
                 rows={5}
                 value={draft.phraseText}
                 onChange={(event) =>

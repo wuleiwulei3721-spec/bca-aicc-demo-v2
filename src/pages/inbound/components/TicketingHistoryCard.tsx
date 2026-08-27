@@ -83,9 +83,7 @@ export function TicketingHistoryCard({
             </button>
           ))
         ) : (
-          <div className="inbound-empty-state">
-            Ticketing history is not loaded.
-          </div>
+          <div className="inbound-empty-state">No data available.</div>
         )}
       </div>
     </SectionCard>

@@ -32,6 +32,7 @@ import type {
   TextChannelSettingsConfig,
   TextChannelSettingsStatus,
 } from '../../types'
+import { formatCallManagementDateTime } from '../../utils/audit'
 
 const { TextArea } = Input
 
@@ -80,16 +81,6 @@ function cloneDefaultConfig(): TextChannelSettingsConfig {
     })),
     serviceRules: { ...defaultTextChannelSettings.serviceRules },
   }
-}
-
-function formatSavedTime(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hour = String(date.getHours()).padStart(2, '0')
-  const minute = String(date.getMinutes()).padStart(2, '0')
-
-  return `${year}-${month}-${day} ${hour}:${minute}`
 }
 
 interface NumberSettingProps {
@@ -197,7 +188,9 @@ export function TextChannelSettingsPage() {
   const [config, setConfig] = useState<TextChannelSettingsConfig>(
     cloneDefaultConfig,
   )
-  const [savedAt, setSavedAt] = useState('2026-06-01 14:30')
+  const [savedAt, setSavedAt] = useState(
+    formatCallManagementDateTime('2026-06-01 14:30:00'),
+  )
   const { notify } = useOperationFeedback()
   const [status, setStatus] = useState<TextChannelSettingsStatus>('Draft')
 
@@ -283,7 +276,7 @@ export function TextChannelSettingsPage() {
   }
 
   const applySave = (nextStatus: TextChannelSettingsStatus) => {
-    const nextSavedAt = formatSavedTime(new Date())
+    const nextSavedAt = formatCallManagementDateTime(new Date())
     setSavedAt(nextSavedAt)
     notify(
       nextStatus === 'Published'

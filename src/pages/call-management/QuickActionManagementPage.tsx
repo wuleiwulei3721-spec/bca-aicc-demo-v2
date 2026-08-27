@@ -20,15 +20,20 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  LimitedTextArea,
   StatusBadge,
 } from '../../components'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
-import { useCallManagementStore } from '../../store'
+import { useAuthStore, useCallManagementStore } from '../../store'
 import type {
   QuickActionEntry,
   QuickActionReorderDirection,
   QuickActionStatus,
 } from '../../types'
+import {
+  formatAuditActor,
+  formatCallManagementDateTime,
+} from '../../utils/audit'
 
 type QuickActionModalMode = 'create' | 'edit' | null
 
@@ -93,24 +98,6 @@ function getNextQuickActionId(entries: QuickActionEntry[]) {
   return `QA${String(nextSequence).padStart(3, '0')}`
 }
 
-function formatDateTime(value?: string) {
-  if (!value) {
-    return '-'
-  }
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  const pad = (part: number) => String(part).padStart(2, '0')
-
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
-    date.getDate(),
-  )} ${pad(date.getHours())}:${pad(date.getMinutes())}`
-}
-
 function renderStatusBadge(status: QuickActionStatus) {
   return (
     <StatusBadge
@@ -123,6 +110,7 @@ function renderStatusBadge(status: QuickActionStatus) {
 }
 
 export function QuickActionManagementPage() {
+  const authSession = useAuthStore((state) => state.session)
   const entries = useCallManagementStore((state) => state.quickActionEntries)
   const addEntry = useCallManagementStore((state) => state.addQuickActionEntry)
   const deleteEntries = useCallManagementStore(
@@ -146,7 +134,10 @@ export function QuickActionManagementPage() {
   const { notify } = useOperationFeedback()
   const [submitAttempted, setSubmitAttempted] = useState(false)
 
-  const auditActor = 'Admin'
+  const auditActor = formatAuditActor(
+    authSession?.employeeId,
+    authSession?.displayName,
+  )
 
   const sortedEntries = useMemo(
     () =>
@@ -253,7 +244,7 @@ export function QuickActionManagementPage() {
       return
     }
 
-    const now = new Date().toISOString()
+    const now = formatCallManagementDateTime(new Date())
     const currentEntry = entries.find((entry) => entry.id === draft.id)
     const nextEntry: QuickActionEntry = {
       actionName: draft.actionName.trim(),
@@ -335,16 +326,16 @@ export function QuickActionManagementPage() {
       width: 150,
     },
     {
-      dataIndex: 'updatedBy',
-      ellipsis: true,
-      title: 'Modified By',
-      width: 80,
+      dataIndex: 'updatedAt',
+      render: (updatedAt: string) => formatCallManagementDateTime(updatedAt),
+      title: 'Updated Time',
+      width: 164,
     },
     {
-      dataIndex: 'updatedAt',
-      render: (updatedAt: string) => formatDateTime(updatedAt),
-      title: 'Modified Time',
-      width: 140,
+      dataIndex: 'updatedBy',
+      ellipsis: true,
+      title: 'Updated By',
+      width: 132,
     },
     {
       render: (_, record) => {
@@ -542,7 +533,7 @@ export function QuickActionManagementPage() {
               </span>
             </AdminFormField>
             <AdminFormField label="Remark" fullWidth>
-              <Input.TextArea
+              <LimitedTextArea
                 rows={3}
                 value={draft.remark}
                 onChange={(event) => updateDraft('remark', event.target.value)}

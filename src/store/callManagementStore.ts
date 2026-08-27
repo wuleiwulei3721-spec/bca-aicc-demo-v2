@@ -14,6 +14,7 @@ import { defaultPriorityListEntries } from '../mock/priorityList'
 import { defaultQuickActionEntries } from '../mock/quickActions'
 import { defaultSensitiveWordEntries } from '../mock/sensitiveWords'
 import { defaultSessionEndReasonEntries } from '../mock/sessionEndReasons'
+import { formatCallManagementDateTime } from '../utils/audit'
 import type {
   BlacklistEntry,
   BlacklistStatus,
@@ -69,7 +70,11 @@ interface CallManagementStore {
   ) => SessionEndReasonEntry[]
   globalControlConfiguration: GlobalControlConfiguration
   loginLogs: LoginLogEntry[]
-  moveCommonPhraseEntries: (phraseIds: string[], categoryId: string) => void
+  moveCommonPhraseEntries: (
+    phraseIds: string[],
+    categoryId: string,
+    updatedBy: string,
+  ) => void
   moveQuickActionEntry: (
     id: string,
     direction: QuickActionReorderDirection,
@@ -306,7 +311,7 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
   deleteQuickActionEntries: (ids, updatedBy) =>
     set((state) => {
       const idSet = new Set(ids)
-      const updatedAt = new Date().toISOString()
+      const updatedAt = formatCallManagementDateTime(new Date())
       const remainingEntries = state.quickActionEntries
         .filter((entry) => !idSet.has(entry.id))
         .sort((first, second) => first.sortOrder - second.sortOrder)
@@ -372,14 +377,15 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
       ),
   globalControlConfiguration: cloneGlobalControlConfiguration(),
   loginLogs: cloneLoginLogs(),
-  moveCommonPhraseEntries: (phraseIds, categoryId) =>
+  moveCommonPhraseEntries: (phraseIds, categoryId, updatedBy) =>
     set((state) => {
       const idSet = new Set(phraseIds)
+      const updatedAt = formatCallManagementDateTime(new Date())
 
       return {
         commonPhraseEntries: state.commonPhraseEntries.map((entry) =>
           idSet.has(entry.phraseId) && entry.categoryId !== categoryId
-            ? { ...entry, categoryId }
+            ? { ...entry, categoryId, updatedAt, updatedBy }
             : entry,
         ),
       }
@@ -411,7 +417,7 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
       const [movedEntry] = orderedEntries.splice(sourceIndex, 1)
       orderedEntries.splice(targetIndex, 0, movedEntry)
 
-      const updatedAt = new Date().toISOString()
+      const updatedAt = formatCallManagementDateTime(new Date())
 
       return {
         quickActionEntries: orderedEntries.map((entry, index) => {

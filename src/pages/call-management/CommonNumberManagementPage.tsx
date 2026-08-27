@@ -12,11 +12,16 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  LimitedTextArea,
   StatusBadge,
 } from '../../components'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
-import { useCallManagementStore } from '../../store'
+import { useAuthStore, useCallManagementStore } from '../../store'
 import type { CommonNumberEntry, CommonNumberStatus } from '../../types'
+import {
+  formatAuditActor,
+  formatCallManagementDateTime,
+} from '../../utils/audit'
 
 type CommonNumberModalMode = 'create' | 'edit' | null
 
@@ -83,6 +88,7 @@ function renderStatusBadge(status: CommonNumberStatus) {
 }
 
 export function CommonNumberManagementPage() {
+  const authSession = useAuthStore((state) => state.session)
   const entries = useCallManagementStore((state) => state.commonNumberEntries)
   const addEntry = useCallManagementStore((state) => state.addCommonNumberEntry)
   const updateEntry = useCallManagementStore(
@@ -216,6 +222,11 @@ export function CommonNumberManagementPage() {
       number: draft.number.trim(),
       remark: draft.remark.trim(),
       status: draft.status,
+      updatedAt: formatCallManagementDateTime(new Date()),
+      updatedBy: formatAuditActor(
+        authSession?.employeeId,
+        authSession?.displayName,
+      ),
     }
 
     if (modalMode === 'edit') {
@@ -250,24 +261,36 @@ export function CommonNumberManagementPage() {
     {
       dataIndex: 'name',
       title: 'Name',
-      width: 220,
+      width: 190,
     },
     {
       dataIndex: 'number',
       title: 'Number',
-      width: 180,
+      width: 140,
     },
     {
       dataIndex: 'status',
       render: (status: CommonNumberStatus) => renderStatusBadge(status),
       title: 'Status',
-      width: 140,
+      width: 110,
     },
     {
       dataIndex: 'remark',
       ellipsis: true,
       title: 'Remark',
-      width: 360,
+      width: 250,
+    },
+    {
+      dataIndex: 'updatedAt',
+      render: (updatedAt: string) => formatCallManagementDateTime(updatedAt),
+      title: 'Updated Time',
+      width: 156,
+    },
+    {
+      dataIndex: 'updatedBy',
+      ellipsis: true,
+      title: 'Updated By',
+      width: 132,
     },
     {
       fixed: 'right',
@@ -294,7 +317,7 @@ export function CommonNumberManagementPage() {
         </div>
       ),
       title: 'Actions',
-      width: 100,
+      width: 96,
     },
   ]
 
@@ -370,7 +393,6 @@ export function CommonNumberManagementPage() {
         <AdminTable<CommonNumberEntry>
           columns={columns}
           dataSource={filteredEntries}
-          horizontalScroll={1072}
           pagination={{}}
           rowKey="id"
         />
@@ -433,7 +455,7 @@ export function CommonNumberManagementPage() {
               </span>
             </AdminFormField>
             <AdminFormField label="Remark" fullWidth>
-              <Input.TextArea
+              <LimitedTextArea
                 rows={3}
                 value={draft.remark}
                 onChange={(event) => updateDraft('remark', event.target.value)}

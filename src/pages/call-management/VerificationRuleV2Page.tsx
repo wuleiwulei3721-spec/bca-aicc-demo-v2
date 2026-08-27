@@ -33,9 +33,14 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  LimitedInput,
   StatusBadge,
 } from '../../components'
-import { useAppStore, useRoutingConfigStore } from '../../store'
+import {
+  useAppStore,
+  useAuthStore,
+  useRoutingConfigStore,
+} from '../../store'
 import type {
   VerificationV2CustomerSegment,
   VerificationV2HaloAppLoginStatus,
@@ -67,6 +72,11 @@ import {
   verificationV2HaloAppLoginStatusOptions,
   verificationV2QuestionBlockTypeLabels,
 } from '../../utils/verificationRuleV2'
+import {
+  DEFAULT_AUDIT_ACTOR,
+  formatAuditActor,
+  formatCallManagementDateTime,
+} from '../../utils/audit'
 
 type RuleModalMode = 'create' | 'edit' | 'view'
 
@@ -371,6 +381,7 @@ function rulesOverlap(
 }
 
 export function VerificationRuleV2Page() {
+  const authSession = useAuthStore((state) => state.session)
   const verificationV2QuestionBank = useAppStore(
     (state) => state.verificationV2QuestionBank,
   )
@@ -832,7 +843,10 @@ export function VerificationRuleV2Page() {
         },
       },
       updatedAt: formatVerificationV2Timestamp(new Date()),
-      updatedBy: 'Admin',
+      updatedBy: formatAuditActor(
+        authSession?.employeeId,
+        authSession?.displayName,
+      ),
     })
     closeRuleModal()
   }
@@ -1085,7 +1099,7 @@ export function VerificationRuleV2Page() {
     {
       key: 'channelCodes',
       title: 'Channel',
-      width: 128,
+      width: 116,
       render: (_, rule) => (
         <div className="verification-rule-v2-tags">
           {rule.channelCodes.map((channelCode) => (
@@ -1098,13 +1112,13 @@ export function VerificationRuleV2Page() {
       dataIndex: 'skillQueueCode',
       key: 'skillQueueCode',
       title: 'Skill Queue',
-      width: 150,
+      width: 140,
       render: (value: string) => skillQueueNameByCode[value] ?? value,
     },
     {
       key: 'customerSegments',
       title: 'Customer Segment',
-      width: 168,
+      width: 150,
       render: (_, rule) => (
         <div className="verification-rule-v2-tags">
           {rule.customerSegments.map((segment) => (
@@ -1118,7 +1132,7 @@ export function VerificationRuleV2Page() {
     {
       key: 'haloAppLoginStatus',
       title: 'HaloApp Login Status',
-      width: 144,
+      width: 128,
       render: (_, rule) =>
         rule.haloAppLoginStatus
           ? verificationV2HaloAppLoginStatusLabels[rule.haloAppLoginStatus]
@@ -1127,7 +1141,7 @@ export function VerificationRuleV2Page() {
     {
       key: 'correctRequired',
       title: 'Correct Required',
-      width: 104,
+      width: 98,
       render: (_, rule) =>
         getVerificationV2ScenarioCorrectRequired(
           getDefaultVerificationV2Scenario(rule),
@@ -1136,7 +1150,7 @@ export function VerificationRuleV2Page() {
     {
       key: 'maxWrongAttempts',
       title: 'Max Wrong',
-      width: 80,
+      width: 76,
       render: (_, rule) => {
         const defaultScenario = getDefaultVerificationV2Scenario(rule)
         return defaultScenario?.maxWrongAttempts ?? '-'
@@ -1146,7 +1160,7 @@ export function VerificationRuleV2Page() {
       dataIndex: 'status',
       key: 'status',
       title: 'Status',
-      width: 96,
+      width: 90,
       render: (value: VerificationV2RuleStatus) => (
         <StatusBadge
           label={value === 'enabled' ? 'Enabled' : 'Disabled'}
@@ -1156,23 +1170,25 @@ export function VerificationRuleV2Page() {
       ),
     },
     {
-      dataIndex: 'updatedBy',
-      key: 'updatedBy',
-      title: 'Updated By',
-      width: 88,
-      render: (value: string | undefined) => value ?? 'Admin',
-    },
-    {
       dataIndex: 'updatedAt',
       key: 'updatedAt',
+      render: (updatedAt: string) => formatCallManagementDateTime(updatedAt),
       title: 'Updated Time',
-      width: 112,
+      width: 154,
+    },
+    {
+      dataIndex: 'updatedBy',
+      key: 'updatedBy',
+      ellipsis: true,
+      title: 'Updated By',
+      width: 126,
+      render: (value: string | undefined) => value ?? DEFAULT_AUDIT_ACTOR,
     },
     {
       fixed: 'right',
       key: 'actions',
       title: 'Actions',
-      width: 144,
+      width: 136,
       render: (_, rule) => (
         <div className="verification-rules-page__row-actions">
           <button
@@ -1548,7 +1564,6 @@ export function VerificationRuleV2Page() {
           dataSource={filteredRules}
           pagination={{}}
           rowKey="id"
-          horizontalScroll={1240}
         />
       </BaseCard>
 
@@ -2135,7 +2150,8 @@ export function VerificationRuleV2Page() {
         <div className="verification-rule-v2-question-editor">
           <label>
             <span>Question Name</span>
-            <Input
+            <LimitedInput
+              maxLength={100}
               placeholder="Question Name"
               status={
                 questionSubmitAttempted &&

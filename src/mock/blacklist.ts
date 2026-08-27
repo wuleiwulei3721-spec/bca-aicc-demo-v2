@@ -1,11 +1,12 @@
 import type { BlacklistEntry } from '../types'
+import { DEFAULT_AUDIT_ACTOR } from '../utils/audit'
 
 export const defaultBlacklistEntries: BlacklistEntry[] = [
   {
     channel: 'Phone',
-    countryCode: '062',
-    createdAt: '2026-06-10 09:12',
-    createdBy: 'Admin',
+    countryCode: '62',
+    createdAt: '2026-06-10 09:12:00',
+    createdBy: DEFAULT_AUDIT_ACTOR,
     id: 'BL001',
     identifier: '08123456789',
     phoneNumber: '08123456789',
@@ -15,9 +16,9 @@ export const defaultBlacklistEntries: BlacklistEntry[] = [
   },
   {
     channel: 'Phone',
-    countryCode: '062',
-    createdAt: '2026-06-10 10:45',
-    createdBy: 'Supervisor',
+    countryCode: '62',
+    createdAt: '2026-06-10 10:45:00',
+    createdBy: DEFAULT_AUDIT_ACTOR,
     id: 'BL002',
     identifier: '0215550133',
     phoneNumber: '0215550133',
@@ -27,18 +28,20 @@ export const defaultBlacklistEntries: BlacklistEntry[] = [
   },
   {
     channel: 'WhatsApp',
-    createdAt: '2026-06-11 08:20',
-    createdBy: 'Admin',
+    countryCode: '62',
+    createdAt: '2026-06-11 08:20:00',
+    createdBy: DEFAULT_AUDIT_ACTOR,
     id: 'BL003',
-    identifier: '6281211122233',
+    identifier: '081211122233',
+    phoneNumber: '081211122233',
     reason: 'Repeated spam message pattern, retain digital containment.',
     restrictionPolicy: 'block-transfer-to-agent',
     status: 'Active',
   },
   {
     channel: 'Bankapp',
-    createdAt: '2026-06-11 11:05',
-    createdBy: 'Risk Ops',
+    createdAt: '2026-06-11 11:05:00',
+    createdBy: DEFAULT_AUDIT_ACTOR,
     id: 'BL004',
     identifier: '00012345',
     reason: 'Temporary access block while customer risk review is open.',

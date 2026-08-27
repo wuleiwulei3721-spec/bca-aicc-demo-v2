@@ -12,6 +12,7 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  LimitedTextArea,
 } from '../../components'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import {
@@ -20,6 +21,11 @@ import {
   useRoutingConfigStore,
 } from '../../store'
 import type { PriorityListEntry } from '../../types'
+import {
+  formatAuditActor,
+  formatCallManagementDateTime,
+} from '../../utils/audit'
+import { isPhoneNumberChannel } from '../../utils/phoneNumberChannels'
 
 type PriorityListModalMode = 'batch' | null
 
@@ -55,7 +61,7 @@ const defaultFilters: PriorityListFilters = {
 
 const defaultDraft: PriorityListDraft = {
   channels: [],
-  countryCode: '062',
+  countryCode: '62',
   identifiers: '',
   phoneNumbers: '',
   matchRule: 'exact_match',
@@ -97,16 +103,6 @@ const identifierTooltip = (
   </div>
 )
 
-function formatSavedTime(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hour = String(date.getHours()).padStart(2, '0')
-  const minute = String(date.getMinutes()).padStart(2, '0')
-
-  return `${year}-${month}-${day} ${hour}:${minute}`
-}
-
 function parseIdentifiers(value: string) {
   return value
     .split(';')
@@ -127,7 +123,7 @@ function getDuplicateKey(
   const normalizedCountryCode = normalizeIdentifier(countryCode)
   const normalizedIdentifier = normalizeIdentifier(identifier)
 
-  return normalizedChannel === 'phone'
+  return isPhoneNumberChannel(channel)
     ? `${normalizedChannel}::${normalizedCountryCode}::${normalizedIdentifier}`
     : `${normalizedChannel}::${normalizedIdentifier}`
 }
@@ -180,7 +176,7 @@ export function PriorityListManagementPage() {
   const [submitAttempted, setSubmitAttempted] = useState(false)
 
   const selectedCount = selectedEntryIds.length
-  const isPhoneMode = draft.channels.includes('Phone')
+  const isPhoneMode = draft.channels.some(isPhoneNumberChannel)
   const enabledChannelOptions = useMemo(() => {
     const channelNames = new Set<string>()
 
@@ -205,11 +201,11 @@ export function PriorityListManagementPage() {
       enabledChannelOptions.map((option) => ({
         ...option,
         disabled:
-          option.value === 'Phone'
-            ? draft.channels.length > 0 && !isPhoneMode
+          isPhoneNumberChannel(option.value)
+            ? draft.channels.some((channel) => !isPhoneNumberChannel(channel))
             : isPhoneMode,
       })),
-    [draft.channels.length, enabledChannelOptions, isPhoneMode],
+    [draft.channels, enabledChannelOptions, isPhoneMode],
   )
   const filteredEntries = useMemo(
     () =>
@@ -251,7 +247,9 @@ export function PriorityListManagementPage() {
 
       existingKeys.set(key, {
         channel: entry.channel,
-        countryCode: entry.channel === 'Phone' ? entry.countryCode || '-' : '-',
+        countryCode: isPhoneNumberChannel(entry.channel)
+          ? entry.countryCode || '-'
+          : '-',
         existingNo: index + 1,
         identifier: entry.identifier,
         key,
@@ -403,8 +401,11 @@ export function PriorityListManagementPage() {
 
     const uniqueIdentifiers = getUniqueIdentifiers(parsedIdentifiers)
     const baseSequence = getNextSequence(priorityListEntries)
-    const createdAt = formatSavedTime(new Date())
-    const createdBy = authSession?.displayName ?? 'Admin'
+    const createdAt = formatCallManagementDateTime(new Date())
+    const createdBy = formatAuditActor(
+      authSession?.employeeId,
+      authSession?.displayName,
+    )
     const countryCode = isPhoneMode ? draft.countryCode.trim() : ''
     const reason = draft.reason.trim()
     const nextEntries: PriorityListEntry[] = []
@@ -500,7 +501,7 @@ export function PriorityListManagementPage() {
     {
       dataIndex: 'countryCode',
       render: (countryCode: string | undefined, entry) =>
-        entry.channel === 'Phone' ? countryCode || '-' : '-',
+        isPhoneNumberChannel(entry.channel) ? countryCode || '-' : '-',
       title: 'Country Code',
       width: 130,
     },
@@ -524,13 +525,15 @@ export function PriorityListManagementPage() {
     },
     {
       dataIndex: 'createdAt',
-      title: 'Created Date',
-      width: 130,
+      render: (createdAt: string) => formatCallManagementDateTime(createdAt),
+      title: 'Created Time',
+      width: 164,
     },
     {
       dataIndex: 'createdBy',
+      ellipsis: true,
       title: 'Created By',
-      width: 100,
+      width: 180,
     },
   ]
 
@@ -719,7 +722,7 @@ export function PriorityListManagementPage() {
               />
             </AdminFormField>
             <AdminFormField label="Reason" required fullWidth>
-              <Input.TextArea
+              <LimitedTextArea
                 rows={3}
                 value={draft.reason}
                 onChange={(event) => updateDraft('reason', event.target.value)}

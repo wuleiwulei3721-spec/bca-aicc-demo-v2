@@ -12,15 +12,20 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  LimitedTextArea,
   StatusBadge,
 } from '../../components'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
-import { useCallManagementStore } from '../../store'
+import { useAuthStore, useCallManagementStore } from '../../store'
 import type {
   SessionEndMediaType,
   SessionEndReasonEntry,
   SessionEndReasonStatus,
 } from '../../types'
+import {
+  formatAuditActor,
+  formatCallManagementDateTime,
+} from '../../utils/audit'
 
 type SessionEndReasonModalMode = 'create' | 'edit' | null
 
@@ -119,6 +124,7 @@ function renderMediaTags(mediaTypes: SessionEndMediaType[]) {
 }
 
 export function SessionEndReasonManagementPage() {
+  const authSession = useAuthStore((state) => state.session)
   const entries = useCallManagementStore(
     (state) => state.sessionEndReasonEntries,
   )
@@ -257,6 +263,11 @@ export function SessionEndReasonManagementPage() {
       reasonName: draft.reasonName.trim(),
       remark: draft.remark.trim(),
       status: draft.status,
+      updatedAt: formatCallManagementDateTime(new Date()),
+      updatedBy: formatAuditActor(
+        authSession?.employeeId,
+        authSession?.displayName,
+      ),
     }
 
     if (modalMode === 'edit') {
@@ -291,26 +302,38 @@ export function SessionEndReasonManagementPage() {
     {
       dataIndex: 'reasonName',
       title: 'Reason Name',
-      width: 280,
+      width: 250,
     },
     {
       dataIndex: 'mediaTypes',
       render: (mediaTypes: SessionEndMediaType[]) =>
         renderMediaTags(mediaTypes),
       title: 'Applicable Media',
-      width: 240,
+      width: 180,
     },
     {
       dataIndex: 'status',
       render: (status: SessionEndReasonStatus) => renderStatusBadge(status),
       title: 'Status',
-      width: 140,
+      width: 110,
     },
     {
       dataIndex: 'remark',
       ellipsis: true,
       title: 'Remark',
-      width: 360,
+      width: 260,
+    },
+    {
+      dataIndex: 'updatedAt',
+      render: (updatedAt: string) => formatCallManagementDateTime(updatedAt),
+      title: 'Updated Time',
+      width: 156,
+    },
+    {
+      dataIndex: 'updatedBy',
+      ellipsis: true,
+      title: 'Updated By',
+      width: 132,
     },
     {
       fixed: 'right',
@@ -337,7 +360,7 @@ export function SessionEndReasonManagementPage() {
         </div>
       ),
       title: 'Actions',
-      width: 100,
+      width: 96,
     },
   ]
 
@@ -414,7 +437,6 @@ export function SessionEndReasonManagementPage() {
         <AdminTable<SessionEndReasonEntry>
           columns={columns}
           dataSource={filteredEntries}
-          horizontalScroll={1192}
           pagination={{}}
           rowKey="id"
         />
@@ -485,7 +507,7 @@ export function SessionEndReasonManagementPage() {
               </span>
             </AdminFormField>
             <AdminFormField label="Remark" fullWidth>
-              <Input.TextArea
+              <LimitedTextArea
                 rows={3}
                 value={draft.remark}
                 onChange={(event) => updateDraft('remark', event.target.value)}

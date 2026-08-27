@@ -659,7 +659,7 @@ function MailboxPanel({
             const displayContact =
               email.direction === 'outbound'
                 ? email.receiver
-                : email.customer.profile.name
+                : email.sender
 
             return (
               <button

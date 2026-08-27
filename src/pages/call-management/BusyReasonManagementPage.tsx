@@ -11,15 +11,20 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  LimitedTextArea,
   StatusBadge,
 } from '../../components'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
-import { useCallManagementStore } from '../../store'
+import { useAuthStore, useCallManagementStore } from '../../store'
 import type {
   BusyReason,
   BusyReasonProductivityType,
   BusyReasonStatus,
 } from '../../types'
+import {
+  formatAuditActor,
+  formatCallManagementDateTime,
+} from '../../utils/audit'
 
 type BusyReasonModalMode = 'edit' | null
 
@@ -54,16 +59,6 @@ const productivityTypeFilterOptions: Array<{
   value: '' | BusyReasonProductivityType
 }> = [{ label: 'All', value: '' }, ...productivityTypeOptions]
 
-function formatSavedTime(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hour = String(date.getHours()).padStart(2, '0')
-  const minute = String(date.getMinutes()).padStart(2, '0')
-
-  return `${year}-${month}-${day} ${hour}:${minute}`
-}
-
 function renderStatusBadge(status: BusyReasonStatus) {
   return (
     <StatusBadge
@@ -76,6 +71,7 @@ function renderStatusBadge(status: BusyReasonStatus) {
 }
 
 export function BusyReasonManagementPage() {
+  const authSession = useAuthStore((state) => state.session)
   const busyReasons = useCallManagementStore((state) => state.busyReasons)
   const upsertBusyReason = useCallManagementStore(
     (state) => state.upsertBusyReason,
@@ -173,8 +169,11 @@ export function BusyReasonManagementPage() {
       ...draft,
       busyReasonName: draft.busyReasonName.trim(),
       remark: draft.remark.trim(),
-      updatedAt: formatSavedTime(new Date()),
-      updatedBy: 'Admin',
+      updatedAt: formatCallManagementDateTime(new Date()),
+      updatedBy: formatAuditActor(
+        authSession?.employeeId,
+        authSession?.displayName,
+      ),
     }
 
     upsertBusyReason(nextRecord)
@@ -186,28 +185,28 @@ export function BusyReasonManagementPage() {
     {
       dataIndex: 'busyReasonId',
       title: 'ID',
-      width: 120,
+      width: 82,
     },
     {
       dataIndex: 'busyReasonName',
       title: 'AUX Reason',
-      width: 180,
+      width: 160,
     },
     {
       dataIndex: 'productivityType',
       title: 'Productivity Type',
-      width: 160,
+      width: 126,
     },
     {
       dataIndex: 'status',
       render: (value: BusyReasonStatus) => renderStatusBadge(value),
       title: 'Status',
-      width: 120,
+      width: 96,
     },
     {
       dataIndex: 'supportsOutbound',
       title: 'Support Outbound',
-      width: 160,
+      width: 120,
       render: (value: boolean) => (
         <StatusBadge
           dot
@@ -221,17 +220,19 @@ export function BusyReasonManagementPage() {
       dataIndex: 'remark',
       ellipsis: true,
       title: 'Remark',
-      width: 320,
+      width: 220,
     },
     {
       dataIndex: 'updatedAt',
-      title: 'Updated Date',
-      width: 160,
+      render: (updatedAt: string) => formatCallManagementDateTime(updatedAt),
+      title: 'Updated Time',
+      width: 154,
     },
     {
       dataIndex: 'updatedBy',
+      ellipsis: true,
       title: 'Updated By',
-      width: 120,
+      width: 126,
     },
     {
       fixed: 'right',
@@ -248,7 +249,7 @@ export function BusyReasonManagementPage() {
         </div>
       ),
       title: 'Actions',
-      width: 88,
+      width: 76,
     },
   ]
 
@@ -312,7 +313,6 @@ export function BusyReasonManagementPage() {
             dataSource={filteredReasons}
             pagination={{}}
             rowKey="busyReasonId"
-            horizontalScroll={1350}
           />
         </BaseCard>
       <AdminModal
@@ -401,15 +401,15 @@ export function BusyReasonManagementPage() {
               </label>
               <label className="global-control-config__field busy-reason-config__field--full">
                 <span>Remark</span>
-                <Input.TextArea
+                <LimitedTextArea
                   rows={3}
                   value={draft.remark}
                   onChange={(event) => updateDraft('remark', event.target.value)}
                 />
               </label>
               <label className="global-control-config__field">
-                <span>Updated Date</span>
-                <em>{draft.updatedAt}</em>
+                <span>Updated Time</span>
+                <em>{formatCallManagementDateTime(draft.updatedAt)}</em>
               </label>
               <label className="global-control-config__field">
                 <span>Updated By</span>

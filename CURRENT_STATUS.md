@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-08-20 11:44 +08:00
+Last updated: 2026-08-27 17:38 +08:00
 
 ## 1. Overall Status
 
@@ -76,9 +76,9 @@ This repository is still a demo application:
 - Timer display.
 - Global Control `Auto Cancel ACW Duration` drives the next voice/video After Call Work timer.
 - Toolbar More menu currently exposes Outbound Call; toolbar display settings are hidden from the More menu.
-- Customer-number Outbound Call and Customer Information phone outbound use `Miss Information` or `Financial Risk`. Ordinary Agents can request TL/SPV approval before entering an eligible AUX, but the approved Call action requires an active AUX configured with `Support Outbound`; TL-and-above calls directly only from an eligible AUX. Switching between eligible outbound AUX reasons retains pending and approved requests; leaving all eligible AUX reasons or disabling the last eligible reason invalidates them. Both completed Call actions create and focus an `Outbound Call` customer workspace carrying the dialed number, then enter the same `Talking` state. The Call Number form uses aligned, icon-free controls.
-- `Outbound Call > Call Agent` shows only SPV and TL entries for every role. Calling an agent requires an active AUX configured with `Support Outbound`, but does not use external-number approval.
-- Call identification and Skill display during call lifecycle.
+- Customer-number Outbound Call and Customer Information phone outbound require an active AUX configured with `Support Outbound` and retain `Miss Information` or `Financial Risk` as the per-call reason. They do not create a TL approval request or approval popup; the Customer Information flow still confirms the reason before calling. Completed number calls create a background `Outbound Call` interaction without activating a customer screen pop, then enter `Talking`. The Call Number form uses aligned, icon-free controls.
+- `Outbound Call > Call Agent` shows only SPV and TL entries for every role. Calling an agent does not require an outbound AUX, creates the same background `Outbound Call` interaction without a customer screen pop, and enters `Talking`.
+- Call identification and Skill display during call lifecycle; both outbound call types display `Skill -`.
 - Active-call and not-ready handoff warnings.
 
 ## 6. Completed Workspace Tabs
@@ -107,22 +107,22 @@ This repository is still a demo application:
 - Shared `InteractionWorkspace` layout.
 - PSTN call simulation.
 - BankApp voice workspace.
-- Unidentified PSTN customer initial state with anonymous caller number, `-` email/CIS, and no CRM-dependent customer actions.
+- Shared Customer Information keeps the compact name-plus-icon/value presentation. The shared customer-context column containing Customer Information, Customer Journey, Ticketing History, Next Best Action, and Quick Action is fixed at `270px` on desktop across inbound voice/video, Live Chat, Email, and Social Media workspaces; narrow stacked layouts may expand it to the container width. Identified profiles show country-coded Phone, contact verification suffix on Email, CRM Customer Number, and CRM Segmentation, with Special Handling inline at the end of the Segmentation row; every customer without a valid CRM CIS shows `Unidentified Customer`, keeps the three icon rows with `-` placeholders, hides Segmentation / Special Handling, and exposes no CRM-dependent or customer-phone outbound actions. The toolbar may still use the anonymous caller or channel-side Guest context for call identification.
 - KBV-approved CRM CIS customer-information refresh demo: no manual Customer ID entry; valid same-origin CRM postMessage responses refresh profile, journey, and ticket history while retaining `Verified`.
 - Customer Information card.
 - CRM-identified Customer Information cards include a compact `Special Handling` action that opens a read-only static demo modal; it is hidden before identity refresh and for Guests.
-- Customer Information verification action is channel-aware: PSTN and BankApp Voice use compact `KBV`; logged-in BankApp text uses compact `PIN`; BankApp text guest, Webchat text, and unsupported channels hide the action.
-- Guest customer information is channel-aware: text-channel guests keep the entered name / phone / email with customer ID shown as `-`, while BankApp voice / video guests show generated `Guest-06290001`-style names, the entered phone number, and `-` for unavailable fields.
+- Customer Information verification is channel- and media-aware: PSTN, BankApp Voice/Video, and Webchat Voice/Video show the verification status with compact `KBV`; logged-in BankApp text shows the status with compact `PIN`; WhatsApp, Email, Webchat text, Social Media, and BankApp text guest hide both the status and action. WhatsApp uses the CRM WhatsApp contact as the displayed Phone value when available.
+- Guest customer information is identity-aware: channel-side Guest status is retained for routing/context, but the shared card shows `Unidentified Customer` with `-` placeholders for Phone / Email / Customer Number and no Segmentation / Special Handling until a valid CRM CIS identifies the customer.
 - Customer Verification V2 right-side tab for KBV.
 - KBV V2 captures HaloApp Voice login status from the first handoff. All HaloApp rules expose `Same for Both` / `Logged In` / `Not Logged In` in management; Perbankan and Kartu Kredit use HaloApp-only logged-in 3-answer rules plus multi-channel Phone/HaloApp-not-logged-in 5- and 4-answer rules respectively, while other skills retain one `Same for Both` configuration. Rule rows support Copy and prevent overlapping enabled conditions.
 - Call Flow Detail modal: PSTN displays IVR Journey only; BankApp Voice / Video and digital channels display the customer-selected Business Menu Selection Record instead. The BankApp demo defaults to `Credit Card`. Transfer History is always shown and includes the current agent's active service row with `-` duration / transfer time until completed.
 - Send Email modal.
-- CRM-backed read-only customer contact display with an `IdcardOutlined` `All Contact Details` header viewer. Its grouped left-channel/right-value list supports multi-value and empty CRM states while reusing the legacy editor's channel icons. Legacy Contact Management DEMO is local-only and disabled by default.
-- Two Demo login identities: `888888 / 888888` is Agent Budi Kartika (`EMP-10027`) and `666666 / 666666` is TL Maya Santoso (`EMP-10108`) with a distinct female avatar. Both use the same workbench; TL receives `transfer:external-number`, which displays `Transfer Number` with consultation-first transfer and conference actions. Ordinary Agent Call Agent lists are limited to SPV and TL records; TL sees all records. Only ordinary-Agent external outbound and customer-phone calls create TL approvals. Pending requests remain valid when the seat closes its originating modal to handle other work; only a number or Reason change, execution, or Log Out makes the prior request unusable. Pending requests share one masked TL simulation window and are processed as a FIFO queue, with the centered approval Modal displaying the current item, remaining-queue count, and optional TL note without a countdown; it closes after the final item is resolved. A real first request creates one TL-page-only mock follow-up after five seconds if it remains pending. Both seat-side entries show `Requesting...` while pending, and the Customer Information request action appears only while its phone row is hovered or keyboard-focused. The result modal uses concise `Approval Granted` or `Approval Rejected` copy, keeps Outbound, number, and Reason on its primary row, places optional Note beneath it, and stays open until manually closed.
-- Customer Journey: Phone, BankApp, Webchat, WhatsApp, Email, and Social Media history. Phone, BankApp, Webchat, and WhatsApp rows derive the displayed value from the Category of every Ticket in the linked Interaction Log record, show `-` when no Ticket exists, omit success/failure icons, and reuse its media-specific read-only detail modal; Email and Social Media retain the existing Interaction Detail modal.
-- Ticketing History displays one-line-ellipsized Ticket Category, CRM Ticket ID, and created date; Ticket Category is also used as the dynamic CRM tab title.
+- CRM-backed read-only customer contact display with an `IdcardOutlined` `All Contact Details` header viewer. The Customer Number / CIS row uses a centered `SIC` marker in the shared icon slot. Its grouped left-channel/right-value list supports multi-value and empty CRM states while reusing the legacy editor's channel icons. Legacy Contact Management DEMO is local-only and disabled by default.
+- Two Demo login identities: `888888 / 888888` is Agent Budi Kartika (`EMP-10027`) and `666666 / 666666` is TL Maya Santoso (`EMP-10108`) with a distinct female avatar. Both use the same workbench; TL receives `transfer:external-number`, which displays `Transfer Number` with consultation-first transfer and conference actions. Ordinary Agent Call Agent lists are limited to SPV and TL records; TL sees all records. Outbound number and Customer Information phone actions use the active outbound AUX gate directly and do not create TL approval requests or approval result popups. Both outbound call types keep the current workspace focused instead of activating a customer screen pop, and their toolbar Skill value is `-`.
+- Customer Journey: Phone, BankApp, Webchat, WhatsApp, Email, and Social Media history. Phone, BankApp, Webchat, and WhatsApp rows derive the displayed value from the Category of every Ticket in the linked Interaction Log record, show `-` when no Ticket exists, omit success/failure icons, and reuse its media-specific read-only detail modal; Email and Social Media retain the existing Interaction Detail modal. Unidentified customers receive no customer-specific journey data and display `No data available.`.
+- Ticketing History displays one-line-ellipsized Ticket Category, CRM Ticket ID, and created date; Ticket Category is also used as the dynamic CRM tab title. Unidentified customers receive no customer-specific ticket data and display `No data available.`.
 - Shared CRM Ticket modal for inbound voice, video, and digital workspaces: it uses the Transfer / Outbound dialog component and is positioned at the right side of the workspace. The compact `Ticket` header retains the light-blue title treatment, rounded modal frame, and standard right-side close. Its one white content surface matches the Customer Information outbound-reason modal. Product / Category / Summary / Note labels are bold; One-Click Generation remains normal weight. Category and Product are searchable single-select dropdowns, with Product disabled before Category and filtered by the supplied Category-Product mapping; long selected values use the standard fixed-height one-line ellipsis, with the arrow right-aligned and vertically centered. All four control values use 12px primary text and an 18px line height. Summary has a visible 250-character limit and Note has a 1000-character limit; both counts are normal-weight 11px text inside the lower-right of the editor. The white form body scrolls independently while One-Click Generation stays at the left of the fixed footer and Cancel / Confirm stay on the right. All four fields are required. Each opening and One-Click Generation prepares an editable valid mock draft. Confirm saves an in-memory CRM ticket, clears the open form for the next ticket, and adds it to Ticketing History.
-- Next Best Action.
+- Next Best Action displays configured recommendations when available and `No data available.` when no customer-specific recommendation is available.
 - Quick Action uses globally configured enabled actions in persistent display order across call, Email, and Social Media workspaces; clicking refreshes or opens the local CRM mock detail tab with the configured Link Address as its reference.
 - Dynamic CRM business tabs.
 - CRM screenshot with fallback.
@@ -131,7 +131,7 @@ This repository is still a demo application:
 - Verification tab for side-by-side CRM comparison.
 - Call Transfer modal includes Transfer IVR targets from Common Number.
 - Voice Transfer supports Ready-only agent filtering, Agent-only SPV/TL transfer-target visibility, SPV/TL priority ordering, consultation cancellation for agent and number targets, a compact Actions column, release transfer for skill / IVR, consultation-first number transfer with retryable deterministic failure, and conference mode that temporarily disables toolbar Transfer.
-- Active PSTN voice shows `IVR: 08123456789`; HaloApp voice/video shows `HaloApp: 00012345` for logged-in customers or `HaloApp: Guest` for guests.
+- Active PSTN voice shows `IVR: +08123456789`; outbound number and agent calls show a `+`-prefixed target; HaloApp voice/video shows `HaloApp: 00012345` for logged-in customers or `HaloApp: Guest` for guests.
 - Transfer success/failure uses an English banner below the toolbar. The local-only `Channel Simulation > Transferred Call` preview shows `Transferred from Maya Lestari.` on the receiving seat for four seconds, plus a green transfer icon after the channel duration without consuming customer-card action space.
 
 ## 8. Completed Video Call Workspace
@@ -198,9 +198,10 @@ This repository is still a demo application:
 
 - Customer-side Webchat simulation is available from Channel Simulation below BankApp.
 - Current scope is text only; voice and video media are not yet implemented.
-- Registered customers queue directly without media selection, customer information input, or business menu selection.
+- Webchat supports Guest customers only; the Demo no longer exposes a Registered customer option.
 - Guest customers show contact information / business selection before queue.
 - Webchat handoff opens Live Chat with a new Webchat customer session.
+- Webchat customer cards retain the internal `Webchat` channel value for routing but display `bca.co.id` as the customer-facing access channel label.
 - Webchat PIN verification is temporarily hidden pending customer confirmation.
 - Webchat queue, agent chat, and satisfaction rating use the latest desensitized screenshots from the customer Webchat folder.
 
@@ -219,6 +220,7 @@ This repository is still a demo application:
 - The shared customer context column is fixed at 280px in the Email layout. Mailbox folders use solid green, blue, orange, and red icon circles with a subtle active background; search uses one prefixed input plus a separate refresh control.
 - Ticket modal reuses the shared CRM Ticket component: Category and Product use searchable single-select dropdowns, Product is filtered by Category, Summary and Note are editable required fields, and One-Click Generation creates an editable valid mock draft from the left of the fixed footer. Summary is limited to 250 characters, Note to 1000, and both show a normal-weight 11px lower-right in-input count. Confirm clears the retained right-side modal after local CRM save. Email and interaction workspaces share the same below-toolbar success notice, and Email no longer renders a separate Ticket saved status badge. The internal CWU mock stores the selected Category and Product as single values.
 - Email verification is hidden because Email verification rules are not confirmed.
+- Ticket Summary and Note now reuse the shared limited-input component; management Remark fields use the same count treatment with a 2000-character default.
 - All Email workflow state is front-end local state and resets after refresh or closing/reopening the tab.
 - Email Record Inquiry and Email Template Deploy are not implemented in this scope.
 
@@ -249,29 +251,29 @@ Customer-visible pages:
 - Interaction Log.
 - Login Log.
 
-These pages open from the left menu as closable workspace tabs. Direct `/call-management/*` visits open the matching workspace tab and return to `/`, preserving active interaction tabs.
+These pages open from the left menu as closable workspace tabs. Direct `/call-management/*` visits open the matching workspace tab and return to `/`, preserving active interaction tabs. Call Management timestamps use `DD-MM-YYYY HH:MM:SS`.
 
 Implemented behaviors:
 
 - Verification Rule V2 CRUD.
-- Verification Rule V2 Question Bank.
+- Verification Rule V2 Question Bank with a 100-character Question Name limit and shared count style.
 - Rule preview using agent verification modal.
 - Scenario-based KBV question model.
-- Blacklist required-channel batch add with a Status switch defaulting to Enabled, dedicated editable `062` Phone country code / phone number mode, a Country Code list column (`-` for non-Phone channels), fixed non-Phone `Prohibit Transfer to Agent` policy, duplicate preview/skip, inline enabled/disabled list Status switch, status filtering, Reason, and delete.
-- Priority list add / batch add / delete with required Reason, Phone-only Country Code (`062` default) / Phone Number mode, mutually exclusive Phone and non-Phone channel selection, Country Code list column, and duplicate validation that excludes Match Rule.
+- Blacklist required-channel batch add with a Status switch defaulting to Enabled, shared `62` Phone / WhatsApp country code and phone-number mode, Phone + WhatsApp multi-select, mutually exclusive non-phone channel selection, Phone-only selectable restriction policies, fixed WhatsApp and non-phone `Prohibit Transfer to Agent` policy, a Country Code list column (`-` for non-phone channels), duplicate preview/skip, inline enabled/disabled list Status switch, status filtering, 2000-character Reason, and delete. Seeded Created By values use `1234-Admin`.
+- Priority list add / batch add / delete with required 2000-character Reason, shared Phone / WhatsApp Country Code (`62` default) / Phone Number mode, Phone + WhatsApp multi-select, mutually exclusive non-phone channel selection, Country Code list column, duplicate validation that excludes Match Rule, and seeded Created By values shown as `1234-Admin`.
 - Priority Match Rule filtering.
-- Common phrase category and phrase CRUD.
+- Common phrase category and phrase CRUD, with a shared Ticket-style 100-character Common Phrase limit plus Updated Time / Updated By list metadata.
 - Common phrase batch move between categories.
 - Public phrase linkage into the Live Chat Quick Replies tab.
-- Common link CRUD for website name, website address, and remark.
+- Common link CRUD for website name, website address, remark, Updated Time, and Updated By; the list places update time before update person at the end.
 - Common Link feeds the shared right-side Common Links tab in voice, video, and Live Chat workspaces.
-- Quick Action Management CRUD for Action Name, Link Address, Status, Remark, display order, and `Admin` / Modified Time metadata. The compact customer-context Quick Action card reads enabled entries in configured order across call, Email, and Social Media workspaces without navigating externally.
-- Common number CRUD for IVR transfer target name, number, status, and remark.
+- Quick Action Management CRUD for Action Name, Link Address, Status, Remark, display order, and Updated By / Updated Time metadata. Existing seeded rows remain administrator-owned mock data; new or edited rows use the current operator. The compact customer-context Quick Action card reads enabled entries in configured order across call, Email, and Social Media workspaces without navigating externally.
+- Common number CRUD for IVR transfer target name, number, status, 2000-character remark, Updated Time, and Updated By; the list places update time before update person at the end.
 - Enabled common numbers feed the call Transfer modal `Transfer IVR` tab.
-- Sensitive word CRUD with fixed category dictionary.
+- Sensitive word CRUD with fixed category dictionary, 2000-character remark, Updated Time, and Updated By list metadata.
 - Sensitive word detection in Live Chat agent reply sending.
-- AUX Reason Management Productivity Type (`Productive` / `Non-Productive`) filtering and editing, plus a read-only list `Support Outbound` status maintained by a switch in the edit modal. `Callback Finrisk` and `Callback Misinform` are the active default customer-outbound AUX reasons; disabled reasons cannot be selected for outbound permission.
-- Abnormal End Reasons CRUD for configurable Voice, Video, and DM service end reasons, seeded with two active DM reasons only.
+- AUX Reason Management Productivity Type (`Productive` / `Non-Productive`) filtering and editing, plus a read-only list `Support Outbound` status maintained by a switch in the edit modal. Remark uses the shared 2000-character limit. Updated Time includes seconds and new edits use the current operator. `Callback Finrisk` and `Callback Misinform` are the active default customer-outbound AUX reasons; disabled reasons cannot be selected for outbound permission.
+- Abnormal End Reasons CRUD for configurable Voice, Video, and DM service end reasons, seeded with two disabled DM reasons only; remark, Updated Time, and Updated By use the shared management standards.
 - Abnormal End Reasons filters by Keyword, Applicable Media, and Status.
 - Interaction Log for current-agent Phone, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp records, seeded with 30 mock records.
 - Interaction Log filters by keyword, channel, media type, call type, ended by, rating score, and date range, defaulting to the current day.

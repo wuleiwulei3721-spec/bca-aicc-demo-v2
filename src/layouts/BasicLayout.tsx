@@ -55,6 +55,7 @@ import type {
   CallStatus,
   LoginLogLogoutType,
   SessionEndMediaType,
+  TransferAgent,
 } from '../types'
 import {
   createAuxStatus,
@@ -112,6 +113,16 @@ const initialCallTiming: CallTiming = {
   talkingStartedAt: null,
   holdStartedAt: null,
   accumulatedHoldSeconds: 0,
+}
+
+function formatToolbarCallNumber(value: string) {
+  const normalizedValue = value.trim()
+
+  if (!normalizedValue || normalizedValue === '-' || normalizedValue.startsWith('+')) {
+    return normalizedValue
+  }
+
+  return `+${normalizedValue}`
 }
 
 const monitoringMenuKeyPrefix = 'monitoring-'
@@ -1053,6 +1064,39 @@ export function BasicLayout() {
     updateCallStatus,
   ])
 
+  const handleOutboundAgentCall = useCallback(
+    (agent: TransferAgent) => {
+      if (agentStatus === 'Unsigned') {
+        return
+      }
+
+      hideCallHandoffNotice()
+      setIsInitialReadyToggleLocked(false)
+      setCallTiming(initialCallTiming)
+      setActiveCallChannel('voice')
+      setIsAfterCallWork(false)
+      setOpenEyeVideoWindowVisible(false)
+      resetBankAppVideoDesktopShare()
+      const interactionId = createCallInteraction(
+        'voice',
+        'outbound',
+        false,
+        undefined,
+        undefined,
+        agent.extension,
+      )
+      startTalkingCall(interactionId, 'voice')
+    },
+    [
+      agentStatus,
+      createCallInteraction,
+      hideCallHandoffNotice,
+      resetBankAppVideoDesktopShare,
+      setOpenEyeVideoWindowVisible,
+      startTalkingCall,
+    ],
+  )
+
   const handleAnswer = useCallback(() => {
     if (callStatus === 'Incoming') {
       startTalkingCall()
@@ -1095,7 +1139,7 @@ export function BasicLayout() {
       const interactionId = createCallInteraction(
         'voice',
         'outbound',
-        true,
+        false,
         undefined,
         undefined,
         customerOutboundCallNumber ?? undefined,
@@ -1465,13 +1509,18 @@ export function BasicLayout() {
     }
 
     if (currentCallInteraction.source === 'pstn') {
-      return { label: 'IVR:', value: '08123456789' }
+      return {
+        label: 'IVR:',
+        value: formatToolbarCallNumber('08123456789'),
+      }
     }
 
     if (currentCallInteraction.source === 'outbound') {
       return {
         label: 'Outbound:',
-        value: currentCallInteraction.outboundNumber ?? '-',
+        value: formatToolbarCallNumber(
+          currentCallInteraction.outboundNumber ?? '-',
+        ),
       }
     }
 
@@ -1535,7 +1584,6 @@ export function BasicLayout() {
         {isSignedIn && (
           <AgentToolbar
             agentStatus={agentStatus}
-            requiresOutboundApproval={authSession?.role === 'agent'}
             hasOutboundAccess={hasOutboundAccess}
             canTransferToNumber={canTransferToNumber}
             callStatus={callStatus}
@@ -1554,6 +1602,7 @@ export function BasicLayout() {
             onHangUp={handleHangUp}
             onHoldToggle={handleHoldToggle}
             onReadyToggle={handleReadyToggle}
+            onCallAgent={handleOutboundAgentCall}
             onRequestOutboundCall={requestCustomerOutboundCall}
             onTransferNotice={showTransferNotice}
           />

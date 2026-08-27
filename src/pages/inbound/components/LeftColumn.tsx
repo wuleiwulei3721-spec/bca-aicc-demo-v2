@@ -14,6 +14,10 @@ import { NextBestActionCard } from './NextBestActionCard'
 import { QuickActionCard } from './QuickActionCard'
 import { TicketingHistoryCard } from './TicketingHistoryCard'
 
+function hasCrmCustomerIdentity(cisNumber: string) {
+  return /^\d{6,}$/.test(cisNumber.trim())
+}
+
 interface LeftColumnProps {
   accessChannelNode?: ReactNode
   accessMenuLabel?: string
@@ -49,6 +53,11 @@ export function LeftColumn({
   showTransferHistory,
   transferContext,
 }: LeftColumnProps) {
+  const hasCustomerIdentity = hasCrmCustomerIdentity(customer.profile.cisNumber)
+  const customerJourney = hasCustomerIdentity ? journey : []
+  const customerTickets = hasCustomerIdentity ? tickets : []
+  const customerNextBestActions = hasCustomerIdentity ? nextBestActions : []
+
   return (
     <div className="inbound-left-column">
       <div className="inbound-left-column__fixed">
@@ -67,9 +76,12 @@ export function LeftColumn({
         />
       </div>
       <div className="inbound-left-column__scroll">
-        <CustomerJourneyCard items={journey} />
-        <TicketingHistoryCard items={tickets} onOpenCrm={onOpenCrm} />
-        <NextBestActionCard items={nextBestActions} onOpenCrm={onOpenCrm} />
+        <CustomerJourneyCard items={customerJourney} />
+        <TicketingHistoryCard items={customerTickets} onOpenCrm={onOpenCrm} />
+        <NextBestActionCard
+          items={customerNextBestActions}
+          onOpenCrm={onOpenCrm}
+        />
         <QuickActionCard onOpenCrm={onOpenCrm} />
       </div>
     </div>

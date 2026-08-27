@@ -18,6 +18,10 @@ import type {
   VerificationV2Scenario,
   VerificationV2SpecialScenarioMode,
 } from '../types'
+import {
+  DEFAULT_AUDIT_ACTOR,
+  formatCallManagementDateTime,
+} from './audit'
 
 export const verificationV2DefaultSkillQueueCode = 'SQ_GENERAL_ID'
 
@@ -356,7 +360,7 @@ export function createEmptyVerificationV2Rule(
     },
     status: 'enabled',
     updatedAt: formatVerificationV2Timestamp(new Date()),
-    updatedBy: 'Admin',
+    updatedBy: DEFAULT_AUDIT_ACTOR,
   }
 }
 
@@ -492,13 +496,7 @@ export function getDefaultVerificationV2Scenario(rule: VerificationV2Rule) {
 }
 
 export function formatVerificationV2Timestamp(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hour = String(date.getHours()).padStart(2, '0')
-  const minute = String(date.getMinutes()).padStart(2, '0')
-
-  return `${year}-${month}-${day} ${hour}:${minute}`
+  return formatCallManagementDateTime(date)
 }
 
 export function getVerificationV2BaseCorrectRequired(rule: VerificationV2Rule) {

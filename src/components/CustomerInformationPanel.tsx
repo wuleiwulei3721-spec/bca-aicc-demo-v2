@@ -2,11 +2,15 @@ import { useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   CheckOutlined,
-  IdcardOutlined,
   MailOutlined,
+  TeamOutlined,
 } from '@ant-design/icons'
-import { Avatar, Tooltip } from 'antd'
-import type { CustomerInformation, VerificationStatus } from '../types'
+import { Tooltip } from 'antd'
+import type {
+  CustomerInformation,
+  CustomerProfile,
+  VerificationStatus,
+} from '../types'
 import { BaseCard } from './BaseCard'
 import { BaseButton } from './BaseButton'
 import { PhoneIcon } from './PhoneIcon'
@@ -56,16 +60,54 @@ function verificationBadge(status: VerificationStatus) {
   return { label: 'Unverified', status: 'warning' as const }
 }
 
-function customerLevelLabel(customerType: string) {
-  if (!customerType || customerType === 'Regular Customer') {
+function customerSegmentationLabel(profile: CustomerProfile) {
+  if (profile.segmentation?.trim()) {
+    return profile.segmentation.trim()
+  }
+
+  if (!profile.customerType || profile.customerType === 'Guest') {
     return null
   }
 
-  if (customerType === 'Priority Customer') {
-    return 'Priority'
+  if (profile.customerType === 'Priority Customer') {
+    return 'Prioritas - Upper Mass'
   }
 
-  return customerType
+  return profile.customerType
+}
+
+function formatPhoneNumber(phoneNumber: string) {
+  const value = phoneNumber.trim()
+
+  if (!value || value === '-') {
+    return value
+  }
+
+  if (value.startsWith('+62')) {
+    return value.slice(1)
+  }
+
+  if (value.startsWith('0')) {
+    return `62 ${value.slice(1)}`
+  }
+
+  return value
+}
+
+function emailVerificationLabel(
+  profile: CustomerProfile,
+  verificationStatus: VerificationStatus,
+) {
+  const value = profile.email.trim()
+
+  if (!value || value === '-') {
+    return null
+  }
+
+  return (
+    profile.emailVerificationStatus ??
+    (verificationStatus === 'Verified' ? 'Verified' : 'Unverified')
+  )
 }
 
 export function CustomerInformationPanel({
@@ -106,8 +148,14 @@ export function CustomerInformationPanel({
     outboundRequestStatus === 'approved'
       ? onStartOutbound
       : onRequestOutbound
-  const levelLabel = customerLevelLabel(profile.customerType)
-  const avatarSrc = profile.avatarUrl.trim() || undefined
+  const phoneNumber = formatPhoneNumber(profile.phoneNumber)
+  const emailAddress = profile.email.trim()
+  const emailStatus = emailVerificationLabel(profile, status)
+  const customerNumber = profile.cisNumber.trim()
+  const segmentationLabel = customerSegmentationLabel(profile)
+  const shouldShowOutboundAction =
+    outboundRequestStatus !== 'idle' ||
+    Boolean(outboundDisabledTitle && !onRequestOutbound)
   const defaultAccessChannelNode = (
     <span className="aicc-customer-info__channel-fallback">
       <span>{customer.accessChannel}</span>
@@ -128,29 +176,6 @@ export function CustomerInformationPanel({
     >
       <div className="aicc-customer-info">
         <div className="aicc-customer-info__identity">
-          <div className="aicc-customer-info__avatar-wrap">
-            <Avatar
-              className="aicc-customer-info__avatar"
-              size={58}
-              src={avatarSrc}
-            >
-              {profile.avatarInitials}
-            </Avatar>
-            {levelLabel && (
-              <StatusBadge label={levelLabel} size="small" status="selected" />
-            )}
-            {onOpenSpecialHandling && (
-              <button
-                className="aicc-customer-info__special-handling"
-                title="View special handling information"
-                type="button"
-                onClick={onOpenSpecialHandling}
-              >
-                Special Handling
-              </button>
-            )}
-          </div>
-
           <div className="aicc-customer-info__main">
             <div className="aicc-customer-info__name">{profile.name}</div>
             <div className="aicc-customer-info__facts">
@@ -158,13 +183,17 @@ export function CustomerInformationPanel({
                 className={[
                   'aicc-customer-info__phone-row',
                   `aicc-customer-info__phone-row--${outboundRequestStatus}`,
+                  shouldShowOutboundAction &&
+                    'aicc-customer-info__phone-row--action-visible',
                 ]
                   .filter(Boolean)
                   .join(' ')}
               >
-                <span className="aicc-customer-info__phone-value">
+                <span className="aicc-customer-info__fact-icon">
                   <PhoneIcon />
-                  {profile.phoneNumber}
+                </span>
+                <span className="aicc-customer-info__phone-value">
+                  {phoneNumber}
                 </span>
                 {(onRequestOutbound || onStartOutbound || outboundDisabledTitle) && (
                   <button
@@ -187,31 +216,82 @@ export function CustomerInformationPanel({
                   </button>
                 )}
               </div>
-              {onSendEmail ? (
-                <button
-                  className="aicc-customer-info__fact-action"
-                  title="Send email"
-                  type="button"
-                  onClick={onSendEmail}
-                >
+              <div className="aicc-customer-info__fact-row">
+                <span className="aicc-customer-info__fact-icon">
                   <MailOutlined />
-                  <span className="aicc-customer-info__email-value">
-                    {profile.email}
-                  </span>
-                </button>
-              ) : (
-                <span className="aicc-customer-info__fact-static">
-                  <MailOutlined />
-                  <span className="aicc-customer-info__email-value">
-                    {profile.email}
-                  </span>
                 </span>
-              )}
-              <span>
-                <IdcardOutlined />
-                {profile.cisNumber}
-              </span>
+                {onSendEmail ? (
+                  <button
+                    className="aicc-customer-info__fact-action"
+                    title="Send email"
+                    type="button"
+                    onClick={onSendEmail}
+                  >
+                    <span className="aicc-customer-info__email-content">
+                      <span className="aicc-customer-info__email-address">
+                        {emailAddress}
+                      </span>
+                      {emailStatus && (
+                        <span
+                          className={`aicc-customer-info__email-verification aicc-customer-info__email-verification--${emailStatus.toLowerCase()}`}
+                        >
+                          {emailStatus}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                ) : (
+                  <span className="aicc-customer-info__fact-value aicc-customer-info__email-content">
+                    <span className="aicc-customer-info__email-address">
+                      {emailAddress}
+                    </span>
+                    {emailStatus && (
+                      <span
+                        className={`aicc-customer-info__email-verification aicc-customer-info__email-verification--${emailStatus.toLowerCase()}`}
+                      >
+                        {emailStatus}
+                      </span>
+                    )}
+                  </span>
+                )}
+              </div>
+              <div className="aicc-customer-info__fact-row">
+                <span
+                  aria-label="SIC"
+                  className="aicc-customer-info__fact-icon aicc-customer-info__fact-icon--sic"
+                  title="SIC"
+                >
+                  SIC
+                </span>
+                <span className="aicc-customer-info__fact-value">
+                  {customerNumber}
+                </span>
+              </div>
             </div>
+            {(segmentationLabel || onOpenSpecialHandling) && (
+              <div className="aicc-customer-info__profile-meta">
+                {segmentationLabel && (
+                  <div className="aicc-customer-info__fact-row aicc-customer-info__fact-row--segmentation">
+                    <span className="aicc-customer-info__fact-icon">
+                      <TeamOutlined />
+                    </span>
+                    <span className="aicc-customer-info__fact-value">
+                      {segmentationLabel}
+                    </span>
+                  </div>
+                )}
+                {onOpenSpecialHandling && (
+                  <button
+                    className="aicc-customer-info__special-handling"
+                    title="View special handling information"
+                    type="button"
+                    onClick={onOpenSpecialHandling}
+                  >
+                    Special Handling
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

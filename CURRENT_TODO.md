@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-08-20 10:58 +08:00
+Last updated: 2026-08-27 17:38 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -65,7 +65,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - selecting AUX during ACW with an active Live Chat keeps Pre-AUX visible, preserves the original ACW countdown, and enters that AUX reason when the timer ends,
   - the next successful Voice or Video incoming interaction closes all ended Voice / Video tabs and their CRM workspaces,
   - Hang Up caret appears only when the current Voice/Video media has an active abnormal reason; otherwise the normal Hang Up button has no caret.
-  - `888888 / 888888` Transfer modal shows Agent, Skill, and IVR only; its external outbound requests need approval. In voice `Transfer Agent` and Outbound Call > Call Agent, verify Agent only sees SPV/TL and no ordinary-agent data. `666666 / 666666` (TL Maya Lestari) shows `Transfer Number`, enables direct Transfer after entering a number, does not show Request Approval for external outbound, preserves the `000` failure path, and sees all transfer / outbound agent targets.
+  - `888888 / 888888` Transfer modal shows Agent, Skill, and IVR only. In voice `Transfer Agent` and Outbound Call > Call Agent, verify Agent only sees SPV/TL and no ordinary-agent data. `666666 / 666666` (TL Maya Lestari) shows `Transfer Number`, enables direct Transfer after entering a number, preserves the `000` failure path, and sees all transfer / outbound agent targets.
   - Local-only `Channel Simulation > Transferred Call` opens a receiving-seat PSTN preview with the `Transferred from Maya Lestari.` banner and a green source-transfer icon after the customer channel duration.
 - Verify toolbar call context:
   - PSTN shows IVR and Skill,
@@ -73,9 +73,9 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Idle hides call context.
 - Verify Customer Information:
   - KBV-approved CRM CIS identity refresh, including valid response, unknown/empty CIS, mismatched correlation ID, foreign origin, and timeout handling,
-  - unidentified PSTN minimum-card state: anonymous caller number, `-` email/CIS, KBV retained, and no CRM-dependent actions before a valid CIS response,
+  - unidentified customer minimum-card state across PSTN and guest voice/video: explicit Phone / Email / Customer Number rows with `-` placeholders; hidden Segmentation / Special Handling; channel-supported KBV retained; no CRM-dependent or customer-phone outbound actions before a valid CIS response; toolbar caller or Guest context remains visible,
   - CRM-backed read-only all-channel contact viewer, including multi-value and empty-channel states after CIS refresh; confirm CRM write authority, audit, field ownership, validation, and failure handling before any customer-facing contact editing is added,
-  - customer-phone outbound: every nonempty customer phone number can start the flow, including before KBV / CRM identity. Agent `Request Approval` opens the compact Reason modal, Reason is required, popup request includes the reason, approve/reject supports an optional generic note, pending status is `Requesting...`, the agent result popup remains until manually closed, and authorization is single-use. TL sees compact `Call` on the card, selects a Reason, then uses `Call` in the same modal for a direct outbound call.
+  - customer-phone outbound: every nonempty customer phone number can start the flow, including before KBV / CRM identity. The agent must switch to an eligible outbound AUX, select `Miss Information` or `Financial Risk`, and call directly without TL approval or a customer screen pop.
   - Send Email,
   - Call Flow Detail: PSTN shows IVR Journey; BankApp Voice / Video and digital channels show Business Menu Selection Record only, with the customer-selected business name. Transfer History is always present and includes the current in-progress agent record with `-` duration / transfer time.
   - Customer Verification V2.
@@ -83,13 +83,13 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - `/screenshots/crm-workspace.jpg`,
   - `/screenshots/assistant-workspace.jpg`,
   - fallback does not appear unless intentionally testing missing images.
-- Verify both outbound entries: `Miss Information` or `Financial Risk` must be selected before Request Approval is enabled; both entries show `Requesting...` while pending, the Customer Information phone action is hover/focus-only with its full label visible and no native browser tooltip, the TL popup carries the entered number and selected reason without a countdown then closes after its last decision, Call stays disabled until approval, closing the originating surface preserves the same pending or approved request, changing either value requires a new approval, Log Out clears unused approvals, and either approved Call action consumes its authorization, opens a new `Outbound Call` customer workspace carrying the dialed number, then enters `Talking`.
+- Verify outbound behavior: Call Number and Customer Information phone outbound remain disabled until the agent switches to an eligible outbound AUX, require the selected `Miss Information` or `Financial Risk` reason, create no TL approval or customer screen pop, and enter `Talking` with toolbar Skill `-`. Call Agent remains enabled without outbound AUX, enters the same outbound call state without a customer screen pop, and also shows toolbar Skill `-`.
 - Verify Ticketing History one-line-ellipsized Category / CRM Ticket ID / date display, then Next Best Action / Quick Action:
   - click opens CRM dynamic tabs,
   - dynamic tabs can close,
   - tab labels remain compact.
-  - Quick Action Management: route/menu workspace lifecycle, add/edit/delete validation, Enabled/Disabled visibility, direct icon reorder boundaries/filter guard, `Admin` / Modified Time values, compact no-horizontal-scroll table layout, and shared PSTN / BankApp / Email / Social Media display order.
-- Verify shared CRM Ticket registration in PSTN, voice/video, Live Chat, and Email: searchable single-select Category / Product linkage, long Category / Product values use standard one-line ellipsis with a right-aligned centered arrow, Product reset after Category changes, Summary 250 and Note 1000 character caps with normal-weight lower-right in-input counts, One-Click Generation draft refresh from the left side of the fixed footer, Confirm save feedback, form reset, consecutive ticket creation, and inbound Ticketing History append.
+  - Quick Action Management: route/menu workspace lifecycle, add/edit/delete validation, Enabled/Disabled visibility, direct icon reorder boundaries/filter guard, current-operator Updated Time / Updated By values, compact no-horizontal-scroll table layout, and shared PSTN / BankApp / Email / Social Media display order.
+- Verify shared CRM Ticket registration in PSTN, voice/video, Live Chat, and Email: searchable single-select Category / Product linkage, long Category / Product values use standard one-line ellipsis with a right-aligned centered arrow, Product reset after Category changes, Summary 250 and Note 1000 character caps with shared limited-input counts, One-Click Generation draft refresh from the left side of the fixed footer, Confirm save feedback, form reset, consecutive ticket creation, and inbound Ticketing History append.
 - Verify Video Popup Workspace:
   - BankApp Video opens Video Call tab,
   - OpenEye floating window appears only during connected active video,
@@ -133,8 +133,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - satisfaction rating.
 - Verify Webchat Demo:
   - menu entry under BankApp,
-  - Registered starts from queue with no media selection or customer input,
-  - Guest shows contact information / business selection then queue,
+  - Guest-only flow shows contact information / business selection then queue,
   - handoff opens a new Webchat customer in Live Chat,
   - handoff success shows Agent Workspace before Text Chat,
   - PIN action remains hidden pending customer confirmation,
@@ -142,15 +141,15 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Verify Call Management:
   - Verification Rules,
   - Global Control Configuration Save / Reset, its effect on the next sign-in, and DM active-service / ended-session-retention limits,
-  - Blacklist: Batch Add Status switch defaults to Enabled and saves its selected state, enabled/disabled status filter and inline Status switch, Phone-only country-code (`062` default, editable) / local-number batch mode with a Country Code list column (`-` for non-Phone channels), fixed non-Phone `Prohibit Transfer to Agent` policy, duplicate preview/skip, Reason required, and non-Phone multi-channel Identifier batch behavior,
-  - Priority List: Phone-only Country Code (`062` default) / Phone Number mode, mutually exclusive Phone and non-Phone channels, Country Code list column, Reason required, and duplicate validation by Phone `Channel + Country Code + Identifier` or non-Phone `Channel + Identifier` regardless of Match Rule,
-  - Common Phrase,
-  - Common Link,
+  - Blacklist: Batch Add Status switch defaults to Enabled and saves its selected state, enabled/disabled status filter and inline Status switch, shared Phone + WhatsApp country-code (`62` default, editable) / local-number batch mode, Phone + WhatsApp multi-select with non-phone channel locking, Phone-only selectable restriction policies, fixed WhatsApp and non-phone `Prohibit Transfer to Agent` policy, a Country Code list column (`-` for non-phone channels), duplicate preview/skip, required 2000-character Reason, and non-phone multi-channel Identifier batch behavior,
+  - Priority List: shared Phone + WhatsApp Country Code (`62` default) / Phone Number mode, Phone + WhatsApp multi-select with non-phone channel locking, Country Code list column, seeded Created By values shown as `1234-Admin`, required 2000-character Reason, and duplicate validation by Phone-like `Channel + Country Code + Identifier` or non-phone `Channel + Identifier` regardless of Match Rule,
+  - Common Phrase 100-character input limit, shared count style, and Updated Time / Updated By list columns,
+  - Common Link audit columns and 2000-character Remark,
   - Quick Action Management,
-  - Common Number,
-  - Sensitive Word,
-  - AUX Reason Management,
-  - Abnormal End Reasons query, add, edit, disable, and delete, with two active DM defaults and no default Voice/Video reason,
+  - Common Number audit columns and 2000-character Remark,
+  - Sensitive Word audit columns and 2000-character Remark,
+  - AUX Reason Management audit columns and 2000-character Remark,
+  - Abnormal End Reasons audit columns and 2000-character Remark, with two disabled DM defaults and no default Voice/Video reason,
 - Interaction Log 30 mock records, default current-day Date Range paging, Call Type list/filter (`Customer` / `Transfer` / `Conference`), Rating Score list/filter (`1`-`5` and PSTN `-`), numeric QM Score third-party detail preview and non-interactive empty score, View-only Actions, Voice left media playback / middle transcript / right Ticket-and-Summary scroll card plus Satisfaction detail, Video left replay / middle transcript / right Ticket-and-Summary scroll card plus Satisfaction detail, DM conversation / right Ticket-and-Summary scroll card plus Satisfaction detail, each Ticket showing its CRM ID and plain Summary-style Category text, and read-only CWU detail,
   - Login Log 19 seeded records across the default seven-day range, keyword, Time Range, Operation, Log Out Type filters, live Login / manual Log Out / idle Log Out records, and seeded System records.
 - Verify Routing Config:

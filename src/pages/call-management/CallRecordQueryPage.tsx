@@ -21,6 +21,7 @@ import type {
   CallRecordRatingScore,
   ServiceEndedBy,
 } from '../../types'
+import { formatCallManagementDateTime } from '../../utils/audit'
 import { CallRecordDetailModal } from './CallRecordDetailModal'
 
 const { RangePicker } = DatePicker
@@ -105,7 +106,7 @@ function normalizeValue(value: string) {
 }
 
 function formatDateTime(value: string) {
-  return dayjs(value).format('YYYY-MM-DD HH:mm:ss')
+  return formatCallManagementDateTime(value)
 }
 
 function formatDuration(durationSeconds: number) {
@@ -440,6 +441,7 @@ export function CallRecordQueryPage() {
               <AdminFilterField label="Date Range" width={300}>
                 <RangePicker
                   allowClear={false}
+                  format="DD-MM-YYYY HH:mm:ss"
                   showTime
                   value={draftFilters.dateRange}
                   onChange={(value) => {

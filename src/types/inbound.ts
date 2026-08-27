@@ -15,6 +15,8 @@ export type VerificationStatus =
   | 'Unverified'
   | 'Verification Failed'
 
+export type CustomerEmailVerificationStatus = 'Verified' | 'Unverified'
+
 export type CustomerContactChannel =
   | 'Phone'
   | 'WhatsApp'
@@ -52,8 +54,10 @@ export interface CustomerProfile {
   name: string
   phoneNumber: string
   email: string
+  emailVerificationStatus?: CustomerEmailVerificationStatus
   cisNumber: string
   customerType: string
+  segmentation?: string
   crmContacts?: CustomerCrmContacts
 }
 

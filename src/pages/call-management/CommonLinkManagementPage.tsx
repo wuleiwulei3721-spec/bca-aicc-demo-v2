@@ -12,10 +12,15 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  LimitedTextArea,
 } from '../../components'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
-import { useCallManagementStore } from '../../store'
+import { useAuthStore, useCallManagementStore } from '../../store'
 import type { CommonLinkEntry } from '../../types'
+import {
+  formatAuditActor,
+  formatCallManagementDateTime,
+} from '../../utils/audit'
 
 type CommonLinkModalMode = 'create' | 'edit' | null
 
@@ -68,6 +73,7 @@ function isValidHttpUrl(value: string) {
 }
 
 export function CommonLinkManagementPage() {
+  const authSession = useAuthStore((state) => state.session)
   const entries = useCallManagementStore((state) => state.commonLinkEntries)
   const addEntry = useCallManagementStore((state) => state.addCommonLinkEntry)
   const updateEntry = useCallManagementStore(
@@ -197,6 +203,11 @@ export function CommonLinkManagementPage() {
           ? draft.id
           : getNextCommonLinkId(entries),
       remark: draft.remark.trim(),
+      updatedAt: formatCallManagementDateTime(new Date()),
+      updatedBy: formatAuditActor(
+        authSession?.employeeId,
+        authSession?.displayName,
+      ),
       websiteName: draft.websiteName.trim(),
       websiteUrl: draft.websiteUrl.trim(),
     }
@@ -233,19 +244,31 @@ export function CommonLinkManagementPage() {
     {
       dataIndex: 'websiteName',
       title: 'Website Name',
-      width: 240,
+      width: 210,
     },
     {
       dataIndex: 'websiteUrl',
       ellipsis: true,
       title: 'Website URL',
-      width: 360,
+      width: 300,
     },
     {
       dataIndex: 'remark',
       ellipsis: true,
       title: 'Remark',
-      width: 360,
+      width: 260,
+    },
+    {
+      dataIndex: 'updatedAt',
+      render: (updatedAt: string) => formatCallManagementDateTime(updatedAt),
+      title: 'Updated Time',
+      width: 156,
+    },
+    {
+      dataIndex: 'updatedBy',
+      ellipsis: true,
+      title: 'Updated By',
+      width: 132,
     },
     {
       fixed: 'right',
@@ -272,7 +295,7 @@ export function CommonLinkManagementPage() {
         </div>
       ),
       title: 'Actions',
-      width: 100,
+      width: 96,
     },
   ]
 
@@ -333,7 +356,6 @@ export function CommonLinkManagementPage() {
         <AdminTable<CommonLinkEntry>
           columns={columns}
           dataSource={filteredEntries}
-          horizontalScroll={1132}
           pagination={{}}
           rowKey="id"
         />
@@ -386,7 +408,7 @@ export function CommonLinkManagementPage() {
               />
             </AdminFormField>
             <AdminFormField label="Remark" fullWidth>
-              <Input.TextArea
+              <LimitedTextArea
                 rows={3}
                 value={draft.remark}
                 onChange={(event) => updateDraft('remark', event.target.value)}

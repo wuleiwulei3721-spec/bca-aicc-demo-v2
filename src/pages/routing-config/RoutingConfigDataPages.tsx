@@ -17,7 +17,7 @@ import {
   AdminPage,
 } from '../../components'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
-import { useRoutingConfigStore } from '../../store'
+import { useAuthStore, useRoutingConfigStore } from '../../store'
 import type {
   AccessSite,
   BusinessType,
@@ -52,6 +52,7 @@ import {
   getNewCustomerAlertSoundUrl,
   newCustomerAlertSounds,
 } from '../../config/newCustomerAlertSounds'
+import { formatAuditActor, formatAuditDateTime } from '../../utils/audit'
 
 const statusSwitchLabels = {
   checked: 'Enabled',
@@ -2545,6 +2546,7 @@ function createDefaultMediaServiceRulePlan(
 }
 
 export function MediaServiceRulePlansPage() {
+  const authSession = useAuthStore((state) => state.session)
   const { notify } = useOperationFeedback()
   const mediaServiceRulePlans = useRoutingConfigStore(
     (state) => state.mediaServiceRulePlans,
@@ -2554,6 +2556,10 @@ export function MediaServiceRulePlansPage() {
   )
   const upsertEntity = useRoutingConfigStore((state) => state.upsertEntity)
   const deleteEntity = useRoutingConfigStore((state) => state.deleteEntity)
+  const auditActor = formatAuditActor(
+    authSession?.employeeId,
+    authSession?.displayName,
+  )
   const { mediaOptions } = useRoutingLookups()
   const [appliedFilters, setAppliedFilters] = useState({
     keyword: '',
@@ -2856,8 +2862,8 @@ export function MediaServiceRulePlansPage() {
       ...draft,
       planCode: draft.planCode.trim(),
       planName: draft.planName.trim(),
-      updatedAt: new Date().toISOString().slice(0, 10),
-      updatedBy: 'Admin',
+      updatedAt: formatAuditDateTime(new Date()),
+      updatedBy: auditActor,
     }
 
     upsertEntity('mediaServiceRulePlans', 'planCode', nextPlan)
@@ -3008,8 +3014,18 @@ export function MediaServiceRulePlansPage() {
       render: (value: MediaTypeCode) => mediaLabelByValue.get(value) ?? value,
     },
     { dataIndex: 'description', title: 'Description', width: 260 },
-    { dataIndex: 'updatedAt', title: 'Updated Date', width: 140 },
-    { dataIndex: 'updatedBy', title: 'Updated By', width: 120 },
+    {
+      dataIndex: 'updatedAt',
+      render: (updatedAt: string) => formatAuditDateTime(updatedAt),
+      title: 'Updated Time',
+      width: 164,
+    },
+    {
+      dataIndex: 'updatedBy',
+      ellipsis: true,
+      title: 'Updated By',
+      width: 180,
+    },
     {
       dataIndex: 'status',
       title: 'Status',
@@ -4440,15 +4456,6 @@ const workingTimeWeekdayOptions: RoutingConfigSelectOption[] = [
   { label: 'Sun', value: 'SUN' },
 ]
 
-function getLocalDateString() {
-  const currentDate = new Date()
-  const year = currentDate.getFullYear()
-  const month = String(currentDate.getMonth() + 1).padStart(2, '0')
-  const day = String(currentDate.getDate()).padStart(2, '0')
-
-  return `${year}-${month}-${day}`
-}
-
 function getDatePickerValue(value: string) {
   return value ? dayjs(value, 'YYYY-MM-DD') : null
 }
@@ -4543,7 +4550,7 @@ function cloneWorkingTimePlan(plan: WorkingTimePlan): WorkingTimePlan {
 function createWorkingTimePlanDraft(
   existingPlans: WorkingTimePlan[] = [],
 ): WorkingTimePlan {
-  const today = getLocalDateString()
+  const now = formatAuditDateTime(new Date())
   let sequence = existingPlans.length + 1
   let planCode = `WTP_${String(sequence).padStart(3, '0')}`
 
@@ -4565,16 +4572,19 @@ function createWorkingTimePlanDraft(
     },
     specialWorkingPlans: [],
     status: 'Active',
-    updatedAt: today,
+    updatedAt: now,
     updatedBy: 'Admin',
     workSchedules: [createWorkScheduleRule()],
   }
 }
 
 
-function normalizeWorkingTimePlan(draft: WorkingTimePlan): WorkingTimePlan {
+function normalizeWorkingTimePlan(
+  draft: WorkingTimePlan,
+  _selectedPlan?: WorkingTimePlan | null,
+  updatedBy = 'Admin',
+): WorkingTimePlan {
   const normalizedDraft = cloneWorkingTimePlan(draft)
-  const today = getLocalDateString()
   const nextPlan: WorkingTimePlan = {
     ...normalizedDraft,
     holidayRules: normalizedDraft.holidayRules.map((rule) => ({
@@ -4585,8 +4595,8 @@ function normalizeWorkingTimePlan(draft: WorkingTimePlan): WorkingTimePlan {
           ? rule.nonWorkingRanges
           : [createTimeRange('00:00', '23:59')],
     })),
-    updatedAt: today,
-    updatedBy: 'Admin',
+    updatedAt: formatAuditDateTime(new Date()),
+    updatedBy,
   }
 
   if (!nextPlan.ramadanSchedule.enabled) {
@@ -4723,12 +4733,17 @@ function validateWorkingTimePlan(draft: WorkingTimePlan) {
 }
 
 export function WorkingTimePlansPage() {
+  const authSession = useAuthStore((state) => state.session)
   const { notify } = useOperationFeedback()
   const workingTimePlans = useRoutingConfigStore(
     (state) => state.workingTimePlans,
   )
   const upsertEntity = useRoutingConfigStore((state) => state.upsertEntity)
   const deleteEntity = useRoutingConfigStore((state) => state.deleteEntity)
+  const auditActor = formatAuditActor(
+    authSession?.employeeId,
+    authSession?.displayName,
+  )
   const { skillQueues } = useRoutingLookups()
   const [filterDraft, setFilterDraft] = useState<WorkingTimePlanFilters>(
     workingTimeInitialFilters,
@@ -4978,7 +4993,11 @@ export function WorkingTimePlansPage() {
       return
     }
 
-    const nextRecord = normalizeWorkingTimePlan(draft, selectedPlan)
+    const nextRecord = normalizeWorkingTimePlan(
+      draft,
+      selectedPlan,
+      auditActor,
+    )
 
     upsertEntity('workingTimePlans', 'planCode', nextRecord)
     notify('Working Time Plan saved locally for this demo session.')
@@ -5004,8 +5023,18 @@ export function WorkingTimePlansPage() {
       width: 260,
       render: (value: string) => value || '-',
     },
-    { dataIndex: 'updatedAt', title: 'Updated Date', width: 120 },
-    { dataIndex: 'updatedBy', title: 'Updated By', width: 110 },
+    {
+      dataIndex: 'updatedAt',
+      render: (updatedAt: string) => formatAuditDateTime(updatedAt),
+      title: 'Updated Time',
+      width: 164,
+    },
+    {
+      dataIndex: 'updatedBy',
+      ellipsis: true,
+      title: 'Updated By',
+      width: 180,
+    },
     {
       dataIndex: 'status',
       title: 'Status',

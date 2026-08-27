@@ -18,7 +18,7 @@ import {
 } from '../../components'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import { routingProjectCode } from '../../mock/routingConfiguration'
-import { useRoutingConfigStore } from '../../store'
+import { useAuthStore, useRoutingConfigStore } from '../../store'
 import type {
   RouteFactor,
   RouteFactorCode,
@@ -26,6 +26,7 @@ import type {
   RoutingRule,
 } from '../../types'
 import { RoutingConfigStatusBadge } from './RoutingConfigStatusBadge'
+import { formatAuditActor, formatAuditDateTime } from '../../utils/audit'
 
 type BatchSelections = Partial<Record<RouteFactorCode, string[]>>
 type FactorValueMap = Partial<Record<RouteFactorCode, string>>
@@ -45,8 +46,6 @@ interface RuleDraft {
 }
 
 const defaultBatchPriority = 70
-const defaultUpdatedBy = 'Admin'
-
 const initialBatchSelections: BatchSelections = {
   '13': ['SITE_JKT', 'SITE_SBY', 'SITE_SG_DR'],
   '11': ['WHATSAPP'],
@@ -109,15 +108,6 @@ function createUniqueRuleCode(baseCode: string, rules: RoutingRule[]) {
   return `${baseCode}-${suffix.slice(0, 3)}`
 }
 
-function formatUpdatedAt(date = new Date()) {
-  const pad = (value: number) => value.toString().padStart(2, '0')
-
-  return [
-    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
-    `${pad(date.getHours())}:${pad(date.getMinutes())}`,
-  ].join(' ')
-}
-
 function createCombinations(
   factors: RouteFactor[],
   selections: BatchSelections,
@@ -141,6 +131,7 @@ function createCombinations(
 }
 
 export function SkillRoutingRulesPage() {
+  const authSession = useAuthStore((state) => state.session)
   const routeFactors = useRoutingConfigStore((state) => state.routeFactors)
   const routingRules = useRoutingConfigStore((state) => state.routingRules)
   const setRoutingRules = useRoutingConfigStore((state) => state.setRoutingRules)
@@ -171,6 +162,10 @@ export function SkillRoutingRulesPage() {
   const [ruleStatusFilter, setRuleStatusFilter] = useState('ALL')
   const [ruleStatusFilterDraft, setRuleStatusFilterDraft] = useState('ALL')
   const { notify } = useOperationFeedback()
+  const auditActor = formatAuditActor(
+    authSession?.employeeId,
+    authSession?.displayName,
+  )
   const [modalMode, setModalMode] = useState<RuleModalMode | null>(null)
   const [selectedRule, setSelectedRule] = useState<RoutingRule | null>(null)
   const [ruleDraft, setRuleDraft] = useState<RuleDraft>({
@@ -434,7 +429,7 @@ export function SkillRoutingRulesPage() {
   const applyBatchRules = () => {
     const nextRules = [...routingRules]
     const excludedDuplicateKeySet = new Set(excludedDuplicateKeys)
-    const updatedAt = formatUpdatedAt()
+    const updatedAt = formatAuditDateTime(new Date())
     let createdCount = 0
     let overwrittenCount = 0
 
@@ -456,7 +451,7 @@ export function SkillRoutingRulesPage() {
           status: 'Active',
           targetSkillQueueCode,
           updatedAt,
-          updatedBy: defaultUpdatedBy,
+          updatedBy: auditActor,
         }
         overwrittenCount += 1
         return
@@ -475,7 +470,7 @@ export function SkillRoutingRulesPage() {
         status: 'Active',
         targetSkillQueueCode,
         updatedAt,
-        updatedBy: defaultUpdatedBy,
+        updatedBy: auditActor,
       }
 
       nextRules.push(nextRule)
@@ -537,8 +532,8 @@ export function SkillRoutingRulesPage() {
               ...rule,
               status: ruleDraft.status,
               targetSkillQueueCode: ruleDraft.targetSkillQueueCode,
-              updatedAt: formatUpdatedAt(),
-              updatedBy: defaultUpdatedBy,
+              updatedAt: formatAuditDateTime(new Date()),
+              updatedBy: auditActor,
             }
           : rule,
       ),
@@ -593,13 +588,15 @@ export function SkillRoutingRulesPage() {
     },
     {
       dataIndex: 'updatedAt',
-      title: 'Updated Date',
-      width: 126,
+      render: (updatedAt: string) => formatAuditDateTime(updatedAt),
+      title: 'Updated Time',
+      width: 164,
     },
     {
       dataIndex: 'updatedBy',
+      ellipsis: true,
       title: 'Updated By',
-      width: 90,
+      width: 180,
     },
     {
       dataIndex: 'status',
@@ -981,8 +978,12 @@ export function SkillRoutingRulesPage() {
                 )}
               </label>
               <label className="routing-config-crud-modal__field">
-                <span>Updated Date</span>
-                <em>{selectedRule?.updatedAt ?? ''}</em>
+                <span>Updated Time</span>
+                <em>
+                  {selectedRule?.updatedAt
+                    ? formatAuditDateTime(selectedRule.updatedAt)
+                    : ''}
+                </em>
               </label>
               <label className="routing-config-crud-modal__field">
                 <span>Updated By</span>

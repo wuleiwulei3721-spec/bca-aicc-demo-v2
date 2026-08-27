@@ -6,6 +6,7 @@ import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import { defaultGlobalControlConfiguration } from '../../mock/globalControlConfiguration'
 import { useAppStore, useCallManagementStore } from '../../store'
 import { useRoutingConfigStore } from '../../store/routingConfigStore'
+import { formatCallManagementDateTime } from '../../utils/audit'
 import type {
   GlobalControlAnswerMode,
   GlobalControlConfiguration,
@@ -27,16 +28,6 @@ const signInStatusOptions: Array<{
   { label: 'Ready', value: 'ready' },
   { label: 'Not Ready', value: 'not-ready' },
 ]
-
-function formatSavedTime(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hour = String(date.getHours()).padStart(2, '0')
-  const minute = String(date.getMinutes()).padStart(2, '0')
-
-  return `${year}-${month}-${day} ${hour}:${minute}`
-}
 
 function normalizeNumber(value: number | null, fallback: number, min: number) {
   if (typeof value !== 'number' || Number.isNaN(value)) {
@@ -125,7 +116,9 @@ export function GlobalControlConfigurationPage() {
   const [config, setConfig] = useState<GlobalControlConfiguration>(
     () => ({ ...savedConfiguration }),
   )
-  const [savedAt, setSavedAt] = useState(formatSavedTime(new Date()))
+  const [savedAt, setSavedAt] = useState(
+    formatCallManagementDateTime(new Date()),
+  )
   const { notify } = useOperationFeedback()
   const activeSkillQueueOptions = useMemo(
     () =>
@@ -211,7 +204,7 @@ export function GlobalControlConfigurationPage() {
       return
     }
 
-    const nextSavedAt = formatSavedTime(new Date())
+    const nextSavedAt = formatCallManagementDateTime(new Date())
     updateGlobalControlConfiguration(config)
     syncLiveChat2RetentionLimit()
     setSavedAt(nextSavedAt)
@@ -222,7 +215,7 @@ export function GlobalControlConfigurationPage() {
     resetGlobalControlConfiguration()
     syncLiveChat2RetentionLimit()
     setConfig({ ...defaultGlobalControlConfiguration })
-    const nextSavedAt = formatSavedTime(new Date())
+    const nextSavedAt = formatCallManagementDateTime(new Date())
     setSavedAt(nextSavedAt)
     notify(`Global control configuration reset at ${nextSavedAt}.`)
   }

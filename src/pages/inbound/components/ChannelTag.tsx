@@ -16,6 +16,7 @@ interface ChannelTagProps {
   value: ChannelTagValue
   compact?: boolean
   duration?: string
+  label?: string
   transferredFrom?: string
 }
 
@@ -78,6 +79,7 @@ export function ChannelTag({
   value,
   compact,
   duration,
+  label,
   transferredFrom,
 }: ChannelTagProps) {
   return (
@@ -94,7 +96,7 @@ export function ChannelTag({
         {renderIcon(value)}
       </span>
       <span className="inbound-channel-tag__label">
-        {channelDisplayLabels[value] ?? value}
+        {label ?? channelDisplayLabels[value] ?? value}
       </span>
       {duration && (
         <span className="inbound-channel-tag__duration">

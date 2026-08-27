@@ -346,20 +346,13 @@ function createLiveChat2HandoffSession(
     (sourceSession.channel === 'BankApp' ||
       sourceSession.channel === 'Webchat') &&
     bankAppCustomerType === 'guest'
-  const textGuestProfile =
-    sourceSession.channel === 'Webchat'
-      ? {
-          avatarInitials: 'MS',
-          email: 'maya.santoso@example.com',
-          name: 'Maya Santoso',
-          phoneNumber: '081298760421',
-        }
-      : {
-          avatarInitials: 'AP',
-          email: 'ayu.pratama@example.com',
-          name: 'Ayu Pratama',
-          phoneNumber: '081234560219',
-        }
+  const textGuestProfile = {
+    avatarInitials: '?',
+    avatarUrl: '',
+    email: '',
+    name: 'Unidentified Customer',
+    phoneNumber: '',
+  }
   const customerProfile = isTextGuest
     ? {
         ...sourceSession.customer.profile,
@@ -367,6 +360,7 @@ function createLiveChat2HandoffSession(
         cisNumber: '-',
         customerType: 'Guest',
       }
+
     : {
         ...sourceSession.customer.profile,
         customerType:
@@ -376,6 +370,19 @@ function createLiveChat2HandoffSession(
             ? 'Regular Customer'
             : sourceSession.customer.profile.customerType,
       }
+
+  const cloneHandoffMessage = (message: LiveChat2Message) => {
+    const clonedMessage = cloneLiveChat2MessageForSession(
+      message,
+      sourceSession.id,
+      nextSessionId,
+      messageTimestampById.get(message.id),
+    )
+
+    return isTextGuest && clonedMessage.sender === 'customer'
+      ? { ...clonedMessage, senderName: 'Unidentified Customer' }
+      : clonedMessage
+  }
 
   return {
     ...sourceSession,
@@ -392,25 +399,11 @@ function createLiveChat2HandoffSession(
           : sourceSession.customer.bankAppLoginStatus,
       profile: customerProfile,
     },
-    historyMessages: sourceSession.historyMessages.map((message) =>
-      cloneLiveChat2MessageForSession(
-        message,
-        sourceSession.id,
-        nextSessionId,
-        messageTimestampById.get(message.id),
-      ),
-    ),
+    historyMessages: sourceSession.historyMessages.map(cloneHandoffMessage),
     id: nextSessionId,
     lastMessageAt: new Date(now).toISOString(),
     lastMessageTime: time,
-    messages: sourceSession.messages.map((message) =>
-      cloneLiveChat2MessageForSession(
-        message,
-        sourceSession.id,
-        nextSessionId,
-        messageTimestampById.get(message.id),
-      ),
-    ),
+    messages: sourceSession.messages.map(cloneHandoffMessage),
     serviceStartedAt: time,
     status: 'active',
   }
@@ -431,8 +424,8 @@ function getCallInteractionTitle(
   return source === 'bankapp-voice' ? 'Voice Call' : 'PSTN'
 }
 
-function getCallInteractionSkillDisplayName() {
-  return DEFAULT_INBOUND_SKILL_DISPLAY_NAME
+function getCallInteractionSkillDisplayName(source: CallInteractionSource) {
+  return source === 'outbound' ? '-' : DEFAULT_INBOUND_SKILL_DISPLAY_NAME
 }
 
 interface AppState {
@@ -891,7 +884,7 @@ export const useAppStore = create<AppState>((set) => ({
         kind,
         outboundNumber: source === 'outbound' ? outboundNumber : undefined,
         phase: 'incoming',
-        skillDisplayName: getCallInteractionSkillDisplayName(),
+        skillDisplayName: getCallInteractionSkillDisplayName(source),
         source,
         startedAt: now,
         tabKey: id,

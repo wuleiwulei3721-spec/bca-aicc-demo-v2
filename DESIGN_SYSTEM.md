@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Design System
 
-Last updated: 2026-08-20 11:33 +08:00
+Last updated: 2026-08-27 17:38 +08:00
 
 This document records the current implemented visual rules. It should be treated as the design baseline for future pages and components.
 
@@ -82,9 +82,9 @@ The toolbar is operational and compact:
 Call context display:
 
 - During `Incoming`, `Talking`, and `Hold`, show call identification and Skill.
-- PSTN displays `IVR 08123456789`.
+- PSTN displays `IVR +08123456789`.
 - BankApp voice/video displays `BankID 00012345`.
-- Skill displays as a second row, currently `Skill Credit card activation`.
+- Skill displays as a second row; inbound calls use `Skill Credit card activation` and outbound number / agent calls use `Skill -`.
 - Idle / ended call state hides call identification and Skill.
 
 ## 5. Card Design Principles
@@ -101,13 +101,17 @@ Use `BaseCard` and `SectionCard` patterns:
 
 Inbound left-column cards:
 
-- Customer Information stays fixed at the top.
-- Unidentified PSTN uses a minimal fact set: identity title, caller number, and `-` for unavailable email / CIS. CRM-dependent header and avatar actions stay hidden until a valid CIS loads.
-- Customer-profile contact information is read-only in customer deployments. Its header provides the compact `IdcardOutlined` `All Contact Details` icon with a tooltip. The modal groups channels in a clean two-column list: fixed left channel icon/name and right CRM values stacked as read-only text, including `-` empty states. The viewer and local legacy editor reuse one shared channel-icon presentation. Do not render editing controls in customer deployments. The legacy pencil is local-maintainer-only behind its explicit feature flag and appears beside the viewer only when enabled.
+- Customer Information stays fixed at the top. The shared customer-context column containing Customer Information, Customer Journey, Ticketing History, Next Best Action, and Quick Action is fixed at `270px` on desktop across inbound voice/video, Live Chat, Email, and Social Media workspaces; narrow stacked layouts may expand it to the container width.
+- Customer Information exposes a compact `Call` action only for a phone row with a usable number. The action remains disabled until the outbound AUX eligibility is active; selecting it opens the existing compact `Outbound Reason` modal, with no TL approval state or approval result popup. The bottom access-channel tag, verification status, and KBV action share the same compact geometry while retaining their semantic colors.
+- Customer Information keeps the compact name-plus-icon/value presentation. Phone, Email, Customer Number, and Segmentation use the same 24px icon slot and centered 20px icon container as the Customer Journey channel rows; their values start on the same text baseline as Journey Category. Segmentation uses a neutral `TeamOutlined` customer-group icon. Identified profiles use country-coded phone formatting. Email renders the address and its contact verification status as separate text spans: only the address receives hover/focus underline, while `Verified` / `Unverified` uses the same semantic text color and small type scale as verification status without a background, parentheses, or label underline. Customer Information fact rows keep a fixed 22px height with a tightened vertical gap; the phone action reserves its horizontal column and sizes to its text so hover/focus does not change row height or leave unnecessary space. Customer Information inline controls use one compact standard: 22px height, 10px text, 650 font weight, 18px line height, 8px horizontal padding, compact radius, and shared hover/focus treatment. The direct `Call` action, Special Handling, and access-channel tag use the same base geometry with their respective semantic colors. When Special Handling is available, it stays on the same row at the far right of Segmentation and sizes to its text. Unidentified PSTN keeps the three icon rows with `-` placeholder values; it does not render an avatar, Segmentation, Special Handling, CRM-dependent header actions, or customer-phone outbound until a valid CIS loads. The toolbar remains responsible for the anonymous caller number used in call identification.
+- Verification status and entry controls are conditional by channel/media: PSTN, BankApp Voice/Video, and Webchat Voice/Video keep the status plus `KBV`; registered BankApp text keeps the status plus `PIN`; WhatsApp, Email, Webchat text, Social Media, and guest BankApp text omit both. The shared bottom-row control geometry remains unchanged when either verification element is omitted.
+- Webchat text keeps `Webchat` as the internal channel value but uses the `bca.co.id` display-label override in the Customer Information access tag; the override does not change the channel icon, style, routing, or verification rule matching.
+- Customer-profile contact information is read-only in customer deployments. Its header provides the compact `IdcardOutlined` `All Contact Details` icon with a tooltip; the Customer Number / CIS fact row uses a centered literal `SIC` marker in the shared fixed icon slot. The modal groups channels in a clean two-column list: fixed left channel icon/name and right CRM values stacked as read-only text, including `-` empty states. The viewer and local legacy editor reuse one shared channel-icon presentation. Do not render editing controls in customer deployments. The legacy pencil is local-maintainer-only behind its explicit feature flag and appears beside the viewer only when enabled.
 - Journey / Ticket / NBA / Quick Action live in the scroll area.
 - Collapsed journey and ticket lists show the most recent two items.
 - Expanded journey and ticket lists show up to ten items.
-- Shared Ticket registration keeps the existing right-side modal shell with one white content surface, matching the Customer Information outbound-reason modal. Category and Product are searchable single-select controls; Product stays disabled until a Category is selected and only exposes products linked to that Category. Both use the standard fixed-height single-line Select layout: a long selected value is ellipsized and the arrow stays right-aligned and vertically centered. All four editable control values use 12px primary text with an 18px line height; Summary and Note counts sit inside the lower-right corner in normal 11px text. Ticketing History Category follows Customer Journey's one-line ellipsis rule. Summary is capped at 250 and Note at 1000. One-Click Generation occupies the left side of the fixed footer, aligned with the Cancel / Confirm action group on the right.
+- Empty Customer Journey, Ticketing History, and Next Best Action cards use the compact shared message `No data available.`; Quick Action remains available independently of customer-specific data.
+- Shared Ticket registration keeps the existing right-side modal shell with one white content surface, matching the Customer Information outbound-reason modal. Category and Product are searchable single-select controls; Product stays disabled until a Category is selected and only exposes products linked to that Category. Both use the standard fixed-height single-line Select layout: a long selected value is ellipsized and the arrow stays right-aligned and vertically centered. All four editable control values use 12px primary text with an 18px line height; Summary and Note counts sit inside the lower-right corner in normal 11px text. Ticketing History Category follows Customer Journey's one-line ellipsis rule. Summary is capped at 250 and Note at 1000. Ticket text areas reuse the shared limited-input component and its count treatment. One-Click Generation occupies the left side of the fixed footer, aligned with the Cancel / Confirm action group on the right.
 
 ## 6. Modal Design Principles
 
@@ -132,8 +136,8 @@ General rules:
 - Search controls and action buttons inside modals should align to the same height.
 - Long modal content should scroll inside the modal body, not push footer actions off-screen.
 - Admin modal footers should use `AdminModalFooter`.
-- External approval results use a compact, non-masked `BaseModal` fixed to the bottom-right corner, manually closable and retained until closed; keep `Outbound + number + Reason` on the first row and optional `Note` on a naturally wrapping second row, so long remarks cannot disturb the primary approval context. Both this result Modal and the Customer Information `Outbound Reason` Modal use a light-blue header with one uninterrupted white content body. A nonempty customer phone number exposes the outbound action only while its phone row is hovered or receives keyboard focus. Use `Request Approval` only for an approval-required role; the direct TL action is a compact content-width `Call` button.
-- TL approval reuses the shared light-blue Modal header with one uninterrupted white body, is centered over a light mask, and blocks the static simulation dashboard while a decision is pending. Multiple pending approvals use one centered Modal with compact remaining-queue progress rather than stacked dialogs; do not add a countdown or automatic timeout state.
+- The Customer Information `Outbound Reason` Modal uses a light-blue header with one uninterrupted white content body. A nonempty customer phone number exposes the compact `Call` action only while its phone row is hovered or receives keyboard focus; the action remains disabled when the agent is not in an eligible outbound AUX.
+- The legacy TL approval route remains available only as a compatibility page and is not opened by outbound number or Customer Information actions.
 
 ## 7. Tab Design Principles
 
@@ -304,6 +308,9 @@ Admin list rules:
 - Internal table vertical scroll is only for long tables inside modals.
 - Complex filters may wrap, but Search / Reset stay in the query action group and Batch Add / Add stay in the right primary-action group.
 - Admin filter controls must use the shared 32px alignment for Input, Select, and Date/RangePicker controls; placeholders and selected values should be vertically centered.
+- Call Management audit timestamps use `DD-MM-YYYY HH:MM:SS` and display `Created By` / `Created Time` or `Updated By` / `Updated Time`; `Modified` is not used as a second label for the same last-update meaning. Other management modules will adopt this format in their own migration scope.
+- When update audit columns are present, list them at the end in `Updated Time`, then `Updated By`, then `Actions` order. Size management-table columns to their content and use horizontal scrolling only when confirmed minimum widths cannot fit the target workspace.
+- `LimitedInput` and `LimitedTextArea` are the shared character-limit controls. Remark fields default to 2000 characters, while business-specific limits are passed explicitly, such as Common Phrase 100, Question Name 100, Ticket Summary 250, or Ticket Note 1000. They share the Ticket count style: a compact normal-weight count that stays inside the control without changing the field geometry, and clamp over-limit change events at the configured maximum.
 - Local-only management modules such as Employee Management must still use English UI text and the same admin layout contract as customer-visible management pages.
 
 ## 14. Responsive and Demo Quality Rules

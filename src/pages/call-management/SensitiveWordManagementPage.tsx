@@ -12,14 +12,19 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  LimitedTextArea,
 } from '../../components'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import {
   sensitiveWordCategoryLabels,
   sensitiveWordCategoryOptions,
 } from '../../mock/sensitiveWords'
-import { useCallManagementStore } from '../../store'
+import { useAuthStore, useCallManagementStore } from '../../store'
 import type { SensitiveWordCategory, SensitiveWordEntry } from '../../types'
+import {
+  formatAuditActor,
+  formatCallManagementDateTime,
+} from '../../utils/audit'
 
 type SensitiveWordModalMode = 'create' | 'edit' | null
 
@@ -67,6 +72,7 @@ function getNextSensitiveWordId(entries: SensitiveWordEntry[]) {
 }
 
 export function SensitiveWordManagementPage() {
+  const authSession = useAuthStore((state) => state.session)
   const entries = useCallManagementStore((state) => state.sensitiveWordEntries)
   const addEntry = useCallManagementStore(
     (state) => state.addSensitiveWordEntry,
@@ -180,6 +186,11 @@ export function SensitiveWordManagementPage() {
           ? draft.id
           : getNextSensitiveWordId(entries),
       remark: draft.remark.trim(),
+      updatedAt: formatCallManagementDateTime(new Date()),
+      updatedBy: formatAuditActor(
+        authSession?.employeeId,
+        authSession?.displayName,
+      ),
       word: draft.word.trim(),
     }
 
@@ -215,20 +226,32 @@ export function SensitiveWordManagementPage() {
     {
       dataIndex: 'word',
       title: 'Sensitive Word',
-      width: 220,
+      width: 200,
     },
     {
       dataIndex: 'category',
       render: (category: SensitiveWordCategory) =>
         sensitiveWordCategoryLabels[category],
       title: 'Category',
-      width: 260,
+      width: 230,
     },
     {
       dataIndex: 'remark',
       ellipsis: true,
       title: 'Remark',
-      width: 360,
+      width: 260,
+    },
+    {
+      dataIndex: 'updatedAt',
+      render: (updatedAt: string) => formatCallManagementDateTime(updatedAt),
+      title: 'Updated Time',
+      width: 156,
+    },
+    {
+      dataIndex: 'updatedBy',
+      ellipsis: true,
+      title: 'Updated By',
+      width: 132,
     },
     {
       fixed: 'right',
@@ -255,7 +278,7 @@ export function SensitiveWordManagementPage() {
         </div>
       ),
       title: 'Actions',
-      width: 100,
+      width: 96,
     },
   ]
 
@@ -319,7 +342,6 @@ export function SensitiveWordManagementPage() {
         <AdminTable<SensitiveWordEntry>
           columns={columns}
           dataSource={filteredEntries}
-          horizontalScroll={1012}
           pagination={{}}
           rowKey="id"
         />
@@ -370,7 +392,7 @@ export function SensitiveWordManagementPage() {
               />
             </AdminFormField>
             <AdminFormField label="Remark" fullWidth>
-              <Input.TextArea
+              <LimitedTextArea
                 rows={3}
                 value={draft.remark}
                 onChange={(event) => updateDraft('remark', event.target.value)}
