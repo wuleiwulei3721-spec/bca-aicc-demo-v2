@@ -33,7 +33,7 @@ Historical entries are preserved in archive files without content rewrites. Use 
 
 修改页面或文件：
 
-- 提交 `28bb1e3` 及 Vercel production deployment
+- 提交 `c4fd9bb` 及 Vercel production deployment
 - `DEV_LOG.md`
 
 修改原因：
@@ -43,7 +43,7 @@ Historical entries are preserved in archive files without content rewrites. Use 
 修改结果：
 
 - 正式 URL：`https://netinfo-aicc-demo-v2.vercel.app`
-- 本次 Deployment Inspect：`https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/9FgDJdAryop8drF438vJJf2PasVE`
+- 本次 Deployment Inspect：`https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/745uy4bcJLsSD99iwdFgKFS9LG4P`
 - 部署命令：`vercel --prod --yes --build-env VITE_APP_VISIBILITY_PROFILE=customer`
 - 生产构建使用 `VITE_APP_VISIBILITY_PROFILE=customer`，部署状态为 Completed，正式别名已绑定。
 
