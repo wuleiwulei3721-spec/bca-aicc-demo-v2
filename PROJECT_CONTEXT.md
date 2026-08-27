@@ -117,6 +117,8 @@ Current router structure:
 - `/call-management/call-record-query`
 - `/call-management/login-log`
 - `/call-management/*` legacy or hidden routes redirect to Verification Rules.
+- `/social-media/interaction-log` -> compatibility entry that opens the Social Media Interaction Log workspace tab and returns to `/`.
+- `/social-media/*` redirects to `/social-media/interaction-log`.
 - `/routing-config/channels`
 - `/routing-config/vdn`
 - `/routing-config/sites`
@@ -152,6 +154,7 @@ All business routes under `/` require an authenticated demo session.
 - `src/pages/whatsapp/WhatsAppDemoPage.tsx`: WhatsApp simulation using the BankApp demo framework.
 - `src/pages/email/EmailPage.tsx`: code-built Email agent workspace with mailbox folders, customer context, message handling, CRM, thread records, and Ticket registration.
 - `src/pages/social-media/SocialMediaPage.tsx`: Social Media agent workspace with queue filters, post/review handling, CRM preview, and CWU prototype.
+- `src/pages/social-media/SocialMediaInteractionLogPage.tsx`: Social Media Interaction Log workspace page for social channel history query, agent lookup, alert review, and conversation detail.
 - `src/pages/call-management/*`: customer-visible call management configuration pages.
 - `src/pages/routing-config/*`: routing configuration data maintenance pages.
 - `src/pages/employee-management/*`: local-only employee profile management pages.
@@ -323,9 +326,11 @@ Email message and Ticket changes are local component state. Closing and reopenin
 
 The Social Media workspace is available immediately after Email under `Channel Simulation` in both customer and local visibility profiles. Its menu action opens or reuses one closable `Social Media` workspace tab.
 
+The separate `Social Media > Interaction Log` menu opens `/social-media/interaction-log` as a registered workspace page tab. It is customer-visible and intentionally separate from `Call Management > Interaction Log`.
+
 The current front-end demo provides anonymized social queue items across Facebook, Instagram, X, YouTube, LinkedIn, TikTok, App Store, and Google Play. Agents can filter by channel and item type (Chats, Comments, Mentions, Reviews), search the queue, inspect post context and conversation/detail views, switch between CRM preview and conversation, open the local CWU prototype, and send a local reply for a Review. All state resets when the tab is closed or the application refreshes.
 
-Social Media does not add a standalone route, real social-network API, authentication, delivery, moderation, routing, audit, persistence, service-ending lifecycle, or Interaction Log query in the current scope.
+Social Media does not add a real social-network API, authentication, delivery, moderation, routing, audit, persistence, or service-ending lifecycle in the current scope. The implemented Social Media Interaction Log is a front-end mock query page only.
 
 ### Call Management
 
@@ -365,7 +370,7 @@ conversation plus right CWU without an empty media column. Voice media stacks
 Voice Recording Playback above the PSTN active-call Screen Recording Playback.
 Video media uses an OpenEye-style vertical replay with two video panes and a
 playback bar, without call-control buttons, labels, or icons. It intentionally excludes Email and Social Media
-records; Email Record Inquiry and Social Media query remain separate future scopes even though the Email handling workspace is now implemented.
+records; Email Record Inquiry remains future scope, and Social Media records are handled by the separate `Social Media > Interaction Log` module.
 
 Login Log is implemented at `/call-management/login-log`. It queries Employee ID / Name through one Keyword field, Time Range, Operation, and Log Out Type. The list records Employee ID, Employee Name, Operation, Log Out Type, and Time. It defaults to the latest seven calendar days and sorts Time descending. Login rows display `-` for Log Out Type; manual log-out uses `User` and idle automatic log-out uses `System`. Browser-close and network-heartbeat detection require a backend/CTI service and are represented only by seeded System records in the current demo.
 
@@ -459,6 +464,7 @@ Current behaviors:
 - BankApp, Webchat, and WhatsApp customer-side simulations with screenshot assets.
 - Customer-visible Email agent workspace with mailbox folders, shared customer context, the Live Chat CRM screenshot, message handling, thread records, and Ticket registration.
 - Customer-visible Social Media agent workspace with queue filtering, social post/review handling, CRM preview, local CWU prototype, and review reply simulation.
+- Customer-visible Social Media Interaction Log workspace page with channel/type/account/agent/team/time/duration/ticket/summary filters, role-scoped mock visibility, agent lookup, alert detail, and conversation detail.
 - Call Management pages listed above.
 - Abnormal End Reasons for abnormal Voice / Video / DM service end reasons.
 - Interaction Log for current-agent Phone, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp history, with 30 mock records, Contact, Queue, Service Time, Ended By, End Reason, QM Score, playback/transcript details, and read-only mandatory CWU summary.
@@ -480,7 +486,7 @@ Current behaviors:
 - Live Chat is a front-end mock, not a real channel gateway.
 - Webchat customer-side simulation currently covers text only; voice and video Webchat media are future scope.
 - Email Record Inquiry and Email Template Deploy are not part of the current Email workspace scope.
-- Social Media has no real social-network gateway, persistence, moderation, routing, audit, service-ending lifecycle, or record-query integration.
+- Social Media has no real social-network gateway, persistence, moderation, routing, audit, or service-ending lifecycle. Social Media Interaction Log is front-end mock data until backend query contracts are confirmed.
 - Dashboard, Admin dashboard, Supervisor pages, and reporting pages are not fully implemented workspaces.
 - CRM and Assistant screenshots exist, but may still need final customer-approved images and quality checks.
 - Localization is mixed: framework UI is mostly English; business content is a mix of English and Indonesian.

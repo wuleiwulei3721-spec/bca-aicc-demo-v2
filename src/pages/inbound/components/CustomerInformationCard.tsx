@@ -41,6 +41,7 @@ interface CustomerInformationCardProps {
   accessMenuLabel?: string
   accessMenuName?: string
   customer: CustomerInformation
+  hideVerificationStatus?: boolean
   onSendEmail?: () => void
   onOpenVerification: (config: CustomerVerificationPanelConfig) => void
   onVerificationFinish: (status: VerificationStatus) => void
@@ -284,6 +285,7 @@ export function CustomerInformationCard({
   accessMenuLabel = 'Business Menu Selection Record',
   accessMenuName,
   customer,
+  hideVerificationStatus: hideVerificationStatusProp,
   onSendEmail,
   onOpenVerification,
   onVerificationFinish,
@@ -353,7 +355,8 @@ export function CustomerInformationCard({
     useState<ExternalOutboundReason | null>(null)
   const verificationStatus = customer.verificationStatus
   const verificationAction = getVerificationAction(customer)
-  const hideVerificationStatus = shouldHideVerificationStatus(customer)
+  const hideVerificationStatus =
+    hideVerificationStatusProp ?? shouldHideVerificationStatus(customer)
   const pinAttemptsRemaining = Math.max(0, 3 - bankAppPinVerificationAttempts)
   const pinButtonDisabled =
     bankAppPinVerificationStatus === 'sent' ||

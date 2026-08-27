@@ -95,6 +95,28 @@ const employeeManagementFallbackRoutes = isModuleVisible('employee-management')
       },
     ]
 
+const socialMediaFallbackRoutes = isModuleVisible('social-media')
+  ? [
+      {
+        path: 'social-media',
+        element: <Navigate replace to="/social-media/interaction-log" />,
+      },
+      {
+        path: 'social-media/*',
+        element: <Navigate replace to="/social-media/interaction-log" />,
+      },
+    ]
+  : [
+      {
+        path: 'social-media',
+        element: <Navigate replace to="/" />,
+      },
+      {
+        path: 'social-media/*',
+        element: <Navigate replace to="/" />,
+      },
+    ]
+
 export const router = createBrowserRouter([
   {
     path: '/tl-outbound-approval',
@@ -114,6 +136,7 @@ export const router = createBrowserRouter([
       },
       ...workspacePageRoutes,
       ...callManagementFallbackRoutes,
+      ...socialMediaFallbackRoutes,
       ...routingConfigFallbackRoutes,
       ...employeeManagementFallbackRoutes,
       {

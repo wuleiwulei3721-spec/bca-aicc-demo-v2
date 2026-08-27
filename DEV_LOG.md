@@ -905,6 +905,40 @@ Historical entries are preserved in archive files without content rewrites. Use 
 
 - 数据仍是浏览器内存 mock，刷新即恢复默认项；Modified By / Time 不是完整审计历史。真实跳转、域名白名单、SSO 和参数映射需要独立后端与安全方案。
 
+### 2026-08-21 10:45 +08:00 - Social Media Interaction Log 独立查询入口
+
+修改页面或文件：
+
+- `src/pages/social-media/SocialMediaInteractionLogPage.tsx`
+- `src/mock/socialMediaInteractionLog.ts`
+- `src/types/socialMediaInteractionLog.ts`
+- `src/config/workspacePageTabs.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/routes.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 根据客户要求补充独立的 Social Media Interaction Log，不混入 Call Management 的 Interaction Log。
+
+修改结果：
+
+- 新增 `Social Media > Interaction Log` 菜单、workspace 页签路由、筛选条件、Agent Lookup、Alert Details 和 conversation / Ticket 详情弹窗。
+- 社媒记录使用前端匿名 mock 数据，并按角色限制可见范围。
+
+验证：
+
+- 本地 lint 和 build 通过；仅保留既有 Vite large chunk warning。
+
+回滚说明：
+
+- 移除 Social Media Interaction Log 页面、mock、类型、样式及其菜单和路由接线即可回滚。
+
+当前风险点：
+
+- 当前页面仅为前端 demo 查询；真实 Social Media API、权限、审计、附件、质检系统跳转和持久化仍需后续后端契约确认。
+
 ### 2026-08-19 20:12 +08:00 - Ticket Category / Product production deployment
 
 修改页面或文件：

@@ -602,11 +602,22 @@ WhatsApp demo is chat-only in the current implementation.
 
 ## 22. Social Media Workspace Rules
 
-- Social Media is available from `Channel Simulation` directly after Email in both customer and local visibility profiles. It does not add a standalone route; its menu action opens or reuses one closable `Social Media` workspace tab.
+- Social Media is available from `Channel Simulation` directly after Email in both customer and local visibility profiles. Its menu action opens or reuses one closable `Social Media` workspace tab.
 - The workspace uses local anonymized mock data for Facebook, Instagram, X, YouTube, LinkedIn, TikTok, App Store, and Google Play. It distinguishes `Chats`, `Cmts`, `AT`, and `Reviews` queue items.
 - Search plus channel/type filters only affect local queue visibility. Selecting an item opens its local CRM preview or conversation/post-detail area and does not create a Live Chat session.
 - Reply SLA progress is visual demo state only. Review replies, CWU popover states, queue selection, and filters are local component state and reset after closing/reopening the tab or refreshing the application.
-- Social Media does not currently integrate channel authentication, real API delivery, moderation, routing, persistence, audit, abnormal service ending, or Social Media record inquiry. It must not be folded into Interaction Log without a separately confirmed query model.
+- Social Media does not currently integrate channel authentication, real API delivery, moderation, routing, persistence, audit, or abnormal service ending. The Social Media Interaction Log below is an independent front-end mock query page and must not be folded into Call Management Interaction Log.
+
+### Social Media Interaction Log
+
+- `Social Media > Interaction Log` is customer-visible and opens `/social-media/interaction-log` as a closable workspace page tab. Direct `/social-media` and `/social-media/*` routes redirect to this page when the module is visible.
+- Query filters are Channel, Message Type, Customer Account, Agent Name, Team, BCA Account, Ticket Type, Customer Contact Time, Distribute to Agent Time, First Response Time, Response Duration, and Summary. Customer Contact Time is mandatory and defaults to the latest seven days.
+- Response Duration filters accept `HH:mm:ss`; invalid duration input blocks Search with a warning.
+- Agent Name supports a local Agent Lookup modal. Selecting an agent fills the Agent Name filter; it does not change the logged-in session or permissions.
+- The list shows Channel, Message Type, Customer Account, Agent Name, Team, BCA Account, Customer Contact Time, Distribute to Agent Time, First Response Time, Response Duration, Ticket Type, Summary, QM, Alert, and View action.
+- OM, RTFM, SPV, and TL demo roles can view all seeded social interaction records. Other roles see only records whose Agent Name matches the current auth session display name.
+- `Alert = Yes` opens a read-only alert detail modal. `View` opens read-only conversation detail with customer/agent messages and Ticket status, ticket type, and summary.
+- Current data is anonymized front-end mock data for social channels and resets with the application. There is no backend social query API, audit log, permission service, moderation state, attachment retrieval, or quality-management integration behind the page.
 
 ## 23. Call Management Rules
 
@@ -763,7 +774,7 @@ Hidden / redirected:
 - Interaction Log is the current demo's 通话记录查询 / interaction history page under Call Management. Its route remains `/call-management/call-record-query`.
 - Current scope includes Phone voice, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp service records.
 - The current demo seeds 30 mock records; at least 12 records are dynamically placed within the current day so the default Date Range has enough data for paging.
-- Current scope excludes Email and Social Media records. Email Record Inquiry and Social Media query remain separate future scopes and are not exposed in the current Call Management menu; the implemented Email handling workspace does not change this boundary.
+- Current scope excludes Email and Social Media records. Email Record Inquiry remains a future scope; Social Media records are exposed only through the separate `Social Media > Interaction Log` menu and are not added to the Call Management menu.
 - Production permission intent is: agents see their own records, TL sees their own group, and SPV sees groups under managed TLs. The current demo has no permission system, so records are seeded as the current agent view only.
 - Search supports keyword, Channel, Media Type, Call Type, Ended By, Rating Score, and Date Range. Default date range is the current day from `00:00:00` to `23:59:59`.
 - `Call Type` identifies how the record arrived at the current agent: `Customer` for a direct customer interaction, `Transfer` for a transferred interaction, and `Conference` for a three-party interaction. It is available as both a list field and query filter for leadership transfer-frequency checks.

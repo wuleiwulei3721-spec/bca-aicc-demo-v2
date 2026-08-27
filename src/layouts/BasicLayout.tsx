@@ -228,6 +228,13 @@ const allSideMenuItems: SideMenuItem[] = [
     children: getWorkspacePageMenuChildren('call-management'),
   },
   {
+    key: 'social-media',
+    icon: <MessageOutlined />,
+    label: 'Social Media',
+    moduleKey: 'social-media',
+    children: getWorkspacePageMenuChildren('social-media'),
+  },
+  {
     key: 'routing-config',
     icon: <BranchesOutlined />,
     label: 'Routing Config',
@@ -284,6 +291,10 @@ function getRouteParentMenuKey(routeMenuKey: string | null) {
 
   if (routeMenuKey.startsWith('call-management')) {
     return 'call-management'
+  }
+
+  if (routeMenuKey.startsWith('social-media')) {
+    return 'social-media'
   }
 
   if (routeMenuKey.startsWith('employee-')) {
