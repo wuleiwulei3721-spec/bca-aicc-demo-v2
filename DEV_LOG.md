@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-08-27 17:38 +08:00
+最后更新：2026-08-27 18:22 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,37 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-08-27 18:22 +08:00 - Production deployment
+
+修改页面或文件：
+
+- 提交 `28bb1e3` 及 Vercel production deployment
+- `DEV_LOG.md`
+
+修改原因：
+
+- 发布当前 `main` 的全部已提交 Demo 修改。
+
+修改结果：
+
+- 正式 URL：`https://netinfo-aicc-demo-v2.vercel.app`
+- 本次 Deployment Inspect：`https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/9FgDJdAryop8drF438vJJf2PasVE`
+- 部署命令：`vercel --prod --yes --build-env VITE_APP_VISIBILITY_PROFILE=customer`
+- 生产构建使用 `VITE_APP_VISIBILITY_PROFILE=customer`，部署状态为 Completed，正式别名已绑定。
+
+验证：
+
+- 本地 `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --cached --check` 通过；构建仅保留既有 large chunk warning。
+- Vercel 远程构建通过，Vite build completed。
+
+回滚说明：
+
+- 在 Vercel 将正式别名指回上一稳定 Deployment，或以目标提交重新执行同一 customer 部署命令。
+
+当前风险点：
+
+- GitHub `origin/main` 推送因当前环境无法连接 `github.com:443` 失败；发布已从本地干净提交直接完成，待网络恢复后需补推 `main`。
 
 ### 2026-08-27 17:38 +08:00 - Call Management 时间格式调整
 
