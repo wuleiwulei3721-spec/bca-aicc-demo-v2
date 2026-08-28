@@ -1643,7 +1643,6 @@ export function EmailPage() {
         activeKey={crmWorkspace.activeKey}
         conversationContent={mailContent}
         conversationIcon={<MailOutlined />}
-        conversationKey={selectedMessageId ?? undefined}
         conversationLabel="Email"
         tabBarExtraContent={
           <BaseButton

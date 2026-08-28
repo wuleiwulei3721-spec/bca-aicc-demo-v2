@@ -10,7 +10,6 @@ export interface InternalChatSession {
   agentName: string
   employeeId: string
   department: string
-  avatarUrl: string
   latestMessage: string
   latestMessageTime: string
   latestMessageTimestamp: number

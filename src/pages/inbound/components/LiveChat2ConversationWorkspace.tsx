@@ -22,7 +22,7 @@ import { Alert, DatePicker, Dropdown, Input } from 'antd'
 import type { InputRef, MenuProps } from 'antd'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-import { BaseButton, BaseModal } from '../../../components'
+import { AgentAvatar, BaseButton, BaseModal, CustomerAvatar } from '../../../components'
 import { TransferModal } from '../../../layouts/components/TransferModal'
 import type { LiveChat2Message, SessionEndReasonEntry } from '../../../types'
 import { formatDuration } from '../../../utils/duration'
@@ -81,16 +81,6 @@ function getMessageDisplayType(message: LiveChat2Message) {
   }
 
   return 'customer'
-}
-
-function getInitials(name: string) {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase()
 }
 
 function getChannelLabel(channel: LiveChat2SessionView['channel']) {
@@ -754,13 +744,19 @@ export function LiveChat2ConversationWorkspace({
                 data-livechat2-message-id={message.id}
                 key={message.id}
               >
-                {displayType !== 'system' && displayType !== 'current-agent' && (
-                  <span className="livechat2-message__avatar">
-                    {displayType === 'customer'
-                      ? session.customer.profile.avatarInitials
-                      : getInitials(message.senderName)}
-                  </span>
-                )}
+                {displayType !== 'system' && displayType !== 'current-agent' &&
+                  (displayType === 'customer' ? (
+                    <CustomerAvatar
+                      className="livechat2-message__avatar"
+                      size={30}
+                    />
+                  ) : (
+                    <AgentAvatar
+                      className="livechat2-message__avatar"
+                      name={message.senderName}
+                      size={30}
+                    />
+                  ))}
                 <div className="livechat2-message__main">
                   <div className="livechat2-message__meta">
                     {displayType === 'previous-agent' && (

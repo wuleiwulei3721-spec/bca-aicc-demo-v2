@@ -1639,7 +1639,6 @@ export function BasicLayout() {
           <span className="aicc-header__divider" />
           <AgentProfileArea
             agentName={authSession?.displayName}
-            avatarUrl={authSession?.avatarUrl}
             presence={effectiveAgentPresence}
             roleName={authSession?.roleName}
             status={agentStatus}

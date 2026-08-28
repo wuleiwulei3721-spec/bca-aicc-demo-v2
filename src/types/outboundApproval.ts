@@ -29,7 +29,6 @@ export interface ExternalOperationApprovalScope {
 }
 
 export interface ExternalOperationApproval extends ExternalOperationApprovalScope {
-  agentAvatarUrl: string
   agentName: string
   createdAt: number
   id: string

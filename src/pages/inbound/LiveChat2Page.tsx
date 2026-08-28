@@ -603,7 +603,6 @@ export function LiveChat2Page() {
           onSendMessage={handleSendMessage}
         />
       }
-      conversationKey={activeSession.id}
       customer={activeSession.customer}
       leadPanel={leadPanel}
       onAssistantActiveKeyChange={setRightPanelActiveKey}

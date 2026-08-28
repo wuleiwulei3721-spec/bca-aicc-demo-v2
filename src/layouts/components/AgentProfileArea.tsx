@@ -1,7 +1,8 @@
 import { DownOutlined } from '@ant-design/icons'
-import { Avatar, Dropdown, Modal } from 'antd'
+import { Dropdown, Modal } from 'antd'
 import type { MenuProps } from 'antd'
 import { useMemo, useState } from 'react'
+import { AgentAvatar } from '../../components'
 import { headerAgentProfile } from '../../mock/agent'
 import { useCallManagementStore } from '../../store'
 import type { AgentStatus } from '../../types'
@@ -36,7 +37,6 @@ function formatAgentStatus(status: AgentStatus) {
 
 interface AgentProfileAreaProps {
   agentName?: string
-  avatarUrl?: string
   presence: AgentPresence
   roleName?: string
   status: AgentStatus
@@ -51,7 +51,6 @@ interface AgentProfileAreaProps {
 
 export function AgentProfileArea({
   agentName = headerAgentProfile.name,
-  avatarUrl = headerAgentProfile.avatarUrl,
   presence,
   roleName = headerAgentProfile.role,
   status,
@@ -207,13 +206,11 @@ export function AgentProfileArea({
     <>
       <div className="aicc-agent-profile">
         <span className="aicc-agent-profile__avatar-wrap">
-          <Avatar
+          <AgentAvatar
             className="aicc-agent-profile__avatar"
+            name={agentName}
             size={34}
-            src={avatarUrl}
-          >
-            BK
-          </Avatar>
+          />
           <span
             className={[
               'aicc-agent-profile__status-dot',

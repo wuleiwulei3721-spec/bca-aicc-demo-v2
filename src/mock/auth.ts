@@ -1,7 +1,6 @@
 import type { AuthRole, AuthSession, LoginPayload, LoginResult } from '../types'
 
 interface DemoLoginAccount {
-  avatarUrl: string
   displayName: string
   employeeId: string
   ldapDn: string
@@ -15,8 +14,6 @@ interface DemoLoginAccount {
 
 export const demoLoginAccounts: DemoLoginAccount[] = [
   {
-    avatarUrl:
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80',
     displayName: 'Budi Kartika',
     employeeId: 'EMP-10027',
     ldapDn: 'uid=888888,ou=People,dc=bank1,dc=local',
@@ -34,8 +31,6 @@ export const demoLoginAccounts: DemoLoginAccount[] = [
     username: '888888',
   },
   {
-    avatarUrl:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
     displayName: 'Maya Santoso',
     employeeId: 'EMP-10108',
     ldapDn: 'uid=666666,ou=People,dc=bank1,dc=local',
@@ -90,7 +85,6 @@ export function authenticateDemoLogin(payload: LoginPayload): LoginResult {
   const expiresAt = addMinutes(now, 120)
   const extension = payload.extension?.trim()
   const session: AuthSession = {
-    avatarUrl: account.avatarUrl,
     crmSso: {
       expiresAt: expiresAt.toISOString(),
       issuedAt: now.toISOString(),

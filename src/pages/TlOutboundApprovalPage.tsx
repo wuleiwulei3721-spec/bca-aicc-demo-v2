@@ -1,4 +1,4 @@
-import { Avatar, Input } from 'antd'
+import { Input } from 'antd'
 import {
   useEffect,
   useMemo,
@@ -6,7 +6,7 @@ import {
   useSyncExternalStore,
 } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { BaseButton, BaseModal } from '../components'
+import { AgentAvatar, BaseButton, BaseModal } from '../components'
 import type { ExternalOperationApproval } from '../types'
 import {
   approveExternalOperationApproval,
@@ -43,8 +43,6 @@ const demoFollowupDelayMs = 5 * 1000
 
 function createDemoQueuedApproval(createdAt: number): ExternalOperationApproval {
   return {
-    agentAvatarUrl:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
     agentName: 'Siti Rahmawati',
     createdAt,
     id: `tl-approval-demo-queue-item-${createdAt}`,
@@ -192,9 +190,7 @@ export function TlOutboundApprovalPage() {
         {approval && (
           <div aria-live="polite" className="tl-outbound-approval-modal__content">
             <div className="tl-outbound-approval-modal__agent">
-              <Avatar size={28} src={approval.agentAvatarUrl}>
-                {approval.agentName.slice(0, 1)}
-              </Avatar>
+              <AgentAvatar name={approval.agentName} size={28} />
               <strong>{approval.agentName}</strong>
             </div>
             <ApprovalRequestDetails approval={approval} />

@@ -231,7 +231,6 @@ export function getExternalOperationApprovalForScope(
 
 export function requestExternalOperationApproval(
   input: ExternalOperationApprovalScope & {
-    agentAvatarUrl: string
     agentName: string
   },
 ) {

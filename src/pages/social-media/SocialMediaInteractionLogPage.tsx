@@ -8,6 +8,7 @@ import type { ColumnsType } from 'antd/es/table'
 import dayjs, { type Dayjs } from 'dayjs'
 import { useMemo, useState } from 'react'
 import {
+  AgentAvatar,
   AdminFilterField,
   AdminModal,
   AdminModalFooter,
@@ -16,6 +17,7 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  CustomerAvatar,
   StatusBadge,
 } from '../../components'
 import {
@@ -717,9 +719,18 @@ export function SocialMediaInteractionLogPage() {
                     }`}
                     key={message.id}
                   >
-                    <span className="social-interaction-log__avatar">
-                      {message.role === 'Agent' ? 'A' : 'C'}
-                    </span>
+                    {message.role === 'Agent' ? (
+                      <AgentAvatar
+                        className="social-interaction-log__avatar"
+                        name={message.sender}
+                        size={34}
+                      />
+                    ) : (
+                      <CustomerAvatar
+                        className="social-interaction-log__avatar"
+                        size={34}
+                      />
+                    )}
                     <div className="social-interaction-log__bubble">
                       <div className="social-interaction-log__bubble-meta">
                         <div>

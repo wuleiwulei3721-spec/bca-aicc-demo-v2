@@ -57,6 +57,7 @@ Agent profile area:
 - Shows role + agent name.
 - Shows team and current status separated by ` | `; service capability is not exposed as a selectable or displayable profile field.
 - Profile metadata uses a compact fixed width: name and team/status lines truncate independently, while avatar, menu trigger, and logout retain stable dimensions.
+- Do not use uploaded or photographic agent avatars. `AgentAvatar` displays the first non-whitespace display-name character on `#1473E6`; `CustomerAvatar` uses the fixed `UserOutlined` icon on `#809AFF`. Both are circular with a `1px rgba(255, 255, 255, 0.5)` border. Use the customer avatar in Live Chat and Interaction Log detail conversations; keep the Social Media popup's approved customer imagery unchanged.
 - Status dot reflects offline, ready, away, or busy.
 - The profile menu is status-specific: Unsigned exposes Sign In and Settings; all Not Ready states expose AUX reasons and Sign Out; Ready exposes AUX reasons; Pre-AUX hides Sign Out.
 - Agent Settings sits below a divider at the bottom of the profile menu. Current setting: system prompt sound on/off; future agent-owned preferences can be added in this modal.

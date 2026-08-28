@@ -23,7 +23,6 @@ import type { CallTransferContext } from '../../store'
 import { AssistantPanel } from './components/AssistantPanel'
 import type { AssistantPanelExtraTab } from './components/AssistantPanel'
 import { CONVERSATION_TAB_KEY, CrmPanel } from './components/CrmPanel'
-import type { ConversationWorkspaceConfig } from './components/ConversationWorkspace'
 import type { CustomerVerificationPanelConfig } from './components/CustomerInformationCard'
 import { CustomerVerificationV2Panel } from './components/CustomerVerificationV2Modal'
 import { LeftColumn } from './components/LeftColumn'
@@ -43,9 +42,7 @@ interface InteractionWorkspaceProps {
   assistantActiveKey?: string
   assistantExtraTabs?: AssistantPanelExtraTab[]
   className?: string
-  conversation?: ConversationWorkspaceConfig
   conversationContent?: ReactNode
-  conversationKey?: string
   customer: CustomerInformation
   initialJourney?: CustomerJourneyItem[]
   initialTickets?: TicketHistoryItem[]
@@ -65,9 +62,7 @@ export function InteractionWorkspace({
   assistantActiveKey,
   assistantExtraTabs,
   className,
-  conversation,
   conversationContent,
-  conversationKey,
   customer,
   initialJourney,
   initialTickets,
@@ -99,7 +94,7 @@ export function InteractionWorkspace({
     tabs: CrmWorkspaceTab[]
   }>({
     activeKey:
-      conversation || conversationContent ? CONVERSATION_TAB_KEY : CRM_TAB_KEY,
+      conversationContent ? CONVERSATION_TAB_KEY : CRM_TAB_KEY,
     tabs: [],
   })
   const initialJourneyItems = initialJourney ?? customerJourney
@@ -426,9 +421,7 @@ export function InteractionWorkspace({
         />
         <CrmPanel
           activeKey={crmWorkspace.activeKey}
-          conversation={conversation}
           conversationContent={conversationContent}
-          conversationKey={conversationKey}
           tabBarExtraContent={
             <BaseButton
               size="small"
@@ -466,7 +459,7 @@ export function InteractionWorkspace({
         />
       </section>
       <TicketRegistrationDrawer
-        contextLabel={conversation?.session.intent ?? accessMenuName}
+        contextLabel={accessMenuName}
         open={isTicketOpen}
         onClose={() => setIsTicketOpen(false)}
         onConfirm={saveTicket}

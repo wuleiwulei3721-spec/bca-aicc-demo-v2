@@ -41,6 +41,34 @@ a {
   transform-origin: center;
 }
 
+.aicc-identity-avatar {
+  display: inline-grid;
+  width: var(--aicc-identity-avatar-size, 34px);
+  height: var(--aicc-identity-avatar-size, 34px);
+  flex: 0 0 var(--aicc-identity-avatar-size, 34px);
+  place-items: center;
+  overflow: hidden;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  color: #ffffff;
+  font-size: calc(var(--aicc-identity-avatar-size, 34px) * 0.4);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.aicc-identity-avatar--agent {
+  background: #1473e6;
+}
+
+.aicc-identity-avatar--customer {
+  background: #809aff;
+}
+
+.aicc-identity-avatar--customer .anticon {
+  font-size: calc(var(--aicc-identity-avatar-size, 34px) * 0.56);
+}
+
 .aicc-app-shell {
   height: 100vh;
   min-height: 100vh;
@@ -1213,7 +1241,6 @@ a {
 }
 
 .aicc-agent-profile__avatar {
-  border: 0;
   box-shadow: 0 3px 10px rgba(0, 35, 80, 0.18);
 }
 
@@ -1438,11 +1465,6 @@ a {
 .aicc-internal-chat__session--active {
   box-shadow: inset 3px 0 0 var(--aicc-primary);
   background: #eef4fb;
-}
-
-.aicc-internal-chat__session .ant-avatar {
-  width: 32px;
-  height: 32px;
 }
 
 .aicc-internal-chat__session .ant-badge-count {
@@ -3054,24 +3076,6 @@ a {
   flex-direction: row-reverse;
 }
 
-.call-record-query__chat-avatar {
-  display: inline-flex;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: #1769e0;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.call-record-query__chat-message--agent .call-record-query__chat-avatar {
-  background: #7b8aa0;
-}
-
 .call-record-query__chat-main {
   display: grid;
   max-width: min(78%, 560px);
@@ -3443,24 +3447,6 @@ a {
 
 .social-interaction-log__message--agent {
   flex-direction: row-reverse;
-}
-
-.social-interaction-log__avatar {
-  display: inline-flex;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: #fff;
-  background: var(--aicc-primary);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.social-interaction-log__message--agent .social-interaction-log__avatar {
-  background: #70829a;
 }
 
 .social-interaction-log__bubble {
@@ -11145,23 +11131,6 @@ button.inbound-list-row .inbound-list-row__title {
 
 .livechat2-message--system {
   justify-content: center;
-}
-
-.livechat2-message__avatar {
-  display: inline-grid;
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
-  place-items: center;
-  border-radius: 50%;
-  background: var(--aicc-primary);
-  color: #ffffff;
-  font-size: 10px;
-  font-weight: 800;
-}
-
-.livechat2-message--previous-agent .livechat2-message__avatar {
-  background: #7c8ca3;
 }
 
 .livechat2-message__main {

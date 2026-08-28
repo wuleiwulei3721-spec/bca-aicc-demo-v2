@@ -6,8 +6,6 @@ export const internalChatSessions: InternalChatSession[] = [
     agentName: 'Siti Rahmawati',
     employeeId: 'AICC1024',
     department: 'Priority Banking',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
     latestMessage: 'I can take the escalation after verification.',
     latestMessageTime: '10:42',
     latestMessageTimestamp: 1759824120,
@@ -38,8 +36,6 @@ export const internalChatSessions: InternalChatSession[] = [
     agentName: 'Maya Lestari',
     employeeId: 'AICC1088',
     department: 'Card Service',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
     latestMessage: 'Use the replacement route in CRM if the card is damaged.',
     latestMessageTime: '10:29',
     latestMessageTimestamp: 1759823340,
@@ -64,8 +60,6 @@ export const internalChatSessions: InternalChatSession[] = [
     agentName: 'Maya Anggraini',
     employeeId: 'AICC1142',
     department: 'Loan Service',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=120&q=80',
     latestMessage: 'KPR eligibility matrix is updated in the knowledge base.',
     latestMessageTime: '09:54',
     latestMessageTimestamp: 1759820040,
@@ -90,8 +84,6 @@ export const internalChatSessions: InternalChatSession[] = [
     agentName: 'Arif Prasetyo',
     employeeId: 'AICC1167',
     department: 'Digital Banking',
-    avatarUrl:
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80',
     latestMessage: 'BankApp voice callback is stable now.',
     latestMessageTime: '09:12',
     latestMessageTimestamp: 1759817520,

@@ -87,10 +87,9 @@ export function useExternalOperationApproval(
     () =>
       requestExternalOperationApproval({
         ...stableScope,
-        agentAvatarUrl: session?.avatarUrl ?? headerAgentProfile.avatarUrl,
         agentName: session?.displayName ?? headerAgentProfile.name,
       }),
-    [session?.avatarUrl, session?.displayName, stableScope],
+    [session?.displayName, stableScope],
   )
   const consume = useCallback(
     () => consumeExternalOperationApproval(stableScope),

@@ -7,7 +7,9 @@ import { useEffect, useState } from 'react'
 import {
   AdminModal,
   AdminModalFooter,
+  AgentAvatar,
   BaseButton,
+  CustomerAvatar,
 } from '../../components'
 import type { CallRecord } from '../../types'
 
@@ -53,16 +55,6 @@ function getSpeakerName(
   return 'System'
 }
 
-function getSpeakerInitials(name: string) {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase()
-}
-
 function renderTranscriptLine(
   record: CallRecord,
   line: CallRecord['transcript'][number],
@@ -86,9 +78,15 @@ function renderTranscriptLine(
       ].join(' ')}
       key={line.id}
     >
-      <div className="call-record-query__chat-avatar">
-        {getSpeakerInitials(speakerName)}
-      </div>
+      {line.speaker === 'Agent' ? (
+        <AgentAvatar
+          className="call-record-query__chat-avatar"
+          name={speakerName}
+          size={34}
+        />
+      ) : (
+        <CustomerAvatar className="call-record-query__chat-avatar" size={34} />
+      )}
       <div className="call-record-query__chat-main">
         <div className="call-record-query__chat-meta">
           <strong>{speakerName}</strong>
