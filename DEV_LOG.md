@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-09-01 11:54 +08:00
+最后更新：2026-09-01 12:12 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,41 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-09-01 12:12 +08:00 - Customer Production Release
+
+修改页面或文件：
+
+- 发布提交 `7b242f1`（`feat: refine call management workflows`）
+- Vercel production deployment
+- `DEV_LOG.md`
+
+修改原因：
+
+- 发布当前已验证的 Call Management、Interaction Log、Live Chat 与相关 Demo 改动至客户可见生产环境。
+
+修改结果：
+
+- 已将提交 `7b242f1` 推送至 `origin/main`。
+- 使用 `vercel --prod --yes --build-env VITE_APP_VISIBILITY_PROFILE=customer` 部署生产版本。
+- 正式 URL：`https://netinfo-aicc-demo-v2.vercel.app`
+- Deployment URL：`https://netinfo-aicc-demo-v2-6rso1o22m-wl-demo-s-projects.vercel.app`
+- Vercel Inspect：`https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/7P3icXW5JijaSpjyYX1xBoYuZcdU`
+- 生产构建使用 `VITE_APP_VISIBILITY_PROFILE=customer`，部署状态为 Completed，正式别名已绑定。
+
+验证结果：
+
+- 发布前 `npm run lint`、`npm run build` 与 `git diff --check` 通过；Build 仅保留既有 large chunk warning。
+- Vercel 远程 `npm run build` 通过。
+- 本机对正式 URL 的 HTTP 头请求在 10 秒内超时；Vercel CLI 已确认 Deployment completed 与 Aliased。该网络超时未影响已完成的部署。
+
+回滚说明：
+
+- 在 Vercel 将正式别名指回上一稳定 Deployment，或重新部署此前的已提交版本。
+
+当前风险点：
+
+- 本机到外部服务的连接在本次发布中曾出现 GitHub 推送重置和正式 URL HTTP 超时；后续如需进一步验证生产访问，应在稳定网络环境下复测。
 
 ### 2026-09-01 11:54 +08:00 - Sensitive Word 列表统一使用 ID
 
