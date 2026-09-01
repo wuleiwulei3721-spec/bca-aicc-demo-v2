@@ -204,7 +204,7 @@ a {
   z-index: 20;
   display: grid;
   align-items: center;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 0.9fr) auto minmax(389px, 1.1fr);
   column-gap: 12px;
   height: var(--aicc-layout-header-height);
   padding: 0 24px;
@@ -1276,7 +1276,7 @@ a {
 
 .aicc-agent-profile__meta {
   display: inline-flex;
-  width: 132px;
+  width: 190px;
   min-width: 0;
   flex-direction: column;
   justify-content: center;
@@ -11246,11 +11246,6 @@ button.inbound-list-row .inbound-list-row__title {
   background: #fff1a8;
 }
 
-.livechat2-message__recalled {
-  color: var(--aicc-text-tertiary) !important;
-  font-style: italic;
-}
-
 .livechat2-message__attachment {
   display: inline-flex;
   align-items: center;
@@ -16339,6 +16334,34 @@ button.inbound-list-row .inbound-list-row__title {
   color: var(--aicc-text-secondary);
   font-size: 11px;
   line-height: 16px;
+}
+
+@media (min-width: 961px) and (max-width: 1120px) {
+  .aicc-agent-toolbar__identification {
+    display: none;
+  }
+
+  .aicc-agent-toolbar .aicc-toolbar-button {
+    width: 29px;
+    min-width: 29px;
+    padding: 0;
+    gap: 0;
+  }
+
+  .aicc-agent-toolbar .aicc-toolbar-button > span {
+    display: none;
+  }
+
+  .aicc-agent-toolbar .aicc-agent-toolbar__split-main {
+    width: 29px;
+    min-width: 29px;
+  }
+
+  .aicc-agent-toolbar__timer {
+    min-width: 74px;
+    padding-inline: 6px;
+    gap: 4px;
+  }
 }
 
 @media (max-width: 960px) {

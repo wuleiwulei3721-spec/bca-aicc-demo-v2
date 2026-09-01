@@ -387,20 +387,6 @@ export function TextChannelSettingsPage() {
         />
       </BaseCard>
 
-      <BaseCard compact title="Webchat Recall">
-        <div className="text-channel-settings__scoped-rule">
-          <StatusBadge label="Webchat only" size="small" status="selected" />
-          <NumberSetting
-            description="Time limit for agents to recall an unsent or recently sent Webchat message."
-            label="Recall time limit"
-            value={config.serviceRules.webchatRecallLimitMinutes}
-            onChange={(value) =>
-              updateServiceRule('webchatRecallLimitMinutes', value)
-            }
-          />
-        </div>
-      </BaseCard>
-
       <BaseCard compact title="Agent No-reply SLA">
         <div className="text-channel-settings__sla-rules">
           <div className="text-channel-settings__sla-row">

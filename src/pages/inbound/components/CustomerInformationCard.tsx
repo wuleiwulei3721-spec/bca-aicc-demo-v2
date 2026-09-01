@@ -6,11 +6,14 @@ import {
   BaseButton,
   BaseModal,
   CustomerInformationPanel,
+  type CustomerOutboundRequestStatus,
 } from '../../../components'
 import { isLocalContactEditingEnabled } from '../../../config/moduleVisibility'
+import { useOperationFeedback } from '../../../contexts/operationFeedbackContext'
 import { useOutboundEligibility } from '../../../contexts/outboundEligibility'
+import { useExternalOperationApproval } from '../../../hooks/useExternalOperationApproval'
 import { callFlowDetail } from '../../../mock/inbound'
-import { useAppStore } from '../../../store'
+import { useAppStore, useAuthStore } from '../../../store'
 import type { CallTransferContext } from '../../../store'
 import type {
   CustomerInformation,
@@ -294,8 +297,12 @@ export function CustomerInformationCard({
   showTransferHistory,
   transferContext,
 }: CustomerInformationCardProps) {
+  const { notify } = useOperationFeedback()
   const requestCustomerOutboundCall = useAppStore(
     (state) => state.requestCustomerOutboundCall,
+  )
+  const requiresOutboundApproval = useAuthStore(
+    (state) => state.session?.role === 'agent',
   )
   const requestBankAppPinVerification = useAppStore(
     (state) => state.requestBankAppPinVerification,
@@ -383,7 +390,26 @@ export function CustomerInformationCard({
       bankAppPinVerificationStatus === 'locked')
       ? 'PIN input is incorrect.'
       : undefined
+  const {
+    consume: consumeOutboundApproval,
+    isApproved: isOutboundApproved,
+    isPending: isOutboundApprovalPending,
+    request: requestOutboundApprovalRequest,
+  } = useExternalOperationApproval({
+    customerId: profile.cisNumber,
+    outboundReason: outboundReason ?? undefined,
+    targetNumber: displayPhoneNumber,
+    type: 'customer-outbound',
+  })
   const [isSpecialHandlingOpen, setIsSpecialHandlingOpen] = useState(false)
+  const outboundRequestStatus: CustomerOutboundRequestStatus =
+    !requiresOutboundApproval && outboundReason
+      ? 'approved'
+      : isOutboundApprovalPending
+        ? 'requesting'
+        : isOutboundApproved
+          ? 'approved'
+          : 'idle'
   const shouldShowIvrJourney =
     showIvrJourney ??
     (customer.accessChannel === 'Phone' ||
@@ -449,7 +475,11 @@ export function CustomerInformationCard({
         : undefined
 
   const openOutboundReasonModal = () => {
-    if (!hasOutboundAccess) {
+    if (
+      !hasOutboundAccess ||
+      (requiresOutboundApproval && isOutboundApprovalPending) ||
+      outboundRequestStatus === 'approved'
+    ) {
       return
     }
 
@@ -458,18 +488,53 @@ export function CustomerInformationCard({
   }
 
   const cancelOutboundReasonModal = () => {
-    setIsOutboundReasonModalOpen(false)
-    setOutboundReason(null)
-  }
-
-  const startCustomerOutboundCall = () => {
-    if (!outboundReason || !hasOutboundAccess) {
+    if (isOutboundApprovalPending) {
       return
     }
 
     setIsOutboundReasonModalOpen(false)
-    requestCustomerOutboundCall(displayPhoneNumber)
     setOutboundReason(null)
+  }
+
+  const requestOutboundApproval = () => {
+    if (
+      !outboundReason ||
+      !hasOutboundAccess ||
+      (requiresOutboundApproval &&
+        (isOutboundApprovalPending || isOutboundApproved))
+    ) {
+      return
+    }
+
+    if (!requiresOutboundApproval) {
+      setIsOutboundReasonModalOpen(false)
+      requestCustomerOutboundCall(displayPhoneNumber)
+      setOutboundReason(null)
+      return
+    }
+
+    const result = requestOutboundApprovalRequest()
+
+    if (result.popupBlocked) {
+      notify('TL approval window was blocked. Allow pop-ups and try again.', 'error')
+      return
+    }
+
+    setIsOutboundReasonModalOpen(false)
+  }
+
+  const startApprovedOutboundCall = () => {
+    if (
+      hasOutboundAccess &&
+      ((requiresOutboundApproval && isOutboundApproved) ||
+        (!requiresOutboundApproval && outboundReason))
+    ) {
+      if (requiresOutboundApproval) {
+        consumeOutboundApproval()
+      }
+      requestCustomerOutboundCall(displayPhoneNumber)
+      setOutboundReason(null)
+    }
   }
 
   return (
@@ -516,7 +581,8 @@ export function CustomerInformationCard({
             </div>
           ) : undefined
         }
-        isDirectOutbound
+        isDirectOutbound={!requiresOutboundApproval}
+        outboundRequestStatus={outboundRequestStatus}
         hideVerificationStatus={hideVerificationStatus}
         verificationStatus={effectiveVerificationStatus}
         verifyButtonDisabled={
@@ -541,8 +607,15 @@ export function CustomerInformationCard({
             ? onSendEmail ?? (() => setIsEmailModalOpen(true))
             : undefined
         }
+        onStartOutbound={
+          hasOutboundNumber && hasOutboundAccess
+            ? startApprovedOutboundCall
+            : undefined
+        }
         outboundDisabledTitle={
-          hasOutboundNumber && !hasOutboundAccess
+          hasOutboundNumber &&
+          !hasOutboundAccess &&
+          (!requiresOutboundApproval || outboundRequestStatus === 'approved')
             ? 'Switch to outbound AUX'
             : undefined
         }
@@ -553,14 +626,14 @@ export function CustomerInformationCard({
         }
       />
       <CustomerOutboundReasonModal
-        canSubmit={hasOutboundAccess}
+        canSubmit={requiresOutboundApproval || hasOutboundAccess}
         open={isOutboundReasonModalOpen}
         reason={outboundReason}
-        submitting={false}
-        submitLabel="Call"
+        submitting={isOutboundApprovalPending}
+        submitLabel={requiresOutboundApproval ? 'Request Approval' : 'Call'}
         onCancel={cancelOutboundReasonModal}
         onReasonChange={setOutboundReason}
-        onSubmit={startCustomerOutboundCall}
+        onSubmit={requestOutboundApproval}
       />
       {isCrmIdentified && (
         <BaseModal

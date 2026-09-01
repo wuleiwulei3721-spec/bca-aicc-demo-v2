@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-08-27 17:38 +08:00
+Last updated: 2026-08-31 18:59 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -75,7 +75,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - KBV-approved CRM CIS identity refresh, including valid response, unknown/empty CIS, mismatched correlation ID, foreign origin, and timeout handling,
   - unidentified customer minimum-card state across PSTN and guest voice/video: explicit Phone / Email / Customer Number rows with `-` placeholders; hidden Segmentation / Special Handling; channel-supported KBV retained; no CRM-dependent or customer-phone outbound actions before a valid CIS response; toolbar caller or Guest context remains visible,
   - CRM-backed read-only all-channel contact viewer, including multi-value and empty-channel states after CIS refresh; confirm CRM write authority, audit, field ownership, validation, and failure handling before any customer-facing contact editing is added,
-  - customer-phone outbound: every nonempty customer phone number can start the flow, including before KBV / CRM identity. The agent must switch to an eligible outbound AUX, select `Miss Information` or `Financial Risk`, and call directly without TL approval or a customer screen pop.
+  - customer-phone outbound: every eligible nonempty customer phone number can start the flow, including before KBV completion. The agent must switch to an eligible outbound AUX and select `Miss Information` or `Financial Risk`; ordinary Agents retain TL approval while TL-and-above accounts call directly, and neither path opens a customer screen pop.
   - Send Email,
   - Call Flow Detail: PSTN shows IVR Journey; BankApp Voice / Video and digital channels show Business Menu Selection Record only, with the customer-selected business name. Transfer History is always present and includes the current in-progress agent record with `-` duration / transfer time.
   - Customer Verification V2.
@@ -83,7 +83,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - `/screenshots/crm-workspace.jpg`,
   - `/screenshots/assistant-workspace.jpg`,
   - fallback does not appear unless intentionally testing missing images.
-- Verify outbound behavior: Call Number and Customer Information phone outbound remain disabled until the agent switches to an eligible outbound AUX, require the selected `Miss Information` or `Financial Risk` reason, create no TL approval or customer screen pop, and enter `Talking` with toolbar Skill `-`. Call Agent remains enabled without outbound AUX, enters the same outbound call state without a customer screen pop, and also shows toolbar Skill `-`.
+- Verify outbound behavior: Call Number and Customer Information phone outbound remain disabled until the agent switches to an eligible outbound AUX, require the selected `Miss Information` or `Financial Risk` reason, retain the existing TL approval flow for ordinary Agents, create no customer screen pop, and enter `Talking` with toolbar Skill `-`. Call Agent remains enabled without outbound AUX, enters the same outbound call state without a customer screen pop, and also shows toolbar Skill `-`.
 - Verify Ticketing History one-line-ellipsized Category / CRM Ticket ID / date display, then Next Best Action / Quick Action:
   - click opens CRM dynamic tabs,
   - dynamic tabs can close,
@@ -106,10 +106,11 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - unread count,
   - customer-list SLA reminder and unanswered progress bar; Conversation header shows only total service duration,
   - Send message,
+  - Confirm Recall / Re-edit are absent for WhatsApp, BankApp, and Webchat,
   - End Service retains the ended session in Current and removes it from active-service guards; Close moves it to History,
   - End Service main action keeps the confirmation modal,
   - End Service caret appears only when DM has an active abnormal reason; otherwise the normal End Service confirmation flow has no caret,
-  - Message Record,
+  - Message Record date-range query and result timestamps in `DD-MM-YYYY HH:MM:SS`,
   - Quick Replies,
   - Sensitive Word send blocking,
   - Transfer: ordinary Agent sees only SPV/TL transfer targets with no ordinary-agent data; TL sees all targets.
@@ -139,15 +140,15 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - PIN action remains hidden pending customer confirmation,
   - satisfaction rating.
 - Verify Call Management:
-  - Verification Rules,
+  - Verification Rules, including the default dynamically derived Channel options `Phone`, `Bankapp Voice`, `Bankapp Video`, `Webchat Voice`, and `Webchat Video`, with no HaloApp Login Status for Webchat,
   - Global Control Configuration Save / Reset, its effect on the next sign-in, and DM active-service / ended-session-retention limits,
-  - Blacklist: Batch Add Status switch defaults to Enabled and saves its selected state, enabled/disabled status filter and inline Status switch, shared Phone + WhatsApp country-code (`62` default, editable) / local-number batch mode, Phone + WhatsApp multi-select with non-phone channel locking, Phone-only selectable restriction policies, fixed WhatsApp and non-phone `Prohibit Transfer to Agent` policy, a Country Code list column (`-` for non-phone channels), duplicate preview/skip, required 2000-character Reason, and non-phone multi-channel Identifier batch behavior,
-  - Priority List: shared Phone + WhatsApp Country Code (`62` default) / Phone Number mode, Phone + WhatsApp multi-select with non-phone channel locking, Country Code list column, seeded Created By values shown as `1234-Admin`, required 2000-character Reason, and duplicate validation by Phone-like `Channel + Country Code + Identifier` or non-phone `Channel + Identifier` regardless of Match Rule,
+  - Blacklist: Batch Add Status switch defaults to Enabled and saves its selected state, enabled/disabled status filter and inline Status switch, single Channel selector, shared Phone / WhatsApp country-code (`62` default, editable) / local-number batch mode, Phone-only selectable restriction policies, fixed WhatsApp and non-phone `Prohibit Transfer to Agent` policy, a Country Code list column (`-` for non-phone channels), duplicate preview/skip, required 2000-character Reason, and one-channel Identifier batch behavior,
+  - Priority List: single Channel selectors in the query and Batch Add form, shared Phone / WhatsApp Country Code (`62` default) / Phone Number mode, Country Code list column, seeded Created By values shown as `1234-Admin`, required 2000-character Reason, and duplicate validation by Phone-like `Channel + Country Code + Identifier` or non-phone `Channel + Identifier` regardless of Match Rule,
   - Common Phrase 100-character input limit, shared count style, and Updated Time / Updated By list columns,
-  - Common Link audit columns and 2000-character Remark,
-  - Quick Action Management,
+  - Common Link audit columns, 200-character Website Name / Website URL fields, and 2000-character Remark,
+  - Quick Action Management with 200-character Action Name / Link Address fields,
   - Common Number audit columns and 2000-character Remark,
-  - Sensitive Word audit columns and 2000-character Remark,
+  - Sensitive Word audit columns, 100-character Sensitive Word field, and 2000-character Remark,
   - AUX Reason Management audit columns and 2000-character Remark,
   - Abnormal End Reasons audit columns and 2000-character Remark, with two disabled DM defaults and no default Voice/Video reason,
 - Interaction Log 30 mock records, default current-day Date Range paging, Call Type list/filter (`Customer` / `Transfer` / `Conference`), Rating Score list/filter (`1`-`5` and PSTN `-`), numeric QM Score third-party detail preview and non-interactive empty score, View-only Actions, Voice left media playback / middle transcript / right Ticket-and-Summary scroll card plus Satisfaction detail, Video left replay / middle transcript / right Ticket-and-Summary scroll card plus Satisfaction detail, DM conversation / right Ticket-and-Summary scroll card plus Satisfaction detail, each Ticket showing its CRM ID and plain Summary-style Category text, and read-only CWU detail,

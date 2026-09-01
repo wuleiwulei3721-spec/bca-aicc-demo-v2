@@ -6,6 +6,8 @@ export type CallRecordMediaType = 'Voice' | 'Video' | 'DM'
 
 export type CallRecordCallType = 'Customer' | 'Transfer' | 'Conference'
 
+export type CallRecordCallScenario = 'Inbound' | 'Outbound'
+
 export type CallRecordRatingScore = 1 | 2 | 3 | 4 | 5
 
 export type CallRecordEndReason =
@@ -42,6 +44,7 @@ export interface CallRecord {
   id: string
   agentId: string
   agentName: string
+  callScenario: CallRecordCallScenario
   callType: CallRecordCallType
   channel: CallRecordChannel
   contact: string

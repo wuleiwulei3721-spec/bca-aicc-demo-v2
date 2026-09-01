@@ -15,6 +15,7 @@ import {
 import { useCallManagementStore } from '../../store'
 import type {
   CallRecord,
+  CallRecordCallScenario,
   CallRecordCallType,
   CallRecordChannel,
   CallRecordMediaType,
@@ -30,6 +31,7 @@ const QM_DETAIL_REPLAY_SRC = '/screenshots/interaction-log/qm-detail.png'
 type CallRecordDateRange = [Dayjs, Dayjs]
 
 interface CallRecordFilters {
+  callScenario: 'All' | CallRecordCallScenario
   callType: 'All' | CallRecordCallType
   channel: 'All' | CallRecordChannel
   dateRange: CallRecordDateRange
@@ -55,6 +57,15 @@ const mediaTypeOptions: Array<{
   { label: 'Voice', value: 'Voice' },
   { label: 'Video', value: 'Video' },
   { label: 'DM', value: 'DM' },
+]
+
+const callScenarioOptions: Array<{
+  label: string
+  value: CallRecordFilters['callScenario']
+}> = [
+  { label: 'All Scenarios', value: 'All' },
+  { label: 'Inbound', value: 'Inbound' },
+  { label: 'Outbound', value: 'Outbound' },
 ]
 
 const callTypeOptions: Array<{
@@ -91,6 +102,7 @@ const ratingScoreOptions: Array<{
 
 function createDefaultFilters(): CallRecordFilters {
   return {
+    callScenario: 'All',
     callType: 'All',
     channel: 'All',
     dateRange: [dayjs().startOf('day'), dayjs().endOf('day')],
@@ -132,6 +144,7 @@ function createSearchText(record: CallRecord) {
     record.recordNo,
     record.channel,
     record.mediaType,
+    record.callScenario,
     record.callType,
     record.customerName,
     record.customerId,
@@ -159,6 +172,8 @@ function recordMatchesFilters(record: CallRecord, filters: CallRecordFilters) {
 
   return (
     (!keyword || createSearchText(record).includes(keyword)) &&
+    (filters.callScenario === 'All' ||
+      record.callScenario === filters.callScenario) &&
     (filters.callType === 'All' || record.callType === filters.callType) &&
     (filters.channel === 'All' || record.channel === filters.channel) &&
     (filters.mediaType === 'All' || record.mediaType === filters.mediaType) &&
@@ -252,6 +267,11 @@ export function CallRecordQueryPage() {
       dataIndex: 'mediaType',
       title: 'Media',
       width: 78,
+    },
+    {
+      dataIndex: 'callScenario',
+      title: 'Call Scenario',
+      width: 112,
     },
     {
       dataIndex: 'callType',
@@ -402,6 +422,18 @@ export function CallRecordQueryPage() {
                   }
                 />
               </AdminFilterField>
+              <AdminFilterField label="Call Scenario" width={170}>
+                <Select
+                  options={callScenarioOptions}
+                  value={draftFilters.callScenario}
+                  onChange={(value) =>
+                    setDraftFilters((currentFilters) => ({
+                      ...currentFilters,
+                      callScenario: value,
+                    }))
+                  }
+                />
+              </AdminFilterField>
               <AdminFilterField label="Call Type" width={170}>
                 <Select
                   options={callTypeOptions}
@@ -470,7 +502,7 @@ export function CallRecordQueryPage() {
         <AdminTable<CallRecord>
           columns={columns}
           dataSource={filteredRecords}
-          horizontalScroll={1858}
+          horizontalScroll={1970}
           pagination={{}}
           rowKey="id"
         />

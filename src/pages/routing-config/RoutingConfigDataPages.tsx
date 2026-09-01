@@ -2541,7 +2541,6 @@ function createDefaultMediaServiceRulePlan(
     status: 'Active',
     updatedAt: '',
     updatedBy: 'Admin',
-    webchatRecallLimitSeconds: 120,
   }
 }
 
@@ -2758,7 +2757,6 @@ export function MediaServiceRulePlansPage() {
         ['preTimeoutReminderMinutes', 'δ�ظ���ʱǰ����ʱ��'],
         ['customerNoReplyTimeoutMinutes', '�ͻ�δ�ظ���ʱʱ��'],
         ['agentNoReplyTimeoutSeconds', '��ϯδ�ظ���ʱʱ��'],
-        ['webchatRecallLimitSeconds', 'Webchat��Ϣ����ʱ��'],
         ['agentNoReplyWarningSeconds', '��ϯδ�ظ���ɫ����'],
         ['agentNoReplyBreachSeconds', '��ϯδ�ظ���ɫ��ʾ'],
       )
@@ -3437,17 +3435,6 @@ export function MediaServiceRulePlansPage() {
                     <strong>��ϯ��������</strong>
                   </header>
                   <div className="routing-config-media-rule-modal__subsections">
-                    <div className="routing-config-media-rule-modal__subsection">
-                      <h4>Webchat ��Ϣ����</h4>
-                      <div className="routing-config-media-rule-modal__compact-row">
-                        {renderNumberField(
-                          'webchatRecallLimitSeconds',
-                          'Webchat��Ϣ����ʱ��',
-                          '��',
-                        )}
-                      </div>
-                    </div>
-
                     <div className="routing-config-media-rule-modal__subsection">
                       <h4>��ϯδ�ظ����񼶱�</h4>
                       <div className="routing-config-media-rule-modal__compact-row">

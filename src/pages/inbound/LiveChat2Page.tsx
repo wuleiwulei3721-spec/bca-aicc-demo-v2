@@ -141,9 +141,6 @@ export function LiveChat2Page() {
   const liveChat2ReadSessionIds = useAppStore(
     (state) => state.liveChat2ReadSessionIds,
   )
-  const liveChat2RecalledMessageIds = useAppStore(
-    (state) => state.liveChat2RecalledMessageIds,
-  )
   const liveChat2SessionInstances = useAppStore(
     (state) => state.liveChat2SessionInstances,
   )
@@ -174,9 +171,6 @@ export function LiveChat2Page() {
   )
   const markLiveChat2SessionRead = useAppStore(
     (state) => state.markLiveChat2SessionRead,
-  )
-  const recallLiveChat2Message = useAppStore(
-    (state) => state.recallLiveChat2Message,
   )
   const sendLiveChat2Message = useAppStore(
     (state) => state.sendLiveChat2Message,
@@ -587,7 +581,6 @@ export function LiveChat2Page() {
           isMessageRecordOpen={isMessageRecordTabOpen}
           messages={messages}
           quickReplies={quickReplyOptions}
-          recalledMessageIds={liveChat2RecalledMessageIds}
           sendBlockedMessage={
             sensitiveWordNotice?.sessionId === activeSession.id
               ? sensitiveWordNotice.message
@@ -599,7 +592,6 @@ export function LiveChat2Page() {
           onDraftChange={setLiveChat2DraftMessage}
           onEndSession={handleEndService}
           onOpenMessageRecord={handleToggleMessageRecord}
-          onRecallMessage={recallLiveChat2Message}
           onSendMessage={handleSendMessage}
         />
       }

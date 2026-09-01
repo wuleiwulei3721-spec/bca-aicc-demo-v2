@@ -20,6 +20,7 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  LimitedInput,
   LimitedTextArea,
   StatusBadge,
 } from '../../components'
@@ -51,6 +52,9 @@ interface QuickActionDraft {
   updatedAt?: string
   updatedBy?: string
 }
+
+const QUICK_ACTION_NAME_MAX_LENGTH = 200
+const QUICK_ACTION_URL_MAX_LENGTH = 200
 
 const defaultFilters: QuickActionFilters = {
   actionName: '',
@@ -178,10 +182,18 @@ export function QuickActionManagementPage() {
 
     if (!normalizedName) {
       errors.push('Action Name is required.')
+    } else if (normalizedName.length > QUICK_ACTION_NAME_MAX_LENGTH) {
+      errors.push(
+        `Action Name must be ${QUICK_ACTION_NAME_MAX_LENGTH} characters or fewer.`,
+      )
     }
 
     if (!normalizedLink) {
       errors.push('Link Address is required.')
+    } else if (normalizedLink.length > QUICK_ACTION_URL_MAX_LENGTH) {
+      errors.push(
+        `Link Address must be ${QUICK_ACTION_URL_MAX_LENGTH} characters or fewer.`,
+      )
     } else if (!isValidHttpUrl(draft.linkAddress.trim())) {
       errors.push('Link Address must start with http:// or https://.')
     }
@@ -503,7 +515,8 @@ export function QuickActionManagementPage() {
               </AdminFormField>
             )}
             <AdminFormField label="Action Name" required>
-              <Input
+              <LimitedInput
+                maxLength={QUICK_ACTION_NAME_MAX_LENGTH}
                 placeholder="Action Name"
                 value={draft.actionName}
                 onChange={(event) =>
@@ -512,7 +525,8 @@ export function QuickActionManagementPage() {
               />
             </AdminFormField>
             <AdminFormField label="Link Address" fullWidth required>
-              <Input
+              <LimitedInput
+                maxLength={QUICK_ACTION_URL_MAX_LENGTH}
                 placeholder="https://example.com"
                 value={draft.linkAddress}
                 onChange={(event) =>

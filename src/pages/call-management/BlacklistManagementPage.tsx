@@ -216,17 +216,6 @@ export function BlacklistManagementPage() {
     () => [{ label: 'All', value: '' }, ...enabledChannelOptions],
     [enabledChannelOptions],
   )
-  const channelFormOptions = useMemo(
-    () =>
-      enabledChannelOptions.map((option) => ({
-        ...option,
-        disabled:
-          isPhoneNumberChannel(option.value)
-            ? draft.channels.some((channel) => !isPhoneNumberChannel(channel))
-            : isPhoneMode,
-      })),
-    [draft.channels, enabledChannelOptions, isPhoneMode],
-  )
   const filteredEntries = useMemo(
     () =>
       blacklistEntries.filter((entry) => {
@@ -742,12 +731,10 @@ export function BlacklistManagementPage() {
             <AdminFormField label="Channel" required>
               <Select
                 aria-required
-                maxTagCount="responsive"
-                mode="multiple"
-                options={channelFormOptions}
-                placeholder="Select channels"
-                value={draft.channels}
-                onChange={handleChannelChange}
+                options={enabledChannelOptions}
+                placeholder="Select channel"
+                value={draft.channels[0]}
+                onChange={(value) => handleChannelChange(value ? [value] : [])}
               />
             </AdminFormField>
             <label className="routing-config-crud-modal__field">

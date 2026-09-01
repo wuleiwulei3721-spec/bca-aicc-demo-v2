@@ -12,6 +12,7 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  LimitedInput,
   LimitedTextArea,
 } from '../../components'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
@@ -39,6 +40,8 @@ interface SensitiveWordDraft {
   remark: string
   word: string
 }
+
+const SENSITIVE_WORD_MAX_LENGTH = 100
 
 const defaultFilters: SensitiveWordFilters = {
   category: '',
@@ -120,6 +123,10 @@ export function SensitiveWordManagementPage() {
 
     if (!normalizedWord) {
       errors.push('Sensitive Word is required.')
+    } else if (normalizedWord.length > SENSITIVE_WORD_MAX_LENGTH) {
+      errors.push(
+        `Sensitive Word must be ${SENSITIVE_WORD_MAX_LENGTH} characters or fewer.`,
+      )
     }
 
     if (
@@ -217,11 +224,9 @@ export function SensitiveWordManagementPage() {
 
   const columns: ColumnsType<SensitiveWordEntry> = [
     {
-      key: 'sequence',
-      render: (_, record) =>
-        filteredEntries.findIndex((entry) => entry.id === record.id) + 1,
-      title: 'No.',
-      width: 72,
+      dataIndex: 'id',
+      title: 'ID',
+      width: 96,
     },
     {
       dataIndex: 'word',
@@ -378,7 +383,8 @@ export function SensitiveWordManagementPage() {
               </AdminFormField>
             )}
             <AdminFormField label="Sensitive Word" required>
-              <Input
+              <LimitedInput
+                maxLength={SENSITIVE_WORD_MAX_LENGTH}
                 placeholder="Sensitive Word"
                 value={draft.word}
                 onChange={(event) => updateDraft('word', event.target.value)}

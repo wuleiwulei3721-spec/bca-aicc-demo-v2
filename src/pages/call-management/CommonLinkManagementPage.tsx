@@ -12,6 +12,7 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  LimitedInput,
   LimitedTextArea,
 } from '../../components'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
@@ -35,6 +36,9 @@ interface CommonLinkDraft {
   websiteName: string
   websiteUrl: string
 }
+
+const COMMON_LINK_NAME_MAX_LENGTH = 200
+const COMMON_LINK_URL_MAX_LENGTH = 200
 
 const defaultFilters: CommonLinkFilters = {
   websiteName: '',
@@ -120,10 +124,18 @@ export function CommonLinkManagementPage() {
 
     if (!normalizedName) {
       errors.push('Website Name is required.')
+    } else if (normalizedName.length > COMMON_LINK_NAME_MAX_LENGTH) {
+      errors.push(
+        `Website Name must be ${COMMON_LINK_NAME_MAX_LENGTH} characters or fewer.`,
+      )
     }
 
     if (!normalizedUrl) {
       errors.push('Website URL is required.')
+    } else if (normalizedUrl.length > COMMON_LINK_URL_MAX_LENGTH) {
+      errors.push(
+        `Website URL must be ${COMMON_LINK_URL_MAX_LENGTH} characters or fewer.`,
+      )
     } else if (!isValidHttpUrl(draft.websiteUrl.trim())) {
       errors.push('Website URL must start with http:// or https://.')
     }
@@ -390,7 +402,8 @@ export function CommonLinkManagementPage() {
               </AdminFormField>
             )}
             <AdminFormField label="Website Name" required>
-              <Input
+              <LimitedInput
+                maxLength={COMMON_LINK_NAME_MAX_LENGTH}
                 placeholder="Website Name"
                 value={draft.websiteName}
                 onChange={(event) =>
@@ -399,7 +412,8 @@ export function CommonLinkManagementPage() {
               />
             </AdminFormField>
             <AdminFormField label="Website URL" required>
-              <Input
+              <LimitedInput
+                maxLength={COMMON_LINK_URL_MAX_LENGTH}
                 placeholder="https://example.com"
                 value={draft.websiteUrl}
                 onChange={(event) =>

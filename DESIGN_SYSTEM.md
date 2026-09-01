@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Design System
 
-Last updated: 2026-08-27 17:38 +08:00
+Last updated: 2026-08-31 18:59 +08:00
 
 This document records the current implemented visual rules. It should be treated as the design baseline for future pages and components.
 
@@ -54,10 +54,12 @@ The header is a high-emphasis BANK 1 shell:
 
 Agent profile area:
 
-- Shows role + agent name.
+- Shows `Role - numeric ID agent name`.
 - Shows team and current status separated by ` | `; service capability is not exposed as a selectable or displayable profile field.
-- Profile metadata uses a compact fixed width: name and team/status lines truncate independently, while avatar, menu trigger, and logout retain stable dimensions.
+- Profile metadata uses a 190px desktop width: name and team/status lines truncate independently, while avatar, menu trigger, and logout retain stable dimensions. The toolbar is offset slightly left through the header grid so this width does not reduce its available space.
 - Do not use uploaded or photographic agent avatars. `AgentAvatar` displays the first non-whitespace display-name character on `#1473E6`; `CustomerAvatar` uses the fixed `UserOutlined` icon on `#809AFF`. Both are circular with a `1px rgba(255, 255, 255, 0.5)` border. Use the customer avatar in Live Chat and Interaction Log detail conversations; keep the Social Media popup's approved customer imagery unchanged.
+- In the Live Chat message record, agent senders use `numeric ID-name`; customer and system senders retain their original labels.
+- Live Chat Message Record date-range inputs and result timestamps use `DD-MM-YYYY HH:MM:SS`; when a time range is selectable, filtering must respect the selected seconds.
 - Status dot reflects offline, ready, away, or busy.
 - The profile menu is status-specific: Unsigned exposes Sign In and Settings; all Not Ready states expose AUX reasons and Sign Out; Ready exposes AUX reasons; Pre-AUX hides Sign Out.
 - Agent Settings sits below a divider at the bottom of the profile menu. Current setting: system prompt sound on/off; future agent-owned preferences can be added in this modal.
@@ -103,7 +105,7 @@ Use `BaseCard` and `SectionCard` patterns:
 Inbound left-column cards:
 
 - Customer Information stays fixed at the top. The shared customer-context column containing Customer Information, Customer Journey, Ticketing History, Next Best Action, and Quick Action is fixed at `270px` on desktop across inbound voice/video, Live Chat, Email, and Social Media workspaces; narrow stacked layouts may expand it to the container width.
-- Customer Information exposes a compact `Call` action only for a phone row with a usable number. The action remains disabled until the outbound AUX eligibility is active; selecting it opens the existing compact `Outbound Reason` modal, with no TL approval state or approval result popup. The bottom access-channel tag, verification status, and KBV action share the same compact geometry while retaining their semantic colors.
+- Customer Information exposes a compact `Call` action only for a phone row with a usable number. The action remains disabled until the outbound AUX eligibility is active; selecting it opens the existing compact `Outbound Reason` modal and preserves the TL approval state/result popup for ordinary Agents. The resulting outbound call does not activate a customer screen pop. The bottom access-channel tag, verification status, and KBV action share the same compact geometry while retaining their semantic colors.
 - Customer Information keeps the compact name-plus-icon/value presentation. Phone, Email, Customer Number, and Segmentation use the same 24px icon slot and centered 20px icon container as the Customer Journey channel rows; their values start on the same text baseline as Journey Category. Segmentation uses a neutral `TeamOutlined` customer-group icon. Identified profiles use country-coded phone formatting. Email renders the address and its contact verification status as separate text spans: only the address receives hover/focus underline, while `Verified` / `Unverified` uses the same semantic text color and small type scale as verification status without a background, parentheses, or label underline. Customer Information fact rows keep a fixed 22px height with a tightened vertical gap; the phone action reserves its horizontal column and sizes to its text so hover/focus does not change row height or leave unnecessary space. Customer Information inline controls use one compact standard: 22px height, 10px text, 650 font weight, 18px line height, 8px horizontal padding, compact radius, and shared hover/focus treatment. The direct `Call` action, Special Handling, and access-channel tag use the same base geometry with their respective semantic colors. When Special Handling is available, it stays on the same row at the far right of Segmentation and sizes to its text. Unidentified PSTN keeps the three icon rows with `-` placeholder values; it does not render an avatar, Segmentation, Special Handling, CRM-dependent header actions, or customer-phone outbound until a valid CIS loads. The toolbar remains responsible for the anonymous caller number used in call identification.
 - Verification status and entry controls are conditional by channel/media: PSTN, BankApp Voice/Video, and Webchat Voice/Video keep the status plus `KBV`; registered BankApp text keeps the status plus `PIN`; WhatsApp, Email, Webchat text, Social Media, and guest BankApp text omit both. The shared bottom-row control geometry remains unchanged when either verification element is omitted.
 - Webchat text keeps `Webchat` as the internal channel value but uses the `bca.co.id` display-label override in the Customer Information access tag; the override does not change the channel icon, style, routing, or verification rule matching.
@@ -138,7 +140,7 @@ General rules:
 - Long modal content should scroll inside the modal body, not push footer actions off-screen.
 - Admin modal footers should use `AdminModalFooter`.
 - The Customer Information `Outbound Reason` Modal uses a light-blue header with one uninterrupted white content body. A nonempty customer phone number exposes the compact `Call` action only while its phone row is hovered or receives keyboard focus; the action remains disabled when the agent is not in an eligible outbound AUX.
-- The legacy TL approval route remains available only as a compatibility page and is not opened by outbound number or Customer Information actions.
+- The TL approval route remains available for ordinary-Agent outbound number and Customer Information phone requests; its approval/result UI is separate from customer screen-pop behavior.
 
 ## 7. Tab Design Principles
 
@@ -311,7 +313,7 @@ Admin list rules:
 - Admin filter controls must use the shared 32px alignment for Input, Select, and Date/RangePicker controls; placeholders and selected values should be vertically centered.
 - Call Management audit timestamps use `DD-MM-YYYY HH:MM:SS` and display `Created By` / `Created Time` or `Updated By` / `Updated Time`; `Modified` is not used as a second label for the same last-update meaning. Other management modules will adopt this format in their own migration scope.
 - When update audit columns are present, list them at the end in `Updated Time`, then `Updated By`, then `Actions` order. Size management-table columns to their content and use horizontal scrolling only when confirmed minimum widths cannot fit the target workspace.
-- `LimitedInput` and `LimitedTextArea` are the shared character-limit controls. Remark fields default to 2000 characters, while business-specific limits are passed explicitly, such as Common Phrase 100, Question Name 100, Ticket Summary 250, or Ticket Note 1000. They share the Ticket count style: a compact normal-weight count that stays inside the control without changing the field geometry, and clamp over-limit change events at the configured maximum.
+- `LimitedInput` and `LimitedTextArea` are the shared character-limit controls. Remark fields default to 2000 characters, while business-specific limits are passed explicitly, such as Sensitive Word 100, Common Phrase 100, Common Link Website Name / Website URL 200, Quick Action Action Name / Link Address 200, Question Name 100, Ticket Summary 250, or Ticket Note 1000. They share the Ticket count style: a compact normal-weight count that stays inside the control without changing the field geometry, and clamp over-limit change events at the configured maximum.
 - Local-only management modules such as Employee Management must still use English UI text and the same admin layout contract as customer-visible management pages.
 
 ## 14. Responsive and Demo Quality Rules

@@ -473,7 +473,6 @@ interface AppState {
   liveChat2LastMessageOverrides: Record<string, LiveChat2SessionSummaryOverride>
   liveChat2MessagesBySessionId: Record<string, LiveChat2Message[]>
   liveChat2ReadSessionIds: string[]
-  liveChat2RecalledMessageIds: string[]
   liveChat2SessionInstances: LiveChat2SessionInstances
   liveChat2SessionStatuses: Record<string, LiveChat2SessionStatusState>
   liveChat2SessionTimings: Record<string, InteractionTiming>
@@ -608,7 +607,6 @@ interface AppState {
     baseMessages?: LiveChat2Message[],
     endReasonName?: string,
   ) => void
-  recallLiveChat2Message: (messageId: string) => void
   sendLiveChat2Message: (
     sessionId: string,
     message: string,
@@ -664,7 +662,6 @@ export const useAppStore = create<AppState>((set) => ({
   liveChat2LastMessageOverrides: {},
   liveChat2MessagesBySessionId: {},
   liveChat2ReadSessionIds: [],
-  liveChat2RecalledMessageIds: [],
   liveChat2SessionInstances: {},
   liveChat2SessionStatuses: {},
   liveChat2SessionTimings: {},
@@ -1248,7 +1245,6 @@ export const useAppStore = create<AppState>((set) => ({
       let nextLastMessageOverrides = state.liveChat2LastMessageOverrides
       let nextMessagesBySessionId = state.liveChat2MessagesBySessionId
       let nextReadSessionIds = state.liveChat2ReadSessionIds
-      let nextRecalledMessageIds = state.liveChat2RecalledMessageIds
       let nextSessionStatuses = state.liveChat2SessionStatuses
       let nextSessionTimings = state.liveChat2SessionTimings
       let nextStarColors = state.liveChat2StarColors
@@ -1278,9 +1274,6 @@ export const useAppStore = create<AppState>((set) => ({
         }
         nextReadSessionIds = state.liveChat2ReadSessionIds.filter(
           (readSessionId) => readSessionId !== handoffSessionId,
-        )
-        nextRecalledMessageIds = state.liveChat2RecalledMessageIds.filter(
-          (messageId) => !messageId.includes(handoffSessionId),
         )
         nextSessionInstances = {
           ...state.liveChat2SessionInstances,
@@ -1329,7 +1322,6 @@ export const useAppStore = create<AppState>((set) => ({
         liveChat2LastMessageOverrides: nextLastMessageOverrides,
         liveChat2MessagesBySessionId: nextMessagesBySessionId,
         liveChat2ReadSessionIds: nextReadSessionIds,
-        liveChat2RecalledMessageIds: nextRecalledMessageIds,
         liveChat2SessionInstances: nextSessionInstances,
         liveChat2SessionStatuses: nextSessionStatuses,
         liveChat2SessionTimings: nextSessionTimings,
@@ -1491,7 +1483,6 @@ export const useAppStore = create<AppState>((set) => ({
           liveChat2LastMessageOverrides: {},
           liveChat2MessagesBySessionId: {},
           liveChat2ReadSessionIds: [],
-          liveChat2RecalledMessageIds: [],
           liveChat2SessionInstances: {},
           liveChat2SessionStatuses: {},
           liveChat2SessionTimings: {},
@@ -1537,7 +1528,6 @@ export const useAppStore = create<AppState>((set) => ({
         liveChat2LastMessageOverrides: state.liveChat2LastMessageOverrides,
         liveChat2MessagesBySessionId: state.liveChat2MessagesBySessionId,
         liveChat2ReadSessionIds: state.liveChat2ReadSessionIds,
-        liveChat2RecalledMessageIds: state.liveChat2RecalledMessageIds,
         liveChat2SessionInstances: state.liveChat2SessionInstances,
         liveChat2SessionStatuses:
           defaultCurrentState?.sessionStatuses ??
@@ -1837,17 +1827,6 @@ export const useAppStore = create<AppState>((set) => ({
         liveChat2UnansweredSinceBySessionId: nextUnanswered,
       }
     }),
-  recallLiveChat2Message: (messageId) =>
-    set((state) =>
-      state.liveChat2RecalledMessageIds.includes(messageId)
-        ? {}
-        : {
-            liveChat2RecalledMessageIds: [
-              ...state.liveChat2RecalledMessageIds,
-              messageId,
-            ],
-          },
-    ),
   sendLiveChat2Message: (sessionId, message, baseMessages, quotedMessage) =>
     set((state) => {
       const now = Date.now()
@@ -1914,7 +1893,6 @@ export const useAppStore = create<AppState>((set) => ({
       liveChat2LastMessageOverrides: {},
       liveChat2MessagesBySessionId: {},
       liveChat2ReadSessionIds: [],
-      liveChat2RecalledMessageIds: [],
       liveChat2SessionInstances: {},
       liveChat2SessionStatuses: {},
       liveChat2SessionTimings: {},

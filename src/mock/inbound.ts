@@ -327,6 +327,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         message:
           'I confirmed the card is active and routed the case to Card Services for unblock authorization.',
         sender: 'agent',
+        senderEmployeeId: 'AICC1024',
         senderName: 'Rina Putri',
         time: '13:45',
         timestamp: '2026-05-27T13:45:00+08:00',
@@ -376,6 +377,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         message:
           'I will verify your card status and submit the unblock request after authentication.',
         sender: 'agent',
+        senderEmployeeId: 'AICC1205',
         senderName: 'Nadia Putri',
         time: '14:31',
         timestamp: '2026-05-27T14:31:00+08:00',
@@ -439,6 +441,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         message:
           'Please keep your registered mobile number ready for verification.',
         sender: 'agent',
+        senderEmployeeId: 'AICC1088',
         senderName: 'Maya Lestari',
         time: '14:00',
         timestamp: '2026-05-27T14:00:00+08:00',
@@ -470,6 +473,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         message:
           'I can help reset the device binding after we complete verification.',
         sender: 'agent',
+        senderEmployeeId: 'AICC1205',
         senderName: 'Nadia Putri',
         time: '14:27',
         timestamp: '2026-05-27T14:27:00+08:00',
@@ -597,6 +601,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         message:
           'I have checked the eligible transaction and registered the installment request.',
         sender: 'agent',
+        senderEmployeeId: 'AICC1205',
         senderName: 'Nadia Putri',
         time: '14:20',
         timestamp: '2026-05-27T14:20:00+08:00',
@@ -674,6 +679,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         message:
           'I am checking the courier status and registered delivery address now.',
         sender: 'agent',
+        senderEmployeeId: 'AICC1205',
         senderName: 'Nadia Putri',
         time: '14:38',
         timestamp: '2026-05-27T14:38:00+08:00',
@@ -739,6 +745,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         kind: 'text',
         message: 'The updated repayment schedule has been sent.',
         sender: 'agent',
+        senderEmployeeId: 'AICC1205',
         senderName: 'Nadia Putri',
         time: '13:52',
         timestamp: '2026-05-27T13:52:00+08:00',

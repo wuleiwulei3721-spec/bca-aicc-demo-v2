@@ -1,8 +1,31 @@
 # Decision Log
 
-Last updated: 2026-08-27 17:38 +08:00
+Last updated: 2026-08-31 18:18 +08:00
 
 This document records important product and system design decisions that can be confirmed from the current codebase, project documents, `DEV_LOG.md`, and readable Git history. It intentionally omits bug fixes, visual micro-adjustments, temporary test data, copy-only tweaks, and implementation details that do not affect product direction.
+
+--------------------------------------------------
+
+Decision ID:
+DEC-053
+
+Module:
+Call Management / Verification Rules Channel Scope
+
+Decision:
+The Verification Rules management Channel field dynamically combines active channel configuration with active Voice/Video media configuration. The current default data produces `Phone`, `Bankapp Voice`, `Bankapp Video`, `Webchat Voice`, and `Webchat Video`. Bankapp Voice and Bankapp Video retain HaloApp Login Status applicability; Webchat Voice and Webchat Video do not expose a login-status field.
+
+Reason:
+The customer requires KBV configuration for Webchat voice/video and BankApp video, while Webchat has no login state. The management dropdown must represent channel and media together, follow Routing Config channel/media availability, and avoid creating additional default rule records.
+
+Impact:
+The Verification Rules page derives option labels from `channels` and `mediaTypes`, and derives available combinations from each channel's configured media types. Removing a channel media removes the corresponding new/filter option but does not delete existing rule rows; unavailable existing values remain readable as inactive in the editor. The existing `BANKAPP` rule value remains displayed as `Bankapp Voice` for backward compatibility, and the global Routing Config channel/media data is not modified by this page.
+
+Status:
+Implemented as front-end Demo behavior
+
+Source:
+Customer requirement on 2026-08-28; Code: `src/pages/call-management/VerificationRuleV2Page.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `DEV_LOG.md`
 
 --------------------------------------------------
 
@@ -13,13 +36,13 @@ Module:
 Outbound Call / AUX and Screen Pop
 
 Decision:
-Outbound number calls from the toolbar `Call Number` tab and Customer Information require an active AUX reason configured with `Support Outbound`, but do not create a TL approval request or approval popup. Outbound agent calls do not require an outbound AUX. Neither outbound type activates a customer screen pop, and both show `Skill -` in the toolbar call context.
+Outbound number calls from the toolbar `Call Number` tab and Customer Information require an active AUX reason configured with `Support Outbound` and retain the existing TL approval request/result flow for ordinary Agents; TL-and-above accounts call directly. Outbound agent calls do not require an outbound AUX. Neither outbound type activates a customer screen pop, and both show `Skill -` in the toolbar call context.
 
 Reason:
 The customer requested that external-number outbound use the dedicated outbound AUX state directly, while agent-to-agent outbound remains available without that state. Neither flow represents a customer record that needs to be opened automatically.
 
 Impact:
-The existing `Miss Information` / `Financial Risk` reason selection remains for number outbound, but the approval transport and result UI are no longer part of either number entry. Both call types create a background outbound voice interaction, keep the current workspace focused, enter `Talking`, and reuse the existing call lifecycle. The outbound skill is explicitly stored as `-` instead of the inbound skill label. The old TL approval route and helpers remain only as unused compatibility code.
+The existing `Miss Information` / `Financial Risk` reason selection and ordinary-Agent TL approval transport/result UI remain part of number outbound; TL-and-above number outbound remains direct. Both call types create a background outbound voice interaction, keep the current workspace focused, enter `Talking`, and reuse the existing call lifecycle. The outbound skill is explicitly stored as `-` instead of the inbound skill label. Approval is separate from customer screen-pop behavior.
 
 Status:
 Implemented as front-end Demo behavior
@@ -36,7 +59,7 @@ Module:
 Call Management / Audit and Input Standards
 
 Decision:
-Phone and WhatsApp are treated as one phone-number channel group in Blacklist and Priority List batch creation. They may be selected together and share Country Code, Phone Number, phone-number matching, and Country Code list display; other channels are mutually exclusive with that group but remain multi-selectable among themselves. In Blacklist, only Phone selected alone supports both Restriction Policies; WhatsApp, Phone + WhatsApp mixed batches, and non-phone channels use fixed `Prohibit Transfer to Agent`. Management audit labels use `Created By` / `Created Time` and `Updated By` / `Updated Time`; `Modified` is not used as a second label for the same last-update meaning. Call Management timestamps display `DD-MM-YYYY HH:MM:SS`. Standard Remark inputs default to 2000 characters, while Common Phrase and Question Name are limited to 100 and shared Ticket fields retain their specific limits.
+Phone and WhatsApp are treated as one phone-number channel group in Blacklist and Priority List batch creation. They may be selected together and share Country Code, Phone Number, phone-number matching, and Country Code list display; other channels are mutually exclusive with that group but remain multi-selectable among themselves. In Blacklist, only Phone selected alone supports both Restriction Policies; WhatsApp, Phone + WhatsApp mixed batches, and non-phone channels use fixed `Prohibit Transfer to Agent`. Management audit labels use `Created By` / `Created Time` and `Updated By` / `Updated Time`; `Modified` is not used as a second label for the same last-update meaning. Call Management timestamps display `DD-MM-YYYY HH:MM:SS`. Standard Remark inputs default to 2000 characters, while Sensitive Word is limited to 100, Common Phrase and Question Name are limited to 100, Common Link Website Name / Website URL are limited to 200, Quick Action Action Name / Link Address are limited to 200, and shared Ticket fields retain their specific limits.
 
 Reason:
 The customer confirmed that WhatsApp identifiers are phone numbers and requested consistent management-console time, audit-user, and input-limit behavior. Reusing one phone-number group keeps the batch form and duplicate model understandable across both lists.
@@ -246,7 +269,7 @@ Reason:
 The customer needs to demonstrate that external-number transfer is a TL-and-above operation while preserving the ordinary-agent transfer experience and without adding a separate TL application.
 
 Impact:
-The authenticated session carries the explicit permission and role scope to the toolbar and its dialogs. The TL account changes only the external outbound, `Transfer Number`, and Call Agent list visibility capabilities; number transfer requires the same Consult, Cancel Consult, Transfer, and Conference progression as agent transfer. It does not gain a TL dashboard, supervisor management features, backend authorization, or cross-device workflow. Every number outbound still requires one selected reason, `Miss Information` or `Financial Risk`, and all number outbound uses the active outbound AUX gate without TL approval.
+The authenticated session carries the explicit permission and role scope to the toolbar and its dialogs. The TL account changes only the external outbound, `Transfer Number`, and Call Agent list visibility capabilities; number transfer requires the same Consult, Cancel Consult, Transfer, and Conference progression as agent transfer. It does not gain a TL dashboard, supervisor management features, backend authorization, or cross-device workflow. Every number outbound still requires one selected reason, `Miss Information` or `Financial Risk`, and the active outbound AUX gate; ordinary Agents retain TL approval while TL-and-above accounts call directly.
 
 Status:
 Implemented as front-end Demo behavior
@@ -338,10 +361,10 @@ Reason:
 The previous Customer Information-only three-second automatic approval did not make the TL role or decision visible in customer demonstrations. A separate TL popup makes the authorization step understandable while preserving the existing agent workbench and no-backend demo boundary.
 
 Impact:
-The same-browser demo stores and synchronizes ordinary-Agent outbound and customer-phone approval records with localStorage and BroadcastChannel. Both approval scopes include the selected reason, so changing the number or reason invalidates the previous authorization. Closing the originating modal does not cancel the request, allowing the agent to handle an incoming interaction and return to the same exact-number approval; Log Out clears pending and unused approvals. Any Customer Information card with a nonempty phone number can initiate outbound without waiting for KBV or CRM identity; the card opens a compact Reason modal and uses the same `Requesting...` pending copy as toolbar outbound. A completed Call from either entry creates and focuses a new `Outbound Call` voice workspace carrying the dialed number, then enters `Talking`. TL can approve or reject with an optional generic note; there is no countdown or automatic approval timeout. The TL account's direct external outbound and Transfer Number permissions are documented separately in DEC-042. The TL popup reuses one window, overlays the supplied complete dashboard screenshot with a light mask, and processes pending requests FIFO through a single centered light-blue-header/white-body Modal; agent results use a compact non-masked `BaseModal` in the bottom-right corner. This is not a production approval, routing, permission, audit, or cross-device contract; a real integration must replace the local transport and introduce TL identity, authorization, persistence, and audit requirements.
+The same-browser demo stores and synchronizes ordinary-Agent outbound and customer-phone approval records with localStorage and BroadcastChannel. Both approval scopes include the selected reason, so changing the number or reason invalidates the previous authorization. Closing the originating modal does not cancel the request, allowing the agent to handle an incoming interaction and return to the same exact-number approval; Log Out clears pending and unused approvals. Any Customer Information card with a nonempty phone number can initiate outbound without waiting for KBV or CRM identity; the card opens a compact Reason modal and uses the same `Requesting...` pending copy as toolbar outbound. A completed Call from either entry creates a background `Outbound Call` voice workspace carrying the dialed number without activating a customer screen pop, then enters `Talking`. TL can approve or reject with an optional generic note; there is no countdown or automatic approval timeout. The TL account's direct external outbound and Transfer Number permissions are documented separately in DEC-042. The TL popup reuses one window, overlays the supplied complete dashboard screenshot with a light mask, and processes pending requests FIFO through a single centered light-blue-header/white-body Modal; agent results use a compact non-masked `BaseModal` in the bottom-right corner. This is not a production approval, routing, permission, audit, or cross-device contract; a real integration must replace the local transport and introduce TL identity, authorization, persistence, and audit requirements.
 
 Status:
-Superseded by DEC-051
+Implemented as front-end Demo behavior
 
 Source:
 Customer requirement and approved implementation plans on 2026-07-22 and 2026-07-23; Code: `src/utils/outboundApproval.ts`, `src/hooks/useExternalOperationApproval.ts`, `src/pages/TlOutboundApprovalPage.tsx`, `src/layouts/components/OutboundCallModal.tsx`, `src/layouts/components/TransferModal.tsx`, `src/pages/inbound/components/CustomerInformationCard.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `PROJECT_CONTEXT.md`, `DEV_LOG.md`
@@ -841,13 +864,13 @@ Module:
 Live Chat Channel Rules
 
 Decision:
-Live Chat supports WhatsApp, BankApp, and Webchat in one workspace, but channel-specific behavior remains explicit: WhatsApp hides Recall/Re-edit, while BankApp and Webchat can keep recall capability in the current demo.
+Live Chat supports WhatsApp, BankApp, and Webchat in one workspace. Message recall and re-edit are unavailable for all three channels.
 
 Reason:
-The channels share the same agent handling surface but have different message capabilities and demo requirements.
+The Channel Business Config recall setting was removed, and the customer confirmed that the remaining Live Chat recall behavior should also be removed.
 
 Impact:
-Future text-channel capabilities must be checked per channel instead of assuming every chat channel supports the same actions.
+Future text-channel capability changes must be explicitly confirmed and kept consistent with the available configuration surface.
 
 Status:
 Implemented

@@ -170,7 +170,6 @@ export interface MediaServiceRulePlan {
   status: RoutingConfigStatus
   updatedAt: string
   updatedBy: string
-  webchatRecallLimitSeconds: number
 }
 
 export interface ChannelMediaRuleBinding {

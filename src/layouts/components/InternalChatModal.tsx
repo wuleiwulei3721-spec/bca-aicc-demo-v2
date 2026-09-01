@@ -3,6 +3,7 @@ import { Badge, Input } from 'antd'
 import { AgentAvatar, AppButton, BaseModal, SearchInput } from '../../components'
 import { internalChatSessions } from '../../mock/chat'
 import type { InternalChatSession } from '../../types'
+import { formatAgentDisplay } from '../../utils/agentDisplay'
 
 const { TextArea } = Input
 
@@ -62,7 +63,7 @@ export function InternalChatModal({ open, onClose }: InternalChatModalProps) {
         </Badge>
         <span className="aicc-internal-chat__session-main">
           <span>
-            <strong>{session.agentName}</strong>
+            <strong>{formatAgentDisplay(session.employeeId, session.agentName)}</strong>
             <em>{session.latestMessageTime}</em>
           </span>
           <small>{session.latestMessage}</small>
@@ -104,7 +105,12 @@ export function InternalChatModal({ open, onClose }: InternalChatModalProps) {
           <header className="aicc-internal-chat__conversation-header">
             <AgentAvatar name={activeSession.agentName} size={34} />
             <span>
-              <strong>{activeSession.agentName}</strong>
+              <strong>
+                {formatAgentDisplay(
+                  activeSession.employeeId,
+                  activeSession.agentName,
+                )}
+              </strong>
               <em>{activeSession.department}</em>
             </span>
           </header>

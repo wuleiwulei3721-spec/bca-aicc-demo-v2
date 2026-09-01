@@ -10,6 +10,5 @@ export interface GlobalControlConfiguration {
   idleWarningMinutes: number
   maxDigitalMediaServices: number
   maxLiveChatEndedSessionRetention: number
-  defaultSkillQueueCode: string
   signInDefaultStatus: GlobalControlSignInStatus
 }

@@ -29,6 +29,7 @@ export interface ExternalOperationApprovalScope {
 }
 
 export interface ExternalOperationApproval extends ExternalOperationApprovalScope {
+  agentEmployeeId: string
   agentName: string
   createdAt: number
   id: string

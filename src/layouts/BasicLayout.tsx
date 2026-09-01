@@ -1595,6 +1595,7 @@ export function BasicLayout() {
         {isSignedIn && (
           <AgentToolbar
             agentStatus={agentStatus}
+            requiresOutboundApproval={authSession?.role === 'agent'}
             hasOutboundAccess={hasOutboundAccess}
             canTransferToNumber={canTransferToNumber}
             callStatus={callStatus}
@@ -1638,6 +1639,7 @@ export function BasicLayout() {
           </button>
           <span className="aicc-header__divider" />
           <AgentProfileArea
+            employeeId={authSession?.employeeId}
             agentName={authSession?.displayName}
             presence={effectiveAgentPresence}
             roleName={authSession?.roleName}

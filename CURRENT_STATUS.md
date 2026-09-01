@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-08-27 17:38 +08:00
+Last updated: 2026-08-31 18:59 +08:00
 
 ## 1. Overall Status
 
@@ -57,7 +57,7 @@ This repository is still a demo application:
 - Status after Sign-in is shared Global Control Configuration, defaults to Not Ready, and applies to the next sign-in in the current browser session.
 - Global Control labels `System Idle Log-out Timeout` and `Auto Log-out Warning Lead Time` distinguish the system timeout from its pre-log-out warning and from the agent toolbar Sign Out action. A timeout value of `0` disables idle auto log-out and disables warning-lead-time validation and input.
 - Global Control `Digital Media Capacity` configures active service capacity through `Max Digital Media Services` (default 3) and Live Chat Current ended-session retention through `Max Live Chat Ended Session Retention` (default 10).
-- Header Log Out first blocks active call, Live Chat, or Live Chat 2 services; when no service is active, it blocks signed-in Ready and Pre-AUX states until the agent switches to Not Ready or AUX. Unsigned, Not Ready, and AUX states then use a confirmation dialog.
+- Header Log Out first blocks active call or Live Chat services; when no service is active, it blocks signed-in Ready and Pre-AUX states until the agent switches to Not Ready or AUX. Unsigned, Not Ready, and AUX states then use a confirmation dialog.
 - When configured above `0`, idle system log-out monitors Unsigned, Not Ready, and AUX states, resets on window activity or warning dismissal, shows a pre-expiry warning, and returns to Login at the configured timeout. A value of `0` disables the timer and warning.
 - Sign out confirmation and active-service block.
 - AUX reason menu from AUX Reason Management.
@@ -76,7 +76,7 @@ This repository is still a demo application:
 - Timer display.
 - Global Control `Auto Cancel ACW Duration` drives the next voice/video After Call Work timer.
 - Toolbar More menu currently exposes Outbound Call; toolbar display settings are hidden from the More menu.
-- Customer-number Outbound Call and Customer Information phone outbound require an active AUX configured with `Support Outbound` and retain `Miss Information` or `Financial Risk` as the per-call reason. They do not create a TL approval request or approval popup; the Customer Information flow still confirms the reason before calling. Completed number calls create a background `Outbound Call` interaction without activating a customer screen pop, then enter `Talking`. The Call Number form uses aligned, icon-free controls.
+- Customer-number Outbound Call and Customer Information phone outbound require an active AUX configured with `Support Outbound` and retain `Miss Information` or `Financial Risk` as the per-call reason. Ordinary Agents retain the existing TL approval request and approval result popup; TL-and-above accounts call directly. Completed number calls create a background `Outbound Call` interaction without activating a customer screen pop, then enter `Talking`. The Call Number form uses aligned controls.
 - `Outbound Call > Call Agent` shows only SPV and TL entries for every role. Calling an agent does not require an outbound AUX, creates the same background `Outbound Call` interaction without a customer screen pop, and enters `Talking`.
 - Call identification and Skill display during call lifecycle; both outbound call types display `Skill -`.
 - Active-call and not-ready handoff warnings.
@@ -120,7 +120,7 @@ This repository is still a demo application:
 - Call Flow Detail modal: PSTN displays IVR Journey only; BankApp Voice / Video and digital channels display the customer-selected Business Menu Selection Record instead. The BankApp demo defaults to `Credit Card`. Transfer History is always shown and includes the current agent's active service row with `-` duration / transfer time until completed.
 - Send Email modal.
 - CRM-backed read-only customer contact display with an `IdcardOutlined` `All Contact Details` header viewer. The Customer Number / CIS row uses a centered `SIC` marker in the shared icon slot. Its grouped left-channel/right-value list supports multi-value and empty CRM states while reusing the legacy editor's channel icons. Legacy Contact Management DEMO is local-only and disabled by default.
-- Two Demo login identities: `888888 / 888888` is Agent Budi Kartika (`EMP-10027`) and `666666 / 666666` is TL Maya Santoso (`EMP-10108`) with a distinct female avatar. Both use the same workbench; TL receives `transfer:external-number`, which displays `Transfer Number` with consultation-first transfer and conference actions. Ordinary Agent Call Agent lists are limited to SPV and TL records; TL sees all records. Outbound number and Customer Information phone actions use the active outbound AUX gate directly and do not create TL approval requests or approval result popups. Both outbound call types keep the current workspace focused instead of activating a customer screen pop, and their toolbar Skill value is `-`.
+- Two Demo login identities: `888888 / 888888` is Agent Budi Kartika (`EMP-10027`) and `666666 / 666666` is TL Maya Santoso (`EMP-10108`). Both use the same workbench and the shared no-photo agent avatar rule; TL receives `transfer:external-number`, which displays `Transfer Number` with consultation-first transfer and conference actions. Ordinary Agent Call Agent lists are limited to SPV and TL records; TL sees all records. Outbound number and Customer Information phone actions use the active outbound AUX gate; ordinary Agents retain TL approval requests and approval result popups, while TL calls directly. Both outbound call types keep the current workspace focused instead of activating a customer screen pop, and their toolbar Skill value is `-`.
 - Customer Journey: Phone, BankApp, Webchat, WhatsApp, Email, and Social Media history. Phone, BankApp, Webchat, and WhatsApp rows derive the displayed value from the Category of every Ticket in the linked Interaction Log record, show `-` when no Ticket exists, omit success/failure icons, and reuse its media-specific read-only detail modal; Email and Social Media retain the existing Interaction Detail modal. Unidentified customers receive no customer-specific journey data and display `No data available.`.
 - Ticketing History displays one-line-ellipsized Ticket Category, CRM Ticket ID, and created date; Ticket Category is also used as the dynamic CRM tab title. Unidentified customers receive no customer-specific ticket data and display `No data available.`.
 - Shared CRM Ticket modal for inbound voice, video, and digital workspaces: it uses the Transfer / Outbound dialog component and is positioned at the right side of the workspace. The compact `Ticket` header retains the light-blue title treatment, rounded modal frame, and standard right-side close. Its one white content surface matches the Customer Information outbound-reason modal. Product / Category / Summary / Note labels are bold; One-Click Generation remains normal weight. Category and Product are searchable single-select dropdowns, with Product disabled before Category and filtered by the supplied Category-Product mapping; long selected values use the standard fixed-height one-line ellipsis, with the arrow right-aligned and vertically centered. All four control values use 12px primary text and an 18px line height. Summary has a visible 250-character limit and Note has a 1000-character limit; both counts are normal-weight 11px text inside the lower-right of the editor. The white form body scrolls independently while One-Click Generation stays at the left of the fixed footer and Cancel / Confirm stay on the right. All four fields are required. Each opening and One-Click Generation prepares an editable valid mock draft. Confirm saves an in-memory CRM ticket, clears the open form for the next ticket, and adds it to Ticketing History.
@@ -150,6 +150,7 @@ This repository is still a demo application:
 ## 9. Completed Live Chat Workspace
 
 - Formal `Live Chat` tab uses the `LiveChat2Page` implementation.
+- The retired pre-`LiveChat2Page` implementation and its dedicated customer-list / conversation components have been removed. Live Chat customer bubbles use the fixed customer icon; agent avatars across the workbench and Interaction Log details use the first display-name character rather than photographs.
 - Current / History customer list. Current unifies active service sessions up to the Global Control `Max Digital Media Services` limit (default 3) and recently ended Live Chat sessions up to `Max Live Chat Ended Session Retention` (default 10) for continued CRM editing; Close or the next retention-capacity eviction moves an ended session to History.
 - Unified WhatsApp / BankApp / Webchat customer list; channel filter controls are hidden for the three-channel demo.
 - Customer panel collapse / expand.
@@ -169,8 +170,7 @@ This repository is still a demo application:
 - Quick Replies right-side tab.
 - Public Phrases in Quick Replies are sourced from Call Management common phrase configuration.
 - Agent replies are blocked before sending when they match Call Management sensitive words.
-- Message Record right-side tab.
-- Local recall state.
+- Message Record right-side tab with `DD-MM-YYYY HH:MM:SS` query and result timestamps.
 
 ## 10. Completed BankApp Demo
 
@@ -263,25 +263,26 @@ Implemented behaviors:
 - Verification Rule V2 Question Bank with a 100-character Question Name limit and shared count style.
 - Rule preview using agent verification modal.
 - Scenario-based KBV question model.
-- Blacklist required-channel batch add with a Status switch defaulting to Enabled, shared `62` Phone / WhatsApp country code and phone-number mode, Phone + WhatsApp multi-select, mutually exclusive non-phone channel selection, Phone-only selectable restriction policies, fixed WhatsApp and non-phone `Prohibit Transfer to Agent` policy, a Country Code list column (`-` for non-phone channels), duplicate preview/skip, inline enabled/disabled list Status switch, status filtering, 2000-character Reason, and delete. Seeded Created By values use `1234-Admin`.
-- Priority list add / batch add / delete with required 2000-character Reason, shared Phone / WhatsApp Country Code (`62` default) / Phone Number mode, Phone + WhatsApp multi-select, mutually exclusive non-phone channel selection, Country Code list column, duplicate validation that excludes Match Rule, and seeded Created By values shown as `1234-Admin`.
+- Verification Rules Channel options are dynamically derived from active channel/media configuration: the default data produces `Phone`, `Bankapp Voice`, `Bankapp Video`, `Webchat Voice`, and `Webchat Video`; existing rule rows remain unchanged, unavailable rule values remain readable as inactive, and only Bankapp Voice / Video expose HaloApp Login Status.
+- Blacklist required single-channel batch add with a Status switch defaulting to Enabled, shared `62` Phone / WhatsApp country code and phone-number mode, Phone-only selectable restriction policies, fixed WhatsApp and non-phone `Prohibit Transfer to Agent` policy, a Country Code list column (`-` for non-phone channels), duplicate preview/skip, inline enabled/disabled list Status switch, status filtering, 2000-character Reason, and delete. Seeded Created By values use `1234-Admin`.
+- Priority list add / batch add / delete with required 2000-character Reason, single-channel query and batch-add selectors, shared Phone / WhatsApp Country Code (`62` default) / Phone Number mode, Country Code list column, duplicate validation that excludes Match Rule, and seeded Created By values shown as `1234-Admin`.
 - Priority Match Rule filtering.
 - Common phrase category and phrase CRUD, with a shared Ticket-style 100-character Common Phrase limit plus Updated Time / Updated By list metadata.
 - Common phrase batch move between categories.
 - Public phrase linkage into the Live Chat Quick Replies tab.
-- Common link CRUD for website name, website address, remark, Updated Time, and Updated By; the list places update time before update person at the end.
+- Common link CRUD for 200-character Website Name / Website URL fields, remark, Updated Time, and Updated By; the list places update time before update person at the end.
 - Common Link feeds the shared right-side Common Links tab in voice, video, and Live Chat workspaces.
-- Quick Action Management CRUD for Action Name, Link Address, Status, Remark, display order, and Updated By / Updated Time metadata. Existing seeded rows remain administrator-owned mock data; new or edited rows use the current operator. The compact customer-context Quick Action card reads enabled entries in configured order across call, Email, and Social Media workspaces without navigating externally.
+- Quick Action Management CRUD for 200-character Action Name / Link Address fields, Status, Remark, display order, and Updated By / Updated Time metadata. Existing seeded rows remain administrator-owned mock data; new or edited rows use the current operator. The compact customer-context Quick Action card reads enabled entries in configured order across call, Email, and Social Media workspaces without navigating externally.
 - Common number CRUD for IVR transfer target name, number, status, 2000-character remark, Updated Time, and Updated By; the list places update time before update person at the end.
 - Enabled common numbers feed the call Transfer modal `Transfer IVR` tab.
-- Sensitive word CRUD with fixed category dictionary, 2000-character remark, Updated Time, and Updated By list metadata.
+- Sensitive word CRUD with a 100-character Sensitive Word field, fixed category dictionary, 2000-character remark, Updated Time, and Updated By list metadata.
 - Sensitive word detection in Live Chat agent reply sending.
 - AUX Reason Management Productivity Type (`Productive` / `Non-Productive`) filtering and editing, plus a read-only list `Support Outbound` status maintained by a switch in the edit modal. Remark uses the shared 2000-character limit. Updated Time includes seconds and new edits use the current operator. `Callback Finrisk` and `Callback Misinform` are the active default customer-outbound AUX reasons; disabled reasons cannot be selected for outbound permission.
 - Abnormal End Reasons CRUD for configurable Voice, Video, and DM service end reasons, seeded with two disabled DM reasons only; remark, Updated Time, and Updated By use the shared management standards.
 - Abnormal End Reasons filters by Keyword, Applicable Media, and Status.
 - Interaction Log for current-agent Phone, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp records, seeded with 30 mock records.
-- Interaction Log filters by keyword, channel, media type, call type, ended by, rating score, and date range, defaulting to the current day.
-- Interaction Log list separates Customer Name / Customer ID and Agent Name / Agent ID, shows Contact, Call Type, Queue, Service Time, Ended By, Rating Score, and QM Score.
+- Interaction Log filters by keyword, channel, media type, call scenario, call type, ended by, rating score, and date range, defaulting to the current day.
+- Interaction Log list separates Customer Name / Customer ID and Agent Name / Agent ID, shows Contact, Call Scenario, Call Type, Queue, Service Time, Ended By, Rating Score, and QM Score.
 - Numeric QM Scores open a read-only third-party QM system-window preview at the source image ratio; only the source image's top-right X closes it, and empty scores render as non-interactive `-`.
 - Interaction Log Rating Score is `1` to `5` or `-`; PSTN is not interaction-bound to its periodic satisfaction outreach and renders `-`, while BankApp, Webchat, and WhatsApp mock records include stored ratings with optional feedback.
 - Interaction Log details use a consistent layout: Voice and Video show left media playback, middle transcript, and a read-only Ticket / Summary card plus Satisfaction panel on the right; DM shows conversation bubbles plus the same right-side panels without an empty media column. Each Ticket uses a CRM-style ID label and one plain Category text value styled like Summary; Product is retained but not displayed. Ticket entries and the single AI-generated service Summary are separated inside one scrollable card. Satisfaction shows stars and the final rating number without a denominator.

@@ -121,6 +121,7 @@ export interface LiveChat2Message {
   kind: LiveChat2MessageKind
   message: string
   sender: LiveChat2MessageSender
+  senderEmployeeId?: string
   senderName: string
   time: string
   timestamp: string

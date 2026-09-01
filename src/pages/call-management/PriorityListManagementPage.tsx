@@ -83,11 +83,11 @@ const matchRuleOptions = Object.entries(matchRuleLabels).map(
 const identifierTooltip = (
   <div className="priority-list-management__identifier-tooltip">
     <p>
-      Enter customer identifiers for priority queue matching. Select one or
-      more channels, then separate multiple identifiers with semicolons.
+      Enter customer identifiers for priority queue matching. Select one
+      channel, then separate multiple identifiers with semicolons.
     </p>
     <p>
-      The system saves one record per selected channel and identifier.
+      The system saves one record per identifier for the selected channel.
     </p>
     <p>
       Exact Match means the customer identifier must equal the configured
@@ -196,17 +196,6 @@ export function PriorityListManagementPage() {
         value: channelName,
       }))
   }, [routingChannels])
-  const channelFormOptions = useMemo(
-    () =>
-      enabledChannelOptions.map((option) => ({
-        ...option,
-        disabled:
-          isPhoneNumberChannel(option.value)
-            ? draft.channels.some((channel) => !isPhoneNumberChannel(channel))
-            : isPhoneMode,
-      })),
-    [draft.channels, enabledChannelOptions, isPhoneMode],
-  )
   const filteredEntries = useMemo(
     () =>
       priorityListEntries.filter((entry) => {
@@ -556,15 +545,13 @@ export function PriorityListManagementPage() {
                 <AdminFilterField label="Channel" width={220}>
                   <Select
                     allowClear
-                    maxTagCount="responsive"
-                    mode="multiple"
                     options={enabledChannelOptions}
                     placeholder="All Channels"
-                    value={filterDraft.channels}
+                    value={filterDraft.channels[0]}
                     onChange={(value) =>
                       setFilterDraft((currentDraft) => ({
                         ...currentDraft,
-                        channels: value,
+                        channels: value ? [value] : [],
                       }))
                     }
                   />
@@ -655,12 +642,10 @@ export function PriorityListManagementPage() {
           <div className="routing-config-crud-modal__form">
             <AdminFormField label="Channel" required>
               <Select
-                maxTagCount="responsive"
-                mode="multiple"
-                options={channelFormOptions}
-                placeholder="Select channels"
-                value={draft.channels}
-                onChange={handleChannelChange}
+                options={enabledChannelOptions}
+                placeholder="Select channel"
+                value={draft.channels[0]}
+                onChange={(value) => handleChannelChange(value ? [value] : [])}
               />
             </AdminFormField>
             {isPhoneMode ? (

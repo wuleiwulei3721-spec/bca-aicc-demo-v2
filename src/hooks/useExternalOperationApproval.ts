@@ -87,9 +87,10 @@ export function useExternalOperationApproval(
     () =>
       requestExternalOperationApproval({
         ...stableScope,
+        agentEmployeeId: session?.employeeId ?? '10027',
         agentName: session?.displayName ?? headerAgentProfile.name,
       }),
-    [session?.displayName, stableScope],
+    [session?.displayName, session?.employeeId, stableScope],
   )
   const consume = useCallback(
     () => consumeExternalOperationApproval(stableScope),

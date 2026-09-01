@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-08-27 17:38 +08:00
+Last updated: 2026-08-31 18:59 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -203,15 +203,15 @@ Outbound Call is available from the toolbar More menu.
 Outbound modal:
 
 - Tabs: `Call Number`, `Call Agent`.
-- Call Number accepts a phone number and requires one business reason: `Miss Information` or `Financial Risk`. Every role must be in an active AUX reason configured with `Support Outbound`; no TL/SPV approval request or approval popup is created. A completed Call Number action creates a background `Outbound Call` voice workspace carrying the dialed number without activating a customer screen pop, then the toolbar enters `Talking`.
+- Call Number accepts a phone number and requires one business reason: `Miss Information` or `Financial Risk`. Every role must be in an active AUX reason configured with `Support Outbound`. Ordinary Agents retain the existing TL/SPV approval request and approval result popup; TL-and-above accounts call directly. A completed Call Number action creates a background `Outbound Call` voice workspace carrying the dialed number without activating a customer screen pop, then the toolbar enters `Talking`.
 - Call Agent supports name / employee ID search and skill queue filtering, and shows only SPV and TL records for every role. It does not require an outbound AUX or external-number approval. Its `Call` action creates a background `Outbound Call` voice interaction without a customer screen pop and enters `Talking`.
 - Agent row action is `Call`.
 
-Customer Information customer-phone outbound uses the same eligible AUX gate for every role. Any Customer Information card with a nonempty phone number can expose the compact `Call` action without requiring KBV completion or CRM identity; the action remains disabled until the agent enters an eligible AUX, then opens the `Outbound Reason` modal. It does not create a TL approval request or customer screen pop. The modal keeps `Miss Information` and `Financial Risk` as per-call business reasons.
+Customer Information customer-phone outbound uses the same eligible AUX gate for every role. Any Customer Information card with a nonempty phone number can expose the compact `Call` action without requiring KBV completion or CRM identity; the action remains disabled until the agent enters an eligible AUX, then opens the `Outbound Reason` modal. Ordinary Agents retain the existing TL approval request and approval result popup, while TL-and-above accounts call directly; neither path activates a customer screen pop. The modal keeps `Miss Information` and `Financial Risk` as per-call business reasons.
 
 ### Outbound Number and Agent State
 
-- Number outbound is status-gated: the agent explicitly switches to an active AUX reason with `Support Outbound` before using either the toolbar `Call Number` action or the Customer Information phone action. Switching away from the eligible AUX disables the action and does not create an approval record.
+- Number outbound is status-gated: the agent explicitly switches to an active AUX reason with `Support Outbound` before using either the toolbar `Call Number` action or the Customer Information phone action. Switching away from the eligible AUX disables the action; the existing approval record remains governed by its current number/reason scope.
 - Agent outbound is status-independent with respect to AUX: `Call Agent` remains callable from the signed-in workspace without switching to an outbound AUX. Both outbound number and agent calls display `Skill -` in the toolbar call context.
 - The outbound number and agent flows keep the current workspace focused and do not activate a customer screen pop. The created background outbound interaction still reuses the normal `Talking`, `Hold`, Hang Up, After Call Work, and ended-call lifecycle.
 - Both flows remain front-end Demo simulations. They do not create a real dialer, CTI connection, customer lookup, or backend routing event.
@@ -303,8 +303,9 @@ Verification V2 is the current KBV model.
 
 Rule matching:
 
+- The Verification Rules management Channel field is built from active channel and media configuration. With the current default configuration it exposes exactly five media-level options: `Phone`, `Bankapp Voice`, `Bankapp Video`, `Webchat Voice`, and `Webchat Video`; `Phone` remains channel-level while Bankapp and Webchat combine with their configured Voice/Video media. Removing a channel media type removes that option from new and filter controls without deleting seeded rule rows; an unavailable value remains readable as inactive in an existing rule editor.
 - Rules match by enabled channel code, skill queue, customer segment, and, for HaloApp, the first received login status.
-- Rules containing HaloApp must set `HaloApp Login Status` to `Same for Both`, `Logged In`, or `Not Logged In`. `Same for Both` applies to either first-call status; Phone-only rules show no HaloApp login status.
+- Rules containing Bankapp Voice or Bankapp Video must set `HaloApp Login Status` to `Same for Both`, `Logged In`, or `Not Logged In`. `Same for Both` applies to either first-call status; Phone and Webchat rules show no HaloApp login status.
 - Perbankan has a HaloApp-only `Logged In` rule requiring 1 Mandatory plus 2 Dynamic correct answers (3 total); its 5-answer `Not Logged In` configuration (1 Mandatory, 2 Dynamic, 2 Static) is combined with Phone in one multi-channel rule. Phone ignores the HaloApp-only login-status condition.
 - Kartu Kredit has a HaloApp-only `Logged In` rule requiring 3 correct answers; its 4-answer `Not Logged In` configuration is combined with Phone in one multi-channel rule.
 - Other HaloApp skills use `Same for Both` and retain their existing question configuration for logged-in and guest customers.
@@ -470,6 +471,7 @@ Message Record:
 
 - Opens as a right Assistant extra tab.
 - Searches and locates historical / current messages.
+- The date-range query and result timestamps use `DD-MM-YYYY HH:MM:SS`; the selected range filters to the exact second.
 - Does not replace the conversation center panel.
 
 Quick Replies:
@@ -482,10 +484,9 @@ Quick Replies:
 - Insert places text into the active composer and focuses the cursor at the end.
 - Slash command candidates should reflect local quick reply changes.
 
-Recall:
+Message recall:
 
-- Demo rule expects WhatsApp messages not to show Recall / Re-edit.
-- BankApp and Webchat can retain recall capability for current-agent messages within demo rules.
+- Message recall and re-edit are not available in the Live Chat workspace for WhatsApp, BankApp, or Webchat.
 
 Sensitive word check:
 
@@ -647,8 +648,8 @@ Hidden / redirected:
 - Restriction policies:
   - Block Access.
   - Prohibit Transfer to Agent.
-- Batch Add is the only local demo creation action. Channel and Reason are required. Phone and WhatsApp may be selected together and create one record for every selected phone-like Channel + Phone Number combination. Other channels support multiple selections among themselves, cannot be mixed with Phone or WhatsApp, and create one record for every selected Channel + Identifier combination. Reason is limited to 2000 characters.
-- Phone and WhatsApp share a phone-number batch mode. Country Code defaults to editable `62`; Country Code and Phone Number are required, while actual Phone Number values remain exactly as entered. Only Phone selected by itself can choose either Restriction Policy. WhatsApp, Phone + WhatsApp mixed batches, and all non-phone channels use the fixed `Prohibit Transfer to Agent` policy, displayed disabled in the form.
+- Batch Add is the only local demo creation action. Channel and Reason are required. The Channel dropdown is single-select, and batch input creates one record per Phone Number or Identifier under that selected channel. Reason is limited to 2000 characters.
+- Phone and WhatsApp each use the phone-number batch mode. Country Code defaults to editable `62`; Country Code and Phone Number are required, while actual Phone Number values remain exactly as entered. Only Phone can choose either Restriction Policy. WhatsApp and all non-phone channels use the fixed `Prohibit Transfer to Agent` policy, displayed disabled in the form.
 - Batch Add previews existing duplicate records and skips them on save. The common preview columns are Channel, Country Code, Identifier, Restriction Policy, Status, and Existing No. Phone duplication uses Channel + Country Code + Phone Number + Restriction Policy; WhatsApp duplication uses Channel + Country Code + Phone Number; non-phone duplication uses Channel + Identifier. Status does not alter duplicate matching.
 - Batch Add exposes a Status switch that defaults to Enabled; its selected value applies to every record generated by that submission. The Status list cell also combines an inline switch with an Enabled/Disabled label; switching updates a record immediately without confirmation. Disabled records remain visible and searchable but are not treated as effective blacklist records for future consumers. The current demo has no customer-flow blacklist consumer.
 - Delete supports selected rows and confirmation.
@@ -662,7 +663,7 @@ Hidden / redirected:
   - Partial Match.
 - Search supports Channel, Identifier, and Match Rule.
 - Empty Match Rule means all match rules.
-- Batch Add uses manually selected Match Rule; Reason is required and limited to 2000 characters. Phone and WhatsApp may be selected together in the shared phone-number mode; either phone-like channel is mutually exclusive with other channels. Selecting either shows required Country Code (default `62`) and Phone Number fields.
+- Search and Batch Add Channel dropdowns are single-select. Batch Add uses manually selected Match Rule; Reason is required and limited to 2000 characters. Selecting Phone or WhatsApp shows required Country Code (default `62`) and Phone Number fields.
 - Phone and WhatsApp duplicate checks use `Channel + normalized Country Code + normalized Identifier`; non-Phone duplicate checks use `Channel + normalized Identifier`. Match Rule does not participate in duplicate detection.
 - Phone and WhatsApp Country Code values are shown in the list; non-Phone entries render `-`.
 - Store is local front-end state.
@@ -727,7 +728,7 @@ Hidden / redirected:
 - Search supports Website Name and Website URL.
 - List columns include No., Website Name, Website URL, Remark, Updated Time, Updated By, and Actions.
 - Add, Edit, and Delete are local demo actions.
-- Website Name and Website URL are unique after trim and lowercase normalization.
+- Website Name and Website URL are limited to 200 characters and are unique after trim and lowercase normalization.
 - Website URL must start with `http://` or `https://`.
 - Remark is limited to 2000 characters. Create and edit operations refresh Updated Time and Updated By.
 - Shared voice, video, and Live Chat workspaces read Common Link data in the right-side `Common Links` tab.
@@ -738,7 +739,7 @@ Hidden / redirected:
 - Quick Action Management maintains shared customer-context quick actions for the current demo session. It is separate from Common Link, which remains a right-side external-reference list.
 - Entries contain Action Name, Link Address, Status, Remark, persistent display order, Updated Time, and Updated By. The list shows Order, Action Name, Link Address, Status, Remark, Updated Time, Updated By, and Actions.
 - Search supports Action Name and Status. Add, Edit, Delete, and order adjustment are local demo actions.
-- Action Name is unique after trim and lowercase normalization. Link Address is required and must start with `http://` or `https://`; duplicate addresses are allowed.
+- Action Name and Link Address are limited to 200 characters. Action Name is unique after trim and lowercase normalization. Link Address is required and must start with `http://` or `https://`; duplicate addresses are allowed.
 - New entries default to `Active` and append to the last display position. Status is changed only in the Add/Edit modal. Disabled entries remain in management search results but do not appear in customer-context Quick Action cards.
 - Order is persisted as a normalized sequential value. The Actions column directly exposes icon-only Move to Top, Move Up, Move Down, and Move to Bottom controls; order changes are unavailable while applied search or status filters are active.
 - Create, edit, status, and reorder changes set `Updated By` to the current operator in `user ID-user name` format and refresh Updated Time. Existing seeded records remain administrator-owned mock data. This is demo-level last-update metadata only, not a complete change-history ledger.
@@ -765,7 +766,7 @@ Hidden / redirected:
 - Current category examples include Security Credential, Personal Data Exposure, Regulatory or Compliance Risk, Profanity / Offensive Language, and Harassment / Discriminatory Language.
 - List columns include No., Sensitive Word, Category, Remark, Updated Time, Updated By, and Actions.
 - Add, Edit, and Delete are local demo actions.
-- Sensitive Word is unique after trim and lowercase normalization.
+- Sensitive Word is limited to 100 characters and is unique after trim and lowercase normalization.
 - Remark is limited to 2000 characters. Create and edit operations refresh Updated Time and Updated By.
 - Store is local front-end state.
 
@@ -776,7 +777,8 @@ Hidden / redirected:
 - The current demo seeds 30 mock records; at least 12 records are dynamically placed within the current day so the default Date Range has enough data for paging.
 - Current scope excludes Email and Social Media records. Email Record Inquiry remains a future scope; Social Media records are exposed only through the separate `Social Media > Interaction Log` menu and are not added to the Call Management menu.
 - Production permission intent is: agents see their own records, TL sees their own group, and SPV sees groups under managed TLs. The current demo has no permission system, so records are seeded as the current agent view only.
-- Search supports keyword, Channel, Media Type, Call Type, Ended By, Rating Score, and Date Range. Default date range is the current day from `00:00:00` to `23:59:59`.
+- Search supports keyword, Channel, Media Type, Call Scenario, Call Type, Ended By, Rating Score, and Date Range. Default date range is the current day from `00:00:00` to `23:59:59`.
+- `Call Scenario` identifies interaction direction as `Inbound` or `Outbound`. It is available as both a list field and query filter before `Call Type`.
 - `Call Type` identifies how the record arrived at the current agent: `Customer` for a direct customer interaction, `Transfer` for a transferred interaction, and `Conference` for a three-party interaction. It is available as both a list field and query filter for leadership transfer-frequency checks.
 - The list uses `Contact` for the customer-side contact identifier: phone and WhatsApp show the number, logged-in BankApp/Webchat show BankID, and guest Webchat shows a guest ID such as `guest-7118`.
 - The list shows `Queue`; missing queue values render as `-`.

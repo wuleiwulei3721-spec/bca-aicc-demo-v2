@@ -9,6 +9,8 @@ import {
   BaseTabs,
   SearchInput,
 } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
+import { useExternalOperationApproval } from '../../hooks/useExternalOperationApproval'
 import { transferAgents } from '../../mock/transfer'
 import { externalOutboundReasonOptions } from '../../types'
 import type {
@@ -23,6 +25,7 @@ interface OutboundCallModalProps {
   onClose: () => void
   onCallAgent: (agent: TransferAgent) => void
   onCallNumber: (phoneNumber: string) => void
+  requiresOutboundApproval: boolean
 }
 
 const allFilterValue = 'all'
@@ -45,17 +48,62 @@ function renderAgentStatus(status: TransferAgentStatus) {
 function CallNumberTab({
   hasOutboundAccess,
   onCallNumber,
+  requiresOutboundApproval,
 }: {
   hasOutboundAccess: boolean
   onCallNumber: (phoneNumber: string) => void
+  requiresOutboundApproval: boolean
 }) {
+  const { notify } = useOperationFeedback()
   const [phoneNumber, setPhoneNumber] = useState('')
   const [outboundReason, setOutboundReason] =
     useState<ExternalOutboundReason | null>(null)
   const normalizedPhoneNumber = phoneNumber.trim()
+  const { consume, isApproved, isPending, request, status } =
+    useExternalOperationApproval({
+      outboundReason: outboundReason ?? undefined,
+      targetNumber: normalizedPhoneNumber,
+      type: 'outbound-number',
+    })
+
+  const handleRequestApproval = () => {
+    if (
+      !requiresOutboundApproval ||
+      !normalizedPhoneNumber ||
+      !outboundReason ||
+      isPending ||
+      isApproved
+    ) {
+      return
+    }
+
+    const result = request()
+
+    if (result.popupBlocked) {
+      notify('TL approval window was blocked. Allow pop-ups and try again.', 'error')
+    }
+  }
+
+  const approvalLabel = !outboundReason
+    ? 'Request Approval'
+    : isPending
+      ? 'Requesting...'
+      : isApproved
+        ? 'Approved'
+        : status === 'rejected'
+          ? 'Request Again'
+          : 'Request Approval'
 
   return (
-    <div className="aicc-modal-section aicc-outbound-number aicc-outbound-number--direct">
+    <div
+      className={[
+        'aicc-modal-section',
+        'aicc-outbound-number',
+        !requiresOutboundApproval && 'aicc-outbound-number--direct',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="aicc-outbound-number__field">
         <label htmlFor="aicc-outbound-phone-number">Phone Number</label>
         <Input
@@ -72,21 +120,45 @@ function CallNumberTab({
           value={outboundReason}
           onChange={setOutboundReason}
         />
+        {requiresOutboundApproval && (
+          <AppButton
+            className="aicc-outbound-number__approval"
+            disabled={
+              !normalizedPhoneNumber ||
+              !outboundReason ||
+              isPending ||
+              isApproved
+            }
+            onClick={handleRequestApproval}
+          >
+            {approvalLabel}
+          </AppButton>
+        )}
         <AppButton
           disabled={
             !hasOutboundAccess ||
             !normalizedPhoneNumber ||
-            !outboundReason
+            !outboundReason ||
+            (requiresOutboundApproval && !isApproved)
           }
           title={
             !hasOutboundAccess
               ? 'Switch to outbound AUX'
               : !outboundReason
-              ? 'Select a reason before calling'
-              : 'Call external number'
+              ? 'Select a reason before requesting TL approval'
+              : !requiresOutboundApproval
+                ? 'Call external number'
+                : isApproved
+                  ? 'Call approved external number'
+                  : 'Request TL approval before placing this call'
           }
           type="primary"
-          onClick={() => onCallNumber(normalizedPhoneNumber)}
+          onClick={() => {
+            if (requiresOutboundApproval) {
+              consume()
+            }
+            onCallNumber(normalizedPhoneNumber)
+          }}
         >
           Call
         </AppButton>
@@ -228,6 +300,7 @@ export function OutboundCallModal({
   onCallAgent,
   onCallNumber,
   hasOutboundAccess,
+  requiresOutboundApproval,
 }: OutboundCallModalProps) {
   const items = [
     {
@@ -236,6 +309,7 @@ export function OutboundCallModal({
       children: (
         <CallNumberTab
           hasOutboundAccess={hasOutboundAccess}
+          requiresOutboundApproval={requiresOutboundApproval}
           onCallNumber={onCallNumber}
         />
       ),

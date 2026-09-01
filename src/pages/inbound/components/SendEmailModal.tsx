@@ -52,6 +52,8 @@ export function SendEmailModal({
     <EmailComposeModal
       bodyReadonly
       draft={draft}
+      hideEditorToolbar
+      hideModalSave
       onAutoSave={persistDraft}
       onCancel={closeModal}
       onChange={() => undefined}

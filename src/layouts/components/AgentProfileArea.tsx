@@ -6,6 +6,7 @@ import { AgentAvatar } from '../../components'
 import { headerAgentProfile } from '../../mock/agent'
 import { useCallManagementStore } from '../../store'
 import type { AgentStatus } from '../../types'
+import { formatAgentDisplay } from '../../utils/agentDisplay'
 import {
   createAuxStatus,
   getAuxReason,
@@ -37,6 +38,7 @@ function formatAgentStatus(status: AgentStatus) {
 
 interface AgentProfileAreaProps {
   agentName?: string
+  employeeId?: string
   presence: AgentPresence
   roleName?: string
   status: AgentStatus
@@ -51,6 +53,7 @@ interface AgentProfileAreaProps {
 
 export function AgentProfileArea({
   agentName = headerAgentProfile.name,
+  employeeId,
   presence,
   roleName = headerAgentProfile.role,
   status,
@@ -223,7 +226,7 @@ export function AgentProfileArea({
 
         <span className="aicc-agent-profile__meta">
           <span className="aicc-agent-profile__name">
-            {roleName} - {agentName}
+            {roleName} - {formatAgentDisplay(employeeId, agentName, ' ')}
           </span>
           <span className="aicc-agent-profile__team">
             {teamName} | {formattedStatus}

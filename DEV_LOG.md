@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-08-27 18:22 +08:00
+最后更新：2026-09-01 11:54 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,314 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-09-01 11:54 +08:00 - Sensitive Word 列表统一使用 ID
+
+修改页面或文件：
+
+- `src/pages/call-management/SensitiveWordManagementPage.tsx`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户要求 Sensitive Word Management 的表单与查询列表统一使用 `ID` 命名，不再使用列表行号 `No.`。
+
+修改结果：
+
+- 列表首列由按筛选结果生成的 `No.` 行号改为记录实际 ID，例如 `SW001`。
+- 新增记录继续由前端自动生成稳定 ID；编辑表单、敏感词校验和拦截逻辑不变。
+
+验证结果：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 与 `git diff --check` 通过；Build 仅保留既有 large chunk warning。
+- 浏览器冒烟检查通过：Sensitive Word 列表首列标题为 `ID`，并显示 `SW001` 至 `SW008` 实际记录 ID。
+
+回滚说明：
+
+- 将列表首列恢复为按筛选结果计算的 `No.` 行号即可。
+
+当前风险点：
+
+- ID 仍为当前前端 Demo 的本地数据键；后端接入时应由服务端生成并返回。
+
+### 2026-08-31 18:59 +08:00 - Live Chat Message Record 时间格式统一
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `BUSINESS_RULES.md`、`DESIGN_SYSTEM.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求 Live Chat 历史聊天记录的查询条件和内容展示统一为 `DD-MM-YYYY HH:MM:SS`。
+
+修改结果：
+
+- Message Record 的时间范围选择器显示并可选择时、分、秒。
+- 查询按所选精确时间范围过滤，记录结果使用完整消息时间戳展示。
+
+验证结果：
+
+- 类型检查、ESLint、Build 和 `git diff --check` 通过；Build 仅保留既有大 bundle 提示。
+- 浏览器冒烟验证通过：Message Record 起止时间和结果时间均显示为 `DD-MM-YYYY HH:MM:SS`，例如 `21-05-2026 14:32:00` 和 `27-05-2026 14:32:00`。
+
+回滚说明：
+
+- 恢复 Message Record RangePicker 的原日期格式和整日边界筛选即可。
+
+当前风险点：
+
+- 时间范围仍使用前端本地消息时间戳，不涉及后端时区或持久化契约。
+
+### 2026-08-31 18:30 +08:00 - 移除 Live Chat 消息撤回
+
+修改页面或文件：
+
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/store/appStore.ts`
+- `src/pages/call-management/TextChannelSettingsPage.tsx`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- 相关类型、mock、样式及项目知识库文档
+
+修改原因：
+
+- 客户确认移除 Live Chat 的消息撤回与重新编辑能力，避免聊天行为与已移除的渠道配置不一致。
+
+修改结果：
+
+- WhatsApp、BankApp、Webchat 均不再显示或支持 Recall / Re-edit；Quote、发送和消息记录保持不变。
+- 删除对应的 Live Chat 本地撤回状态和遗留 Webchat 撤回时限配置字段。
+
+验证结果：
+
+- `npm run lint`、`npm run build` 和 `git diff --check` 通过；构建仅保留既有 large chunk warning。
+- 浏览器烟测通过：使用 `888888 / 888888` 登录、Sign In、切换 Ready 后打开 Live Chat，WhatsApp 会话消息工具区仅显示 Quote，不显示 Recall / Re-edit。
+
+回滚说明：
+
+- 恢复 Live Chat 撤回 Store 状态、对话操作和相关配置字段即可。
+
+当前风险点：
+
+- 当前仍为前端本地消息模拟；未来接入真实消息通道时，如需撤回能力，应连同渠道协议、权限和审计规则一并重新确认。
+
+### 2026-08-31 18:18 +08:00 - Call Management 字段长度限制补充
+
+修改页面或文件：
+
+- `src/pages/call-management/SensitiveWordManagementPage.tsx`
+- `src/pages/call-management/CommonLinkManagementPage.tsx`
+- `src/pages/call-management/QuickActionManagementPage.tsx`
+- `DESIGN_SYSTEM.md`、`BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户补充确认敏感词字段限制 100 字符，常用链接和快捷操作的名称及 URL 限制 200 字符。
+
+修改结果：
+
+- 三个维护弹窗统一复用 `LimitedInput`，显示与 Ticket 一致的字符计数，并在变更事件中截断超限输入。
+- 提交校验同步增加对应长度兜底：Sensitive Word 100；Website Name / Website URL 200；Action Name / Link Address 200。
+
+验证结果：
+
+- 类型检查、ESLint、Build 和 `git diff --check` 通过；Build 仅保留既有大 bundle 提示。
+- 浏览器冒烟验证通过：Sensitive Word 的维护字段为 `100`，Common Link 的 Website Name / Website URL 为 `200`，Quick Action 的 Action Name / Link Address 为 `200`；三个弹窗均显示字符计数，Quick Action 超限输入会截断到 200。
+
+回滚说明：
+
+- 恢复三个维护弹窗的 `Input` 和对应长度常量/校验即可；不影响其他工作区未提交修改。
+
+当前风险点：
+
+- 本次限制作用于新增/编辑维护字段，查询筛选框保持现有普通输入行为。
+
+### 2026-08-31 16:38 +08:00 - Blacklist 与 Priority List 渠道改为单选
+
+修改页面或文件：
+
+- `src/pages/call-management/BlacklistManagementPage.tsx`
+- `src/pages/call-management/PriorityListManagementPage.tsx`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求 Call Management > Blacklist 与 Priority List 的渠道下拉框改为单选，其他逻辑保持不变。
+
+修改结果：
+
+- Blacklist Batch Add、Priority List 查询和 Batch Add 的 Channel 均改为单选；表单每次仅保存到内部渠道数组的一项，保留既有批量 Identifier / Phone Number 创建方式。
+- Phone / WhatsApp 国家码、Phone 的 Restriction Policy 例外、重复校验、状态、筛选和删除逻辑保持原有行为。
+
+验证结果：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 通过；Build 仅保留既有 large chunk warning。
+- 浏览器冒烟检查通过：Priority List 查询和 Batch Add，以及 Blacklist Batch Add 均显示单选 Channel 控件。
+
+回滚说明：
+
+- 恢复两个页面 Channel Select 的 `mode="multiple"`、数组值绑定和原有多渠道提示文案即可。
+
+当前风险点：
+
+- 当前为前端本地 mock 管理页；未来后端批量导入接口应继续按单渠道加多个 Identifier / Phone Number 的模型处理。
+
+### 2026-08-31 16:33 +08:00 - Interaction Log 增加呼叫场景
+
+修改页面或文件：
+
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `src/types/callRecord.ts`
+- `src/mock/callRecords.ts`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求在 Call Management > Interaction Log 的查询条件和列表中，紧邻 `Call Type` 前增加区分呼入、呼出的字段。
+
+修改结果：
+
+- 新增 `Call Scenario`，可取值为 `Inbound` 或 `Outbound`；查询器、关键词检索和列表列均已接入，字段顺序位于 `Call Type` 前。
+- 记录模型新增 `callScenario`，默认 mock 记录为 `Inbound`，并配置 Outbound 演示记录以验证筛选结果。
+
+验证结果：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 通过；Build 仅保留既有 large chunk warning。
+- 浏览器冒烟检查通过：Outbound 筛选在默认当日范围返回 3 条 Outbound 记录，列表列顺序正确。
+
+回滚说明：
+
+- 删除 `callScenario` 类型、mock 字段、Interaction Log 查询控件、筛选条件和表格列即可恢复此前结构。
+
+当前风险点：
+
+- 当前为前端 mock Demo；实际对接时应由话务后台返回呼叫方向，不能由前端默认值替代。
+
+### 2026-08-31 16:12 +08:00 - 全局控制配置移除默认技能队列
+
+修改页面或文件：
+
+- `src/pages/call-management/GlobalControlConfigurationPage.tsx`
+- `src/types/globalControlConfiguration.ts`
+- `src/mock/globalControlConfiguration.ts`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户要求移除 Call Management > Global Control Configuration 中的默认技能配置字段。
+
+修改结果：
+
+- 移除 `Routing Fallback` 卡片、`Default Skill Queue` 下拉框及其活跃技能队列校验。
+- 全局控制配置类型和默认 mock 不再保存默认技能队列代码；Routing Config 的技能队列配置不受影响。
+
+验证结果：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 与 `git diff --check` 通过；Build 仅保留既有 large chunk warning。
+- 浏览器冒烟检查通过：Global Control Configuration 页面不再显示 `Routing Fallback` 或 `Default Skill Queue`，其余配置项保持可见。
+
+回滚说明：
+
+- 恢复全局控制配置页面的 Routing Fallback 卡片、字段校验以及对应类型和 mock 字段即可。
+
+当前风险点：
+
+- 当前前端 Demo 未使用该字段进行实际路由；真实路由服务如仍依赖默认技能队列，应在后端配置中独立维护。
+
+### 2026-08-28 19:34 +08:00 - 外呼审批流程恢复与客户弹屏边界修正
+
+修改页面或文件：
+
+- `src/layouts/components/OutboundCallModal.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DESIGN_SYSTEM.md`、`PROJECT_CONTEXT.md`、`DECISION_LOG.md`
+
+修改原因：
+
+- 客户确认外呼号码的既有 TL 审批不能移除；本次范围只要求号码外呼不激活客户弹屏，以及外呼坐席不要求切换 AUX。
+
+修改结果：
+
+- Toolbar `Call Number` 与 Customer Information 电话外呼保留原有普通 Agent TL 审批、审批结果弹窗和 `Support Outbound` AUX 门禁；TL-and-above 继续直接呼叫。
+- 两类号码外呼均创建后台 outbound 通话并保持当前工作区，不激活客户 screen pop；外呼坐席可在非 AUX 状态直接呼叫。
+- 两类外呼的话务条 Skill 继续显示为 `-`，号码显示保留 `+` 前缀。
+
+验证结果：
+
+- `npx tsc --noEmit`、`npm run lint`、`npm run build` 和 `git diff --check` 通过；Build 仅保留既有 large chunk warning。
+
+回滚说明：
+
+- 恢复号码外呼的审批 hook/result modal 连接及 `requiresOutboundApproval` 传递即可；不要回滚同一工作区中的其他用户修改。
+
+当前风险点：
+
+- TL 审批仍是同源前端 Demo 页面和浏览器本地同步，不代表生产环境的授权、审计或跨设备审批能力。
+
+### 2026-08-28 16:44 +08:00 - 弹屏客户邮件只读编辑器精简
+
+修改页面或文件：
+
+- `src/pages/inbound/components/SendEmailModal.tsx`
+- `src/pages/email/components/EmailComposeModal.tsx`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户要求在 Customer Information 卡片点击邮箱打开的发送邮件弹框中移除 Save，并隐藏只读正文不适用的格式化工具栏。
+
+修改结果：
+
+- 客户信息卡片的邮件弹框隐藏 Save 和正文格式化 / 模板配置工具栏，保留只读正文以及现有 Send、关闭、收件人、主题、模板和语言操作。
+- 独立 Email 工作台继续显示原有格式化工具栏和 Save，不受影响。
+
+验证：
+
+- `npm run lint`、`npm run build` 和 `git diff --check` 通过；Build 仅保留既有 large chunk warning。
+- 浏览器冒烟验证通过：在已识别客户的 Customer Information 卡片点击邮箱后，Reply Email 弹框不显示 Save 和 Email formatting toolbar，正文区域保持禁用状态。
+
+回滚说明：
+
+- 移除客户邮件入口传入的两个展示开关，或恢复共享组件中的条件渲染，即可恢复原界面。
+
+当前风险点：
+
+- 客户邮件弹框仍为前端演示流程，正文内容与自动保存不会持久化到后端。
+
+### 2026-08-28 00:00 +08:00 - Verification Rules 媒体级渠道选项
+
+修改页面或文件：
+
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求 KBV 配置覆盖 `Phone`、`Bankapp Voice`、`Bankapp Video`、`Webchat Voice`、`Webchat Video`；Webchat 没有登录状态。
+- 变更范围限定为身份验证规则的 Channel 下拉选项，不新增或删除列表规则条目，也不修改全局 Routing Config 渠道主数据。
+
+修改结果：
+
+- Verification Rules 页面现在根据活跃渠道的已配置媒体动态生成 Channel 选项；默认配置下展示五个媒体级选项。
+- 既有 `BANKAPP` 规则值按 `Bankapp Voice` 展示并继续参与筛选；`Bankapp Video` 与 BankApp Voice 共用 HaloApp Login Status 联动，Webchat Voice / Video 不显示该字段。
+- 渠道管理移除某个 Voice / Video 媒体后，该选项从新建和筛选控件中消失；既有规则不删除，编辑时保留为不可选的停用值。
+- 既有 mock 规则条目数量和内容未变。
+
+验证结果：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 和 `git diff --check` 通过。
+- Build 仅保留项目原有 large chunk warning；Verification Rules 浏览器冒烟验证通过：默认配置下五个选项均渲染，Bankapp Video 显示 HaloApp Login Status，Webchat Video 不显示该字段；移除 Routing Config 的 Bankapp Voice 后，该选项从 Verification Rules 下拉框消失，既有规则仍保留，列表维持 14 条记录。
+
+回滚说明：
+
+- 恢复 `VerificationRuleV2Page.tsx` 的渠道选项映射和 HaloApp 渠道判断即可；同步文档记录可一并回退。
+
+当前风险点：
+
+- 当前为 Zustand 前端 Demo，媒体级渠道选项和既有规则值尚未接入后端持久化或真实路由配置服务。
 
 ### 2026-08-27 18:22 +08:00 - Production deployment
 
@@ -7527,3 +7835,45 @@ Current risk:
 当前风险点：
 
 - 黑名单仍为本地前端演示数据，刷新页面会重置。
+
+### 2026-08-28 17:48 +08:00 - 统一坐席与客户头像规则，清理旧版 Live Chat
+
+修改页面或文件：
+
+- `src/components/IdentityAvatar.tsx`
+- `src/layouts/components/AgentProfileArea.tsx`
+- `src/layouts/components/InternalChatModal.tsx`
+- `src/pages/inbound/LiveChat2Page.tsx` 及其 Conversation Workspace
+- `src/pages/call-management/CallRecordDetailModal.tsx`
+- `src/pages/social-media/SocialMediaInteractionLogPage.tsx`
+- `src/pages/inbound/LiveChatPage.tsx`（删除）
+- `src/pages/inbound/components/ConversationWorkspace.tsx`（删除）
+- `src/pages/inbound/components/LiveChatCustomerList.tsx`（删除）
+- `src/styles/index.less`
+- `DESIGN_SYSTEM.md`
+- `CURRENT_STATUS.md`
+
+修改原因：
+
+- 客户确认坐席不提供真人头像，坐席头像需由展示名称的第一个有效字符自动生成；Live Chat 和 Interaction Log 详情的客户头像改为统一固定图标。旧版 Live Chat 已停止使用，仅保留现行实现并以 `Live Chat` 作为用户可见名称。
+
+修改结果：
+
+- 新增共享 `AgentAvatar` / `CustomerAvatar`：坐席为 `#1473E6`，客户为 `#809AFF`，均使用 `1px rgba(255, 255, 255, 0.5)` 圆形描边。
+- 右上角个人资料、内部聊天、审批弹窗、Live Chat 历史坐席消息，以及 Call Management / Social Media Interaction Log 详情均已改用统一坐席首字符头像；详情中的客户消息改用统一图标。
+- Social Media 弹屏的客户图片未改动。
+- 删除旧版 Live Chat 页面及其专属组件；现行 `LiveChat2Page` 继续承载用户可见的 `Live Chat` 工作台与现有 handoff 流程。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 large chunk warning。
+- 本地浏览器烟测 `http://127.0.0.1:4173/` 已通过：右上角 Budi Kartika 显示 `B`；Live Chat 客户消息显示固定人像图标、历史坐席 Rina Putri 显示 `R`；Interaction Log 详情中客户和坐席头像规则一致。
+
+回滚说明：
+
+- 恢复旧版 Live Chat 文件与 `CrmPanel` 的 `ConversationWorkspace` 分支，并将头像渲染恢复为原有 Avatar / 图片字段即可回退。
+
+当前风险点：
+
+- 头像仍为前端展示规则；接入真实身份服务时，展示名称必须可用，空名称会显示 `?`。

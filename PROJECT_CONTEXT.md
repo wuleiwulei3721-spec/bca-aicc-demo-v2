@@ -200,7 +200,7 @@ The toolbar supports:
 - Ready / Not Ready toggle.
 - Timer display.
 - More menu for Outbound Call; toolbar Settings is temporarily hidden.
-- Customer-number Outbound Call and Customer Information outbound actions require an active AUX configured with `Support Outbound`, retain the `Miss Information` or `Financial Risk` business reason, and do not create a TL approval request or approval popup. Any nonempty Customer Information phone number can initiate that flow without KBV / CRM identity. A completed external Call creates a background `Outbound Call` voice interaction carrying the dialed number, keeps the current workspace focused instead of opening a customer screen pop, and enters `Talking`. `Transfer Number` remains a TL-and-above permission, hidden from `888888` and available to `666666` without additional approval.
+- Customer-number Outbound Call and Customer Information outbound actions require an active AUX configured with `Support Outbound` and retain the `Miss Information` or `Financial Risk` business reason. Ordinary Agents keep the TL approval request/result flow, while TL-and-above accounts call directly. Any eligible nonempty Customer Information phone number can initiate that flow without KBV completion. A completed external Call creates a background `Outbound Call` voice interaction carrying the dialed number, keeps the current workspace focused instead of opening a customer screen pop, and enters `Talking`. `Transfer Number` remains a TL-and-above permission, hidden from `888888` and available to `666666` without additional approval.
 - In `Outbound Call > Call Agent`, ordinary Agents see only SPV and TL records; TL-and-above roles see the complete agent list. Calling an agent does not require an outbound AUX and enters a background `Outbound Call` voice interaction without a customer screen pop.
 - `Channel Simulation > Transferred Call` is local-only and opens a PSTN receiving-seat preview with source-agent transfer metadata; it is a local demo visualization, not a real routed call.
 - Call identification display: `IVR: {ANI Number}` for PSTN and `HaloApp: {BCAID}` / `HaloApp: Guest` for HaloApp voice and video; the current HaloApp BCAID mock is `00012345`. Future Webchat voice/video follows `Webchat: {BCAID}` / `Webchat: Guest-0001`.
@@ -269,7 +269,7 @@ Current formal Live Chat uses `LiveChat2Page`:
 - Message Record tab.
 - Transfer modal.
 - End Service / Close behavior.
-- Message sending, recall state, and local draft state.
+- Message sending and local draft state.
 
 This is still a front-end simulation, not a real message gateway integration.
 

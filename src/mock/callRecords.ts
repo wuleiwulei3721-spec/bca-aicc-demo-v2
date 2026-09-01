@@ -1,5 +1,6 @@
 import type {
   CallRecord,
+  CallRecordCallScenario,
   CallRecordCallType,
   CallRecordRatingScore,
   CallRecordTicket,
@@ -13,8 +14,14 @@ interface CallRecordSeedSummary {
 
 type CallRecordSeed = Omit<
   CallRecord,
-  'callType' | 'endedAt' | 'ratingFeedback' | 'ratingScore' | 'summary'
+  | 'callScenario'
+  | 'callType'
+  | 'endedAt'
+  | 'ratingFeedback'
+  | 'ratingScore'
+  | 'summary'
 > & {
+  callScenario?: CallRecordCallScenario
   callType?: CallRecordCallType
   endedAt?: string
   ratingFeedback?: string | null
@@ -167,6 +174,7 @@ function createRecord(record: CallRecordSeed): CallRecord {
 
   return {
     ...recordData,
+    callScenario: record.callScenario ?? 'Inbound',
     callType: record.callType ?? 'Customer',
     endedAt,
     ratingFeedback:
@@ -262,6 +270,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       durationSeconds: 436,
       endedBy: 'Agent',
       id: 'call-record-001',
+      callScenario: 'Outbound',
       mediaType: 'Voice',
       queueName: 'Credit Card Activation',
       recordNo: 'CR202607070001',
@@ -317,6 +326,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       durationSeconds: 675,
       endedBy: 'Agent',
       id: 'call-record-021',
+      callScenario: 'Outbound',
       mediaType: 'Video',
       callType: 'Transfer',
       queueName: 'Digital Banking Support',
@@ -404,6 +414,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       durationSeconds: 932,
       endedBy: 'Agent',
       id: 'call-record-024',
+      callScenario: 'Outbound',
       mediaType: 'Video',
       callType: 'Conference',
       queueName: 'Priority Service',
@@ -635,6 +646,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       durationSeconds: 762,
       endedBy: 'Agent',
       id: 'call-record-014',
+      callScenario: 'Outbound',
       mediaType: 'Video',
       callType: 'Transfer',
       queueName: 'Digital Banking Support',
@@ -751,6 +763,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       durationSeconds: 552,
       endedBy: 'Agent',
       id: 'call-record-018',
+      callScenario: 'Outbound',
       mediaType: 'Voice',
       callType: 'Conference',
       queueName: 'Paylater Service',

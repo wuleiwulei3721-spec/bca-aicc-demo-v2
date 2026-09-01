@@ -231,6 +231,7 @@ export function getExternalOperationApprovalForScope(
 
 export function requestExternalOperationApproval(
   input: ExternalOperationApprovalScope & {
+    agentEmployeeId: string
     agentName: string
   },
 ) {

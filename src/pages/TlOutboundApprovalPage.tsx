@@ -8,6 +8,7 @@ import {
 import { useSearchParams } from 'react-router-dom'
 import { AgentAvatar, BaseButton, BaseModal } from '../components'
 import type { ExternalOperationApproval } from '../types'
+import { formatAgentDisplay } from '../utils/agentDisplay'
 import {
   approveExternalOperationApproval,
   getExternalOperationApprovalsSnapshot,
@@ -43,6 +44,7 @@ const demoFollowupDelayMs = 5 * 1000
 
 function createDemoQueuedApproval(createdAt: number): ExternalOperationApproval {
   return {
+    agentEmployeeId: 'AICC1024',
     agentName: 'Siti Rahmawati',
     createdAt,
     id: `tl-approval-demo-queue-item-${createdAt}`,
@@ -191,7 +193,12 @@ export function TlOutboundApprovalPage() {
           <div aria-live="polite" className="tl-outbound-approval-modal__content">
             <div className="tl-outbound-approval-modal__agent">
               <AgentAvatar name={approval.agentName} size={28} />
-              <strong>{approval.agentName}</strong>
+              <strong>
+                {formatAgentDisplay(
+                  approval.agentEmployeeId,
+                  approval.agentName,
+                )}
+              </strong>
             </div>
             <ApprovalRequestDetails approval={approval} />
             <Input
