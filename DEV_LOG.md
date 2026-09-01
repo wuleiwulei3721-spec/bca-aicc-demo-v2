@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-09-01 16:22 +08:00
+最后更新：2026-09-01 19:38 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,40 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-09-01 19:38 +08:00 - Customer Production Release
+
+修改页面或文件：
+
+- 发布提交 `b0f5f8f`（`feat: refine customer interactions and channel UI`）
+- Vercel production deployment
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求将当前全部已确认改动提交并发布到客户可见环境。
+
+修改结果：
+
+- 全部 58 个文件改动已提交并推送到 `origin/main`。
+- 使用 `npx vercel --prod --yes --build-env VITE_APP_VISIBILITY_PROFILE=customer` 发布。
+- 正式 URL：`https://netinfo-aicc-demo-v2.vercel.app`
+- Deployment URL：`https://netinfo-aicc-demo-v2-kkrlenxae-wl-demo-s-projects.vercel.app`
+- Vercel Inspect：`https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/BHAzJ6SF4MhighMy5uy2CXH6WWAF`
+
+验证结果：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check` 均通过。
+- Vercel 远程 `npm run build` 通过；生产别名已绑定。
+- Build 仅保留既有的 bundle size warning。
+
+回滚说明：
+
+- 在 Vercel 将正式别名指回上一稳定 Deployment，或重新部署提交 `89a5026`。
+
+当前风险点：
+
+- 当前应用仍是前端 mock demo；Vite bundle size warning 未在本次发布范围内处理。
 
 ### 2026-09-01 16:22 +08:00 - 审批队列提醒与申请文案修正
 
