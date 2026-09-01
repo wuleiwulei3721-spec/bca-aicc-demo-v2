@@ -6320,6 +6320,14 @@ a {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.routing-config-skill-queue-modal__target-field {
+  width: auto;
+}
+
+.routing-config-skill-queue-modal__target-field .routing-config-media-rule-modal__number-control {
+  width: 100%;
+}
+
 .routing-config-skill-queue-modal__work-time-control {
   display: grid;
   min-width: 0;
@@ -9165,6 +9173,15 @@ a {
   line-height: 1;
 }
 
+.channel-logo {
+  display: block;
+  width: var(--channel-logo-size, 100%);
+  height: var(--channel-logo-size, 100%);
+  flex: 0 0 auto;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
 .inbound-channel-tag__duration {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
@@ -9566,13 +9583,14 @@ a {
   width: 20px;
   height: 20px;
   place-items: center;
-  border-radius: var(--aicc-radius-sm);
+  overflow: hidden;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
   font-size: 13px;
 }
 
 .inbound-journey-channel {
-  border: 1px solid #d8e1ee;
-  background: #f7faff;
   color: #475569;
 }
 
@@ -9622,6 +9640,19 @@ a {
   border-color: #cfe0f7;
   background: #f1f7ff;
   color: #1769e0;
+}
+
+.aicc-customer-info__channel-action .inbound-channel-tag {
+  border-color: #bfd7ff;
+  background: #eef6ff;
+  color: #1557b0;
+}
+
+.aicc-customer-info__channel-action:hover .inbound-channel-tag,
+.aicc-customer-info__channel-action:focus-visible .inbound-channel-tag {
+  border-color: #8fbaf0;
+  background: #e2f0ff;
+  color: #0f4fb4;
 }
 
 .inbound-ticket-row {
@@ -10700,8 +10731,8 @@ button.inbound-list-row .inbound-list-row__title {
   height: 34px;
   place-items: center;
   border: 1px solid #d8e1ee;
-  border-radius: var(--aicc-radius-sm);
-  background: #f7faff;
+  border-radius: 50%;
+  background: transparent;
   color: #475569;
   font-size: 16px;
 }
@@ -13051,6 +13082,12 @@ button.inbound-list-row .inbound-list-row__title {
   display: block;
   width: 14px;
   height: 14px;
+}
+
+.inbound-contact-channel-icon:has(.channel-logo) {
+  border: 0;
+  background: transparent;
+  color: inherit;
 }
 
 .inbound-contact-management__add,
@@ -16364,6 +16401,10 @@ button.inbound-list-row .inbound-list-row__title {
   }
 }
 
+.livechat2-channel-avatar .channel-logo {
+  border-radius: 50%;
+}
+
 @media (max-width: 960px) {
   :root {
     --aicc-layout-content-padding: 16px;
@@ -19013,6 +19054,46 @@ button.inbound-list-row .inbound-list-row__title {
   font-weight: 650;
 }
 
+.aicc-ticket-form__field-control {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.aicc-ticket-form__field-control > :first-child {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.aicc-ticket-form__copy {
+  display: inline-grid;
+  width: var(--aicc-control-height-sm);
+  height: var(--aicc-control-height-sm);
+  flex: 0 0 var(--aicc-control-height-sm);
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--aicc-border-strong);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--aicc-text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.aicc-ticket-form__copy:hover:not(:disabled),
+.aicc-ticket-form__copy:focus-visible:not(:disabled) {
+  border-color: var(--aicc-primary);
+  color: var(--aicc-primary);
+  outline: 0;
+}
+
+.aicc-ticket-form__copy:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .aicc-ticket-form .ant-input,
 .aicc-ticket-form__select.ant-select {
   box-sizing: border-box;
@@ -19999,6 +20080,12 @@ button.inbound-list-row .inbound-list-row__title {
   background: #ffffff;
 }
 
+.aicc-approval-result-modal__timeout {
+  color: var(--aicc-text);
+  font-size: 12px;
+  line-height: 18px;
+}
+
 .aicc-approval-result-modal__request {
   display: flex;
   align-items: center;
@@ -20065,6 +20152,11 @@ button.inbound-list-row .inbound-list-row__title {
   color: var(--aicc-danger);
 }
 
+.aicc-approval-result-modal--timed-out .aicc-approval-result-modal__title,
+.aicc-approval-result-modal--timed-out .aicc-approval-result-modal__title .anticon {
+  color: var(--aicc-warning);
+}
+
 .social-media-page {
   --social-border: #d8dee8;
   --social-border-light: #edf2f7;
@@ -20082,6 +20174,7 @@ button.inbound-list-row .inbound-list-row__title {
   width: 100%;
   min-width: 0;
   min-height: 0;
+  grid-template-rows: minmax(0, 1fr);
   grid-template-columns: 280px var(--aicc-customer-column-width) minmax(380px, 1fr) 260px;
   gap: 10px;
   overflow: hidden;
@@ -20715,6 +20808,7 @@ button.inbound-list-row .inbound-list-row__title {
 
 .social-media-page__customer-panel {
   display: flex;
+  height: 100%;
   min-height: 0;
   flex-direction: column;
   gap: 10px;
@@ -20724,6 +20818,7 @@ button.inbound-list-row .inbound-list-row__title {
 .social-media-page__customer-panel .inbound-left-column {
   height: 100%;
   min-height: 0;
+  flex: 1 1 auto;
 }
 
 .social-media-page__customer-access-node {

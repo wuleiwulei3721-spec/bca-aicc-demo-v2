@@ -34,6 +34,7 @@ export interface CustomerInformationPanelProps {
   onSendEmail?: () => void
   onStartOutbound?: () => void
   onVerify?: () => void
+  outboundDisabled?: boolean
   outboundDisabledTitle?: string
   isDirectOutbound?: boolean
   outboundRequestStatus?: CustomerOutboundRequestStatus
@@ -123,6 +124,7 @@ export function CustomerInformationPanel({
   onSendEmail,
   onStartOutbound,
   onVerify,
+  outboundDisabled = false,
   outboundDisabledTitle,
   isDirectOutbound = false,
   outboundRequestStatus = 'idle',
@@ -153,9 +155,7 @@ export function CustomerInformationPanel({
   const emailStatus = emailVerificationLabel(profile, status)
   const customerNumber = profile.cisNumber.trim()
   const segmentationLabel = customerSegmentationLabel(profile)
-  const shouldShowOutboundAction =
-    outboundRequestStatus !== 'idle' ||
-    Boolean(outboundDisabledTitle && !onRequestOutbound)
+  const shouldShowOutboundAction = outboundRequestStatus !== 'idle'
   const defaultAccessChannelNode = (
     <span className="aicc-customer-info__channel-fallback">
       <span>{customer.accessChannel}</span>
@@ -205,7 +205,11 @@ export function CustomerInformationPanel({
                     ]
                       .filter(Boolean)
                       .join(' ')}
-                    disabled={outboundRequestStatus === 'requesting' || !handleOutboundClick}
+                    disabled={
+                      outboundRequestStatus === 'requesting' ||
+                      outboundDisabled ||
+                      !handleOutboundClick
+                    }
                     aria-label={outboundRequestLabel}
                     title={outboundDisabledTitle}
                     type="button"

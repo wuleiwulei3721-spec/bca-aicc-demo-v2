@@ -864,6 +864,7 @@ export const useAppStore = create<AppState>((set) => ({
       const source =
         rawSource ??
         (kind === 'voice' ? 'pstn' : 'standard')
+      const showsWorkspaceTab = source !== 'outbound'
       const interaction: CallInteraction = {
         bankAppCustomerType:
           source === 'bankapp-voice' || source === 'bankapp-video'
@@ -892,7 +893,7 @@ export const useAppStore = create<AppState>((set) => ({
       createdId = id
 
       return {
-        activeWorkspaceTabKey: activate
+        activeWorkspaceTabKey: activate && showsWorkspaceTab
           ? interaction.tabKey
           : state.activeWorkspaceTabKey,
         bankAppVideoShareState:
@@ -901,7 +902,9 @@ export const useAppStore = create<AppState>((set) => ({
             : kind === 'video'
               ? 'idle'
               : state.bankAppVideoShareState,
-        callInteractionOrder: [...remainingInteractionIds, id],
+        callInteractionOrder: showsWorkspaceTab
+          ? [...remainingInteractionIds, id]
+          : remainingInteractionIds,
         callInteractionSeq: nextSeq,
         callInteractions: {
           ...remainingInteractions,

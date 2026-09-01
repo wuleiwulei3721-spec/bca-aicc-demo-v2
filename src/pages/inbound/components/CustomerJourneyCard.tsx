@@ -1,18 +1,9 @@
 import { useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
 import {
   DownOutlined,
-  FacebookFilled,
-  GlobalOutlined,
-  InstagramFilled,
-  MailOutlined,
-  MobileOutlined,
-  TikTokFilled,
-  WhatsAppOutlined,
-  XOutlined,
 } from '@ant-design/icons'
 import { Space, Tag, Tooltip } from 'antd'
-import { BaseModal, PhoneIcon, StatusBadge } from '../../../components'
+import { BaseModal, ChannelLogo, StatusBadge } from '../../../components'
 import { useCallManagementStore } from '../../../store'
 import type { CustomerJourneyItem, JourneyChannel } from '../../../types'
 import { CallRecordDetailModal } from '../../call-management/CallRecordDetailModal'
@@ -48,18 +39,6 @@ function parseJourneyDate(date: string) {
 }
 
 function renderChannelIcon(channel: JourneyChannel) {
-  const iconMap: Record<JourneyChannel, ReactNode> = {
-    Phone: <PhoneIcon />,
-    BankApp: <MobileOutlined />,
-    Webchat: <GlobalOutlined />,
-    Email: <MailOutlined />,
-    Facebook: <FacebookFilled />,
-    X: <XOutlined />,
-    Instagram: <InstagramFilled />,
-    TikTok: <TikTokFilled />,
-    WhatsApp: <WhatsAppOutlined />,
-  }
-
   return (
     <Tooltip title={channel}>
       <span
@@ -67,7 +46,7 @@ function renderChannelIcon(channel: JourneyChannel) {
           .toLowerCase()
           .replace(/\s+/g, '-')}`}
       >
-        {iconMap[channel]}
+        <ChannelLogo channel={channel} />
       </span>
     </Tooltip>
   )

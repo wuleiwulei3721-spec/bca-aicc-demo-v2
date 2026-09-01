@@ -2,6 +2,7 @@ import {
   CaretDownOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
+  ClockCircleOutlined,
   DisconnectOutlined,
   EllipsisOutlined,
   PauseCircleOutlined,
@@ -37,7 +38,7 @@ export interface TransferNotice {
 interface ApprovalNotice {
   approval: ExternalOperationApproval
   title: string
-  tone: 'approved' | 'rejected'
+  tone: 'approved' | 'rejected' | 'timed-out'
 }
 
 function getOutboundReasonLabel(approval: ExternalOperationApproval) {
@@ -46,9 +47,20 @@ function getOutboundReasonLabel(approval: ExternalOperationApproval) {
     : 'Miss Information'
 }
 
-function ApprovalResultDetails({ approval }: { approval: ExternalOperationApproval }) {
+function ApprovalResultDetails({
+  approval,
+  tone,
+}: {
+  approval: ExternalOperationApproval
+  tone: ApprovalNotice['tone']
+}) {
   return (
     <div className="aicc-approval-result-modal__details">
+      {tone === 'timed-out' && (
+        <div className="aicc-approval-result-modal__timeout">
+          Approval timed out. Please submit the outbound call request again.
+        </div>
+      )}
       <div className="aicc-approval-result-modal__request">
         <span>Outbound</span>
         <strong>{approval.targetNumber}</strong>
@@ -143,7 +155,7 @@ export function AgentToolbar({
   useEffect(
     () =>
       subscribeExternalOperationApprovalEvents((event) => {
-        if (!['approved', 'rejected'].includes(event.kind)) {
+        if (!['approved', 'rejected', 'timed-out'].includes(event.kind)) {
           return
         }
 
@@ -151,9 +163,15 @@ export function AgentToolbar({
         const result =
           event.kind === 'approved'
             ? 'Approval Granted'
-            : 'Approval Rejected'
+            : event.kind === 'rejected'
+              ? 'Approval Rejected'
+              : 'Approval Timed Out'
         const tone: ApprovalNotice['tone'] =
-          event.kind === 'approved' ? 'approved' : 'rejected'
+          event.kind === 'approved'
+            ? 'approved'
+            : event.kind === 'rejected'
+              ? 'rejected'
+              : 'timed-out'
         setApprovalNotice({
           approval,
           title: result,
@@ -501,6 +519,8 @@ export function AgentToolbar({
             <span className="aicc-approval-result-modal__title">
               {approvalNotice.tone === 'approved' ? (
                 <CheckCircleOutlined />
+              ) : approvalNotice.tone === 'timed-out' ? (
+                <ClockCircleOutlined />
               ) : (
                 <CloseCircleOutlined />
               )}
@@ -512,7 +532,10 @@ export function AgentToolbar({
         onCancel={() => setApprovalNotice(null)}
       >
         {approvalNotice && (
-          <ApprovalResultDetails approval={approvalNotice.approval} />
+          <ApprovalResultDetails
+            approval={approvalNotice.approval}
+            tone={approvalNotice.tone}
+          />
         )}
       </BaseModal>
     </>

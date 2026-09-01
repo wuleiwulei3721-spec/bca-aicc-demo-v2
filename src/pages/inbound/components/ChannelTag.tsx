@@ -1,16 +1,8 @@
-import {
-  AudioOutlined,
-  GlobalOutlined,
-  MessageOutlined,
-  MobileOutlined,
-  VideoCameraOutlined,
-  WhatsAppOutlined,
-} from '@ant-design/icons'
 import { Tag } from 'antd'
-import { PhoneIcon } from '../../../components'
-import type { AccessChannel, JourneyChannel } from '../../../types'
+import { ChannelLogo } from '../../../components'
+import type { ChannelLogoChannel } from '../../../components'
 
-type ChannelTagValue = AccessChannel | JourneyChannel
+type ChannelTagValue = ChannelLogoChannel
 
 interface ChannelTagProps {
   value: ChannelTagValue
@@ -43,38 +35,6 @@ const channelDisplayLabels: Partial<Record<ChannelTagValue, string>> = {
   Video: 'Video Call',
 }
 
-function renderIcon(value: ChannelTagValue) {
-  if (value === 'Phone') {
-    return <PhoneIcon />
-  }
-
-  if (value === 'Video') {
-    return <VideoCameraOutlined />
-  }
-
-  if (
-    value === 'BankApp' ||
-    value === 'BankApp Voice' ||
-    value === 'BankApp Video'
-  ) {
-    return <MobileOutlined />
-  }
-
-  if (value === 'WhatsApp') {
-    return <WhatsAppOutlined />
-  }
-
-  if (value === 'Webchat') {
-    return <GlobalOutlined />
-  }
-
-  if (value.includes('Voice')) {
-    return <AudioOutlined />
-  }
-
-  return <MessageOutlined />
-}
-
 export function ChannelTag({
   value,
   compact,
@@ -93,7 +53,7 @@ export function ChannelTag({
         .join(' ')}
     >
       <span aria-hidden="true" className="inbound-channel-tag__icon">
-        {renderIcon(value)}
+        <ChannelLogo channel={value} />
       </span>
       <span className="inbound-channel-tag__label">
         {label ?? channelDisplayLabels[value] ?? value}

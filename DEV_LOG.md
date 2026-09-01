@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-09-01 12:12 +08:00
+最后更新：2026-09-01 16:22 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,102 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-09-01 16:22 +08:00 - 审批队列提醒与申请文案修正
+
+修改页面或文件：
+
+- `src/pages/TlOutboundApprovalPage.tsx`
+- `src/layouts/components/OutboundCallModal.tsx`
+- `BUSINESS_RULES.md`
+- `DESIGN_SYSTEM.md`
+- `CURRENT_STATUS.md`
+- `DEV_LOG.md`
+
+修改结果：
+
+- 恢复 TL 审批弹框右上角的 `N more pending` 排队提醒；超时仍会直接关闭当前审批弹框。
+- 超时后的坐席申请按钮保持原始 `Request Approval` 文案，仅被拒绝时使用 `Request Again`。
+
+当前风险点：
+
+- 排队中的后续项仍是前端 Demo 模拟数据，不代表真实审批队列。
+
+### 2026-09-01 16:05 +08:00 - 外呼审批超时与无工作区页签
+
+修改页面或文件：
+
+- `src/types/outboundApproval.ts`
+- `src/utils/outboundApproval.ts`
+- `src/pages/TlOutboundApprovalPage.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/layouts/components/OutboundCallModal.tsx`
+- `src/components/CustomerInformationPanel.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/store/appStore.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DESIGN_SYSTEM.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户确认假 TL 审批人不需要 Ready 状态，但待审外呼必须在 10 秒后超时关闭并提示坐席重新申请。
+- 外呼审批只允许坐席使用最后一笔通过且未使用的申请；号码外呼和坐席外呼均不得再创建 `Outbound Call` 工作区页签。
+- 客户信息电话行的外呼申请入口需恢复，并继续遵守外呼 AUX 门禁。
+
+修改结果：
+
+- 普通 Agent 的待审外呼在 TL 弹窗显示 10 秒倒计时；超时后记录为 `timed-out`、弹窗关闭，坐席右下角显示 `Approval timed out. Please submit the outbound call request again.`。
+- 同一 Agent 后续审批通过时，旧的未使用通过记录失效；原号码或原因需重新申请。
+- 外呼交互继续驱动工具栏的 `Talking`、Hold、Hang Up、ACW 生命周期和 `Skill -`，但不再生成或切换 `Outbound Call` 页签；客户电话操作在号码行 hover/focus 时可见，非外呼 AUX 下禁用。
+
+回滚说明：
+
+- 移除审批定时器和 `timed-out` 状态，并恢复 outbound 交互加入工作区 tab order 的逻辑即可回到上一版；不要回滚同一工作区中的其他用户修改。
+
+当前风险点：
+
+- 审批、倒计时和结果提示仍是同浏览器的前端 Demo 状态，不包含真实 TL/SPV 可用状态、服务端 SLA、授权审计或跨设备通知。
+
+### 2026-09-01 15:39 +08:00 - Customer Information channel mapping correction
+
+修改页面或文件：
+
+- `src/pages/social-media/SocialMediaPage.tsx`
+- `src/pages/email/EmailPage.tsx`
+- `src/mock/inbound.ts`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `BUSINESS_RULES.md`
+- `DESIGN_SYSTEM.md`
+- `CURRENT_STATUS.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 按客户 Mapping Customer Information 的渠道差异，修正 Social Media 的 `Identified, Unverified` 状态、Email / Social Media 客户卡片的固定接入时长，以及未识别 WhatsApp 的渠道电话号码展示。
+
+修改结果：
+
+- Social Media 客户资料状态改为 `Unverified`，继续隐藏验证状态和验证入口；客户卡片接入时长从回复 SLA 计时中拆出，使用固定 mock 秒数并通过共享 `formatDuration` 显示为 `mm:ss` / `hh:mm:ss`。
+- Email 客户卡片恢复使用邮件客户资料中的固定接入时长；邮件列表与详情的 SLA 计时继续动态运行，不再污染客户卡片。
+- 未识别 WhatsApp mock 增加渠道电话号码 `62 8123456789`。共享客户卡片只对 WhatsApp 未识别状态显示该号码，Email / SIC 仍显示 `-`，且不开放 CRM 或外呼操作。
+
+验证结果：
+
+- 已完成 `git diff --check`；类型检查、Lint、Build 和浏览器冒烟检查待本次修改后执行。
+
+回滚说明：
+
+- 恢复 Social Media 的回复 SLA 传入客户卡片、Email 的 SLA 时长覆盖、WhatsApp 未识别 mock 及客户卡片的 WhatsApp 例外逻辑即可回滚。
+
+当前风险点：
+
+- Social Media 当前仍为前端匿名 mock；Social Media 的其他已验证状态被 Mapping 标记为 `not possible`，本次只修正当前展示的 `Identified, Unverified` demo 状态。
 
 ### 2026-09-01 12:12 +08:00 - Customer Production Release
 
@@ -7912,3 +8008,37 @@ Current risk:
 当前风险点：
 
 - 头像仍为前端展示规则；接入真实身份服务时，展示名称必须可用，空名称会显示 `?`。
+### 2026-09-01 18:17 +08:00 - 技能队列增加 AHT 与 QM Target 配置
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/types/routingConfiguration.ts`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求在 Routing Config > Skill Queues 中增加可选 AHT Target 和 QM Target 属性配置。
+
+修改结果：
+
+- Add / Edit / View 表单新增 AHT Target（秒）和 QM Target（百分比）数字输入，均为非必填；QM Target 限制为 0 至 100。
+- 技能队列列表显示已配置的目标值，未配置时显示 `-`。
+- 两个 Target 的单位统一写入字段标签（`AHT Target (sec)`、`QM Target (%)`），输入框保持与同类配置项一致的完整宽度；Assigned Agents 调整为最后一个字段。
+- Target 输入框使用技能队列弹框专属的全列宽度，已与同一弹框内的标准输入框对齐。
+- 类型契约以可选数字字段保存，确保空配置不会被写入为 `0`。
+
+验证：
+
+- 按用户要求跳过 lint、build 和浏览器冒烟测试。
+
+回滚说明：
+
+- 移除 SkillQueue 的两个可选字段及页面对应列、表单字段即可回退。
+
+当前风险点：
+
+- Routing Config 仍为本地前端演示数据，刷新页面会重置。

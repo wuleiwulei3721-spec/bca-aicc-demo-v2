@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-08-31 18:59 +08:00
+Last updated: 2026-09-01 15:39 +08:00
 
 ## 1. Overall Status
 
@@ -76,9 +76,10 @@ This repository is still a demo application:
 - Timer display.
 - Global Control `Auto Cancel ACW Duration` drives the next voice/video After Call Work timer.
 - Toolbar More menu currently exposes Outbound Call; toolbar display settings are hidden from the More menu.
-- Customer-number Outbound Call and Customer Information phone outbound require an active AUX configured with `Support Outbound` and retain `Miss Information` or `Financial Risk` as the per-call reason. Ordinary Agents retain the existing TL approval request and approval result popup; TL-and-above accounts call directly. Completed number calls create a background `Outbound Call` interaction without activating a customer screen pop, then enter `Talking`. The Call Number form uses aligned controls.
-- `Outbound Call > Call Agent` shows only SPV and TL entries for every role. Calling an agent does not require an outbound AUX, creates the same background `Outbound Call` interaction without a customer screen pop, and enters `Talking`.
+- Customer-number Outbound Call and Customer Information phone outbound require an active AUX configured with `Support Outbound` and retain `Miss Information` or `Financial Risk` as the per-call reason. Ordinary Agents retain the TL approval request and approval result popup; TL-and-above accounts call directly. A pending ordinary-Agent approval counts down from 10 seconds in the TL popup and shows additional pending-request count when queued; on timeout the popup closes and the agent receives `Approval timed out. Please submit the outbound call request again.` Completed number calls enter `Talking` without creating or activating an `Outbound Call` workspace tab. The Call Number form uses aligned controls.
+- `Outbound Call > Call Agent` shows only SPV and TL entries for every role. Calling an agent does not require an outbound AUX, enters `Talking` without creating an `Outbound Call` workspace tab, and keeps the current workspace selected.
 - Call identification and Skill display during call lifecycle; both outbound call types display `Skill -`.
+- An Agent may use only the most recently approved, unused outbound request; a later approved request invalidates earlier unused approvals and requires a new application for those calls.
 - Active-call and not-ready handoff warnings.
 
 ## 6. Completed Workspace Tabs
@@ -94,7 +95,7 @@ This repository is still a demo application:
 - Customer and local profiles expose the Social Media workspace entry immediately below Email.
 - Customer profiles expose a separate `Social Media > Interaction Log` workspace-page entry.
 - Fixed Live Chat tab.
-- Dynamic PSTN / Voice Call / Outbound Call tabs.
+- Dynamic PSTN / Voice Call tabs; outbound number and agent calls remain toolbar-only interactions without a workspace tab.
 - Dynamic Video Call tabs.
 - Closable workspace page tabs for visible Call Management, Routing Config, local-only Employee Management, and local-only Design System pages.
 - Closable workspace page tab for the visible Social Media Interaction Log page.
@@ -109,12 +110,12 @@ This repository is still a demo application:
 - Shared `InteractionWorkspace` layout.
 - PSTN call simulation.
 - BankApp voice workspace.
-- Shared Customer Information keeps the compact name-plus-icon/value presentation. The shared customer-context column containing Customer Information, Customer Journey, Ticketing History, Next Best Action, and Quick Action is fixed at `270px` on desktop across inbound voice/video, Live Chat, Email, and Social Media workspaces; narrow stacked layouts may expand it to the container width. Identified profiles show country-coded Phone, contact verification suffix on Email, CRM Customer Number, and CRM Segmentation, with Special Handling inline at the end of the Segmentation row; every customer without a valid CRM CIS shows `Unidentified Customer`, keeps the three icon rows with `-` placeholders, hides Segmentation / Special Handling, and exposes no CRM-dependent or customer-phone outbound actions. The toolbar may still use the anonymous caller or channel-side Guest context for call identification.
+- Shared Customer Information keeps the compact name-plus-icon/value presentation. The shared customer-context column containing Customer Information, Customer Journey, Ticketing History, Next Best Action, and Quick Action is fixed at `270px` on desktop across inbound voice/video, Live Chat, Email, and Social Media workspaces; narrow stacked layouts may expand it to the container width. Identified profiles show country-coded Phone, contact verification suffix on Email, CRM Customer Number, and CRM Segmentation, with Special Handling inline at the end of the Segmentation row; every customer without a valid CRM CIS shows `Unidentified Customer`, keeps the three icon rows with `-` placeholders except for a channel-provided WhatsApp number in an unidentified WhatsApp Phone row, hides Segmentation / Special Handling, and exposes no CRM-dependent or customer-phone outbound actions. The toolbar may still use the anonymous caller or channel-side Guest context for call identification. The shared access duration is fixed mock data in `mm:ss` or `hh:mm:ss`, separate from Email SLA and Social Media reply-SLA timers.
 - KBV-approved CRM CIS customer-information refresh demo: no manual Customer ID entry; valid same-origin CRM postMessage responses refresh profile, journey, and ticket history while retaining `Verified`.
 - Customer Information card.
 - CRM-identified Customer Information cards include a compact `Special Handling` action that opens a read-only static demo modal; it is hidden before identity refresh and for Guests.
-- Customer Information verification is channel- and media-aware: PSTN, BankApp Voice/Video, and Webchat Voice/Video show the verification status with compact `KBV`; logged-in BankApp text shows the status with compact `PIN`; WhatsApp, Email, Webchat text, Social Media, and BankApp text guest hide both the status and action. WhatsApp uses the CRM WhatsApp contact as the displayed Phone value when available.
-- Guest customer information is identity-aware: channel-side Guest status is retained for routing/context, but the shared card shows `Unidentified Customer` with `-` placeholders for Phone / Email / Customer Number and no Segmentation / Special Handling until a valid CRM CIS identifies the customer.
+- Customer Information verification is channel- and media-aware: PSTN, BankApp Voice/Video, and Webchat Voice/Video show the verification status with compact `KBV`; logged-in BankApp text shows the status with compact `PIN`; WhatsApp, Email, Webchat text, Social Media, and BankApp text guest hide both the status and action. Social Media's populated customer state is `Identified, Unverified`. WhatsApp uses the CRM WhatsApp contact as the displayed Phone value when available.
+- Guest customer information is identity-aware: channel-side Guest status is retained for routing/context, but the shared card shows `Unidentified Customer` with `-` placeholders for Email / Customer Number and for Phone except when an unidentified WhatsApp interaction supplies its channel phone number; Segmentation / Special Handling remain hidden until a valid CRM CIS identifies the customer.
 - Customer Verification V2 right-side tab for KBV.
 - KBV V2 captures HaloApp Voice login status from the first handoff. All HaloApp rules expose `Same for Both` / `Logged In` / `Not Logged In` in management; Perbankan and Kartu Kredit use HaloApp-only logged-in 3-answer rules plus multi-channel Phone/HaloApp-not-logged-in 5- and 4-answer rules respectively, while other skills retain one `Same for Both` configuration. Rule rows support Copy and prevent overlapping enabled conditions.
 - Call Flow Detail modal: PSTN displays IVR Journey only; BankApp Voice / Video and digital channels display the customer-selected Business Menu Selection Record instead. The BankApp demo defaults to `Credit Card`. Transfer History is always shown and includes the current agent's active service row with `-` duration / transfer time until completed.
@@ -219,7 +220,7 @@ This repository is still a demo application:
 - Ignore supports AD, Spam, and Sales Email reasons, moves the email to Trash, and stops its SLA.
 - Customer context directly reuses the shared Customer Information, Journey, Ticketing, NBA, and Quick Action column; Customer Information shows Email as the access channel.
 - The workspace directly reuses Live Chat's `CrmPanel`: CRM uses the same screenshot and Email replaces the visible Conversation label while keeping the same tab styling.
-- The shared customer context column is fixed at 280px in the Email layout. Mailbox folders use solid green, blue, orange, and red icon circles with a subtle active background; search uses one prefixed input plus a separate refresh control.
+- The shared customer context column is fixed at 270px in the Email layout. The Customer Information access duration uses the fixed value from the email mock profile; the mailbox SLA timer remains dynamic and separate. Mailbox folders use solid green, blue, orange, and red icon circles with a subtle active background; search uses one prefixed input plus a separate refresh control.
 - Ticket modal reuses the shared CRM Ticket component: Category and Product use searchable single-select dropdowns, Product is filtered by Category, Summary and Note are editable required fields, and One-Click Generation creates an editable valid mock draft from the left of the fixed footer. Summary is limited to 250 characters, Note to 1000, and both show a normal-weight 11px lower-right in-input count. Confirm clears the retained right-side modal after local CRM save. Email and interaction workspaces share the same below-toolbar success notice, and Email no longer renders a separate Ticket saved status badge. The internal CWU mock stores the selected Category and Product as single values.
 - Email verification is hidden because Email verification rules are not confirmed.
 - Ticket Summary and Note now reuse the shared limited-input component; management Remark fields use the same count treatment with a 2000-character default.
@@ -230,7 +231,7 @@ This repository is still a demo application:
 
 - `Channel Simulation > Social Media` is available in both customer and local visibility profiles, directly below Email.
 - Social Media opens or reuses one closable workspace tab; closing it falls back to Home.
-- The standalone agent workspace provides search, channel and item-type filters, reply SLA progress, a queue for Chats / Comments / Mentions / Reviews, CRM preview, post detail, and local CWU prototype states.
+- The standalone agent workspace provides search, channel and item-type filters, reply SLA progress, a queue for Chats / Comments / Mentions / Reviews, CRM preview, post detail, and local CWU prototype states. The shared Customer Information card uses the populated `Identified, Unverified` mock state, hides verification status / action, and shows a fixed `mm:ss` or `hh:mm:ss` access duration independent of the reply SLA timer.
 - Review items include a local draft and Send reply interaction. Queue, filters, drafts, replies, CWU, and active selection reset after refresh or closing/reopening the tab.
 - Demo data covers Facebook, Instagram, X, YouTube, LinkedIn, TikTok, App Store, and Google Play using anonymized mock content.
 - The separate `Social Media > Interaction Log` page is customer-visible. It uses anonymized mock records for Twitter, Facebook, Instagram, YouTube, TikTok, and LinkedIn; supports channel, message type, customer account, agent, team, BCA account, ticket type, mandatory customer-contact time range, distribution time, first-response time, response-duration, and summary filters; exposes agent lookup; and provides alert and conversation detail modals.
@@ -325,7 +326,7 @@ Implemented behaviors:
 - Channels Business Config Agent Service warning and breach threshold labels include colored status dots that reuse Live Chat SLA warning and breach colors.
 - Phone account management disabled.
 - Business Types `Source Business Code`.
-- Skill Queues include required `Access Code` after `VDN` in list columns and Add / Edit / View forms; Keyword search includes Access Code.
+- Skill Queues include required `Access Code` after `VDN` in list columns and Add / Edit / View forms; Keyword search includes Access Code. Optional `AHT Target` (seconds) and `QM Target` (percentage) can be configured and displayed per queue.
 - Skill Routing Rules batch behavior and duplicate handling.
 - Working Time Plans hide internal plan IDs from query, list, editor, and preview surfaces.
 - Local store state for demo changes.

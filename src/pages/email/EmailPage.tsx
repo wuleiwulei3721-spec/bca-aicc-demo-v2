@@ -757,14 +757,12 @@ function MailboxPanel({
 
 interface EmailCustomerContextProps {
   activeEmail: EmailMessage | null
-  now: number
   onCompose: () => void
   onOpenCrm: (tab: CrmWorkspaceTab) => void
 }
 
 function EmailCustomerContext({
   activeEmail,
-  now,
   onCompose,
   onOpenCrm,
 }: EmailCustomerContextProps) {
@@ -776,15 +774,7 @@ function EmailCustomerContext({
     )
   }
 
-  const customer = {
-    ...activeEmail.customer,
-    accessDuration: activeEmail.slaStartedAt
-      ? formatElapsed(
-          ((activeEmail.slaStoppedAt ?? now) - activeEmail.slaStartedAt) /
-            1000,
-        )
-      : '-',
-  }
+  const customer = activeEmail.customer
 
   return (
     <LeftColumn
@@ -1634,7 +1624,6 @@ export function EmailPage() {
 
       <EmailCustomerContext
         activeEmail={selectedEmail}
-        now={now}
         onCompose={() => openComposeModal(true)}
         onOpenCrm={openCrm}
       />

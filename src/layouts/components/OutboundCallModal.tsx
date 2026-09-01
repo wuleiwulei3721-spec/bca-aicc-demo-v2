@@ -90,9 +90,9 @@ function CallNumberTab({
       ? 'Requesting...'
       : isApproved
         ? 'Approved'
-        : status === 'rejected'
-          ? 'Request Again'
-          : 'Request Approval'
+      : status === 'rejected'
+        ? 'Request Again'
+        : 'Request Approval'
 
   return (
     <div

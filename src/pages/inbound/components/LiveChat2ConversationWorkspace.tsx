@@ -6,22 +6,25 @@ import {
   ClockCircleOutlined,
   FileImageOutlined,
   FolderOpenOutlined,
-  GlobalOutlined,
   HistoryOutlined,
-  MobileOutlined,
   PaperClipOutlined,
   RollbackOutlined,
   SearchOutlined,
   SendOutlined,
   SmileOutlined,
   SwapOutlined,
-  WhatsAppOutlined,
 } from '@ant-design/icons'
 import { Alert, DatePicker, Dropdown, Input } from 'antd'
 import type { InputRef, MenuProps } from 'antd'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-import { AgentAvatar, BaseButton, BaseModal, CustomerAvatar } from '../../../components'
+import {
+  AgentAvatar,
+  BaseButton,
+  BaseModal,
+  ChannelLogo,
+  CustomerAvatar,
+} from '../../../components'
 import { TransferModal } from '../../../layouts/components/TransferModal'
 import type { LiveChat2Message, SessionEndReasonEntry } from '../../../types'
 import { formatAgentDisplay } from '../../../utils/agentDisplay'
@@ -88,18 +91,6 @@ function getChannelLabel(channel: LiveChat2SessionView['channel']) {
   }
 
   return channel
-}
-
-function getChannelIcon(channel: LiveChat2SessionView['channel']) {
-  if (channel === 'WhatsApp') {
-    return <WhatsAppOutlined />
-  }
-
-  if (channel === 'BankApp') {
-    return <MobileOutlined />
-  }
-
-  return <GlobalOutlined />
 }
 
 function getChannelClassName(channel: LiveChat2SessionView['channel']) {
@@ -641,7 +632,7 @@ export function LiveChat2ConversationWorkspace({
             role="img"
             title={getChannelLabel(session.channel)}
           >
-            {getChannelIcon(session.channel)}
+            <ChannelLogo channel={session.channel} variant="livechat" />
           </span>
           <strong>{session.customer.profile.name}</strong>
           <span className="livechat2-conversation__duration">

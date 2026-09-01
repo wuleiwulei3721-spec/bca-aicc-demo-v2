@@ -58,6 +58,15 @@ export const unidentifiedInboundCustomer: CustomerInformation = {
   verificationStatus: 'Unverified',
 }
 
+const unidentifiedWhatsAppCustomer: CustomerInformation = {
+  ...unidentifiedInboundCustomer,
+  accessChannel: 'WhatsApp',
+  profile: {
+    ...unidentifiedInboundCustomer.profile,
+    phoneNumber: '62 8123456789',
+  },
+}
+
 export const unidentifiedCustomerJourney: CustomerJourneyItem[] = []
 
 export const unidentifiedTicketingHistory: TicketHistoryItem[] = []
@@ -131,8 +140,7 @@ export const liveChatSessions: LiveChatSession[] = [
     id: 'live-chat-001',
     channel: 'WhatsApp',
     customer: {
-      ...unidentifiedInboundCustomer,
-      accessChannel: 'WhatsApp',
+      ...unidentifiedWhatsAppCustomer,
       accessDuration: '00:48',
     },
     conversation: [
@@ -306,8 +314,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
     accessSequence: 1,
     channel: 'WhatsApp',
     customer: {
-      ...unidentifiedInboundCustomer,
-      accessChannel: 'WhatsApp',
+      ...unidentifiedWhatsAppCustomer,
       accessDuration: '00:18',
     },
     historyMessages: [
@@ -561,8 +568,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
     accessSequence: 4,
     channel: 'WhatsApp',
     customer: {
-      ...unidentifiedInboundCustomer,
-      accessChannel: 'WhatsApp',
+      ...unidentifiedWhatsAppCustomer,
       accessDuration: '00:42',
     },
     historyMessages: [

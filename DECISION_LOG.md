@@ -30,6 +30,29 @@ Customer requirement on 2026-08-28; Code: `src/pages/call-management/Verificatio
 --------------------------------------------------
 
 Decision ID:
+DEC-052
+
+Module:
+External Outbound Approval
+
+Decision:
+Ordinary-Agent external outbound approvals use a fixed 10-second pending window in the fake TL approval popup. Expiry closes that popup, prompts the Agent to submit the request again, and does not model TL/SPV Ready availability. Per Agent, only the latest approved unused outbound request is valid; later approval invalidates earlier unused approvals.
+
+Reason:
+The Demo uses a local fake approver rather than a real TL/SPV state service. The requested flow needs a visible response deadline without adding a new approver-presence model, and stale approvals must not authorize an earlier destination after a later request has been approved.
+
+Impact:
+The approval store persists a `timed-out` status and schedules pending requests against their creation time. The Agent receives the standard right-bottom approval-result dialog with `Approval timed out. Please submit the outbound call request again.` Approved-request replacement is scoped to the requesting Agent; direct TL-and-above calls remain unchanged.
+
+Status:
+Implemented as front-end Demo behavior
+
+Source:
+Customer confirmation on 2026-09-01; Code: `src/utils/outboundApproval.ts`, `src/pages/TlOutboundApprovalPage.tsx`, `src/layouts/components/AgentToolbar.tsx`, `src/layouts/components/OutboundCallModal.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `DESIGN_SYSTEM.md`, `PROJECT_CONTEXT.md`, `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
 DEC-051
 
 Module:
@@ -42,7 +65,7 @@ Reason:
 The customer requested that external-number outbound use the dedicated outbound AUX state directly, while agent-to-agent outbound remains available without that state. Neither flow represents a customer record that needs to be opened automatically.
 
 Impact:
-The existing `Miss Information` / `Financial Risk` reason selection and ordinary-Agent TL approval transport/result UI remain part of number outbound; TL-and-above number outbound remains direct. Both call types create a background outbound voice interaction, keep the current workspace focused, enter `Talking`, and reuse the existing call lifecycle. The outbound skill is explicitly stored as `-` instead of the inbound skill label. Approval is separate from customer screen-pop behavior.
+The existing `Miss Information` / `Financial Risk` reason selection and ordinary-Agent TL approval transport/result UI remain part of number outbound; TL-and-above number outbound remains direct. Both call types enter `Talking`, reuse the existing call lifecycle, keep the current workspace focused, and create no `Outbound Call` workspace tab. The outbound skill is explicitly stored as `-` instead of the inbound skill label. Approval is separate from customer screen-pop behavior.
 
 Status:
 Implemented as front-end Demo behavior

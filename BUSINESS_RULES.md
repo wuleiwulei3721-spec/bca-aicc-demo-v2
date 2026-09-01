@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-08-31 18:59 +08:00
+Last updated: 2026-09-01 15:39 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -203,17 +203,18 @@ Outbound Call is available from the toolbar More menu.
 Outbound modal:
 
 - Tabs: `Call Number`, `Call Agent`.
-- Call Number accepts a phone number and requires one business reason: `Miss Information` or `Financial Risk`. Every role must be in an active AUX reason configured with `Support Outbound`. Ordinary Agents retain the existing TL/SPV approval request and approval result popup; TL-and-above accounts call directly. A completed Call Number action creates a background `Outbound Call` voice workspace carrying the dialed number without activating a customer screen pop, then the toolbar enters `Talking`.
-- Call Agent supports name / employee ID search and skill queue filtering, and shows only SPV and TL records for every role. It does not require an outbound AUX or external-number approval. Its `Call` action creates a background `Outbound Call` voice interaction without a customer screen pop and enters `Talking`.
+- Call Number accepts a phone number and requires one business reason: `Miss Information` or `Financial Risk`. Every role must be in an active AUX reason configured with `Support Outbound`. Ordinary Agents retain the TL/SPV approval request and approval result popup; TL-and-above accounts call directly. The TL popup counts down from 10 seconds for each pending approval and shows the number of additional pending requests when a queue exists. On timeout it closes, the Agent receives `Approval timed out. Please submit the outbound call request again.`, and the request must be submitted again. A completed Call Number action enters the toolbar `Talking` state with the dialed number without creating an `Outbound Call` workspace tab or activating a customer screen pop.
+- Call Agent supports name / employee ID search and skill queue filtering, and shows only SPV and TL records for every role. It does not require an outbound AUX or external-number approval. Its `Call` action enters `Talking` without creating an `Outbound Call` workspace tab or customer screen pop.
 - Agent row action is `Call`.
 
-Customer Information customer-phone outbound uses the same eligible AUX gate for every role. Any Customer Information card with a nonempty phone number can expose the compact `Call` action without requiring KBV completion or CRM identity; the action remains disabled until the agent enters an eligible AUX, then opens the `Outbound Reason` modal. Ordinary Agents retain the existing TL approval request and approval result popup, while TL-and-above accounts call directly; neither path activates a customer screen pop. The modal keeps `Miss Information` and `Financial Risk` as per-call business reasons.
+Customer Information customer-phone outbound uses the same eligible AUX gate for every role. Any Customer Information card with a nonempty phone number exposes the compact `Call` action on phone-row hover or keyboard focus without requiring KBV completion or CRM identity; the action remains disabled until the agent enters an eligible AUX, then opens the `Outbound Reason` modal. Ordinary Agents retain the TL approval request and approval result popup, while TL-and-above accounts call directly; neither path creates an `Outbound Call` workspace tab or activates a customer screen pop. The modal keeps `Miss Information` and `Financial Risk` as per-call business reasons.
 
 ### Outbound Number and Agent State
 
 - Number outbound is status-gated: the agent explicitly switches to an active AUX reason with `Support Outbound` before using either the toolbar `Call Number` action or the Customer Information phone action. Switching away from the eligible AUX disables the action; the existing approval record remains governed by its current number/reason scope.
 - Agent outbound is status-independent with respect to AUX: `Call Agent` remains callable from the signed-in workspace without switching to an outbound AUX. Both outbound number and agent calls display `Skill -` in the toolbar call context.
-- The outbound number and agent flows keep the current workspace focused and do not activate a customer screen pop. The created background outbound interaction still reuses the normal `Talking`, `Hold`, Hang Up, After Call Work, and ended-call lifecycle.
+- The outbound number and agent flows keep the current workspace focused, create no workspace tab, and do not activate a customer screen pop. The outbound interaction still reuses the normal `Talking`, `Hold`, Hang Up, After Call Work, and ended-call lifecycle.
+- Only the Agent's most recently approved unused external outbound request remains valid. Approving a later request invalidates all earlier unused approvals for that Agent; attempting an earlier request must submit a new approval.
 - Both flows remain front-end Demo simulations. They do not create a real dialer, CTI connection, customer lookup, or backend routing event.
 
 No real dialer integration exists.
@@ -249,6 +250,8 @@ Customer Information shows:
 - outbound action,
 - read-only Special Handling demo information.
 
+- The shared Customer Information access duration is a fixed channel-provided mock value. It uses `mm:ss` below one hour and `hh:mm:ss` at one hour or above; Email SLA and Social Media reply-SLA timers are separate operational timers and must not replace the card's access duration.
+
 Special Handling:
 
 - `Special Handling` is available only after a valid CRM CIS identifies the customer. Unidentified PSTN and Guest customers do not show it.
@@ -257,8 +260,8 @@ Special Handling:
 
 Customer identity refresh:
 
-- A customer without a valid CRM CIS is displayed as `Unidentified Customer`; Customer Information has no manual Customer ID input or refresh action. The card keeps the compact presentation: Phone, Email, and Customer Number rows remain with `-` placeholder values, without an avatar, CRM-dependent actions, customer-phone outbound, Segmentation, or Special Handling. Identified profiles use the mapping formats: country-coded Phone, Email with contact verification suffix, Customer Number, and Segmentation from the CRM membership/segmentation fields. When available, Special Handling sits at the end of the Segmentation row. The toolbar may still show the anonymous caller number or channel-side Guest context for call identification.
-- Verification display follows the customer mapping by channel and media: PSTN, BankApp Voice/Video, and Webchat Voice/Video show the verification status and `KBV` entry; registered BankApp text / Live Chat shows the verification status and `PIN` entry; WhatsApp, Email, Webchat text, Social Media, and guest BankApp text hide both the status and verification entry. WhatsApp uses the CRM WhatsApp contact as the Phone value when available.
+- A customer without a valid CRM CIS is displayed as `Unidentified Customer`; Customer Information has no manual Customer ID input or refresh action. The card keeps the compact presentation: Phone, Email, and Customer Number rows remain with `-` placeholder values, except that an unidentified WhatsApp interaction keeps its channel-provided WhatsApp number in the Phone row. Unidentified customers have no avatar, CRM-dependent actions, customer-phone outbound, Segmentation, or Special Handling. Identified profiles use the mapping formats: country-coded Phone, Email with contact verification suffix, Customer Number, and Segmentation from the CRM membership/segmentation fields. When available, Special Handling sits at the end of the Segmentation row. The toolbar may still show the anonymous caller number or channel-side Guest context for call identification.
+- Verification display follows the customer mapping by channel and media: PSTN, BankApp Voice/Video, and Webchat Voice/Video show the verification status and `KBV` entry; registered BankApp text / Live Chat shows the verification status and `PIN` entry; WhatsApp, Email, Webchat text, Social Media, and guest BankApp text hide both the status and verification entry. Social Media's supported identified state is `Identified, Unverified`; its customer profile may be populated, while the verification result and action remain hidden. WhatsApp uses the CRM WhatsApp contact as the Phone value when available.
 - After voice KBV meets its requirements and the agent selects `Apply Verified`, AICC marks the customer `Verified` and sends a same-origin CRM CIS `postMessage` request with a version and correlation ID.
 - The CRM demo bridge returns the CIS in a matching response. AICC accepts only matching, same-origin, non-empty CIS responses, then uses the CIS to load mock customer profile, journey, and ticket history.
 - Invalid origin, message type, correlation ID, empty CIS, unknown CIS, or timeout leaves the current customer information unchanged and shows a refresh failure message. A completed KBV remains `Verified`.
@@ -268,13 +271,13 @@ Customer identity refresh:
 
 Guest customer information:
 
-- Channel-side Guest status remains available for routing and call context, but the shared Customer Information card treats the customer as unidentified until a valid CRM CIS is available. It displays `Unidentified Customer`; Phone, Email, and Customer Number show `-`, while Segmentation and Special Handling are hidden.
+- Channel-side Guest status remains available for routing and call context, but the shared Customer Information card treats the customer as unidentified until a valid CRM CIS is available. It displays `Unidentified Customer`; Email and Customer Number show `-`, and Phone shows `-` except when an unidentified WhatsApp interaction supplies its channel phone number. Segmentation and Special Handling are hidden.
 - A valid CRM CIS identifies the customer and replaces the unidentified display with the CRM-backed name and profile fields. An identified customer is never displayed as a `Guest` customer in the Customer Information card.
 - Outbound Customer is a call-operation context rather than an unidentified inbound customer and may retain its dialed number for the outbound flow.
 
 Customer contact information:
 
-- Customer Information displays the phone number and email from the current CRM-backed customer profile. For WhatsApp interactions, the Phone value uses the CRM WhatsApp contact when available. After a valid CRM CIS is available, its header provides an `All Contact Details` viewer; it is read-only and does not dial, send, or open external links. The viewer is hidden while the customer is unidentified or a Guest.
+- Customer Information displays the phone number and email from the current CRM-backed customer profile. For WhatsApp interactions, the Phone value uses the CRM WhatsApp contact when available; an unidentified WhatsApp interaction may display its channel-provided WhatsApp number even without a CRM CIS. After a valid CRM CIS is available, its header provides an `All Contact Details` viewer; it is read-only and does not dial, send, or open external links. The viewer is hidden while the customer is unidentified or a Guest.
 - The viewer groups Phone, WhatsApp, BankApp, Email, Facebook, Instagram, X, TikTok, YouTube, LinkedIn, App Store, and Play Store. Each group presents fixed left channel identity and right-side CRM values; a channel can contain zero or more values, and no CRM value shows `-`.
 - Agents cannot add, edit, or delete contacts in the customer profile. Unidentified customers have no CRM contact values; after a valid CIS refresh, the viewer reads the refreshed CRM-backed profile.
 - The legacy Contact Management DEMO remains available only to local maintainers when `VITE_APP_VISIBILITY_PROFILE=local` and `VITE_ENABLE_CONTACT_EDIT=true`; it is local-only mock state, not a CRM write-back capability or customer-visible feature.
@@ -832,7 +835,7 @@ Important rules:
 - Voice and Video do not expose new-customer alert sound configuration and continue to use OpenEye ringing.
 - Channels Business Config `Agent Service Configuration` keeps the existing `Agent No Reply Warning (sec)` and `Agent No Reply Breach (sec)` labels, and uses colored dots matching Live Chat SLA warning and breach colors to clarify the threshold severity.
 - Business Types include `Source Business Code`.
-- Skill Queues require `Access Code`; it appears after `VDN` in list columns and Add / Edit / View forms. Keyword search includes Access Code.
+- Skill Queues require `Access Code`; it appears after `VDN` in list columns and Add / Edit / View forms. Keyword search includes Access Code. Optional `AHT Target` is a non-negative seconds value and optional `QM Target` is a percentage from `0` through `100`.
 - Skill Routing Rules use configured route elements and target skill queues.
 - Site Access Volume ratios should total 100% for the same channel + media combination.
 - Working Time Plans support work schedule, Ramadan schedule, holiday schedule, and special working plans. Their plan codes are local internal keys and are not displayed or user-maintained.

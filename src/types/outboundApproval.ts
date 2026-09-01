@@ -20,6 +20,7 @@ export type ExternalOperationApprovalStatus =
   | 'rejected'
   | 'cancelled'
   | 'consumed'
+  | 'timed-out'
 
 export interface ExternalOperationApprovalScope {
   customerId?: string
@@ -45,6 +46,7 @@ export type ExternalOperationApprovalEventKind =
   | 'consumed'
   | 'created'
   | 'rejected'
+  | 'timed-out'
 
 export interface ExternalOperationApprovalEvent {
   approval: ExternalOperationApproval

@@ -66,6 +66,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - the next successful Voice or Video incoming interaction closes all ended Voice / Video tabs and their CRM workspaces,
   - Hang Up caret appears only when the current Voice/Video media has an active abnormal reason; otherwise the normal Hang Up button has no caret.
   - `888888 / 888888` Transfer modal shows Agent, Skill, and IVR only. In voice `Transfer Agent` and Outbound Call > Call Agent, verify Agent only sees SPV/TL and no ordinary-agent data. `666666 / 666666` (TL Maya Lestari) shows `Transfer Number`, enables direct Transfer after entering a number, preserves the `000` failure path, and sees all transfer / outbound agent targets.
+  - Verify ordinary-Agent external outbound approval: the TL popup counts down 10 seconds, closes on timeout, and the Agent sees `Approval timed out. Please submit the outbound call request again.` Verify only the latest approved unused request can be called and neither number nor agent outbound creates an `Outbound Call` workspace tab.
   - Local-only `Channel Simulation > Transferred Call` opens a receiving-seat PSTN preview with the `Transferred from Maya Lestari.` banner and a green source-transfer icon after the customer channel duration.
 - Verify toolbar call context:
   - PSTN shows IVR and Skill,
@@ -162,7 +163,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Verify Routing Config:
   - Routing Config visible by default,
   - Channels Phone Accounts disabled,
-  - Skill Queues Access Code appears after VDN in list columns and Add / Edit / View forms, Keyword can search Access Code, and required validation works,
+  - Skill Queues Access Code appears after VDN in list columns and Add / Edit / View forms, Keyword can search Access Code, required validation works, and optional AHT Target / QM Target values can be configured,
   - Skill Routing Rules batch behavior,
   - Site Access Volume ratio validation,
   - Working Time Plans layout.

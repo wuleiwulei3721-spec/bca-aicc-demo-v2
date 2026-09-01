@@ -283,6 +283,7 @@ export interface SkillQueuePrompt {
 
 export interface SkillQueue {
   accessCode: string
+  ahtTargetSeconds?: number
   assignedAgentCount: number
   maxQueueCustomers: number
   nonWorkingTimeMessage: string
@@ -291,6 +292,7 @@ export interface SkillQueue {
   queueTimeoutMessage: string
   queueTimeoutMinutes: number
   queueWaitingMessage: string
+  qmTargetPercent?: number
   skillQueueCode: string
   skillQueueName: string
   status: RoutingConfigStatus

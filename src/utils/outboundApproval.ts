@@ -8,6 +8,7 @@ import type {
 const storageKey = 'bank1-aicc-external-operation-approvals'
 const broadcastChannelName = 'bank1-aicc-external-operation-approvals'
 const retentionMs = 30 * 60 * 1000
+export const externalOperationApprovalTimeoutMs = 10 * 1000
 const tabId = `approval-tab-${Math.random().toString(36).slice(2, 10)}`
 
 type ApprovalListener = () => void
@@ -15,6 +16,7 @@ type ApprovalEventListener = (event: ExternalOperationApprovalEvent) => void
 
 let approvals = readApprovals()
 let broadcastChannel: BroadcastChannel | null = null
+const approvalTimeouts = new Map<string, number>()
 const listeners = new Set<ApprovalListener>()
 const eventListeners = new Set<ApprovalEventListener>()
 
@@ -106,6 +108,7 @@ function publishEvent(event: ExternalOperationApprovalEvent) {
 
 function reloadApprovals(event?: ExternalOperationApprovalEvent) {
   approvals = readApprovals()
+  schedulePendingApprovalTimeouts()
   notifyListeners()
 
   if (event) {
@@ -128,6 +131,8 @@ function setApprovals(
   if (event) {
     publishEvent(event)
   }
+
+  schedulePendingApprovalTimeouts()
 }
 
 function scopeMatches(
@@ -150,7 +155,7 @@ function resolveApproval(
   id: string,
   status: Extract<
     ExternalOperationApproval['status'],
-    'approved' | 'cancelled' | 'consumed' | 'rejected'
+    'approved' | 'cancelled' | 'consumed' | 'rejected' | 'timed-out'
   >,
   reviewNote?: string,
 ) {
@@ -176,15 +181,62 @@ function resolveApproval(
     updatedAt: now,
   }
   const kind = status as ExternalOperationApprovalEventKind
-
-  setApprovals(
-    approvals.map((approval) =>
+  const nextApprovals = approvals
+    .filter(
+      (approval) =>
+        status !== 'approved' ||
+        approval.id === id ||
+        approval.agentEmployeeId !== nextApproval.agentEmployeeId ||
+        approval.status !== 'approved',
+    )
+    .map((approval) =>
       approval.id === id ? nextApproval : approval,
-    ),
-    { approval: nextApproval, kind },
-  )
+    )
+
+  setApprovals(nextApprovals, { approval: nextApproval, kind })
 
   return nextApproval
+}
+
+function schedulePendingApprovalTimeouts() {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  const pendingApprovalIds = new Set(
+    approvals
+      .filter((approval) => approval.status === 'pending')
+      .map((approval) => approval.id),
+  )
+
+  approvalTimeouts.forEach((timer, approvalId) => {
+    if (!pendingApprovalIds.has(approvalId)) {
+      window.clearTimeout(timer)
+      approvalTimeouts.delete(approvalId)
+    }
+  })
+
+  approvals
+    .filter((approval) => approval.status === 'pending')
+    .forEach((approval) => {
+      if (approvalTimeouts.has(approval.id)) {
+        return
+      }
+
+      const remainingMs =
+        approval.createdAt + externalOperationApprovalTimeoutMs - Date.now()
+
+      if (remainingMs <= 0) {
+        resolveApproval(approval.id, 'timed-out')
+        return
+      }
+
+      const timer = window.setTimeout(() => {
+        approvalTimeouts.delete(approval.id)
+        resolveApproval(approval.id, 'timed-out')
+      }, remainingMs)
+      approvalTimeouts.set(approval.id, timer)
+    })
 }
 
 function createApprovalId() {
@@ -198,6 +250,7 @@ function createApprovalId() {
 export function subscribeExternalOperationApprovals(listener: ApprovalListener) {
   getBroadcastChannel()
   listeners.add(listener)
+  schedulePendingApprovalTimeouts()
 
   return () => listeners.delete(listener)
 }

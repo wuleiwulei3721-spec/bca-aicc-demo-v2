@@ -341,7 +341,11 @@ export function CustomerInformationCard({
         ? {
             name: 'Unidentified Customer',
             email: '-',
-            phoneNumber: '-',
+            phoneNumber:
+              customer.accessChannel === 'WhatsApp' &&
+              hasCustomerContactValue(displayPhoneNumber)
+                ? displayPhoneNumber
+                : '-',
             cisNumber: '-',
             customerType: '',
           }
@@ -598,9 +602,7 @@ export function CustomerInformationCard({
             : undefined
         }
         onRequestOutbound={
-          hasOutboundNumber && hasOutboundAccess
-            ? openOutboundReasonModal
-            : undefined
+          hasOutboundNumber ? openOutboundReasonModal : undefined
         }
         onSendEmail={
           isCrmIdentified && hasEmail
@@ -608,14 +610,12 @@ export function CustomerInformationCard({
             : undefined
         }
         onStartOutbound={
-          hasOutboundNumber && hasOutboundAccess
-            ? startApprovedOutboundCall
-            : undefined
+          hasOutboundNumber ? startApprovedOutboundCall : undefined
         }
+        outboundDisabled={hasOutboundNumber && !hasOutboundAccess}
         outboundDisabledTitle={
           hasOutboundNumber &&
-          !hasOutboundAccess &&
-          (!requiresOutboundApproval || outboundRequestStatus === 'approved')
+          !hasOutboundAccess
             ? 'Switch to outbound AUX'
             : undefined
         }

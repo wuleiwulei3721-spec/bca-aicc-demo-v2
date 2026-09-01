@@ -72,6 +72,15 @@ function numberValue(value: unknown) {
   return typeof value === 'number' ? value : Number(value) || 0
 }
 
+function optionalNumberValue(value: unknown) {
+  if (value === null || value === undefined || value === '') {
+    return undefined
+  }
+
+  const parsedValue = Number(value)
+  return Number.isFinite(parsedValue) ? parsedValue : undefined
+}
+
 function booleanValue(value: unknown) {
   return value === true || value === 'true' || value === 'Yes'
 }
@@ -5969,10 +5978,23 @@ export function SkillQueuesPage() {
           render: (value: string) =>
             workTimeLabelMap.get(value) ?? 'Default 24/7',
         },
+        {
+          dataIndex: 'ahtTargetSeconds',
+          title: 'AHT Target (sec)',
+          width: 110,
+          render: (value?: number) => (value === undefined ? '-' : value),
+        },
+        {
+          dataIndex: 'qmTargetPercent',
+          title: 'QM Target (%)',
+          width: 105,
+          render: (value?: number) => (value === undefined ? '-' : value),
+        },
         { dataIndex: 'assignedAgentCount', title: 'Agents', width: 72 },
       ]}
       createDraft={() => ({
         accessCode: '',
+        ahtTargetSeconds: undefined,
         assignedAgentCount: 0,
         maxQueueCustomers: 60,
         nonWorkingTimeMessage:
@@ -5984,6 +6006,7 @@ export function SkillQueuesPage() {
         queueTimeoutMinutes: 10,
         queueWaitingMessage:
           'All agents are busy. Estimated waiting time is {estimatedWaitMinutes} minutes.',
+        qmTargetPercent: undefined,
         skillQueueCode: 'SQ_NEW',
         skillQueueName: '',
         status: 'Active',
@@ -5994,6 +6017,7 @@ export function SkillQueuesPage() {
       data={skillQueues}
       draftToRecord={(draft) => ({
         accessCode: stringValue(draft.accessCode),
+        ahtTargetSeconds: optionalNumberValue(draft.ahtTargetSeconds),
         assignedAgentCount: numberValue(draft.assignedAgentCount),
         maxQueueCustomers: numberValue(draft.maxQueueCustomers),
         nonWorkingTimeMessage: stringValue(draft.nonWorkingTimeMessage),
@@ -6002,6 +6026,7 @@ export function SkillQueuesPage() {
         queueTimeoutMessage: stringValue(draft.queueTimeoutMessage),
         queueTimeoutMinutes: numberValue(draft.queueTimeoutMinutes),
         queueWaitingMessage: stringValue(draft.queueWaitingMessage),
+        qmTargetPercent: optionalNumberValue(draft.qmTargetPercent),
         skillQueueCode: stringValue(draft.skillQueueCode),
         skillQueueName: stringValue(draft.skillQueueName),
         status: 'Active',
@@ -6047,6 +6072,7 @@ export function SkillQueuesPage() {
       modalWidth={820}
       recordToDraft={(record) => ({
         accessCode: record.accessCode,
+        ahtTargetSeconds: record.ahtTargetSeconds,
         assignedAgentCount: record.assignedAgentCount,
         maxQueueCustomers: record.maxQueueCustomers,
         nonWorkingTimeMessage: record.nonWorkingTimeMessage,
@@ -6055,6 +6081,7 @@ export function SkillQueuesPage() {
         queueTimeoutMessage: record.queueTimeoutMessage,
         queueTimeoutMinutes: record.queueTimeoutMinutes,
         queueWaitingMessage: record.queueWaitingMessage,
+        qmTargetPercent: record.qmTargetPercent,
         skillQueueCode: record.skillQueueCode,
         skillQueueName: record.skillQueueName,
         supportsVideo: record.supportsVideo ? 'true' : 'false',
@@ -6197,6 +6224,39 @@ export function SkillQueuesPage() {
             </label>
           )
         }
+        const renderOptionalNumberField = (
+          key: string,
+          label: string,
+          options?: {
+            max?: number
+            min?: number
+          },
+        ) => {
+          const value = optionalNumberValue(draft[key])
+
+          return (
+            <label className="routing-config-crud-modal__field routing-config-media-rule-modal__number-field routing-config-skill-queue-modal__target-field">
+              <span>{label}</span>
+              {isReadOnly ? (
+                <em>{value === undefined ? '-' : value}</em>
+              ) : (
+                <span className="routing-config-media-rule-modal__number-control">
+                  <InputNumber
+                    max={options?.max}
+                    min={options?.min ?? 0}
+                    value={value}
+                    onChange={(nextValue) =>
+                      setDraftValue(
+                        key,
+                        nextValue === null ? undefined : Number(nextValue),
+                      )
+                    }
+                  />
+                </span>
+              )}
+            </label>
+          )
+        }
         return (
           <div className="routing-config-skill-queue-modal">
             <section className="routing-config-media-rule-modal__section">
@@ -6219,6 +6279,15 @@ export function SkillQueuesPage() {
                   required: true,
                 })}
                 {renderWorkTimePlanField()}
+                {renderOptionalNumberField(
+                  'ahtTargetSeconds',
+                  'AHT Target (sec)',
+                )}
+                {renderOptionalNumberField(
+                  'qmTargetPercent',
+                  'QM Target (%)',
+                  { max: 100 },
+                )}
                 {renderNumberField('assignedAgentCount', 'Assigned Agents', 'agents', {
                   readOnly: true,
                 })}
