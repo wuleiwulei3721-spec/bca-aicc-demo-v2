@@ -29,6 +29,13 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
 
+### 2026-09-02 - Customer Information CIS label hotfix release
+
+- 将客户信息卡片的客户号图标文案、无障碍标签和悬浮提示由 `SIC` 修正为 `CIS`。
+- 本地提交：`472538d`。
+- 已使用客户可见配置发布至 Vercel，正式地址：`https://netinfo-aicc-demo-v2.vercel.app`。
+- GitHub 推送因网络连接超时暂未完成，待网络恢复后补推 `472538d`。
+
 ### 2026-09-01 19:38 +08:00 - Customer Production Release
 
 修改页面或文件：
