@@ -261,11 +261,11 @@ export function CustomerInformationPanel({
               </div>
               <div className="aicc-customer-info__fact-row">
                 <span
-                  aria-label="SIC"
+                  aria-label="CIS"
                   className="aicc-customer-info__fact-icon aicc-customer-info__fact-icon--sic"
-                  title="SIC"
+                  title="CIS"
                 >
-                  SIC
+                  CIS
                 </span>
                 <span className="aicc-customer-info__fact-value">
                   {customerNumber}
