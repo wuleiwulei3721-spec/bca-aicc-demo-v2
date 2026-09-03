@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-09-02 18:22 +08:00
+最后更新：2026-09-03 09:46 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,40 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-09-03 09:46 +08:00 - Customer Production Release
+
+修改页面或文件：
+
+- 发布提交 `eff97ca`（`feat: refine agent controls and management settings`）
+- Vercel production deployment
+- `DEV_LOG.md`
+
+修改原因：
+
+- 发布当前已验证的 Global Control、审批流程、Quick Replies 与客户工作台改动至客户可见生产环境。
+
+修改结果：
+
+- 因 GitHub HTTPS 链路不可用，提交 `eff97ca` 当前保留在本地 `main`，待网络恢复后补推；生产部署按用户授权直接使用该干净的本地提交执行。
+- 使用 `vercel --prod --yes --build-env VITE_APP_VISIBILITY_PROFILE=customer` 部署生产版本。
+- 正式 URL：`https://netinfo-aicc-demo-v2.vercel.app`
+- Deployment URL：`https://netinfo-aicc-demo-v2-7n4o7crln-wl-demo-s-projects.vercel.app`
+- Vercel Inspect：`https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/GxaLxY5hPyd2u1WzvGwMfnF7UfqB`
+- 生产构建使用 `VITE_APP_VISIBILITY_PROFILE=customer`，部署状态为 Completed，正式别名已绑定。
+
+验证结果：
+
+- 发布前 `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 与 `git diff --check` 通过；Build 仅保留既有 large chunk warning。
+- Vercel 远程 `npm run build` 通过。
+
+回滚说明：
+
+- 在 Vercel 将正式别名指回上一稳定 Deployment，或重新部署此前的已提交版本。
+
+当前风险点：
+
+- 生产版本已发布，但 GitHub `origin/main` 尚未包含本次运行代码；网络恢复后必须补推 `eff97ca` 及本条发布记录。
 
 ### 2026-09-02 18:22 +08:00 - 全局控制自动登出时长改为固定单选
 
