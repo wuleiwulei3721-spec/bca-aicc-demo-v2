@@ -19,6 +19,9 @@ export function NextBestActionCard({
 
   return (
     <SectionCard
+      className={
+        visibleItems.length === 0 ? 'inbound-section-card--empty' : undefined
+      }
       expandable
       expanded={expanded}
       extra={<DownOutlined />}

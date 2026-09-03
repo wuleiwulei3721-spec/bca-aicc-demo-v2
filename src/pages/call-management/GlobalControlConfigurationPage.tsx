@@ -9,6 +9,7 @@ import { formatCallManagementDateTime } from '../../utils/audit'
 import type {
   GlobalControlAnswerMode,
   GlobalControlConfiguration,
+  GlobalControlIdleLogoutMinutes,
   GlobalControlSignInStatus,
 } from '../../types'
 
@@ -26,6 +27,15 @@ const signInStatusOptions: Array<{
 }> = [
   { label: 'Ready', value: 'ready' },
   { label: 'Not Ready', value: 'not-ready' },
+]
+
+const idleLogoutTimeoutOptions: Array<{
+  label: string
+  value: GlobalControlIdleLogoutMinutes
+}> = [
+  { label: '30', value: 30 },
+  { label: '60', value: 60 },
+  { label: '120', value: 120 },
 ]
 
 function normalizeNumber(value: number | null, fallback: number, min: number) {
@@ -75,17 +85,19 @@ function NumberField({
   )
 }
 
-interface SelectFieldProps<Value extends string> {
+interface SelectFieldProps<Value extends string | number> {
   label: string
   options: Array<{ label: string; value: Value }>
+  unit?: string
   value: Value
   onChange: (value: Value) => void
 }
 
-function SelectField<Value extends string>({
+function SelectField<Value extends string | number>({
   label,
   onChange,
   options,
+  unit,
   value,
 }: SelectFieldProps<Value>) {
   return (
@@ -93,7 +105,14 @@ function SelectField<Value extends string>({
       <span>
         {label} <strong>*</strong>
       </span>
-      <Select options={options} value={value} onChange={onChange} />
+      {unit ? (
+        <div className="global-control-config__number-control">
+          <Select options={options} value={value} onChange={onChange} />
+          <em>{unit}</em>
+        </div>
+      ) : (
+        <Select options={options} value={value} onChange={onChange} />
+      )}
     </label>
   )
 }
@@ -148,20 +167,14 @@ export function GlobalControlConfigurationPage() {
       errors.push('Auto Cancel ACW Duration must be greater than 0 seconds.')
     }
 
-    if (config.idleAutoLogOutMinutes < 0) {
-      errors.push('System Idle Log-out Timeout cannot be less than 0 minutes.')
+    if (config.idleWarningMinutes <= 0) {
+      errors.push('Auto Log-out Warning Lead Time must be greater than 0 minutes.')
     }
 
-    if (config.idleAutoLogOutMinutes > 0) {
-      if (config.idleWarningMinutes <= 0) {
-        errors.push('Auto Log-out Warning Lead Time must be greater than 0 minutes.')
-      }
-
-      if (config.idleWarningMinutes >= config.idleAutoLogOutMinutes) {
-        errors.push(
-          'Auto Log-out Warning Lead Time must be less than System Idle Log-out Timeout.',
-        )
-      }
+    if (config.idleWarningMinutes >= config.idleAutoLogOutMinutes) {
+      errors.push(
+        'Auto Log-out Warning Lead Time must be less than System Idle Log-out Timeout.',
+      )
     }
 
     if (config.maxDigitalMediaServices <= 0) {
@@ -281,9 +294,9 @@ export function GlobalControlConfigurationPage() {
 
           <BaseCard compact title="Inactivity Control">
             <div className="global-control-config__row">
-              <NumberField
+              <SelectField
                 label="System Idle Log-out Timeout"
-                min={0}
+                options={idleLogoutTimeoutOptions}
                 unit="min"
                 value={config.idleAutoLogOutMinutes}
                 onChange={(value) =>
@@ -291,9 +304,7 @@ export function GlobalControlConfigurationPage() {
                 }
               />
               <NumberField
-                disabled={config.idleAutoLogOutMinutes === 0}
                 label="Auto Log-out Warning Lead Time"
-                required={config.idleAutoLogOutMinutes > 0}
                 unit="min"
                 value={config.idleWarningMinutes}
                 onChange={(value) => updateConfig('idleWarningMinutes', value)}

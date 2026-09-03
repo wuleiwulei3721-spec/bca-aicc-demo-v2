@@ -14,6 +14,7 @@ import {
   externalOperationApprovalTimeoutMs,
   getExternalOperationApprovalsSnapshot,
   rejectExternalOperationApproval,
+  startExternalOperationApprovalReview,
   subscribeExternalOperationApprovals,
 } from '../utils/outboundApproval'
 
@@ -93,14 +94,26 @@ export function TlOutboundApprovalPage() {
   const initialApproval = approvals.find(
     (item) => item.id === initialRequestId,
   )
+  const approvalId = approval?.id
   const secondsRemaining = approval
     ? Math.max(
         0,
         Math.ceil(
-          (approval.createdAt + externalOperationApprovalTimeoutMs - now) / 1000,
+          ((approval.reviewStartedAt ?? now) +
+            externalOperationApprovalTimeoutMs -
+            now) /
+            1000,
         ),
       )
     : 0
+
+  useEffect(() => {
+    if (!approvalId) {
+      return
+    }
+
+    startExternalOperationApprovalReview(approvalId)
+  }, [approvalId])
 
   useEffect(() => {
     if (!approval) {
@@ -114,7 +127,6 @@ export function TlOutboundApprovalPage() {
 
   useEffect(() => {
     if (
-      initialApproval?.status !== 'timed-out' ||
       initialApproval?.status !== 'timed-out'
     ) {
       return undefined

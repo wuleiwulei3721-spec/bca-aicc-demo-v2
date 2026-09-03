@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-09-01 19:38 +08:00
+最后更新：2026-09-02 18:22 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,116 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-09-02 18:22 +08:00 - 全局控制自动登出时长改为固定单选
+
+修改页面或文件：
+
+- `src/pages/call-management/GlobalControlConfigurationPage.tsx`
+- `src/types/globalControlConfiguration.ts`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求将 Global Control 的系统无操作自动登出时长改为下拉单选，固定可选时长为 30、60、120 分钟。
+
+修改结果：
+
+- `System Idle Log-out Timeout` 改为必填单选，显示 `30`（默认）、`60`、`120`，并在控件右侧固定显示单位 `min`，与同页数值输入控件对齐。
+- 移除 `0` 分钟关闭自动登出的配置路径；预警时长始终必填，并继续校验小于选定超时时长。
+
+验证结果：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 通过；Build 仅保留既有 large chunk warning。
+- 浏览器冒烟检查通过：默认显示 `30 min`，下拉菜单提供 30、60、120 分钟三个选项。
+
+回滚说明：
+
+- 恢复数值输入、`0` 分钟分支及预警字段的禁用逻辑即可。
+
+当前风险点：
+
+- 当前仍为浏览器内前端计时；真实生产超时与会话失效仍需由认证服务强制执行。
+
+### 2026-09-02 11:32 +08:00 - 客户信息 TL 外呼状态修正
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `DEV_LOG.md`
+
+修改结果：
+
+- 客户信息电话行的 `approved` 状态只反映普通 Agent 的真实审批通过结果。
+- TL 在外呼原因弹框中选择原因不会提前将电话行操作改为 `Call`；TL 必须在弹框内点击 `Call` 后直接外呼。
+
+当前风险点：
+
+- 客户信息和工具栏号码外呼共用审批存储，但保留各自的原因弹框状态，仍为前端 Demo 行为。
+
+### 2026-09-02 11:18 +08:00 - TL 审批弹框同步与倒计时起点修正
+
+修改页面或文件：
+
+- `src/types/outboundApproval.ts`
+- `src/utils/outboundApproval.ts`
+- `src/pages/TlOutboundApprovalPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `BUSINESS_RULES.md`
+- `DESIGN_SYSTEM.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户确认 TL 审批页应在申请后立即显示审批弹框，10 秒倒计时必须从弹框实际打开时开始，而非坐席提交申请时开始。
+
+修改结果：
+
+- 审批订阅在独立 TL 窗口挂载时强制刷新持久化待审记录，避免窗口加载到旧快照而只显示背景。
+- TL 审批弹框首次显示时写入 `reviewStartedAt` 并启动 10 秒超时；坐席页在此之前不启动超时。
+
+验证结果：
+
+- 浏览器烟测：普通 Agent 提交外呼申请后立即进入 TL 页面，审批弹框显示申请号码、原因、Approve / Reject，并从 `00:10` 开始倒计时。
+
+回滚说明：
+
+- 移除 `reviewStartedAt` 及 TL 页面启动审核的副作用，即可回到申请提交即开始倒计时的旧行为。
+
+当前风险点：
+
+- 审批记录和跨窗口同步仍是同浏览器前端 Demo，不包含真实服务端审批队列或跨设备一致性。
+
+### 2026-09-02 09:56 +08:00 - Quick Replies Length Limits
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2QuickRepliesPanel.tsx`
+- `src/pages/call-management/CommonPhraseManagementPage.tsx`
+- `BUSINESS_RULES.md`、`DESIGN_SYSTEM.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DECISION_LOG.md`
+
+修改原因：
+
+- 客户要求个人常用语和公共常用语维护中的快捷代码限制为 50 字符，快捷回复限制为 2000 字符。
+
+修改结果：
+
+- Personal `My Phrases` 和 Call Management `Common Phrase` 均复用共享 `LimitedInput` / `LimitedTextArea`，展示与 Ticket 一致的字符计数并截断超限输入。
+- 两处保存校验同步保留 50 / 2000 字符兜底；公共常用语与个人常用语的维护范围和读写边界保持不变。
+
+验证结果：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 和 `git diff --check` 通过；Build 仅保留既有大 bundle 提示。
+- 浏览器冒烟验证通过：公共常用语弹窗和个人常用语新增表单均显示 `0 / 50`、`0 / 2000`；分别输入 51 和 2001 个字符后，实际值被截断为 50 和 2000。
+
+回滚说明：
+
+- 恢复两个表单的长度常量、共享限长组件引用和对应知识库记录即可。
+
+当前风险点：
+
+- 个人常用语仍为当前浏览器会话内的本地 Demo 数据，不包含跨会话持久化。
 
 ### 2026-09-02 - Customer Information CIS label hotfix release
 

@@ -11,7 +11,11 @@ import {
   SearchOutlined,
 } from '@ant-design/icons'
 import { Input } from 'antd'
-import { BaseButton } from '../../../components'
+import {
+  BaseButton,
+  LimitedInput,
+  LimitedTextArea,
+} from '../../../components'
 import type {
   LiveChat2QuickReplyGroup,
   LiveChat2QuickReplyPhrase,
@@ -35,6 +39,8 @@ interface PhraseFormState {
 
 const myScope: LiveChat2QuickReplyScope = 'my'
 const publicScope: LiveChat2QuickReplyScope = 'public'
+const QUICK_REPLY_CODE_MAX_LENGTH = 50
+const QUICK_REPLY_TEXT_MAX_LENGTH = 2000
 
 function createQuickReplyId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.round(Math.random() * 1000)}`
@@ -78,12 +84,20 @@ function getPhraseValidationError({
     return 'Code is required.'
   }
 
+  if (normalizedCode.length > QUICK_REPLY_CODE_MAX_LENGTH) {
+    return `Code must be ${QUICK_REPLY_CODE_MAX_LENGTH} characters or fewer.`
+  }
+
   if (!/^[a-z0-9]+$/i.test(normalizedCode)) {
     return 'Use letters or numbers only.'
   }
 
   if (!normalizedText) {
     return 'Phrase is required.'
+  }
+
+  if (normalizedText.length > QUICK_REPLY_TEXT_MAX_LENGTH) {
+    return `Phrase must be ${QUICK_REPLY_TEXT_MAX_LENGTH} characters or fewer.`
   }
 
   const isDuplicateCode = targetGroup.phrases.some(
@@ -255,8 +269,9 @@ export function LiveChat2QuickRepliesPanel({
 
     return (
       <div className="livechat2-quick-reply-panel__phrase-form">
-        <Input
+        <LimitedInput
           aria-label="Quick reply code"
+          maxLength={QUICK_REPLY_CODE_MAX_LENGTH}
           placeholder="Code"
           size="small"
           value={phraseForm.code}
@@ -269,9 +284,10 @@ export function LiveChat2QuickRepliesPanel({
           }
           onPressEnter={handleSubmitPhrase}
         />
-        <Input.TextArea
+        <LimitedTextArea
           aria-label="Quick reply phrase"
           autoSize={{ maxRows: 4, minRows: 2 }}
+          maxLength={QUICK_REPLY_TEXT_MAX_LENGTH}
           placeholder="Phrase"
           size="small"
           value={phraseForm.text}

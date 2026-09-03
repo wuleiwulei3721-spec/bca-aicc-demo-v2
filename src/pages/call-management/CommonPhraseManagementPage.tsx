@@ -20,6 +20,7 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  LimitedInput,
   LimitedTextArea,
 } from '../../components'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
@@ -45,7 +46,8 @@ interface CommonPhraseDraft {
 }
 
 const allCategoriesKey = '__all__'
-const COMMON_PHRASE_MAX_LENGTH = 100
+const COMMON_PHRASE_SHORTCUT_CODE_MAX_LENGTH = 50
+const COMMON_PHRASE_MAX_LENGTH = 2000
 
 const defaultFilters: CommonPhraseFilters = {
   phraseText: '',
@@ -217,6 +219,10 @@ export function CommonPhraseManagementPage() {
 
     if (!shortcutCode) {
       errors.push('Shortcut Code is required.')
+    } else if (shortcutCode.length > COMMON_PHRASE_SHORTCUT_CODE_MAX_LENGTH) {
+      errors.push(
+        `Shortcut Code must be ${COMMON_PHRASE_SHORTCUT_CODE_MAX_LENGTH} characters or fewer.`,
+      )
     } else {
       const normalizedShortcutCode = normalizeValue(shortcutCode)
       const hasDuplicateShortcutCode = entries.some(
@@ -774,7 +780,8 @@ export function CommonPhraseManagementPage() {
           )}
           <div className="routing-config-crud-modal__form">
             <AdminFormField label="Shortcut Code" required>
-              <Input
+              <LimitedInput
+                maxLength={COMMON_PHRASE_SHORTCUT_CODE_MAX_LENGTH}
                 value={draft.shortcutCode}
                 onChange={(event) =>
                   updateDraft('shortcutCode', event.target.value)

@@ -407,13 +407,11 @@ export function CustomerInformationCard({
   })
   const [isSpecialHandlingOpen, setIsSpecialHandlingOpen] = useState(false)
   const outboundRequestStatus: CustomerOutboundRequestStatus =
-    !requiresOutboundApproval && outboundReason
-      ? 'approved'
-      : isOutboundApprovalPending
-        ? 'requesting'
-        : isOutboundApproved
-          ? 'approved'
-          : 'idle'
+    isOutboundApprovalPending
+      ? 'requesting'
+      : isOutboundApproved
+        ? 'approved'
+        : 'idle'
   const shouldShowIvrJourney =
     showIvrJourney ??
     (customer.accessChannel === 'Phone' ||
@@ -480,7 +478,6 @@ export function CustomerInformationCard({
 
   const openOutboundReasonModal = () => {
     if (
-      !hasOutboundAccess ||
       (requiresOutboundApproval && isOutboundApprovalPending) ||
       outboundRequestStatus === 'approved'
     ) {
@@ -503,7 +500,6 @@ export function CustomerInformationCard({
   const requestOutboundApproval = () => {
     if (
       !outboundReason ||
-      !hasOutboundAccess ||
       (requiresOutboundApproval &&
         (isOutboundApprovalPending || isOutboundApproved))
     ) {
@@ -612,9 +608,14 @@ export function CustomerInformationCard({
         onStartOutbound={
           hasOutboundNumber ? startApprovedOutboundCall : undefined
         }
-        outboundDisabled={hasOutboundNumber && !hasOutboundAccess}
+        outboundDisabled={
+          hasOutboundNumber &&
+          outboundRequestStatus === 'approved' &&
+          !hasOutboundAccess
+        }
         outboundDisabledTitle={
           hasOutboundNumber &&
+          outboundRequestStatus === 'approved' &&
           !hasOutboundAccess
             ? 'Switch to outbound AUX'
             : undefined

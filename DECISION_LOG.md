@@ -1,6 +1,6 @@
 # Decision Log
 
-Last updated: 2026-08-31 18:18 +08:00
+Last updated: 2026-09-02 09:45 +08:00
 
 This document records important product and system design decisions that can be confirmed from the current codebase, project documents, `DEV_LOG.md`, and readable Git history. It intentionally omits bug fixes, visual micro-adjustments, temporary test data, copy-only tweaks, and implementation details that do not affect product direction.
 
@@ -82,7 +82,7 @@ Module:
 Call Management / Audit and Input Standards
 
 Decision:
-Phone and WhatsApp are treated as one phone-number channel group in Blacklist and Priority List batch creation. They may be selected together and share Country Code, Phone Number, phone-number matching, and Country Code list display; other channels are mutually exclusive with that group but remain multi-selectable among themselves. In Blacklist, only Phone selected alone supports both Restriction Policies; WhatsApp, Phone + WhatsApp mixed batches, and non-phone channels use fixed `Prohibit Transfer to Agent`. Management audit labels use `Created By` / `Created Time` and `Updated By` / `Updated Time`; `Modified` is not used as a second label for the same last-update meaning. Call Management timestamps display `DD-MM-YYYY HH:MM:SS`. Standard Remark inputs default to 2000 characters, while Sensitive Word is limited to 100, Common Phrase and Question Name are limited to 100, Common Link Website Name / Website URL are limited to 200, Quick Action Action Name / Link Address are limited to 200, and shared Ticket fields retain their specific limits.
+Phone and WhatsApp are treated as one phone-number channel group in Blacklist and Priority List batch creation. They may be selected together and share Country Code, Phone Number, phone-number matching, and Country Code list display; other channels are mutually exclusive with that group but remain multi-selectable among themselves. In Blacklist, only Phone selected alone supports both Restriction Policies; WhatsApp, Phone + WhatsApp mixed batches, and non-phone channels use fixed `Prohibit Transfer to Agent`. Management audit labels use `Created By` / `Created Time` and `Updated By` / `Updated Time`; `Modified` is not used as a second label for the same last-update meaning. Call Management timestamps display `DD-MM-YYYY HH:MM:SS`. Standard Remark inputs default to 2000 characters, while Quick Reply Code is limited to 50, Common Phrase / Quick Reply text to 2000, Sensitive Word and Question Name to 100, Common Link Website Name / Website URL to 200, Quick Action Action Name / Link Address to 200, and shared Ticket fields retain their specific limits.
 
 Reason:
 The customer confirmed that WhatsApp identifiers are phone numbers and requested consistent management-console time, audit-user, and input-limit behavior. Reusing one phone-number group keeps the batch form and duplicate model understandable across both lists.

@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-09-01 15:39 +08:00
+Last updated: 2026-09-02 09:45 +08:00
 
 ## 1. Overall Status
 
@@ -55,10 +55,10 @@ This repository is still a demo application:
 - Single-action Sign In; the former service-mode selector is removed from the profile menu and header.
 - Profile menu follows explicit Unsigned / Not Ready / Ready / Pre-AUX / AUX state branches, with current status displayed beside the team name.
 - Status after Sign-in is shared Global Control Configuration, defaults to Not Ready, and applies to the next sign-in in the current browser session.
-- Global Control labels `System Idle Log-out Timeout` and `Auto Log-out Warning Lead Time` distinguish the system timeout from its pre-log-out warning and from the agent toolbar Sign Out action. A timeout value of `0` disables idle auto log-out and disables warning-lead-time validation and input.
+- Global Control `System Idle Log-out Timeout` is a single-select field with `30` minutes by default and `60` / `120` minute alternatives. `Auto Log-out Warning Lead Time` remains required and must be less than the selected timeout.
 - Global Control `Digital Media Capacity` configures active service capacity through `Max Digital Media Services` (default 3) and Live Chat Current ended-session retention through `Max Live Chat Ended Session Retention` (default 10).
 - Header Log Out first blocks active call or Live Chat services; when no service is active, it blocks signed-in Ready and Pre-AUX states until the agent switches to Not Ready or AUX. Unsigned, Not Ready, and AUX states then use a confirmation dialog.
-- When configured above `0`, idle system log-out monitors Unsigned, Not Ready, and AUX states, resets on window activity or warning dismissal, shows a pre-expiry warning, and returns to Login at the configured timeout. A value of `0` disables the timer and warning.
+- Idle system log-out monitors Unsigned, Not Ready, and AUX states, resets on window activity or warning dismissal, shows a pre-expiry warning, and returns to Login at the selected timeout.
 - Sign out confirmation and active-service block.
 - AUX reason menu from AUX Reason Management.
 - All Not Ready states expose AUX Reason options; if a customer service remains active during After Call Work, choosing one displays Pre-AUX while the saved Global Control countdown continues and then automatically enters AUX.
@@ -76,7 +76,7 @@ This repository is still a demo application:
 - Timer display.
 - Global Control `Auto Cancel ACW Duration` drives the next voice/video After Call Work timer.
 - Toolbar More menu currently exposes Outbound Call; toolbar display settings are hidden from the More menu.
-- Customer-number Outbound Call and Customer Information phone outbound require an active AUX configured with `Support Outbound` and retain `Miss Information` or `Financial Risk` as the per-call reason. Ordinary Agents retain the TL approval request and approval result popup; TL-and-above accounts call directly. A pending ordinary-Agent approval counts down from 10 seconds in the TL popup and shows additional pending-request count when queued; on timeout the popup closes and the agent receives `Approval timed out. Please submit the outbound call request again.` Completed number calls enter `Talking` without creating or activating an `Outbound Call` workspace tab. The Call Number form uses aligned controls.
+- Customer-number Outbound Call and Customer Information phone outbound retain `Miss Information` or `Financial Risk` as the per-call reason. Ordinary Agents retain the TL approval request and approval result popup; TL-and-above accounts call directly. The external outbound AUX is required when placing a call, not when submitting its approval request. A pending ordinary-Agent approval starts its 10-second countdown only after the TL popup renders and shows additional pending-request count when queued; on timeout the popup closes and the agent receives `Approval timed out. Please submit the outbound call request again.` Completed number calls enter `Talking` without creating or activating an `Outbound Call` workspace tab. The Call Number form uses aligned controls.
 - `Outbound Call > Call Agent` shows only SPV and TL entries for every role. Calling an agent does not require an outbound AUX, enters `Talking` without creating an `Outbound Call` workspace tab, and keeps the current workspace selected.
 - Call identification and Skill display during call lifecycle; both outbound call types display `Skill -`.
 - An Agent may use only the most recently approved, unused outbound request; a later approved request invalidates earlier unused approvals and requires a new application for those calls.
@@ -168,8 +168,8 @@ This repository is still a demo application:
 - End Service uses a split-button only when DM has an active abnormal end reason; otherwise it remains the normal confirmation-based End Service action.
 - Customer-ended mock session handling.
 - Transfer modal from voice and conversation workspaces; ordinary Agents see only SPV and TL transfer targets, while TL and other roles see all targets.
-- Quick Replies right-side tab.
-- Public Phrases in Quick Replies are sourced from Call Management common phrase configuration.
+- Quick Replies right-side tab, with local My Phrases maintenance using 50-character Shortcut Code and 2000-character Quick Reply limits.
+- Public Phrases in Quick Replies are sourced read-only from Call Management common phrase configuration.
 - Agent replies are blocked before sending when they match Call Management sensitive words.
 - Message Record right-side tab with `DD-MM-YYYY HH:MM:SS` query and result timestamps.
 
@@ -268,7 +268,7 @@ Implemented behaviors:
 - Blacklist required single-channel batch add with a Status switch defaulting to Enabled, shared `62` Phone / WhatsApp country code and phone-number mode, Phone-only selectable restriction policies, fixed WhatsApp and non-phone `Prohibit Transfer to Agent` policy, a Country Code list column (`-` for non-phone channels), duplicate preview/skip, inline enabled/disabled list Status switch, status filtering, 2000-character Reason, and delete. Seeded Created By values use `1234-Admin`.
 - Priority list add / batch add / delete with required 2000-character Reason, single-channel query and batch-add selectors, shared Phone / WhatsApp Country Code (`62` default) / Phone Number mode, Country Code list column, duplicate validation that excludes Match Rule, and seeded Created By values shown as `1234-Admin`.
 - Priority Match Rule filtering.
-- Common phrase category and phrase CRUD, with a shared Ticket-style 100-character Common Phrase limit plus Updated Time / Updated By list metadata.
+- Common phrase category and phrase CRUD, with a shared Ticket-style 50-character Shortcut Code and 2000-character Common Phrase limits plus Updated Time / Updated By list metadata.
 - Common phrase batch move between categories.
 - Public phrase linkage into the Live Chat Quick Replies tab.
 - Common link CRUD for 200-character Website Name / Website URL fields, remark, Updated Time, and Updated By; the list places update time before update person at the end.

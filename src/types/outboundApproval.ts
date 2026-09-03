@@ -34,6 +34,7 @@ export interface ExternalOperationApproval extends ExternalOperationApprovalScop
   agentName: string
   createdAt: number
   id: string
+  reviewStartedAt?: number
   reviewNote?: string
   resolvedAt?: number
   status: ExternalOperationApprovalStatus

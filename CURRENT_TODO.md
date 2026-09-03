@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-08-31 18:59 +08:00
+Last updated: 2026-09-02 09:45 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -145,7 +145,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Global Control Configuration Save / Reset, its effect on the next sign-in, and DM active-service / ended-session-retention limits,
   - Blacklist: Batch Add Status switch defaults to Enabled and saves its selected state, enabled/disabled status filter and inline Status switch, single Channel selector, shared Phone / WhatsApp country-code (`62` default, editable) / local-number batch mode, Phone-only selectable restriction policies, fixed WhatsApp and non-phone `Prohibit Transfer to Agent` policy, a Country Code list column (`-` for non-phone channels), duplicate preview/skip, required 2000-character Reason, and one-channel Identifier batch behavior,
   - Priority List: single Channel selectors in the query and Batch Add form, shared Phone / WhatsApp Country Code (`62` default) / Phone Number mode, Country Code list column, seeded Created By values shown as `1234-Admin`, required 2000-character Reason, and duplicate validation by Phone-like `Channel + Country Code + Identifier` or non-phone `Channel + Identifier` regardless of Match Rule,
-  - Common Phrase 100-character input limit, shared count style, and Updated Time / Updated By list columns,
+  - Common Phrase 50-character Shortcut Code / 2000-character Common Phrase limits, shared count style, and Updated Time / Updated By list columns,
   - Common Link audit columns, 200-character Website Name / Website URL fields, and 2000-character Remark,
   - Quick Action Management with 200-character Action Name / Link Address fields,
   - Common Number audit columns and 2000-character Remark,

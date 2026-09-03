@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-09-01 15:39 +08:00
+Last updated: 2026-09-02 09:45 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -37,7 +37,7 @@ Implemented status model:
 - The current demo has fixed internal full-channel capability. Voice/video and text handoffs are gated only by `Ready` state and active-service guards; no sign-in-mode mismatch warning is shown.
 - A Not Ready sign-in opens no Live Chat service or default customer session. The first switch to Ready opens the fixed `Live Chat` tab and seeds default live chat demo sessions.
 - Saving or resetting Global Control Configuration changes the status applied by the next sign-in and immediately synchronizes the Live Chat ended-session retention limit in the current browser session. Refresh resets the demo configuration to its mock defaults.
-- Global Control `System Idle Log-out Timeout` is a system-session inactivity setting. A value of `0` disables automatic log-out, so `Auto Log-out Warning Lead Time` is disabled, not validated, and not applied. When the timeout is greater than `0`, the warning lead time becomes required and must be greater than `0` and less than the timeout. Neither setting represents or changes the agent toolbar `Sign Out` action.
+- Global Control `System Idle Log-out Timeout` is a required single-select system-session inactivity setting with `30` (default), `60`, and `120` minute values. `Auto Log-out Warning Lead Time` is always required, must be greater than `0`, and must be less than the selected timeout. Neither setting represents or changes the agent toolbar `Sign Out` action.
 
 ### Profile Menu
 
@@ -62,7 +62,7 @@ Implemented status model:
 - When the agent is signed in and is neither `Not Ready` nor AUX, including `Ready` and `Pre-AUX`, Log Out is blocked with: `To prevent new customer work from being assigned while you log out, change your status to Not Ready or AUX before logging out.`
 - `Unsigned`, `Not Ready`, and AUX statuses show the `Confirm Log Out` confirmation. Confirming clears agent service state, clears the auth session and any pending or unused external-operation approval, and returns to the login page.
 - Idle monitoring applies only while status is `Unsigned`, `Not Ready`, or AUX. It resets whenever the agent enters one of those statuses, leaves that scope, closes the warning, or performs a window activity such as focus, pointer movement/click, keyboard input, scrolling, or touch input.
-- When `System Idle Log-out Timeout` is greater than `0`, the demo shows `Session Expiring` at `System Idle Log-out Timeout - Auto Log-out Warning Lead Time`; closing the dialog or choosing `Continue Working` resets the timer. At the full timeout, the demo automatically logs out. A timeout of `0` creates no timer, warning, or automatic log-out.
+- The demo shows `Session Expiring` at `System Idle Log-out Timeout - Auto Log-out Warning Lead Time`; closing the dialog or choosing `Continue Working` resets the timer. At the selected timeout, the demo automatically logs out.
 - This is a current-window front-end demo only. It does not provide server session invalidation, multi-tab synchronization, or a backend authentication revocation flow.
 
 ### Login Log
@@ -203,11 +203,11 @@ Outbound Call is available from the toolbar More menu.
 Outbound modal:
 
 - Tabs: `Call Number`, `Call Agent`.
-- Call Number accepts a phone number and requires one business reason: `Miss Information` or `Financial Risk`. Every role must be in an active AUX reason configured with `Support Outbound`. Ordinary Agents retain the TL/SPV approval request and approval result popup; TL-and-above accounts call directly. The TL popup counts down from 10 seconds for each pending approval and shows the number of additional pending requests when a queue exists. On timeout it closes, the Agent receives `Approval timed out. Please submit the outbound call request again.`, and the request must be submitted again. A completed Call Number action enters the toolbar `Talking` state with the dialed number without creating an `Outbound Call` workspace tab or activating a customer screen pop.
+- Call Number accepts a phone number and requires one business reason: `Miss Information` or `Financial Risk`. The external outbound AUX is required only for the final Call action. Ordinary Agents retain the TL/SPV approval request and approval result popup; TL-and-above accounts call directly. The TL popup starts a 10-second countdown only after its pending-approval dialog has rendered and shows the number of additional pending requests when a queue exists. On timeout it closes, the Agent receives `Approval timed out. Please submit the outbound call request again.`, and the request must be submitted again. A completed Call Number action enters the toolbar `Talking` state with the dialed number without creating an `Outbound Call` workspace tab or activating a customer screen pop.
 - Call Agent supports name / employee ID search and skill queue filtering, and shows only SPV and TL records for every role. It does not require an outbound AUX or external-number approval. Its `Call` action enters `Talking` without creating an `Outbound Call` workspace tab or customer screen pop.
 - Agent row action is `Call`.
 
-Customer Information customer-phone outbound uses the same eligible AUX gate for every role. Any Customer Information card with a nonempty phone number exposes the compact `Call` action on phone-row hover or keyboard focus without requiring KBV completion or CRM identity; the action remains disabled until the agent enters an eligible AUX, then opens the `Outbound Reason` modal. Ordinary Agents retain the TL approval request and approval result popup, while TL-and-above accounts call directly; neither path creates an `Outbound Call` workspace tab or activates a customer screen pop. The modal keeps `Miss Information` and `Financial Risk` as per-call business reasons.
+Customer Information customer-phone outbound uses the same eligibility sequence as toolbar number outbound. Any Customer Information card with a nonempty phone number exposes the compact `Request Approval` action on phone-row hover or keyboard focus without requiring KBV completion, CRM identity, or an eligible outbound AUX. Ordinary Agents can select `Miss Information` or `Financial Risk` and submit the TL approval request from that modal. After approval, its `Call` action is disabled until the agent enters an eligible outbound AUX and shows `Switch to outbound AUX`; TL-and-above direct calling remains subject to the same outbound-AUX call gate. Neither path creates an `Outbound Call` workspace tab or activates a customer screen pop.
 
 ### Outbound Number and Agent State
 
@@ -481,7 +481,7 @@ Quick Replies:
 
 - Fixed Assistant extra tab.
 - Supports My/Public phrase groups.
-- My groups and phrases can be maintained locally.
+- My groups and phrases can be maintained locally. Personal Quick Reply Code is limited to 50 characters and Quick Reply text to 2000 characters; both use the shared Ticket-style count control.
 - Public phrases are read-only in the agent workspace.
 - Public phrases are sourced from `Call Management > Common Phrase`.
 - Insert places text into the active composer and focuses the cursor at the end.
@@ -677,7 +677,7 @@ Hidden / redirected:
 - Audit labels use `Created By` / `Created Time` for creation metadata and `Updated By` / `Updated Time` for last-update metadata. `Updated` is the single UI term for the previous `Modified` meaning.
 - Where a management list exposes update metadata, `Updated Time` appears before `Updated By` at the end of the data columns, immediately before Actions. The list uses content-sized columns and only enables horizontal scrolling when confirmed minimum widths cannot fit the workspace.
 - New or edited demo records use the current operator in `user ID-user name` format. Seeded administrator-owned records in the management lists display `1234-Admin`.
-- Standard Remark inputs default to a 2000-character limit. Business-specific fields may use a different configured limit, such as Common Phrase 100, Question Name 100, Ticket Summary 250, or Ticket Note 1000.
+- Standard Remark inputs default to a 2000-character limit. Business-specific fields may use a different configured limit, such as Quick Reply Code 50, Common Phrase / Quick Reply text 2000, Question Name 100, Ticket Summary 250, or Ticket Note 1000.
 
 ### AUX Reason Management
 
@@ -717,8 +717,8 @@ Hidden / redirected:
 - Categories contain public common phrase entries.
 - `All Categories` is a view-only aggregate and cannot be used when adding a new phrase.
 - Adding a phrase requires a concrete category; when opened from `All Categories`, the add modal defaults to the first configured category and allows category selection.
-- Common Phrase is required and limited to 100 characters; it uses the shared Ticket-style count control.
-- Shortcut Code is globally unique across public common phrases after trim and lowercase normalization.
+- Common Phrase is required and limited to 2000 characters; it uses the shared Ticket-style count control.
+- Shortcut Code is limited to 50 characters and globally unique across public common phrases after trim and lowercase normalization.
 - Category Name is unique after trim and lowercase normalization.
 - Phrase records contain Shortcut Code, Common Phrase, Category, Updated Time, and Updated By. The list shows Updated Time followed by Updated By before Actions, and adding, editing, or moving a phrase refreshes the update metadata.
 - Deleting a category requires confirmation and deletes all phrases under that category.

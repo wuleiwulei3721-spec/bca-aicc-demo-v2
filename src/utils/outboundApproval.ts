@@ -205,7 +205,10 @@ function schedulePendingApprovalTimeouts() {
 
   const pendingApprovalIds = new Set(
     approvals
-      .filter((approval) => approval.status === 'pending')
+      .filter(
+        (approval) =>
+          approval.status === 'pending' && approval.reviewStartedAt !== undefined,
+      )
       .map((approval) => approval.id),
   )
 
@@ -217,14 +220,19 @@ function schedulePendingApprovalTimeouts() {
   })
 
   approvals
-    .filter((approval) => approval.status === 'pending')
+    .filter(
+      (approval) =>
+        approval.status === 'pending' && approval.reviewStartedAt !== undefined,
+    )
     .forEach((approval) => {
       if (approvalTimeouts.has(approval.id)) {
         return
       }
 
       const remainingMs =
-        approval.createdAt + externalOperationApprovalTimeoutMs - Date.now()
+        (approval.reviewStartedAt ?? Date.now()) +
+        externalOperationApprovalTimeoutMs -
+        Date.now()
 
       if (remainingMs <= 0) {
         resolveApproval(approval.id, 'timed-out')
@@ -250,7 +258,7 @@ function createApprovalId() {
 export function subscribeExternalOperationApprovals(listener: ApprovalListener) {
   getBroadcastChannel()
   listeners.add(listener)
-  schedulePendingApprovalTimeouts()
+  reloadApprovals()
 
   return () => listeners.delete(listener)
 }
@@ -270,6 +278,29 @@ export function getExternalOperationApprovalsSnapshot() {
 
 export function getExternalOperationApproval(id: string) {
   return approvals.find((approval) => approval.id === id) ?? null
+}
+
+export function startExternalOperationApprovalReview(id: string) {
+  const current = approvals.find((approval) => approval.id === id)
+
+  if (!current || current.status !== 'pending' || current.reviewStartedAt) {
+    return current ?? null
+  }
+
+  const now = Date.now()
+  const nextApproval: ExternalOperationApproval = {
+    ...current,
+    reviewStartedAt: now,
+    updatedAt: now,
+  }
+
+  setApprovals(
+    approvals.map((approval) =>
+      approval.id === id ? nextApproval : approval,
+    ),
+  )
+
+  return nextApproval
 }
 
 export function getExternalOperationApprovalForScope(
