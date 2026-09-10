@@ -142,7 +142,7 @@ export const workspacePageTabDefinitions: WorkspacePageTabDefinition[] = [
   {
     element: <CallRecordQueryPage />,
     icon: callManagementIcon,
-    label: 'Interaction Log',
+    label: 'Social Media Interaction Log',
     menuKey: 'call-management-call-record-query',
     moduleKey: 'call-management',
     routePath: '/call-management/call-record-query',

@@ -634,7 +634,7 @@ function openSocialMediaPostPage(item: SocialMediaItem) {
 function getSourceContextLabel(item: SocialMediaItem) {
   switch (getSourceContext(item)) {
     case 'bca-post-comment':
-      return 'BCA Post Comment'
+      return ''
     case 'customer-post-mention':
       return 'Customer Post Mention'
     case 'third-party-comment-mention':
@@ -889,23 +889,6 @@ function SearchGlyph() {
   )
 }
 
-function FilterGlyph() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="social-media-page__button-glyph"
-      focusable="false"
-      viewBox="0 0 16 16"
-    >
-      <path
-        d="M2.5 3.25c0-.41.34-.75.75-.75h9.5a.75.75 0 0 1 .57 1.24L9.25 8.47v3.33a.75.75 0 0 1-1.08.67l-1.65-.82a.75.75 0 0 1-.42-.67V8.47L1.93 3.74a.75.75 0 0 1 .57-.49Zm1.42.75 3.48 3.96c.12.14.2.32.2.5v2.05l.15.07V8.46c0-.18.07-.36.19-.5L11.42 4Z"
-        fill="currentColor"
-        fillRule="evenodd"
-      />
-    </svg>
-  )
-}
-
 function RefreshGlyph() {
   return (
     <svg
@@ -1120,7 +1103,6 @@ function getSocialCustomerInformation(
       cisNumber: `00000${String(780000 + numericId * 37)}`,
       customerType: numericId <= 2 ? 'Priority Customer' : 'Regular Customer',
     },
-    verificationStatus: 'Verified',
   }
 }
 
@@ -1313,7 +1295,6 @@ function SocialQuickReplyPanel() {
 
 export function SocialMediaPage() {
   const [isQueueCollapsed, setIsQueueCollapsed] = useState(false)
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [searchValue, setSearchValue] = useState('')
   const [activeQueueScope, setActiveQueueScope] =
     useState<SocialMediaQueueScope>('current')
@@ -1717,17 +1698,6 @@ export function SocialMediaPage() {
             />
           </label>
           <button
-            aria-label="Filter Social Media items"
-            className={`social-media-page__svg-icon-button${
-              isFilterOpen ? ' social-media-page__svg-icon-button--selected' : ''
-            }`}
-            title="Filter"
-            type="button"
-            onClick={() => setIsFilterOpen((open) => !open)}
-          >
-            <FilterGlyph />
-          </button>
-          <button
             aria-label="Refresh Social Media items"
             className="social-media-page__svg-icon-button"
             title="Refresh"
@@ -1787,114 +1757,109 @@ export function SocialMediaPage() {
           </button>
         </div>
 
-        {isFilterOpen ? (
-          <div className="social-media-page__filter-panel">
-            <div className="social-media-page__filter-row social-media-page__filter-row--channels">
-              <button
-                aria-label="Toggle all social media channels"
-                className={`social-media-page__filter-chip social-media-page__filter-chip--channel${
-                  areAllChannelsSelected
-                    ? ' social-media-page__filter-chip--active'
-                    : ''
-                }`}
-                title="All"
-                type="button"
-                onClick={() =>
-                  setSelectedChannels(
-                    areAllChannelsSelected ? [] : allChannelKeys,
-                  )
-                }
-              >
-                <SocialFilterIcon
-                  src={areAllChannelsSelected ? allFilterIconActive : allFilterIcon}
-                />
-              </button>
-              {channelOptions.map((option) => {
-                const isActive = selectedChannels.includes(option.key)
+        <div className="social-media-page__filter-panel">
+          <div className="social-media-page__filter-row social-media-page__filter-row--channels">
+            <button
+              aria-label="Toggle all social media channels"
+              className={`social-media-page__filter-chip social-media-page__filter-chip--channel${
+                areAllChannelsSelected
+                  ? ' social-media-page__filter-chip--active'
+                  : ''
+              }`}
+              title="All"
+              type="button"
+              onClick={() =>
+                setSelectedChannels(areAllChannelsSelected ? [] : allChannelKeys)
+              }
+            >
+              <SocialFilterIcon
+                src={areAllChannelsSelected ? allFilterIconActive : allFilterIcon}
+              />
+            </button>
+            {channelOptions.map((option) => {
+              const isActive = selectedChannels.includes(option.key)
 
-                return (
-                  <button
-                    key={option.key}
-                    aria-label={`Filter channel ${option.label}`}
-                    className={`social-media-page__filter-chip social-media-page__filter-chip--channel${
-                      isActive ? ' social-media-page__filter-chip--active' : ''
-                    }${
-                      isActive && option.activeButtonChrome
-                        ? ' social-media-page__filter-chip--chrome-active'
-                        : ''
-                    }`}
-                    title={option.label}
-                    type="button"
-                    onClick={() =>
-                      setSelectedChannels((current) =>
-                        current.length === allChannelKeys.length
-                          ? [option.key]
-                          : toggleValue(current, option.key),
-                      )
+              return (
+                <button
+                  key={option.key}
+                  aria-label={`Filter channel ${option.label}`}
+                  className={`social-media-page__filter-chip social-media-page__filter-chip--channel${
+                    isActive ? ' social-media-page__filter-chip--active' : ''
+                  }${
+                    isActive && option.activeButtonChrome
+                      ? ' social-media-page__filter-chip--chrome-active'
+                      : ''
+                  }`}
+                  title={option.label}
+                  type="button"
+                  onClick={() =>
+                    setSelectedChannels((current) =>
+                      current.length === allChannelKeys.length
+                        ? [option.key]
+                        : toggleValue(current, option.key),
+                    )
+                  }
+                >
+                  <SocialFilterIcon
+                    activeSprite={
+                      isActive &&
+                      option.activeIconSprite !== false &&
+                      !option.activeButtonChrome
                     }
-                  >
-                    <SocialFilterIcon
-                      activeSprite={
-                        isActive &&
-                        option.activeIconSprite !== false &&
-                        !option.activeButtonChrome
-                      }
-                      spritePosition={
-                        isActive ? option.activeSpritePosition : undefined
-                      }
-                      src={isActive ? option.activeIconSrc : option.iconSrc}
-                    />
-                  </button>
-                )
-              })}
-            </div>
-
-            <div className="social-media-page__filter-row social-media-page__filter-row--types">
-              <button
-                aria-label="Toggle all social media types"
-                className={`social-media-page__filter-chip social-media-page__filter-chip--channel${
-                  areAllTypesSelected
-                    ? ' social-media-page__filter-chip--active'
-                    : ''
-                }`}
-                title="All"
-                type="button"
-                onClick={() =>
-                  setSelectedTypes(areAllTypesSelected ? [] : allTypeKeys)
-                }
-              >
-                <SocialFilterIcon
-                  src={areAllTypesSelected ? allFilterIconActive : allFilterIcon}
-                />
-              </button>
-              {typeOptions.map((option) => {
-                const isActive = selectedTypes.includes(option.key)
-
-                return (
-                  <button
-                    key={option.key}
-                    aria-label={`Filter type ${option.label}`}
-                    className={`social-media-page__filter-chip social-media-page__filter-chip--type${
-                      isActive ? ' social-media-page__filter-chip--active' : ''
-                    }`}
-                    title={option.label}
-                    type="button"
-                    onClick={() =>
-                      setSelectedTypes((current) =>
-                        current.length === allTypeKeys.length
-                          ? [option.key]
-                          : toggleValue(current, option.key),
-                      )
+                    spritePosition={
+                      isActive ? option.activeSpritePosition : undefined
                     }
-                  >
-                    <SocialTypeChip active={isActive} type={option.key} />
-                  </button>
-                )
-              })}
-            </div>
-
+                    src={isActive ? option.activeIconSrc : option.iconSrc}
+                  />
+                </button>
+              )
+            })}
           </div>
-        ) : null}
+
+          <div className="social-media-page__filter-row social-media-page__filter-row--types">
+            <button
+              aria-label="Toggle all social media types"
+              className={`social-media-page__filter-chip social-media-page__filter-chip--channel${
+                areAllTypesSelected
+                  ? ' social-media-page__filter-chip--active'
+                  : ''
+              }`}
+              title="All"
+              type="button"
+              onClick={() =>
+                setSelectedTypes(areAllTypesSelected ? [] : allTypeKeys)
+              }
+            >
+              <SocialFilterIcon
+                src={areAllTypesSelected ? allFilterIconActive : allFilterIcon}
+              />
+            </button>
+            {typeOptions.map((option) => {
+              const isActive = selectedTypes.includes(option.key)
+
+              return (
+                <button
+                  key={option.key}
+                  aria-label={`Filter type ${option.label}`}
+                  className={`social-media-page__filter-chip social-media-page__filter-chip--type${
+                    isActive ? ' social-media-page__filter-chip--active' : ''
+                  }`}
+                  title={option.label}
+                  type="button"
+                  onClick={() =>
+                    setSelectedTypes((current) =>
+                      current.length === allTypeKeys.length
+                        ? [option.key]
+                        : toggleValue(current, option.key),
+                    )
+                  }
+                >
+                  <SocialTypeChip active={isActive} type={option.key} />
+                </button>
+              )
+            })}
+          </div>
+        </div>
 
         <div className="social-media-page__queue-list">
           {filteredItems.length > 0 ? (

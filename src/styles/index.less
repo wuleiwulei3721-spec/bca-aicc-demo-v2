@@ -7984,12 +7984,14 @@ a {
 }
 
 .inbound-page {
+  --channel-customer-panel-width: 270px;
+  --channel-session-list-width: 270px;
   display: grid;
   height: 100%;
   min-width: 0;
   min-height: 0;
   grid-template-columns:
-    minmax(280px, 20fr)
+    var(--channel-customer-panel-width)
     minmax(420px, 50fr)
     minmax(300px, 30fr);
   gap: 10px;
@@ -7997,8 +7999,8 @@ a {
 
 .inbound-page--live-chat {
   grid-template-columns:
-    minmax(236px, 17fr)
-    minmax(270px, 20fr)
+    var(--channel-session-list-width)
+    var(--channel-customer-panel-width)
     minmax(390px, 43fr)
     minmax(280px, 27fr);
 }
@@ -8006,7 +8008,7 @@ a {
 .inbound-page--live-chat-list-collapsed {
   grid-template-columns:
     56px
-    minmax(280px, 20fr)
+    var(--channel-customer-panel-width)
     minmax(420px, 50fr)
     minmax(300px, 30fr);
 }
@@ -9976,8 +9978,8 @@ button.inbound-list-row .inbound-list-row__title {
 
 .inbound-page--livechat2 {
   grid-template-columns:
-    minmax(236px, 17fr)
-    minmax(270px, 19fr)
+    var(--channel-session-list-width)
+    var(--channel-customer-panel-width)
     minmax(420px, 44fr)
     minmax(280px, 27fr);
 }
@@ -9985,7 +9987,7 @@ button.inbound-list-row .inbound-list-row__title {
 .inbound-page--livechat2-list-collapsed {
   grid-template-columns:
     56px
-    minmax(280px, 20fr)
+    var(--channel-customer-panel-width)
     minmax(420px, 50fr)
     minmax(300px, 30fr);
 }
@@ -16283,15 +16285,15 @@ button.inbound-list-row .inbound-list-row__title {
 @media (min-width: 961px) and (max-width: 1320px) {
   .inbound-page {
     grid-template-columns:
-      minmax(270px, 22fr)
+      var(--channel-customer-panel-width)
       minmax(360px, 48fr)
       minmax(260px, 30fr);
   }
 
   .inbound-page--live-chat {
     grid-template-columns:
-      minmax(190px, 16fr)
-      minmax(210px, 20fr)
+      var(--channel-session-list-width)
+      var(--channel-customer-panel-width)
       minmax(300px, 42fr)
       minmax(210px, 28fr);
   }
@@ -16299,15 +16301,15 @@ button.inbound-list-row .inbound-list-row__title {
   .inbound-page--live-chat-list-collapsed {
     grid-template-columns:
       56px
-      minmax(250px, 22fr)
+      var(--channel-customer-panel-width)
       minmax(340px, 48fr)
       minmax(230px, 30fr);
   }
 
   .inbound-page--livechat2 {
     grid-template-columns:
-      minmax(230px, 18fr)
-      minmax(230px, 22fr)
+      var(--channel-session-list-width)
+      var(--channel-customer-panel-width)
       minmax(330px, 42fr)
       minmax(230px, 28fr);
   }
@@ -16315,7 +16317,7 @@ button.inbound-list-row .inbound-list-row__title {
   .inbound-page--livechat2-list-collapsed {
     grid-template-columns:
       56px
-      minmax(250px, 22fr)
+      var(--channel-customer-panel-width)
       minmax(340px, 48fr)
       minmax(230px, 30fr);
   }
@@ -16403,6 +16405,8 @@ button.inbound-list-row .inbound-list-row__title {
 
 /* Email channel workspace */
 .email-page {
+  --channel-customer-panel-width: 270px;
+  --channel-session-list-width: 270px;
   --email-border: #d8dee8;
   --email-border-light: #edf2f7;
   --email-danger: #f04444;
@@ -16424,8 +16428,8 @@ button.inbound-list-row .inbound-list-row__title {
   min-height: 0;
   padding: 0;
   grid-template-columns:
-    300px
-    300px
+    var(--channel-session-list-width)
+    var(--channel-customer-panel-width)
     minmax(500px, 1fr);
   background: #fcfcfc;
   color: var(--email-text);
@@ -16436,7 +16440,7 @@ button.inbound-list-row .inbound-list-row__title {
 .email-page--mailbox-collapsed {
   grid-template-columns:
     58px
-    300px
+    var(--channel-customer-panel-width)
     minmax(500px, 1fr);
 }
 
@@ -19276,14 +19280,14 @@ button.inbound-list-row .inbound-list-row__title {
 @media (max-width: 1366px) {
   .email-page {
     grid-template-columns:
-      286px
-      286px
+      var(--channel-session-list-width)
+      var(--channel-customer-panel-width)
       minmax(480px, 1fr);
     gap: 8px;
   }
 
   .email-page--mailbox-collapsed {
-    grid-template-columns: 58px 286px minmax(480px, 1fr);
+    grid-template-columns: 58px var(--channel-customer-panel-width) minmax(480px, 1fr);
   }
 
   .email-mail-workspace {
@@ -19305,12 +19309,15 @@ button.inbound-list-row .inbound-list-row__title {
 
 @media (max-width: 1180px) {
   .email-page {
-    grid-template-columns: 270px 270px minmax(440px, 1fr);
+    grid-template-columns:
+      var(--channel-session-list-width)
+      var(--channel-customer-panel-width)
+      minmax(440px, 1fr);
     overflow-x: auto;
   }
 
   .email-page--mailbox-collapsed {
-    grid-template-columns: 58px 270px minmax(440px, 1fr);
+    grid-template-columns: 58px var(--channel-customer-panel-width) minmax(440px, 1fr);
   }
 
   .email-folder-button {
@@ -19615,6 +19622,8 @@ button.inbound-list-row .inbound-list-row__title {
 }
 
 .social-media-page {
+  --channel-customer-panel-width: 270px;
+  --channel-session-list-width: 270px;
   --social-border: #d8dee8;
   --social-border-light: #edf2f7;
   --social-card-bg: #ffffff;
@@ -19631,7 +19640,11 @@ button.inbound-list-row .inbound-list-row__title {
   width: 100%;
   min-width: 0;
   min-height: 0;
-  grid-template-columns: 280px 220px minmax(380px, 1fr) 260px;
+  grid-template-columns:
+    var(--channel-session-list-width)
+    var(--channel-customer-panel-width)
+    minmax(380px, 1fr)
+    260px;
   gap: 10px;
   overflow: hidden;
   background: #fcfcfc;
@@ -19640,7 +19653,11 @@ button.inbound-list-row .inbound-list-row__title {
 }
 
 .social-media-page--queue-collapsed {
-  grid-template-columns: 44px 220px minmax(440px, 1fr) 260px;
+  grid-template-columns:
+    44px
+    var(--channel-customer-panel-width)
+    minmax(440px, 1fr)
+    260px;
 }
 
 .social-media-page__queue-panel,
@@ -19669,7 +19686,7 @@ button.inbound-list-row .inbound-list-row__title {
 .social-media-page__queue-toolbar {
   display: grid;
   min-height: 56px;
-  grid-template-columns: minmax(0, 1fr) 32px 32px 32px;
+  grid-template-columns: minmax(0, 1fr) 32px 32px;
   gap: 8px;
   align-items: center;
   padding: 12px;
@@ -22005,7 +22022,7 @@ button.inbound-list-row .inbound-list-row__title {
 
 @media (max-width: 1360px) {
   .social-media-page {
-    grid-template-columns: 280px minmax(0, 1fr);
+    grid-template-columns: var(--channel-session-list-width) minmax(0, 1fr);
   }
 
   .social-media-page--queue-collapsed {
