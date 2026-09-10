@@ -1,11 +1,17 @@
-import { Checkbox, Input, Select } from 'antd'
+import { CopyOutlined } from '@ant-design/icons'
+import { Select } from 'antd'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  getProductsForTicketCategory,
+  ticketCategoryProductOptions,
+} from '../mock/ticketCategoryProducts'
 import { BaseButton } from './BaseButton'
 import { BaseModal } from './BaseModal'
+import { LimitedTextArea } from './LimitedTextArea'
 
 export interface TicketRegistrationDraft {
-  product: string[]
-  category: string[]
+  caseCategory: string
+  product: string
   summary: string
   note: string
 }
@@ -19,41 +25,25 @@ interface TicketRegistrationDrawerProps {
 
 type TicketRegistrationField = keyof TicketRegistrationDraft
 
-const productOptions = [
-  'Credit Card',
-  'Debit Card',
-  'Deposit Account',
-  'BankApp',
-  'Loan',
-  'Investment',
-]
-
-const categoryOptions = [
-  'Activation',
-  'Card Replacement',
-  'Transaction Inquiry',
-  'Service Request',
-  'Complaint',
-  'Follow-up',
-]
-
 const emptyDraft = (): TicketRegistrationDraft => ({
-  category: [],
+  caseCategory: '',
   note: '',
-  product: [],
+  product: '',
   summary: '',
 })
 
 function generatedDraft(index: number, contextLabel?: string): TicketRegistrationDraft {
-  const product = productOptions[index % productOptions.length]
-  const category = categoryOptions[index % categoryOptions.length]
+  const categoryOption =
+    ticketCategoryProductOptions[index % ticketCategoryProductOptions.length]
+  const product =
+    categoryOption.products[index % categoryOption.products.length]
   const context = contextLabel?.trim() || 'the current customer interaction'
 
   return {
-    category: [category],
+    caseCategory: categoryOption.category,
     note: 'Review the request with the customer and complete the required follow-up.',
-    product: [product],
-    summary: `Customer contacted BANK 1 regarding ${context}. A ${category.toLowerCase()} request for ${product} has been prepared for CRM follow-up.`,
+    product,
+    summary: `Customer contacted BANK 1 regarding ${context}. A ${categoryOption.category.toLowerCase()} request for ${product} has been prepared for CRM follow-up.`,
   }
 }
 
@@ -86,14 +76,49 @@ export function TicketRegistrationDrawer({
     setError('')
   }
 
-  const confirm = () => {
-    if (draft.product.length === 0) {
-      setError('product')
+  const copyField = async (field: TicketRegistrationField) => {
+    const value = draft[field].trim()
+
+    if (!value) {
       return
     }
 
-    if (draft.category.length === 0) {
-      setError('category')
+    try {
+      await navigator.clipboard.writeText(value)
+    } catch {
+      const input = document.createElement('textarea')
+      input.value = value
+      input.style.position = 'fixed'
+      input.style.opacity = '0'
+      document.body.appendChild(input)
+      input.select()
+      document.execCommand('copy')
+      input.remove()
+    }
+
+  }
+
+  const renderCopyButton = (field: TicketRegistrationField, label: string) => (
+    <button
+      aria-label={`Copy ${label}`}
+      className="aicc-ticket-form__copy"
+      disabled={!draft[field].trim()}
+      title={`Copy ${label}`}
+      type="button"
+      onClick={() => void copyField(field)}
+    >
+      <CopyOutlined />
+    </button>
+  )
+
+  const confirm = () => {
+    if (!draft.caseCategory) {
+      setError('caseCategory')
+      return
+    }
+
+    if (!draft.product) {
+      setError('product')
       return
     }
 
@@ -108,9 +133,9 @@ export function TicketRegistrationDrawer({
     }
 
     onConfirm({
-      category: [...draft.category],
+      caseCategory: draft.caseCategory,
       note: draft.note.trim(),
-      product: [...draft.product],
+      product: draft.product,
       summary: draft.summary.trim(),
     })
     setDraft(emptyDraft())
@@ -123,10 +148,22 @@ export function TicketRegistrationDrawer({
       className="aicc-ticket-modal"
       footer={
         <div className="aicc-ticket-modal__footer">
-          <BaseButton onClick={onClose}>Cancel</BaseButton>
-          <BaseButton variant="primary" onClick={confirm}>
-            Confirm
-          </BaseButton>
+          <button
+            className="aicc-ticket-form__generate"
+            type="button"
+            onClick={generate}
+          >
+            <span aria-hidden="true" className="aicc-ticket-form__sparkle">
+              ✦
+            </span>
+            One-Click Generation
+          </button>
+          <div className="aicc-ticket-modal__actions">
+            <BaseButton onClick={onClose}>Cancel</BaseButton>
+            <BaseButton variant="primary" onClick={confirm}>
+              Confirm
+            </BaseButton>
+          </div>
         </div>
       }
       kind="outbound"
@@ -139,100 +176,94 @@ export function TicketRegistrationDrawer({
       <div className="aicc-ticket-form">
         <section>
           <span>Category</span>
-          <Select
-            className="aicc-ticket-form__select"
-            maxTagCount={Number.MAX_SAFE_INTEGER}
-            mode="multiple"
-            optionFilterProp="label"
-            optionRender={(option) => (
-              <span className="aicc-ticket-select-option">
-                <Checkbox
-                  checked={draft.category.includes(String(option.value))}
-                  onChange={() => undefined}
-                />
-                <span>{option.label}</span>
-              </span>
-            )}
-            options={categoryOptions.map((value) => ({ label: value, value }))}
-            placeholder="Select category"
-            showSearch
-            value={draft.category}
-            onChange={(category) => updateDraft({ category })}
-          />
-          {error === 'category' && (
+          <div className="aicc-ticket-form__field-control">
+            <Select
+              className="aicc-ticket-form__select"
+              optionFilterProp="label"
+              options={ticketCategoryProductOptions.map(({ category }) => ({
+                label: category,
+                value: category,
+              }))}
+              placeholder="Select category"
+              showSearch
+              value={draft.caseCategory || undefined}
+              onChange={(caseCategory) =>
+                updateDraft({ caseCategory, product: '' })
+              }
+            />
+            {renderCopyButton('caseCategory', 'Category')}
+          </div>
+          {error === 'caseCategory' && (
             <small className="aicc-ticket-form__field-error">
-              Select at least one Category.
+              Select a Category.
             </small>
           )}
         </section>
         <section>
           <span>Product</span>
-          <Select
-            className="aicc-ticket-form__select"
-            maxTagCount={Number.MAX_SAFE_INTEGER}
-            mode="multiple"
-            optionFilterProp="label"
-            optionRender={(option) => (
-              <span className="aicc-ticket-select-option">
-                <Checkbox
-                  checked={draft.product.includes(String(option.value))}
-                  onChange={() => undefined}
-                />
-                <span>{option.label}</span>
-              </span>
-            )}
-            options={productOptions.map((value) => ({ label: value, value }))}
-            placeholder="Select product"
-            showSearch
-            value={draft.product}
-            onChange={(product) => updateDraft({ product })}
-          />
+          <div className="aicc-ticket-form__field-control">
+            <Select
+              className="aicc-ticket-form__select"
+              disabled={!draft.caseCategory}
+              optionFilterProp="label"
+              options={getProductsForTicketCategory(draft.caseCategory).map(
+                (product) => ({ label: product, value: product }),
+              )}
+              placeholder="Select product"
+              showSearch
+              value={draft.product || undefined}
+              onChange={(product) => updateDraft({ product })}
+            />
+            {renderCopyButton('product', 'Product')}
+          </div>
           {error === 'product' && (
             <small className="aicc-ticket-form__field-error">
-              Select at least one Product.
+              Select a Product.
             </small>
           )}
         </section>
-        <label>
+        <section>
           <span>Summary</span>
-          <Input.TextArea
-            placeholder="Enter ticket summary"
-            rows={5}
-            maxLength={250}
-            showCount
-            value={draft.summary}
-            onChange={(event) => updateDraft({ summary: event.target.value })}
-          />
+          <div className="aicc-ticket-form__field-control">
+            <LimitedTextArea
+              placeholder="Enter ticket summary"
+              rows={5}
+              maxLength={250}
+              showCount
+              value={draft.summary}
+              onChange={(event) =>
+                updateDraft({ summary: event.target.value.slice(0, 250) })
+              }
+            />
+            {renderCopyButton('summary', 'Summary')}
+          </div>
           {error === 'summary' && (
             <small className="aicc-ticket-form__field-error">
               Summary is required.
             </small>
           )}
-        </label>
-        <label>
+        </section>
+        <section>
           <span>Note</span>
-          <Input.TextArea
-            placeholder="Enter agent note"
-            rows={5}
-            value={draft.note}
-            onChange={(event) => updateDraft({ note: event.target.value })}
-          />
+          <div className="aicc-ticket-form__field-control">
+            <LimitedTextArea
+              placeholder="Enter agent note"
+              rows={5}
+              maxLength={1000}
+              showCount
+              value={draft.note}
+              onChange={(event) =>
+                updateDraft({ note: event.target.value.slice(0, 1000) })
+              }
+            />
+            {renderCopyButton('note', 'Note')}
+          </div>
           {error === 'note' && (
             <small className="aicc-ticket-form__field-error">
               Note is required.
             </small>
           )}
-        </label>
-        <button
-          className="aicc-ticket-form__generate"
-          type="button"
-          onClick={generate}
-        >
-          <span aria-hidden="true" className="aicc-ticket-form__sparkle">
-            ✦
-          </span>
-          One-Click Generation
-        </button>
+        </section>
       </div>
     </BaseModal>
   )

@@ -20,9 +20,16 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  LimitedInput,
+  LimitedTextArea,
 } from '../../components'
-import { useCallManagementStore } from '../../store'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
+import { useAuthStore, useCallManagementStore } from '../../store'
 import type { CommonPhraseCategory, CommonPhraseEntry } from '../../types'
+import {
+  formatAuditActor,
+  formatCallManagementDateTime,
+} from '../../utils/audit'
 
 type CommonPhraseModalMode = 'create' | 'edit' | null
 
@@ -39,6 +46,8 @@ interface CommonPhraseDraft {
 }
 
 const allCategoriesKey = '__all__'
+const COMMON_PHRASE_SHORTCUT_CODE_MAX_LENGTH = 50
+const COMMON_PHRASE_MAX_LENGTH = 2000
 
 const defaultFilters: CommonPhraseFilters = {
   phraseText: '',
@@ -60,6 +69,7 @@ function createEntityId(prefix: string) {
 }
 
 export function CommonPhraseManagementPage() {
+  const authSession = useAuthStore((state) => state.session)
   const categories = useCallManagementStore(
     (state) => state.commonPhraseCategories,
   )
@@ -99,7 +109,7 @@ export function CommonPhraseManagementPage() {
   const [movePopoverOpen, setMovePopoverOpen] = useState(false)
   const [moveTargetCategoryId, setMoveTargetCategoryId] = useState('')
   const [newCategoryName, setNewCategoryName] = useState('')
-  const [notice, setNotice] = useState('')
+  const { notify } = useOperationFeedback()
   const [selectedCategoryId, setSelectedCategoryId] =
     useState(allCategoriesKey)
   const [selectedPhraseIds, setSelectedPhraseIds] = useState<string[]>([])
@@ -209,6 +219,10 @@ export function CommonPhraseManagementPage() {
 
     if (!shortcutCode) {
       errors.push('Shortcut Code is required.')
+    } else if (shortcutCode.length > COMMON_PHRASE_SHORTCUT_CODE_MAX_LENGTH) {
+      errors.push(
+        `Shortcut Code must be ${COMMON_PHRASE_SHORTCUT_CODE_MAX_LENGTH} characters or fewer.`,
+      )
     } else {
       const normalizedShortcutCode = normalizeValue(shortcutCode)
       const hasDuplicateShortcutCode = entries.some(
@@ -224,6 +238,10 @@ export function CommonPhraseManagementPage() {
 
     if (!phraseText) {
       errors.push('Common Phrase is required.')
+    } else if (phraseText.length > COMMON_PHRASE_MAX_LENGTH) {
+      errors.push(
+        `Common Phrase must be ${COMMON_PHRASE_MAX_LENGTH} characters or fewer.`,
+      )
     }
 
     if (!draft.categoryId || !categoryNameById.has(draft.categoryId)) {
@@ -263,13 +281,12 @@ export function CommonPhraseManagementPage() {
     addCategory(category)
     setNewCategoryName('')
     setSelectedCategoryId(category.categoryId)
-    setNotice('Common phrase category added.')
+    notify('Common phrase category added.')
   }
 
   const startRenameCategory = (category: CommonPhraseCategory) => {
     setEditingCategoryId(category.categoryId)
     setEditingCategoryName(category.categoryName)
-    setNotice('')
   }
 
   const cancelRenameCategory = () => {
@@ -290,7 +307,7 @@ export function CommonPhraseManagementPage() {
 
     renameCategory(editingCategoryId, categoryName)
     cancelRenameCategory()
-    setNotice('Common phrase category renamed.')
+    notify('Common phrase category renamed.')
   }
 
   const confirmDeleteCategory = () => {
@@ -308,7 +325,7 @@ export function CommonPhraseManagementPage() {
       setSelectedCategoryId(allCategoriesKey)
     }
 
-    setNotice('Common phrase category and related phrases deleted.')
+    notify('Common phrase category and related phrases deleted.')
   }
 
   const updateDraft = <Key extends keyof CommonPhraseDraft>(
@@ -319,7 +336,6 @@ export function CommonPhraseManagementPage() {
       ...currentDraft,
       [key]: value,
     }))
-    setNotice('')
   }
 
   const openCreateModal = () => {
@@ -333,14 +349,12 @@ export function CommonPhraseManagementPage() {
     })
     setModalMode('create')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const openEditModal = (entry: CommonPhraseEntry) => {
     setDraft({ ...entry })
     setModalMode('edit')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const closeModal = () => {
@@ -361,14 +375,19 @@ export function CommonPhraseManagementPage() {
       phraseId: draft.phraseId ?? createEntityId('public-phrase'),
       phraseText: draft.phraseText.trim(),
       shortcutCode: draft.shortcutCode.trim(),
+      updatedAt: formatCallManagementDateTime(new Date()),
+      updatedBy: formatAuditActor(
+        authSession?.employeeId,
+        authSession?.displayName,
+      ),
     }
 
     if (modalMode === 'edit') {
       updateEntry(nextEntry)
-      setNotice('Common phrase updated.')
+      notify('Common phrase updated.')
     } else {
       addEntry(nextEntry)
-      setNotice('Common phrase added.')
+      notify('Common phrase added.')
     }
 
     closeModal()
@@ -384,7 +403,7 @@ export function CommonPhraseManagementPage() {
       currentIds.filter((phraseId) => phraseId !== deleteEntryTarget.phraseId),
     )
     setDeleteEntryTarget(null)
-    setNotice('Common phrase deleted.')
+    notify('Common phrase deleted.')
   }
 
   const handleSearch = () => {
@@ -407,8 +426,12 @@ export function CommonPhraseManagementPage() {
       (entry) => entry.categoryId !== moveTargetCategoryId,
     ).length
 
-    moveEntries(selectedPhraseIds, moveTargetCategoryId)
-    setNotice(
+    moveEntries(
+      selectedPhraseIds,
+      moveTargetCategoryId,
+      formatAuditActor(authSession?.employeeId, authSession?.displayName),
+    )
+    notify(
       movedCount === 1
         ? 'Selected common phrase moved.'
         : `${movedCount} selected common phrases moved.`,
@@ -453,20 +476,31 @@ export function CommonPhraseManagementPage() {
     {
       dataIndex: 'shortcutCode',
       title: 'Shortcut Code',
-      width: 150,
+      width: 100,
     },
     {
       dataIndex: 'phraseText',
       ellipsis: true,
       title: 'Common Phrase',
-      width: 420,
+      width: 280,
     },
     {
       dataIndex: 'categoryId',
       render: (categoryId: string) =>
         categoryNameById.get(categoryId) ?? 'Unknown Category',
       title: 'Category',
-      width: 180,
+      width: 96,
+    },
+    {
+      dataIndex: 'updatedAt',
+      render: (updatedAt: string) => formatCallManagementDateTime(updatedAt),
+      title: 'Updated Time',
+      width: 146,
+    },
+    {
+      dataIndex: 'updatedBy',
+      title: 'Updated By',
+      width: 170,
     },
     {
       fixed: 'right',
@@ -486,7 +520,6 @@ export function CommonPhraseManagementPage() {
             type="button"
             onClick={() => {
               setDeleteEntryTarget(record)
-              setNotice('')
             }}
           >
             <DeleteOutlined />
@@ -494,7 +527,7 @@ export function CommonPhraseManagementPage() {
         </div>
       ),
       title: 'Actions',
-      width: 96,
+      width: 86,
     },
   ]
 
@@ -503,14 +536,6 @@ export function CommonPhraseManagementPage() {
       className="common-phrase-management"
       title="Common Phrase"
     >
-      {notice && (
-        <Alert
-          showIcon
-          className="routing-config-page__notice"
-          message={notice}
-          type="success"
-        />
-      )}
       <div className="common-phrase-management__layout">
         <BaseCard compact className="common-phrase-management__categories">
           <div className="common-phrase-management__category-search">
@@ -602,7 +627,6 @@ export function CommonPhraseManagementPage() {
                           type="button"
                           onClick={() => {
                             setDeleteCategoryTarget(category)
-                            setNotice('')
                           }}
                         >
                           <DeleteOutlined />
@@ -720,7 +744,6 @@ export function CommonPhraseManagementPage() {
           <AdminTable<CommonPhraseEntry>
             columns={columns}
             dataSource={filteredEntries}
-            horizontalScroll={900}
             pagination={{}}
             rowKey="phraseId"
             rowSelection={{
@@ -757,7 +780,8 @@ export function CommonPhraseManagementPage() {
           )}
           <div className="routing-config-crud-modal__form">
             <AdminFormField label="Shortcut Code" required>
-              <Input
+              <LimitedInput
+                maxLength={COMMON_PHRASE_SHORTCUT_CODE_MAX_LENGTH}
                 value={draft.shortcutCode}
                 onChange={(event) =>
                   updateDraft('shortcutCode', event.target.value)
@@ -775,7 +799,8 @@ export function CommonPhraseManagementPage() {
               />
             </AdminFormField>
             <AdminFormField label="Common Phrase" required fullWidth>
-              <Input.TextArea
+              <LimitedTextArea
+                maxLength={COMMON_PHRASE_MAX_LENGTH}
                 rows={5}
                 value={draft.phraseText}
                 onChange={(event) =>

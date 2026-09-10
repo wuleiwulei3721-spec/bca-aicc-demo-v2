@@ -285,7 +285,7 @@ export function DesignSystem() {
               <div className="design-list-demo">
                 {ticketingHistory.slice(0, 2).map((item) => (
                   <button className="inbound-compact-row" key={item.id} type="button">
-                    <span className="inbound-ticket-type">{item.ticketType}</span>
+                    <span className="inbound-ticket-type">{item.caseCategory}</span>
                     <StatusBadge label={item.ticketNumber} size="small" status="neutral" />
                     <span className="inbound-compact-row__date">{item.createdDate}</span>
                   </button>

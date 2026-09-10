@@ -9,6 +9,8 @@ import type {
   VerificationV2SpecialScenario,
   VerificationV2SpecialRules,
 } from '../types'
+import { DEFAULT_AUDIT_ACTOR } from '../utils/audit'
+import { formatCallManagementDateTime } from '../utils/audit'
 
 const createQuestion = (
   id: string,
@@ -903,4 +905,8 @@ export const verificationV2Rules: VerificationV2Rule[] = [
         }
       : rule,
   ),
-]
+].map((rule) => ({
+  ...rule,
+  updatedAt: formatCallManagementDateTime(rule.updatedAt),
+  updatedBy: rule.updatedBy ?? DEFAULT_AUDIT_ACTOR,
+}))

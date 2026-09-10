@@ -6,25 +6,28 @@ import {
   ClockCircleOutlined,
   FileImageOutlined,
   FolderOpenOutlined,
-  GlobalOutlined,
   HistoryOutlined,
-  MobileOutlined,
   PaperClipOutlined,
-  ReloadOutlined,
   RollbackOutlined,
   SearchOutlined,
   SendOutlined,
   SmileOutlined,
   SwapOutlined,
-  WhatsAppOutlined,
 } from '@ant-design/icons'
 import { Alert, DatePicker, Dropdown, Input } from 'antd'
 import type { InputRef, MenuProps } from 'antd'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
-import { BaseButton, BaseModal } from '../../../components'
+import {
+  AgentAvatar,
+  BaseButton,
+  BaseModal,
+  ChannelLogo,
+  CustomerAvatar,
+} from '../../../components'
 import { TransferModal } from '../../../layouts/components/TransferModal'
 import type { LiveChat2Message, SessionEndReasonEntry } from '../../../types'
+import { formatAgentDisplay } from '../../../utils/agentDisplay'
 import { formatDuration } from '../../../utils/duration'
 import type { LiveChat2SessionView } from './LiveChat2CustomerPanel'
 import {
@@ -33,6 +36,7 @@ import {
 import type { LiveChat2QuickReplyOption } from './liveChat2QuickReplies'
 
 const { RangePicker } = DatePicker
+const MESSAGE_RECORD_DATE_TIME_FORMAT = 'DD-MM-YYYY HH:mm:ss'
 
 interface LiveChat2ConversationWorkspaceProps {
   composerFocusRequest: LiveChat2ComposerFocusRequest | null
@@ -40,7 +44,6 @@ interface LiveChat2ConversationWorkspaceProps {
   isMessageRecordOpen: boolean
   messages: LiveChat2Message[]
   quickReplies: LiveChat2QuickReplyOption[]
-  recalledMessageIds: string[]
   sendBlockedMessage?: string | null
   session: LiveChat2SessionView
   sessionEndReasons?: SessionEndReasonEntry[]
@@ -52,7 +55,6 @@ interface LiveChat2ConversationWorkspaceProps {
     endReasonName?: string,
   ) => void
   onOpenMessageRecord: () => void
-  onRecallMessage: (messageId: string) => void
   onSendMessage: (
     sessionId: string,
     message: string,
@@ -83,34 +85,12 @@ function getMessageDisplayType(message: LiveChat2Message) {
   return 'customer'
 }
 
-function getInitials(name: string) {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase()
-}
-
 function getChannelLabel(channel: LiveChat2SessionView['channel']) {
   if (channel === 'BankApp') {
     return 'BankApp'
   }
 
   return channel
-}
-
-function getChannelIcon(channel: LiveChat2SessionView['channel']) {
-  if (channel === 'WhatsApp') {
-    return <WhatsAppOutlined />
-  }
-
-  if (channel === 'BankApp') {
-    return <MobileOutlined />
-  }
-
-  return <GlobalOutlined />
 }
 
 function getChannelClassName(channel: LiveChat2SessionView['channel']) {
@@ -145,13 +125,8 @@ function highlightSearch(value: string, search: string) {
 
 function renderMessageContent(
   message: LiveChat2Message,
-  isRecalled: boolean,
   search = '',
 ) {
-  if (isRecalled) {
-    return <p className="livechat2-message__recalled">Message recalled</p>
-  }
-
   if (message.kind === 'image') {
     return (
       <div className="livechat2-message__attachment">
@@ -224,10 +199,12 @@ function getDefaultRecordFilters(
   }
 }
 
-function getDateBoundary(dateValue: Dayjs, type: 'end' | 'start') {
-  return type === 'start'
-    ? dateValue.startOf('day').valueOf()
-    : dateValue.endOf('day').valueOf()
+function formatMessageRecordTimestamp(timestamp: string) {
+  const date = dayjs(timestamp)
+
+  return date.isValid()
+    ? date.format(MESSAGE_RECORD_DATE_TIME_FORMAT)
+    : timestamp
 }
 
 export function LiveChat2MessageRecordPanel({
@@ -261,8 +238,8 @@ export function LiveChat2MessageRecordPanel({
   } | null>(null)
 
   const matchedRecordMessages = useMemo(() => {
-    const fromTime = getDateBoundary(appliedFilters.dateRange[0], 'start')
-    const toTime = getDateBoundary(appliedFilters.dateRange[1], 'end')
+    const fromTime = appliedFilters.dateRange[0].valueOf()
+    const toTime = appliedFilters.dateRange[1].valueOf()
     const normalizedKeyword = appliedKeyword.toLowerCase()
 
     return messages
@@ -348,9 +325,10 @@ export function LiveChat2MessageRecordPanel({
         <RangePicker
           allowClear={false}
           className="livechat2-records__range-picker"
-          format="MM-DD"
+          format={MESSAGE_RECORD_DATE_TIME_FORMAT}
           inputReadOnly
           size="small"
+          showTime={{ format: 'HH:mm:ss' }}
           value={draftFilters.dateRange}
           onChange={(dates) => {
             if (!dates?.[0] || !dates?.[1]) {
@@ -419,9 +397,16 @@ export function LiveChat2MessageRecordPanel({
               tabIndex={0}
             >
               <div className="livechat2-records__item-head">
-                <strong>{message.senderName}</strong>
+                <strong>
+                  {message.sender === 'agent' || message.sender === 'bot'
+                    ? formatAgentDisplay(
+                        message.senderEmployeeId,
+                        message.senderName,
+                      )
+                    : message.senderName}
+                </strong>
                 <time>
-                  {message.timestamp.slice(0, 10)} {message.time}
+                  {formatMessageRecordTimestamp(message.timestamp)}
                 </time>
               </div>
               <p>{highlightSearch(message.message, appliedKeyword)}</p>
@@ -451,7 +436,6 @@ export function LiveChat2ConversationWorkspace({
   isMessageRecordOpen,
   messages,
   quickReplies,
-  recalledMessageIds,
   sendBlockedMessage,
   session,
   sessionEndReasons = [],
@@ -459,7 +443,6 @@ export function LiveChat2ConversationWorkspace({
   onDraftChange,
   onEndSession,
   onOpenMessageRecord,
-  onRecallMessage,
   onSendMessage,
 }: LiveChat2ConversationWorkspaceProps) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
@@ -474,8 +457,6 @@ export function LiveChat2ConversationWorkspace({
   const readOnly = session.statusDisplay === 'history'
   const isEnded = session.statusDisplay === 'ended'
   const canCompose = !readOnly && !isEnded
-  const canRecallMessages =
-    session.channel === 'BankApp' || session.channel === 'Webchat'
   const trimmedDraft = draftMessage.trim()
   const visibleMessages = getLiveChat2VisibleMessages(
     session.historyMessages,
@@ -608,11 +589,6 @@ export function LiveChat2ConversationWorkspace({
     }
   }
 
-  const handleReEditMessage = (message: LiveChat2Message) => {
-    setQuoteMessage(null)
-    onDraftChange(session.id, message.message)
-    window.setTimeout(() => composerRef.current?.focus(), 0)
-  }
   const hasAbnormalEndReasons = sessionEndReasons.length > 0
   const abnormalEndReasonItems: MenuProps['items'] = [
     {
@@ -656,7 +632,7 @@ export function LiveChat2ConversationWorkspace({
             role="img"
             title={getChannelLabel(session.channel)}
           >
-            {getChannelIcon(session.channel)}
+            <ChannelLogo channel={session.channel} variant="livechat" />
           </span>
           <strong>{session.customer.profile.name}</strong>
           <span className="livechat2-conversation__duration">
@@ -743,8 +719,6 @@ export function LiveChat2ConversationWorkspace({
         >
           {visibleMessages.map((message) => {
             const displayType = getMessageDisplayType(message)
-            const isRecalled = recalledMessageIds.includes(message.id)
-
             return (
               <article
                 className={[
@@ -754,17 +728,28 @@ export function LiveChat2ConversationWorkspace({
                 data-livechat2-message-id={message.id}
                 key={message.id}
               >
-                {displayType !== 'system' && displayType !== 'current-agent' && (
-                  <span className="livechat2-message__avatar">
-                    {displayType === 'customer'
-                      ? session.customer.profile.avatarInitials
-                      : getInitials(message.senderName)}
-                  </span>
-                )}
+                {displayType !== 'system' && displayType !== 'current-agent' &&
+                  (displayType === 'customer' ? (
+                    <CustomerAvatar
+                      className="livechat2-message__avatar"
+                      size={30}
+                    />
+                  ) : (
+                    <AgentAvatar
+                      className="livechat2-message__avatar"
+                      name={message.senderName}
+                      size={30}
+                    />
+                  ))}
                 <div className="livechat2-message__main">
                   <div className="livechat2-message__meta">
                     {displayType === 'previous-agent' && (
-                      <strong>{message.senderName}</strong>
+                      <strong>
+                        {formatAgentDisplay(
+                          message.senderEmployeeId,
+                          message.senderName,
+                        )}
+                      </strong>
                     )}
                     <time>{message.time}</time>
                   </div>
@@ -774,42 +759,17 @@ export function LiveChat2ConversationWorkspace({
                     </div>
                   )}
                   <div className="livechat2-message__bubble">
-                    {renderMessageContent(message, isRecalled)}
+                    {renderMessageContent(message)}
                   </div>
                   {displayType !== 'system' && (
                     <div className="livechat2-message__tools">
-                      {!isRecalled && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => setQuoteMessage(message.message)}
-                          >
-                            <RollbackOutlined />
-                            Quote
-                          </button>
-                          {message.isCurrentAgent && canRecallMessages && (
-                            <button
-                              type="button"
-                              onClick={() => onRecallMessage(message.id)}
-                            >
-                              <ReloadOutlined />
-                              Recall
-                            </button>
-                          )}
-                        </>
-                      )}
-                      {message.isCurrentAgent &&
-                        canRecallMessages &&
-                        isRecalled &&
-                        canCompose && (
-                        <button
-                          type="button"
-                          onClick={() => handleReEditMessage(message)}
-                        >
-                          <ReloadOutlined />
-                          Re-edit
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => setQuoteMessage(message.message)}
+                      >
+                        <RollbackOutlined />
+                        Quote
+                      </button>
                     </div>
                   )}
                 </div>

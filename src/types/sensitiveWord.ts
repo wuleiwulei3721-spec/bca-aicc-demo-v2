@@ -9,6 +9,8 @@ export interface SensitiveWordEntry {
   category: SensitiveWordCategory
   id: string
   remark: string
+  updatedAt: string
+  updatedBy: string
   word: string
 }
 

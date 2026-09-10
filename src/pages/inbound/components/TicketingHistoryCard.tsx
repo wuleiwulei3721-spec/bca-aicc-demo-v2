@@ -45,6 +45,9 @@ export function TicketingHistoryCard({
 
   return (
     <SectionCard
+      className={
+        visibleItems.length === 0 ? 'inbound-section-card--empty' : undefined
+      }
       expandable
       expanded={expanded}
       extra={<DownOutlined />}
@@ -61,7 +64,7 @@ export function TicketingHistoryCard({
               onClick={() =>
                 onOpenCrm({
                   key: `ticket-${item.ticketNumber}`,
-                  title: item.ticketType,
+                  title: item.caseCategory,
                   kind: 'ticket',
                   crmLink: `/crm/tickets/${item.ticketNumber}`,
                   reference: item.ticketNumber,
@@ -70,7 +73,7 @@ export function TicketingHistoryCard({
                 })
               }
             >
-              <span className="inbound-ticket-type">{item.ticketType}</span>
+              <span className="inbound-ticket-type">{item.caseCategory}</span>
               <span className="inbound-ticket-row__meta">
                 <Tag className="inbound-neutral-tag inbound-ticket-row__number">
                   {item.ticketNumber}
@@ -83,9 +86,7 @@ export function TicketingHistoryCard({
             </button>
           ))
         ) : (
-          <div className="inbound-empty-state">
-            Ticketing history is not loaded.
-          </div>
+          <div className="inbound-empty-state">No data available.</div>
         )}
       </div>
     </SectionCard>

@@ -15,7 +15,11 @@ import {
   SendOutlined,
   StarFilled,
 } from '@ant-design/icons'
-import { BaseButton } from '../../components'
+import {
+  BaseButton,
+  getChannelLogoSrc,
+  type ChannelLogoChannel,
+} from '../../components'
 import { useNow } from '../../hooks/useNow'
 import type {
   CrmWorkspaceTab,
@@ -23,10 +27,11 @@ import type {
   CustomerJourneyItem,
   JourneyChannel,
   NextBestActionItem,
-  QuickActionItem,
   TicketHistoryItem,
 } from '../../types'
+import { formatDuration } from '../../utils/duration'
 import { AssistantPanel } from '../inbound/components/AssistantPanel'
+import { ChannelTag } from '../inbound/components/ChannelTag'
 import { LeftColumn } from '../inbound/components/LeftColumn'
 
 type SocialMediaView = 'conversation' | 'post-detail'
@@ -81,6 +86,7 @@ interface SocialMediaItem {
   customer: string
   handle: string
   id: string
+  accessDurationSeconds: number
   initialReplySeconds: number
   post: string
   postAvatarAlt?: string
@@ -133,6 +139,9 @@ const socialMediaAvatar = (fileName: string) =>
 
 const socialMediaPostAvatar = (fileName: string) =>
   socialMediaAsset(`post-avatars/${fileName}`)
+
+const socialMediaChannelLogo = (channel: Parameters<typeof getChannelLogoSrc>[0]) =>
+  getChannelLogoSrc(channel)
 
 const allFilterIcon = socialMediaAsset('all.svg')
 const allFilterIconActive = socialMediaAsset('all-active.svg')
@@ -197,70 +206,76 @@ const SOCIAL_MEDIA_POST_URLS: Record<SocialMediaChannel, string> = {
 
 const channelOptions: SocialMediaFilterOption<SocialMediaChannel>[] = [
   {
-    activeIconSrc: socialMediaAsset('facebook-active.svg'),
+    activeIconSprite: false,
+    activeIconSrc: socialMediaChannelLogo('Facebook'),
     color: '#1877F2',
-    iconSrc: socialMediaAsset('facebook.svg'),
+    iconSrc: socialMediaChannelLogo('Facebook'),
     key: 'facebook',
     label: 'Facebook',
-    logoSrc: socialMediaAsset('logos/facebook-logo.png'),
+    logoSrc: socialMediaChannelLogo('Facebook'),
   },
   {
-    activeIconSrc: socialMediaAsset('instagram-active.svg'),
+    activeIconSprite: false,
+    activeIconSrc: socialMediaChannelLogo('Instagram'),
     color: '#E4405F',
-    iconSrc: socialMediaAsset('instagram.svg'),
+    iconSrc: socialMediaChannelLogo('Instagram'),
     key: 'instagram',
     label: 'Instagram',
-    logoSrc: socialMediaAsset('logos/instagram-logo.png'),
+    logoSrc: socialMediaChannelLogo('Instagram'),
   },
   {
-    activeIconSrc: socialMediaAsset('x-active.svg'),
+    activeIconSprite: false,
+    activeIconSrc: socialMediaChannelLogo('X'),
     color: '#111827',
-    iconSrc: socialMediaAsset('x.svg'),
+    iconSrc: socialMediaChannelLogo('X'),
     key: 'x',
     label: 'X',
-    logoSrc: socialMediaAsset('logos/x-logo.png'),
+    logoSrc: socialMediaChannelLogo('X'),
   },
   {
     activeIconSprite: false,
-    activeIconSrc: socialMediaAsset('youtube-active.svg'),
+    activeIconSrc: socialMediaChannelLogo('YouTube'),
     color: '#FF0000',
-    iconSrc: socialMediaAsset('youtube.svg'),
+    iconSrc: socialMediaChannelLogo('YouTube'),
     key: 'youtube',
     label: 'YouTube',
-    logoSrc: socialMediaAsset('logos/youtube-logo.png'),
-  },
-  {
-    activeIconSrc: socialMediaAsset('linkedin-active.svg'),
-    color: '#0A66C2',
-    iconSrc: socialMediaAsset('linkedin.svg'),
-    key: 'linkedin',
-    label: 'LinkedIn',
-    logoSrc: socialMediaAsset('logos/linkedin-logo.png'),
-  },
-  {
-    activeIconSrc: socialMediaAsset('tiktok-active.svg'),
-    color: '#111827',
-    iconSrc: socialMediaAsset('tiktok.svg'),
-    key: 'tiktok',
-    label: 'TikTok',
-    logoSrc: socialMediaAsset('logos/tiktok-logo.png'),
-  },
-  {
-    activeIconSrc: socialMediaAsset('appstore-active.svg'),
-    color: '#1473E6',
-    iconSrc: socialMediaAsset('appstore.svg'),
-    key: 'appstore',
-    label: 'App Store',
-    logoSrc: socialMediaAsset('logos/appstore-logo.png'),
+    logoSrc: socialMediaChannelLogo('YouTube'),
   },
   {
     activeIconSprite: false,
-    activeIconSrc: socialMediaAsset('googleplay-active.svg'),
+    activeIconSrc: socialMediaChannelLogo('LinkedIn'),
+    color: '#0A66C2',
+    iconSrc: socialMediaChannelLogo('LinkedIn'),
+    key: 'linkedin',
+    label: 'LinkedIn',
+    logoSrc: socialMediaChannelLogo('LinkedIn'),
+  },
+  {
+    activeIconSprite: false,
+    activeIconSrc: socialMediaChannelLogo('TikTok'),
+    color: '#111827',
+    iconSrc: socialMediaChannelLogo('TikTok'),
+    key: 'tiktok',
+    label: 'TikTok',
+    logoSrc: socialMediaChannelLogo('TikTok'),
+  },
+  {
+    activeIconSprite: false,
+    activeIconSrc: socialMediaChannelLogo('App Store'),
+    color: '#1473E6',
+    iconSrc: socialMediaChannelLogo('App Store'),
+    key: 'appstore',
+    label: 'App Store',
+    logoSrc: socialMediaChannelLogo('App Store'),
+  },
+  {
+    activeIconSprite: false,
+    activeIconSrc: socialMediaChannelLogo('Google Play'),
     color: '#25B46B',
-    iconSrc: socialMediaAsset('googleplay.svg'),
+    iconSrc: socialMediaChannelLogo('Google Play'),
     key: 'googleplay',
     label: 'Google Play',
-    logoSrc: socialMediaAsset('logos/googleplay-logo.png'),
+    logoSrc: socialMediaChannelLogo('Google Play'),
   },
 ]
 
@@ -328,6 +343,7 @@ const socialMediaItems: SocialMediaItem[] = [
     customer: 'Dimas Abimanyu Prabowo',
     handle: '@dimas.ap',
     id: 'sm-001',
+    accessDurationSeconds: 59,
     initialReplySeconds: 59,
     post:
       'Up to 50% off on all summer essentials! Get yours before they run out. All cards and digital payment options are supported.',
@@ -356,6 +372,7 @@ const socialMediaItems: SocialMediaItem[] = [
     customer: 'Guest',
     handle: 'Guest account',
     id: 'sm-002',
+    accessDurationSeconds: 239,
     initialReplySeconds: 239,
     post:
       'Payment failed after checkout but the balance has already been deducted. Please help me confirm the transaction.',
@@ -376,6 +393,7 @@ const socialMediaItems: SocialMediaItem[] = [
     customer: 'Michael Chen',
     handle: '@michaelchen',
     id: 'sm-003',
+    accessDurationSeconds: 899,
     initialReplySeconds: 899,
     post: LONG_CHAT_MESSAGE,
     preview: 'Account verification needed',
@@ -392,6 +410,7 @@ const socialMediaItems: SocialMediaItem[] = [
     customer: 'Emma Davis',
     handle: '@emmadavis',
     id: 'sm-004',
+    accessDurationSeconds: 1499,
     initialReplySeconds: 1499,
     post:
       'Can I replace my damaged credit card through branch pickup? The delivery address changed last week.',
@@ -409,6 +428,7 @@ const socialMediaItems: SocialMediaItem[] = [
     customer: 'Nadia Putri',
     handle: 'Nadia Putri',
     id: 'sm-005',
+    accessDurationSeconds: 432,
     initialReplySeconds: 432,
     post:
       'Our corporate card onboarding team needs confirmation for the requested limit change.',
@@ -440,6 +460,7 @@ const socialMediaItems: SocialMediaItem[] = [
     customer: 'Rafi Aditya',
     handle: '@rafiaditya',
     id: 'sm-006',
+    accessDurationSeconds: 568,
     initialReplySeconds: 568,
     post:
       'The branch queue video was helpful. I want to know whether online appointment slots are available today.',
@@ -460,6 +481,7 @@ const socialMediaItems: SocialMediaItem[] = [
     customer: 'Sari Handayani',
     handle: '@sarihandayani',
     id: 'sm-007',
+    accessDurationSeconds: 341,
     initialReplySeconds: 341,
     post:
       'Five stars for the mobile banking tutorial. Please add a video for credit-card reward redemption.',
@@ -477,6 +499,7 @@ const socialMediaItems: SocialMediaItem[] = [
     customer: 'Budi Santoso',
     handle: '@budisantoso',
     id: 'sm-008',
+    accessDurationSeconds: 662,
     initialReplySeconds: 662,
     post:
       '@BCA can the agent check why my card limit request is still pending after two business days?',
@@ -497,6 +520,7 @@ const socialMediaItems: SocialMediaItem[] = [
     customer: 'Maya Larasati',
     handle: 'App Store review',
     id: 'sm-009',
+    accessDurationSeconds: 281,
     initialReplySeconds: 281,
     post:
       'The new app flow is faster, but I cannot find the card statement download option after the update.',
@@ -514,6 +538,7 @@ const socialMediaItems: SocialMediaItem[] = [
     customer: 'Andi Pratama',
     handle: 'Google Play user',
     id: 'sm-010',
+    accessDurationSeconds: 126,
     initialReplySeconds: 126,
     post:
       'Commented under Bank Deals Indonesia: @BCA QR payment setup still asks for verification twice after the update.',
@@ -889,6 +914,23 @@ function SearchGlyph() {
   )
 }
 
+function FilterGlyph() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="social-media-page__button-glyph"
+      focusable="false"
+      viewBox="0 0 16 16"
+    >
+      <path
+        d="M2.5 3.25c0-.41.34-.75.75-.75h9.5a.75.75 0 0 1 .57 1.24L9.25 8.47v3.33a.75.75 0 0 1-1.08.67l-1.65-.82a.75.75 0 0 1-.42-.67V8.47L1.93 3.74a.75.75 0 0 1 .57-.49Zm1.42.75 3.48 3.96c.12.14.2.32.2.5v2.05l.15.07V8.46c0-.18.07-.36.19-.5L11.42 4Z"
+        fill="currentColor"
+        fillRule="evenodd"
+      />
+    </svg>
+  )
+}
+
 function RefreshGlyph() {
   return (
     <svg
@@ -1082,7 +1124,6 @@ function getCustomerInitials(name: string) {
 
 function getSocialCustomerInformation(
   item: SocialMediaItem,
-  progressLabel: string,
 ): CustomerInformation {
   const numericId = Number(item.id.replace(/\D/g, '')) || 1
   const emailName =
@@ -1093,7 +1134,7 @@ function getSocialCustomerInformation(
 
   return {
     accessChannel: 'Webchat',
-    accessDuration: progressLabel,
+    accessDuration: formatDuration(item.accessDurationSeconds),
     profile: {
       avatarInitials: getCustomerInitials(item.customer),
       avatarUrl: item.avatarSrc,
@@ -1103,6 +1144,7 @@ function getSocialCustomerInformation(
       cisNumber: `00000${String(780000 + numericId * 37)}`,
       customerType: numericId <= 2 ? 'Priority Customer' : 'Regular Customer',
     },
+    verificationStatus: 'Unverified',
   }
 }
 
@@ -1117,16 +1159,18 @@ const socialJourneyChannelMap: Partial<
 
 const socialTicketingHistory: TicketHistoryItem[] = [
   {
+    caseCategory: 'REQ/R005 GANTI KARTU/HILANG',
     createdDate: '22 Dec',
     id: 'social-ticket-card-replacement',
+    product: 'KARTU KREDIT BCA/AMEX PLATINUM',
     ticketNumber: 'CRM000154',
-    ticketType: 'Card replacement',
   },
   {
+    caseCategory: 'REQ/R009 NAIK LIMIT/SEMENTARA (BCNS)',
     createdDate: '14 Dec',
     id: 'social-ticket-limit-request',
+    product: 'KARTU KREDIT BCA REGULER',
     ticketNumber: 'CRM000153',
-    ticketType: 'Limit request',
   },
 ]
 
@@ -1145,29 +1189,6 @@ const socialNextBestActions: NextBestActionItem[] = [
     crmLink: '/crm/recommendations/secure-channel',
     id: 'social-nba-secure-channel',
     recommendedService: 'Use secure channel',
-  },
-]
-
-const socialQuickActions: QuickActionItem[] = [
-  {
-    crmLink: '/crm/quick-actions/unblock-bank-id',
-    id: 'social-quick-unblock-bank-id',
-    label: 'Buka Blokir BANK 1 ID',
-  },
-  {
-    crmLink: '/crm/quick-actions/two-question-verification',
-    id: 'social-quick-two-question',
-    label: 'Verifikasi Dua Pertanyaan',
-  },
-  {
-    crmLink: '/crm/quick-actions/card-replacement',
-    id: 'social-quick-card-replacement',
-    label: 'Penggantian Kartu',
-  },
-  {
-    crmLink: '/crm/quick-actions/five-question-verification',
-    id: 'social-quick-five-question',
-    label: 'Verifikasi Lima Pertanyaan',
   },
 ]
 
@@ -1247,31 +1268,27 @@ function getThreadEmptyCopy(tab: SocialMediaThreadTab) {
 function SocialCustomerContext({
   item,
   onOpenCrm,
-  progressLabel,
 }: {
   item: SocialMediaItem
   onOpenCrm: (tab: CrmWorkspaceTab) => void
-  progressLabel: string
 }) {
-  const customer = getSocialCustomerInformation(item, progressLabel)
+  const customer = getSocialCustomerInformation(item)
   const channel = getChannelOption(item.channel)
 
   return (
     <aside className="social-media-page__customer-panel" aria-label="Customer information">
       <LeftColumn
         accessChannelNode={
-          <span className="social-media-page__customer-access-node">
-            <SocialChannelMark channel={item.channel} />
-            <span>{channel.label}</span>
-            <span className="social-media-page__customer-access-time">
-              {progressLabel}
-            </span>
-          </span>
+          <ChannelTag
+            compact
+            duration={customer.accessDuration}
+            value={channel.label as ChannelLogoChannel}
+          />
         }
         customer={customer}
+        hideVerificationStatus
         journey={createSocialCustomerJourney(item)}
         nextBestActions={socialNextBestActions}
-        quickActions={socialQuickActions}
         tickets={socialTicketingHistory}
         onOpenCrm={onOpenCrm}
         onOpenVerification={() => undefined}
@@ -1295,6 +1312,7 @@ function SocialQuickReplyPanel() {
 
 export function SocialMediaPage() {
   const [isQueueCollapsed, setIsQueueCollapsed] = useState(false)
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [searchValue, setSearchValue] = useState('')
   const [activeQueueScope, setActiveQueueScope] =
     useState<SocialMediaQueueScope>('current')
@@ -1698,6 +1716,17 @@ export function SocialMediaPage() {
             />
           </label>
           <button
+            aria-label="Filter Social Media items"
+            className={`social-media-page__svg-icon-button${
+              isFilterOpen ? ' social-media-page__svg-icon-button--selected' : ''
+            }`}
+            title="Filter"
+            type="button"
+            onClick={() => setIsFilterOpen((open) => !open)}
+          >
+            <FilterGlyph />
+          </button>
+          <button
             aria-label="Refresh Social Media items"
             className="social-media-page__svg-icon-button"
             title="Refresh"
@@ -1757,109 +1786,114 @@ export function SocialMediaPage() {
           </button>
         </div>
 
-        <div className="social-media-page__filter-panel">
-          <div className="social-media-page__filter-row social-media-page__filter-row--channels">
-            <button
-              aria-label="Toggle all social media channels"
-              className={`social-media-page__filter-chip social-media-page__filter-chip--channel${
-                areAllChannelsSelected
-                  ? ' social-media-page__filter-chip--active'
-                  : ''
-              }`}
-              title="All"
-              type="button"
-              onClick={() =>
-                setSelectedChannels(areAllChannelsSelected ? [] : allChannelKeys)
-              }
-            >
-              <SocialFilterIcon
-                src={areAllChannelsSelected ? allFilterIconActive : allFilterIcon}
-              />
-            </button>
-            {channelOptions.map((option) => {
-              const isActive = selectedChannels.includes(option.key)
+        {isFilterOpen ? (
+          <div className="social-media-page__filter-panel">
+            <div className="social-media-page__filter-row social-media-page__filter-row--channels">
+              <button
+                aria-label="Toggle all social media channels"
+                className={`social-media-page__filter-chip social-media-page__filter-chip--channel${
+                  areAllChannelsSelected
+                    ? ' social-media-page__filter-chip--active'
+                    : ''
+                }`}
+                title="All"
+                type="button"
+                onClick={() =>
+                  setSelectedChannels(
+                    areAllChannelsSelected ? [] : allChannelKeys,
+                  )
+                }
+              >
+                <SocialFilterIcon
+                  src={areAllChannelsSelected ? allFilterIconActive : allFilterIcon}
+                />
+              </button>
+              {channelOptions.map((option) => {
+                const isActive = selectedChannels.includes(option.key)
 
-              return (
-                <button
-                  key={option.key}
-                  aria-label={`Filter channel ${option.label}`}
-                  className={`social-media-page__filter-chip social-media-page__filter-chip--channel${
-                    isActive ? ' social-media-page__filter-chip--active' : ''
-                  }${
-                    isActive && option.activeButtonChrome
-                      ? ' social-media-page__filter-chip--chrome-active'
-                      : ''
-                  }`}
-                  title={option.label}
-                  type="button"
-                  onClick={() =>
-                    setSelectedChannels((current) =>
-                      current.length === allChannelKeys.length
-                        ? [option.key]
-                        : toggleValue(current, option.key),
-                    )
-                  }
-                >
-                  <SocialFilterIcon
-                    activeSprite={
-                      isActive &&
-                      option.activeIconSprite !== false &&
-                      !option.activeButtonChrome
+                return (
+                  <button
+                    key={option.key}
+                    aria-label={`Filter channel ${option.label}`}
+                    className={`social-media-page__filter-chip social-media-page__filter-chip--channel${
+                      isActive ? ' social-media-page__filter-chip--active' : ''
+                    }${
+                      isActive && option.activeButtonChrome
+                        ? ' social-media-page__filter-chip--chrome-active'
+                        : ''
+                    }`}
+                    title={option.label}
+                    type="button"
+                    onClick={() =>
+                      setSelectedChannels((current) =>
+                        current.length === allChannelKeys.length
+                          ? [option.key]
+                          : toggleValue(current, option.key),
+                      )
                     }
-                    spritePosition={
-                      isActive ? option.activeSpritePosition : undefined
+                  >
+                    <SocialFilterIcon
+                      activeSprite={
+                        isActive &&
+                        option.activeIconSprite !== false &&
+                        !option.activeButtonChrome
+                      }
+                      spritePosition={
+                        isActive ? option.activeSpritePosition : undefined
+                      }
+                      src={isActive ? option.activeIconSrc : option.iconSrc}
+                    />
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="social-media-page__filter-row social-media-page__filter-row--types">
+              <button
+                aria-label="Toggle all social media types"
+                className={`social-media-page__filter-chip social-media-page__filter-chip--channel${
+                  areAllTypesSelected
+                    ? ' social-media-page__filter-chip--active'
+                    : ''
+                }`}
+                title="All"
+                type="button"
+                onClick={() =>
+                  setSelectedTypes(areAllTypesSelected ? [] : allTypeKeys)
+                }
+              >
+                <SocialFilterIcon
+                  src={areAllTypesSelected ? allFilterIconActive : allFilterIcon}
+                />
+              </button>
+              {typeOptions.map((option) => {
+                const isActive = selectedTypes.includes(option.key)
+
+                return (
+                  <button
+                    key={option.key}
+                    aria-label={`Filter type ${option.label}`}
+                    className={`social-media-page__filter-chip social-media-page__filter-chip--type${
+                      isActive ? ' social-media-page__filter-chip--active' : ''
+                    }`}
+                    title={option.label}
+                    type="button"
+                    onClick={() =>
+                      setSelectedTypes((current) =>
+                        current.length === allTypeKeys.length
+                          ? [option.key]
+                          : toggleValue(current, option.key),
+                      )
                     }
-                    src={isActive ? option.activeIconSrc : option.iconSrc}
-                  />
-                </button>
-              )
-            })}
-          </div>
+                  >
+                    <SocialTypeChip active={isActive} type={option.key} />
+                  </button>
+                )
+              })}
+            </div>
 
-          <div className="social-media-page__filter-row social-media-page__filter-row--types">
-            <button
-              aria-label="Toggle all social media types"
-              className={`social-media-page__filter-chip social-media-page__filter-chip--channel${
-                areAllTypesSelected
-                  ? ' social-media-page__filter-chip--active'
-                  : ''
-              }`}
-              title="All"
-              type="button"
-              onClick={() =>
-                setSelectedTypes(areAllTypesSelected ? [] : allTypeKeys)
-              }
-            >
-              <SocialFilterIcon
-                src={areAllTypesSelected ? allFilterIconActive : allFilterIcon}
-              />
-            </button>
-            {typeOptions.map((option) => {
-              const isActive = selectedTypes.includes(option.key)
-
-              return (
-                <button
-                  key={option.key}
-                  aria-label={`Filter type ${option.label}`}
-                  className={`social-media-page__filter-chip social-media-page__filter-chip--type${
-                    isActive ? ' social-media-page__filter-chip--active' : ''
-                  }`}
-                  title={option.label}
-                  type="button"
-                  onClick={() =>
-                    setSelectedTypes((current) =>
-                      current.length === allTypeKeys.length
-                        ? [option.key]
-                        : toggleValue(current, option.key),
-                    )
-                  }
-                >
-                  <SocialTypeChip active={isActive} type={option.key} />
-                </button>
-              )
-            })}
           </div>
-        </div>
+        ) : null}
 
         <div className="social-media-page__queue-list">
           {filteredItems.length > 0 ? (
@@ -1955,7 +1989,6 @@ export function SocialMediaPage() {
         <SocialCustomerContext
           item={activeItem}
           onOpenCrm={openSocialCrmWorkspace}
-          progressLabel={activeReplyProgress?.label ?? '0m00s'}
         />
       ) : (
         <aside

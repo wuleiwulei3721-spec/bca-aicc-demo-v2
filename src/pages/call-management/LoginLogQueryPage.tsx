@@ -16,6 +16,7 @@ import type {
   LoginLogLogoutType,
   LoginLogOperation,
 } from '../../types'
+import { formatCallManagementDateTime } from '../../utils/audit'
 
 const { RangePicker } = DatePicker
 
@@ -56,7 +57,7 @@ function createDefaultFilters(): LoginLogFilters {
 }
 
 function formatDateTime(value: string) {
-  return dayjs(value).format('YYYY-MM-DD HH:mm:ss')
+  return formatCallManagementDateTime(value)
 }
 
 function matchesFilters(entry: LoginLogEntry, filters: LoginLogFilters) {
@@ -162,6 +163,7 @@ export function LoginLogQueryPage() {
               <AdminFilterField label="Time Range" width={300}>
                 <RangePicker
                   allowClear={false}
+                  format="DD-MM-YYYY HH:mm:ss"
                   showTime
                   value={draftFilters.dateRange}
                   onChange={(value) => {

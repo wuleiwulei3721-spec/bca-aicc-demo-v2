@@ -37,6 +37,7 @@ import {
 } from '../mock/monitoring'
 import { useIdleLogout } from '../hooks/useIdleLogout'
 import { OutboundEligibilityContext } from '../contexts/outboundEligibility'
+import { useOperationFeedback } from '../contexts/operationFeedbackContext'
 import {
   useAppStore,
   useAuthStore,
@@ -54,6 +55,7 @@ import type {
   CallStatus,
   LoginLogLogoutType,
   SessionEndMediaType,
+  TransferAgent,
 } from '../types'
 import {
   createAuxStatus,
@@ -69,7 +71,6 @@ import {
 } from './components/AgentProfileArea'
 import { AgentToolbar } from './components/AgentToolbar'
 import { InternalChatModal } from './components/InternalChatModal'
-import { OperationNotice } from '../components'
 import { releaseExternalOperationApprovals } from '../utils/outboundApproval'
 
 const { Header, Sider, Content } = Layout
@@ -112,6 +113,16 @@ const initialCallTiming: CallTiming = {
   talkingStartedAt: null,
   holdStartedAt: null,
   accumulatedHoldSeconds: 0,
+}
+
+function formatToolbarCallNumber(value: string) {
+  const normalizedValue = value.trim()
+
+  if (!normalizedValue || normalizedValue === '-' || normalizedValue.startsWith('+')) {
+    return normalizedValue
+  }
+
+  return `+${normalizedValue}`
 }
 
 const monitoringMenuKeyPrefix = 'monitoring-'
@@ -217,6 +228,13 @@ const allSideMenuItems: SideMenuItem[] = [
     children: getWorkspacePageMenuChildren('call-management'),
   },
   {
+    key: 'social-media',
+    icon: <MessageOutlined />,
+    label: 'Social Media',
+    moduleKey: 'social-media',
+    children: getWorkspacePageMenuChildren('social-media'),
+  },
+  {
     key: 'routing-config',
     icon: <BranchesOutlined />,
     label: 'Routing Config',
@@ -275,6 +293,10 @@ function getRouteParentMenuKey(routeMenuKey: string | null) {
     return 'call-management'
   }
 
+  if (routeMenuKey.startsWith('social-media')) {
+    return 'social-media'
+  }
+
   if (routeMenuKey.startsWith('employee-')) {
     return 'employee-management'
   }
@@ -283,6 +305,7 @@ function getRouteParentMenuKey(routeMenuKey: string | null) {
 }
 
 export function BasicLayout() {
+  const { notify } = useOperationFeedback()
   const navigate = useNavigate()
   const location = useLocation()
   const authSession = useAuthStore((state) => state.session)
@@ -454,15 +477,6 @@ export function BasicLayout() {
     id: 0,
     reason: null,
   })
-  const [transferNotice, setTransferNotice] = useState<{
-    id: number
-    message: string | null
-    tone: 'error' | 'success'
-  }>({
-    id: 0,
-    message: null,
-    tone: 'success',
-  })
   const [closedFlyoutKey, setClosedFlyoutKey] = useState<string | null>(null)
   const [menuSearchQuery, setMenuSearchQuery] = useState('')
   const [openMenuKeys, setOpenMenuKeys] = useState<string[]>(() => {
@@ -521,13 +535,9 @@ export function BasicLayout() {
 
   const showTransferNotice = useCallback(
     (notice: { message: string; tone: 'error' | 'success' }) => {
-      setTransferNotice((current) => ({
-        id: current.id + 1,
-        message: notice.message,
-        tone: notice.tone,
-      }))
+      notify(notice.message, notice.tone)
     },
-    [],
+    [notify],
   )
 
   const updateAgentStatus = useCallback((
@@ -915,23 +925,6 @@ export function BasicLayout() {
   }, [callHandoffNotice.id, callHandoffNotice.reason])
 
   useEffect(() => {
-    if (!transferNotice.message) {
-      return undefined
-    }
-
-    const noticeId = transferNotice.id
-    const timer = window.setTimeout(() => {
-      setTransferNotice((current) =>
-        current.id === noticeId
-          ? { ...current, message: null }
-          : current,
-      )
-    }, 4000)
-
-    return () => window.clearTimeout(timer)
-  }, [transferNotice.id, transferNotice.message])
-
-  useEffect(() => {
     setOpenEyeVideoWindowVisible(
       activeCallChannel === 'video' &&
         isConnectedCall &&
@@ -1082,6 +1075,39 @@ export function BasicLayout() {
     updateCallStatus,
   ])
 
+  const handleOutboundAgentCall = useCallback(
+    (agent: TransferAgent) => {
+      if (agentStatus === 'Unsigned') {
+        return
+      }
+
+      hideCallHandoffNotice()
+      setIsInitialReadyToggleLocked(false)
+      setCallTiming(initialCallTiming)
+      setActiveCallChannel('voice')
+      setIsAfterCallWork(false)
+      setOpenEyeVideoWindowVisible(false)
+      resetBankAppVideoDesktopShare()
+      const interactionId = createCallInteraction(
+        'voice',
+        'outbound',
+        false,
+        undefined,
+        undefined,
+        agent.extension,
+      )
+      startTalkingCall(interactionId, 'voice')
+    },
+    [
+      agentStatus,
+      createCallInteraction,
+      hideCallHandoffNotice,
+      resetBankAppVideoDesktopShare,
+      setOpenEyeVideoWindowVisible,
+      startTalkingCall,
+    ],
+  )
+
   const handleAnswer = useCallback(() => {
     if (callStatus === 'Incoming') {
       startTalkingCall()
@@ -1124,7 +1150,7 @@ export function BasicLayout() {
       const interactionId = createCallInteraction(
         'voice',
         'outbound',
-        true,
+        false,
         undefined,
         undefined,
         customerOutboundCallNumber ?? undefined,
@@ -1336,6 +1362,9 @@ export function BasicLayout() {
           sourceAgentName: 'Maya Lestari',
           transferredAt: Date.now(),
         })
+        if (voiceVideoHandoffReadiness === 'available') {
+          notify('Transferred from Maya Lestari.')
+        }
       }
 
       if (childKey === 'customer-bankapp') {
@@ -1390,6 +1419,8 @@ export function BasicLayout() {
       requestWhatsAppDemoWorkspace,
       selectMonitoringHomeView,
       triggerVoiceInboundCall,
+      notify,
+      voiceVideoHandoffReadiness,
     ],
   )
 
@@ -1489,13 +1520,18 @@ export function BasicLayout() {
     }
 
     if (currentCallInteraction.source === 'pstn') {
-      return { label: 'IVR:', value: '08123456789' }
+      return {
+        label: 'IVR:',
+        value: formatToolbarCallNumber('08123456789'),
+      }
     }
 
     if (currentCallInteraction.source === 'outbound') {
       return {
         label: 'Outbound:',
-        value: currentCallInteraction.outboundNumber ?? '-',
+        value: formatToolbarCallNumber(
+          currentCallInteraction.outboundNumber ?? '-',
+        ),
       }
     }
 
@@ -1578,6 +1614,7 @@ export function BasicLayout() {
             onHangUp={handleHangUp}
             onHoldToggle={handleHoldToggle}
             onReadyToggle={handleReadyToggle}
+            onCallAgent={handleOutboundAgentCall}
             onRequestOutboundCall={requestCustomerOutboundCall}
             onTransferNotice={showTransferNotice}
           />
@@ -1602,8 +1639,8 @@ export function BasicLayout() {
           </button>
           <span className="aicc-header__divider" />
           <AgentProfileArea
+            employeeId={authSession?.employeeId}
             agentName={authSession?.displayName}
-            avatarUrl={authSession?.avatarUrl}
             presence={effectiveAgentPresence}
             roleName={authSession?.roleName}
             status={agentStatus}
@@ -1636,10 +1673,6 @@ export function BasicLayout() {
           <span>{callHandoffNoticeMessage}</span>
         </div>
       )}
-      <OperationNotice
-        message={transferNotice.message}
-        tone={transferNotice.tone}
-      />
       <InternalChatModal
         open={isInternalChatOpen}
         onClose={() => setIsInternalChatOpen(false)}

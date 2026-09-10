@@ -1,15 +1,13 @@
 import {
   DisconnectOutlined,
   EditOutlined,
-  GlobalOutlined,
   LeftOutlined,
   MenuOutlined,
-  MobileOutlined,
   RightOutlined,
-  WhatsAppOutlined,
 } from '@ant-design/icons'
 import { Badge, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
+import { ChannelLogo } from '../../../components'
 import type {
   LiveChat2EndReason,
   LiveChat2Session,
@@ -60,18 +58,6 @@ const channelLabels: Record<LiveChat2Session['channel'], string> = {
   BankApp: 'BankApp',
   Webchat: 'Webchat',
   WhatsApp: 'WhatsApp',
-}
-
-function getChannelIcon(channel: LiveChat2Session['channel']) {
-  if (channel === 'WhatsApp') {
-    return <WhatsAppOutlined />
-  }
-
-  if (channel === 'BankApp') {
-    return <MobileOutlined />
-  }
-
-  return <GlobalOutlined />
 }
 
 function getChannelClassName(channel: LiveChat2Channel) {
@@ -163,7 +149,7 @@ function renderSessionCard({
             role="img"
             title={channelLabels[session.channel]}
           >
-            {getChannelIcon(session.channel)}
+            <ChannelLogo channel={session.channel} variant="livechat" />
           </span>
         </span>
       </Badge>

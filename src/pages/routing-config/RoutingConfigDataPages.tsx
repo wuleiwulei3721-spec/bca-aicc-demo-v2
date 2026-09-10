@@ -16,7 +16,8 @@ import {
   AdminTable,
   AdminPage,
 } from '../../components'
-import { useRoutingConfigStore } from '../../store'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
+import { useAuthStore, useRoutingConfigStore } from '../../store'
 import type {
   AccessSite,
   BusinessType,
@@ -51,6 +52,7 @@ import {
   getNewCustomerAlertSoundUrl,
   newCustomerAlertSounds,
 } from '../../config/newCustomerAlertSounds'
+import { formatAuditActor, formatAuditDateTime } from '../../utils/audit'
 
 const statusSwitchLabels = {
   checked: 'Enabled',
@@ -68,6 +70,15 @@ function stringValue(value: unknown) {
 
 function numberValue(value: unknown) {
   return typeof value === 'number' ? value : Number(value) || 0
+}
+
+function optionalNumberValue(value: unknown) {
+  if (value === null || value === undefined || value === '') {
+    return undefined
+  }
+
+  const parsedValue = Number(value)
+  return Number.isFinite(parsedValue) ? parsedValue : undefined
 }
 
 function booleanValue(value: unknown) {
@@ -973,6 +984,7 @@ export function ChannelTypesPage() {
 }
 
 export function ChannelsPage() {
+  const { notify } = useOperationFeedback()
   const channels = useRoutingConfigStore((state) => state.channels)
   const upsertEntity = useRoutingConfigStore((state) => state.upsertEntity)
   const deleteEntity = useRoutingConfigStore((state) => state.deleteEntity)
@@ -1325,6 +1337,11 @@ export function ChannelsPage() {
     }
 
     upsertEntity('channels', 'channelId', nextChannel)
+    notify(
+      modalMode === 'business'
+        ? 'Channel business configuration saved locally for this demo session.'
+        : 'Channel saved locally for this demo session.',
+    )
 
     closeModal()
   }
@@ -1397,6 +1414,7 @@ export function ChannelsPage() {
       credentialRef: accountDraft.credentialRef.trim(),
       purpose: accountDraft.purpose.trim(),
     })
+    notify('Channel account saved locally for this demo session.')
     closeAccountModal()
   }
   const handleAccountDelete = () => {
@@ -1416,6 +1434,7 @@ export function ChannelsPage() {
       'accountCode',
       selectedAccount.accountCode,
     )
+    notify('Channel account deleted locally for this demo session.')
     closeAccountModal()
   }
   const renderBusinessNumberField = (
@@ -2531,11 +2550,12 @@ function createDefaultMediaServiceRulePlan(
     status: 'Active',
     updatedAt: '',
     updatedBy: 'Admin',
-    webchatRecallLimitSeconds: 120,
   }
 }
 
 export function MediaServiceRulePlansPage() {
+  const authSession = useAuthStore((state) => state.session)
+  const { notify } = useOperationFeedback()
   const mediaServiceRulePlans = useRoutingConfigStore(
     (state) => state.mediaServiceRulePlans,
   )
@@ -2544,6 +2564,10 @@ export function MediaServiceRulePlansPage() {
   )
   const upsertEntity = useRoutingConfigStore((state) => state.upsertEntity)
   const deleteEntity = useRoutingConfigStore((state) => state.deleteEntity)
+  const auditActor = formatAuditActor(
+    authSession?.employeeId,
+    authSession?.displayName,
+  )
   const { mediaOptions } = useRoutingLookups()
   const [appliedFilters, setAppliedFilters] = useState({
     keyword: '',
@@ -2742,7 +2766,6 @@ export function MediaServiceRulePlansPage() {
         ['preTimeoutReminderMinutes', 'δ�ظ���ʱǰ����ʱ��'],
         ['customerNoReplyTimeoutMinutes', '�ͻ�δ�ظ���ʱʱ��'],
         ['agentNoReplyTimeoutSeconds', '��ϯδ�ظ���ʱʱ��'],
-        ['webchatRecallLimitSeconds', 'Webchat��Ϣ����ʱ��'],
         ['agentNoReplyWarningSeconds', '��ϯδ�ظ���ɫ����'],
         ['agentNoReplyBreachSeconds', '��ϯδ�ظ���ɫ��ʾ'],
       )
@@ -2846,11 +2869,12 @@ export function MediaServiceRulePlansPage() {
       ...draft,
       planCode: draft.planCode.trim(),
       planName: draft.planName.trim(),
-      updatedAt: new Date().toISOString().slice(0, 10),
-      updatedBy: 'Admin',
+      updatedAt: formatAuditDateTime(new Date()),
+      updatedBy: auditActor,
     }
 
     upsertEntity('mediaServiceRulePlans', 'planCode', nextPlan)
+    notify('Media service rule plan saved locally for this demo session.')
     closeModal()
   }
   const handleDelete = () => {
@@ -2866,6 +2890,7 @@ export function MediaServiceRulePlansPage() {
     }
 
     deleteEntity('mediaServiceRulePlans', 'planCode', selectedPlan.planCode)
+    notify('Media service rule plan deleted locally for this demo session.')
     closeModal()
   }
   const isReadOnly = modalMode === 'delete' || modalMode === 'view'
@@ -2996,8 +3021,18 @@ export function MediaServiceRulePlansPage() {
       render: (value: MediaTypeCode) => mediaLabelByValue.get(value) ?? value,
     },
     { dataIndex: 'description', title: 'Description', width: 260 },
-    { dataIndex: 'updatedAt', title: 'Updated Date', width: 140 },
-    { dataIndex: 'updatedBy', title: 'Updated By', width: 120 },
+    {
+      dataIndex: 'updatedAt',
+      render: (updatedAt: string) => formatAuditDateTime(updatedAt),
+      title: 'Updated Time',
+      width: 164,
+    },
+    {
+      dataIndex: 'updatedBy',
+      ellipsis: true,
+      title: 'Updated By',
+      width: 180,
+    },
     {
       dataIndex: 'status',
       title: 'Status',
@@ -3410,17 +3445,6 @@ export function MediaServiceRulePlansPage() {
                   </header>
                   <div className="routing-config-media-rule-modal__subsections">
                     <div className="routing-config-media-rule-modal__subsection">
-                      <h4>Webchat ��Ϣ����</h4>
-                      <div className="routing-config-media-rule-modal__compact-row">
-                        {renderNumberField(
-                          'webchatRecallLimitSeconds',
-                          'Webchat��Ϣ����ʱ��',
-                          '��',
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="routing-config-media-rule-modal__subsection">
                       <h4>��ϯδ�ظ����񼶱�</h4>
                       <div className="routing-config-media-rule-modal__compact-row">
                         {renderNumberField(
@@ -3684,6 +3708,7 @@ function getSiteRatioTotal(ratioDraft: Record<string, number> = {}) {
 }
 
 export function SiteAccessVolumePage() {
+  const { notify } = useOperationFeedback()
   const siteAccessRatioGroups = useRoutingConfigStore(
     (state) => state.siteAccessRatioGroups,
   )
@@ -3706,7 +3731,6 @@ export function SiteAccessVolumePage() {
     useState<SiteAccessVolumeModalMode | null>(null)
   const [modalStatus, setModalStatus] =
     useState<RoutingConfigStatus>('Active')
-  const [notice, setNotice] = useState<string | null>(null)
   const [ratioDrafts, setRatioDrafts] = useState<SiteRatioDraftByMedia>({})
   const [selectedChannelCode, setSelectedChannelCode] = useState(
     channels[0]?.channelCode ?? '',
@@ -4033,7 +4057,6 @@ export function SiteAccessVolumePage() {
     setRatioDrafts(createChannelRatioDrafts(defaultChannelCode))
     setModalStatus('Active')
     setModalMode('add')
-    setNotice(null)
     setSubmitAttempted(false)
   }
 
@@ -4046,7 +4069,6 @@ export function SiteAccessVolumePage() {
     setRatioDrafts(createChannelRatioDrafts(row.channelCode))
     setModalStatus(row.status)
     setModalMode(mode)
-    setNotice(null)
     setSubmitAttempted(false)
   }
 
@@ -4101,7 +4123,7 @@ export function SiteAccessVolumePage() {
 
         upsertEntity('siteAccessRatioGroups', 'ratioGroupCode', nextRecord)
       })
-      setNotice('Site Access Volume saved locally for this demo session.')
+      notify('Site Access Volume saved locally for this demo session.')
       closeModal()
       return
     }
@@ -4124,7 +4146,7 @@ export function SiteAccessVolumePage() {
 
         upsertEntity('siteAccessRatioGroups', 'ratioGroupCode', nextRecord)
       })
-      setNotice('Site Access Volume saved locally for this demo session.')
+      notify('Site Access Volume saved locally for this demo session.')
       closeModal()
     }
   }
@@ -4143,7 +4165,7 @@ export function SiteAccessVolumePage() {
           group.ratioGroupCode,
         ),
       )
-    setNotice('Site Access Volume deleted locally for this demo session.')
+    notify('Site Access Volume deleted locally for this demo session.')
     closeModal()
   }
 
@@ -4161,14 +4183,6 @@ export function SiteAccessVolumePage() {
   return (
     <AdminPage title="Site Access Volume">
       <section className="routing-config-page">
-        {notice && (
-          <Alert
-            showIcon
-            className="routing-config-page__notice"
-            message={notice}
-            type="success"
-          />
-        )}
         <BaseCard compact>
           <div className="routing-config-page__admin-toolbar">
             <div className="routing-config-page__query-group">
@@ -4438,15 +4452,6 @@ const workingTimeWeekdayOptions: RoutingConfigSelectOption[] = [
   { label: 'Sun', value: 'SUN' },
 ]
 
-function getLocalDateString() {
-  const currentDate = new Date()
-  const year = currentDate.getFullYear()
-  const month = String(currentDate.getMonth() + 1).padStart(2, '0')
-  const day = String(currentDate.getDate()).padStart(2, '0')
-
-  return `${year}-${month}-${day}`
-}
-
 function getDatePickerValue(value: string) {
   return value ? dayjs(value, 'YYYY-MM-DD') : null
 }
@@ -4541,7 +4546,7 @@ function cloneWorkingTimePlan(plan: WorkingTimePlan): WorkingTimePlan {
 function createWorkingTimePlanDraft(
   existingPlans: WorkingTimePlan[] = [],
 ): WorkingTimePlan {
-  const today = getLocalDateString()
+  const now = formatAuditDateTime(new Date())
   let sequence = existingPlans.length + 1
   let planCode = `WTP_${String(sequence).padStart(3, '0')}`
 
@@ -4563,16 +4568,19 @@ function createWorkingTimePlanDraft(
     },
     specialWorkingPlans: [],
     status: 'Active',
-    updatedAt: today,
+    updatedAt: now,
     updatedBy: 'Admin',
     workSchedules: [createWorkScheduleRule()],
   }
 }
 
 
-function normalizeWorkingTimePlan(draft: WorkingTimePlan): WorkingTimePlan {
+function normalizeWorkingTimePlan(
+  draft: WorkingTimePlan,
+  _selectedPlan?: WorkingTimePlan | null,
+  updatedBy = 'Admin',
+): WorkingTimePlan {
   const normalizedDraft = cloneWorkingTimePlan(draft)
-  const today = getLocalDateString()
   const nextPlan: WorkingTimePlan = {
     ...normalizedDraft,
     holidayRules: normalizedDraft.holidayRules.map((rule) => ({
@@ -4583,8 +4591,8 @@ function normalizeWorkingTimePlan(draft: WorkingTimePlan): WorkingTimePlan {
           ? rule.nonWorkingRanges
           : [createTimeRange('00:00', '23:59')],
     })),
-    updatedAt: today,
-    updatedBy: 'Admin',
+    updatedAt: formatAuditDateTime(new Date()),
+    updatedBy,
   }
 
   if (!nextPlan.ramadanSchedule.enabled) {
@@ -4721,11 +4729,17 @@ function validateWorkingTimePlan(draft: WorkingTimePlan) {
 }
 
 export function WorkingTimePlansPage() {
+  const authSession = useAuthStore((state) => state.session)
+  const { notify } = useOperationFeedback()
   const workingTimePlans = useRoutingConfigStore(
     (state) => state.workingTimePlans,
   )
   const upsertEntity = useRoutingConfigStore((state) => state.upsertEntity)
   const deleteEntity = useRoutingConfigStore((state) => state.deleteEntity)
+  const auditActor = formatAuditActor(
+    authSession?.employeeId,
+    authSession?.displayName,
+  )
   const { skillQueues } = useRoutingLookups()
   const [filterDraft, setFilterDraft] = useState<WorkingTimePlanFilters>(
     workingTimeInitialFilters,
@@ -4739,7 +4753,6 @@ export function WorkingTimePlansPage() {
     createWorkingTimePlanDraft,
   )
   const [submitAttempted, setSubmitAttempted] = useState(false)
-  const [notice, setNotice] = useState('')
   const isReadOnly = modalMode === 'view'
   const isDeleteBlocked = Boolean(
     selectedPlan &&
@@ -4976,10 +4989,14 @@ export function WorkingTimePlansPage() {
       return
     }
 
-    const nextRecord = normalizeWorkingTimePlan(draft, selectedPlan)
+    const nextRecord = normalizeWorkingTimePlan(
+      draft,
+      selectedPlan,
+      auditActor,
+    )
 
     upsertEntity('workingTimePlans', 'planCode', nextRecord)
-    setNotice('Working Time Plan saved locally for this demo session.')
+    notify('Working Time Plan saved locally for this demo session.')
     closeModal()
   }
 
@@ -4989,7 +5006,7 @@ export function WorkingTimePlansPage() {
     }
 
     deleteEntity('workingTimePlans', 'planCode', selectedPlan.planCode)
-    setNotice('Working Time Plan deleted locally for this demo session.')
+    notify('Working Time Plan deleted locally for this demo session.')
     closeModal()
   }
 
@@ -5002,8 +5019,18 @@ export function WorkingTimePlansPage() {
       width: 260,
       render: (value: string) => value || '-',
     },
-    { dataIndex: 'updatedAt', title: 'Updated Date', width: 120 },
-    { dataIndex: 'updatedBy', title: 'Updated By', width: 110 },
+    {
+      dataIndex: 'updatedAt',
+      render: (updatedAt: string) => formatAuditDateTime(updatedAt),
+      title: 'Updated Time',
+      width: 164,
+    },
+    {
+      dataIndex: 'updatedBy',
+      ellipsis: true,
+      title: 'Updated By',
+      width: 180,
+    },
     {
       dataIndex: 'status',
       title: 'Status',
@@ -5525,14 +5552,6 @@ export function WorkingTimePlansPage() {
   return (
     <AdminPage title="Working Time Plans">
       <section className="routing-config-page">
-        {notice && (
-          <Alert
-            showIcon
-            className="routing-config-page__notice"
-            message={notice}
-            type="success"
-          />
-        )}
         <BaseCard compact>
           <div className="routing-config-page__admin-toolbar">
             <div className="routing-config-page__query-group">
@@ -5959,10 +5978,23 @@ export function SkillQueuesPage() {
           render: (value: string) =>
             workTimeLabelMap.get(value) ?? 'Default 24/7',
         },
+        {
+          dataIndex: 'ahtTargetSeconds',
+          title: 'AHT Target (sec)',
+          width: 110,
+          render: (value?: number) => (value === undefined ? '-' : value),
+        },
+        {
+          dataIndex: 'qmTargetPercent',
+          title: 'QM Target (%)',
+          width: 105,
+          render: (value?: number) => (value === undefined ? '-' : value),
+        },
         { dataIndex: 'assignedAgentCount', title: 'Agents', width: 72 },
       ]}
       createDraft={() => ({
         accessCode: '',
+        ahtTargetSeconds: undefined,
         assignedAgentCount: 0,
         maxQueueCustomers: 60,
         nonWorkingTimeMessage:
@@ -5974,6 +6006,7 @@ export function SkillQueuesPage() {
         queueTimeoutMinutes: 10,
         queueWaitingMessage:
           'All agents are busy. Estimated waiting time is {estimatedWaitMinutes} minutes.',
+        qmTargetPercent: undefined,
         skillQueueCode: 'SQ_NEW',
         skillQueueName: '',
         status: 'Active',
@@ -5984,6 +6017,7 @@ export function SkillQueuesPage() {
       data={skillQueues}
       draftToRecord={(draft) => ({
         accessCode: stringValue(draft.accessCode),
+        ahtTargetSeconds: optionalNumberValue(draft.ahtTargetSeconds),
         assignedAgentCount: numberValue(draft.assignedAgentCount),
         maxQueueCustomers: numberValue(draft.maxQueueCustomers),
         nonWorkingTimeMessage: stringValue(draft.nonWorkingTimeMessage),
@@ -5992,6 +6026,7 @@ export function SkillQueuesPage() {
         queueTimeoutMessage: stringValue(draft.queueTimeoutMessage),
         queueTimeoutMinutes: numberValue(draft.queueTimeoutMinutes),
         queueWaitingMessage: stringValue(draft.queueWaitingMessage),
+        qmTargetPercent: optionalNumberValue(draft.qmTargetPercent),
         skillQueueCode: stringValue(draft.skillQueueCode),
         skillQueueName: stringValue(draft.skillQueueName),
         status: 'Active',
@@ -6037,6 +6072,7 @@ export function SkillQueuesPage() {
       modalWidth={820}
       recordToDraft={(record) => ({
         accessCode: record.accessCode,
+        ahtTargetSeconds: record.ahtTargetSeconds,
         assignedAgentCount: record.assignedAgentCount,
         maxQueueCustomers: record.maxQueueCustomers,
         nonWorkingTimeMessage: record.nonWorkingTimeMessage,
@@ -6045,6 +6081,7 @@ export function SkillQueuesPage() {
         queueTimeoutMessage: record.queueTimeoutMessage,
         queueTimeoutMinutes: record.queueTimeoutMinutes,
         queueWaitingMessage: record.queueWaitingMessage,
+        qmTargetPercent: record.qmTargetPercent,
         skillQueueCode: record.skillQueueCode,
         skillQueueName: record.skillQueueName,
         supportsVideo: record.supportsVideo ? 'true' : 'false',
@@ -6187,6 +6224,39 @@ export function SkillQueuesPage() {
             </label>
           )
         }
+        const renderOptionalNumberField = (
+          key: string,
+          label: string,
+          options?: {
+            max?: number
+            min?: number
+          },
+        ) => {
+          const value = optionalNumberValue(draft[key])
+
+          return (
+            <label className="routing-config-crud-modal__field routing-config-media-rule-modal__number-field routing-config-skill-queue-modal__target-field">
+              <span>{label}</span>
+              {isReadOnly ? (
+                <em>{value === undefined ? '-' : value}</em>
+              ) : (
+                <span className="routing-config-media-rule-modal__number-control">
+                  <InputNumber
+                    max={options?.max}
+                    min={options?.min ?? 0}
+                    value={value}
+                    onChange={(nextValue) =>
+                      setDraftValue(
+                        key,
+                        nextValue === null ? undefined : Number(nextValue),
+                      )
+                    }
+                  />
+                </span>
+              )}
+            </label>
+          )
+        }
         return (
           <div className="routing-config-skill-queue-modal">
             <section className="routing-config-media-rule-modal__section">
@@ -6209,6 +6279,15 @@ export function SkillQueuesPage() {
                   required: true,
                 })}
                 {renderWorkTimePlanField()}
+                {renderOptionalNumberField(
+                  'ahtTargetSeconds',
+                  'AHT Target (sec)',
+                )}
+                {renderOptionalNumberField(
+                  'qmTargetPercent',
+                  'QM Target (%)',
+                  { max: 100 },
+                )}
                 {renderNumberField('assignedAgentCount', 'Assigned Agents', 'agents', {
                   readOnly: true,
                 })}

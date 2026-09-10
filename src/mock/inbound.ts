@@ -6,7 +6,6 @@ import type {
   LiveChat2Session,
   LiveChatSession,
   NextBestActionItem,
-  QuickActionItem,
   TicketHistoryItem,
   VerificationBusinessTypeOption,
   VerificationRule,
@@ -21,12 +20,14 @@ export const inboundCustomer: CustomerInformation = {
     avatarUrl:
       'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=160&q=80',
     name: 'Dimas Abimanyu Prabowo',
-    phoneNumber: '087825100234',
+    phoneNumber: '+62 21 25563000',
     email: 'Dimas@gmail.com',
+    emailVerificationStatus: 'Verified',
     cisNumber: '00000078987',
     customerType: 'Priority Customer',
+    segmentation: 'Prioritas - Upper Mass',
     crmContacts: {
-      Phone: ['087825100234', '+62 21 5088 1001'],
+      Phone: ['+62 21 25563000', '+62 21 5088 1001'],
       WhatsApp: ['+62 878 2510 0234'],
       BankApp: ['dimas.bank1'],
       Email: ['Dimas@gmail.com', 'dimas.abimanyu@example.net'],
@@ -49,12 +50,21 @@ export const unidentifiedInboundCustomer: CustomerInformation = {
     avatarInitials: '?',
     avatarUrl: '',
     name: 'Unidentified Customer',
-    phoneNumber: '08123456789',
-    email: '-',
-    cisNumber: '-',
+    phoneNumber: '',
+    email: '',
+    cisNumber: '',
     customerType: '',
   },
   verificationStatus: 'Unverified',
+}
+
+const unidentifiedWhatsAppCustomer: CustomerInformation = {
+  ...unidentifiedInboundCustomer,
+  accessChannel: 'WhatsApp',
+  profile: {
+    ...unidentifiedInboundCustomer.profile,
+    phoneNumber: '62 8123456789',
+  },
 }
 
 export const unidentifiedCustomerJourney: CustomerJourneyItem[] = []
@@ -69,8 +79,9 @@ export const bankAppVoiceCustomer: CustomerInformation = {
     avatarInitials: 'SA',
     avatarUrl: '',
     name: 'Sari Amelia',
-    phoneNumber: '081234560118',
+    phoneNumber: '08123456789',
     email: 'sari.amelia@example.com',
+    emailVerificationStatus: 'Unverified',
     cisNumber: '00000056231',
     customerType: 'Regular Customer',
   },
@@ -84,11 +95,11 @@ export const bankAppVoiceGuestCustomer: CustomerInformation = {
   profile: {
     avatarInitials: 'GU',
     avatarUrl: '',
-    name: 'Guest-06290001',
-    phoneNumber: '081234560118',
-    email: '-',
-    cisNumber: '-',
-    customerType: 'Guest',
+    name: 'Unidentified Customer',
+    phoneNumber: '',
+    email: '',
+    cisNumber: '',
+    customerType: '',
   },
   verificationStatus: 'Unverified',
 }
@@ -100,8 +111,9 @@ export const bankAppVideoCustomer: CustomerInformation = {
     avatarInitials: 'SA',
     avatarUrl: '',
     name: 'Sari Amelia',
-    phoneNumber: '081234560118',
+    phoneNumber: '08123456789',
     email: 'sari.amelia@example.com',
+    emailVerificationStatus: 'Unverified',
     cisNumber: '00000056231',
     customerType: 'Regular Customer',
   },
@@ -114,11 +126,11 @@ export const bankAppVideoGuestCustomer: CustomerInformation = {
   profile: {
     avatarInitials: 'GU',
     avatarUrl: '',
-    name: 'Guest-06290002',
-    phoneNumber: '081234560119',
-    email: '-',
-    cisNumber: '-',
-    customerType: 'Guest',
+    name: 'Unidentified Customer',
+    phoneNumber: '',
+    email: '',
+    cisNumber: '',
+    customerType: '',
   },
   verificationStatus: 'Unverified',
 }
@@ -128,13 +140,8 @@ export const liveChatSessions: LiveChatSession[] = [
     id: 'live-chat-001',
     channel: 'WhatsApp',
     customer: {
-      ...inboundCustomer,
-      accessChannel: 'WhatsApp',
+      ...unidentifiedWhatsAppCustomer,
       accessDuration: '00:48',
-      profile: {
-        ...inboundCustomer.profile,
-        avatarUrl: '/avatars/whatsapp-customer-female.png',
-      },
     },
     conversation: [
       {
@@ -197,8 +204,9 @@ export const liveChatSessions: LiveChatSession[] = [
         avatarInitials: 'SA',
         avatarUrl: '',
         name: 'Sari Amelia',
-        phoneNumber: '081234560118',
+        phoneNumber: '08123456789',
         email: 'sari.amelia@example.com',
+        emailVerificationStatus: 'Unverified',
         cisNumber: '00000056231',
         customerType: 'Regular Customer',
       },
@@ -250,18 +258,9 @@ export const liveChatSessions: LiveChatSession[] = [
     id: 'live-chat-003',
     channel: 'Webchat',
     customer: {
+      ...unidentifiedInboundCustomer,
       accessChannel: 'Webchat',
       accessDuration: '03:44',
-      profile: {
-        avatarInitials: 'RF',
-        avatarUrl: '',
-        name: 'Rafi Firmansyah',
-        phoneNumber: '082187650041',
-        email: 'rafi.firmansyah@example.com',
-        cisNumber: '00000073452',
-        customerType: 'Regular Customer',
-      },
-      verificationStatus: 'Verified',
     },
     conversation: [
       {
@@ -315,13 +314,8 @@ export const liveChat2Sessions: LiveChat2Session[] = [
     accessSequence: 1,
     channel: 'WhatsApp',
     customer: {
-      ...inboundCustomer,
-      accessChannel: 'WhatsApp',
+      ...unidentifiedWhatsAppCustomer,
       accessDuration: '00:18',
-      profile: {
-        ...inboundCustomer.profile,
-        avatarUrl: '/avatars/whatsapp-customer-female.png',
-      },
     },
     historyMessages: [
       {
@@ -340,6 +334,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         message:
           'I confirmed the card is active and routed the case to Card Services for unblock authorization.',
         sender: 'agent',
+        senderEmployeeId: 'AICC1024',
         senderName: 'Rina Putri',
         time: '13:45',
         timestamp: '2026-05-27T13:45:00+08:00',
@@ -389,6 +384,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         message:
           'I will verify your card status and submit the unblock request after authentication.',
         sender: 'agent',
+        senderEmployeeId: 'AICC1205',
         senderName: 'Nadia Putri',
         time: '14:31',
         timestamp: '2026-05-27T14:31:00+08:00',
@@ -427,8 +423,9 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         avatarInitials: 'SA',
         avatarUrl: '',
         name: 'Sari Amelia',
-        phoneNumber: '081234560118',
+        phoneNumber: '08123456789',
         email: 'sari.amelia@example.com',
+        emailVerificationStatus: 'Unverified',
         cisNumber: '00000056231',
         customerType: 'Regular Customer',
       },
@@ -451,6 +448,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         message:
           'Please keep your registered mobile number ready for verification.',
         sender: 'agent',
+        senderEmployeeId: 'AICC1088',
         senderName: 'Maya Lestari',
         time: '14:00',
         timestamp: '2026-05-27T14:00:00+08:00',
@@ -482,6 +480,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         message:
           'I can help reset the device binding after we complete verification.',
         sender: 'agent',
+        senderEmployeeId: 'AICC1205',
         senderName: 'Nadia Putri',
         time: '14:27',
         timestamp: '2026-05-27T14:27:00+08:00',
@@ -507,18 +506,9 @@ export const liveChat2Sessions: LiveChat2Session[] = [
     accessSequence: 3,
     channel: 'Webchat',
     customer: {
+      ...unidentifiedInboundCustomer,
       accessChannel: 'Webchat',
       accessDuration: '02:06',
-      profile: {
-        avatarInitials: 'RF',
-        avatarUrl: '',
-        name: 'Rafi Firmansyah',
-        phoneNumber: '082187650041',
-        email: 'rafi.firmansyah@example.com',
-        cisNumber: '00000073452',
-        customerType: 'Regular Customer',
-      },
-      verificationStatus: 'Unverified',
     },
     historyMessages: [
       {
@@ -578,18 +568,8 @@ export const liveChat2Sessions: LiveChat2Session[] = [
     accessSequence: 4,
     channel: 'WhatsApp',
     customer: {
-      accessChannel: 'WhatsApp',
+      ...unidentifiedWhatsAppCustomer,
       accessDuration: '00:42',
-      profile: {
-        avatarInitials: 'AS',
-        avatarUrl: '',
-        name: 'Andika Saputra',
-        phoneNumber: '081236780991',
-        email: 'andika.saputra@example.com',
-        cisNumber: '00000091277',
-        customerType: 'Regular Customer',
-      },
-      verificationStatus: 'Verified',
     },
     historyMessages: [
       {
@@ -627,6 +607,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         message:
           'I have checked the eligible transaction and registered the installment request.',
         sender: 'agent',
+        senderEmployeeId: 'AICC1205',
         senderName: 'Nadia Putri',
         time: '14:20',
         timestamp: '2026-05-27T14:20:00+08:00',
@@ -658,8 +639,9 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         avatarInitials: 'LN',
         avatarUrl: '',
         name: 'Lina Nuraini',
-        phoneNumber: '081237770245',
+        phoneNumber: '08123456789',
         email: 'lina.nuraini@example.com',
+        emailVerificationStatus: 'Unverified',
         cisNumber: '00000077124',
         customerType: 'Regular Customer',
       },
@@ -703,6 +685,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         message:
           'I am checking the courier status and registered delivery address now.',
         sender: 'agent',
+        senderEmployeeId: 'AICC1205',
         senderName: 'Nadia Putri',
         time: '14:38',
         timestamp: '2026-05-27T14:38:00+08:00',
@@ -735,8 +718,9 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         avatarInitials: 'RA',
         avatarUrl: '',
         name: 'Raka Aditya',
-        phoneNumber: '081298760044',
+        phoneNumber: '08123456789',
         email: 'raka.aditya@example.com',
+        emailVerificationStatus: 'Unverified',
         cisNumber: '00000068221',
         customerType: 'Regular Customer',
       },
@@ -767,6 +751,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         kind: 'text',
         message: 'The updated repayment schedule has been sent.',
         sender: 'agent',
+        senderEmployeeId: 'AICC1205',
         senderName: 'Nadia Putri',
         time: '13:52',
         timestamp: '2026-05-27T13:52:00+08:00',
@@ -1579,62 +1564,74 @@ export const customerJourney: CustomerJourneyItem[] = [
 
 export const ticketingHistory: TicketHistoryItem[] = [
   {
+    caseCategory: 'REQ/R001 BLOKIR HILANG (LOST)',
     id: 'ticket-001',
-    ticketType: 'Blokir Kartu Debit',
+    product: 'JASA/PASPOR BCA',
     ticketNumber: 'CRM000145',
     createdDate: '24 Sep',
   },
   {
+    caseCategory: 'REQ/R005 GANTI KARTU/HILANG',
     id: 'ticket-002',
-    ticketType: 'Laporan Kartu Hilang',
+    product: 'KARTU KREDIT BCA/AMEX PLATINUM',
     ticketNumber: 'CRM000146',
     createdDate: '13 Oct',
   },
   {
+    caseCategory:
+      'REQ/R010 UBAH/DATA NASABAH/DATA KORESPONDENSI (NSBH GIRO,TAPRES,BCA DOLAR)',
     id: 'ticket-003',
-    ticketType: 'Koreksi Data Nasabah',
+    product: 'TABUNGAN/TAHAPAN',
     ticketNumber: 'CRM000147',
     createdDate: '29 Oct',
   },
   {
+    caseCategory: 'REQ/R036 AKTIFKAN USER ID',
     id: 'ticket-004',
-    ticketType: 'Aktivasi Mobile Banking',
+    product: 'JASA/MOBILE Perbankan BCA',
     ticketNumber: 'CRM000148',
     createdDate: '03 Nov',
   },
   {
+    caseCategory: 'REQ/R019 PENGAKTIFAN PIN',
     id: 'ticket-005',
-    ticketType: 'Reset PIN Kartu',
+    product: 'JASA/PASPOR BCA',
     ticketNumber: 'CRM000149',
     createdDate: '11 Nov',
   },
   {
+    caseCategory: 'COMPL/C004 MERASA TDK TRANSAKSI KRT KREDIT/RETAIL/HALOBCA',
     id: 'ticket-006',
-    ticketType: 'Pembatalan Transaksi',
+    product: 'KARTU KREDIT BCA REGULER',
     ticketNumber: 'CRM000150',
     createdDate: '19 Nov',
   },
   {
+    caseCategory: 'REQ/R005 GANTI KARTU/HILANG',
     id: 'ticket-007',
-    ticketType: 'Penggantian Kartu',
+    product: 'KARTU KREDIT BCA/AMEX PLATINUM',
     ticketNumber: 'CRM000151',
     createdDate: '28 Nov',
   },
   {
+    caseCategory: 'REQ/R009 NAIK LIMIT/SEMENTARA (BCNS)',
     id: 'ticket-008',
-    ticketType: 'Kenaikan Limit',
+    product: 'KARTU KREDIT BCA REGULER',
     ticketNumber: 'CRM000152',
     createdDate: '05 Dec',
   },
   {
+    caseCategory: 'INF/I68888 PRODUCT/KARTU KREDIT',
     id: 'ticket-009',
-    ticketType: 'Klaim Promosi',
+    product: 'LAIN-LAIN',
     ticketNumber: 'CRM000153',
     createdDate: '14 Dec',
   },
   {
+    caseCategory:
+      'REQ/R010 UBAH/DATA NASABAH/DATA KORESPONDENSI (NSBH GIRO,TAPRES,BCA DOLAR)',
     id: 'ticket-010',
-    ticketType: 'Perubahan Alamat',
+    product: 'TABUNGAN/TAHAPAN',
     ticketNumber: 'CRM000154',
     createdDate: '22 Dec',
   },
@@ -1674,33 +1671,5 @@ export const nextBestActions: NextBestActionItem[] = [
     id: 'nba-004',
     recommendedService: 'Aktivasi BANK 1 Mobile',
     crmLink: '/crm/recommendations/travel-insurance',
-  },
-]
-
-export const quickActions: QuickActionItem[] = [
-  {
-    id: 'quick-001',
-    label: 'Buka Blokir BANK 1 ID',
-    crmLink: '/crm/quick-actions/unblock-abc-id',
-  },
-  {
-    id: 'quick-002',
-    label: 'Verifikasi Dua Pertanyaan',
-    crmLink: '/crm/quick-actions/two-questions',
-  },
-  {
-    id: 'quick-003',
-    label: 'Penggantian Kartu',
-    crmLink: '/crm/quick-actions/card-replacement',
-  },
-  {
-    id: 'quick-004',
-    label: 'Verifikasi Lima Pertanyaan',
-    crmLink: '/crm/quick-actions/five-questions',
-  },
-  {
-    id: 'quick-005',
-    label: 'Panduan Penggantian Kartu',
-    crmLink: '/crm/quick-actions/card-replacement-guide',
   },
 ]

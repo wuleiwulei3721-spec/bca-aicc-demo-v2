@@ -16,7 +16,7 @@ export const CONTACT_SECTIONS = [
 export const CUSTOMER_CONTACT_DETAIL_SECTIONS = [
   {
     title: 'Communication Channels',
-    types: ['Phone', 'WhatsApp', 'BankApp', 'Email'],
+    types: ['Phone', 'BankApp', 'Email'],
   },
   {
     title: 'Social Media',

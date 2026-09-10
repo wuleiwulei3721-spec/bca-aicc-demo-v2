@@ -15,6 +15,8 @@ export type VerificationStatus =
   | 'Unverified'
   | 'Verification Failed'
 
+export type CustomerEmailVerificationStatus = 'Verified' | 'Unverified'
+
 export type CustomerContactChannel =
   | 'Phone'
   | 'WhatsApp'
@@ -52,8 +54,10 @@ export interface CustomerProfile {
   name: string
   phoneNumber: string
   email: string
+  emailVerificationStatus?: CustomerEmailVerificationStatus
   cisNumber: string
   customerType: string
+  segmentation?: string
   crmContacts?: CustomerCrmContacts
 }
 
@@ -117,6 +121,7 @@ export interface LiveChat2Message {
   kind: LiveChat2MessageKind
   message: string
   sender: LiveChat2MessageSender
+  senderEmployeeId?: string
   senderName: string
   time: string
   timestamp: string
@@ -247,8 +252,9 @@ export interface CustomerJourneyItem {
 }
 
 export interface TicketHistoryItem {
+  caseCategory: string
   id: string
-  ticketType: string
+  product: string
   ticketNumber: string
   createdDate: string
 }

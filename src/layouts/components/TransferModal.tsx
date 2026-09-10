@@ -23,10 +23,13 @@ interface TransferModalProps {
   open: boolean
   variant?: TransferModalVariant
   consultedAgentId?: string | null
+  consultedNumber?: string | null
   onClose: () => void
   onConsultAgent?: (agent: TransferAgent | null) => void
+  onConsultNumber?: (number: string | null) => void
   onTransferToAgent?: (agent: TransferAgent) => void
   onConferenceWithAgent?: (agent: TransferAgent) => void
+  onConferenceWithNumber?: (number: string) => void
   onTransferToSkill?: (skill: TransferSkill) => void
   onTransferToNumber?: (number: string) => void
   onTransferToIvr?: (entry: CommonNumberEntry) => void
@@ -72,6 +75,7 @@ function TransferAgentTab({
   variant,
   onConferenceWithAgent,
   onConsultAgent,
+  hasNumberConsultation,
   onTransferToAgent,
   onComplete,
 }: {
@@ -80,6 +84,7 @@ function TransferAgentTab({
   variant: TransferModalVariant
   onConferenceWithAgent?: (agent: TransferAgent) => void
   onConsultAgent?: (agent: TransferAgent | null) => void
+  hasNumberConsultation: boolean
   onTransferToAgent?: (agent: TransferAgent) => void
   onComplete: () => void
 }) {
@@ -172,7 +177,8 @@ function TransferAgentTab({
         }
 
         const isConsultedAgent = consultedAgentId === agent.id
-        const hasActiveConsultation = Boolean(consultedAgentId)
+        const hasActiveConsultation =
+          Boolean(consultedAgentId) || hasNumberConsultation
 
         return (
           <Space className="aicc-transfer-row-actions" size={4}>
@@ -357,27 +363,47 @@ function TransferSkillTab({
 }
 
 function TransferNumberTab({
+  consultedNumber,
+  hasAgentConsultation,
+  onConferenceWithNumber,
+  onConsultNumber,
   onTransferToNumberFailed,
   onTransferToNumber,
 }: {
+  consultedNumber?: string | null
+  hasAgentConsultation: boolean
+  onConferenceWithNumber?: (number: string) => void
+  onConsultNumber?: (number: string | null) => void
   onTransferToNumberFailed?: () => void
   onTransferToNumber?: (number: string) => void
 }) {
   const [phoneNumber, setPhoneNumber] = useState('')
   const normalizedPhoneNumber = phoneNumber.trim()
+  const isConsultedNumber = consultedNumber === normalizedPhoneNumber
+  const hasActiveConsultation = Boolean(consultedNumber) || hasAgentConsultation
 
   return (
     <div className="aicc-modal-section aicc-transfer-number">
       <div className="aicc-transfer-number__line">
         <Input
+          disabled={hasActiveConsultation}
           placeholder="Enter phone number"
           value={phoneNumber}
           onChange={(event) => setPhoneNumber(event.target.value)}
         />
         <AppButton
-          disabled={!normalizedPhoneNumber}
-          title="Transfer to external number"
-          type="primary"
+          disabled={
+            !normalizedPhoneNumber || (hasActiveConsultation && !isConsultedNumber)
+          }
+          title={isConsultedNumber ? 'Cancel consultation' : 'Consult external number'}
+          variant={isConsultedNumber ? 'danger' : 'secondary'}
+          onClick={() => onConsultNumber?.(isConsultedNumber ? null : normalizedPhoneNumber)}
+        >
+          {isConsultedNumber ? 'Cancel Consult' : 'Consult'}
+        </AppButton>
+        <AppButton
+          disabled={!isConsultedNumber}
+          title="Transfer to consulted external number"
           onClick={() => {
             if (normalizedPhoneNumber.endsWith('000')) {
               onTransferToNumberFailed?.()
@@ -388,6 +414,13 @@ function TransferNumberTab({
           }}
         >
           Transfer
+        </AppButton>
+        <AppButton
+          disabled={!isConsultedNumber}
+          title="Add consulted external number to conference"
+          onClick={() => onConferenceWithNumber?.(normalizedPhoneNumber)}
+        >
+          Conference
         </AppButton>
       </div>
     </div>
@@ -470,9 +503,12 @@ export function TransferModal({
   open,
   variant = 'call',
   consultedAgentId,
+  consultedNumber,
   onClose,
   onConferenceWithAgent,
+  onConferenceWithNumber,
   onConsultAgent,
+  onConsultNumber,
   onTransferToAgent,
   onTransferToIvr,
   onTransferToNumber,
@@ -493,6 +529,7 @@ export function TransferModal({
           agentScope={agentScope}
           consultedAgentId={consultedAgentId}
           variant={variant}
+          hasNumberConsultation={Boolean(consultedNumber)}
           onComplete={onClose}
           onConferenceWithAgent={onConferenceWithAgent}
           onConsultAgent={onConsultAgent}
@@ -519,6 +556,10 @@ export function TransferModal({
                   label: 'Transfer Number',
                   children: (
                     <TransferNumberTab
+                      consultedNumber={consultedNumber}
+                      hasAgentConsultation={Boolean(consultedAgentId)}
+                      onConferenceWithNumber={onConferenceWithNumber}
+                      onConsultNumber={onConsultNumber}
                       onTransferToNumberFailed={onTransferToNumberFailed}
                       onTransferToNumber={onTransferToNumber}
                     />

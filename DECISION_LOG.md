@@ -1,8 +1,235 @@
 # Decision Log
 
-Last updated: 2026-08-13 16:00 +08:00
+Last updated: 2026-09-02 09:45 +08:00
 
 This document records important product and system design decisions that can be confirmed from the current codebase, project documents, `DEV_LOG.md`, and readable Git history. It intentionally omits bug fixes, visual micro-adjustments, temporary test data, copy-only tweaks, and implementation details that do not affect product direction.
+
+--------------------------------------------------
+
+Decision ID:
+DEC-053
+
+Module:
+Call Management / Verification Rules Channel Scope
+
+Decision:
+The Verification Rules management Channel field dynamically combines active channel configuration with active Voice/Video media configuration. The current default data produces `Phone`, `Bankapp Voice`, `Bankapp Video`, `Webchat Voice`, and `Webchat Video`. Bankapp Voice and Bankapp Video retain HaloApp Login Status applicability; Webchat Voice and Webchat Video do not expose a login-status field.
+
+Reason:
+The customer requires KBV configuration for Webchat voice/video and BankApp video, while Webchat has no login state. The management dropdown must represent channel and media together, follow Routing Config channel/media availability, and avoid creating additional default rule records.
+
+Impact:
+The Verification Rules page derives option labels from `channels` and `mediaTypes`, and derives available combinations from each channel's configured media types. Removing a channel media removes the corresponding new/filter option but does not delete existing rule rows; unavailable existing values remain readable as inactive in the editor. The existing `BANKAPP` rule value remains displayed as `Bankapp Voice` for backward compatibility, and the global Routing Config channel/media data is not modified by this page.
+
+Status:
+Implemented as front-end Demo behavior
+
+Source:
+Customer requirement on 2026-08-28; Code: `src/pages/call-management/VerificationRuleV2Page.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-052
+
+Module:
+External Outbound Approval
+
+Decision:
+Ordinary-Agent external outbound approvals use a fixed 10-second pending window in the fake TL approval popup. Expiry closes that popup, prompts the Agent to submit the request again, and does not model TL/SPV Ready availability. Per Agent, only the latest approved unused outbound request is valid; later approval invalidates earlier unused approvals.
+
+Reason:
+The Demo uses a local fake approver rather than a real TL/SPV state service. The requested flow needs a visible response deadline without adding a new approver-presence model, and stale approvals must not authorize an earlier destination after a later request has been approved.
+
+Impact:
+The approval store persists a `timed-out` status and schedules pending requests against their creation time. The Agent receives the standard right-bottom approval-result dialog with `Approval timed out. Please submit the outbound call request again.` Approved-request replacement is scoped to the requesting Agent; direct TL-and-above calls remain unchanged.
+
+Status:
+Implemented as front-end Demo behavior
+
+Source:
+Customer confirmation on 2026-09-01; Code: `src/utils/outboundApproval.ts`, `src/pages/TlOutboundApprovalPage.tsx`, `src/layouts/components/AgentToolbar.tsx`, `src/layouts/components/OutboundCallModal.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `DESIGN_SYSTEM.md`, `PROJECT_CONTEXT.md`, `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-051
+
+Module:
+Outbound Call / AUX and Screen Pop
+
+Decision:
+Outbound number calls from the toolbar `Call Number` tab and Customer Information require an active AUX reason configured with `Support Outbound` and retain the existing TL approval request/result flow for ordinary Agents; TL-and-above accounts call directly. Outbound agent calls do not require an outbound AUX. Neither outbound type activates a customer screen pop, and both show `Skill -` in the toolbar call context.
+
+Reason:
+The customer requested that external-number outbound use the dedicated outbound AUX state directly, while agent-to-agent outbound remains available without that state. Neither flow represents a customer record that needs to be opened automatically.
+
+Impact:
+The existing `Miss Information` / `Financial Risk` reason selection and ordinary-Agent TL approval transport/result UI remain part of number outbound; TL-and-above number outbound remains direct. Both call types enter `Talking`, reuse the existing call lifecycle, keep the current workspace focused, and create no `Outbound Call` workspace tab. The outbound skill is explicitly stored as `-` instead of the inbound skill label. Approval is separate from customer screen-pop behavior.
+
+Status:
+Implemented as front-end Demo behavior
+
+Source:
+Customer requirement on 2026-08-27; Code: `src/layouts/BasicLayout.tsx`, `src/layouts/components/AgentToolbar.tsx`, `src/layouts/components/OutboundCallModal.tsx`, `src/pages/inbound/components/CustomerInformationCard.tsx`, `src/store/appStore.ts`; Docs: `PROJECT_CONTEXT.md`, `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `DESIGN_SYSTEM.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-050
+
+Module:
+Call Management / Audit and Input Standards
+
+Decision:
+Phone and WhatsApp are treated as one phone-number channel group in Blacklist and Priority List batch creation. They may be selected together and share Country Code, Phone Number, phone-number matching, and Country Code list display; other channels are mutually exclusive with that group but remain multi-selectable among themselves. In Blacklist, only Phone selected alone supports both Restriction Policies; WhatsApp, Phone + WhatsApp mixed batches, and non-phone channels use fixed `Prohibit Transfer to Agent`. Management audit labels use `Created By` / `Created Time` and `Updated By` / `Updated Time`; `Modified` is not used as a second label for the same last-update meaning. Call Management timestamps display `DD-MM-YYYY HH:MM:SS`. Standard Remark inputs default to 2000 characters, while Quick Reply Code is limited to 50, Common Phrase / Quick Reply text to 2000, Sensitive Word and Question Name to 100, Common Link Website Name / Website URL to 200, Quick Action Action Name / Link Address to 200, and shared Ticket fields retain their specific limits.
+
+Reason:
+The customer confirmed that WhatsApp identifiers are phone numbers and requested consistent management-console time, audit-user, and input-limit behavior. Reusing one phone-number group keeps the batch form and duplicate model understandable across both lists.
+
+Impact:
+Blacklist and Priority List generate one record per selected phone-like channel and phone number. Blacklist and Priority List seeded creation records use `1234-Admin`; new or edited demo records use the current operator in `user ID-user name` format. Common Phrase, Common Link, Common Number, Sensitive Word, AUX Reason, Abnormal End Reason, Quick Action, Verification Rule, and Routing Config use `Updated Time` / `Updated By` at the end of their lists, with seeded administrator-owned values displayed as `1234-Admin`. The shared limited-input components provide the Ticket-compatible count presentation.
+
+Status:
+Implemented as front-end Demo behavior
+
+Source:
+Customer confirmation on 2026-08-27; Code: `src/pages/call-management/BlacklistManagementPage.tsx`, `src/pages/call-management/PriorityListManagementPage.tsx`, `src/pages/call-management/CommonPhraseManagementPage.tsx`, `src/components/LimitedInput.tsx`, `src/components/LimitedTextArea.tsx`, `src/components/limitedInputUtils.ts`, `src/utils/audit.ts`; Docs: `BUSINESS_RULES.md`, `DESIGN_SYSTEM.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-049
+
+Module:
+Webchat Demo / Customer Information Channel Label
+
+Decision:
+Webchat is a Guest-only customer-side Demo flow. Its shared Customer Information card keeps the internal `Webchat` channel value for routing and rule matching, but displays `bca.co.id` as the access-channel label. The Webchat Demo control shows Guest as a fixed read-only customer type and does not expose Registered.
+
+Reason:
+The customer mapping identifies Webchat as the `bca.co.id` text access surface and the current Webchat route has no login capability. Retaining a Registered option or showing the internal channel name would describe a flow that the channel does not support.
+
+Impact:
+Webchat handoff and shared-card verification rules continue to use the existing Webchat data value. Only the Webchat Demo customer-type control and customer-card channel label change; other channel labels remain unchanged.
+
+Status:
+Implemented as front-end Demo behavior
+
+Source:
+Customer mapping clarification on 2026-08-26; Code: `src/pages/bankapp/BankAppDemoPage.tsx`, `src/pages/inbound/components/ChannelTag.tsx`, `src/pages/inbound/components/CustomerInformationCard.tsx`; Docs: `BUSINESS_RULES.md`, `DESIGN_SYSTEM.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-048
+
+Module:
+Customer Information / Unidentified Guest Normalization
+
+Decision:
+The shared Customer Information card treats every inbound customer without a valid CRM CIS as unidentified, regardless of the channel-side Guest label. It displays `Unidentified Customer`, keeps Phone, Email, and Customer Number rows empty, and hides Segmentation and Special Handling. A valid CRM CIS displays the CRM-backed customer profile; an identified customer is not displayed as Guest. Channel-supported verification controls remain governed by the channel/media mapping.
+
+Reason:
+The latest customer mapping defines customer identity separately from channel login or Guest context. Showing `Guest-...` and entered contact data in the customer card implies customer information exists before CRM identification and conflicts with the empty/not-displayed field rules.
+
+Impact:
+BankApp Voice/Video Guest demos retain Guest context for routing and toolbar behavior, but their customer cards use the same unidentified presentation as PSTN. Outbound Customer remains a separate operational context and can retain its dialed number.
+
+Status:
+Implemented as front-end Demo behavior
+
+Source:
+Customer clarification on 2026-08-26; Code: `src/pages/inbound/components/CustomerInformationCard.tsx`, `src/mock/inbound.ts`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-047
+
+Module:
+Customer Information / Channel Verification Visibility
+
+Decision:
+The shared Customer Information card follows the customer mapping for verification visibility by channel and media. PSTN, BankApp Voice/Video, and Webchat Voice/Video show the verification result and `KBV`; registered BankApp text / Live Chat shows the verification result and `PIN`; WhatsApp, Email, Webchat text, Social Media, and guest BankApp text hide both the result and entry. WhatsApp displays the CRM WhatsApp contact as the Phone value when available.
+
+Reason:
+The customer mapping defines verification status and verification entry separately from the customer profile fields, and the text-channel cases explicitly omit both. Keeping this as one shared card rule prevents individual channel pages from drifting.
+
+Impact:
+Customer Information remains structurally shared while its bottom verification controls reflect the active channel/media. KBV and PIN continue to use their existing flows where allowed; hidden channels cannot expose a misleading status or clickable verification entry.
+
+Status:
+Implemented as front-end Demo behavior
+
+Source:
+Customer mapping confirmation on 2026-08-26; Code: `src/pages/inbound/components/CustomerInformationCard.tsx`, `src/components/CustomerInformationPanel.tsx`; Docs: `BUSINESS_RULES.md`, `DESIGN_SYSTEM.md`, `CURRENT_STATUS.md`, `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-046
+
+Module:
+Customer Information / Unidentified PSTN Display
+
+Decision:
+The shared Customer Information card does not render customer avatars and keeps the compact name-plus-icon/value presentation. For an unidentified PSTN customer, Phone, Email, and Customer Number icon rows remain present with empty values, while Segmentation and Special Handling are hidden. Identified profiles use the customer mapping formats for country-coded Phone, contact-verification-suffixed Email, Customer Number, and Segmentation; when available, Special Handling sits at the far right of the Segmentation row. Customer-phone outbound and CRM-dependent actions remain unavailable until CRM identity is loaded; the toolbar may continue to show the anonymous caller number for call identification.
+
+Reason:
+The customer mapping distinguishes `empty` values from `not displayed` fields and confirms that the customer information card cannot receive customer avatars. Keeping the empty rows preserves the common card structure without inventing placeholder values or implying an available customer identity.
+
+Impact:
+The shared card layout applies the no-avatar presentation to inbound, digital, Email, and Social Media customer contexts. The unidentified PSTN state is rendered from an empty display profile while the underlying interaction can still complete KBV and CRM CIS refresh. Guest and Outbound Customer records keep their existing entered or dialed contact values.
+
+Status:
+Implemented as front-end Demo behavior
+
+Source:
+Customer mapping confirmation on 2026-08-24; Code: `src/components/CustomerInformationPanel.tsx`, `src/pages/inbound/components/CustomerInformationCard.tsx`, `src/styles/index.less`; Docs: `BUSINESS_RULES.md`, `DESIGN_SYSTEM.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`
+Decision ID:
+DEC-052
+
+Module:
+Social Media Interaction Log
+
+Decision:
+Social Media records are delivered as a dedicated customer-visible `Social Media > Interaction Log` workspace page, opened through `/social-media/interaction-log`, rather than being added to `Call Management > Interaction Log`.
+
+Reason:
+The social media query model has distinct channel, message type, customer account, agent, team, social account, ticket, alert, and conversation-detail fields. Keeping it separate preserves the existing Call Management Interaction Log boundary for Phone, BankApp, Webchat, and WhatsApp service records while still giving the customer a working social history query entry.
+
+Impact:
+The new page is registered through the shared workspace page tab registry and is visible in the customer profile. It uses anonymized front-end mock data, role-scoped display rules, agent lookup, alert detail, and read-only conversation detail. Backend query, social API, audit, attachment, moderation, and quality-management contracts remain future work.
+
+Status:
+Implemented as front-end demo behavior
+
+Source:
+Customer request and 社媒会话查询 requirement document on 2026-08-21; Code: `src/pages/social-media/SocialMediaInteractionLogPage.tsx`, `src/mock/socialMediaInteractionLog.ts`, `src/types/socialMediaInteractionLog.ts`, `src/config/workspacePageTabs.tsx`, `src/layouts/BasicLayout.tsx`, `src/routes.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `PROJECT_CONTEXT.md`, `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-045
+
+Module:
+Ticket Registration / Customer Journey / Interaction Log
+
+Decision:
+Ticket Category is the parent field for Product. A ticket stores exactly one Category and one Product; Product choices are restricted to the Category-Product mapping supplied by the customer. Customer Journey and Ticketing History present Category, while Interaction Log presents each Ticket's ID and one Category only.
+
+Reason:
+The customer confirmed that one Category may have multiple applicable Products, but agents must select only one Product per Ticket. Showing Product in the requested history surfaces would add detail where the business wants Category-level visibility.
+
+Impact:
+All current shared Ticket entry points use searchable single-select Category and Product controls. Changing Category clears Product. Interaction Log may continue to contain multiple Tickets per interaction, but every Ticket has one Category and one retained Product. The approved mapping source contains 103 Categories and 495 distinct Category-Product relationships after removal of one exact duplicate pair.
+
+Status:
+Implemented as front-end demo behavior
+
+Source:
+Customer-provided `Category and product.xlsx` on 2026-08-19; Code: `src/mock/ticketCategoryProducts.ts`, `src/components/TicketRegistrationDrawer.tsx`, `src/pages/inbound/components/CustomerJourneyCard.tsx`, `src/pages/call-management/CallRecordDetailModal.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `DESIGN_SYSTEM.md`
 
 --------------------------------------------------
 
@@ -10,19 +237,19 @@ Decision ID:
 DEC-044
 
 Module:
-Customer Outbound / Busy Reason
+Customer Outbound / AUX Reason
 
 Decision:
-Outbound calling requires an active Busy Reason configured for outbound. The DEMO defaults `Callback Finrisk` and `Callback Misinform` to this eligibility. `Miss Information` and `Financial Risk` remain per-call business reasons for customer numbers. Ordinary Agents request TL/SPV approval for customer numbers; TL-and-above accounts call those numbers directly. Call Agent always exposes only TL/SPV targets and requires the same outbound AUX, but does not use external-number approval.
+Outbound calling requires an active AUX Reason configured for outbound. The DEMO defaults `Callback Finrisk` and `Callback Misinform` to this eligibility. `Miss Information` and `Financial Risk` remain per-call business reasons for customer numbers. Ordinary Agents request TL/SPV approval for customer numbers; TL-and-above accounts call those numbers directly. Call Agent always exposes only TL/SPV targets and requires the same outbound AUX, but does not use external-number approval.
 
 Reason:
 The customer requires callback work to be explicitly separated from normal AUX use, while retaining existing per-call business attribution and approval demonstration.
 
 Impact:
-Busy Reason maintains `Support Outbound` as a list-level setting supporting multiple active reasons. Customer outbound approval remains valid while the agent moves between eligible AUX reasons, and becomes invalid only after the agent leaves the eligible set or the eligible configuration is removed. Future backend integration must enforce the same status, role, approval, and audit constraints server-side.
+AUX Reason maintains `Support Outbound` as a list-level setting supporting multiple active reasons. Customer outbound approval remains valid while the agent moves between eligible AUX reasons, and becomes invalid only after the agent leaves the eligible set or the eligible configuration is removed. Future backend integration must enforce the same status, role, approval, and audit constraints server-side.
 
 Status:
-Implemented as front-end Demo behavior
+Superseded by DEC-051
 
 Source:
 Customer annotation and confirmed plan on 2026-08-13; Code: `src/pages/call-management/BusyReasonManagementPage.tsx`, `src/layouts/components/OutboundCallModal.tsx`, `src/pages/inbound/components/CustomerInformationCard.tsx`, `src/utils/outboundApproval.ts`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `DEV_LOG.md`
@@ -59,13 +286,13 @@ Module:
 Demo Authentication / Transfer Permission
 
 Decision:
-The Demo exposes two safe accounts in the same workbench: `888888 / 888888` is the ordinary Agent account, and `666666 / 666666` is the female TL account Maya Lestari. The TL account receives `transfer:external-number`, which exposes direct `Transfer Number` behavior, and calls external numbers directly after selecting the required reason. Ordinary Agents see only SPV and TL records in Call Agent; TL-and-above roles see the full Call Agent list.
+The Demo exposes two safe accounts in the same workbench: `888888 / 888888` is the ordinary Agent account, and `666666 / 666666` is the female TL account Maya Lestari. The TL account receives `transfer:external-number`, which exposes consultation-first `Transfer Number` behavior, and calls external numbers directly after selecting the required reason. Ordinary Agents see only SPV and TL records in Call Agent; TL-and-above roles see the full Call Agent list.
 
 Reason:
 The customer needs to demonstrate that external-number transfer is a TL-and-above operation while preserving the ordinary-agent transfer experience and without adding a separate TL application.
 
 Impact:
-The authenticated session carries the explicit permission and role scope to the toolbar and its dialogs. The TL account changes only the external outbound, `Transfer Number`, and Call Agent list visibility capabilities; it does not gain a TL dashboard, supervisor management features, backend authorization, or cross-device workflow. Every external outbound still requires one selected reason, `Miss Information` or `Financial Risk`, but only ordinary Agents create TL approval requests.
+The authenticated session carries the explicit permission and role scope to the toolbar and its dialogs. The TL account changes only the external outbound, `Transfer Number`, and Call Agent list visibility capabilities; number transfer requires the same Consult, Cancel Consult, Transfer, and Conference progression as agent transfer. It does not gain a TL dashboard, supervisor management features, backend authorization, or cross-device workflow. Every number outbound still requires one selected reason, `Miss Information` or `Financial Risk`, and the active outbound AUX gate; ordinary Agents retain TL approval while TL-and-above accounts call directly.
 
 Status:
 Implemented as front-end Demo behavior
@@ -157,10 +384,10 @@ Reason:
 The previous Customer Information-only three-second automatic approval did not make the TL role or decision visible in customer demonstrations. A separate TL popup makes the authorization step understandable while preserving the existing agent workbench and no-backend demo boundary.
 
 Impact:
-The same-browser demo stores and synchronizes ordinary-Agent outbound and customer-phone approval records with localStorage and BroadcastChannel. Both approval scopes include the selected reason, so changing the number or reason invalidates the previous authorization. Closing the originating modal does not cancel the request, allowing the agent to handle an incoming interaction and return to the same exact-number approval; Log Out clears pending and unused approvals. Any Customer Information card with a nonempty phone number can initiate outbound without waiting for KBV or CRM identity; the card opens a compact Reason modal and uses the same `Requesting...` pending copy as toolbar outbound. A completed Call from either entry creates and focuses a new `Outbound Call` voice workspace carrying the dialed number, then enters `Talking`. TL can approve or reject with an optional generic note; there is no countdown or automatic approval timeout. The TL account's direct external outbound and Transfer Number permissions are documented separately in DEC-042. The TL popup reuses one window, overlays the supplied complete dashboard screenshot with a light mask, and processes pending requests FIFO through a single centered light-blue-header/white-body Modal; agent results use a compact non-masked `BaseModal` in the bottom-right corner. This is not a production approval, routing, permission, audit, or cross-device contract; a real integration must replace the local transport and introduce TL identity, authorization, persistence, and audit requirements.
+The same-browser demo stores and synchronizes ordinary-Agent outbound and customer-phone approval records with localStorage and BroadcastChannel. Both approval scopes include the selected reason, so changing the number or reason invalidates the previous authorization. Closing the originating modal does not cancel the request, allowing the agent to handle an incoming interaction and return to the same exact-number approval; Log Out clears pending and unused approvals. Any Customer Information card with a nonempty phone number can initiate outbound without waiting for KBV or CRM identity; the card opens a compact Reason modal and uses the same `Requesting...` pending copy as toolbar outbound. A completed Call from either entry creates a background `Outbound Call` voice workspace carrying the dialed number without activating a customer screen pop, then enters `Talking`. TL can approve or reject with an optional generic note; there is no countdown or automatic approval timeout. The TL account's direct external outbound and Transfer Number permissions are documented separately in DEC-042. The TL popup reuses one window, overlays the supplied complete dashboard screenshot with a light mask, and processes pending requests FIFO through a single centered light-blue-header/white-body Modal; agent results use a compact non-masked `BaseModal` in the bottom-right corner. This is not a production approval, routing, permission, audit, or cross-device contract; a real integration must replace the local transport and introduce TL identity, authorization, persistence, and audit requirements.
 
 Status:
-Implemented
+Implemented as front-end Demo behavior
 
 Source:
 Customer requirement and approved implementation plans on 2026-07-22 and 2026-07-23; Code: `src/utils/outboundApproval.ts`, `src/hooks/useExternalOperationApproval.ts`, `src/pages/TlOutboundApprovalPage.tsx`, `src/layouts/components/OutboundCallModal.tsx`, `src/layouts/components/TransferModal.tsx`, `src/pages/inbound/components/CustomerInformationCard.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `PROJECT_CONTEXT.md`, `DEV_LOG.md`
@@ -660,13 +887,13 @@ Module:
 Live Chat Channel Rules
 
 Decision:
-Live Chat supports WhatsApp, BankApp, and Webchat in one workspace, but channel-specific behavior remains explicit: WhatsApp hides Recall/Re-edit, while BankApp and Webchat can keep recall capability in the current demo.
+Live Chat supports WhatsApp, BankApp, and Webchat in one workspace. Message recall and re-edit are unavailable for all three channels.
 
 Reason:
-The channels share the same agent handling surface but have different message capabilities and demo requirements.
+The Channel Business Config recall setting was removed, and the customer confirmed that the remaining Live Chat recall behavior should also be removed.
 
 Impact:
-Future text-channel capabilities must be checked per channel instead of assuming every chat channel supports the same actions.
+Future text-channel capability changes must be explicitly confirmed and kept consistent with the available configuration surface.
 
 Status:
 Implemented
@@ -729,7 +956,7 @@ Module:
 Call Management
 
 Decision:
-Customer-visible Call Management scope currently includes Verification Rules, Global Control Configuration, Blacklist, Priority List, Common Phrase, Common Link, Common Number, Sensitive Word, Busy Reason, Abnormal End Reasons, and Interaction Log; hidden/legacy Call Management routes redirect to Verification Rules.
+Customer-visible Call Management scope currently includes Verification Rules, Global Control Configuration, Blacklist, Priority List, Common Phrase, Common Link, Common Number, Sensitive Word, AUX Reason Management, Abnormal End Reasons, and Interaction Log; hidden/legacy Call Management routes redirect to Verification Rules.
 
 Reason:
 The current demo exposes the management pages relevant to customer review and avoids leaving stale or unfinished configuration pages in the visible menu.
@@ -798,13 +1025,13 @@ Module:
 Priority List
 
 Decision:
-Priority List matching is explicitly modeled as user-selected `Exact Match` or `Partial Match`; duplicate detection includes Channel, normalized Identifier, and Match Rule.
+Priority List matching is explicitly modeled as user-selected `Exact Match` or `Partial Match`. Phone entries include Country Code and use mutually exclusive Phone/non-Phone channel selection. Duplicate detection uses Channel + normalized Country Code + normalized Identifier for Phone and Channel + normalized Identifier for non-Phone; Match Rule does not participate in duplicate detection.
 
 Reason:
-The latest implementation and history simplified matching away from implicit email-domain behavior toward a more understandable rule that can be selected and filtered directly.
+The latest implementation and history simplified matching away from implicit email-domain behavior toward a more understandable rule that can be selected and filtered directly, while duplicate identity remains stable across Exact and Partial configurations.
 
 Impact:
-Backend implementation must use the same exact/partial semantics and duplicate key logic to avoid front-end/back-end mismatches.
+Backend implementation must use the same exact/partial semantics, Phone Country Code model, channel exclusivity, and duplicate key logic to avoid front-end/back-end mismatches.
 
 Status:
 Implemented
@@ -1036,10 +1263,10 @@ Module:
 Call Management / Service End Lifecycle
 
 Decision:
-Abnormal agent-side service end reasons are maintained in `Call Management > Abnormal End Reasons` for Voice, Video, and DM. `Normal` remains a system default reason and is not maintained in the abnormal reason list; the default configuration contains two active DM reasons only.
+Abnormal agent-side service end reasons are maintained in `Call Management > Abnormal End Reasons` for Voice, Video, and DM. `Normal` remains a system default reason and is not maintained in the abnormal reason list; the default configuration contains two disabled DM reasons only.
 
 Reason:
-The customer requirement separates normal service completion from exceptional agent-selected ending causes, and Social Media / Non-DM is out of current scope. Voice, Video, and DM remain future-configurable media, while the current default data is limited to the two confirmed DM reasons.
+The customer requirement separates normal service completion from exceptional agent-selected ending causes, and Social Media / Non-DM is out of current scope. Voice, Video, and DM remain future-configurable media, while the current default data is limited to the two confirmed DM reasons and does not expose abnormal-end choices until an administrator enables one.
 
 Impact:
 Voice/video Hang Up and Live Chat End Service should preserve the default normal action. The abnormal-reason caret renders only when an active configured reason matches the current media; otherwise the main action renders with its normal full shape. Abnormal reason selection ends immediately without a second confirmation. Service records split `Ended By` from `End Reason`: agent/customer normal ends use `Normal`, agent abnormal ends use the selected configured reason, and system ends use specific system reasons such as `Customer Timeout`, `Connection Lost`, `System Error`, or `Channel Gateway Error`. Do not add Social Media / Non-DM values unless that scope is explicitly added.
@@ -1095,6 +1322,29 @@ Implemented
 
 Source:
 Customer clarification on 2026-07-31; Code: `src/store/appStore.ts`, `src/pages/inbound/LiveChat2Page.tsx`, `src/pages/bankapp/BankAppDemoPage.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-038
+
+Module:
+Call Management / Customer Context
+
+Decision:
+Quick Action is a global Call Management configuration for all customer-context workspaces. It maintains Action Name, HTTP(S) Link Address, Remark, Active/Disabled status, stable display order, and last-modification metadata; it continues to open the existing local CRM mock detail tab instead of navigating externally.
+
+Reason:
+The customer requires configurable rather than hard-coded shortcuts, while preserving the current demo's CRM-tab workflow and avoiding an unapproved SSO, credential, URL-parameter, or external-navigation design.
+
+Impact:
+PSTN, BankApp Voice/Video, Email, and Social Media must read the same enabled actions in configured order. Common Link remains a separate right-side external-reference capability. Sorting uses constrained move commands with a stored normalized order; the audit fields provide demo-level last-change visibility only.
+
+Status:
+Implemented
+
+Source:
+Customer clarification on 2026-08-20; Code: `src/pages/call-management/QuickActionManagementPage.tsx`, `src/store/callManagementStore.ts`, `src/pages/inbound/components/QuickActionCard.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `PROJECT_CONTEXT.md`
 
 --------------------------------------------------
 

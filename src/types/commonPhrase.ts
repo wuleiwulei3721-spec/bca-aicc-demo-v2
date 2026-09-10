@@ -8,4 +8,6 @@ export interface CommonPhraseEntry {
   phraseId: string
   phraseText: string
   shortcutCode: string
+  updatedAt: string
+  updatedBy: string
 }

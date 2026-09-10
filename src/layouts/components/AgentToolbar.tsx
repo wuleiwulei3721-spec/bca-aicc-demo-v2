@@ -38,7 +38,7 @@ export interface TransferNotice {
 interface ApprovalNotice {
   approval: ExternalOperationApproval
   title: string
-  tone: 'approved' | 'rejected'
+  tone: 'approved' | 'rejected' | 'timed-out'
 }
 
 function getOutboundReasonLabel(approval: ExternalOperationApproval) {
@@ -47,9 +47,20 @@ function getOutboundReasonLabel(approval: ExternalOperationApproval) {
     : 'Miss Information'
 }
 
-function ApprovalResultDetails({ approval }: { approval: ExternalOperationApproval }) {
+function ApprovalResultDetails({
+  approval,
+  tone,
+}: {
+  approval: ExternalOperationApproval
+  tone: ApprovalNotice['tone']
+}) {
   return (
     <div className="aicc-approval-result-modal__details">
+      {tone === 'timed-out' && (
+        <div className="aicc-approval-result-modal__timeout">
+          Approval timed out. Please submit the outbound call request again.
+        </div>
+      )}
       <div className="aicc-approval-result-modal__request">
         <span>Outbound</span>
         <strong>{approval.targetNumber}</strong>
@@ -91,6 +102,7 @@ interface AgentToolbarProps {
   onHangUp: (endReasonName?: string) => void
   onHoldToggle: () => void
   onReadyToggle: () => void
+  onCallAgent: (agent: TransferAgent) => void
   onRequestOutboundCall: (phoneNumber: string) => void
   onTransferNotice: (notice: TransferNotice) => void
 }
@@ -114,6 +126,7 @@ export function AgentToolbar({
   onHangUp,
   onHoldToggle,
   onReadyToggle,
+  onCallAgent,
   onRequestOutboundCall,
   onTransferNotice,
 }: AgentToolbarProps) {
@@ -123,6 +136,7 @@ export function AgentToolbar({
   const [consultedAgent, setConsultedAgent] = useState<TransferAgent | null>(
     null,
   )
+  const [consultedNumber, setConsultedNumber] = useState<string | null>(null)
   const [isConferenceActive, setIsConferenceActive] = useState(false)
   const [approvalNotice, setApprovalNotice] = useState<ApprovalNotice | null>(
     null,
@@ -141,7 +155,7 @@ export function AgentToolbar({
   useEffect(
     () =>
       subscribeExternalOperationApprovalEvents((event) => {
-        if (!['approved', 'rejected'].includes(event.kind)) {
+        if (!['approved', 'rejected', 'timed-out'].includes(event.kind)) {
           return
         }
 
@@ -149,11 +163,15 @@ export function AgentToolbar({
         const result =
           event.kind === 'approved'
             ? 'Approval Granted'
-            : 'Approval Rejected'
+            : event.kind === 'rejected'
+              ? 'Approval Rejected'
+              : 'Approval Timed Out'
         const tone: ApprovalNotice['tone'] =
           event.kind === 'approved'
             ? 'approved'
-            : 'rejected'
+            : event.kind === 'rejected'
+              ? 'rejected'
+              : 'timed-out'
         setApprovalNotice({
           approval,
           title: result,
@@ -188,7 +206,16 @@ export function AgentToolbar({
   }
   const closeTransferModal = () => {
     setConsultedAgent(null)
+    setConsultedNumber(null)
     setIsTransferOpen(false)
+  }
+  const handleConsultAgent = (agent: TransferAgent | null) => {
+    setConsultedNumber(null)
+    setConsultedAgent(agent)
+  }
+  const handleConsultNumber = (number: string | null) => {
+    setConsultedAgent(null)
+    setConsultedNumber(number)
   }
   const handleCallEnd = (endReasonName?: string) => {
     closeTransferModal()
@@ -204,10 +231,21 @@ export function AgentToolbar({
   }
   const handleConferenceWithAgent = (agent: TransferAgent) => {
     setConsultedAgent(null)
+    setConsultedNumber(null)
     setIsConferenceActive(true)
     setIsTransferOpen(false)
     onTransferNotice({
       message: `${agent.name} joined the conference.`,
+      tone: 'success',
+    })
+  }
+  const handleConferenceWithNumber = (number: string) => {
+    setConsultedAgent(null)
+    setConsultedNumber(null)
+    setIsConferenceActive(true)
+    setIsTransferOpen(false)
+    onTransferNotice({
+      message: `${number} joined the conference.`,
       tone: 'success',
     })
   }
@@ -435,10 +473,13 @@ export function AgentToolbar({
         <TransferModal
           canTransferToNumber={canTransferToNumber}
           consultedAgentId={consultedAgent?.id}
+          consultedNumber={consultedNumber}
           open={isTransferOpen}
           onClose={closeTransferModal}
           onConferenceWithAgent={handleConferenceWithAgent}
-          onConsultAgent={setConsultedAgent}
+          onConferenceWithNumber={handleConferenceWithNumber}
+          onConsultAgent={handleConsultAgent}
+          onConsultNumber={handleConsultNumber}
           onTransferToAgent={handleTransferToAgent}
           onTransferToIvr={handleTransferToIvr}
           onTransferToNumber={handleTransferToNumber}
@@ -456,6 +497,10 @@ export function AgentToolbar({
         open={isOutboundOpen}
         requiresOutboundApproval={requiresOutboundApproval}
         onClose={() => setIsOutboundOpen(false)}
+        onCallAgent={(agent) => {
+          setIsOutboundOpen(false)
+          onCallAgent(agent)
+        }}
         onCallNumber={(phoneNumber) => {
           setIsOutboundOpen(false)
           onRequestOutboundCall(phoneNumber)
@@ -474,10 +519,10 @@ export function AgentToolbar({
             <span className="aicc-approval-result-modal__title">
               {approvalNotice.tone === 'approved' ? (
                 <CheckCircleOutlined />
-              ) : approvalNotice.tone === 'rejected' ? (
-                <CloseCircleOutlined />
-              ) : (
+              ) : approvalNotice.tone === 'timed-out' ? (
                 <ClockCircleOutlined />
+              ) : (
+                <CloseCircleOutlined />
               )}
               {approvalNotice.title}
             </span>
@@ -487,7 +532,10 @@ export function AgentToolbar({
         onCancel={() => setApprovalNotice(null)}
       >
         {approvalNotice && (
-          <ApprovalResultDetails approval={approvalNotice.approval} />
+          <ApprovalResultDetails
+            approval={approvalNotice.approval}
+            tone={approvalNotice.tone}
+          />
         )}
       </BaseModal>
     </>

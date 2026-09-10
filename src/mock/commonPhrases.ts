@@ -1,4 +1,7 @@
 import type { CommonPhraseCategory, CommonPhraseEntry } from '../types'
+import { DEFAULT_AUDIT_ACTOR } from '../utils/audit'
+
+const DEFAULT_AUDIT_TIME = '2026-06-18 09:00:00'
 
 export const defaultCommonPhraseCategories: CommonPhraseCategory[] = [
   {
@@ -18,6 +21,8 @@ export const defaultCommonPhraseEntries: CommonPhraseEntry[] = [
     phraseText:
       'For verification, please confirm your registered mobile number and date of birth.',
     shortcutCode: 'ab',
+    updatedAt: DEFAULT_AUDIT_TIME,
+    updatedBy: DEFAULT_AUDIT_ACTOR,
   },
   {
     categoryId: 'public-security',
@@ -25,11 +30,15 @@ export const defaultCommonPhraseEntries: CommonPhraseEntry[] = [
     phraseText:
       'For your security, never share OTP, PIN, CVV, password, or full card number in this chat.',
     shortcutCode: 'ad',
+    updatedAt: DEFAULT_AUDIT_TIME,
+    updatedBy: DEFAULT_AUDIT_ACTOR,
   },
   {
     categoryId: 'public-security',
     phraseId: 'public-af',
     phraseText: 'I can help with one more request before we close this conversation.',
     shortcutCode: 'af',
+    updatedAt: DEFAULT_AUDIT_TIME,
+    updatedBy: DEFAULT_AUDIT_ACTOR,
   },
 ]

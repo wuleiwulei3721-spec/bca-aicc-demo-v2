@@ -85,6 +85,5 @@ export const defaultTextChannelSettings: TextChannelSettingsConfig = {
     agentNoReplyBreachMinutes: 2,
     agentNoReplyWarningMinutes: 1,
     maxConcurrentCustomersPerAgent: 3,
-    webchatRecallLimitMinutes: 2,
   },
 }

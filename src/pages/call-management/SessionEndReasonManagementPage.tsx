@@ -12,14 +12,20 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  LimitedTextArea,
   StatusBadge,
 } from '../../components'
-import { useCallManagementStore } from '../../store'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
+import { useAuthStore, useCallManagementStore } from '../../store'
 import type {
   SessionEndMediaType,
   SessionEndReasonEntry,
   SessionEndReasonStatus,
 } from '../../types'
+import {
+  formatAuditActor,
+  formatCallManagementDateTime,
+} from '../../utils/audit'
 
 type SessionEndReasonModalMode = 'create' | 'edit' | null
 
@@ -118,6 +124,7 @@ function renderMediaTags(mediaTypes: SessionEndMediaType[]) {
 }
 
 export function SessionEndReasonManagementPage() {
+  const authSession = useAuthStore((state) => state.session)
   const entries = useCallManagementStore(
     (state) => state.sessionEndReasonEntries,
   )
@@ -139,7 +146,7 @@ export function SessionEndReasonManagementPage() {
   const [filterDraft, setFilterDraft] =
     useState<SessionEndReasonFilters>(defaultFilters)
   const [modalMode, setModalMode] = useState<SessionEndReasonModalMode>(null)
-  const [notice, setNotice] = useState('')
+  const { notify } = useOperationFeedback()
   const [submitAttempted, setSubmitAttempted] = useState(false)
 
   const filteredEntries = useMemo(
@@ -208,7 +215,6 @@ export function SessionEndReasonManagementPage() {
       ...currentDraft,
       [key]: value,
     }))
-    setNotice('')
   }
 
   const handleSearch = () => {
@@ -224,7 +230,6 @@ export function SessionEndReasonManagementPage() {
     setDraft(defaultDraft)
     setModalMode('create')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const openEditModal = (entry: SessionEndReasonEntry) => {
@@ -234,7 +239,6 @@ export function SessionEndReasonManagementPage() {
     })
     setModalMode('edit')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const closeModal = () => {
@@ -259,14 +263,19 @@ export function SessionEndReasonManagementPage() {
       reasonName: draft.reasonName.trim(),
       remark: draft.remark.trim(),
       status: draft.status,
+      updatedAt: formatCallManagementDateTime(new Date()),
+      updatedBy: formatAuditActor(
+        authSession?.employeeId,
+        authSession?.displayName,
+      ),
     }
 
     if (modalMode === 'edit') {
       updateEntry(nextEntry)
-      setNotice('Session end reason updated.')
+      notify('Session end reason updated.')
     } else {
       addEntry(nextEntry)
-      setNotice('Session end reason added.')
+      notify('Session end reason added.')
     }
 
     closeModal()
@@ -278,7 +287,7 @@ export function SessionEndReasonManagementPage() {
     }
 
     deleteEntries([deleteTarget.id])
-    setNotice('Session end reason deleted.')
+    notify('Session end reason deleted.')
     setDeleteTarget(null)
   }
 
@@ -293,26 +302,38 @@ export function SessionEndReasonManagementPage() {
     {
       dataIndex: 'reasonName',
       title: 'Reason Name',
-      width: 280,
+      width: 250,
     },
     {
       dataIndex: 'mediaTypes',
       render: (mediaTypes: SessionEndMediaType[]) =>
         renderMediaTags(mediaTypes),
       title: 'Applicable Media',
-      width: 240,
+      width: 180,
     },
     {
       dataIndex: 'status',
       render: (status: SessionEndReasonStatus) => renderStatusBadge(status),
       title: 'Status',
-      width: 140,
+      width: 110,
     },
     {
       dataIndex: 'remark',
       ellipsis: true,
       title: 'Remark',
-      width: 360,
+      width: 260,
+    },
+    {
+      dataIndex: 'updatedAt',
+      render: (updatedAt: string) => formatCallManagementDateTime(updatedAt),
+      title: 'Updated Time',
+      width: 156,
+    },
+    {
+      dataIndex: 'updatedBy',
+      ellipsis: true,
+      title: 'Updated By',
+      width: 132,
     },
     {
       fixed: 'right',
@@ -332,7 +353,6 @@ export function SessionEndReasonManagementPage() {
             type="button"
             onClick={() => {
               setDeleteTarget(record)
-              setNotice('')
             }}
           >
             <DeleteOutlined />
@@ -340,7 +360,7 @@ export function SessionEndReasonManagementPage() {
         </div>
       ),
       title: 'Actions',
-      width: 100,
+      width: 96,
     },
   ]
 
@@ -349,14 +369,6 @@ export function SessionEndReasonManagementPage() {
       className="session-end-reason-management"
       title="Abnormal End Reasons"
     >
-      {notice && (
-        <Alert
-          showIcon
-          className="routing-config-page__notice"
-          message={notice}
-          type="success"
-        />
-      )}
       <BaseCard compact>
         <AdminToolbar
           actions={
@@ -425,7 +437,6 @@ export function SessionEndReasonManagementPage() {
         <AdminTable<SessionEndReasonEntry>
           columns={columns}
           dataSource={filteredEntries}
-          horizontalScroll={1192}
           pagination={{}}
           rowKey="id"
         />
@@ -496,7 +507,7 @@ export function SessionEndReasonManagementPage() {
               </span>
             </AdminFormField>
             <AdminFormField label="Remark" fullWidth>
-              <Input.TextArea
+              <LimitedTextArea
                 rows={3}
                 value={draft.remark}
                 onChange={(event) => updateDraft('remark', event.target.value)}

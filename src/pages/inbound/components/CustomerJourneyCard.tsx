@@ -1,18 +1,9 @@
 import { useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
 import {
   DownOutlined,
-  FacebookFilled,
-  GlobalOutlined,
-  InstagramFilled,
-  MailOutlined,
-  MobileOutlined,
-  TikTokFilled,
-  WhatsAppOutlined,
-  XOutlined,
 } from '@ant-design/icons'
 import { Space, Tag, Tooltip } from 'antd'
-import { BaseModal, PhoneIcon, StatusBadge } from '../../../components'
+import { BaseModal, ChannelLogo, StatusBadge } from '../../../components'
 import { useCallManagementStore } from '../../../store'
 import type { CustomerJourneyItem, JourneyChannel } from '../../../types'
 import { CallRecordDetailModal } from '../../call-management/CallRecordDetailModal'
@@ -48,18 +39,6 @@ function parseJourneyDate(date: string) {
 }
 
 function renderChannelIcon(channel: JourneyChannel) {
-  const iconMap: Record<JourneyChannel, ReactNode> = {
-    Phone: <PhoneIcon />,
-    BankApp: <MobileOutlined />,
-    Webchat: <GlobalOutlined />,
-    Email: <MailOutlined />,
-    Facebook: <FacebookFilled />,
-    X: <XOutlined />,
-    Instagram: <InstagramFilled />,
-    TikTok: <TikTokFilled />,
-    WhatsApp: <WhatsAppOutlined />,
-  }
-
   return (
     <Tooltip title={channel}>
       <span
@@ -67,7 +46,7 @@ function renderChannelIcon(channel: JourneyChannel) {
           .toLowerCase()
           .replace(/\s+/g, '-')}`}
       >
-        {iconMap[channel]}
+        <ChannelLogo channel={channel} />
       </span>
     </Tooltip>
   )
@@ -98,6 +77,9 @@ export function CustomerJourneyCard({ items }: CustomerJourneyCardProps) {
   return (
     <>
       <SectionCard
+        className={
+          visibleItems.length === 0 ? 'inbound-section-card--empty' : undefined
+        }
         expandable
         expanded={expanded}
         extra={<DownOutlined />}
@@ -111,7 +93,10 @@ export function CustomerJourneyCard({ items }: CustomerJourneyCardProps) {
                 ? callRecordsById.get(item.callRecordId)
                 : null
               const summary = item.callRecordId
-                ? callRecord?.summary.tickets[0]?.categories.join(', ') || '-'
+                ? callRecord?.summary.tickets
+                    .map((ticket) => ticket.caseCategory)
+                    .filter(Boolean)
+                    .join(', ') || '-'
                 : item.summary
 
               return (
@@ -135,9 +120,7 @@ export function CustomerJourneyCard({ items }: CustomerJourneyCardProps) {
               )
             })
           ) : (
-            <div className="inbound-empty-state">
-              Customer journey is not loaded.
-            </div>
+            <div className="inbound-empty-state">No data available.</div>
           )}
         </div>
       </SectionCard>

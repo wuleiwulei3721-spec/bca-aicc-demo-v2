@@ -33,10 +33,16 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  LimitedInput,
   StatusBadge,
 } from '../../components'
-import { useAppStore, useRoutingConfigStore } from '../../store'
+import {
+  useAppStore,
+  useAuthStore,
+  useRoutingConfigStore,
+} from '../../store'
 import type {
+  MediaTypeCode,
   VerificationV2CustomerSegment,
   VerificationV2HaloAppLoginStatus,
   VerificationV2Question,
@@ -67,6 +73,11 @@ import {
   verificationV2HaloAppLoginStatusOptions,
   verificationV2QuestionBlockTypeLabels,
 } from '../../utils/verificationRuleV2'
+import {
+  DEFAULT_AUDIT_ACTOR,
+  formatAuditActor,
+  formatCallManagementDateTime,
+} from '../../utils/audit'
 
 type RuleModalMode = 'create' | 'edit' | 'view'
 
@@ -131,7 +142,36 @@ const defaultScenarioCreateDraft: ScenarioCreateDraft = {
   name: '',
 }
 
-const verificationV2AllowedChannelCodes = ['PHONE', 'BANKAPP']
+const verificationV2SupportedChannelDefinitions = [
+  { appendMediaName: false, channelCode: 'PHONE' },
+  { appendMediaName: true, channelCode: 'BANKAPP' },
+  { appendMediaName: true, channelCode: 'WEBCHAT' },
+] as const
+
+const verificationV2SupportedMediaCodes: MediaTypeCode[] = [
+  'VOICE',
+  'VIDEO',
+]
+
+const verificationV2HaloAppChannelCodes = ['BANKAPP', 'BANKAPP_VIDEO']
+
+function isVerificationV2HaloAppChannel(channelCode: string) {
+  return verificationV2HaloAppChannelCodes.includes(channelCode)
+}
+
+function getVerificationV2ChannelValue(
+  channelCode: string,
+  mediaCode: MediaTypeCode,
+) {
+  if (
+    channelCode === 'PHONE' ||
+    (channelCode === 'BANKAPP' && mediaCode === 'VOICE')
+  ) {
+    return channelCode
+  }
+
+  return `${channelCode}_${mediaCode}`
+}
 
 const ruleStatusOptions: Array<{
   label: string
@@ -254,7 +294,9 @@ function getRuleValidationErrors(rule: VerificationV2Rule) {
     errors.push('Channel is required.')
   }
 
-  const hasHaloAppChannel = rule.channelCodes.includes('BANKAPP')
+  const hasHaloAppChannel = rule.channelCodes.some(
+    isVerificationV2HaloAppChannel,
+  )
 
   if (hasHaloAppChannel && !rule.haloAppLoginStatus) {
     errors.push('HaloApp Login Status is required.')
@@ -361,7 +403,7 @@ function rulesOverlap(
 
   return sharedChannels.some(
     (channelCode) =>
-      channelCode !== 'BANKAPP' ||
+      !isVerificationV2HaloAppChannel(channelCode) ||
       !firstRule.haloAppLoginStatus ||
       !secondRule.haloAppLoginStatus ||
       firstRule.haloAppLoginStatus === 'all' ||
@@ -371,6 +413,7 @@ function rulesOverlap(
 }
 
 export function VerificationRuleV2Page() {
+  const authSession = useAuthStore((state) => state.session)
   const verificationV2QuestionBank = useAppStore(
     (state) => state.verificationV2QuestionBank,
   )
@@ -388,6 +431,7 @@ export function VerificationRuleV2Page() {
     (state) => state.deleteVerificationV2Question,
   )
   const channels = useRoutingConfigStore((state) => state.channels)
+  const mediaTypes = useRoutingConfigStore((state) => state.mediaTypes)
   const skillQueues = useRoutingConfigStore((state) => state.skillQueues)
   const [questionBankOpen, setQuestionBankOpen] = useState(false)
   const [questionBankFilters, setQuestionBankFilters] =
@@ -420,19 +464,57 @@ export function VerificationRuleV2Page() {
   const [questionPicker, setQuestionPicker] =
     useState<QuestionPickerState | null>(null)
 
+  const mediaTypeByCode = useMemo(
+    () => new Map(mediaTypes.map((mediaType) => [mediaType.mediaCode, mediaType])),
+    [mediaTypes],
+  )
   const activeChannelOptions = useMemo(
-    () =>
-      channels
-        .filter(
-          (channel) =>
-            channel.status === 'Active' &&
-            verificationV2AllowedChannelCodes.includes(channel.channelCode),
-        )
-        .map((channel) => ({
-          label: channel.channelName,
-          value: channel.channelCode,
-        })),
-    [channels],
+    () => {
+      const activeChannelByCode = new Map(
+        channels
+          .filter((channel) => channel.status === 'Active')
+          .map((channel) => [channel.channelCode, channel]),
+      )
+
+      return verificationV2SupportedChannelDefinitions.flatMap(
+        ({ appendMediaName, channelCode }) => {
+          const channel = activeChannelByCode.get(channelCode)
+
+          if (!channel) {
+            return []
+          }
+
+          const availableMediaCodes = channel.mediaTypes.filter(
+            (mediaCode) =>
+              verificationV2SupportedMediaCodes.includes(mediaCode) &&
+              mediaTypeByCode.get(mediaCode)?.status === 'Active',
+          )
+
+          if (!appendMediaName) {
+            return availableMediaCodes.length > 0
+              ? [{ label: channel.channelName, value: channel.channelCode }]
+              : []
+          }
+
+          return availableMediaCodes.flatMap((mediaCode) => {
+            const mediaType = mediaTypeByCode.get(mediaCode)
+
+            return mediaType
+              ? [
+                  {
+                    label: `${channel.channelName} ${mediaType.mediaName}`,
+                    value: getVerificationV2ChannelValue(
+                      channel.channelCode,
+                      mediaCode,
+                    ),
+                  },
+                ]
+              : []
+          })
+        },
+      )
+    },
+    [channels, mediaTypeByCode],
   )
   const activeSkillQueueOptions = useMemo(
     () =>
@@ -454,12 +536,41 @@ export function VerificationRuleV2Page() {
     [questionBankFilters, verificationV2QuestionBank],
   )
   const channelNameByCode = useMemo(
-    () =>
-      Object.fromEntries(
+    () => {
+      const channelNameByCode = Object.fromEntries(
         channels.map((channel) => [channel.channelCode, channel.channelName]),
-      ) as Record<string, string>,
-    [channels],
+      ) as Record<string, string>
+      const getChannelName = (channelCode: string, fallback: string) =>
+        channelNameByCode[channelCode] ?? fallback
+      const getMediaName = (mediaCode: MediaTypeCode, fallback: string) =>
+        mediaTypeByCode.get(mediaCode)?.mediaName ?? fallback
+
+      return {
+        ...channelNameByCode,
+        BANKAPP: `${getChannelName('BANKAPP', 'Bankapp')} ${getMediaName('VOICE', 'Voice')}`,
+        BANKAPP_VIDEO: `${getChannelName('BANKAPP', 'Bankapp')} ${getMediaName('VIDEO', 'Video')}`,
+        PHONE: getChannelName('PHONE', 'Phone'),
+        WEBCHAT: `${getChannelName('WEBCHAT', 'Webchat')} ${getMediaName('VOICE', 'Voice')}`,
+        WEBCHAT_VIDEO: `${getChannelName('WEBCHAT', 'Webchat')} ${getMediaName('VIDEO', 'Video')}`,
+        WEBCHAT_VOICE: `${getChannelName('WEBCHAT', 'Webchat')} ${getMediaName('VOICE', 'Voice')}`,
+      } as Record<string, string>
+    },
+    [channels, mediaTypeByCode],
   )
+  const ruleDraftChannelOptions = useMemo(() => {
+    const activeChannelValues = new Set(
+      activeChannelOptions.map((option) => option.value),
+    )
+    const inactiveChannelOptions = (ruleDraft?.channelCodes ?? [])
+      .filter((channelCode) => !activeChannelValues.has(channelCode))
+      .map((channelCode) => ({
+        disabled: true,
+        label: `${channelNameByCode[channelCode] ?? channelCode} (Inactive)`,
+        value: channelCode,
+      }))
+
+    return [...activeChannelOptions, ...inactiveChannelOptions]
+  }, [activeChannelOptions, channelNameByCode, ruleDraft])
   const skillQueueNameByCode = useMemo(
     () =>
       Object.fromEntries(
@@ -689,7 +800,9 @@ export function VerificationRuleV2Page() {
 
     const nextRule = createEmptyVerificationV2Rule(
       {
-        channelCodes: [activeChannelOptions[0]?.value ?? 'PHONE'],
+        channelCodes: activeChannelOptions[0]
+          ? [activeChannelOptions[0].value]
+          : [],
         customerSegments: ['regular'],
         skillQueueCode: activeSkillQueueOptions[0]?.value ?? 'SQ_GENERAL_ID',
       },
@@ -832,7 +945,10 @@ export function VerificationRuleV2Page() {
         },
       },
       updatedAt: formatVerificationV2Timestamp(new Date()),
-      updatedBy: 'Admin',
+      updatedBy: formatAuditActor(
+        authSession?.employeeId,
+        authSession?.displayName,
+      ),
     })
     closeRuleModal()
   }
@@ -1085,7 +1201,7 @@ export function VerificationRuleV2Page() {
     {
       key: 'channelCodes',
       title: 'Channel',
-      width: 128,
+      width: 116,
       render: (_, rule) => (
         <div className="verification-rule-v2-tags">
           {rule.channelCodes.map((channelCode) => (
@@ -1098,13 +1214,13 @@ export function VerificationRuleV2Page() {
       dataIndex: 'skillQueueCode',
       key: 'skillQueueCode',
       title: 'Skill Queue',
-      width: 150,
+      width: 140,
       render: (value: string) => skillQueueNameByCode[value] ?? value,
     },
     {
       key: 'customerSegments',
       title: 'Customer Segment',
-      width: 168,
+      width: 150,
       render: (_, rule) => (
         <div className="verification-rule-v2-tags">
           {rule.customerSegments.map((segment) => (
@@ -1118,7 +1234,7 @@ export function VerificationRuleV2Page() {
     {
       key: 'haloAppLoginStatus',
       title: 'HaloApp Login Status',
-      width: 144,
+      width: 128,
       render: (_, rule) =>
         rule.haloAppLoginStatus
           ? verificationV2HaloAppLoginStatusLabels[rule.haloAppLoginStatus]
@@ -1127,7 +1243,7 @@ export function VerificationRuleV2Page() {
     {
       key: 'correctRequired',
       title: 'Correct Required',
-      width: 104,
+      width: 98,
       render: (_, rule) =>
         getVerificationV2ScenarioCorrectRequired(
           getDefaultVerificationV2Scenario(rule),
@@ -1136,7 +1252,7 @@ export function VerificationRuleV2Page() {
     {
       key: 'maxWrongAttempts',
       title: 'Max Wrong',
-      width: 80,
+      width: 76,
       render: (_, rule) => {
         const defaultScenario = getDefaultVerificationV2Scenario(rule)
         return defaultScenario?.maxWrongAttempts ?? '-'
@@ -1146,7 +1262,7 @@ export function VerificationRuleV2Page() {
       dataIndex: 'status',
       key: 'status',
       title: 'Status',
-      width: 96,
+      width: 90,
       render: (value: VerificationV2RuleStatus) => (
         <StatusBadge
           label={value === 'enabled' ? 'Enabled' : 'Disabled'}
@@ -1156,23 +1272,25 @@ export function VerificationRuleV2Page() {
       ),
     },
     {
-      dataIndex: 'updatedBy',
-      key: 'updatedBy',
-      title: 'Updated By',
-      width: 88,
-      render: (value: string | undefined) => value ?? 'Admin',
-    },
-    {
       dataIndex: 'updatedAt',
       key: 'updatedAt',
+      render: (updatedAt: string) => formatCallManagementDateTime(updatedAt),
       title: 'Updated Time',
-      width: 112,
+      width: 154,
+    },
+    {
+      dataIndex: 'updatedBy',
+      key: 'updatedBy',
+      ellipsis: true,
+      title: 'Updated By',
+      width: 126,
+      render: (value: string | undefined) => value ?? DEFAULT_AUDIT_ACTOR,
     },
     {
       fixed: 'right',
       key: 'actions',
       title: 'Actions',
-      width: 144,
+      width: 136,
       render: (_, rule) => (
         <div className="verification-rules-page__row-actions">
           <button
@@ -1548,7 +1666,6 @@ export function VerificationRuleV2Page() {
           dataSource={filteredRules}
           pagination={{}}
           rowKey="id"
-          horizontalScroll={1240}
         />
       </BaseCard>
 
@@ -1614,12 +1731,14 @@ export function VerificationRuleV2Page() {
                       `+${omittedValues.length}`
                     }
                     mode="multiple"
-                    options={activeChannelOptions}
+                    options={ruleDraftChannelOptions}
                     value={ruleDraft.channelCodes}
                     onChange={(channelCodes) =>
                       patchRuleDraft({
                         channelCodes,
-                        haloAppLoginStatus: channelCodes.includes('BANKAPP')
+                        haloAppLoginStatus: channelCodes.some(
+                          isVerificationV2HaloAppChannel,
+                        )
                           ? ruleDraft.haloAppLoginStatus ?? 'all'
                           : undefined,
                       })
@@ -1654,7 +1773,9 @@ export function VerificationRuleV2Page() {
                     }
                   />
                 </AdminFormField>
-                {ruleDraft.channelCodes.includes('BANKAPP') && (
+                {ruleDraft.channelCodes.some(
+                  isVerificationV2HaloAppChannel,
+                ) && (
                   <AdminFormField label="HaloApp Login Status" required>
                     <Select
                       disabled={isRuleViewMode}
@@ -2135,7 +2256,8 @@ export function VerificationRuleV2Page() {
         <div className="verification-rule-v2-question-editor">
           <label>
             <span>Question Name</span>
-            <Input
+            <LimitedInput
+              maxLength={100}
               placeholder="Question Name"
               status={
                 questionSubmitAttempted &&

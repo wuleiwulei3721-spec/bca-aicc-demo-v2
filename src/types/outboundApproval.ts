@@ -20,6 +20,7 @@ export type ExternalOperationApprovalStatus =
   | 'rejected'
   | 'cancelled'
   | 'consumed'
+  | 'timed-out'
 
 export interface ExternalOperationApprovalScope {
   customerId?: string
@@ -29,10 +30,11 @@ export interface ExternalOperationApprovalScope {
 }
 
 export interface ExternalOperationApproval extends ExternalOperationApprovalScope {
-  agentAvatarUrl: string
+  agentEmployeeId: string
   agentName: string
   createdAt: number
   id: string
+  reviewStartedAt?: number
   reviewNote?: string
   resolvedAt?: number
   status: ExternalOperationApprovalStatus
@@ -45,6 +47,7 @@ export type ExternalOperationApprovalEventKind =
   | 'consumed'
   | 'created'
   | 'rejected'
+  | 'timed-out'
 
 export interface ExternalOperationApprovalEvent {
   approval: ExternalOperationApproval

@@ -12,10 +12,16 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  LimitedTextArea,
   StatusBadge,
 } from '../../components'
-import { useCallManagementStore } from '../../store'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
+import { useAuthStore, useCallManagementStore } from '../../store'
 import type { CommonNumberEntry, CommonNumberStatus } from '../../types'
+import {
+  formatAuditActor,
+  formatCallManagementDateTime,
+} from '../../utils/audit'
 
 type CommonNumberModalMode = 'create' | 'edit' | null
 
@@ -82,6 +88,7 @@ function renderStatusBadge(status: CommonNumberStatus) {
 }
 
 export function CommonNumberManagementPage() {
+  const authSession = useAuthStore((state) => state.session)
   const entries = useCallManagementStore((state) => state.commonNumberEntries)
   const addEntry = useCallManagementStore((state) => state.addCommonNumberEntry)
   const updateEntry = useCallManagementStore(
@@ -98,7 +105,7 @@ export function CommonNumberManagementPage() {
   const [filterDraft, setFilterDraft] =
     useState<CommonNumberFilters>(defaultFilters)
   const [modalMode, setModalMode] = useState<CommonNumberModalMode>(null)
-  const [notice, setNotice] = useState('')
+  const { notify } = useOperationFeedback()
   const [submitAttempted, setSubmitAttempted] = useState(false)
 
   const filteredEntries = useMemo(
@@ -170,7 +177,6 @@ export function CommonNumberManagementPage() {
       ...currentDraft,
       [key]: value,
     }))
-    setNotice('')
   }
 
   const handleSearch = () => {
@@ -186,14 +192,12 @@ export function CommonNumberManagementPage() {
     setDraft(defaultDraft)
     setModalMode('create')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const openEditModal = (entry: CommonNumberEntry) => {
     setDraft({ ...entry })
     setModalMode('edit')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const closeModal = () => {
@@ -218,14 +222,19 @@ export function CommonNumberManagementPage() {
       number: draft.number.trim(),
       remark: draft.remark.trim(),
       status: draft.status,
+      updatedAt: formatCallManagementDateTime(new Date()),
+      updatedBy: formatAuditActor(
+        authSession?.employeeId,
+        authSession?.displayName,
+      ),
     }
 
     if (modalMode === 'edit') {
       updateEntry(nextEntry)
-      setNotice('Common number updated.')
+      notify('Common number updated.')
     } else {
       addEntry(nextEntry)
-      setNotice('Common number added.')
+      notify('Common number added.')
     }
 
     closeModal()
@@ -237,7 +246,7 @@ export function CommonNumberManagementPage() {
     }
 
     deleteEntries([deleteTarget.id])
-    setNotice('Common number deleted.')
+    notify('Common number deleted.')
     setDeleteTarget(null)
   }
 
@@ -252,24 +261,36 @@ export function CommonNumberManagementPage() {
     {
       dataIndex: 'name',
       title: 'Name',
-      width: 220,
+      width: 190,
     },
     {
       dataIndex: 'number',
       title: 'Number',
-      width: 180,
+      width: 140,
     },
     {
       dataIndex: 'status',
       render: (status: CommonNumberStatus) => renderStatusBadge(status),
       title: 'Status',
-      width: 140,
+      width: 110,
     },
     {
       dataIndex: 'remark',
       ellipsis: true,
       title: 'Remark',
-      width: 360,
+      width: 250,
+    },
+    {
+      dataIndex: 'updatedAt',
+      render: (updatedAt: string) => formatCallManagementDateTime(updatedAt),
+      title: 'Updated Time',
+      width: 156,
+    },
+    {
+      dataIndex: 'updatedBy',
+      ellipsis: true,
+      title: 'Updated By',
+      width: 132,
     },
     {
       fixed: 'right',
@@ -289,7 +310,6 @@ export function CommonNumberManagementPage() {
             type="button"
             onClick={() => {
               setDeleteTarget(record)
-              setNotice('')
             }}
           >
             <DeleteOutlined />
@@ -297,7 +317,7 @@ export function CommonNumberManagementPage() {
         </div>
       ),
       title: 'Actions',
-      width: 100,
+      width: 96,
     },
   ]
 
@@ -306,14 +326,6 @@ export function CommonNumberManagementPage() {
       className="common-number-management"
       title="Common Number"
     >
-      {notice && (
-        <Alert
-          showIcon
-          className="routing-config-page__notice"
-          message={notice}
-          type="success"
-        />
-      )}
       <BaseCard compact>
         <AdminToolbar
           actions={
@@ -381,7 +393,6 @@ export function CommonNumberManagementPage() {
         <AdminTable<CommonNumberEntry>
           columns={columns}
           dataSource={filteredEntries}
-          horizontalScroll={1072}
           pagination={{}}
           rowKey="id"
         />
@@ -444,7 +455,7 @@ export function CommonNumberManagementPage() {
               </span>
             </AdminFormField>
             <AdminFormField label="Remark" fullWidth>
-              <Input.TextArea
+              <LimitedTextArea
                 rows={3}
                 value={draft.remark}
                 onChange={(event) => updateDraft('remark', event.target.value)}

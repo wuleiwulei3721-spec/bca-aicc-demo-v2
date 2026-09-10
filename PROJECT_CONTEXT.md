@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Project Context
 
-Last updated: 2026-08-05 19:05 +08:00
+Last updated: 2026-08-27 17:38 +08:00
 Repository path: `D:\03projects\bca-aicc-demo-v2`
 
 ## 1. Project Name
@@ -109,6 +109,7 @@ Current router structure:
 - `/call-management/priority-list`
 - `/call-management/common-phrases`
 - `/call-management/common-links`
+- `/call-management/quick-actions`
 - `/call-management/common-numbers`
 - `/call-management/sensitive-words`
 - `/call-management/busy-reasons`
@@ -116,6 +117,8 @@ Current router structure:
 - `/call-management/call-record-query`
 - `/call-management/login-log`
 - `/call-management/*` legacy or hidden routes redirect to Verification Rules.
+- `/social-media/interaction-log` -> compatibility entry that opens the Social Media Interaction Log workspace tab and returns to `/`.
+- `/social-media/*` redirects to `/social-media/interaction-log`.
 - `/routing-config/channels`
 - `/routing-config/vdn`
 - `/routing-config/sites`
@@ -151,6 +154,7 @@ All business routes under `/` require an authenticated demo session.
 - `src/pages/whatsapp/WhatsAppDemoPage.tsx`: WhatsApp simulation using the BankApp demo framework.
 - `src/pages/email/EmailPage.tsx`: code-built Email agent workspace with mailbox folders, customer context, message handling, CRM, thread records, and Ticket registration.
 - `src/pages/social-media/SocialMediaPage.tsx`: Social Media agent workspace with queue filters, post/review handling, CRM preview, and CWU prototype.
+- `src/pages/social-media/SocialMediaInteractionLogPage.tsx`: Social Media Interaction Log workspace page for social channel history query, agent lookup, alert review, and conversation detail.
 - `src/pages/call-management/*`: customer-visible call management configuration pages.
 - `src/pages/routing-config/*`: routing configuration data maintenance pages.
 - `src/pages/employee-management/*`: local-only employee profile management pages.
@@ -196,11 +200,11 @@ The toolbar supports:
 - Ready / Not Ready toggle.
 - Timer display.
 - More menu for Outbound Call; toolbar Settings is temporarily hidden.
-- Ordinary Agent external outbound number and Customer Information outbound actions require one TL approval per target before their original action is enabled. Both external outbound entries require `Miss Information` or `Financial Risk`; any nonempty Customer Information phone number can initiate that flow without KBV / CRM identity, while TL selects the same reason and calls directly. A completed external Call creates and focuses a dynamic `Outbound Call` customer workspace with the dialed number, then enters `Talking`. `Transfer Number` is a TL-and-above permission, hidden from `888888` and available to `666666` without additional approval.
-- In `Outbound Call > Call Agent`, ordinary Agents see only SPV and TL records; TL-and-above roles see the complete agent list.
+- Customer-number Outbound Call and Customer Information outbound actions require an active AUX configured with `Support Outbound` only when placing the call and retain the `Miss Information` or `Financial Risk` business reason. Ordinary Agents keep the TL approval request/result flow, while TL-and-above accounts call directly. Any eligible nonempty Customer Information phone number can initiate that flow without KBV completion. The 10-second countdown starts only after the TL approval popup renders its pending request; timeout closes the popup and prompts the Agent to apply again. Only the Agent's latest approved unused request remains callable. A completed external Call carries the dialed number into the toolbar `Talking` state without creating an `Outbound Call` workspace tab or customer screen pop. `Transfer Number` remains a TL-and-above permission, hidden from `888888` and available to `666666` without additional approval.
+- In `Outbound Call > Call Agent`, ordinary Agents see only SPV and TL records; TL-and-above roles see the complete agent list. Calling an agent does not require an outbound AUX and enters the toolbar `Talking` state without creating an `Outbound Call` workspace tab or customer screen pop.
 - `Channel Simulation > Transferred Call` is local-only and opens a PSTN receiving-seat preview with source-agent transfer metadata; it is a local demo visualization, not a real routed call.
 - Call identification display: `IVR: {ANI Number}` for PSTN and `HaloApp: {BCAID}` / `HaloApp: Guest` for HaloApp voice and video; the current HaloApp BCAID mock is `00012345`. Future Webchat voice/video follows `Webchat: {BCAID}` / `Webchat: Guest-0001`.
-- Skill display during active call lifecycle.
+- Skill display during active call lifecycle; outbound number and agent calls display `Skill -`.
 
 ### Agent Workspace
 
@@ -265,7 +269,7 @@ Current formal Live Chat uses `LiveChat2Page`:
 - Message Record tab.
 - Transfer modal.
 - End Service / Close behavior.
-- Message sending, recall state, and local draft state.
+- Message sending and local draft state.
 
 This is still a front-end simulation, not a real message gateway integration.
 
@@ -314,7 +318,7 @@ The current Email demo supports:
 - Trash recovery returns a trashed or ignored mock email to its original folder.
 - The shared Customer Information, Customer Journey, Ticketing History, Next Best Action, and Quick Action column used by the other interaction workspaces; Email is shown as the access channel.
 - The shared Live Chat `CrmPanel`, including the same CRM screenshot, `CRM / Email` tab styling, and closable CRM business-detail tabs.
-- Ticket registration with Business Type, Summary, and one-click summary generation.
+- Ticket registration with linked single-select Category and Product, editable Summary / Note, and one-click draft generation.
 
 Email message and Ticket changes are local component state. Closing and reopening the Email tab or refreshing the application restores the default anonymized mock data. Email verification is not exposed because no Email verification rule is confirmed. Email Record Inquiry and Email Template Deploy remain separate future scope.
 
@@ -322,9 +326,11 @@ Email message and Ticket changes are local component state. Closing and reopenin
 
 The Social Media workspace is available immediately after Email under `Channel Simulation` in both customer and local visibility profiles. Its menu action opens or reuses one closable `Social Media` workspace tab.
 
+The separate `Social Media > Interaction Log` menu opens `/social-media/interaction-log` as a registered workspace page tab. It is customer-visible and intentionally separate from `Call Management > Interaction Log`.
+
 The current front-end demo provides anonymized social queue items across Facebook, Instagram, X, YouTube, LinkedIn, TikTok, App Store, and Google Play. Agents can filter by channel and item type (Chats, Comments, Mentions, Reviews), search the queue, inspect post context and conversation/detail views, switch between CRM preview and conversation, open the local CWU prototype, and send a local reply for a Review. All state resets when the tab is closed or the application refreshes.
 
-Social Media does not add a standalone route, real social-network API, authentication, delivery, moderation, routing, audit, persistence, service-ending lifecycle, or Interaction Log query in the current scope.
+Social Media does not add a real social-network API, authentication, delivery, moderation, routing, audit, persistence, or service-ending lifecycle in the current scope. The implemented Social Media Interaction Log is a front-end mock query page only.
 
 ### Call Management
 
@@ -336,9 +342,10 @@ Customer-visible Call Management pages:
 - Priority List.
 - Common Phrase.
 - Common Link.
+- Quick Action Management.
 - Common Number.
 - Sensitive Word.
-- Busy Reason.
+- AUX Reason Management.
 - Abnormal End Reasons.
 - Interaction Log.
 - Login Log.
@@ -363,14 +370,14 @@ conversation plus right CWU without an empty media column. Voice media stacks
 Voice Recording Playback above the PSTN active-call Screen Recording Playback.
 Video media uses an OpenEye-style vertical replay with two video panes and a
 playback bar, without call-control buttons, labels, or icons. It intentionally excludes Email and Social Media
-records; Email Record Inquiry and Social Media query remain separate future scopes even though the Email handling workspace is now implemented.
+records; Email Record Inquiry remains future scope, and Social Media records are handled by the separate `Social Media > Interaction Log` module.
 
 Login Log is implemented at `/call-management/login-log`. It queries Employee ID / Name through one Keyword field, Time Range, Operation, and Log Out Type. The list records Employee ID, Employee Name, Operation, Log Out Type, and Time. It defaults to the latest seven calendar days and sorts Time descending. Login rows display `-` for Log Out Type; manual log-out uses `User` and idle automatic log-out uses `System`. Browser-close and network-heartbeat detection require a backend/CTI service and are represented only by seeded System records in the current demo.
 
 Abnormal End Reasons maintains agent-selectable abnormal end reasons for Voice,
 Video, and DM service endings. `Normal` is the system default normal end reason
 and is not listed as a maintainable abnormal reason. The default configuration
-contains two active DM reasons only; Voice and Video remain available for future
+contains two disabled DM reasons only; Voice and Video remain available for future
 management configuration, but have no preconfigured abnormal reason.
 
 ### Routing Config
@@ -457,10 +464,13 @@ Current behaviors:
 - BankApp, Webchat, and WhatsApp customer-side simulations with screenshot assets.
 - Customer-visible Email agent workspace with mailbox folders, shared customer context, the Live Chat CRM screenshot, message handling, thread records, and Ticket registration.
 - Customer-visible Social Media agent workspace with queue filtering, social post/review handling, CRM preview, local CWU prototype, and review reply simulation.
+- Customer-visible Social Media Interaction Log workspace page with channel/type/account/agent/team/time/duration/ticket/summary filters, role-scoped mock visibility, agent lookup, alert detail, and conversation detail.
 - Call Management pages listed above.
 - Abnormal End Reasons for abnormal Voice / Video / DM service end reasons.
 - Interaction Log for current-agent Phone, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp history, with 30 mock records, Contact, Queue, Service Time, Ended By, End Reason, QM Score, playback/transcript details, and read-only mandatory CWU summary.
 - Common Number feeds enabled IVR transfer targets in the call Transfer modal.
+- Quick Action Management maintains global enabled quick actions, their display order, and Updated Time / Updated By metadata for the shared customer-context cards in call, Email, and Social Media workspaces. Common Phrase, Common Link, Common Number, Sensitive Word, AUX Reason, Abnormal End Reasons, and Verification Rules expose the same update metadata pattern in their management lists. A quick action continues to open the local CRM mock detail tab; its configured Link Address is a displayed business reference and does not navigate externally.
+- Call Management page timestamps, including management audit columns, Interaction Log Service Time, Login Log Time, configuration Last saved, and date-range controls, use `DD-MM-YYYY HH:MM:SS`. Routing Config retains its existing timestamp presentation until its own migration.
 - Sensitive word detection for Live Chat agent replies.
 - Routing Config pages listed above.
 - Admin CRUD component set.
@@ -476,7 +486,7 @@ Current behaviors:
 - Live Chat is a front-end mock, not a real channel gateway.
 - Webchat customer-side simulation currently covers text only; voice and video Webchat media are future scope.
 - Email Record Inquiry and Email Template Deploy are not part of the current Email workspace scope.
-- Social Media has no real social-network gateway, persistence, moderation, routing, audit, service-ending lifecycle, or record-query integration.
+- Social Media has no real social-network gateway, persistence, moderation, routing, audit, or service-ending lifecycle. Social Media Interaction Log is front-end mock data until backend query contracts are confirmed.
 - Dashboard, Admin dashboard, Supervisor pages, and reporting pages are not fully implemented workspaces.
 - CRM and Assistant screenshots exist, but may still need final customer-approved images and quality checks.
 - Localization is mixed: framework UI is mostly English; business content is a mix of English and Indonesian.

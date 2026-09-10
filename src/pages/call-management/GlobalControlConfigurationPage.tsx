@@ -2,12 +2,14 @@ import { ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import { Alert, InputNumber, Select } from 'antd'
 import { useMemo, useState } from 'react'
 import { BaseButton, BaseCard, PageContainer } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import { defaultGlobalControlConfiguration } from '../../mock/globalControlConfiguration'
 import { useAppStore, useCallManagementStore } from '../../store'
-import { useRoutingConfigStore } from '../../store/routingConfigStore'
+import { formatCallManagementDateTime } from '../../utils/audit'
 import type {
   GlobalControlAnswerMode,
   GlobalControlConfiguration,
+  GlobalControlIdleLogoutMinutes,
   GlobalControlSignInStatus,
 } from '../../types'
 
@@ -27,43 +29,54 @@ const signInStatusOptions: Array<{
   { label: 'Not Ready', value: 'not-ready' },
 ]
 
-function formatSavedTime(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hour = String(date.getHours()).padStart(2, '0')
-  const minute = String(date.getMinutes()).padStart(2, '0')
+const idleLogoutTimeoutOptions: Array<{
+  label: string
+  value: GlobalControlIdleLogoutMinutes
+}> = [
+  { label: '30', value: 30 },
+  { label: '60', value: 60 },
+  { label: '120', value: 120 },
+]
 
-  return `${year}-${month}-${day} ${hour}:${minute}`
-}
-
-function normalizePositiveNumber(value: number | null, fallback: number) {
+function normalizeNumber(value: number | null, fallback: number, min: number) {
   if (typeof value !== 'number' || Number.isNaN(value)) {
     return fallback
   }
 
-  return Math.max(1, value)
+  return Math.max(min, value)
 }
 
 interface NumberFieldProps {
+  disabled?: boolean
   label: string
+  min?: number
+  required?: boolean
   unit: string
   value: number
   onChange: (value: number) => void
 }
 
-function NumberField({ label, onChange, unit, value }: NumberFieldProps) {
+function NumberField({
+  disabled = false,
+  label,
+  min = 1,
+  onChange,
+  required = true,
+  unit,
+  value,
+}: NumberFieldProps) {
   return (
     <label className="global-control-config__field">
       <span>
-        {label} <strong>*</strong>
+        {label} {required && <strong>*</strong>}
       </span>
       <div className="global-control-config__number-control">
         <InputNumber
-          min={1}
+          disabled={disabled}
+          min={min}
           value={value}
           onChange={(nextValue) =>
-            onChange(normalizePositiveNumber(nextValue, value))
+            onChange(normalizeNumber(nextValue, value, min))
           }
         />
         <em>{unit}</em>
@@ -72,17 +85,19 @@ function NumberField({ label, onChange, unit, value }: NumberFieldProps) {
   )
 }
 
-interface SelectFieldProps<Value extends string> {
+interface SelectFieldProps<Value extends string | number> {
   label: string
   options: Array<{ label: string; value: Value }>
+  unit?: string
   value: Value
   onChange: (value: Value) => void
 }
 
-function SelectField<Value extends string>({
+function SelectField<Value extends string | number>({
   label,
   onChange,
   options,
+  unit,
   value,
 }: SelectFieldProps<Value>) {
   return (
@@ -90,13 +105,19 @@ function SelectField<Value extends string>({
       <span>
         {label} <strong>*</strong>
       </span>
-      <Select options={options} value={value} onChange={onChange} />
+      {unit ? (
+        <div className="global-control-config__number-control">
+          <Select options={options} value={value} onChange={onChange} />
+          <em>{unit}</em>
+        </div>
+      ) : (
+        <Select options={options} value={value} onChange={onChange} />
+      )}
     </label>
   )
 }
 
 export function GlobalControlConfigurationPage() {
-  const skillQueues = useRoutingConfigStore((state) => state.skillQueues)
   const savedConfiguration = useCallManagementStore(
     (state) => state.globalControlConfiguration,
   )
@@ -112,22 +133,10 @@ export function GlobalControlConfigurationPage() {
   const [config, setConfig] = useState<GlobalControlConfiguration>(
     () => ({ ...savedConfiguration }),
   )
-  const [savedAt, setSavedAt] = useState(formatSavedTime(new Date()))
-  const [savedNotice, setSavedNotice] = useState('')
-  const activeSkillQueueOptions = useMemo(
-    () =>
-      skillQueues
-        .filter((skillQueue) => skillQueue.status === 'Active')
-        .map((skillQueue) => ({
-          label: skillQueue.skillQueueName,
-          value: skillQueue.skillQueueCode,
-        })),
-    [skillQueues],
+  const [savedAt, setSavedAt] = useState(
+    formatCallManagementDateTime(new Date()),
   )
-  const activeSkillQueueCodes = useMemo(
-    () => new Set(activeSkillQueueOptions.map((option) => option.value)),
-    [activeSkillQueueOptions],
-  )
+  const { notify } = useOperationFeedback()
 
   const updateConfig = <Key extends keyof GlobalControlConfiguration>(
     key: Key,
@@ -137,7 +146,6 @@ export function GlobalControlConfigurationPage() {
       ...currentConfig,
       [key]: value,
     }))
-    setSavedNotice('')
   }
 
   const validationErrors = useMemo(() => {
@@ -159,10 +167,6 @@ export function GlobalControlConfigurationPage() {
       errors.push('Auto Cancel ACW Duration must be greater than 0 seconds.')
     }
 
-    if (config.idleAutoLogOutMinutes <= 0) {
-      errors.push('System Idle Log-out Timeout must be greater than 0 minutes.')
-    }
-
     if (config.idleWarningMinutes <= 0) {
       errors.push('Auto Log-out Warning Lead Time must be greater than 0 minutes.')
     }
@@ -181,14 +185,8 @@ export function GlobalControlConfigurationPage() {
       errors.push('Max Live Chat Ended Session Retention must be greater than 0.')
     }
 
-    if (!config.defaultSkillQueueCode) {
-      errors.push('Default Skill Queue is required.')
-    } else if (!activeSkillQueueCodes.has(config.defaultSkillQueueCode)) {
-      errors.push('Default Skill Queue must be an active skill queue.')
-    }
-
     return errors
-  }, [activeSkillQueueCodes, config])
+  }, [config])
 
   const hasValidationErrors = validationErrors.length > 0
 
@@ -197,20 +195,20 @@ export function GlobalControlConfigurationPage() {
       return
     }
 
-    const nextSavedAt = formatSavedTime(new Date())
+    const nextSavedAt = formatCallManagementDateTime(new Date())
     updateGlobalControlConfiguration(config)
     syncLiveChat2RetentionLimit()
     setSavedAt(nextSavedAt)
-    setSavedNotice(`Global control configuration saved at ${nextSavedAt}.`)
+    notify(`Global control configuration saved at ${nextSavedAt}.`)
   }
 
   const handleReset = () => {
     resetGlobalControlConfiguration()
     syncLiveChat2RetentionLimit()
     setConfig({ ...defaultGlobalControlConfiguration })
-    const nextSavedAt = formatSavedTime(new Date())
+    const nextSavedAt = formatCallManagementDateTime(new Date())
     setSavedAt(nextSavedAt)
-    setSavedNotice(`Global control configuration reset at ${nextSavedAt}.`)
+    notify(`Global control configuration reset at ${nextSavedAt}.`)
   }
 
   return (
@@ -238,14 +236,6 @@ export function GlobalControlConfigurationPage() {
       title="Global Control Configuration"
     >
       <section className="global-control-config">
-        {savedNotice && (
-          <Alert
-            showIcon
-            className="global-control-config__notice"
-            message={savedNotice}
-            type="success"
-          />
-        )}
 
         {hasValidationErrors && (
           <Alert
@@ -304,8 +294,9 @@ export function GlobalControlConfigurationPage() {
 
           <BaseCard compact title="Inactivity Control">
             <div className="global-control-config__row">
-              <NumberField
+              <SelectField
                 label="System Idle Log-out Timeout"
+                options={idleLogoutTimeoutOptions}
                 unit="min"
                 value={config.idleAutoLogOutMinutes}
                 onChange={(value) =>
@@ -337,19 +328,6 @@ export function GlobalControlConfigurationPage() {
                 value={config.maxLiveChatEndedSessionRetention}
                 onChange={(value) =>
                   updateConfig('maxLiveChatEndedSessionRetention', value)
-                }
-              />
-            </div>
-          </BaseCard>
-
-          <BaseCard compact title="Routing Fallback">
-            <div className="global-control-config__row global-control-config__row--single">
-              <SelectField
-                label="Default Skill Queue"
-                options={activeSkillQueueOptions}
-                value={config.defaultSkillQueueCode}
-                onChange={(value) =>
-                  updateConfig('defaultSkillQueueCode', value)
                 }
               />
             </div>

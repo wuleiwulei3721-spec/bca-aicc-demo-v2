@@ -12,9 +12,16 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  LimitedInput,
+  LimitedTextArea,
 } from '../../components'
-import { useCallManagementStore } from '../../store'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
+import { useAuthStore, useCallManagementStore } from '../../store'
 import type { CommonLinkEntry } from '../../types'
+import {
+  formatAuditActor,
+  formatCallManagementDateTime,
+} from '../../utils/audit'
 
 type CommonLinkModalMode = 'create' | 'edit' | null
 
@@ -29,6 +36,9 @@ interface CommonLinkDraft {
   websiteName: string
   websiteUrl: string
 }
+
+const COMMON_LINK_NAME_MAX_LENGTH = 200
+const COMMON_LINK_URL_MAX_LENGTH = 200
 
 const defaultFilters: CommonLinkFilters = {
   websiteName: '',
@@ -67,6 +77,7 @@ function isValidHttpUrl(value: string) {
 }
 
 export function CommonLinkManagementPage() {
+  const authSession = useAuthStore((state) => state.session)
   const entries = useCallManagementStore((state) => state.commonLinkEntries)
   const addEntry = useCallManagementStore((state) => state.addCommonLinkEntry)
   const updateEntry = useCallManagementStore(
@@ -82,7 +93,7 @@ export function CommonLinkManagementPage() {
   const [filterDraft, setFilterDraft] =
     useState<CommonLinkFilters>(defaultFilters)
   const [modalMode, setModalMode] = useState<CommonLinkModalMode>(null)
-  const [notice, setNotice] = useState('')
+  const { notify } = useOperationFeedback()
   const [submitAttempted, setSubmitAttempted] = useState(false)
 
   const filteredEntries = useMemo(
@@ -113,10 +124,18 @@ export function CommonLinkManagementPage() {
 
     if (!normalizedName) {
       errors.push('Website Name is required.')
+    } else if (normalizedName.length > COMMON_LINK_NAME_MAX_LENGTH) {
+      errors.push(
+        `Website Name must be ${COMMON_LINK_NAME_MAX_LENGTH} characters or fewer.`,
+      )
     }
 
     if (!normalizedUrl) {
       errors.push('Website URL is required.')
+    } else if (normalizedUrl.length > COMMON_LINK_URL_MAX_LENGTH) {
+      errors.push(
+        `Website URL must be ${COMMON_LINK_URL_MAX_LENGTH} characters or fewer.`,
+      )
     } else if (!isValidHttpUrl(draft.websiteUrl.trim())) {
       errors.push('Website URL must start with http:// or https://.')
     }
@@ -154,7 +173,6 @@ export function CommonLinkManagementPage() {
       ...currentDraft,
       [key]: value,
     }))
-    setNotice('')
   }
 
   const handleSearch = () => {
@@ -170,14 +188,12 @@ export function CommonLinkManagementPage() {
     setDraft(defaultDraft)
     setModalMode('create')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const openEditModal = (entry: CommonLinkEntry) => {
     setDraft({ ...entry })
     setModalMode('edit')
     setSubmitAttempted(false)
-    setNotice('')
   }
 
   const closeModal = () => {
@@ -199,16 +215,21 @@ export function CommonLinkManagementPage() {
           ? draft.id
           : getNextCommonLinkId(entries),
       remark: draft.remark.trim(),
+      updatedAt: formatCallManagementDateTime(new Date()),
+      updatedBy: formatAuditActor(
+        authSession?.employeeId,
+        authSession?.displayName,
+      ),
       websiteName: draft.websiteName.trim(),
       websiteUrl: draft.websiteUrl.trim(),
     }
 
     if (modalMode === 'edit') {
       updateEntry(nextEntry)
-      setNotice('Common link updated.')
+      notify('Common link updated.')
     } else {
       addEntry(nextEntry)
-      setNotice('Common link added.')
+      notify('Common link added.')
     }
 
     closeModal()
@@ -220,7 +241,7 @@ export function CommonLinkManagementPage() {
     }
 
     deleteEntries([deleteTarget.id])
-    setNotice('Common link deleted.')
+    notify('Common link deleted.')
     setDeleteTarget(null)
   }
 
@@ -235,19 +256,31 @@ export function CommonLinkManagementPage() {
     {
       dataIndex: 'websiteName',
       title: 'Website Name',
-      width: 240,
+      width: 210,
     },
     {
       dataIndex: 'websiteUrl',
       ellipsis: true,
       title: 'Website URL',
-      width: 360,
+      width: 300,
     },
     {
       dataIndex: 'remark',
       ellipsis: true,
       title: 'Remark',
-      width: 360,
+      width: 260,
+    },
+    {
+      dataIndex: 'updatedAt',
+      render: (updatedAt: string) => formatCallManagementDateTime(updatedAt),
+      title: 'Updated Time',
+      width: 156,
+    },
+    {
+      dataIndex: 'updatedBy',
+      ellipsis: true,
+      title: 'Updated By',
+      width: 132,
     },
     {
       fixed: 'right',
@@ -267,7 +300,6 @@ export function CommonLinkManagementPage() {
             type="button"
             onClick={() => {
               setDeleteTarget(record)
-              setNotice('')
             }}
           >
             <DeleteOutlined />
@@ -275,20 +307,12 @@ export function CommonLinkManagementPage() {
         </div>
       ),
       title: 'Actions',
-      width: 100,
+      width: 96,
     },
   ]
 
   return (
     <AdminPage className="common-link-management" title="Common Link">
-      {notice && (
-        <Alert
-          showIcon
-          className="routing-config-page__notice"
-          message={notice}
-          type="success"
-        />
-      )}
       <BaseCard compact>
         <AdminToolbar
           actions={
@@ -344,7 +368,6 @@ export function CommonLinkManagementPage() {
         <AdminTable<CommonLinkEntry>
           columns={columns}
           dataSource={filteredEntries}
-          horizontalScroll={1132}
           pagination={{}}
           rowKey="id"
         />
@@ -379,7 +402,8 @@ export function CommonLinkManagementPage() {
               </AdminFormField>
             )}
             <AdminFormField label="Website Name" required>
-              <Input
+              <LimitedInput
+                maxLength={COMMON_LINK_NAME_MAX_LENGTH}
                 placeholder="Website Name"
                 value={draft.websiteName}
                 onChange={(event) =>
@@ -388,7 +412,8 @@ export function CommonLinkManagementPage() {
               />
             </AdminFormField>
             <AdminFormField label="Website URL" required>
-              <Input
+              <LimitedInput
+                maxLength={COMMON_LINK_URL_MAX_LENGTH}
                 placeholder="https://example.com"
                 value={draft.websiteUrl}
                 onChange={(event) =>
@@ -397,7 +422,7 @@ export function CommonLinkManagementPage() {
               />
             </AdminFormField>
             <AdminFormField label="Remark" fullWidth>
-              <Input.TextArea
+              <LimitedTextArea
                 rows={3}
                 value={draft.remark}
                 onChange={(event) => updateDraft('remark', event.target.value)}

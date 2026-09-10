@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { useMemo, useState } from 'react'
 import { EditOutlined, IdcardOutlined } from '@ant-design/icons'
-import { message, Select } from 'antd'
+import { Select } from 'antd'
 import {
   BaseButton,
   BaseModal,
@@ -9,8 +9,9 @@ import {
   type CustomerOutboundRequestStatus,
 } from '../../../components'
 import { isLocalContactEditingEnabled } from '../../../config/moduleVisibility'
-import { useExternalOperationApproval } from '../../../hooks/useExternalOperationApproval'
+import { useOperationFeedback } from '../../../contexts/operationFeedbackContext'
 import { useOutboundEligibility } from '../../../contexts/outboundEligibility'
+import { useExternalOperationApproval } from '../../../hooks/useExternalOperationApproval'
 import { callFlowDetail } from '../../../mock/inbound'
 import { useAppStore, useAuthStore } from '../../../store'
 import type { CallTransferContext } from '../../../store'
@@ -43,6 +44,7 @@ interface CustomerInformationCardProps {
   accessMenuLabel?: string
   accessMenuName?: string
   customer: CustomerInformation
+  hideVerificationStatus?: boolean
   onSendEmail?: () => void
   onOpenVerification: (config: CustomerVerificationPanelConfig) => void
   onVerificationFinish: (status: VerificationStatus) => void
@@ -93,6 +95,11 @@ function createContactsForCustomerProfile(
   return initialContacts
 }
 
+function hasCustomerContactValue(value: string) {
+  const normalizedValue = value.trim()
+  return normalizedValue.length > 0 && normalizedValue !== '-'
+}
+
 function getCustomerSegmentFromProfile(
   customerType: string,
 ): VerificationV2CustomerSegment {
@@ -123,21 +130,39 @@ function getCustomerSegmentFromProfile(
 }
 
 function getVerificationAction(customer: CustomerInformation) {
+  const channel = customer.accessChannel
+
   if (
-    customer.accessChannel === 'Phone' ||
-    customer.accessChannel.includes('Voice')
+    channel === 'Phone' ||
+    channel.includes('Voice') ||
+    channel === 'Video' ||
+    channel.includes('Video')
   ) {
     return 'kbv'
   }
 
   if (
-    customer.accessChannel === 'BankApp' &&
+    channel === 'BankApp' &&
     customer.bankAppLoginStatus === 'registered'
   ) {
     return 'pin'
   }
 
   return 'none'
+}
+
+function shouldHideVerificationStatus(customer: CustomerInformation) {
+  const channel = customer.accessChannel
+
+  if (
+    channel === 'WhatsApp' ||
+    channel === 'Email' ||
+    channel === 'Webchat'
+  ) {
+    return true
+  }
+
+  return channel === 'BankApp' && customer.bankAppLoginStatus !== 'registered'
 }
 
 function hasCrmCustomerIdentity(cisNumber: string) {
@@ -263,6 +288,7 @@ export function CustomerInformationCard({
   accessMenuLabel = 'Business Menu Selection Record',
   accessMenuName,
   customer,
+  hideVerificationStatus: hideVerificationStatusProp,
   onSendEmail,
   onOpenVerification,
   onVerificationFinish,
@@ -271,6 +297,7 @@ export function CustomerInformationCard({
   showTransferHistory,
   transferContext,
 }: CustomerInformationCardProps) {
+  const { notify } = useOperationFeedback()
   const requestCustomerOutboundCall = useAppStore(
     (state) => state.requestCustomerOutboundCall,
   )
@@ -295,7 +322,36 @@ export function CustomerInformationCard({
   const { hasOutboundAccess } = useOutboundEligibility()
   const { profile } = customer
   const isCrmIdentified = hasCrmCustomerIdentity(profile.cisNumber)
-  const hasOutboundNumber = profile.phoneNumber.trim().length > 0
+  const isUnidentifiedCustomer =
+    !isCrmIdentified && profile.name !== 'Outbound Customer'
+  const hasEmail = hasCustomerContactValue(profile.email)
+  const whatsAppPhoneNumber =
+    customer.accessChannel === 'WhatsApp'
+      ? profile.crmContacts?.WhatsApp?.find(hasCustomerContactValue)
+      : undefined
+  const displayPhoneNumber = whatsAppPhoneNumber ?? profile.phoneNumber
+  const hasOutboundNumber =
+    !isUnidentifiedCustomer && hasCustomerContactValue(displayPhoneNumber)
+  const displayCustomer = {
+    ...customer,
+    profile: {
+      ...profile,
+      phoneNumber: displayPhoneNumber,
+      ...(isUnidentifiedCustomer
+        ? {
+            name: 'Unidentified Customer',
+            email: '-',
+            phoneNumber:
+              customer.accessChannel === 'WhatsApp' &&
+              hasCustomerContactValue(displayPhoneNumber)
+                ? displayPhoneNumber
+                : '-',
+            cisNumber: '-',
+            customerType: '',
+          }
+        : undefined),
+    },
+  }
   const customerKey = [
     customer.accessChannel,
     profile.cisNumber,
@@ -310,6 +366,8 @@ export function CustomerInformationCard({
     useState<ExternalOutboundReason | null>(null)
   const verificationStatus = customer.verificationStatus
   const verificationAction = getVerificationAction(customer)
+  const hideVerificationStatus =
+    hideVerificationStatusProp ?? shouldHideVerificationStatus(customer)
   const pinAttemptsRemaining = Math.max(0, 3 - bankAppPinVerificationAttempts)
   const pinButtonDisabled =
     bankAppPinVerificationStatus === 'sent' ||
@@ -344,14 +402,12 @@ export function CustomerInformationCard({
   } = useExternalOperationApproval({
     customerId: profile.cisNumber,
     outboundReason: outboundReason ?? undefined,
-    targetNumber: profile.phoneNumber,
+    targetNumber: displayPhoneNumber,
     type: 'customer-outbound',
   })
   const [isSpecialHandlingOpen, setIsSpecialHandlingOpen] = useState(false)
   const outboundRequestStatus: CustomerOutboundRequestStatus =
-    !requiresOutboundApproval && outboundReason
-      ? 'approved'
-      : isOutboundApprovalPending
+    isOutboundApprovalPending
       ? 'requesting'
       : isOutboundApproved
         ? 'approved'
@@ -444,14 +500,15 @@ export function CustomerInformationCard({
   const requestOutboundApproval = () => {
     if (
       !outboundReason ||
-      (requiresOutboundApproval && (isOutboundApprovalPending || isOutboundApproved))
+      (requiresOutboundApproval &&
+        (isOutboundApprovalPending || isOutboundApproved))
     ) {
       return
     }
 
     if (!requiresOutboundApproval) {
       setIsOutboundReasonModalOpen(false)
-      requestCustomerOutboundCall(profile.phoneNumber)
+      requestCustomerOutboundCall(displayPhoneNumber)
       setOutboundReason(null)
       return
     }
@@ -459,7 +516,7 @@ export function CustomerInformationCard({
     const result = requestOutboundApprovalRequest()
 
     if (result.popupBlocked) {
-      message.error('TL approval window was blocked. Allow pop-ups and try again.')
+      notify('TL approval window was blocked. Allow pop-ups and try again.', 'error')
       return
     }
 
@@ -475,7 +532,7 @@ export function CustomerInformationCard({
       if (requiresOutboundApproval) {
         consumeOutboundApproval()
       }
-      requestCustomerOutboundCall(profile.phoneNumber)
+      requestCustomerOutboundCall(displayPhoneNumber)
       setOutboundReason(null)
     }
   }
@@ -488,6 +545,9 @@ export function CustomerInformationCard({
             <ChannelTag
               compact
               duration={customer.accessDuration}
+              label={
+                customer.accessChannel === 'Webchat' ? 'bca.co.id' : undefined
+              }
               transferredFrom={
                 transferContext
                   ? `${transferContext.sourceAgentName} (${transferContext.sourceAgentEmployeeId})`
@@ -498,7 +558,7 @@ export function CustomerInformationCard({
           )
         }
         className="inbound-section-card inbound-section-card--customer"
-        customer={customer}
+        customer={displayCustomer}
         headerExtra={
           isCrmIdentified ? (
             <div className="aicc-customer-info__header-actions">
@@ -509,7 +569,7 @@ export function CustomerInformationCard({
                 type="button"
                 onClick={() => setIsContactDetailsOpen(true)}
               >
-                <IdcardOutlined />
+                  <IdcardOutlined />
               </button>
               {isLocalContactEditingEnabled && (
                 <ContactEditingDemo
@@ -523,6 +583,7 @@ export function CustomerInformationCard({
         }
         isDirectOutbound={!requiresOutboundApproval}
         outboundRequestStatus={outboundRequestStatus}
+        hideVerificationStatus={hideVerificationStatus}
         verificationStatus={effectiveVerificationStatus}
         verifyButtonDisabled={
           verificationAction === 'pin' ? pinButtonDisabled : false
@@ -537,28 +598,33 @@ export function CustomerInformationCard({
             : undefined
         }
         onRequestOutbound={
-          hasOutboundNumber && (requiresOutboundApproval || hasOutboundAccess)
-            ? openOutboundReasonModal
-            : undefined
+          hasOutboundNumber ? openOutboundReasonModal : undefined
         }
         onSendEmail={
-          isCrmIdentified
+          isCrmIdentified && hasEmail
             ? onSendEmail ?? (() => setIsEmailModalOpen(true))
             : undefined
         }
         onStartOutbound={
-          hasOutboundNumber && hasOutboundAccess
-            ? startApprovedOutboundCall
-            : undefined
+          hasOutboundNumber ? startApprovedOutboundCall : undefined
+        }
+        outboundDisabled={
+          hasOutboundNumber &&
+          outboundRequestStatus === 'approved' &&
+          !hasOutboundAccess
         }
         outboundDisabledTitle={
           hasOutboundNumber &&
-          !hasOutboundAccess &&
-          (!requiresOutboundApproval || outboundRequestStatus === 'approved')
+          outboundRequestStatus === 'approved' &&
+          !hasOutboundAccess
             ? 'Switch to outbound AUX'
             : undefined
         }
-        onVerify={verificationAction === 'none' ? undefined : openVerification}
+        onVerify={
+          hideVerificationStatus || verificationAction === 'none'
+            ? undefined
+            : openVerification
+        }
       />
       <CustomerOutboundReasonModal
         canSubmit={requiresOutboundApproval || hasOutboundAccess}

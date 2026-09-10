@@ -18,6 +18,7 @@ import {
   PageContainer,
   StatusBadge,
 } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import {
   defaultTextChannelSettings,
   textChannelAlertRecipients,
@@ -31,6 +32,7 @@ import type {
   TextChannelSettingsConfig,
   TextChannelSettingsStatus,
 } from '../../types'
+import { formatCallManagementDateTime } from '../../utils/audit'
 
 const { TextArea } = Input
 
@@ -79,16 +81,6 @@ function cloneDefaultConfig(): TextChannelSettingsConfig {
     })),
     serviceRules: { ...defaultTextChannelSettings.serviceRules },
   }
-}
-
-function formatSavedTime(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hour = String(date.getHours()).padStart(2, '0')
-  const minute = String(date.getMinutes()).padStart(2, '0')
-
-  return `${year}-${month}-${day} ${hour}:${minute}`
 }
 
 interface NumberSettingProps {
@@ -196,8 +188,10 @@ export function TextChannelSettingsPage() {
   const [config, setConfig] = useState<TextChannelSettingsConfig>(
     cloneDefaultConfig,
   )
-  const [savedAt, setSavedAt] = useState('2026-06-01 14:30')
-  const [savedNotice, setSavedNotice] = useState<string | null>(null)
+  const [savedAt, setSavedAt] = useState(
+    formatCallManagementDateTime('2026-06-01 14:30:00'),
+  )
+  const { notify } = useOperationFeedback()
   const [status, setStatus] = useState<TextChannelSettingsStatus>('Draft')
 
   const validationErrors = useMemo(() => {
@@ -282,16 +276,15 @@ export function TextChannelSettingsPage() {
   }
 
   const applySave = (nextStatus: TextChannelSettingsStatus) => {
-    const nextSavedAt = formatSavedTime(new Date())
+    const nextSavedAt = formatCallManagementDateTime(new Date())
     setSavedAt(nextSavedAt)
-    setSavedNotice(
+    notify(
       nextStatus === 'Published'
         ? 'Configuration published for demo preview.'
         : 'Draft saved locally for this demo session.',
     )
     setStatus(nextStatus)
 
-    window.setTimeout(() => setSavedNotice(null), 3200)
   }
 
   const queueAlertColumns: ColumnsType<TextChannelQueueAlertConfig> = [
@@ -392,20 +385,6 @@ export function TextChannelSettingsPage() {
           value={config.messages.agentNoReplyAutoResponseMessage}
           onChange={updateMessage}
         />
-      </BaseCard>
-
-      <BaseCard compact title="Webchat Recall">
-        <div className="text-channel-settings__scoped-rule">
-          <StatusBadge label="Webchat only" size="small" status="selected" />
-          <NumberSetting
-            description="Time limit for agents to recall an unsent or recently sent Webchat message."
-            label="Recall time limit"
-            value={config.serviceRules.webchatRecallLimitMinutes}
-            onChange={(value) =>
-              updateServiceRule('webchatRecallLimitMinutes', value)
-            }
-          />
-        </div>
       </BaseCard>
 
       <BaseCard compact title="Agent No-reply SLA">
@@ -616,14 +595,6 @@ export function TextChannelSettingsPage() {
       title="Text Channel Settings"
     >
       <section className="text-channel-settings">
-        {savedNotice && (
-          <Alert
-            showIcon
-            className="text-channel-settings__notice"
-            message={savedNotice}
-            type="success"
-          />
-        )}
 
         {hasValidationErrors && (
           <Alert

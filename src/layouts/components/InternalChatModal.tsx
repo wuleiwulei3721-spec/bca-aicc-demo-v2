@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
-import { Avatar, Badge, Input } from 'antd'
-import { AppButton, BaseModal, SearchInput } from '../../components'
+import { Badge, Input } from 'antd'
+import { AgentAvatar, AppButton, BaseModal, SearchInput } from '../../components'
 import { internalChatSessions } from '../../mock/chat'
 import type { InternalChatSession } from '../../types'
+import { formatAgentDisplay } from '../../utils/agentDisplay'
 
 const { TextArea } = Input
 
@@ -58,11 +59,11 @@ export function InternalChatModal({ open, onClose }: InternalChatModalProps) {
         onClick={() => setActiveSessionId(session.id)}
       >
         <Badge count={session.unreadCount} size="small">
-          <Avatar src={session.avatarUrl}>{session.agentName.slice(0, 1)}</Avatar>
+          <AgentAvatar name={session.agentName} size={32} />
         </Badge>
         <span className="aicc-internal-chat__session-main">
           <span>
-            <strong>{session.agentName}</strong>
+            <strong>{formatAgentDisplay(session.employeeId, session.agentName)}</strong>
             <em>{session.latestMessageTime}</em>
           </span>
           <small>{session.latestMessage}</small>
@@ -102,11 +103,14 @@ export function InternalChatModal({ open, onClose }: InternalChatModalProps) {
 
         <section className="aicc-internal-chat__conversation">
           <header className="aicc-internal-chat__conversation-header">
-            <Avatar size={34} src={activeSession.avatarUrl}>
-              {activeSession.agentName.slice(0, 1)}
-            </Avatar>
+            <AgentAvatar name={activeSession.agentName} size={34} />
             <span>
-              <strong>{activeSession.agentName}</strong>
+              <strong>
+                {formatAgentDisplay(
+                  activeSession.employeeId,
+                  activeSession.agentName,
+                )}
+              </strong>
               <em>{activeSession.department}</em>
             </span>
           </header>

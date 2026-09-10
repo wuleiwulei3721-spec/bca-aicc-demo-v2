@@ -12,7 +12,9 @@ import {
   AdminToolbar,
   BaseButton,
   BaseCard,
+  LimitedTextArea,
 } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import {
   useAuthStore,
   useCallManagementStore,
@@ -24,6 +26,11 @@ import type {
   BlacklistRestrictionPolicy,
   BlacklistStatus,
 } from '../../types'
+import {
+  formatAuditActor,
+  formatCallManagementDateTime,
+} from '../../utils/audit'
+import { isPhoneNumberChannel } from '../../utils/phoneNumberChannels'
 
 type BlacklistModalMode = 'batch' | null
 
@@ -63,7 +70,7 @@ const defaultFilters: BlacklistFilters = {
 
 const defaultDraft: BlacklistDraft = {
   channels: [],
-  countryCode: '062',
+  countryCode: '62',
   identifiers: '',
   phoneNumbers: '',
   reason: '',
@@ -103,16 +110,6 @@ const blacklistStatusOptions: Array<{
   { label: 'Disabled', value: 'Disabled' },
 ]
 
-function formatSavedTime(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hour = String(date.getHours()).padStart(2, '0')
-  const minute = String(date.getMinutes()).padStart(2, '0')
-
-  return `${year}-${month}-${day} ${hour}:${minute}`
-}
-
 function parseIdentifiers(value: string) {
   return value
     .split(';')
@@ -148,7 +145,7 @@ function getDuplicateKey(
   const normalizedChannel = channel.trim().toLowerCase()
   const normalizedIdentifier = normalizeIdentifier(identifier)
 
-  return normalizedChannel === 'phone'
+  return channel.trim().toLowerCase() === 'phone'
     ? `${normalizedChannel}::${normalizeIdentifier(countryCode)}::${normalizedIdentifier}::${restrictionPolicy}`
     : `${normalizedChannel}::${normalizedIdentifier}`
 }
@@ -187,13 +184,15 @@ export function BlacklistManagementPage() {
   const [draft, setDraft] = useState<BlacklistDraft>(defaultDraft)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [modalMode, setModalMode] = useState<BlacklistModalMode>(null)
-  const [notice, setNotice] = useState('')
+  const { notify } = useOperationFeedback()
   const [saveWarning, setSaveWarning] = useState('')
   const [selectedEntryIds, setSelectedEntryIds] = useState<string[]>([])
   const [submitAttempted, setSubmitAttempted] = useState(false)
 
   const selectedCount = selectedEntryIds.length
-  const isPhoneMode = draft.channels.includes('Phone')
+  const isPhoneMode = draft.channels.some(isPhoneNumberChannel)
+  const isPhoneOnlyMode =
+    draft.channels.length === 1 && draft.channels[0] === 'Phone'
   const enabledChannelOptions = useMemo(() => {
     const channelNames = new Set<string>()
 
@@ -216,17 +215,6 @@ export function BlacklistManagementPage() {
   const channelFilterOptions = useMemo(
     () => [{ label: 'All', value: '' }, ...enabledChannelOptions],
     [enabledChannelOptions],
-  )
-  const channelFormOptions = useMemo(
-    () =>
-      enabledChannelOptions.map((option) => ({
-        ...option,
-        disabled:
-          option.value === 'Phone'
-            ? draft.channels.length > 0 && !isPhoneMode
-            : isPhoneMode,
-      })),
-    [draft.channels.length, enabledChannelOptions, isPhoneMode],
   )
   const filteredEntries = useMemo(
     () =>
@@ -275,7 +263,9 @@ export function BlacklistManagementPage() {
 
       existingKeys.set(key, {
         channel: entry.channel,
-        countryCode: entry.channel === 'Phone' ? entry.countryCode || '-' : '-',
+        countryCode: isPhoneNumberChannel(entry.channel)
+          ? entry.countryCode || '-'
+          : '-',
         existingNo: index + 1,
         identifier: entry.identifier,
         key,
@@ -293,7 +283,7 @@ export function BlacklistManagementPage() {
     }
 
     const countryCode = isPhoneMode ? draft.countryCode.trim() : ''
-    const restrictionPolicy = isPhoneMode
+    const restrictionPolicy = isPhoneOnlyMode
       ? draft.restrictionPolicy
       : 'block-transfer-to-agent'
 
@@ -328,6 +318,7 @@ export function BlacklistManagementPage() {
     draft.restrictionPolicy,
     existingBlacklistKeys,
     isPhoneMode,
+    isPhoneOnlyMode,
     modalMode,
     parsedIdentifiers,
   ])
@@ -387,21 +378,20 @@ export function BlacklistManagementPage() {
       ...currentDraft,
       [key]: value,
     }))
-    setNotice('')
     setSaveWarning('')
   }
 
   const handleChannelChange = (channels: BlacklistChannel[]) => {
-    const nextIsPhoneMode = channels.includes('Phone')
+    const nextIsPhoneOnlyMode =
+      channels.length === 1 && channels[0] === 'Phone'
 
     setDraft((currentDraft) => ({
       ...currentDraft,
       channels,
-      restrictionPolicy: nextIsPhoneMode
+      restrictionPolicy: nextIsPhoneOnlyMode
         ? currentDraft.restrictionPolicy
         : 'block-transfer-to-agent',
     }))
-    setNotice('')
     setSaveWarning('')
   }
 
@@ -411,7 +401,6 @@ export function BlacklistManagementPage() {
     setDraft(createDefaultDraft())
     setModalMode('batch')
     setSubmitAttempted(false)
-    setNotice('')
     setSaveWarning('')
   }
 
@@ -443,11 +432,14 @@ export function BlacklistManagementPage() {
     const uniqueChannels = Array.from(new Set(draft.channels))
     const uniqueIdentifiers = getUniqueIdentifiers(parsedIdentifiers)
     const baseSequence = getNextSequence(blacklistEntries)
-    const createdAt = formatSavedTime(new Date())
-    const createdBy = authSession?.displayName ?? 'Admin'
+    const createdAt = formatCallManagementDateTime(new Date())
+    const createdBy = formatAuditActor(
+      authSession?.employeeId,
+      authSession?.displayName,
+    )
     const countryCode = draft.countryCode.trim()
     const reason = draft.reason.trim()
-    const restrictionPolicy = isPhoneMode
+    const restrictionPolicy = isPhoneOnlyMode
       ? draft.restrictionPolicy
       : 'block-transfer-to-agent'
     const nextEntries: BlacklistEntry[] = []
@@ -489,7 +481,7 @@ export function BlacklistManagementPage() {
     }
 
     addBlacklistEntries(nextEntries)
-    setNotice(
+    notify(
       nextEntries.length === 1
         ? `Blacklist identifier added.${
             duplicateRows.length > 0
@@ -515,7 +507,6 @@ export function BlacklistManagementPage() {
     }
 
     setDeleteConfirmOpen(true)
-    setNotice('')
   }
 
   const handleDeleteSelected = () => {
@@ -528,7 +519,7 @@ export function BlacklistManagementPage() {
     deleteBlacklistEntries(selectedEntryIds)
     setSelectedEntryIds([])
     setDeleteConfirmOpen(false)
-    setNotice(
+    notify(
       deletedCount === 1
         ? 'Selected blacklist record deleted.'
         : `${deletedCount} selected blacklist records deleted.`,
@@ -539,7 +530,7 @@ export function BlacklistManagementPage() {
     const nextStatus: BlacklistStatus = enabled ? 'Active' : 'Disabled'
 
     updateBlacklistEntryStatus(entry.id, nextStatus)
-    setNotice(
+    notify(
       `Blacklist record ${nextStatus === 'Active' ? 'enabled' : 'disabled'}.`,
     )
   }
@@ -560,7 +551,7 @@ export function BlacklistManagementPage() {
     {
       dataIndex: 'countryCode',
       render: (countryCode: string | undefined, entry) =>
-        entry.channel === 'Phone' ? countryCode || '-' : '-',
+        isPhoneNumberChannel(entry.channel) ? countryCode || '-' : '-',
       title: 'Country Code',
       width: 108,
     },
@@ -603,26 +594,20 @@ export function BlacklistManagementPage() {
     },
     {
       dataIndex: 'createdAt',
-      title: 'Created Date',
-      width: 124,
+      render: (createdAt: string) => formatCallManagementDateTime(createdAt),
+      title: 'Created Time',
+      width: 164,
     },
     {
       dataIndex: 'createdBy',
+      ellipsis: true,
       title: 'Created By',
-      width: 100,
+      width: 180,
     },
   ]
 
   return (
     <AdminPage className="blacklist-management" title="Blacklist">
-        {notice && (
-          <Alert
-            showIcon
-            className="routing-config-page__notice"
-            message={notice}
-            type="success"
-          />
-        )}
         <BaseCard compact>
           <AdminToolbar
             actions={
@@ -746,21 +731,19 @@ export function BlacklistManagementPage() {
             <AdminFormField label="Channel" required>
               <Select
                 aria-required
-                maxTagCount="responsive"
-                mode="multiple"
-                options={channelFormOptions}
-                placeholder="Select channels"
-                value={draft.channels}
-                onChange={handleChannelChange}
+                options={enabledChannelOptions}
+                placeholder="Select channel"
+                value={draft.channels[0]}
+                onChange={(value) => handleChannelChange(value ? [value] : [])}
               />
             </AdminFormField>
             <label className="routing-config-crud-modal__field">
               <span>Restriction Policy</span>
               <Select
-                disabled={!isPhoneMode}
+                disabled={!isPhoneOnlyMode}
                 options={formRestrictionPolicyOptions}
                 value={
-                  isPhoneMode
+                  isPhoneOnlyMode
                     ? draft.restrictionPolicy
                     : 'block-transfer-to-agent'
                 }
@@ -824,7 +807,7 @@ export function BlacklistManagementPage() {
               </AdminFormField>
             )}
             <AdminFormField label="Reason" required fullWidth>
-              <Input.TextArea
+              <LimitedTextArea
                 rows={3}
                 value={draft.reason}
                 onChange={(event) => updateDraft('reason', event.target.value)}

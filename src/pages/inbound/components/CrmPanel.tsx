@@ -16,21 +16,14 @@ import {
   createCrmCisResponse,
   isCrmCisRequestMessage,
 } from '../../../utils/crmCustomerIdentity'
-import {
-  ConversationWorkspace,
-  type ConversationWorkspaceConfig,
-} from './ConversationWorkspace'
-
 export const CRM_TAB_KEY = 'crm'
 export const CONVERSATION_TAB_KEY = 'conversation'
 const CRM_SCREENSHOT_SRC = '/screenshots/crm-workspace.jpg'
 
 interface CrmPanelProps {
   activeKey: string
-  conversation?: ConversationWorkspaceConfig
   conversationContent?: ReactNode
   conversationIcon?: ReactNode
-  conversationKey?: string
   conversationLabel?: string
   tabBarExtraContent?: ReactNode
   workspaceTabs: CrmWorkspaceTab[]
@@ -256,10 +249,8 @@ function WorkspaceBusinessDetail({ tab }: { tab: CrmWorkspaceTab }) {
 
 export function CrmPanel({
   activeKey,
-  conversation,
   conversationContent,
   conversationIcon,
-  conversationKey,
   conversationLabel = 'Conversation',
   tabBarExtraContent,
   workspaceTabs,
@@ -274,7 +265,7 @@ export function CrmPanel({
         label: renderCrmTabLabel('CRM', <BankOutlined />),
         children: <CrmScreenshotArea />,
       },
-      ...(conversation || conversationContent
+      ...(conversationContent
         ? [
             {
               key: CONVERSATION_TAB_KEY,
@@ -283,12 +274,7 @@ export function CrmPanel({
                 conversationLabel,
                 conversationIcon ?? <MessageOutlined />,
               ),
-              children: conversationContent ?? (
-                <ConversationWorkspace
-                  key={conversationKey ?? conversation?.session.id}
-                  {...conversation!}
-                />
-              ),
+              children: conversationContent,
             },
           ]
         : []),
@@ -303,10 +289,8 @@ export function CrmPanel({
       })),
     ],
     [
-      conversation,
       conversationContent,
       conversationIcon,
-      conversationKey,
       conversationLabel,
       workspaceTabs,
     ],

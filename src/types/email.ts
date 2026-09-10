@@ -24,10 +24,9 @@ export type EmailLanguage = 'EN' | 'ID'
 export type EmailStatus = 'open' | 'pending' | 'closed'
 
 export interface EmailCwuRegistration {
-  businessTypes: string[]
-  category: string[]
+  caseCategory: string
   note: string
-  product: string[]
+  product: string
   summary: string
   registeredAt: number
 }

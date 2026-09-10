@@ -6,4 +6,6 @@ export interface CommonNumberEntry {
   number: string
   remark: string
   status: CommonNumberStatus
+  updatedAt: string
+  updatedBy: string
 }

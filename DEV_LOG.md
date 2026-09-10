@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-08-15 12:34 +08:00
+最后更新：2026-09-03 09:46 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,1815 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-09-03 09:46 +08:00 - Customer Production Release
+
+修改页面或文件：
+
+- 发布提交 `eff97ca`（`feat: refine agent controls and management settings`）
+- Vercel production deployment
+- `DEV_LOG.md`
+
+修改原因：
+
+- 发布当前已验证的 Global Control、审批流程、Quick Replies 与客户工作台改动至客户可见生产环境。
+
+修改结果：
+
+- 因 GitHub HTTPS 链路不可用，提交 `eff97ca` 当前保留在本地 `main`，待网络恢复后补推；生产部署按用户授权直接使用该干净的本地提交执行。
+- 使用 `vercel --prod --yes --build-env VITE_APP_VISIBILITY_PROFILE=customer` 部署生产版本。
+- 正式 URL：`https://netinfo-aicc-demo-v2.vercel.app`
+- Deployment URL：`https://netinfo-aicc-demo-v2-7n4o7crln-wl-demo-s-projects.vercel.app`
+- Vercel Inspect：`https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/GxaLxY5hPyd2u1WzvGwMfnF7UfqB`
+- 生产构建使用 `VITE_APP_VISIBILITY_PROFILE=customer`，部署状态为 Completed，正式别名已绑定。
+
+验证结果：
+
+- 发布前 `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 与 `git diff --check` 通过；Build 仅保留既有 large chunk warning。
+- Vercel 远程 `npm run build` 通过。
+
+回滚说明：
+
+- 在 Vercel 将正式别名指回上一稳定 Deployment，或重新部署此前的已提交版本。
+
+当前风险点：
+
+- 生产版本已发布，但 GitHub `origin/main` 尚未包含本次运行代码；网络恢复后必须补推 `eff97ca` 及本条发布记录。
+
+### 2026-09-02 18:22 +08:00 - 全局控制自动登出时长改为固定单选
+
+修改页面或文件：
+
+- `src/pages/call-management/GlobalControlConfigurationPage.tsx`
+- `src/types/globalControlConfiguration.ts`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求将 Global Control 的系统无操作自动登出时长改为下拉单选，固定可选时长为 30、60、120 分钟。
+
+修改结果：
+
+- `System Idle Log-out Timeout` 改为必填单选，显示 `30`（默认）、`60`、`120`，并在控件右侧固定显示单位 `min`，与同页数值输入控件对齐。
+- 移除 `0` 分钟关闭自动登出的配置路径；预警时长始终必填，并继续校验小于选定超时时长。
+
+验证结果：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 通过；Build 仅保留既有 large chunk warning。
+- 浏览器冒烟检查通过：默认显示 `30 min`，下拉菜单提供 30、60、120 分钟三个选项。
+
+回滚说明：
+
+- 恢复数值输入、`0` 分钟分支及预警字段的禁用逻辑即可。
+
+当前风险点：
+
+- 当前仍为浏览器内前端计时；真实生产超时与会话失效仍需由认证服务强制执行。
+
+### 2026-09-02 11:32 +08:00 - 客户信息 TL 外呼状态修正
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `DEV_LOG.md`
+
+修改结果：
+
+- 客户信息电话行的 `approved` 状态只反映普通 Agent 的真实审批通过结果。
+- TL 在外呼原因弹框中选择原因不会提前将电话行操作改为 `Call`；TL 必须在弹框内点击 `Call` 后直接外呼。
+
+当前风险点：
+
+- 客户信息和工具栏号码外呼共用审批存储，但保留各自的原因弹框状态，仍为前端 Demo 行为。
+
+### 2026-09-02 11:18 +08:00 - TL 审批弹框同步与倒计时起点修正
+
+修改页面或文件：
+
+- `src/types/outboundApproval.ts`
+- `src/utils/outboundApproval.ts`
+- `src/pages/TlOutboundApprovalPage.tsx`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `BUSINESS_RULES.md`
+- `DESIGN_SYSTEM.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户确认 TL 审批页应在申请后立即显示审批弹框，10 秒倒计时必须从弹框实际打开时开始，而非坐席提交申请时开始。
+
+修改结果：
+
+- 审批订阅在独立 TL 窗口挂载时强制刷新持久化待审记录，避免窗口加载到旧快照而只显示背景。
+- TL 审批弹框首次显示时写入 `reviewStartedAt` 并启动 10 秒超时；坐席页在此之前不启动超时。
+
+验证结果：
+
+- 浏览器烟测：普通 Agent 提交外呼申请后立即进入 TL 页面，审批弹框显示申请号码、原因、Approve / Reject，并从 `00:10` 开始倒计时。
+
+回滚说明：
+
+- 移除 `reviewStartedAt` 及 TL 页面启动审核的副作用，即可回到申请提交即开始倒计时的旧行为。
+
+当前风险点：
+
+- 审批记录和跨窗口同步仍是同浏览器前端 Demo，不包含真实服务端审批队列或跨设备一致性。
+
+### 2026-09-02 09:56 +08:00 - Quick Replies Length Limits
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2QuickRepliesPanel.tsx`
+- `src/pages/call-management/CommonPhraseManagementPage.tsx`
+- `BUSINESS_RULES.md`、`DESIGN_SYSTEM.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DECISION_LOG.md`
+
+修改原因：
+
+- 客户要求个人常用语和公共常用语维护中的快捷代码限制为 50 字符，快捷回复限制为 2000 字符。
+
+修改结果：
+
+- Personal `My Phrases` 和 Call Management `Common Phrase` 均复用共享 `LimitedInput` / `LimitedTextArea`，展示与 Ticket 一致的字符计数并截断超限输入。
+- 两处保存校验同步保留 50 / 2000 字符兜底；公共常用语与个人常用语的维护范围和读写边界保持不变。
+
+验证结果：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 和 `git diff --check` 通过；Build 仅保留既有大 bundle 提示。
+- 浏览器冒烟验证通过：公共常用语弹窗和个人常用语新增表单均显示 `0 / 50`、`0 / 2000`；分别输入 51 和 2001 个字符后，实际值被截断为 50 和 2000。
+
+回滚说明：
+
+- 恢复两个表单的长度常量、共享限长组件引用和对应知识库记录即可。
+
+当前风险点：
+
+- 个人常用语仍为当前浏览器会话内的本地 Demo 数据，不包含跨会话持久化。
+
+### 2026-09-02 - Customer Information CIS label hotfix release
+
+- 将客户信息卡片的客户号图标文案、无障碍标签和悬浮提示由 `SIC` 修正为 `CIS`。
+- 本地提交：`472538d`。
+- 已使用客户可见配置发布至 Vercel，正式地址：`https://netinfo-aicc-demo-v2.vercel.app`。
+- GitHub 推送因网络连接超时暂未完成，待网络恢复后补推 `472538d`。
+
+### 2026-09-01 19:38 +08:00 - Customer Production Release
+
+修改页面或文件：
+
+- 发布提交 `b0f5f8f`（`feat: refine customer interactions and channel UI`）
+- Vercel production deployment
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求将当前全部已确认改动提交并发布到客户可见环境。
+
+修改结果：
+
+- 全部 58 个文件改动已提交并推送到 `origin/main`。
+- 使用 `npx vercel --prod --yes --build-env VITE_APP_VISIBILITY_PROFILE=customer` 发布。
+- 正式 URL：`https://netinfo-aicc-demo-v2.vercel.app`
+- Deployment URL：`https://netinfo-aicc-demo-v2-kkrlenxae-wl-demo-s-projects.vercel.app`
+- Vercel Inspect：`https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/BHAzJ6SF4MhighMy5uy2CXH6WWAF`
+
+验证结果：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check` 均通过。
+- Vercel 远程 `npm run build` 通过；生产别名已绑定。
+- Build 仅保留既有的 bundle size warning。
+
+回滚说明：
+
+- 在 Vercel 将正式别名指回上一稳定 Deployment，或重新部署提交 `89a5026`。
+
+当前风险点：
+
+- 当前应用仍是前端 mock demo；Vite bundle size warning 未在本次发布范围内处理。
+
+### 2026-09-01 16:22 +08:00 - 审批队列提醒与申请文案修正
+
+修改页面或文件：
+
+- `src/pages/TlOutboundApprovalPage.tsx`
+- `src/layouts/components/OutboundCallModal.tsx`
+- `BUSINESS_RULES.md`
+- `DESIGN_SYSTEM.md`
+- `CURRENT_STATUS.md`
+- `DEV_LOG.md`
+
+修改结果：
+
+- 恢复 TL 审批弹框右上角的 `N more pending` 排队提醒；超时仍会直接关闭当前审批弹框。
+- 超时后的坐席申请按钮保持原始 `Request Approval` 文案，仅被拒绝时使用 `Request Again`。
+
+当前风险点：
+
+- 排队中的后续项仍是前端 Demo 模拟数据，不代表真实审批队列。
+
+### 2026-09-01 16:05 +08:00 - 外呼审批超时与无工作区页签
+
+修改页面或文件：
+
+- `src/types/outboundApproval.ts`
+- `src/utils/outboundApproval.ts`
+- `src/pages/TlOutboundApprovalPage.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/layouts/components/OutboundCallModal.tsx`
+- `src/components/CustomerInformationPanel.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/store/appStore.ts`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DESIGN_SYSTEM.md`
+- `BUSINESS_RULES.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户确认假 TL 审批人不需要 Ready 状态，但待审外呼必须在 10 秒后超时关闭并提示坐席重新申请。
+- 外呼审批只允许坐席使用最后一笔通过且未使用的申请；号码外呼和坐席外呼均不得再创建 `Outbound Call` 工作区页签。
+- 客户信息电话行的外呼申请入口需恢复，并继续遵守外呼 AUX 门禁。
+
+修改结果：
+
+- 普通 Agent 的待审外呼在 TL 弹窗显示 10 秒倒计时；超时后记录为 `timed-out`、弹窗关闭，坐席右下角显示 `Approval timed out. Please submit the outbound call request again.`。
+- 同一 Agent 后续审批通过时，旧的未使用通过记录失效；原号码或原因需重新申请。
+- 外呼交互继续驱动工具栏的 `Talking`、Hold、Hang Up、ACW 生命周期和 `Skill -`，但不再生成或切换 `Outbound Call` 页签；客户电话操作在号码行 hover/focus 时可见，非外呼 AUX 下禁用。
+
+回滚说明：
+
+- 移除审批定时器和 `timed-out` 状态，并恢复 outbound 交互加入工作区 tab order 的逻辑即可回到上一版；不要回滚同一工作区中的其他用户修改。
+
+当前风险点：
+
+- 审批、倒计时和结果提示仍是同浏览器的前端 Demo 状态，不包含真实 TL/SPV 可用状态、服务端 SLA、授权审计或跨设备通知。
+
+### 2026-09-01 15:39 +08:00 - Customer Information channel mapping correction
+
+修改页面或文件：
+
+- `src/pages/social-media/SocialMediaPage.tsx`
+- `src/pages/email/EmailPage.tsx`
+- `src/mock/inbound.ts`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `BUSINESS_RULES.md`
+- `DESIGN_SYSTEM.md`
+- `CURRENT_STATUS.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 按客户 Mapping Customer Information 的渠道差异，修正 Social Media 的 `Identified, Unverified` 状态、Email / Social Media 客户卡片的固定接入时长，以及未识别 WhatsApp 的渠道电话号码展示。
+
+修改结果：
+
+- Social Media 客户资料状态改为 `Unverified`，继续隐藏验证状态和验证入口；客户卡片接入时长从回复 SLA 计时中拆出，使用固定 mock 秒数并通过共享 `formatDuration` 显示为 `mm:ss` / `hh:mm:ss`。
+- Email 客户卡片恢复使用邮件客户资料中的固定接入时长；邮件列表与详情的 SLA 计时继续动态运行，不再污染客户卡片。
+- 未识别 WhatsApp mock 增加渠道电话号码 `62 8123456789`。共享客户卡片只对 WhatsApp 未识别状态显示该号码，Email / SIC 仍显示 `-`，且不开放 CRM 或外呼操作。
+
+验证结果：
+
+- 已完成 `git diff --check`；类型检查、Lint、Build 和浏览器冒烟检查待本次修改后执行。
+
+回滚说明：
+
+- 恢复 Social Media 的回复 SLA 传入客户卡片、Email 的 SLA 时长覆盖、WhatsApp 未识别 mock 及客户卡片的 WhatsApp 例外逻辑即可回滚。
+
+当前风险点：
+
+- Social Media 当前仍为前端匿名 mock；Social Media 的其他已验证状态被 Mapping 标记为 `not possible`，本次只修正当前展示的 `Identified, Unverified` demo 状态。
+
+### 2026-09-01 12:12 +08:00 - Customer Production Release
+
+修改页面或文件：
+
+- 发布提交 `7b242f1`（`feat: refine call management workflows`）
+- Vercel production deployment
+- `DEV_LOG.md`
+
+修改原因：
+
+- 发布当前已验证的 Call Management、Interaction Log、Live Chat 与相关 Demo 改动至客户可见生产环境。
+
+修改结果：
+
+- 已将提交 `7b242f1` 推送至 `origin/main`。
+- 使用 `vercel --prod --yes --build-env VITE_APP_VISIBILITY_PROFILE=customer` 部署生产版本。
+- 正式 URL：`https://netinfo-aicc-demo-v2.vercel.app`
+- Deployment URL：`https://netinfo-aicc-demo-v2-6rso1o22m-wl-demo-s-projects.vercel.app`
+- Vercel Inspect：`https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/7P3icXW5JijaSpjyYX1xBoYuZcdU`
+- 生产构建使用 `VITE_APP_VISIBILITY_PROFILE=customer`，部署状态为 Completed，正式别名已绑定。
+
+验证结果：
+
+- 发布前 `npm run lint`、`npm run build` 与 `git diff --check` 通过；Build 仅保留既有 large chunk warning。
+- Vercel 远程 `npm run build` 通过。
+- 本机对正式 URL 的 HTTP 头请求在 10 秒内超时；Vercel CLI 已确认 Deployment completed 与 Aliased。该网络超时未影响已完成的部署。
+
+回滚说明：
+
+- 在 Vercel 将正式别名指回上一稳定 Deployment，或重新部署此前的已提交版本。
+
+当前风险点：
+
+- 本机到外部服务的连接在本次发布中曾出现 GitHub 推送重置和正式 URL HTTP 超时；后续如需进一步验证生产访问，应在稳定网络环境下复测。
+
+### 2026-09-01 11:54 +08:00 - Sensitive Word 列表统一使用 ID
+
+修改页面或文件：
+
+- `src/pages/call-management/SensitiveWordManagementPage.tsx`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户要求 Sensitive Word Management 的表单与查询列表统一使用 `ID` 命名，不再使用列表行号 `No.`。
+
+修改结果：
+
+- 列表首列由按筛选结果生成的 `No.` 行号改为记录实际 ID，例如 `SW001`。
+- 新增记录继续由前端自动生成稳定 ID；编辑表单、敏感词校验和拦截逻辑不变。
+
+验证结果：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 与 `git diff --check` 通过；Build 仅保留既有 large chunk warning。
+- 浏览器冒烟检查通过：Sensitive Word 列表首列标题为 `ID`，并显示 `SW001` 至 `SW008` 实际记录 ID。
+
+回滚说明：
+
+- 将列表首列恢复为按筛选结果计算的 `No.` 行号即可。
+
+当前风险点：
+
+- ID 仍为当前前端 Demo 的本地数据键；后端接入时应由服务端生成并返回。
+
+### 2026-08-31 18:59 +08:00 - Live Chat Message Record 时间格式统一
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `BUSINESS_RULES.md`、`DESIGN_SYSTEM.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求 Live Chat 历史聊天记录的查询条件和内容展示统一为 `DD-MM-YYYY HH:MM:SS`。
+
+修改结果：
+
+- Message Record 的时间范围选择器显示并可选择时、分、秒。
+- 查询按所选精确时间范围过滤，记录结果使用完整消息时间戳展示。
+
+验证结果：
+
+- 类型检查、ESLint、Build 和 `git diff --check` 通过；Build 仅保留既有大 bundle 提示。
+- 浏览器冒烟验证通过：Message Record 起止时间和结果时间均显示为 `DD-MM-YYYY HH:MM:SS`，例如 `21-05-2026 14:32:00` 和 `27-05-2026 14:32:00`。
+
+回滚说明：
+
+- 恢复 Message Record RangePicker 的原日期格式和整日边界筛选即可。
+
+当前风险点：
+
+- 时间范围仍使用前端本地消息时间戳，不涉及后端时区或持久化契约。
+
+### 2026-08-31 18:30 +08:00 - 移除 Live Chat 消息撤回
+
+修改页面或文件：
+
+- `src/pages/inbound/LiveChat2Page.tsx`
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/store/appStore.ts`
+- `src/pages/call-management/TextChannelSettingsPage.tsx`
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- 相关类型、mock、样式及项目知识库文档
+
+修改原因：
+
+- 客户确认移除 Live Chat 的消息撤回与重新编辑能力，避免聊天行为与已移除的渠道配置不一致。
+
+修改结果：
+
+- WhatsApp、BankApp、Webchat 均不再显示或支持 Recall / Re-edit；Quote、发送和消息记录保持不变。
+- 删除对应的 Live Chat 本地撤回状态和遗留 Webchat 撤回时限配置字段。
+
+验证结果：
+
+- `npm run lint`、`npm run build` 和 `git diff --check` 通过；构建仅保留既有 large chunk warning。
+- 浏览器烟测通过：使用 `888888 / 888888` 登录、Sign In、切换 Ready 后打开 Live Chat，WhatsApp 会话消息工具区仅显示 Quote，不显示 Recall / Re-edit。
+
+回滚说明：
+
+- 恢复 Live Chat 撤回 Store 状态、对话操作和相关配置字段即可。
+
+当前风险点：
+
+- 当前仍为前端本地消息模拟；未来接入真实消息通道时，如需撤回能力，应连同渠道协议、权限和审计规则一并重新确认。
+
+### 2026-08-31 18:18 +08:00 - Call Management 字段长度限制补充
+
+修改页面或文件：
+
+- `src/pages/call-management/SensitiveWordManagementPage.tsx`
+- `src/pages/call-management/CommonLinkManagementPage.tsx`
+- `src/pages/call-management/QuickActionManagementPage.tsx`
+- `DESIGN_SYSTEM.md`、`BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户补充确认敏感词字段限制 100 字符，常用链接和快捷操作的名称及 URL 限制 200 字符。
+
+修改结果：
+
+- 三个维护弹窗统一复用 `LimitedInput`，显示与 Ticket 一致的字符计数，并在变更事件中截断超限输入。
+- 提交校验同步增加对应长度兜底：Sensitive Word 100；Website Name / Website URL 200；Action Name / Link Address 200。
+
+验证结果：
+
+- 类型检查、ESLint、Build 和 `git diff --check` 通过；Build 仅保留既有大 bundle 提示。
+- 浏览器冒烟验证通过：Sensitive Word 的维护字段为 `100`，Common Link 的 Website Name / Website URL 为 `200`，Quick Action 的 Action Name / Link Address 为 `200`；三个弹窗均显示字符计数，Quick Action 超限输入会截断到 200。
+
+回滚说明：
+
+- 恢复三个维护弹窗的 `Input` 和对应长度常量/校验即可；不影响其他工作区未提交修改。
+
+当前风险点：
+
+- 本次限制作用于新增/编辑维护字段，查询筛选框保持现有普通输入行为。
+
+### 2026-08-31 16:38 +08:00 - Blacklist 与 Priority List 渠道改为单选
+
+修改页面或文件：
+
+- `src/pages/call-management/BlacklistManagementPage.tsx`
+- `src/pages/call-management/PriorityListManagementPage.tsx`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求 Call Management > Blacklist 与 Priority List 的渠道下拉框改为单选，其他逻辑保持不变。
+
+修改结果：
+
+- Blacklist Batch Add、Priority List 查询和 Batch Add 的 Channel 均改为单选；表单每次仅保存到内部渠道数组的一项，保留既有批量 Identifier / Phone Number 创建方式。
+- Phone / WhatsApp 国家码、Phone 的 Restriction Policy 例外、重复校验、状态、筛选和删除逻辑保持原有行为。
+
+验证结果：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 通过；Build 仅保留既有 large chunk warning。
+- 浏览器冒烟检查通过：Priority List 查询和 Batch Add，以及 Blacklist Batch Add 均显示单选 Channel 控件。
+
+回滚说明：
+
+- 恢复两个页面 Channel Select 的 `mode="multiple"`、数组值绑定和原有多渠道提示文案即可。
+
+当前风险点：
+
+- 当前为前端本地 mock 管理页；未来后端批量导入接口应继续按单渠道加多个 Identifier / Phone Number 的模型处理。
+
+### 2026-08-31 16:33 +08:00 - Interaction Log 增加呼叫场景
+
+修改页面或文件：
+
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `src/types/callRecord.ts`
+- `src/mock/callRecords.ts`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求在 Call Management > Interaction Log 的查询条件和列表中，紧邻 `Call Type` 前增加区分呼入、呼出的字段。
+
+修改结果：
+
+- 新增 `Call Scenario`，可取值为 `Inbound` 或 `Outbound`；查询器、关键词检索和列表列均已接入，字段顺序位于 `Call Type` 前。
+- 记录模型新增 `callScenario`，默认 mock 记录为 `Inbound`，并配置 Outbound 演示记录以验证筛选结果。
+
+验证结果：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 通过；Build 仅保留既有 large chunk warning。
+- 浏览器冒烟检查通过：Outbound 筛选在默认当日范围返回 3 条 Outbound 记录，列表列顺序正确。
+
+回滚说明：
+
+- 删除 `callScenario` 类型、mock 字段、Interaction Log 查询控件、筛选条件和表格列即可恢复此前结构。
+
+当前风险点：
+
+- 当前为前端 mock Demo；实际对接时应由话务后台返回呼叫方向，不能由前端默认值替代。
+
+### 2026-08-31 16:12 +08:00 - 全局控制配置移除默认技能队列
+
+修改页面或文件：
+
+- `src/pages/call-management/GlobalControlConfigurationPage.tsx`
+- `src/types/globalControlConfiguration.ts`
+- `src/mock/globalControlConfiguration.ts`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户要求移除 Call Management > Global Control Configuration 中的默认技能配置字段。
+
+修改结果：
+
+- 移除 `Routing Fallback` 卡片、`Default Skill Queue` 下拉框及其活跃技能队列校验。
+- 全局控制配置类型和默认 mock 不再保存默认技能队列代码；Routing Config 的技能队列配置不受影响。
+
+验证结果：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 与 `git diff --check` 通过；Build 仅保留既有 large chunk warning。
+- 浏览器冒烟检查通过：Global Control Configuration 页面不再显示 `Routing Fallback` 或 `Default Skill Queue`，其余配置项保持可见。
+
+回滚说明：
+
+- 恢复全局控制配置页面的 Routing Fallback 卡片、字段校验以及对应类型和 mock 字段即可。
+
+当前风险点：
+
+- 当前前端 Demo 未使用该字段进行实际路由；真实路由服务如仍依赖默认技能队列，应在后端配置中独立维护。
+
+### 2026-08-28 19:34 +08:00 - 外呼审批流程恢复与客户弹屏边界修正
+
+修改页面或文件：
+
+- `src/layouts/components/OutboundCallModal.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DESIGN_SYSTEM.md`、`PROJECT_CONTEXT.md`、`DECISION_LOG.md`
+
+修改原因：
+
+- 客户确认外呼号码的既有 TL 审批不能移除；本次范围只要求号码外呼不激活客户弹屏，以及外呼坐席不要求切换 AUX。
+
+修改结果：
+
+- Toolbar `Call Number` 与 Customer Information 电话外呼保留原有普通 Agent TL 审批、审批结果弹窗和 `Support Outbound` AUX 门禁；TL-and-above 继续直接呼叫。
+- 两类号码外呼均创建后台 outbound 通话并保持当前工作区，不激活客户 screen pop；外呼坐席可在非 AUX 状态直接呼叫。
+- 两类外呼的话务条 Skill 继续显示为 `-`，号码显示保留 `+` 前缀。
+
+验证结果：
+
+- `npx tsc --noEmit`、`npm run lint`、`npm run build` 和 `git diff --check` 通过；Build 仅保留既有 large chunk warning。
+
+回滚说明：
+
+- 恢复号码外呼的审批 hook/result modal 连接及 `requiresOutboundApproval` 传递即可；不要回滚同一工作区中的其他用户修改。
+
+当前风险点：
+
+- TL 审批仍是同源前端 Demo 页面和浏览器本地同步，不代表生产环境的授权、审计或跨设备审批能力。
+
+### 2026-08-28 16:44 +08:00 - 弹屏客户邮件只读编辑器精简
+
+修改页面或文件：
+
+- `src/pages/inbound/components/SendEmailModal.tsx`
+- `src/pages/email/components/EmailComposeModal.tsx`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 客户要求在 Customer Information 卡片点击邮箱打开的发送邮件弹框中移除 Save，并隐藏只读正文不适用的格式化工具栏。
+
+修改结果：
+
+- 客户信息卡片的邮件弹框隐藏 Save 和正文格式化 / 模板配置工具栏，保留只读正文以及现有 Send、关闭、收件人、主题、模板和语言操作。
+- 独立 Email 工作台继续显示原有格式化工具栏和 Save，不受影响。
+
+验证：
+
+- `npm run lint`、`npm run build` 和 `git diff --check` 通过；Build 仅保留既有 large chunk warning。
+- 浏览器冒烟验证通过：在已识别客户的 Customer Information 卡片点击邮箱后，Reply Email 弹框不显示 Save 和 Email formatting toolbar，正文区域保持禁用状态。
+
+回滚说明：
+
+- 移除客户邮件入口传入的两个展示开关，或恢复共享组件中的条件渲染，即可恢复原界面。
+
+当前风险点：
+
+- 客户邮件弹框仍为前端演示流程，正文内容与自动保存不会持久化到后端。
+
+### 2026-08-28 00:00 +08:00 - Verification Rules 媒体级渠道选项
+
+修改页面或文件：
+
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求 KBV 配置覆盖 `Phone`、`Bankapp Voice`、`Bankapp Video`、`Webchat Voice`、`Webchat Video`；Webchat 没有登录状态。
+- 变更范围限定为身份验证规则的 Channel 下拉选项，不新增或删除列表规则条目，也不修改全局 Routing Config 渠道主数据。
+
+修改结果：
+
+- Verification Rules 页面现在根据活跃渠道的已配置媒体动态生成 Channel 选项；默认配置下展示五个媒体级选项。
+- 既有 `BANKAPP` 规则值按 `Bankapp Voice` 展示并继续参与筛选；`Bankapp Video` 与 BankApp Voice 共用 HaloApp Login Status 联动，Webchat Voice / Video 不显示该字段。
+- 渠道管理移除某个 Voice / Video 媒体后，该选项从新建和筛选控件中消失；既有规则不删除，编辑时保留为不可选的停用值。
+- 既有 mock 规则条目数量和内容未变。
+
+验证结果：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 和 `git diff --check` 通过。
+- Build 仅保留项目原有 large chunk warning；Verification Rules 浏览器冒烟验证通过：默认配置下五个选项均渲染，Bankapp Video 显示 HaloApp Login Status，Webchat Video 不显示该字段；移除 Routing Config 的 Bankapp Voice 后，该选项从 Verification Rules 下拉框消失，既有规则仍保留，列表维持 14 条记录。
+
+回滚说明：
+
+- 恢复 `VerificationRuleV2Page.tsx` 的渠道选项映射和 HaloApp 渠道判断即可；同步文档记录可一并回退。
+
+当前风险点：
+
+- 当前为 Zustand 前端 Demo，媒体级渠道选项和既有规则值尚未接入后端持久化或真实路由配置服务。
+
+### 2026-08-27 18:22 +08:00 - Production deployment
+
+修改页面或文件：
+
+- 提交 `c4fd9bb` 及 Vercel production deployment
+- `DEV_LOG.md`
+
+修改原因：
+
+- 发布当前 `main` 的全部已提交 Demo 修改。
+
+修改结果：
+
+- 正式 URL：`https://netinfo-aicc-demo-v2.vercel.app`
+- 本次 Deployment Inspect：`https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/745uy4bcJLsSD99iwdFgKFS9LG4P`
+- 部署命令：`vercel --prod --yes --build-env VITE_APP_VISIBILITY_PROFILE=customer`
+- 生产构建使用 `VITE_APP_VISIBILITY_PROFILE=customer`，部署状态为 Completed，正式别名已绑定。
+
+验证：
+
+- 本地 `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --cached --check` 通过；构建仅保留既有 large chunk warning。
+- Vercel 远程构建通过，Vite build completed。
+
+回滚说明：
+
+- 在 Vercel 将正式别名指回上一稳定 Deployment，或以目标提交重新执行同一 customer 部署命令。
+
+当前风险点：
+
+- GitHub `origin/main` 推送因当前环境无法连接 `github.com:443` 失败；发布已从本地干净提交直接完成，待网络恢复后需补推 `main`。
+
+### 2026-08-27 17:38 +08:00 - Call Management 时间格式调整
+
+修改页面或文件：
+
+- `src/utils/audit.ts`
+- `src/utils/verificationRuleV2.ts`
+- `src/mock/verificationRuleV2.ts`
+- `src/store/callManagementStore.ts`
+- Call Management 下 Blacklist、Priority List、AUX Reason、Common Phrase、Common Link、Common Number、Quick Action、Sensitive Word、Abnormal End Reasons、Verification Rules、Interaction Log、Login Log、Global Control Configuration、Text Channel Settings 页面
+- `BUSINESS_RULES.md`、`DESIGN_SYSTEM.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`PROJECT_CONTEXT.md`、`DECISION_LOG.md`
+
+修改原因：
+
+- 客户将管理台时间展示格式调整为 `DD-MM-YYYY HH:MM:SS`，本阶段先覆盖 Call Management 模块。
+
+修改结果：
+
+- Call Management 的创建时间、更新时间、Service Time、Login Log Time、配置 Last saved 和时间范围控件统一使用 `DD-MM-YYYY HH:MM:SS`。
+- 新增 `formatCallManagementDateTime`，保留旧格式化函数供尚未迁移的 Routing Config 使用。
+- 兼容解析旧的 `YYYY-MM-DD` 和新的 `DD-MM-YYYY` 字符串，避免既有 mock 数据显示异常。
+
+验证结果：
+
+- 类型检查、ESLint、Build 和 `git diff --check` 通过；Build 仅保留既有大 bundle 提示。
+- 浏览器冒烟验证通过：Blacklist、Priority List、AUX、Common Phrase、Common Link、Common Number、Quick Action、Sensitive Word、Abnormal End Reasons、Verification Rules、Interaction Log、Login Log 和 Global Control 的时间显示均为 `DD-MM-YYYY HH:MM:SS`；时间范围输入也显示新格式。Text Channel Settings 是当前路由重定向的隐藏页面，源码已同步。
+
+回滚说明：
+
+- 恢复 Call Management 页面对旧格式化函数和旧 DatePicker 格式的引用即可；不要回滚同一工作区中的其他用户修改。
+
+当前风险点：
+
+- Routing Config 尚未迁移到新格式，后续迁移时应复用 `formatCallManagementDateTime` 或统一调整公共格式化策略。
+
+### 2026-08-27 17:02 +08:00 - 客户专属卡片空状态文案统一
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerJourneyCard.tsx`
+- `src/pages/inbound/components/TicketingHistoryCard.tsx`
+- `src/pages/inbound/components/NextBestActionCard.tsx`
+- `src/pages/inbound/components/LeftColumn.tsx`
+- `BUSINESS_RULES.md`、`DESIGN_SYSTEM.md`、`CURRENT_STATUS.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 未识别客户没有客户旅程、历史工单和下一步行动数据，空白或较长的旧提示在固定宽度卡片中不够统一。
+
+修改结果：
+
+- Customer Journey、Ticketing History、Next Best Action 在没有客户专属数据时统一显示简洁文案 `No data available.`。
+- 共享 `LeftColumn` 在客户没有有效 CRM CIS 时不再向这三个卡片传入客户数据；识别客户仍正常显示原有数据。
+- Quick Action 保持独立显示，不受客户识别状态影响。
+
+验证结果：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 和浏览器冒烟检查已完成。
+
+回滚说明：
+
+- 恢复三个共享卡片的空状态分支及对应文档记录即可；不影响已有客户数据渲染。
+
+当前风险点：
+
+- 该文案为前端 Demo 统一展示，不代表后端客户专属数据接口已接入。
+
+### 2026-08-27 16:20 +08:00 - 未识别数字渠道客户 mock 修正
+
+修改页面或文件：
+
+- `src/mock/inbound.ts`
+- `src/mock/email.ts`
+- `src/pages/email/EmailPage.tsx`
+- `DEV_LOG.md`
+
+修改原因：
+
+- WhatsApp、Webchat、Email 的默认 mock 仍带有效 CIS，导致共享客户信息卡错误展示已识别客户资料；这与客户确认的未识别渠道规则不一致。
+
+修改结果：
+
+- WhatsApp（旧版和当前 Live Chat）、Webchat、Email 默认客户资料改为无 CIS、无联系方式的未识别客户。
+- 共享客户信息卡统一显示 `Unidentified Customer`，Phone / Email / SIC 使用 `-`，不展示客户级别和验证状态/操作。
+- Email 队列继续使用邮件发件人地址显示，邮件正文和会话消息不受影响。
+- HaloApp Guest handoff 继续沿用现有无 CIS 识别逻辑；已登录 BankApp 客户资料保持不变。
+- Webchat / BankApp Guest handoff 的队列、会话标题和客户消息发送者名称也统一为 `Unidentified Customer`，不再显示临时姓名。
+
+验证结果：
+
+- `npm run lint`、`npm run build`、`git diff --check` 均通过；Build 仅保留既有 large chunk warning。
+- 浏览器检查 WhatsApp handoff 与 Email 默认卡片，均显示未识别占位符且不显示验证状态/按钮。
+
+回滚说明：
+
+- 仅恢复上述 mock 客户资料和 Email 队列发件人显示逻辑即可回滚；不要覆盖同一工作区中的其他用户修改。
+
+当前风险点：
+
+- Webchat handoff 的实时路由仍依赖 Agent Ready 和当前 Live Chat 容量；本次未改变该流程。
+
+### 2026-08-27 15:10 +08:00 - 外呼号码与外呼坐席规则优化
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/layouts/components/AgentToolbar.tsx`、`src/layouts/components/OutboundCallModal.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/store/appStore.ts`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DESIGN_SYSTEM.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`
+
+修改原因：
+
+- 客户确认外呼号码的两个入口使用外呼 AUX 直接呼叫，不再触发 TL 审批弹屏；外呼坐席不应被外呼 AUX 门禁阻断；两类外呼的话务条 Skill 应显示为 `-`。
+
+修改结果：
+
+- Toolbar `Call Number` 与 Customer Information 电话外呼继续要求 `Support Outbound` AUX，并保留 `Miss Information` / `Financial Risk` 原因选择，但不创建审批请求、审批结果弹窗或客户 screen pop。通话进入 `Talking`，当前工作区保持聚焦。
+- `Outbound Call > Call Agent` 移除 AUX 门禁，点击坐席后创建后台 outbound 通话并进入 `Talking`，当前工作区保持聚焦。
+- outbound 交互的 `skillDisplayName` 统一存储为 `-`，话务条显示 `Outbound: {target} | Skill -`。
+
+验证结果：
+
+- `npx tsc --noEmit`、`npm run lint`、`npm run build` 均通过；Build 仅保留既有 large chunk warning。
+- 浏览器验证普通 Agent 在 `Not Ready` 下可直接使用 `Call Agent`，进入 `Talking` 且显示 `Skill -`；号码入口在非 AUX 下禁用，切换到 `AUX - Callback Finrisk` 后直接呼叫，Home 页签保持选中且显示 `Skill -`。
+- 客户资料卡在非 AUX 下显示禁用 `Call` 和 `Switch to outbound AUX`，未出现审批结果弹窗。
+
+回滚说明：
+
+- 恢复两个号码入口的审批 hook、`createCallInteraction` 的激活参数、Call Agent 的 `hasOutboundAccess` 门禁及 inbound Skill 默认值即可回到上一版行为；不要回滚同一工作区中的其他用户修改。
+
+当前风险点：
+
+- 当前仍是前端 Demo，不包含真实 CTI 建呼、坐席状态后端同步、号码校验、坐席路由或客户数据反查；旧 TL 审批页面和本地工具仅作为兼容代码保留。
+
+### 2026-08-27 11:56 +08:00 - Common Phrase 主字段宽度优化
+
+修改页面或文件：
+
+- `src/pages/call-management/CommonPhraseManagementPage.tsx`
+- `DEV_LOG.md`
+
+修改原因：
+
+- Common Phrase 列在不需要滚动的表格中显示空间不足，而 Shortcut Code、Category 等字段存在可回收空白。
+
+修改结果：
+
+- Common Phrase 列调整为约 280px，Updated By 保留约 170px，其他列使用内容所需的紧凑宽度。
+- 表格总宽度与当前可用宽度一致，保留完整的 `Updated Time`、`Updated By` 和 Actions 展示。
+
+验证结果：
+
+- 浏览器实测表格和容器宽度均为约 912px，未产生横向滚动；Common Phrase 列顺序正确。
+
+回滚说明：
+
+- 恢复 Common Phrase 列定义即可；不要回滚同一工作区中的其他用户修改。
+
+当前风险点：
+
+- 若未来用户名称明显变长，Updated By 可能需要允许换行或增加最小宽度。
+
+### 2026-08-27 11:53 +08:00 - Common Phrase 更新人列宽修正
+
+修改页面或文件：
+
+- `src/pages/call-management/CommonPhraseManagementPage.tsx`
+- `DEV_LOG.md`
+
+修改原因：
+
+- Common Phrase 列表的 Shortcut Code 和 Category 列存在空白，而 Updated By 宽度不足，导致更新人信息被省略并产生不必要的横向滚动。
+
+修改结果：
+
+- 收紧 Shortcut Code、Common Phrase、Category、Updated Time 和 Actions 列，将 Updated By 调整为约 190px，并移除更新人字段的省略显示。
+- 当前 Demo 分辨率下表格总宽度与可用宽度一致，更新人 `1234-Admin` 完整展示。
+
+验证结果：
+
+- 浏览器实测 Common Phrase 表格可用宽度和总宽度均为约 912px，无横向滚动；列表列顺序保持正确。
+- 类型检查、ESLint、Build 已通过；Build 仅保留既有大 bundle 提示。
+
+回滚说明：
+
+- 恢复 Common Phrase 列定义即可；不要回滚同一工作区中的其他用户修改。
+
+当前风险点：
+
+- 若未来新增更长的用户 ID 或用户名，Updated By 可能需要继续增加最小宽度或允许换行。
+
+### 2026-08-27 11:45 +08:00 - Common Phrase 长度和审计字段补充
+
+修改页面或文件：
+
+- `src/pages/call-management/CommonPhraseManagementPage.tsx`
+- `src/types/commonPhrase.ts`
+- `src/mock/commonPhrases.ts`
+- `src/store/callManagementStore.ts`
+- `src/components/limitedInputUtils.ts`
+- `src/components/LimitedTextArea.tsx`、`src/components/LimitedInput.tsx`
+- `BUSINESS_RULES.md`、`DESIGN_SYSTEM.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`PROJECT_CONTEXT.md`、`DECISION_LOG.md`
+
+修改原因：
+
+- 客户确认 Common Phrase 字段限制为 100 字符，并要求列表增加更新时间和更新人。
+
+修改结果：
+
+- Common Phrase 维护表单接入共享 Ticket 风格计数组件，最大 100 字符。
+- Common Phrase 列表在 Actions 前增加 `Updated Time`、`Updated By`，时间格式为 `YYYY-MM-DD HH:MM:SS`，种子数据更新人为 `1234-Admin`。
+- 新增、编辑和移动分类会使用当前操作人的审计信息。
+- 共享限长组件在 change 事件层截断超限值，确保实际输入不会超过配置的最大字符数。
+
+验证结果：
+
+- `npx tsc --noEmit --pretty false` 通过。
+- Common Phrase 定向 ESLint 通过。
+- 全量 ESLint 和 Build 通过；Build 仅保留既有大 bundle 提示。
+- 浏览器验证通过：列表审计列顺序正确，种子数据为 `1234-Admin`，输入 101 个字符后保持 `100 / 100`。
+
+回滚说明：
+
+- 回滚 Common Phrase 类型、mock、store 审计字段和页面列/输入组件引用即可；不要回滚同一工作区中的其他用户修改。
+
+当前风险点：
+
+- Common Phrase 的更新时间和更新人仍是浏览器内存 Demo 数据，不是后端变更历史。
+
+### 2026-08-27 11:35 +08:00 - 管理台列表审计字段和表格密度统一
+
+修改页面或文件：
+
+- `src/pages/call-management/BusyReasonManagementPage.tsx`
+- `src/pages/call-management/CommonLinkManagementPage.tsx`
+- `src/pages/call-management/CommonNumberManagementPage.tsx`
+- `src/pages/call-management/SensitiveWordManagementPage.tsx`
+- `src/pages/call-management/SessionEndReasonManagementPage.tsx`
+- `src/pages/call-management/QuickActionManagementPage.tsx`
+- `src/pages/call-management/VerificationRuleV2Page.tsx`
+- 对应类型、mock、store、审计格式化工具和共享限长输入组件
+- `BUSINESS_RULES.md`、`DESIGN_SYSTEM.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`PROJECT_CONTEXT.md`、`DECISION_LOG.md`
+
+修改原因：
+
+- 客户要求常用号码、常用链接、敏感词、异常原因、快捷操作、验证规则列表增加修改时间和修改人，并统一人员与时间格式。
+- AUX Reason 列表存在强制横向滚动和过大的列宽，需要按内容收紧。
+- 最新确认覆盖此前 Common Number 暂不增加审计字段的临时约定。
+
+修改结果：
+
+- 相关管理列表统一在 Actions 前按 `Updated Time`、`Updated By` 顺序展示，时间为 `YYYY-MM-DD HH:MM:SS`，人员为 `用户ID-用户名`，Demo 默认管理员显示为 `1234-Admin`。
+- Common Number 现在包含更新审计字段；所有相关 Remark 维护输入使用共享 2000 字符限制组件。
+- AUX、Common Link、Common Number、Sensitive Word、Abnormal End Reasons、Quick Action 和 Verification Rules 去除不必要的固定横向滚动，列宽按内容和操作区收紧。
+
+验证结果：
+
+- `npx tsc --noEmit --pretty false` 通过。
+- `npx eslint src --max-warnings=0` 通过。
+- 浏览器冒烟验证通过：AUX 无横向溢出，相关列表审计列顺序和 `1234-Admin` 展示正确，Common Number 备注计数为 `0 / 2000`，Blacklist Phone / WhatsApp 策略联动正确。
+
+回滚说明：
+
+- 回滚对应页面列定义、mock/type 审计字段和共享限长组件引用即可；不要回滚同一工作区中的其他用户修改。
+
+当前风险点：
+
+- 审计信息仍是浏览器内存 Demo 数据，不是后端变更历史；真实员工身份和持久化审计接口接入时需要沿用当前字段格式。
+
+### 2026-08-26 19:42 +08:00 - 管理台审计、时间和长度限制标准化
+
+修改页面或文件：
+
+- `src/components/LimitedInput.tsx`
+- `src/components/LimitedTextArea.tsx`
+- `src/utils/audit.ts`
+- `src/utils/phoneNumberChannels.ts`
+- Blacklist、Priority List、AUX Reason、Verification Rules、Quick Action、Routing Config 和相关管理台页面
+- Blacklist / Priority mock 数据
+- `BUSINESS_RULES.md`、`DESIGN_SYSTEM.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`PROJECT_CONTEXT.md`、`DECISION_LOG.md`
+
+修改原因：
+
+- 客户确认 WhatsApp 与 Phone 都按手机号渠道维护，需要共享国家码和批量选择规则。
+- 管理台创建/更新时间需要统一到秒，审计人需要使用用户 ID-用户名格式。
+- Remark 默认限制 2000 字符，Priority Reason 也补充 2000 字符限制，Question Name 限制 100 字符；Ticket 限制输入样式需要沉淀为公共组件。
+
+修改结果：
+
+- Phone + WhatsApp 可同时选择；选择其他渠道时两者禁用，其他非手机号渠道之间仍可多选。
+- 管理台时间显示统一为 `YYYY-MM-DD HH:MM:SS`，`Modified` UI 字段统一为 `Updated`。
+- Blacklist / Priority 的已有管理员创建记录显示 `1234-Admin`；其他管理菜单的管理员更新 mock 继续显示 `Admin`，新增/编辑/排序操作使用当前登录会话的用户信息。
+- Ticket、BlackList、Priority、AUX、Common Link、Common Number、Quick Action、Sensitive Word、Abnormal End Reasons 和 Question Bank 接入共享长度限制控件。
+- Common Number 本次未增加修改人和修改时间，只接入 Remark 的默认 2000 字符限制。
+
+验证结果：
+
+- `npm run lint` 通过。
+- `npm run build` 通过；Vite 仍提示现有 bundle 大于 500 kB。
+- 浏览器冒烟验证 Blacklist 的 Phone + WhatsApp 多选、非手机号渠道锁定、WhatsApp 国家码、秒级 Created Time、Reason `0 / 2000`，以及 Question Bank `0 / 100`。
+
+回滚说明：
+
+- 恢复本次新增共享组件和格式化工具，并还原相关页面对 Ant Design 原始输入、时间标签和渠道互斥条件的引用即可；不要回滚同一工作区中其他未相关的用户修改。
+
+当前风险点：
+
+- 当前登录账号的既有 Demo 员工 ID 仍沿用原 mock 值；审计显示已按当前会话动态拼接，未来接入真实用户 ID 后无需再改页面逻辑。
+- Demo 电话国家码已按国际电话格式统一为 `62`；真实系统接入时仍需由后端确认国家码字段的存储和展示格式。
+
+### 2026-08-27 10:43 +08:00 - Blacklist 渠道限制策略和创建人格式修正
+
+修改页面或文件：
+
+- `src/pages/call-management/BlacklistManagementPage.tsx`
+- `src/mock/blacklist.ts`
+- `src/mock/priorityList.ts`
+- `src/utils/audit.ts`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DECISION_LOG.md`
+
+修改原因：
+
+- 客户确认限制策略只有 Phone 渠道支持“禁止接入”和“禁止转人工”；WhatsApp 虽然使用电话号码识别，但不继承 Phone 的两种策略。
+- Blacklist / Priority 列表的已有创建人需要按工号-姓名格式展示，管理员示例为 `1234-Admin`。
+
+修改结果：
+
+- 只有单独选择 Phone 时限制策略可选；WhatsApp、Phone + WhatsApp 混选及其他渠道固定为“禁止转人工”。
+- Blacklist / Priority seeded Created By 改为 `1234-Admin`；新建记录继续使用当前登录会话的用户信息。
+- Blacklist 去重中的限制策略仅参与 Phone 记录，WhatsApp 使用渠道、国家码和电话号码去重。
+
+验证结果：
+
+- lint、build 和浏览器 smoke 已验证列表创建人及渠道限制策略。
+
+回滚说明：
+
+- 恢复 Blacklist 的 Phone-only 策略判断、默认管理员创建人和对应规则文档即可回滚。
+
+当前风险点：
+
+- 当前登录会话仍使用现有 Demo 用户资料；后续接入真实员工账号后，新增记录会继续按会话中的工号和姓名显示。
+
+### 2026-08-27 09:00 +08:00 - 电话国家码标准化
+
+修改页面或文件：
+
+- `src/pages/call-management/BlacklistManagementPage.tsx`
+- `src/pages/call-management/PriorityListManagementPage.tsx`
+- `src/mock/blacklist.ts`
+- `src/mock/priorityList.ts`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`
+
+修改原因：
+
+- 国际电话国家码不使用前导 `0`，印尼国家码应使用 `62`。
+
+修改结果：
+
+- 黑名单、优先名单的默认国家码和现有 Phone / WhatsApp mock 数据由 `062` 统一改为 `62`。
+- 其他使用 ISO 国家标识的 Routing Config 数据不变。
+
+验证结果：
+
+- 全仓库业务代码和 mock 数据中不再使用 `062` 电话国家码。
+- `git diff --check` 通过。
+
+回滚说明：
+
+- 将上述页面、mock 和当前规则文档中的 `62` 恢复为 `062` 即可回滚本次变更。
+
+当前风险点：
+
+- 真实后端接口仍需确认国家码字段是存储为纯数字 `62`，还是展示时附加 `+`。
+
+### 2026-08-26 19:01 +08:00 - 客户信息纵向栏固定宽度
+
+修改页面或文件：
+
+- `src/styles/tokens.less`
+- `src/styles/index.less`
+- `DESIGN_SYSTEM.md`
+- `CURRENT_STATUS.md`
+
+修改原因：客户确认不同弹屏页面中 Customer Information、Customer Journey、Ticketing History、Next Best Action、Quick Action 纵向栏宽度不应随网格比例变化。
+
+修改结果：新增统一的 `270px` 客户信息纵向栏宽度 token，并应用到入站语音/视频、Live Chat、Email 和 Social Media 的父级网格；窄屏堆叠布局恢复占满容器。
+
+回滚说明：恢复各页面原有的动态 `minmax` 列定义并移除客户栏宽度 token即可回滚。
+
+当前风险点：固定宽度会增加窄桌面视口的整体最小内容宽度，需通过构建和浏览器冒烟检查确认各页面仍可正常使用。
+
+### 2026-08-26 18:27 +08:00 - 未识别客户空字段占位符修正
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DESIGN_SYSTEM.md`
+
+修改原因：客户确认未识别客户的 Phone、Email、SIC 空值直接留白不利于识别字段结构，需要使用 `-` 表示暂无内容。
+
+修改结果：未识别客户仍显示三行资料字段，但 Phone、Email、SIC 值统一显示 `-`；Segmentation、Special Handling、头像及相关操作入口继续隐藏。已识别客户的联系方式和操作行为不变。
+
+回滚说明：将未识别展示 profile 中三个 `-` 恢复为空字符串即可回滚本次显示调整。
+
+当前风险点：需要通过 TypeScript、Lint、Build 和浏览器冒烟检查确认占位符不会意外启用联系方式操作。
+
+### 2026-08-26 - Abnormal End Reasons 默认状态调整
+
+修改页面或文件：
+
+- `src/mock/sessionEndReasons.ts`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`PROJECT_CONTEXT.md`、`DECISION_LOG.md`
+
+修改原因：用户要求呼叫管理的异常关机原因默认全部禁用，LiveChat 初始状态不显示异常挂机下拉三角。
+
+修改结果：两条默认 DM 异常原因均改为 `Disabled`；现有 LiveChat 条件会在没有启用 DM 原因时仅显示普通 `End Service`。
+
+回滚说明：恢复 `src/mock/sessionEndReasons.ts` 中两条记录的 `status` 为 `Active` 即可恢复默认异常挂机选项。
+
+当前风险点：这是前端 Zustand mock 默认状态，刷新或 Reset 会回到禁用状态；真实后端配置尚未接入。
+
+### 2026-08-26 14:14 +08:00 - Customer Information 图标语义修正
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/components/CustomerInformationPanel.tsx`
+- `src/styles/index.less`
+- `DESIGN_SYSTEM.md`
+- `CURRENT_STATUS.md`
+
+修改原因：客户确认联系方式区域继续使用原有证件卡片图标，客户号字段直接使用 `SIC` 作为业务标识。
+
+修改结果：`All Contact Details` 恢复使用 `IdcardOutlined`；Customer Number / CIS 行改为固定图标槽内居中的 `SIC` 文本标识，保持与其他资料行一致的尺寸、间距和对齐规则。
+
+回滚说明：仅涉及图标语义和对应规范文案，可独立回滚。
+
+当前风险点：需要通过 TypeScript、Lint、Build 和浏览器冒烟检查确认图标替换未引入回归。
+
+### 2026-08-26 12:54 +08:00 - Webchat Demo Guest-only 与渠道文案修正
+
+修改页面或文件：
+
+- `src/pages/bankapp/BankAppDemoPage.tsx`
+- `src/pages/inbound/components/ChannelTag.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DESIGN_SYSTEM.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 当前 Webchat 没有登录能力，不应在客户侧流程中暴露 Registered；客户映射要求客户信息卡的 Webchat 接入渠道显示为 `bca.co.id`。
+
+修改结果：
+
+- Webchat Demo 固定为 Guest 流程，客户类型改为只读展示，不再显示 Registered 选项或登录客户分支。
+- Customer Information 保留内部 `Webchat` 渠道值用于路由和规则判断，仅将卡片接入标签展示为 `bca.co.id`。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 和 `git diff --check` 已通过；构建仅保留项目原有的大 bundle warning。
+- 浏览器烟测通过：Webchat Demo 仅显示 Guest，流程从 Guest Information 开始；交接后的客户卡显示 `Unidentified Customer`，接入渠道显示 `bca.co.id`，没有显示 Registered 选项。
+
+### 2026-08-26 12:18 +08:00 - Customer Information 未识别 Guest 展示修正
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/mock/inbound.ts`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- BankApp Video Guest 仍显示 `Guest-06290002`、电话和未识别状态，混淆了渠道侧 Guest 状态与客户是否已被 CRM 识别。
+
+修改结果：
+
+- 客户信息卡现在按有效 CIS 判断识别状态；无有效 CIS 的客户统一显示 `Unidentified Customer`。
+- 未识别客户的 Phone、Email、Customer Number 保留空行；Segmentation、Special Handling、CRM 联系人入口和客户外呼均隐藏。
+- BankApp Voice/Video 仍保留渠道侧 Guest 上下文，支持的媒体继续显示底部验证状态和 `KBV`；识别后的客户显示 CRM 资料，不再显示 Guest 姓名。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 和 `git diff --check` 已通过；构建仅保留项目原有的大 bundle warning。
+- 浏览器烟测通过：BankApp Video Guest 客户卡显示 `Unidentified Customer`，Phone / Email / Customer Number 为空，Segmentation / Special Handling / CRM 联系人入口隐藏，同时按媒体规则保留 `Unverified + KBV`。
+
+### 2026-08-26 12:02 +08:00 - Customer Information 渠道验证显示规则
+
+修改页面或文件：
+
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`DESIGN_SYSTEM.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户映射表要求按渠道和媒体分别控制验证入口与验证结果，之前共享卡只完成了部分入口逻辑，Video 和文本渠道的状态显示仍不完整。
+
+修改结果：
+
+- PSTN、BankApp Voice/Video、Webchat Voice/Video 显示验证状态和 `KBV`；已登录 BankApp 文本显示验证状态和 `PIN`。
+- WhatsApp、Email、Webchat 文本、Social Media、未登录 BankApp 文本同时隐藏验证状态和验证入口，避免只隐藏按钮而留下不适用的结果。
+- WhatsApp 客户信息优先显示 CRM 中的 WhatsApp 接入号码，并让对应的客户电话操作使用同一号码。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 和 `git diff --check` 已通过；构建仅保留项目原有的大 bundle warning。
+- 浏览器烟测通过：WhatsApp 隐藏验证区并显示 `62 878 2510 0234`；已登录 BankApp 文本显示 `Unverified + PIN`；BankApp Video 显示 `Unverified + KBV`；Webchat 文本隐藏验证状态和入口。
+
+### 2026-08-26 10:42 +08:00 - Customer Information 外呼状态与底部控件修正
+
+修改页面或文件：
+
+- `src/components/CustomerInformationPanel.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/styles/index.less`
+- `DESIGN_SYSTEM.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户发现 `Requesting...` / `Call` 不应继续依赖电话行悬浮；未进入外呼 AUX 时，已审批的 `Call` 应显示但保持禁用。同时客户联系方式入口与 Customer Number 使用了重复图标，底部接入、验证和 KBV 控件的几何尺寸也不统一。
+
+修改结果：
+
+- `Request Approval` 仅在 idle 状态下悬浮显示；`Requesting...` 和 `Call` 在对应状态下常驻显示。`Call` 继续由 `hasOutboundAccess` 控制是否可用，未进入外呼 AUX 时显示禁用态并提示切换 AUX。
+- Customer Information 标题栏的 All Contact Details 改用 `ContactsOutlined`，Customer Number / CIS 保留 `IdcardOutlined`。
+- Customer Information 底部的接入渠道、验证状态和 KBV 统一为 22px 高、10px 字号、650 字重、18px 行高、8px 水平内边距和统一圆角；颜色仍按渠道、验证和操作语义区分。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 和 `git diff --check` 已通过；构建仅保留项目原有的大 bundle warning。
+- 浏览器烟测通过：idle 状态的 Request Approval 仍隐藏等待悬浮；已识别客户卡的底部渠道、验证状态和 KBV 实际高度均为 22px，字号、字重、内边距和圆角一致；联系方式入口使用 ContactsOutlined，Customer Number 使用 IdcardOutlined。
+
+### 2026-08-26 10:42 +08:00 - Customer Information 控件与渠道示例统一
+
+修改页面或文件：
+
+- `src/components/CustomerInformationPanel.tsx`
+- `src/mock/inbound.ts`
+- `src/styles/index.less`
+- `DESIGN_SYSTEM.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户确认客户级别不应使用流程感图标；同时要求 PSTN 与 BankApp 使用有区号/无区号的不同号码示例，并统一客户信息卡中的紧凑型操作控件。
+
+修改结果：
+
+- 客户级别图标改为 `TeamOutlined`，表达客户分组/分层，不再使用流程感较强的图标。
+- PSTN 已识别示例改为 `62 21 25563000` 并保持 Email `Verified`；BankApp 已注册示例改为 `62 8123456789` 并固定 Email `Unverified`。
+- `Request Approval`、`Requesting...`、`Call` 共用相同的 22px 高度、10px 字号、650 字重、18px 行高、8px 水平内边距和文字自适应宽度；普通、申请中、已批准仅通过语义色区分。
+- `Special Handling` 与 Customer Information 的接入渠道标签复用同一紧凑控件基础规范，并统一悬浮/键盘聚焦反馈。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 和 `git diff --check` 已通过；构建仅保留项目原有的大 bundle warning。
+- 浏览器烟测通过：PSTN 已识别资料显示 `62 21 25563000`、`Verified`、`TeamOutlined`；Request Approval、Special Handling 和 PSTN 接入标签的实际高度、字号、字重、内边距一致。BankApp 主入口与注册历史会话 mock 显示 `62 8123456789` 和 `Unverified`。
+
+### 2026-08-26 10:18 +08:00 - Customer Information 统一图标网格与按钮宽度
+
+修改页面或文件：
+
+- `src/components/CustomerInformationPanel.tsx`
+- `src/styles/index.less`
+- `DESIGN_SYSTEM.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 按客户确认结论优化 Customer Information 的视觉一致性和交互稳定性。
+
+修改结果：
+
+- 客户级别使用中性的横向 Partition 图标；资料行与 Customer Journey 渠道行复用 24px 图标槽位和居中的 20px 图标容器，字段值与 Journey Category 文本起点对齐。
+- Email 保持地址与验证状态分离，去掉括号；Verified / Unverified 使用与统一验证状态相同的字号和语义色，悬浮下划线只作用于邮箱地址。
+- Phone、Email、Customer Number、Segmentation 资料行固定 22px 高度并收紧行间距；电话操作按钮和 Special Handling 按文字自适应宽度，电话悬浮或键盘聚焦只改变可见性，不改变纵向布局。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 通过；仅保留项目原有的大 bundle warning。
+- 浏览器烟测通过：未识别 PSTN 的三个图标行保持 22px 且无外呼入口；已识别客户显示 Partition 图标、语义色 Verified 状态，四个资料行高度一致。
+
+### 2026-08-24 18:18 +08:00 - Special Handling 与 Segmentation 同行
+
+修改页面或文件：
+
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`、`DESIGN_SYSTEM.md`、`CURRENT_STATUS.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户确认 Special Handling 应放在客户级别字段的最后，并与 Segmentation 保持同一行。
+
+修改结果：
+
+- Customer Information 的资料元信息改为双列网格：左侧为 Segmentation 图标和值，右侧为 Special Handling 操作入口。
+- Special Handling 仅在 CRM 信息存在时显示；未识别客户不占用该位置。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 通过；仅保留项目原有的大 bundle warning。
+- 浏览器烟测通过：已识别客户的 Segmentation 与 Special Handling 同行，Special Handling 位于最右侧；未识别 PSTN 仍隐藏两者。
+
+### 2026-08-24 18:02 +08:00 - Customer Information 紧凑字段样式修正
+
+修改页面或文件：
+
+- `src/components/CustomerInformationPanel.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`、`DESIGN_SYSTEM.md`、`CURRENT_STATUS.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户确认附件中的字段名是 Mapping 规则，不要求在卡片中重复渲染为文字标签；卡片应保持现有紧凑的图标式信息布局。
+
+修改结果：
+
+- 姓名恢复为直接显示，不增加 `Name` 标签。
+- Phone、Email、Customer Number 恢复原有图标 + 值展示；Segmentation 使用图标 + CRM 映射值，Special Handling 继续保留标签式操作入口。
+- 保留已确认的号码格式、邮箱验证后缀、未识别 PSTN 空值、无头像和操作权限规则。
+- 电话悬浮操作按钮仍使用独立网格空间，避免覆盖号码。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 通过；仅保留项目原有的大 bundle warning。
+- 浏览器烟测通过：未识别 PSTN 保留 Phone / Email / Customer Number 图标行并显示空值；已识别示例保留 phone / mail / idcard / tags 图标，并显示格式化 Phone、带验证后缀的 Email、Customer Number 和 Segmentation。
+
+### 2026-08-24 17:20 +08:00 - Customer Information 字段标签与 Mapping 格式
+
+修改页面或文件：
+
+- `src/components/CustomerInformationPanel.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/pages/inbound/InteractionWorkspace.tsx`
+- `src/types/inbound.ts`、`src/mock/inbound.ts`、`src/styles/index.less`
+- `BUSINESS_RULES.md`、`DESIGN_SYSTEM.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户确认共享 Customer Information 需要按附件字段示例直接展示字段名称、值和验证格式，不能继续使用旧的纯图标字段样式或 Priority 标签。
+
+修改结果：
+
+- Phone、Email、Customer Number、Segmentation 改为明确的字段标签和值；Priority Customer 映射为 `Prioritas - Upper Mass`。
+- 已识别客户的 Phone 按 `62 ...` 格式展示，Email 增加 `(Verified)` / `(Unverified)` 联系人验证状态。
+- 未识别 PSTN 保留三个带标签的空字段，继续隐藏 Segmentation / Special Handling、头像和客户电话外呼；电话操作按钮改为独立布局区域，不覆盖号码。
+- 增加 CRM 字段展示类型并保留 InteractionWorkspace 的字段传递。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 通过。
+- 浏览器烟测通过：已识别示例显示 `62 87825100234`、`Dimas@gmail.com (Verified)`、Customer Number 和 `Prioritas - Upper Mass`；未识别 PSTN 显示 Phone / Email / Customer Number 空行，隐藏 Segmentation / Special Handling / 客户电话外呼。
+
+当前风险点：
+
+- 其他渠道的 CRM 联系人若尚未提供独立的 `emailVerificationStatus`，Demo 会按当前交互验证状态补充 Email 后缀；真实 CRM 接入时应直接使用 `contacts.contact_verified`。
+
+### 2026-08-24 15:31 +08:00 - Customer Information 未识别客户字段展示
+
+修改页面或文件：
+
+- `src/components/CustomerInformationPanel.tsx`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`、`DESIGN_SYSTEM.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 按客户 Mapping Customer Information.xlsx 的确认规则区分 `empty` 与 `not displayed`，并落实客户无法提供头像的展示边界。
+
+修改结果：
+
+- 共享 Customer Information 卡片移除头像；已识别客户的客户级别与 Special Handling 保留在资料区。
+- 未识别 PSTN 保留 Phone、Email、Customer Number 行但清空值，不显示 `-`；Segmentation 与 Special Handling 不显示。
+- 未识别 PSTN 不显示客户电话外呼入口，KBV 与工具栏来电识别信息保留。
+- Guest 与 Outbound Customer 的现有号码、邮箱和客户上下文不被清空。
+
+验证：
+
+- `npx tsc --noEmit --pretty false` 通过。
+- `npm run lint` 通过。
+- `npm run build` 通过；仅保留既有的大 bundle warning。
+- 浏览器烟测通过：Ready 状态进入 PSTN 后，未识别客户卡片无头像，Phone / Email / Customer Number 为空，Segmentation / Special Handling / 客户电话外呼入口隐藏，PSTN 状态、Unverified、KBV 和工具栏来电识别信息保留。
+
+回滚说明：
+
+- 恢复共享卡片的头像布局、未识别 PSTN 的显示 profile 转换和对应文档记录即可。
+
+当前风险点：
+
+- 客户 Mapping 仍只提供展示映射，真实 CRM 的头像、Segmentation、Special Handling 和联系人验证字段尚未接入。
+
+### 2026-08-24 11:36 +08:00 - Priority List Phone Country Code / AUX Reason 文案
+
+修改页面或文件：
+
+- `src/pages/call-management/PriorityListManagementPage.tsx`
+- `src/types/priorityList.ts`
+- `src/mock/priorityList.ts`
+- `src/config/workspacePageTabs.tsx`
+- `src/pages/call-management/BusyReasonManagementPage.tsx`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`PROJECT_CONTEXT.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 按确认反馈补齐 Priority List 的 Phone 国家码和渠道互斥规则，并将重复校验改为不包含 Match Rule；同步管理菜单从 Busy Reason 改为 AUX Reason Management。
+
+修改结果：
+
+- Priority List Phone 模式默认国家码为 `062`，仅显示 Country Code / Phone Number；Phone 与非 Phone 渠道互斥，列表和重复预览显示 Country Code，非 Phone 显示 `-`。
+- 重复键改为 Phone `Channel + Country Code + Identifier`、非 Phone `Channel + Identifier`；Exact / Partial Match 仍保留为匹配行为，但不参与去重。
+- 菜单、Tab、页面标题、筛选提示、表格列、编辑弹窗和校验文案统一使用 `AUX Reason Management` / `AUX Reason`。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 通过；构建仅保留既有 bundle size warning。
+- 本地浏览器烟测通过：Phone 选择禁用 Bankapp，显示 Country Code / Phone Number；非 Phone 选择禁用 Phone；已有 Phone 号码在切换 Exact / Partial Match 后均显示重复预览；AUX Reason 菜单和页面文案正确。
+
+回滚说明：
+
+- 恢复 Priority List 页面、类型和 mock 的旧字段/重复键，并将 workspace tab 与 Busy Reason 页面可见文案恢复即可；不涉及黑名单新增默认值。
+
+当前风险点：
+
+- 当前仍为 Zustand 内存 Demo；后端接口需要同步 Country Code 字段、Phone/非 Phone 渠道互斥和新的重复键规则。
+
+### 2026-08-24 11:55 +08:00 - Production 发布 63180ca
+
+发布信息：
+
+- 提交：`63180ca feat: update call management demo configuration`
+- 命令：`vercel deploy --prod --yes --build-env VITE_APP_VISIBILITY_PROFILE=customer`
+- 环境：`VITE_APP_VISIBILITY_PROFILE=customer`
+- 生产地址：`https://netinfo-aicc-demo-v2.vercel.app`
+- 部署详情：`https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/7EPake9NuSQfbUgaBWiYxsTUehZ7`
+
+验证结果：
+
+- 发布前 `git diff --check`、`npm run lint`、`npm run build` 通过；线上首页返回 HTTP 200。
+- Vercel 远端构建成功，仅保留既有 bundle size warning。
+
+回滚说明：
+
+- 可在 Vercel 部署详情中重新提升上一份生产部署；本次发布前的 Git 提交为 `e1e0cbe`。
+- 本次 GitHub `main` 推送因网络连接重置未完成，本地 `main` 当前领先 `origin/main` 两个提交（包含本发布记录）。
+
+### 2026-08-20 14:55 +08:00 - 接收坐席转入提示
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 用户确认转入坐席的简洁英文反馈使用 `Transferred from XXX`，并要求可通过本地 `Transferred Call` 菜单直接展示以便截图。
+
+修改结果：
+
+- 点击本地 `Channel Simulation > Transferred Call` 后，接收坐席弹屏显示已有转移标识，并在 Header 下方居中显示四秒 `Transferred from Maya Lestari.` 成功提示。
+- 坐席未处于可接听状态时仅保留既有来话状态拦截，不显示转入成功提示。
+
+验证：
+
+- `npm run lint`、`npm run build`、`git diff --check` 已通过；构建仅保留既有 large chunk warning。
+- 本地浏览器烟测已通过：以 Ready 坐席点击 `Channel Simulation > Transferred Call` 后，客户卡显示 `Transferred from Maya Lestari (AICC1088)` 标识，Header 下方同时显示 `Transferred from Maya Lestari.` 成功提示。
+
+回滚说明：
+
+- 移除 `test-transferred-voice` 菜单分支中的 `notify()` 调用即可恢复仅显示客户卡转移标识的预览。
+
+当前风险点：
+
+- 当前入口仅模拟接收坐席视角，不会创建真实跨坐席 CTI 事件或同步另一浏览器会话。
+
+### 2026-08-20 11:44 +08:00 - Global Control idle auto log-out disable value
+
+修改页面或文件：
+
+- `src/pages/call-management/GlobalControlConfigurationPage.tsx`
+- `src/hooks/useIdleLogout.ts`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户确认 Global Control 的 `System Idle Log-out Timeout` 配置为 `0` 时，系统不执行自动登出，因此不应验证 `Auto Log-out Warning Lead Time`。
+
+修改结果：
+
+- 自动登出时长字段允许输入 `0`；此时提醒时间字段禁用且不再显示必填标识。仅当该时长大于 `0` 时，才启用并验证提醒时间必须大于 `0` 且小于自动登出时长。
+- 闲置登出 Hook 在自动登出时长为 `0` 时清理计时器；不显示提醒弹窗，也不会触发自动登出。
+
+验证：
+
+- `npm run lint`、`npm run build`、`git diff --check` 通过；构建仅保留既有 bundle size warning。
+- 本地浏览器烟测：`System Idle Log-out Timeout` 可输入 `0`；将提醒时间设为 `999` 后保存仍可用，保存成功且未显示提醒时间校验。测试后已通过 Reset 恢复浏览器会话默认值 `30` / `10`。
+- 补充烟测：自动登出时长设为 `0` 时，提醒时间字段禁用且不再显示必填标识；恢复为正数后可重新编辑。测试后已重置默认值。
+
+回滚说明：
+
+- 恢复自动登出时长最小值为 `1`，并移除 Hook 对 `0` 的禁用分支，即可恢复原有必须启用自动登出的规则。
+
+当前风险点：
+
+- 当前行为仅覆盖浏览器内存中的前端演示配置；未来后端会话超时策略需采用同一 `0` 禁用语义。
+
+### 2026-08-20 11:33 +08:00 - Unified Operation Feedback
+
+修改页面或文件：
+
+- `src/contexts/operationFeedback.tsx`、`src/contexts/operationFeedbackContext.ts`、`src/components/OperationNotice.tsx`、`src/App.tsx`
+- Agent toolbar / CRM / Email、Call Management、Routing Config 与本地 Employee Management 页面
+- `src/styles/index.less`、`DESIGN_SYSTEM.md`、`CURRENT_STATUS.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 系统的非阻断操作结果原先分散在话务条下方、管理页标题下方、Email 页内及 Ant 默认 message 位置，影响坐席工作台的一致性和扫描效率。
+
+修改结果：
+
+- 新增全局 `OperationFeedbackProvider` 与 `useOperationFeedback()`；同一时刻仅显示最新反馈，固定在 Header 下方居中，成功、信息、失败均自动显示四秒。
+- 转移、CRM/工单、外呼审批窗口阻塞、Email、Call Management、Routing Config 和本地 Employee Management 的非阻断结果已迁移到该入口；删除管理页顶部成功 Alert 与 Email 专属右上角通知。
+- 表单校验、重复/关联限制、敏感词拦截、登录失败、实时服务预警、删除确认与审批结果保持原有上下文形式；`OperationNotice` 为成功/信息提供 polite status，为失败提供 assertive alert。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build` 通过；构建仅保留既有 Vite/Rolldown bundle size warning。
+- 本地浏览器烟测：Common Number 删除和编辑保存均在 Header 下方居中显示唯一全局反馈，删除确认 Modal 保持原样；四秒时长由全局 Provider 固定实现。浏览器自动化在后续重复交互时出现间歇性会话解析错误，未完成全部页面的截图级点击复查。
+
+回滚说明：
+
+- 移除 `OperationFeedbackProvider` 接入并恢复各页面原本局部 notice 状态即可回到分散提示方式；不影响业务状态、路由或 mock 数据模型。
+
+当前风险点：
+
+- 项目无自动化 UI 测试套件；后续新增操作结果必须使用共享 Hook，避免重新引入页面级 success Alert 或 Ant message。
+
+### 2026-08-20 10:58 +08:00 - Global Quick Action Management
+
+修改页面或文件：
+
+- `src/pages/call-management/QuickActionManagementPage.tsx`
+- `src/mock/quickActions.ts`、`src/types/quickAction.ts`、`src/store/callManagementStore.ts`
+- `src/pages/inbound/components/QuickActionCard.tsx`、Email、Social Media、workspace route/menu wiring
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 客户要求弹屏 Quick Action 不再硬编码，改由 Call Management 维护名称、链接地址、备注、状态、展示顺序及最后修改信息。
+- 客户确认配置在全部工作台共用，链接保持 CRM mock detail 的业务引用，不做真实跳转、SSO、账号或参数配置。
+
+修改结果：
+
+- 新增 `Call Management > Quick Action Management` 和 `/call-management/quick-actions` workspace route。
+- 管理页仅支持 Action Name / Status 查询，新增、编辑、删除、Enabled / Disabled、Order 以及 `Admin` / Modified Time；Action Name 按 trim + lowercase 唯一，Link Address 限制 HTTP(S) 且允许重复。
+- 排序使用持久化的 normalized order，并在 Actions 列直接提供图标化的置顶、上移、下移、置底；已应用查询或状态筛选时禁用排序。
+- 列宽收紧并依靠 URL / Remark 省略展示，当前桌面布局不使用横向滚动；Link Address 在新增 / 编辑弹窗中占满一行，弹窗不展示额外的创建或修改信息。
+- PSTN、BankApp Voice/Video、Email 和 Social Media 的 Quick Action card 统一读取启用项并按配置顺序显示。点击仅打开或刷新本地 CRM 动态 mock tab，显示 Link Address，不打开新浏览器页。
+
+验证：
+
+- 本地 `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check` 通过；构建仅保留既有 large chunk warning。
+- 浏览器烟测通过：Call Management 菜单与直达 `/call-management/quick-actions` 都打开同一 workspace tab；Move to Top 更新排序与 Modified By / Time，筛选后排序入口禁用；Enabled / Disabled 生效；Email 共享 Quick Action card 隐藏禁用项、按全局配置显示启用项，点击后只打开本地 CRM mock tab 且不新增浏览器页。
+- 在 1280px 浏览器视区复核：查询仅保留 Action Name / Status，表格及页面均无水平滚动；Actions 列直接显示四个排序图标与编辑、删除图标；编辑弹窗的 Link Address 占满一行，且不显示创建或最后修改信息。
+- 新页面已将 `destroyOnClose` / Alert `message` 替换为当前 Ant Design API，复测未新增本页的弃用告警；浏览器仍保留既有插件 telemetry 网络超时输出，与应用功能无关。
+
+回滚说明：
+
+- 移除 Quick Action Management route/menu/page/store，并恢复 `src/mock/inbound.ts` 与 Social Media 的静态 quick action 数组即可回到原先演示行为。
+
+当前风险点：
+
+- 数据仍是浏览器内存 mock，刷新即恢复默认项；Modified By / Time 不是完整审计历史。真实跳转、域名白名单、SSO 和参数映射需要独立后端与安全方案。
+
+### 2026-08-21 10:45 +08:00 - Social Media Interaction Log 独立查询入口
+
+修改页面或文件：
+
+- `src/pages/social-media/SocialMediaInteractionLogPage.tsx`
+- `src/mock/socialMediaInteractionLog.ts`
+- `src/types/socialMediaInteractionLog.ts`
+- `src/config/workspacePageTabs.tsx`
+- `src/layouts/BasicLayout.tsx`
+- `src/routes.tsx`
+- `src/styles/index.less`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`、`DEV_LOG.md`
+
+修改原因：
+
+- 根据客户要求补充独立的 Social Media Interaction Log，不混入 Call Management 的 Interaction Log。
+
+修改结果：
+
+- 新增 `Social Media > Interaction Log` 菜单、workspace 页签路由、筛选条件、Agent Lookup、Alert Details 和 conversation / Ticket 详情弹窗。
+- 社媒记录使用前端匿名 mock 数据，并按角色限制可见范围。
+
+验证：
+
+- 本地 lint 和 build 通过；仅保留既有 Vite large chunk warning。
+
+回滚说明：
+
+- 移除 Social Media Interaction Log 页面、mock、类型、样式及其菜单和路由接线即可回滚。
+
+当前风险点：
+
+- 当前页面仅为前端 demo 查询；真实 Social Media API、权限、审计、附件、质检系统跳转和持久化仍需后续后端契约确认。
+
+### 2026-08-19 20:12 +08:00 - Ticket Category / Product production deployment
+
+修改页面或文件：
+
+- Production deployment `dpl_7K4dHr81CBkAnNSrFPeZ3tCrcd6H`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 发布已验收的 Ticket Category-Product 联动、Customer Journey / Ticketing History / Interaction Log 展示统一，以及后续 Ticket 和 Interaction Log 视觉修正。
+
+修改结果：
+
+- 已部署提交 `8387930`（`feat: link ticket category and product`）。
+- 正式 URL：`https://netinfo-aicc-demo-v2.vercel.app`；兼容别名：`https://bca-aicc-demo-v2.vercel.app`。
+- Vercel Inspect：`https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/7K4dHr81CBkAnNSrFPeZ3tCrcd6H`。
+- 部署命令：`vercel --prod --yes --build-env VITE_APP_VISIBILITY_PROFILE=customer`；生产环境使用 `VITE_APP_VISIBILITY_PROFILE=customer`。
+
+验证：
+
+- 本地 `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check` 通过；构建仅保留既有 large chunk warning。
+- Vercel Inspect 显示 target `production`、status `Ready`，正式别名已绑定本次部署。
+
+回滚说明：
+
+- 回退 `8387930`，推送 `main` 后以同一 customer 环境重新部署；或在 Vercel 将正式别名指回上一稳定部署。
+
+当前风险点：
+
+- 当前 Ticket、Category-Product 映射和 Interaction Log 仍为前端 mock；真实 CRM 分类校验、持久化与审计仍依赖未来后端契约。
+
+### 2026-08-19 20:08 +08:00 - Interaction Log Ticket Category 纯文本展示
+
+修改页面或文件：
+
+- `src/pages/call-management/CallRecordDetailModal.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`
+
+修改原因：
+
+- 客户要求通话记录详情的 Ticket Category 移除胶囊样式，以避免长 Category 视觉拥挤，并与 Summary 正文保持一致。
+
+修改结果：
+
+- 每张 Interaction Log Ticket 保留 CRM Ticket ID；Category 改为普通文本段落，不再使用背景、边框、圆角或 Tag 布局。
+- Category 复用 Summary 的 13px、次级文字色、常规字重和 22px 行高，支持长文本自然换行。
+
+验证：
+
+- 本地浏览器烟测 `CR202607100006`：三张 Ticket 均显示 ID 与普通 Category 文本；Category 和 Summary 的计算背景、边框、圆角、颜色、字号、字重及行高一致。
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check` 通过；构建仅保留既有 large chunk warning。
+
+回滚说明：
+
+- 恢复 `call-record-query__business-tags` / `call-record-query__business-tag` 容器和对应 CSS，即可还原胶囊 Category。
+
+当前风险点：
+
+- Category 为前端 mock 的服务分类；真实 CRM 返回的极长连续字符仍需在后端和前端共同约束。
+
+### 2026-08-19 19:56 +08:00 - Ticket 标准 Select 与 History 省略展示修正
+
+修改页面或文件：
+
+- `src/components/TicketRegistrationDrawer.tsx`
+- `src/pages/inbound/components/TicketingHistoryCard.tsx`
+- `src/styles/index.less`
+- `DESIGN_SYSTEM.md`、`BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`
+
+修改原因：
+
+- 客户确认长 Category / Product 换行会造成下拉箭头错位和相邻字段高度不一致；Ticketing History 的 Category 也不应换行。
+
+修改结果：
+
+- Ticket Category / Product 恢复 Ant Design 6 的标准固定高度单行 Select，长值显示省略号，箭头固定在控件右侧并垂直居中。
+- Ticketing History Category 改为与 Customer Journey 一致的单行省略展示，CRM Ticket ID、日期和点击 CRM 行为保持不变。
+
+验证：
+
+- 本地浏览器 Ticket Modal 烟测：96 字符 Category 使用单行省略，两个 Select 固定 28px 高，箭头距右侧约 8px 且垂直居中。Ticketing History 的长 Category 为单行 15px 文本，`scrollWidth` 大于 `clientWidth` 时显示省略号。
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check` 通过；构建仅保留既有 large chunk warning。
+
+回滚说明：
+
+- 恢复 Ticket Select 的多行内容样式和 Ticketing History Category 的换行规则即可。
+
+当前风险点：
+
+- 单行省略保留浏览器原生 title 以查看完整选择值；真实 CRM 接入后仍应由服务端保存完整 Category / Product。
+
+### 2026-08-19 19:36 +08:00 - Ticket Modal 长文本与视觉层级统一
+
+修改页面或文件：
+
+- `src/components/TicketRegistrationDrawer.tsx`
+- `src/styles/index.less`
+- `DESIGN_SYSTEM.md`、`BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`
+
+修改原因：
+
+- 客户反馈长 Category / Product 会撑宽 Ticket 表单，且 Ticket Modal 存在灰白嵌套感，四个字段的文本 token 也不一致。
+
+修改结果：
+
+- 根据 Ant Design 6 实际 Select DOM，长选中值和下拉选项改为在控件内换行；字段与其父容器均允许收缩，480px Ticket Modal 不再被长值撑宽。
+- Ticket Modal 仅保留单层白色 `.ant-modal-container` 内容面；Category、Product、Summary、Note 的内容均使用 12px 主文字色和 18px 行高。
+
+验证：
+
+- 本地浏览器 Ticket Modal 烟测：96 字符 Category 与 56 字符 Product 均保持在控件宽度内，长 Product 换为两行；两个 Select 和两个 TextArea 的计算值均为 12px、`rgb(31, 42, 55)`、18px 行高；Modal container 与 body 均为白色。
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check` 通过；构建仅保留既有 large chunk warning。
+
+回滚说明：
+
+- 恢复 Ticket Select 的 Ant Design 默认单行截断规则及原 Modal 容器样式即可。
+
+当前风险点：
+
+- Category / Product 选中值可增高字段高度；在后续映射表新增更长的连续无分隔字符时，仍应复核移动端的多行布局。
+
+### 2026-08-19 19:11 +08:00 - Ticket 文本限制与页脚操作对齐
+
+修改页面或文件：
+
+- `src/components/TicketRegistrationDrawer.tsx`
+- `src/styles/index.less`
+- `DESIGN_SYSTEM.md`、`BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`
+
+修改原因：
+
+- 客户要求 Note 限制为 1000 字符，Summary 和 Note 的字数提示显示在输入框内右下角且不加粗，并将 One-Click Generation 与页脚操作同一行对齐。
+
+修改结果：
+
+- Summary 保持 250 字限制；Note 新增 1000 字限制，两个编辑框均显示 11px、常规字重的框内右下角计数，并保留底部输入留白。
+- One-Click Generation 移至固定 Ticket 页脚左侧，Cancel / Confirm 保持右侧操作组，三者垂直对齐。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check` 通过；构建仅保留既有 large chunk warning。
+- 本地浏览器 Ticket Modal 烟测：Note 的 DOM `maxlength` 为 `1000`，输入 1001 个字符后受控状态与计数均为 `1000 / 1000`；Summary / Note 计数均在编辑框内、为 11px 常规字重；One-Click Generation 位于右侧按钮组左方且共享同一垂直中心线。
+
+回滚说明：
+
+- 移除 Note 的 `maxLength` / `showCount`，并恢复原表单内的生成按钮与页脚对齐样式即可。
+
+当前风险点：
+
+- 当前实现为前端本地 Ticket draft；真实 CRM 接口接入时仍需在服务端同步校验 Summary / Note 的长度。
+
+### 2026-08-19 19:04 +08:00 - Ticket Category / Product 联动与历史展示统一
+
+修改页面或文件：
+
+- `src/mock/ticketCategoryProducts.ts`、`src/components/TicketRegistrationDrawer.tsx`
+- 入站 / Email Ticket 数据类型与 Ticketing History
+- Customer Journey、Interaction Log detail / mock records
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DESIGN_SYSTEM.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`
+
+修改原因：
+
+- 客户确认一个 Ticket 只能选择一个 Category 和一个 Product，Product 必须由 Category 过滤；Customer Journey、Ticketing History 与 Interaction Log 详情只展示 Category。
+
+修改结果：
+
+- 从客户提供的映射工作簿提取 103 个 Category 与 495 条去重 Category-Product 关系，保留工作簿顺序。
+- 所有共享 Ticket 入口改为可搜索单选；Product 在未选 Category 时禁用，并在 Category 变更时清空。
+- Customer Journey 汇总一个 Interaction Log 内全部 Tickets 的 Category；Ticketing History 显示 Category、CRM Ticket ID 和日期；Interaction Log 的每张 Ticket 显示单一 ID 与 Category。
+- Email CWU 与 Interaction Log mock 改为保存单一 Category / Product；Product 保留在数据中但不在历史与日志详情显示。
+
+验证：
+
+- `npx tsc --noEmit --pretty false`、`npm run lint`、`npm run build`、`git diff --check` 通过；构建仅保留既有 large chunk warning。
+- 本地浏览器烟测 `http://127.0.0.1:5173/`：Category 搜索 `REQ/R036 AKTIFKAN USER ID` 后，原 Product 被清空；Product 搜索仅返回关联的 `JASA/MOBILE Perbankan BCA/IM3`。保存后 Ticketing History 显示 Category、CRM ID、日期；`CR202607100006` Interaction Log detail 显示三张独立 Ticket 的 ID 与单一 Category。
+
+回滚说明：
+
+- 回退本次提交中的 Ticket 映射配置、单值类型迁移及相关展示逻辑，即可恢复原独立多选模型。
+
+当前风险点：
+
+- 映射仍是前端静态 mock；客户后续更新 Category / Product 工作簿时，需要同步更新 `ticketCategoryProducts.ts`，真实 CRM 校验仍依赖未来后端契约。
+
+### 2026-08-18 14:54 +08:00 - Transfer Number consultation flow production deployment
+
+修改页面或文件：
+
+- 生产部署 `https://netinfo-aicc-demo-v2.vercel.app`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 发布 Transfer Number 咨询后转移或三方流程，以及与 Transfer Agent 对齐的按钮样式。
+
+修改结果：
+
+- 已部署提交 `88305c2`（`feat: require consultation for number transfer`）。
+- Vercel Inspect：`https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/4e5MZYNTRKDA5RNL1DMqN1HdWSZQ`。
+- 部署命令：`vercel --prod --yes --build-env VITE_APP_VISIBILITY_PROFILE=customer`。
+- 构建环境：`VITE_APP_VISIBILITY_PROFILE=customer`。
+
+验证：
+
+- 本地 `npm run lint`、`npm run build` 通过；构建仅保留既有 large chunk warning。
+- Vercel production build 通过，且正式别名已设置到 `https://netinfo-aicc-demo-v2.vercel.app`。
+- 当前工作站无法连接正式域名的 443 端口，HTTP 冒烟未完成；需在可访问 Vercel 的网络环境复核。
+
+回滚说明：
+
+- 在 Vercel 将 production alias 指回上一稳定部署，或将 `main` 回退至 `0cf2ea4` 后重新部署。
+
+当前风险点：
+
+- 当前项目仍使用前端 mock 数据；生产环境不连接真实客户或路由后端。
+
+### 2026-08-15 17:41 +08:00 - Transfer Number consultation flow
+
+Modified files or modules:
+
+- `src/layouts/components/TransferModal.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `src/styles/index.less`
+- `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `DECISION_LOG.md`, `DEV_LOG.md`
+
+Reason:
+
+- The requested call-toolbar behavior requires external-number transfer to follow the same consultation-first flow as agent transfer.
+
+Result:
+
+- `Transfer Number` now requires `Consult` before `Transfer` or `Conference` becomes available.
+- The consulted number is locked with other transfer targets until `Cancel Consult`, transfer, or conference completes.
+- Number conference uses the existing conference lock on the toolbar. The deterministic `000` failure remains on the final transfer action.
+
+Rollback:
+
+- Restore the direct `Transfer` action in `TransferNumberTab` and remove the number consultation state from `AgentToolbar`.
+
+Current risk:
+
+- This remains a front-end-only consultation simulation without telephony signaling or real conference bridging.
 
 ### 2026-08-15 12:34 +08:00 - customer 生产发布
 
@@ -6342,3 +8151,79 @@ Historical entries are preserved in archive files without content rewrites. Use 
 当前风险点：
 
 - 黑名单仍为本地前端演示数据，刷新页面会重置。
+
+### 2026-08-28 17:48 +08:00 - 统一坐席与客户头像规则，清理旧版 Live Chat
+
+修改页面或文件：
+
+- `src/components/IdentityAvatar.tsx`
+- `src/layouts/components/AgentProfileArea.tsx`
+- `src/layouts/components/InternalChatModal.tsx`
+- `src/pages/inbound/LiveChat2Page.tsx` 及其 Conversation Workspace
+- `src/pages/call-management/CallRecordDetailModal.tsx`
+- `src/pages/social-media/SocialMediaInteractionLogPage.tsx`
+- `src/pages/inbound/LiveChatPage.tsx`（删除）
+- `src/pages/inbound/components/ConversationWorkspace.tsx`（删除）
+- `src/pages/inbound/components/LiveChatCustomerList.tsx`（删除）
+- `src/styles/index.less`
+- `DESIGN_SYSTEM.md`
+- `CURRENT_STATUS.md`
+
+修改原因：
+
+- 客户确认坐席不提供真人头像，坐席头像需由展示名称的第一个有效字符自动生成；Live Chat 和 Interaction Log 详情的客户头像改为统一固定图标。旧版 Live Chat 已停止使用，仅保留现行实现并以 `Live Chat` 作为用户可见名称。
+
+修改结果：
+
+- 新增共享 `AgentAvatar` / `CustomerAvatar`：坐席为 `#1473E6`，客户为 `#809AFF`，均使用 `1px rgba(255, 255, 255, 0.5)` 圆形描边。
+- 右上角个人资料、内部聊天、审批弹窗、Live Chat 历史坐席消息，以及 Call Management / Social Media Interaction Log 详情均已改用统一坐席首字符头像；详情中的客户消息改用统一图标。
+- Social Media 弹屏的客户图片未改动。
+- 删除旧版 Live Chat 页面及其专属组件；现行 `LiveChat2Page` 继续承载用户可见的 `Live Chat` 工作台与现有 handoff 流程。
+
+验证：
+
+- `npm run lint` 已通过。
+- `npm run build` 已通过；仅保留既有 large chunk warning。
+- 本地浏览器烟测 `http://127.0.0.1:4173/` 已通过：右上角 Budi Kartika 显示 `B`；Live Chat 客户消息显示固定人像图标、历史坐席 Rina Putri 显示 `R`；Interaction Log 详情中客户和坐席头像规则一致。
+
+回滚说明：
+
+- 恢复旧版 Live Chat 文件与 `CrmPanel` 的 `ConversationWorkspace` 分支，并将头像渲染恢复为原有 Avatar / 图片字段即可回退。
+
+当前风险点：
+
+- 头像仍为前端展示规则；接入真实身份服务时，展示名称必须可用，空名称会显示 `?`。
+### 2026-09-01 18:17 +08:00 - 技能队列增加 AHT 与 QM Target 配置
+
+修改页面或文件：
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/types/routingConfiguration.ts`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求在 Routing Config > Skill Queues 中增加可选 AHT Target 和 QM Target 属性配置。
+
+修改结果：
+
+- Add / Edit / View 表单新增 AHT Target（秒）和 QM Target（百分比）数字输入，均为非必填；QM Target 限制为 0 至 100。
+- 技能队列列表显示已配置的目标值，未配置时显示 `-`。
+- 两个 Target 的单位统一写入字段标签（`AHT Target (sec)`、`QM Target (%)`），输入框保持与同类配置项一致的完整宽度；Assigned Agents 调整为最后一个字段。
+- Target 输入框使用技能队列弹框专属的全列宽度，已与同一弹框内的标准输入框对齐。
+- 类型契约以可选数字字段保存，确保空配置不会被写入为 `0`。
+
+验证：
+
+- 按用户要求跳过 lint、build 和浏览器冒烟测试。
+
+回滚说明：
+
+- 移除 SkillQueue 的两个可选字段及页面对应列、表单字段即可回退。
+
+当前风险点：
+
+- Routing Config 仍为本地前端演示数据，刷新页面会重置。

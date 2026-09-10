@@ -90,6 +90,8 @@ type EmailComposeSurface = 'inline' | 'modal'
 interface EmailComposePanelContentProps {
   bodyReadonly?: boolean
   draft: EmailComposeDraft
+  hideEditorToolbar?: boolean
+  hideModalSave?: boolean
   onAutoSave: (draft: EmailComposeDraft) => EmailComposeDraft
   onCancel: () => void
   onChange: (draft: EmailComposeDraft) => void
@@ -102,6 +104,8 @@ interface EmailComposePanelContentProps {
 function EmailComposePanelContent({
   bodyReadonly = false,
   draft,
+  hideEditorToolbar = false,
+  hideModalSave = false,
   onAutoSave,
   onCancel,
   onChange,
@@ -327,9 +331,11 @@ function EmailComposePanelContent({
             >
               Send
             </BaseButton>
-            <BaseButton size="small" variant="secondary" onClick={() => submit('save')}>
-              Save
-            </BaseButton>
+            {!hideModalSave && (
+              <BaseButton size="small" variant="secondary" onClick={() => submit('save')}>
+                Save
+              </BaseButton>
+            )}
             {autoSaveLabel && <span>{autoSaveLabel}</span>}
           </div>
           <button aria-label="Close compose modal" type="button" onClick={onCancel}>
@@ -419,42 +425,44 @@ function EmailComposePanelContent({
         </div>
 
         <div className="email-compose__editor-shell">
-          <div className="email-compose__toolbar" aria-label="Email formatting toolbar">
-            {[
-              ['bold', 'B', 'Bold'],
-              ['italic', 'I', 'Italic'],
-              ['underline', 'U', 'Underline'],
-              ['insertUnorderedList', '\u2022', 'Bulleted list'],
-              ['justifyLeft', '\u2261', 'Align left'],
-            ].map(([command, label, titleText]) => (
+          {!hideEditorToolbar && (
+            <div className="email-compose__toolbar" aria-label="Email formatting toolbar">
+              {[
+                ['bold', 'B', 'Bold'],
+                ['italic', 'I', 'Italic'],
+                ['underline', 'U', 'Underline'],
+                ['insertUnorderedList', '\u2022', 'Bulleted list'],
+                ['justifyLeft', '\u2261', 'Align left'],
+              ].map(([command, label, titleText]) => (
+                <button
+                  aria-label={titleText}
+                  disabled={!canEditBody}
+                  key={command}
+                  title={titleText}
+                  type="button"
+                  onMouseDown={(event) => {
+                    event.preventDefault()
+                    runEditorCommand(command)
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+              <span className="email-compose__toolbar-divider" />
               <button
-                aria-label={titleText}
+                aria-label="Template config"
                 disabled={!canEditBody}
-                key={command}
-                title={titleText}
+                title="Template config"
                 type="button"
                 onMouseDown={(event) => {
                   event.preventDefault()
-                  runEditorCommand(command)
+                  setTemplateConfigOpen((open) => !open)
                 }}
               >
-                {label}
+                <FilePdfOutlined />
               </button>
-            ))}
-            <span className="email-compose__toolbar-divider" />
-            <button
-              aria-label="Template config"
-              disabled={!canEditBody}
-              title="Template config"
-              type="button"
-              onMouseDown={(event) => {
-                event.preventDefault()
-                setTemplateConfigOpen((open) => !open)
-              }}
-            >
-              <FilePdfOutlined />
-            </button>
-          </div>
+            </div>
+          )}
           {templateConfigOpen && (
             <div className="email-compose__template-config">
               <div>

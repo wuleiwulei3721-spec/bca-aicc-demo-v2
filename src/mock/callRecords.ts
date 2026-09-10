@@ -1,23 +1,27 @@
 import type {
   CallRecord,
+  CallRecordCallScenario,
   CallRecordCallType,
   CallRecordRatingScore,
+  CallRecordTicket,
 } from '../types'
 
 interface CallRecordSeedSummary {
   description: string
-  ticketCategories: string[]
+  ticketTopics: string[]
   ticketPrefix: string
-  tickets?: Array<{
-    categories: string[]
-    id: string
-  }>
 }
 
 type CallRecordSeed = Omit<
   CallRecord,
-  'callType' | 'endedAt' | 'ratingFeedback' | 'ratingScore' | 'summary'
+  | 'callScenario'
+  | 'callType'
+  | 'endedAt'
+  | 'ratingFeedback'
+  | 'ratingScore'
+  | 'summary'
 > & {
+  callScenario?: CallRecordCallScenario
   callType?: CallRecordCallType
   endedAt?: string
   ratingFeedback?: string | null
@@ -64,6 +68,71 @@ const ratingFeedbackByScore: Record<CallRecordRatingScore, string> = {
   5: 'Very helpful service and clear guidance.',
 }
 
+type TicketDefinition = Pick<
+  CallRecordTicket,
+  'caseCategory' | 'product'
+>
+
+const ticketDefinitionByTopic: Record<string, TicketDefinition> = {
+  'Account Service': {
+    caseCategory:
+      'REQ/R010 UBAH/DATA NASABAH/DATA KORESPONDENSI (NSBH GIRO,TAPRES,BCA DOLAR)',
+    product: 'TABUNGAN/TAHAPAN',
+  },
+  BankApp: {
+    caseCategory: 'REQ/R024 BUKA BLOKIR/PIN BCA ID',
+    product: 'JASA/BCA ID',
+  },
+  'Branch Service': {
+    caseCategory: 'INF/I050 LAIN-LAIN',
+    product: 'BCA PRIORITAS',
+  },
+  'Credit Card Activation': {
+    caseCategory: 'REQ/R063 PENGAKTIFAN KARTU KREDIT BARU',
+    product: 'KARTU KREDIT BCA REGULER',
+  },
+  'Credit Card Billing': {
+    caseCategory: 'REQ/R015 PERMOHONAN/HAPUS BIAYA(UI)',
+    product: 'KARTU KREDIT BCA REGULER',
+  },
+  'Credit Card': {
+    caseCategory: 'INF/I68888 PRODUCT/KARTU KREDIT',
+    product: 'LAIN-LAIN',
+  },
+  'Debit Card': {
+    caseCategory: 'REQ/R001 BLOKIR HILANG (LOST)',
+    product: 'JASA/PASPOR BCA',
+  },
+  Dispute: {
+    caseCategory: 'COMPL/C004 MERASA TDK TRANSAKSI KRT KREDIT/RETAIL/HALOBCA',
+    product: 'KARTU KREDIT BCA REGULER',
+  },
+  Investment: {
+    caseCategory: 'INF/I163 TRANSAKSI PRODUK INVESTASI',
+    product: 'JASA/BCA ID/INVESTASIMYBCA',
+  },
+  Loan: {
+    caseCategory: 'INF/I68888 PRODUCT/KBB',
+    product: 'LAIN-LAIN',
+  },
+  'Mobile Banking': {
+    caseCategory: 'REQ/R036 AKTIFKAN USER ID',
+    product: 'JASA/MOBILE Perbankan BCA',
+  },
+  Others: {
+    caseCategory: 'INF/I050 LAIN-LAIN',
+    product: 'BCA PRIORITAS',
+  },
+  Paylater: {
+    caseCategory: 'INF/I68888 PRODUCT/PAYLATER',
+    product: 'LAIN-LAIN',
+  },
+  'Priority Banking': {
+    caseCategory: 'INF/I050 LAIN-LAIN',
+    product: 'BCA PRIORITAS',
+  },
+}
+
 function createDefaultRating(
   record: Pick<CallRecord, 'channel' | 'id'>,
 ): Pick<CallRecord, 'ratingFeedback' | 'ratingScore'> {
@@ -86,6 +155,18 @@ function createDefaultRating(
   }
 }
 
+function createTickets(
+  record: Pick<CallRecordSeed, 'id'>,
+  ticketTopics: string[],
+): CallRecordTicket[] {
+  const recordNumber = Number(record.id.replace(/\D/g, ''))
+
+  return ticketTopics.map((topic, index) => ({
+    ...(ticketDefinitionByTopic[topic] ?? ticketDefinitionByTopic.Others),
+    id: `CRM${String(recordNumber * 100 + index + 1).padStart(6, '0')}`,
+  }))
+}
+
 function createRecord(record: CallRecordSeed): CallRecord {
   const endedAt = record.endedAt ?? addSeconds(record.startedAt, record.durationSeconds)
   const defaultRating = createDefaultRating(record)
@@ -93,6 +174,7 @@ function createRecord(record: CallRecordSeed): CallRecord {
 
   return {
     ...recordData,
+    callScenario: record.callScenario ?? 'Inbound',
     callType: record.callType ?? 'Customer',
     endedAt,
     ratingFeedback:
@@ -105,16 +187,7 @@ function createRecord(record: CallRecordSeed): CallRecord {
         : record.ratingScore,
     summary: {
       description: summary.description,
-      tickets:
-        summary.tickets?.map((ticket) => ({
-          ...ticket,
-          categories: [...ticket.categories],
-        })) ?? [
-          {
-            categories: [...summary.ticketCategories],
-            id: `CRM${summary.ticketPrefix.replace(/\D/g, '').slice(-6).padStart(6, '0')}`,
-          },
-        ],
+      tickets: createTickets(record, summary.ticketTopics),
     },
   }
 }
@@ -197,6 +270,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       durationSeconds: 436,
       endedBy: 'Agent',
       id: 'call-record-001',
+      callScenario: 'Outbound',
       mediaType: 'Voice',
       queueName: 'Credit Card Activation',
       recordNo: 'CR202607070001',
@@ -204,7 +278,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: recentVoiceStart,
       qmScore: 92,
       summary: {
-        ticketCategories: ['Credit Card Activation', 'Credit Card Billing'],
+        ticketTopics: ['Credit Card Activation', 'Credit Card Billing'],
         description:
           'Customer requested card activation status and delivery confirmation. Verified customer identity, confirmed activation path, and advised customer to retry BankApp card menu.',
         ticketPrefix: 'TK-260707-001',
@@ -252,6 +326,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       durationSeconds: 675,
       endedBy: 'Agent',
       id: 'call-record-021',
+      callScenario: 'Outbound',
       mediaType: 'Video',
       callType: 'Transfer',
       queueName: 'Digital Banking Support',
@@ -260,8 +335,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: dayFiveVideoStart,
       qmScore: 96,
       summary: {
-        ticketCategories: [],
-        tickets: [],
+        ticketTopics: [],
         description:
           'Customer needed support enabling transaction notification. Guided customer through BankApp notification settings.',
         ticketPrefix: 'TK-260705-002',
@@ -290,7 +364,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: daySevenVoiceStart,
       qmScore: 88,
       summary: {
-        ticketCategories: ['Credit Card'],
+        ticketTopics: ['Credit Card'],
         description:
           'Customer requested billing cycle explanation. Explained due date, minimum payment, and statement cutoff.',
         ticketPrefix: 'TK-260703-002',
@@ -318,7 +392,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: dayEightDmStart,
       qmScore: null,
       summary: {
-        ticketCategories: ['Branch Service'],
+        ticketTopics: ['Branch Service'],
         description:
           'Customer asked about branch operating hours. Shared branch search path before the session timed out.',
         ticketPrefix: 'TK-260702-001',
@@ -340,6 +414,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       durationSeconds: 932,
       endedBy: 'Agent',
       id: 'call-record-024',
+      callScenario: 'Outbound',
       mediaType: 'Video',
       callType: 'Conference',
       queueName: 'Priority Service',
@@ -348,7 +423,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: dayNineVideoStart,
       qmScore: 81,
       summary: {
-        ticketCategories: ['Investment'],
+        ticketTopics: ['Investment'],
         description:
           'Customer screen was frozen during portfolio review. Agent documented technical issue and shared relationship manager route.',
         ticketPrefix: 'TK-260701-002',
@@ -377,7 +452,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: dayTenVoiceStart,
       qmScore: 90,
       summary: {
-        ticketCategories: ['Loan'],
+        ticketTopics: ['Loan'],
         description:
           'Customer asked about car loan installment proof. Explained statement download and email request option.',
         ticketPrefix: 'TK-260630-001',
@@ -405,7 +480,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: dayElevenDmStart,
       qmScore: 92,
       summary: {
-        ticketCategories: ['Debit Card'],
+        ticketTopics: ['Debit Card'],
         description:
           'Customer requested debit card delivery tracking. Shared delivery tracking path and expected delivery date.',
         ticketPrefix: 'TK-260629-001',
@@ -433,7 +508,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: oldVideoStartTwo,
       qmScore: null,
       summary: {
-        ticketCategories: ['BankApp'],
+        ticketTopics: ['BankApp'],
         description:
           'Customer attempted video support for BankApp login issue. Session ended due to channel gateway error.',
         ticketPrefix: 'TK-260626-001',
@@ -462,7 +537,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: oldDmStartTwo,
       qmScore: 85,
       summary: {
-        ticketCategories: ['Others'],
+        ticketTopics: ['Others'],
         description:
           'Guest customer asked about account opening requirements. Shared document checklist and branch appointment path.',
         ticketPrefix: 'TK-260623-001',
@@ -491,7 +566,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: oldVoiceStartTwo,
       qmScore: 97,
       summary: {
-        ticketCategories: ['Dispute', 'Credit Card'],
+        ticketTopics: ['Dispute', 'Credit Card'],
         description:
           'Customer reported unknown online card transaction. Blocked card and created dispute review ticket.',
         ticketPrefix: 'TK-260609-001',
@@ -520,7 +595,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: oldWhatsAppStart,
       qmScore: 78,
       summary: {
-        ticketCategories: ['Account Service'],
+        ticketTopics: ['Account Service'],
         description:
           'Customer asked about dormant account reactivation but stopped responding after receiving the reactivation checklist.',
         ticketPrefix: 'TK-260605-001',
@@ -549,7 +624,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: todayPhoneStart,
       qmScore: null,
       summary: {
-        ticketCategories: ['Account Service'],
+        ticketTopics: ['Account Service'],
         description:
           'Customer asked about account statement delivery. Explained statement cycle and advised customer to retry after service restoration.',
         ticketPrefix: 'TK-260710-005',
@@ -571,6 +646,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       durationSeconds: 762,
       endedBy: 'Agent',
       id: 'call-record-014',
+      callScenario: 'Outbound',
       mediaType: 'Video',
       callType: 'Transfer',
       queueName: 'Digital Banking Support',
@@ -579,20 +655,10 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: todayVideoStartTwo,
       qmScore: 93,
       summary: {
-        ticketCategories: ['Mobile Banking', 'Account Service'],
+        ticketTopics: ['Mobile Banking', 'Account Service', 'BankApp'],
         description:
           'Customer needed help with biometric login reset. Reviewed shared screen and guided customer to reset biometric access.',
         ticketPrefix: 'TK-260710-006',
-        tickets: [
-          {
-            categories: ['Mobile Banking', 'Account Service'],
-            id: 'CRM000154',
-          },
-          {
-            categories: ['BankApp'],
-            id: 'CRM000153',
-          },
-        ],
       },
       transcript: createTranscript(
         'call-record-014',
@@ -618,7 +684,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: todayBankAppDmStart,
       qmScore: 89,
       summary: {
-        ticketCategories: ['Debit Card'],
+        ticketTopics: ['Debit Card'],
         description:
           'Customer asked how to replace a damaged debit card. Shared replacement steps and branch pickup options.',
         ticketPrefix: 'TK-260710-007',
@@ -646,7 +712,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: todayWebchatStart,
       qmScore: 82,
       summary: {
-        ticketCategories: ['Others'],
+        ticketTopics: ['Others'],
         description:
           'Guest customer reported webchat page refresh issue. Advised browser refresh and provided contact center callback option.',
         ticketPrefix: 'TK-260710-008',
@@ -675,7 +741,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: todayWhatsAppStart,
       qmScore: null,
       summary: {
-        ticketCategories: ['Priority Banking'],
+        ticketTopics: ['Priority Banking'],
         description:
           'Customer asked about priority lounge eligibility. Shared eligibility checklist before session timed out.',
         ticketPrefix: 'TK-260710-009',
@@ -697,6 +763,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       durationSeconds: 552,
       endedBy: 'Agent',
       id: 'call-record-018',
+      callScenario: 'Outbound',
       mediaType: 'Voice',
       callType: 'Conference',
       queueName: 'Paylater Service',
@@ -705,7 +772,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: todayVoiceStartTwo,
       qmScore: 91,
       summary: {
-        ticketCategories: ['Paylater'],
+        ticketTopics: ['Paylater'],
         description:
           'Customer requested repayment amount clarification. Confirmed outstanding amount and explained payment schedule.',
         ticketPrefix: 'TK-260710-010',
@@ -734,7 +801,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: todayVoiceStartThree,
       qmScore: 76,
       summary: {
-        ticketCategories: ['Dispute', 'Debit Card'],
+        ticketTopics: ['Dispute', 'Debit Card'],
         description:
           'Customer initially reported suspicious cash withdrawal, then stopped responding. Agent documented the risk and opened follow-up task.',
         ticketPrefix: 'TK-260710-011',
@@ -763,7 +830,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: todayDmStartTwo,
       qmScore: 87,
       summary: {
-        ticketCategories: ['Loan'],
+        ticketTopics: ['Loan'],
         description:
           'Customer asked about personal loan application document status. Shared pending document list and upload path.',
         ticketPrefix: 'TK-260710-012',
@@ -792,7 +859,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: recentVideoStart,
       qmScore: 88,
       summary: {
-        ticketCategories: ['Mobile Banking'],
+        ticketTopics: ['Mobile Banking'],
         description:
           'Customer could not complete device binding during BankApp login. Reviewed shared screen, confirmed device binding step, and advised customer to remove old device registration.',
         ticketPrefix: 'TK-260707-002',
@@ -847,7 +914,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: recentDmStart,
       qmScore: 95,
       summary: {
-        ticketCategories: ['Account Service'],
+        ticketTopics: ['Account Service'],
         description:
           'Guest customer asked how to update statement delivery preference. Explained secure channel requirement and sent the customer to BankApp profile settings.',
         ticketPrefix: 'TK-260707-003',
@@ -897,7 +964,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: recentWhatsappStart,
       qmScore: 90,
       summary: {
-        ticketCategories: ['Debit Card'],
+        ticketTopics: ['Debit Card'],
         description:
           'Customer asked why ATM cash withdrawal was rejected. Confirmed daily withdrawal limit was reached and shared next available withdrawal time.',
         ticketPrefix: 'TK-260707-004',
@@ -947,7 +1014,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: dayOneVoiceStart,
       qmScore: 86,
       summary: {
-        ticketCategories: ['Loan'],
+        ticketTopics: ['Loan'],
         description:
           'Customer requested mortgage repayment schedule explanation. Explained installment schedule and transferred to loan specialist for rate simulation.',
         ticketPrefix: 'TK-260706-001',
@@ -990,7 +1057,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: dayTwoDmStart,
       qmScore: null,
       summary: {
-        ticketCategories: ['BankApp', 'Debit Card'],
+        ticketTopics: ['BankApp', 'Debit Card'],
         description:
           'Customer could not find card delivery tracking menu. Sent navigation guidance and confirmed customer found the delivery tracking page.',
         ticketPrefix: 'TK-260705-001',
@@ -1034,7 +1101,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: dayThreeVideoStart,
       qmScore: 94,
       summary: {
-        ticketCategories: ['Priority Banking', 'Investment'],
+        ticketTopics: ['Priority Banking', 'Investment'],
         description:
           'Customer needed help reading investment portfolio dashboard. Explained portfolio dashboard sections and advised customer to contact relationship manager for product decision.',
         ticketPrefix: 'TK-260704-001',
@@ -1078,7 +1145,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: dayFourVoiceStart,
       qmScore: 79,
       summary: {
-        ticketCategories: ['Dispute', 'Credit Card'],
+        ticketTopics: ['Dispute', 'Credit Card'],
         description:
           'Customer reported suspicious card transaction. Guided customer through blocking path and opened dispute review ticket.',
         ticketPrefix: 'TK-260703-001',
@@ -1121,7 +1188,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: daySixDmStart,
       qmScore: 91,
       summary: {
-        ticketCategories: ['Branch Service'],
+        ticketTopics: ['Branch Service'],
         description:
           'Customer requested branch appointment information. Shared branch appointment guidance and confirmed the customer selected a slot.',
         ticketPrefix: 'TK-260701-001',
@@ -1164,7 +1231,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: oldVoiceStart,
       qmScore: null,
       summary: {
-        ticketCategories: ['Paylater'],
+        ticketTopics: ['Paylater'],
         description:
           'Customer asked about Paylater repayment due date. Confirmed due date and explained repayment menu in BankApp.',
         ticketPrefix: 'TK-260625-001',
@@ -1201,7 +1268,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: oldDmStart,
       qmScore: 84,
       summary: {
-        ticketCategories: ['Credit Card'],
+        ticketTopics: ['Credit Card'],
         description:
           'Customer requested annual fee information. Shared annual fee policy and advised customer to review current promotion eligibility.',
         ticketPrefix: 'TK-260616-001',
@@ -1239,7 +1306,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: oldVideoStart,
       qmScore: null,
       summary: {
-        ticketCategories: ['BankApp', 'Account Service'],
+        ticketTopics: ['BankApp', 'Account Service'],
         description:
           'Customer could not find e-statement download page. Guided customer through shared screen and confirmed e-statement download succeeded.',
         ticketPrefix: 'TK-260601-001',

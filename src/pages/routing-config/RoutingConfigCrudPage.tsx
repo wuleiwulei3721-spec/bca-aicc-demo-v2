@@ -15,6 +15,7 @@ import {
   BaseCard,
   SearchInput,
 } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import type { RoutingConfigStatus } from '../../types'
 import { RoutingConfigStatusBadge } from './RoutingConfigStatusBadge'
 
@@ -368,7 +369,7 @@ export function RoutingConfigCrudPage<RecordType extends object>({
   const [appliedFilters, setAppliedFilters] = useState(() =>
     createInitialFilterValues(filters),
   )
-  const [notice, setNotice] = useState<string | null>(null)
+  const { notify } = useOperationFeedback()
   const [submitAttempted, setSubmitAttempted] = useState(false)
   const hasConfiguredFilters = Boolean(filters?.length)
 
@@ -478,7 +479,6 @@ export function RoutingConfigCrudPage<RecordType extends object>({
     setSelectedRecord(record ?? null)
     setDraft(record ? recordToDraft(record) : createDraft())
     setModalMode(mode)
-    setNotice(null)
     setSubmitAttempted(false)
   }
 
@@ -498,7 +498,7 @@ export function RoutingConfigCrudPage<RecordType extends object>({
 
     const nextRecord = draftToRecord(draft, selectedRecord)
     onSave(nextRecord)
-    setNotice(`${title} saved locally for this demo session.`)
+    notify(`${title} saved locally for this demo session.`)
     closeModal()
   }
 
@@ -508,7 +508,7 @@ export function RoutingConfigCrudPage<RecordType extends object>({
     }
 
     onDelete(selectedRecord)
-    setNotice(`${title} deleted locally for this demo session.`)
+    notify(`${title} deleted locally for this demo session.`)
     closeModal()
   }
 
@@ -573,14 +573,6 @@ export function RoutingConfigCrudPage<RecordType extends object>({
 
   return (
     <AdminPage title={title}>
-        {notice && (
-          <Alert
-            showIcon
-            className="routing-config-page__notice"
-            message={notice}
-            type="success"
-          />
-        )}
         {extraContent}
         <BaseCard compact>
           <AdminToolbar

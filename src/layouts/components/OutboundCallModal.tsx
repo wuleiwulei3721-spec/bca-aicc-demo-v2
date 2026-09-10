@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
-import { Input, message, Select, Tag } from 'antd'
+import { Input, Select, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import {
   AppButton,
@@ -9,6 +9,7 @@ import {
   BaseTabs,
   SearchInput,
 } from '../../components'
+import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import { useExternalOperationApproval } from '../../hooks/useExternalOperationApproval'
 import { transferAgents } from '../../mock/transfer'
 import { externalOutboundReasonOptions } from '../../types'
@@ -22,6 +23,7 @@ interface OutboundCallModalProps {
   open: boolean
   hasOutboundAccess: boolean
   onClose: () => void
+  onCallAgent: (agent: TransferAgent) => void
   onCallNumber: (phoneNumber: string) => void
   requiresOutboundApproval: boolean
 }
@@ -52,6 +54,7 @@ function CallNumberTab({
   onCallNumber: (phoneNumber: string) => void
   requiresOutboundApproval: boolean
 }) {
+  const { notify } = useOperationFeedback()
   const [phoneNumber, setPhoneNumber] = useState('')
   const [outboundReason, setOutboundReason] =
     useState<ExternalOutboundReason | null>(null)
@@ -77,16 +80,16 @@ function CallNumberTab({
     const result = request()
 
     if (result.popupBlocked) {
-      message.error('TL approval window was blocked. Allow pop-ups and try again.')
+      notify('TL approval window was blocked. Allow pop-ups and try again.', 'error')
     }
   }
 
   const approvalLabel = !outboundReason
     ? 'Request Approval'
     : isPending
-    ? 'Requesting...'
-    : isApproved
-      ? 'Approved'
+      ? 'Requesting...'
+      : isApproved
+        ? 'Approved'
       : status === 'rejected'
         ? 'Request Again'
         : 'Request Approval'
@@ -145,9 +148,9 @@ function CallNumberTab({
               ? 'Select a reason before requesting TL approval'
               : !requiresOutboundApproval
                 ? 'Call external number'
-              : isApproved
-              ? 'Call approved external number'
-              : 'Request TL approval before placing this call'
+                : isApproved
+                  ? 'Call approved external number'
+                  : 'Request TL approval before placing this call'
           }
           type="primary"
           onClick={() => {
@@ -165,11 +168,9 @@ function CallNumberTab({
 }
 
 function CallAgentTab({
-  hasOutboundAccess,
   onComplete,
 }: {
-  hasOutboundAccess: boolean
-  onComplete: () => void
+  onComplete: (agent: TransferAgent) => void
 }) {
   const [keyword, setKeyword] = useState('')
   const [skillQueue, setSkillQueue] = useState(allFilterValue)
@@ -242,13 +243,11 @@ function CallAgentTab({
       key: 'action',
       title: 'Action',
       width: 74,
-      render: () => (
+      render: (_value, agent) => (
         <div className="aicc-transfer-row-actions">
           <AppButton
-            disabled={!hasOutboundAccess}
             size="small"
-            title={!hasOutboundAccess ? 'Switch to outbound AUX' : undefined}
-            onClick={onComplete}
+            onClick={() => onComplete(agent)}
           >
             Call
           </AppButton>
@@ -296,10 +295,11 @@ function CallAgentTab({
 }
 
 export function OutboundCallModal({
-  hasOutboundAccess,
   open,
   onClose,
+  onCallAgent,
   onCallNumber,
+  hasOutboundAccess,
   requiresOutboundApproval,
 }: OutboundCallModalProps) {
   const items = [
@@ -318,10 +318,7 @@ export function OutboundCallModal({
       key: 'agent',
       label: 'Call Agent',
       children: (
-        <CallAgentTab
-          hasOutboundAccess={hasOutboundAccess}
-          onComplete={onClose}
-        />
+        <CallAgentTab onComplete={onCallAgent} />
       ),
     },
   ]

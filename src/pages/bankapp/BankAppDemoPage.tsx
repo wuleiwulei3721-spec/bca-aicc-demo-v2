@@ -130,13 +130,6 @@ const whatsAppStepSequence: BankAppDemoStep[] = [
   'closed',
 ]
 
-const webchatRegisteredStepSequence: BankAppDemoStep[] = [
-  'calling',
-  'agent-workspace',
-  'chat',
-  'closed',
-]
-
 const webchatGuestStepSequence: BankAppDemoStep[] = [
   'channel',
   'calling',
@@ -162,9 +155,7 @@ function getStepSequence(
   }
 
   if (variant === 'webchat') {
-    return customerType === 'registered'
-      ? webchatRegisteredStepSequence
-      : webchatGuestStepSequence
+    return webchatGuestStepSequence
   }
 
   const phoneStep: BankAppDemoStep[] =
@@ -377,11 +368,9 @@ function getProcessDescription(
       'agent-workspace':
         'Agent receives a new Webchat customer in the Live Chat workspace.',
       calling:
-        customerType === 'registered'
-          ? 'Logged-in Webchat customer is routed directly to the text queue without information input or menu selection.'
-          : 'Guest Webchat customer submits contact information and the request is routed to the text queue.',
+        'Guest Webchat customer submits contact information and the request is routed to the text queue.',
       channel:
-        'Guest Webchat customer enters contact information and selects the request topic. Registered customers skip this step.',
+        'Guest Webchat customer enters contact information and selects the request topic.',
       chat: 'Customer and agent exchange Webchat text messages.',
       closed: 'Customer receives the Webchat satisfaction rating page.',
     }
@@ -478,15 +467,6 @@ function getVisibleDemoStep({
   return demoStep
 }
 
-function getInitialDemoStep(
-  variant: CustomerAppDemoVariant,
-  customerType: BankAppCustomerType,
-) {
-  return variant === 'webchat' && customerType === 'registered'
-    ? 'calling'
-    : 'channel'
-}
-
 export function BankAppDemoPage({
   variant = 'bankapp',
 }: {
@@ -544,20 +524,19 @@ export function BankAppDemoPage({
   const resetBankAppPinVerification = useAppStore(
     (state) => state.resetBankAppPinVerification,
   )
-  const [customerType, setCustomerType] =
-    useState<BankAppCustomerType>('registered')
+  const [customerType, setCustomerType] = useState<BankAppCustomerType>(
+    variant === 'webchat' ? 'guest' : 'registered',
+  )
   const language: BankAppLanguage = 'en'
   const [contactMethod, setContactMethod] =
     useState<BankAppContactMethod>(config.defaultContactMethod)
   const [businessType, setBusinessType] =
     useState<BankAppBusinessType>('card-issue')
-  const [demoStep, setDemoStep] = useState<BankAppDemoStep>(() =>
-    getInitialDemoStep(variant, 'registered'),
-  )
+  const [demoStep, setDemoStep] = useState<BankAppDemoStep>('channel')
   const [handoffWarningReason, setHandoffWarningReason] =
     useState<HandoffWarningReason | null>(null)
   const isPinVerificationOpen =
-    (variant === 'bankapp' || variant === 'webchat') &&
+    variant === 'bankapp' &&
     bankAppPinVerificationStatus !== 'idle' &&
     demoStep !== 'closed'
   const effectiveContactMethod = isPinVerificationOpen
@@ -653,7 +632,7 @@ export function BankAppDemoPage({
         config.liveChatSessionId,
         activateWorkspace,
         variant === 'bankapp' || variant === 'webchat'
-          ? customerType
+          ? effectiveCustomerType
           : undefined,
       )
       if (!wasAdmitted) {
@@ -674,7 +653,7 @@ export function BankAppDemoPage({
       setHandoffWarningReason(null)
       requestBankAppVoiceCall(
         activateWorkspace,
-        customerType,
+        effectiveCustomerType,
         selectedBusiness.label,
       )
       return true
@@ -683,7 +662,7 @@ export function BankAppDemoPage({
     setHandoffWarningReason(null)
     requestBankAppVideoCall(
       activateWorkspace,
-      customerType,
+      effectiveCustomerType,
       selectedBusiness.label,
     )
     return true
@@ -781,7 +760,7 @@ export function BankAppDemoPage({
     resetBankAppPinVerification()
     setHandoffWarningReason(null)
     setCustomerType(nextCustomerType)
-    setDemoStep(getInitialDemoStep(variant, nextCustomerType))
+    setDemoStep('channel')
   }
 
   const handleMethodChange = (nextMethod: BankAppContactMethod) => {
@@ -789,11 +768,11 @@ export function BankAppDemoPage({
     resetBankAppPinVerification()
     setHandoffWarningReason(null)
     setContactMethod(nextMethod)
-    setDemoStep(getInitialDemoStep(variant, customerType))
+    setDemoStep('channel')
   }
 
   const handleReset = () => {
-    setDemoStep(getInitialDemoStep(variant, customerType))
+    setDemoStep('channel')
     setHandoffWarningReason(null)
     resetBankAppPinVerification()
     resetBankAppVideoDesktopShare()
@@ -1336,17 +1315,10 @@ export function BankAppDemoPage({
                   <span>Media</span>
                   <strong>chat</strong>
                 </div>
-                <SegmentedControl
-                  label="Customer Type"
-                  options={[
-                    ['registered', 'Registered'],
-                    ['guest', 'Guest'],
-                  ]}
-                  value={effectiveCustomerType}
-                  onChange={(value) =>
-                    handleCustomerTypeChange(value as BankAppCustomerType)
-                  }
-                />
+                <div className="bankapp-process__readonly-control">
+                  <span>Customer Type</span>
+                  <strong>Guest</strong>
+                </div>
               </>
             ) : (
               <div className="bankapp-process__readonly-control">

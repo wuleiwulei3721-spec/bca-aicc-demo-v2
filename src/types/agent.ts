@@ -12,7 +12,6 @@ export type CallStatus =
   | 'Hold'
 
 export interface AgentProfile {
-  avatarUrl: string
   role: string
   name: string
   team: string

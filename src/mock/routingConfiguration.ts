@@ -727,7 +727,7 @@ export const channelMediaSettings: ChannelMedia[] = [
   {
     channelCode: 'WEBCHAT',
     channelMediaCode: 'WEBCHAT_TEXT',
-    extensionConfig: 'Website widget, recall within configured window',
+    extensionConfig: 'Website widget',
     maxConcurrency: 50,
     mediaCode: 'TEXT',
     minScanIntervalSeconds: null,
@@ -879,7 +879,6 @@ export const mediaServiceRulePlans: MediaServiceRulePlan[] = [
     status: 'Active',
     updatedAt: '2026-06-03',
     updatedBy: 'Admin',
-    webchatRecallLimitSeconds: 120,
   },
   {
     accessSuccessWelcomeMessage: '您好，优先服务智能助手为您提供服务。',
@@ -914,7 +913,6 @@ export const mediaServiceRulePlans: MediaServiceRulePlan[] = [
     status: 'Active',
     updatedAt: '2026-06-03',
     updatedBy: 'Admin',
-    webchatRecallLimitSeconds: 120,
   },
   {
     accessSuccessWelcomeMessage: '您好，语音智能小助手为您提供服务。',
@@ -948,7 +946,6 @@ export const mediaServiceRulePlans: MediaServiceRulePlan[] = [
     status: 'Active',
     updatedAt: '2026-06-04',
     updatedBy: 'Admin',
-    webchatRecallLimitSeconds: 120,
   },
   {
     accessSuccessWelcomeMessage: '您好，视频智能小助手为您提供服务。',
@@ -982,7 +979,6 @@ export const mediaServiceRulePlans: MediaServiceRulePlan[] = [
     status: 'Active',
     updatedAt: '2026-06-04',
     updatedBy: 'Admin',
-    webchatRecallLimitSeconds: 120,
   },
   {
     accessSuccessWelcomeMessage:
@@ -1021,7 +1017,6 @@ export const mediaServiceRulePlans: MediaServiceRulePlan[] = [
     status: 'Active',
     updatedAt: '2026-07-02',
     updatedBy: 'Admin',
-    webchatRecallLimitSeconds: 120,
   },
 ]
 

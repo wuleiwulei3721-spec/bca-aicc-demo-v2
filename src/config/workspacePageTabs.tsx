@@ -2,6 +2,7 @@ import {
   BranchesOutlined,
   CustomerServiceOutlined,
   IdcardOutlined,
+  MessageOutlined,
   SettingOutlined,
 } from '@ant-design/icons'
 import type { ReactNode } from 'react'
@@ -17,11 +18,13 @@ import {
   GlobalControlConfigurationPage,
   LoginLogQueryPage,
   PriorityListManagementPage,
+  QuickActionManagementPage,
   SensitiveWordManagementPage,
   SessionEndReasonManagementPage,
   VerificationRuleV2Page,
 } from '../pages/call-management'
 import { EmployeeProfileManagementPage } from '../pages/employee-management'
+import { SocialMediaInteractionLogPage } from '../pages/social-media'
 import {
   BusinessTypesPage,
   ChannelsPage,
@@ -46,6 +49,7 @@ export interface WorkspacePageTabDefinition {
 const callManagementIcon = <CustomerServiceOutlined />
 const routingConfigIcon = <BranchesOutlined />
 const employeeManagementIcon = <IdcardOutlined />
+const socialMediaIcon = <MessageOutlined />
 const designSystemIcon = <SettingOutlined />
 
 export const workspacePageTabDefinitions: WorkspacePageTabDefinition[] = [
@@ -104,6 +108,15 @@ export const workspacePageTabDefinitions: WorkspacePageTabDefinition[] = [
     tabKey: 'page:call-management-common-links',
   },
   {
+    element: <QuickActionManagementPage />,
+    icon: callManagementIcon,
+    label: 'Quick Action Management',
+    menuKey: 'call-management-quick-actions',
+    moduleKey: 'call-management',
+    routePath: '/call-management/quick-actions',
+    tabKey: 'page:call-management-quick-actions',
+  },
+  {
     element: <CommonNumberManagementPage />,
     icon: callManagementIcon,
     label: 'Common Number',
@@ -124,7 +137,7 @@ export const workspacePageTabDefinitions: WorkspacePageTabDefinition[] = [
   {
     element: <BusyReasonManagementPage />,
     icon: callManagementIcon,
-    label: 'Busy Reason',
+    label: 'AUX Reason Management',
     menuKey: 'call-management-busy-reasons',
     moduleKey: 'call-management',
     routePath: '/call-management/busy-reasons',
@@ -156,6 +169,15 @@ export const workspacePageTabDefinitions: WorkspacePageTabDefinition[] = [
     moduleKey: 'call-management',
     routePath: '/call-management/login-log',
     tabKey: 'page:call-management-login-log',
+  },
+  {
+    element: <SocialMediaInteractionLogPage />,
+    icon: socialMediaIcon,
+    label: 'Interaction Log',
+    menuKey: 'social-media-interaction-log',
+    moduleKey: 'social-media',
+    routePath: '/social-media/interaction-log',
+    tabKey: 'page:social-media-interaction-log',
   },
   {
     element: <VdnPage />,

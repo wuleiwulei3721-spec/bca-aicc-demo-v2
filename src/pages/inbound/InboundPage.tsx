@@ -37,6 +37,7 @@ export function InboundPage({ interaction }: InboundPageProps) {
       ariaLabel="Inbound call workspace"
       accessMenuLabel="Business Menu Selection Record"
       accessMenuName={interaction.businessMenuName}
+      className={isPstn ? 'inbound-page--pstn' : undefined}
       customer={customer}
       initialJourney={
         isBankAppVoice || isOutbound ? undefined : unidentifiedCustomerJourney

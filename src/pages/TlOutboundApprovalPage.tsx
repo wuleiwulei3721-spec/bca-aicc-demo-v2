@@ -1,4 +1,4 @@
-import { Avatar, Input } from 'antd'
+import { Input } from 'antd'
 import {
   useEffect,
   useMemo,
@@ -6,12 +6,15 @@ import {
   useSyncExternalStore,
 } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { BaseButton, BaseModal } from '../components'
+import { AgentAvatar, BaseButton, BaseModal } from '../components'
 import type { ExternalOperationApproval } from '../types'
+import { formatAgentDisplay } from '../utils/agentDisplay'
 import {
   approveExternalOperationApproval,
+  externalOperationApprovalTimeoutMs,
   getExternalOperationApprovalsSnapshot,
   rejectExternalOperationApproval,
+  startExternalOperationApprovalReview,
   subscribeExternalOperationApprovals,
 } from '../utils/outboundApproval'
 
@@ -43,8 +46,7 @@ const demoFollowupDelayMs = 5 * 1000
 
 function createDemoQueuedApproval(createdAt: number): ExternalOperationApproval {
   return {
-    agentAvatarUrl:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
+    agentEmployeeId: 'AICC1024',
     agentName: 'Siti Rahmawati',
     createdAt,
     id: `tl-approval-demo-queue-item-${createdAt}`,
@@ -68,6 +70,7 @@ export function TlOutboundApprovalPage() {
   const [demoFollowup, setDemoFollowup] =
     useState<ExternalOperationApproval | null>(null)
   const [initialRequestId] = useState(requestId)
+  const [now, setNow] = useState(() => Date.now())
   const pendingApprovals = useMemo(
     () =>
       approvals
@@ -88,6 +91,51 @@ export function TlOutboundApprovalPage() {
     ...(demoFollowup ? [demoFollowup] : []),
   ]
   const isDemoApproval = approval?.id === demoFollowup?.id
+  const initialApproval = approvals.find(
+    (item) => item.id === initialRequestId,
+  )
+  const approvalId = approval?.id
+  const secondsRemaining = approval
+    ? Math.max(
+        0,
+        Math.ceil(
+          ((approval.reviewStartedAt ?? now) +
+            externalOperationApprovalTimeoutMs -
+            now) /
+            1000,
+        ),
+      )
+    : 0
+
+  useEffect(() => {
+    if (!approvalId) {
+      return
+    }
+
+    startExternalOperationApprovalReview(approvalId)
+  }, [approvalId])
+
+  useEffect(() => {
+    if (!approval) {
+      return undefined
+    }
+
+    const timer = window.setInterval(() => setNow(Date.now()), 250)
+
+    return () => window.clearInterval(timer)
+  }, [approval])
+
+  useEffect(() => {
+    if (
+      initialApproval?.status !== 'timed-out'
+    ) {
+      return undefined
+    }
+
+    const timer = window.setTimeout(() => window.close(), 180)
+
+    return () => window.clearTimeout(timer)
+  }, [initialApproval?.status])
 
   useEffect(() => {
     if (
@@ -180,6 +228,7 @@ export function TlOutboundApprovalPage() {
             <>
               <span>Approval</span>
               <span className="tl-outbound-approval-modal__header-meta">
+                <time>{`00:${String(secondsRemaining).padStart(2, '0')}`}</time>
                 {queuedApprovals.length > 0 && (
                   <span>{queuedApprovals.length} more pending</span>
                 )}
@@ -192,10 +241,13 @@ export function TlOutboundApprovalPage() {
         {approval && (
           <div aria-live="polite" className="tl-outbound-approval-modal__content">
             <div className="tl-outbound-approval-modal__agent">
-              <Avatar size={28} src={approval.agentAvatarUrl}>
-                {approval.agentName.slice(0, 1)}
-              </Avatar>
-              <strong>{approval.agentName}</strong>
+              <AgentAvatar name={approval.agentName} size={28} />
+              <strong>
+                {formatAgentDisplay(
+                  approval.agentEmployeeId,
+                  approval.agentName,
+                )}
+              </strong>
             </div>
             <ApprovalRequestDetails approval={approval} />
             <Input

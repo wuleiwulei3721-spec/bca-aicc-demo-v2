@@ -15,7 +15,6 @@ export interface AuthCrmSsoContext {
 }
 
 export interface AuthSession {
-  avatarUrl?: string
   crmSso: AuthCrmSsoContext
   displayName: string
   employeeId: string

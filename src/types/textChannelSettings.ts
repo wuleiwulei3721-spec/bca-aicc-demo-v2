@@ -7,7 +7,6 @@ export interface TextChannelServiceRules {
   agentNoReplyBreachMinutes: number
   agentNoReplyWarningMinutes: number
   maxConcurrentCustomersPerAgent: number
-  webchatRecallLimitMinutes: number
 }
 
 export interface TextChannelCustomerTimeoutRules {

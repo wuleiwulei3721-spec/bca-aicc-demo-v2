@@ -346,20 +346,13 @@ function createLiveChat2HandoffSession(
     (sourceSession.channel === 'BankApp' ||
       sourceSession.channel === 'Webchat') &&
     bankAppCustomerType === 'guest'
-  const textGuestProfile =
-    sourceSession.channel === 'Webchat'
-      ? {
-          avatarInitials: 'MS',
-          email: 'maya.santoso@example.com',
-          name: 'Maya Santoso',
-          phoneNumber: '081298760421',
-        }
-      : {
-          avatarInitials: 'AP',
-          email: 'ayu.pratama@example.com',
-          name: 'Ayu Pratama',
-          phoneNumber: '081234560219',
-        }
+  const textGuestProfile = {
+    avatarInitials: '?',
+    avatarUrl: '',
+    email: '',
+    name: 'Unidentified Customer',
+    phoneNumber: '',
+  }
   const customerProfile = isTextGuest
     ? {
         ...sourceSession.customer.profile,
@@ -367,6 +360,7 @@ function createLiveChat2HandoffSession(
         cisNumber: '-',
         customerType: 'Guest',
       }
+
     : {
         ...sourceSession.customer.profile,
         customerType:
@@ -376,6 +370,19 @@ function createLiveChat2HandoffSession(
             ? 'Regular Customer'
             : sourceSession.customer.profile.customerType,
       }
+
+  const cloneHandoffMessage = (message: LiveChat2Message) => {
+    const clonedMessage = cloneLiveChat2MessageForSession(
+      message,
+      sourceSession.id,
+      nextSessionId,
+      messageTimestampById.get(message.id),
+    )
+
+    return isTextGuest && clonedMessage.sender === 'customer'
+      ? { ...clonedMessage, senderName: 'Unidentified Customer' }
+      : clonedMessage
+  }
 
   return {
     ...sourceSession,
@@ -392,25 +399,11 @@ function createLiveChat2HandoffSession(
           : sourceSession.customer.bankAppLoginStatus,
       profile: customerProfile,
     },
-    historyMessages: sourceSession.historyMessages.map((message) =>
-      cloneLiveChat2MessageForSession(
-        message,
-        sourceSession.id,
-        nextSessionId,
-        messageTimestampById.get(message.id),
-      ),
-    ),
+    historyMessages: sourceSession.historyMessages.map(cloneHandoffMessage),
     id: nextSessionId,
     lastMessageAt: new Date(now).toISOString(),
     lastMessageTime: time,
-    messages: sourceSession.messages.map((message) =>
-      cloneLiveChat2MessageForSession(
-        message,
-        sourceSession.id,
-        nextSessionId,
-        messageTimestampById.get(message.id),
-      ),
-    ),
+    messages: sourceSession.messages.map(cloneHandoffMessage),
     serviceStartedAt: time,
     status: 'active',
   }
@@ -431,8 +424,8 @@ function getCallInteractionTitle(
   return source === 'bankapp-voice' ? 'Voice Call' : 'PSTN'
 }
 
-function getCallInteractionSkillDisplayName() {
-  return DEFAULT_INBOUND_SKILL_DISPLAY_NAME
+function getCallInteractionSkillDisplayName(source: CallInteractionSource) {
+  return source === 'outbound' ? '-' : DEFAULT_INBOUND_SKILL_DISPLAY_NAME
 }
 
 interface AppState {
@@ -480,7 +473,6 @@ interface AppState {
   liveChat2LastMessageOverrides: Record<string, LiveChat2SessionSummaryOverride>
   liveChat2MessagesBySessionId: Record<string, LiveChat2Message[]>
   liveChat2ReadSessionIds: string[]
-  liveChat2RecalledMessageIds: string[]
   liveChat2SessionInstances: LiveChat2SessionInstances
   liveChat2SessionStatuses: Record<string, LiveChat2SessionStatusState>
   liveChat2SessionTimings: Record<string, InteractionTiming>
@@ -615,7 +607,6 @@ interface AppState {
     baseMessages?: LiveChat2Message[],
     endReasonName?: string,
   ) => void
-  recallLiveChat2Message: (messageId: string) => void
   sendLiveChat2Message: (
     sessionId: string,
     message: string,
@@ -671,7 +662,6 @@ export const useAppStore = create<AppState>((set) => ({
   liveChat2LastMessageOverrides: {},
   liveChat2MessagesBySessionId: {},
   liveChat2ReadSessionIds: [],
-  liveChat2RecalledMessageIds: [],
   liveChat2SessionInstances: {},
   liveChat2SessionStatuses: {},
   liveChat2SessionTimings: {},
@@ -874,6 +864,7 @@ export const useAppStore = create<AppState>((set) => ({
       const source =
         rawSource ??
         (kind === 'voice' ? 'pstn' : 'standard')
+      const showsWorkspaceTab = source !== 'outbound'
       const interaction: CallInteraction = {
         bankAppCustomerType:
           source === 'bankapp-voice' || source === 'bankapp-video'
@@ -891,7 +882,7 @@ export const useAppStore = create<AppState>((set) => ({
         kind,
         outboundNumber: source === 'outbound' ? outboundNumber : undefined,
         phase: 'incoming',
-        skillDisplayName: getCallInteractionSkillDisplayName(),
+        skillDisplayName: getCallInteractionSkillDisplayName(source),
         source,
         startedAt: now,
         tabKey: id,
@@ -902,7 +893,7 @@ export const useAppStore = create<AppState>((set) => ({
       createdId = id
 
       return {
-        activeWorkspaceTabKey: activate
+        activeWorkspaceTabKey: activate && showsWorkspaceTab
           ? interaction.tabKey
           : state.activeWorkspaceTabKey,
         bankAppVideoShareState:
@@ -911,7 +902,9 @@ export const useAppStore = create<AppState>((set) => ({
             : kind === 'video'
               ? 'idle'
               : state.bankAppVideoShareState,
-        callInteractionOrder: [...remainingInteractionIds, id],
+        callInteractionOrder: showsWorkspaceTab
+          ? [...remainingInteractionIds, id]
+          : remainingInteractionIds,
         callInteractionSeq: nextSeq,
         callInteractions: {
           ...remainingInteractions,
@@ -1255,7 +1248,6 @@ export const useAppStore = create<AppState>((set) => ({
       let nextLastMessageOverrides = state.liveChat2LastMessageOverrides
       let nextMessagesBySessionId = state.liveChat2MessagesBySessionId
       let nextReadSessionIds = state.liveChat2ReadSessionIds
-      let nextRecalledMessageIds = state.liveChat2RecalledMessageIds
       let nextSessionStatuses = state.liveChat2SessionStatuses
       let nextSessionTimings = state.liveChat2SessionTimings
       let nextStarColors = state.liveChat2StarColors
@@ -1285,9 +1277,6 @@ export const useAppStore = create<AppState>((set) => ({
         }
         nextReadSessionIds = state.liveChat2ReadSessionIds.filter(
           (readSessionId) => readSessionId !== handoffSessionId,
-        )
-        nextRecalledMessageIds = state.liveChat2RecalledMessageIds.filter(
-          (messageId) => !messageId.includes(handoffSessionId),
         )
         nextSessionInstances = {
           ...state.liveChat2SessionInstances,
@@ -1336,7 +1325,6 @@ export const useAppStore = create<AppState>((set) => ({
         liveChat2LastMessageOverrides: nextLastMessageOverrides,
         liveChat2MessagesBySessionId: nextMessagesBySessionId,
         liveChat2ReadSessionIds: nextReadSessionIds,
-        liveChat2RecalledMessageIds: nextRecalledMessageIds,
         liveChat2SessionInstances: nextSessionInstances,
         liveChat2SessionStatuses: nextSessionStatuses,
         liveChat2SessionTimings: nextSessionTimings,
@@ -1498,7 +1486,6 @@ export const useAppStore = create<AppState>((set) => ({
           liveChat2LastMessageOverrides: {},
           liveChat2MessagesBySessionId: {},
           liveChat2ReadSessionIds: [],
-          liveChat2RecalledMessageIds: [],
           liveChat2SessionInstances: {},
           liveChat2SessionStatuses: {},
           liveChat2SessionTimings: {},
@@ -1544,7 +1531,6 @@ export const useAppStore = create<AppState>((set) => ({
         liveChat2LastMessageOverrides: state.liveChat2LastMessageOverrides,
         liveChat2MessagesBySessionId: state.liveChat2MessagesBySessionId,
         liveChat2ReadSessionIds: state.liveChat2ReadSessionIds,
-        liveChat2RecalledMessageIds: state.liveChat2RecalledMessageIds,
         liveChat2SessionInstances: state.liveChat2SessionInstances,
         liveChat2SessionStatuses:
           defaultCurrentState?.sessionStatuses ??
@@ -1844,17 +1830,6 @@ export const useAppStore = create<AppState>((set) => ({
         liveChat2UnansweredSinceBySessionId: nextUnanswered,
       }
     }),
-  recallLiveChat2Message: (messageId) =>
-    set((state) =>
-      state.liveChat2RecalledMessageIds.includes(messageId)
-        ? {}
-        : {
-            liveChat2RecalledMessageIds: [
-              ...state.liveChat2RecalledMessageIds,
-              messageId,
-            ],
-          },
-    ),
   sendLiveChat2Message: (sessionId, message, baseMessages, quotedMessage) =>
     set((state) => {
       const now = Date.now()
@@ -1921,7 +1896,6 @@ export const useAppStore = create<AppState>((set) => ({
       liveChat2LastMessageOverrides: {},
       liveChat2MessagesBySessionId: {},
       liveChat2ReadSessionIds: [],
-      liveChat2RecalledMessageIds: [],
       liveChat2SessionInstances: {},
       liveChat2SessionStatuses: {},
       liveChat2SessionTimings: {},
