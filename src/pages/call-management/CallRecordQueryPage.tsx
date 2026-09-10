@@ -378,7 +378,7 @@ export function CallRecordQueryPage() {
   return (
     <AdminPage
       className="call-record-query"
-      title="Social Media Interaction Log"
+      title="Interaction Log"
       description="Current agent view for Phone, BankApp, Webchat, and WhatsApp interaction records."
     >
       <BaseCard compact>
