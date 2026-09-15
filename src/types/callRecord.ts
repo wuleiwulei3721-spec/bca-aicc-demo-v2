@@ -1,6 +1,6 @@
 import type { ServiceEndedBy } from './sessionEndReason'
 
-export type CallRecordChannel = 'Phone' | 'BankApp' | 'Webchat' | 'WhatsApp'
+export type CallRecordChannel = 'Phone' | 'HaloBCA' | 'Webchat' | 'WhatsApp'
 
 export type CallRecordMediaType = 'Voice' | 'Video' | 'DM'
 
@@ -51,6 +51,7 @@ export interface CallRecord {
   customerId: string
   customerName: string
   durationSeconds: number
+  holdDurationSeconds: number
   endedBy: ServiceEndedBy
   endedAt: string
   endReason: CallRecordEndReason

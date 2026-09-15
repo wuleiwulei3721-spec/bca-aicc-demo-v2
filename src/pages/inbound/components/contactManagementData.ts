@@ -1,7 +1,7 @@
 export const CONTACT_SECTIONS = [
   {
     title: 'Communication Channels',
-    types: ['Phone', 'WhatsApp', 'BankApp', 'Email'],
+    types: ['Phone', 'WhatsApp', 'HaloBCA', 'Email'],
   },
   {
     title: 'Social Media',
@@ -16,7 +16,7 @@ export const CONTACT_SECTIONS = [
 export const CUSTOMER_CONTACT_DETAIL_SECTIONS = [
   {
     title: 'Communication Channels',
-    types: ['Phone', 'BankApp', 'Email'],
+    types: ['Phone', 'HaloBCA', 'Email'],
   },
   {
     title: 'Social Media',

@@ -52,12 +52,12 @@ interface CustomerAppDemoConfig {
 
 const demoConfigs: Record<CustomerAppDemoVariant, CustomerAppDemoConfig> = {
   bankapp: {
-    ariaLabel: 'BankApp customer demo',
-    channelLabel: 'BankApp',
+    ariaLabel: 'HaloBCA customer demo',
+    channelLabel: 'HaloBCA',
     contactMethods: ['voice', 'video', 'livechat'],
     defaultContactMethod: 'voice',
     liveChatSessionId: BANKAPP_LIVE_CHAT_SESSION_ID,
-    phoneTitle: 'Customer BankApp',
+    phoneTitle: 'Customer HaloBCA',
   },
   whatsapp: {
     ariaLabel: 'WhatsApp customer demo',
@@ -396,7 +396,7 @@ function getProcessDescription(
       'personal-info':
         customerType === 'guest'
           ? 'Guest customer enters name, phone number, and email.'
-          : 'Registered BankApp customers skip guest information input because login context is already available.',
+          : 'Registered HaloBCA customers skip guest information input because login context is already available.',
       'phone-number':
         'Text channel does not use the guest phone-number page in this demo.',
       'pin-input': 'Customer enters PIN and BANK returns the result.',
@@ -1073,7 +1073,7 @@ export function BankAppDemoPage({
 
   const renderPinVerificationScreen = () => (
     <div className="bankapp-phone-screen bankapp-phone-screen--pin">
-      <DemoScreenshot alt="Haloapp PIN verification page" src={bankAppScreenshotSources.pinInput} />
+      <DemoScreenshot alt="HaloBCA PIN verification page" src={bankAppScreenshotSources.pinInput} />
       <button
         aria-label="Simulate failed PIN result"
         className="bankapp-pin-hotspot bankapp-pin-hotspot--failed"
@@ -1372,12 +1372,12 @@ export function BankAppDemoPage({
                   <LockOutlined />
                   <span>
                     {bankAppPinVerificationStatus === 'verified'
-                      ? 'Customer PIN verified in Haloapp.'
+                      ? 'Customer PIN verified in HaloBCA.'
                       : bankAppPinVerificationStatus === 'locked'
                         ? 'PIN verification failed after 3 attempts.'
                         : bankAppPinVerificationStatus === 'failed'
                           ? `PIN verification failed. Attempt ${bankAppPinVerificationAttempts}/3 used.`
-                          : `Haloapp PIN page is open. Attempt ${bankAppPinVerificationAttempts}/3.`}
+                          : `HaloBCA PIN page is open. Attempt ${bankAppPinVerificationAttempts}/3.`}
                   </span>
                 </div>
               )}

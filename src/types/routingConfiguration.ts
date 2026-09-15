@@ -72,14 +72,15 @@ export interface ChannelMediaBusinessConfig {
   maxConcurrentAccess: number
   minScanIntervalSeconds: number
   newCustomerAlertSound: string
-  outsideServiceHoursMessage: string
-  longQueueWaitingMessage: string
-  longQueueWaitingSeconds: number
+  outsideServiceHoursMessage?: string
+  longQueueWaitingMessage?: string
+  longQueueWaitingSeconds?: number
   preTimeoutReminderMessage: string
   preTimeoutReminderMinutes: number
-  queueTimeoutMessage: string
-  queueTimeoutSeconds: number
-  queueWaitingMessage: string
+  queueAutoReplyMessage?: string
+  queueTimeoutMessage?: string
+  queueTimeoutSeconds?: number
+  queueWaitingMessage?: string
 }
 
 export type ChannelBusinessConfig = Partial<
@@ -293,6 +294,7 @@ export interface SkillQueue {
   queueTimeoutMinutes: number
   queueWaitingMessage: string
   qmTargetPercent?: number
+  slTargetPercent?: number
   skillQueueCode: string
   skillQueueName: string
   status: RoutingConfigStatus

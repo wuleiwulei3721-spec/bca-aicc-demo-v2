@@ -89,8 +89,10 @@ interface AgentToolbarProps {
   callIdentification?: CallIdentification | null
   callSkillDisplayName?: string | null
   callStatus: CallStatus
+  holdDisabled?: boolean
   canTransfer?: boolean
   canTransferToNumber?: boolean
+  transferDisabled?: boolean
   hasOutboundAccess?: boolean
   requiresOutboundApproval?: boolean
   sessionEndReasons?: SessionEndReasonEntry[]
@@ -113,8 +115,10 @@ export function AgentToolbar({
   callIdentification,
   callSkillDisplayName,
   callStatus,
+  holdDisabled = false,
   canTransfer = true,
   canTransferToNumber = false,
+  transferDisabled = false,
   hasOutboundAccess = false,
   requiresOutboundApproval = true,
   sessionEndReasons = [],
@@ -357,8 +361,9 @@ export function AgentToolbar({
             <ToolbarButton
               active={callStatus === 'Hold'}
               aria-label="Hold"
+              disabled={holdDisabled}
               icon={<PauseCircleOutlined />}
-              title="Hold"
+              title={holdDisabled ? 'Hold unavailable during video call' : 'Hold'}
               onClick={onHoldToggle}
             >
               {showButtonText ? 'Hold' : undefined}
@@ -377,8 +382,13 @@ export function AgentToolbar({
                 <ToolbarButton
                   active={isTransferOpen}
                   aria-label="Transfer"
+                  disabled={transferDisabled}
                   icon={<SwapOutlined />}
-                  title="Transfer"
+                  title={
+                    transferDisabled
+                      ? 'Transfer unavailable during video call'
+                      : 'Transfer'
+                  }
                   onClick={() => setIsTransferOpen(true)}
                 >
                   {showButtonText ? 'Transfer' : undefined}

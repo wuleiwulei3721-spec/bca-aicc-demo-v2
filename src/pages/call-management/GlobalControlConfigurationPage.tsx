@@ -33,9 +33,22 @@ const idleLogoutTimeoutOptions: Array<{
   label: string
   value: GlobalControlIdleLogoutMinutes
 }> = [
+  { label: '15', value: 15 },
   { label: '30', value: 30 },
+  { label: '45', value: 45 },
   { label: '60', value: 60 },
+  { label: '75', value: 75 },
+  { label: '90', value: 90 },
+  { label: '105', value: 105 },
   { label: '120', value: 120 },
+  { label: '135', value: 135 },
+  { label: '150', value: 150 },
+  { label: '165', value: 165 },
+  { label: '180', value: 180 },
+  { label: '195', value: 195 },
+  { label: '210', value: 210 },
+  { label: '225', value: 225 },
+  { label: '240', value: 240 },
 ]
 
 function normalizeNumber(value: number | null, fallback: number, min: number) {
@@ -167,11 +180,14 @@ export function GlobalControlConfigurationPage() {
       errors.push('Auto Cancel ACW Duration must be greater than 0 seconds.')
     }
 
-    if (config.idleWarningMinutes <= 0) {
-      errors.push('Auto Log-out Warning Lead Time must be greater than 0 minutes.')
+    if (config.idleWarningMinutes < 0) {
+      errors.push('Auto Log-out Warning Lead Time must be 0 minutes or greater.')
     }
 
-    if (config.idleWarningMinutes >= config.idleAutoLogOutMinutes) {
+    if (
+      config.idleWarningMinutes > 0 &&
+      config.idleWarningMinutes >= config.idleAutoLogOutMinutes
+    ) {
       errors.push(
         'Auto Log-out Warning Lead Time must be less than System Idle Log-out Timeout.',
       )
@@ -305,6 +321,7 @@ export function GlobalControlConfigurationPage() {
               />
               <NumberField
                 label="Auto Log-out Warning Lead Time"
+                min={0}
                 unit="min"
                 value={config.idleWarningMinutes}
                 onChange={(value) => updateConfig('idleWarningMinutes', value)}

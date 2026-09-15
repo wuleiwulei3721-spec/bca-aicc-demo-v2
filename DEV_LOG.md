@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-09-03 09:46 +08:00
+最后更新：2026-09-14 17:07 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,649 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-09-14 16:50 +08:00 - Live Chat 机器人转人工摘要
+
+修改页面或文件：
+
+- `src/types/inbound.ts`、`src/mock/inbound.ts`、`src/store/appStore.ts`。
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`、`src/styles/index.less`。
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`DEV_LOG.md`。
+
+修改原因：
+
+- 坐席接入机器人转人工的 Live Chat 后，需要在对话内快速了解客户与机器人的沟通上下文。
+
+修改结果：
+
+- Current 会话增加 BANK 1 Virtual Assistant 对话、独立机器人头像及居中的一段式机器人总结；History 不展示总结。
+- Channel Simulation 成功转入的新文本会话先显示 `Organizing the bot conversation. Please wait...`，约 1.5 秒后显示对应的 mock 总结；摘要状态按会话隔离。
+- 不连接客户消息中台或 SpeaklyAI，现阶段仅模拟其结果；不会改变现有 SLA、未读、Message Record、发送、转接或结束服务行为。
+
+验证：
+
+- `npm run lint`、`npm run build` 与 `git diff --check` 通过；build 仅有既有的大 chunk 提示。
+- 浏览器冒烟通过：Ready 后的 Current 会话显示机器人头像、机器人消息和完成态摘要；Webchat 成功转人工后先显示生成中提示，约 1.8 秒后显示对应总结。
+
+回滚说明：
+
+- 移除 Live Chat 会话的 `botSummary` 字段、handoff 延迟状态与 Conversation 摘要渲染/样式，即可回退；现有消息、客户侧截图和路由无需回滚。
+
+当前风险点：
+
+- 总结文本和延迟为前端 mock。真实集成前需确认消息中台读取授权、摘要接口安全边界、超时与失败降级策略。
+
+### 2026-09-14 15:44 +08:00 - HaloBCA 渠道品牌统一
+
+修改页面或文件：
+
+- `src/` 中的渠道显示值、交互 mock、核验规则、Customer Journey、Live Chat、Interaction Log、Routing Config mock。
+- `AGENTS.md`、`PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DESIGN_SYSTEM.md`、`BUSINESS_RULES.md`。
+
+修改原因：
+
+- 产品确认原 HaloApp / BankApp 渠道统一命名为 `HaloBCA`。
+
+修改结果：
+
+- 所有客户可见名称及其对应的前端渠道值统一为 `HaloBCA`，包括 Voice、Video、Text 与 Login Status 相关文案。
+- 保留 `BANKAPP` 路由代码、`bankApp...` 内部状态字段与 `haloapp-v18` 截图资源路径，避免破坏当前路由、核验和资源引用兼容性。
+
+验证：
+
+- 受控词汇扫描确认 `src/` 和当前项目知识库文档无独立的 `BankApp`、`Bankapp`、`HaloApp` 或 `Haloapp` 残留。
+
+回滚说明：
+
+- 将客户可见渠道值和文案恢复为旧名称即可；不涉及 `BANKAPP` 代码迁移。
+
+当前风险点：
+
+- 【需要产品经理确认】若 `BANKAPP` 是需要对外迁移的渠道代码而非兼容主键，必须单独迁移 Routing Config、Verification Rules 与未来接口契约。
+
+### 2026-09-14 15:07 +08:00 - Interaction Log 时长字段拆分
+
+修改页面或文件：
+
+- `src/pages/call-management/CallRecordQueryPage.tsx`
+- `src/types/callRecord.ts`
+- `src/mock/callRecords.ts`
+
+修改原因：
+
+- 客户要求将列表中的 `Duration` 明确为总通话时长，并独立展示保持时长。
+
+修改结果：
+
+- 原 `Duration` 列改名为 `Total Duration`，后紧接新增 `Hold Duration` 列。
+- 通话记录模型新增 `holdDurationSeconds`；模拟语音记录生成不超过总时长的保持时长，非语音记录默认为 `00:00:00`。
+
+验证：
+
+- `npm run typecheck`、`npm run lint`、`npm run build` 和 `git diff --check` 通过；build 仅有既有 large chunk warning。
+- 浏览器冒烟通过：Interaction Log 表头依次显示 `Total Duration`、`Hold Duration`；语音记录显示非零 Hold Duration，视频与 DM 记录显示 `00:00:00`。
+
+回滚说明：
+
+- 移除 `holdDurationSeconds` 及列定义，并将 `Total Duration` 恢复为 `Duration`，即可回退。
+
+当前风险点：
+
+- 保持时长为前端 demo mock 数据；对接 CTI 后需以平台返回的保持事件累计为准。
+
+### 2026-09-14 14:30 +08:00 - 已识别客户联系方式默认展示
+
+修改页面或文件：
+
+- `src/pages/inbound/components/contactManagementData.ts`
+- `src/pages/inbound/components/CustomerInformationCard.tsx`
+- `BUSINESS_RULES.md`、`DESIGN_SYSTEM.md`、`CURRENT_STATUS.md`
+
+修改结果：
+
+- `All Contact Details` 保留 BankApp；有效 CIS 识别客户打开联系方式时，不依赖验证状态。
+- 缺少结构化 CRM 联系方式时，弹框默认展示客户档案中的 Phone / Email；未识别客户仍无该入口。
+
+验证：
+
+- `npm run lint`、`npm run build` 通过；未执行浏览器冒烟。
+
+### 2026-09-14 14:12 +08:00 - 视频通话话务条操作禁用
+
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`
+- `src/layouts/components/AgentToolbar.tsx`
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`
+
+修改原因：
+
+- 客户要求视频通话时话务条上的保持和转移均不可点击。
+
+修改结果：
+
+- 视频通话中的 Hold 与 Transfer 保留在原有话务条位置，但均以禁用状态展示，并提供说明其在视频通话中不可用的原生悬停提示。
+- 语音通话的保持、转移及会议中转移禁用逻辑保持不变。
+
+验证结果：
+
+- `npm run lint`、`npm run build` 和 `git diff --check` 通过；build 仅保留既有 large chunk warning。
+- 浏览器冒烟检查通过：BankApp Video 接通后，话务条 Hold 与 Transfer 均可见，均为 `disabled=true`，且分别显示视频通话不可用的原生提示。
+
+回滚说明：
+
+- 移除 `AgentToolbar` 的视频操作禁用 props，并恢复视频通话传入的转移可用性逻辑即可回退。
+
+当前风险点：
+
+- 此规则为前端演示话务条限制；尚未对接真实视频 CTI 能力协商。
+
+### 2026-09-11 14:40 +08:00 - Common Link 第三个本地全栈模块
+
+修改页面或文件：
+
+- `backend/app/`、`backend/alembic/versions/0003_common_link.py`、`backend/tests/test_common_links.py`
+- `src/api/commonLink*`、`src/config/commonLinkMode.ts`、`src/store/commonLinkStore.ts`
+- `src/pages/call-management/CommonLinkManagementPage.tsx`
+- `src/pages/inbound/components/AssistantPanel.tsx`
+- `.env.example`、`scripts/check-fastapi.mjs`、`docs/LOCAL_FASTAPI_MYSQL.md`、项目知识库文档
+
+修改原因：
+
+- 将 Common Link 从前端 mock 升级为已确认的 React -> FastAPI -> 本地 MySQL 模式，并让管理页与坐席工作台 Common Links 使用同一数据源，同时保留客户静态版 mock 数据。
+
+修改结果：
+
+- 新增独立 MySQL `common_links` 表、SQLAlchemy model/repository/schema、FastAPI CRUD/query API、API 测试和 `0003_common_link` Alembic migration；未修改已应用的 Common Phrase 或 Common Number migrations。
+- Website Name 和 Website URL 使用 trim + lowercase 唯一校验；Website URL 仅接受 HTTP(S) 地址；Remark 最大 2000 字符；本地 API 保存 Updated Time / Updated By。
+- 本地开发默认 `VITE_COMMON_LINK_MODE=api`，静态/客户构建默认 browser demo 数据；该开关与 Common Phrase、Common Number 独立。
+- 管理页的新增、编辑、删除、Website Name/URL 查询、错误重试和刷新持久化均通过 API；Assistant Panel 的 Common Links tab 读取相同的 `useCommonLinkStore`，不再读取 `callManagementStore` 的旧 mock 状态。
+
+验证结果：
+
+- `npm run backend:migrate`：`0002_common_number -> 0003_common_link` 成功。
+- `npm run backend:test`：3 passed（含 Common Phrase、Common Number 回归）。
+- `npm run check:fastapi`：FastAPI health、三个模块字段形状、Common Phrase / Number Active filter 和 Common Link Website Name filter 通过。
+- `npm run lint`、`npm run typecheck`、`npm run build`、`git diff --check` 通过；build 仅保留既有 large chunk warning。
+- 浏览器：登录后 Common Link 管理页显示 3 条本地 MySQL 种子；新增验收链接后刷新并重新进入页面仍保留；随后删除验收链接，MySQL 恢复为 3 条默认种子。
+
+回滚说明：
+
+- 删除 `0003_common_link` 及对应 Common Link 前后端文件可回退本模块；不得改写或回退 `0001_common_phrase`、`0002_common_number`。本地数据库可通过 Alembic downgrade 处理，客户静态版不依赖本机数据库。
+
+当前风险点：
+
+- FastAPI/MySQL 仍是本地 Demo 基础设施，无生产认证、权限、多用户并发或生产部署边界；客户发布必须保持 demo 模式。
+
+### 2026-09-11 10:55 +08:00 - Common Number 第二个本地全栈模块
+
+修改页面或文件：
+
+- `backend/app/`、`backend/alembic/versions/0002_common_number.py`、`backend/tests/test_common_numbers.py`
+- `src/api/commonNumber*`、`src/config/commonNumberMode.ts`、`src/store/commonNumberStore.ts`
+- `src/pages/call-management/CommonNumberManagementPage.tsx`
+- `src/layouts/components/TransferModal.tsx`
+- `.env.example`、`scripts/check-fastapi.mjs`、项目知识库文档
+
+修改原因：
+
+- 将 Common Number 按已验收的 Common Phrase 本地/发布双运行模式实现为第二个本地全栈模块，并让 Call Transfer 的 IVR 读取同一数据源。
+
+修改结果：
+
+- 新增独立 MySQL `common_numbers` 表、SQLAlchemy model/repository/schema、FastAPI CRUD/query API、API 测试和 `0002_common_number` Alembic migration；未修改已应用的 Common Phrase migration。
+- Name 与 Number 采用 trim + lowercase 唯一校验，Number 不限制电话格式；Remark 最大 2000 字符；本地 API 保存 Updated Time / Updated By。
+- 本地开发默认 `VITE_COMMON_NUMBER_MODE=api`，静态/客户构建默认 browser demo 数据；该开关与 Common Phrase 完全独立。
+- 管理页新增、编辑、删除、Name/Number/Status 查询和刷新持久化均通过 API；Transfer IVR 同源且仅请求 Active 条目。
+
+验证结果：
+
+- `npm run backend:test`：2 passed（含 Common Phrase 回归与 Common Number）。
+- `npm run backend:migrate`：`0001_common_phrase -> 0002_common_number` 成功。
+- `npm run check:fastapi`：FastAPI health、两个模块字段形状和 Active filter 通过。
+- `npm run lint`、`npm run build` 通过；build 仅保留既有 large chunk warning。
+- 浏览器：新增 -> 刷新仍保留 -> 停用后 PSTN Transfer IVR 为 3 个 Active 条目且不显示验收项 -> 重新启用后为 4 个并恢复显示。验收数据已删除，MySQL 恢复为 4 条默认种子。
+
+回滚说明：
+
+- 删除 `0002_common_number` 及对应 Common Number 前后端文件可回退本模块；不得改写或回退 `0001_common_phrase`。本地数据库可通过 Alembic downgrade 处理，客户静态版不依赖本机数据库。
+
+当前风险点：
+
+- FastAPI/MySQL 仍是本地 Demo 基础设施，无生产认证、权限、多用户并发或生产部署边界；客户发布必须保持 demo 模式。
+
+### 2026-09-10 17:00 +08:00 - 固化后续模块的本地/发布双运行规则
+
+修改页面或文件：
+
+- `PROJECT_CONTEXT.md`
+- `CURRENT_TODO.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求后续扩展其他模块时继续遵循 Common Phrase 已验证的实现方式，避免新的对话遗漏本地真实后端与发布版模拟数据之间的边界。
+
+修改结果：
+
+- 固化项目级规则：本地开发使用真实本地后端和数据库；发布/客户构建使用 React bundled mock data；每个模块保留显式运行开关、API/模拟数据边界和回退说明。
+- 明确新模块不得默认连接公司旧系统、共享开发库、CRM、CTI、Redis、真实账号或生产数据；如需改变边界，必须单独确认。
+- 将 Common Phrase 标记为该模式的参考实现：React -> FastAPI -> `aicc_demo_local` MySQL，发布版 React -> 模拟数据。
+
+验证结果：
+
+- 规则已写入 `PROJECT_CONTEXT.md`、`CURRENT_TODO.md` 和 `DECISION_LOG.md`；未修改业务代码或发布配置。
+
+### 2026-09-10 16:30 +08:00 - FastAPI 设为本地开发默认，保留客户版模拟数据开关
+
+修改页面或文件：
+
+- `vite.config.ts`
+- `scripts/dev.mjs`
+- `.env.example`
+- `backend/README.md`
+- `docs/LOCAL_FASTAPI_MYSQL.md`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户确认 Common Phrase 本地全栈已通过验收，要求本地开发直接使用 FastAPI + MySQL；发布版本仍保持前端模拟数据。
+
+修改结果：
+
+- `npm run dev` 默认启动 FastAPI + Vite，不再默认启动 Node + SQLite。
+- 本地前端通过 Vite `/api` 代理访问 `http://127.0.0.1:8000`；`http://127.0.0.1:5173` 只是前端页面地址。
+- Vite 开发服务器固定监听 `127.0.0.1:5173`，避免 Windows 上默认绑定 `::1` 导致访问 IPv4 地址失败。
+- `VITE_COMMON_PHRASE_MODE=demo` 继续作为静态/客户构建的数据源开关；生产构建未显式设置时也默认使用 demo 数据，不访问本机 API。
+- Node + SQLite 文件保留为旧回退代码，但不再属于正常开发流程。
+
+验证结果：
+
+- 未设置 `VITE_COMMON_PHRASE_BACKEND` 时，`npm run dev` 实际监听 Vite `5173` 和 FastAPI `8000`，未启动 Node `3001`。
+- FastAPI `/api/health`、`/docs` 和 `npm run check:fastapi` 通过。
+- `npm run lint`、`npm run build`、`npm run typecheck` 和 `git diff --check` 通过；Build 仍有既有 large chunk warning。
+
+当前风险点：
+
+- 本地 FastAPI 仍无真实认证、权限和多用户隔离；客户发布版本必须保持 `demo` 模式，不能把本机 FastAPI 或 MySQL 一起发布。
+
+### 2026-09-10 15:30 +08:00 - 完成本机 FastAPI + MySQL 环境验证，暂缓默认切换
+
+修改页面或文件：
+
+- `.env.example`
+- `scripts/dev.mjs`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DEV_LOG.md`
+
+修改原因：
+
+- 用户要求继续执行本机环境准备和验证，并明确 FastAPI + MySQL 全部验收通过前保留 Node + SQLite 回退。
+
+修改结果：
+
+- 本机已安装 Python 3.12.10 和 MySQL Community Server 8.0.46，创建独立数据库 `aicc_demo_local`，配置本地应用账号和 `backend/.venv`。
+- `scripts/dev.mjs` 的 FastAPI 分支会自动优先使用 `backend/.venv`，不依赖系统 Python PATH。
+- 项目级环境变量只保存在本机用户环境，不写入仓库；`.env.example` 明确 Node + SQLite 为当前默认。
+- FastAPI 管理页 CRUD、刷新后持久化、Active/Disabled 公共短语过滤、Live Chat 公共短语恢复、迁移和数据库持久化已完成实际验证；验收临时短语已删除。
+
+验证结果：
+
+- `npm run backend:migrate` 通过。
+- `npm run backend:test` 通过：1 passed。
+- `npm run check:fastapi` 通过，`/docs` 返回 HTTP 200，健康检查确认 `aicc_demo_local`。
+- `npm test` 通过：4 passed。
+- `npm run typecheck`、`npm run lint`、`npm run build` 通过；Build 保留既有 large chunk warning。
+- 浏览器已完成登录、Common Phrase 新增、刷新后重新进入管理页确认保留、停用后 Live Chat 不显示、重新启用后恢复显示；临时短语已清理。FastAPI 仍未自动切换为默认后端，Node + SQLite 回退继续保留。
+
+回滚说明：
+
+- `npm run dev` 继续启动 Node + SQLite；设置 `VITE_COMMON_PHRASE_BACKEND=fastapi` 可显式启动 FastAPI + MySQL。
+
+当前风险点：
+
+- FastAPI 本地后端仍无真实认证、权限和多用户隔离，仅适合本机学习/演示环境；客户静态版不连接本机数据库。
+- MySQL 当前服务仍监听本机安装的默认网络配置，后续可再收紧为仅 loopback；本项目代码和数据库连接校验已拒绝非本机地址。
+
+### 2026-09-08 14:19 +08:00 - 暂缓 FastAPI 默认切换并恢复 Node 回退
+
+修改页面或文件：
+
+- `vite.config.ts`
+- `scripts/dev.mjs`
+- `.env.example`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `backend/README.md`
+- `docs/LOCAL_FASTAPI_MYSQL.md`
+
+修改原因：
+
+- 用户要求在 FastAPI + MySQL 实际验证完成前，`npm run dev` 必须继续可用，不能默认启动尚未安装的 FastAPI。
+
+修改结果：
+
+- `npm run dev` 默认恢复 Node + SQLite；FastAPI 只能通过 `VITE_COMMON_PHRASE_BACKEND=fastapi` 显式启用。
+- 当前机器检查仍未发现可用 Python、MySQL 客户端/服务或 Docker。
+- `winget source reset --force` 已确认需要管理员权限，因此未继续安装或修改系统环境。
+
+验证结果：
+
+- Node + SQLite 的 `npm run lint`、`npm run build`、`npm test`、`npm run check:local`、server typecheck 和 `git diff --check` 通过。
+- FastAPI + MySQL 尚未验证，不宣称完成；等待本机 Python/MySQL 安装后继续迁移、API、浏览器和持久化验证。
+
+回滚说明：
+
+- 将 `VITE_COMMON_PHRASE_BACKEND` 默认值改回 `fastapi` 可恢复目标架构默认启动，但必须在完整验证通过后执行。
+
+当前风险：
+
+- FastAPI 依赖和迁移代码已在仓库中，但没有本机 Python/MySQL 运行结果；Node + SQLite 是当前唯一已验证的本地运行路径。
+
+### 2026-09-08 - Common Phrase FastAPI + 本地 MySQL 技术路线升级
+
+修改页面或文件：
+
+- `backend/requirements.txt`
+- `backend/pyproject.toml`
+- `backend/app/*`
+- `backend/alembic/*`
+- `backend/run.py`
+- `backend/scripts/*`
+- `backend/tests/test_common_phrases.py`
+- `src/types/commonPhrase.ts`
+- `src/mock/commonPhrases.ts`
+- `src/api/commonPhraseApi.ts`
+- `src/api/commonPhraseDemoApi.ts`
+- `src/pages/call-management/CommonPhraseManagementPage.tsx`
+- `server/commonPhraseRepository.ts`
+- `server/commonPhraseSeed.ts`
+- `server/commonPhraseHttp.ts`
+- `scripts/dev.mjs`
+- `scripts/check-fastapi.mjs`
+- `scripts/inspect-mysql-schema.mjs`
+- `scripts/inspect-mysql-schema.ps1`
+- `vite.config.ts`
+- `package.json`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DECISION_LOG.md`
+
+修改原因：
+
+- 用户确认当前 Demo 是唯一业务规则来源，不采用公司旧系统或共享开发库的 Common Phrase 表结构，并要求将下一阶段本地架构升级为 React -> FastAPI -> 独立本地 MySQL。
+
+修改结果：
+
+- 新增 FastAPI + SQLAlchemy + Alembic + PyMySQL 分层后端，数据库固定保护为回环地址上的 `aicc_demo_local`。
+- 新增迁移、Demo 种子、CRUD、查询、Active/Disabled、排序、Remark、创建/更新审计字段、唯一约束、外键级联和统一 JSON 错误。
+- React API 路径保持兼容；FastAPI 可通过 `VITE_COMMON_PHRASE_BACKEND=fastapi` 显式启用，FastAPI + MySQL 完整验证前，Vite 和 `npm run dev` 默认继续使用 Node + SQLite `127.0.0.1:3001`。
+- Common Phrase 管理页新增 Demo 数据模型字段展示/编辑；Live Chat 继续只消费 Active 公共短语。
+- MySQL schema 检查脚本已收紧为只允许本机 `aicc_demo_local`，不会连接公司共享库。
+
+验证结果：
+
+- 当前已完成 `npm run lint`、`npm run build`、`npm test`、Node server typecheck 和 `git diff --check`。
+- FastAPI/MySQL 的迁移、API、Python 测试和数据库持久化尚未在本机执行，因为当前环境没有可用 Python、MySQL 服务或 Docker。
+
+回滚说明：
+
+- 设置 `VITE_COMMON_PHRASE_BACKEND=node` 可继续使用现有 Node + SQLite 本地路径；FastAPI 文件和迁移保留，不删除。
+
+当前风险：
+
+- 需要先安装 Python 3.11+、本地 MySQL 8.x 并安装 `backend/requirements.txt`；客户版仍是静态 Demo，不连接本地或远程 MySQL，客户修改刷新后不持久化。
+
+### 2026-09-07 16:29 +08:00 - Live Chat Ended Status Seed Data
+
+Modified files or modules:
+
+- `src/store/appStore.ts`
+- `src/mock/inbound.ts`
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `src/styles/index.less`
+- `CURRENT_STATUS.md`
+- `BUSINESS_RULES.md`
+
+Reason:
+
+- Customer requested three default ended Current records, one per channel, to validate the compact end-status treatment.
+
+Result:
+
+- Default Live Chat seeds one active WhatsApp session plus three ended sessions: WhatsApp ended by agent, BankApp ended by customer, and Webchat ended by timeout.
+- Ended cards show an unframed, light-gray, compact right-aligned status label (`Agent`, `Customer`, or `Timeout`) on the customer-name row; tooltip text remains available and Close stays below the conversation summary.
+- The ended conversation header shows the full end reason directly left of its `Close` action.
+
+Rollback notes:
+
+- Restore the default seed IDs and the original active mock statuses, then remove the end-status renderer and styles.
+
+Current risk:
+
+- Ended records are anonymized demo fixtures; production status labels should come from the channel/session lifecycle contract.
+
+### 2026-09-07 16:29 +08:00 - Live Chat Channel Display Name
+
+Modified files or modules:
+
+- `src/types/inbound.ts`
+- `src/store/appStore.ts`
+- `src/pages/inbound/components/LiveChat2CustomerPanel.tsx`
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`
+- `src/pages/inbound/components/liveChat2CustomerDisplayName.ts`
+- `BUSINESS_RULES.md`
+
+Reason:
+
+- Customer clarification: Live Chat customer lists and conversation headers must show the channel-provided name for BankApp, WhatsApp, and Webchat, including BankApp guest sessions. This must not alter the separate Customer Information identity rule.
+
+Result:
+
+- Live Chat resolves a dedicated display name from the customer message/channel handoff data, with the customer profile name only as a fallback.
+- New handoff sessions retain the original channel display name even when the Customer Information profile is anonymized for a guest customer.
+- Customer Information remains unchanged and can continue to show `Unidentified Customer` until CRM identity is available.
+
+Rollback notes:
+
+- Remove `customerDisplayName` and the Live Chat display-name helper, then restore the two components to `session.customer.profile.name`.
+
+Current risk:
+
+- The name is still mock/channel handoff data in this front-end demo; a future channel gateway must supply a validated display-name field.
+
+### 2026-09-04 10:15 +08:00 - 自动登出前提醒支持关闭
+
+修改页面或文件：
+
+- `src/pages/call-management/GlobalControlConfigurationPage.tsx`
+- `src/hooks/useIdleLogout.ts`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+
+修改原因：
+
+- 客户确认 `Auto Log-out Warning Lead Time` 配置为 `0` 时表示无需提前提醒。
+
+修改结果：
+
+- 提醒时间允许配置为 `0`；非零值仍必须小于系统无操作自动登出时长。
+- 配置为 `0` 时不创建 `Session Expiring` 提醒计时器，但仍在所选无操作时长到达后自动登出。
+
+验证结果：
+
+- `npm run lint`、`npm run build`、`npx tsc --noEmit` 和 `git diff --check` 通过；构建仅保留既有 bundle size warning。
+- 浏览器冒烟检查通过：页面可输入并保存 `0 min`，未触发前端校验错误。提醒弹窗跳过逻辑经 Hook 分支检查确认；未等待实际 30 分钟超时周期。
+
+回滚说明：
+
+- 将提醒时间最小值和校验恢复为 `1`，并恢复提醒计时器无条件创建即可。
+
+当前风险点：
+
+- 空闲计时仍只在当前浏览器窗口生效，不提供服务端会话失效或多标签页同步。
+
+### 2026-09-04 10:07 +08:00 - 全局控制自动登出时长扩展为 15 分钟间隔
+
+修改页面或文件：
+
+- `src/pages/call-management/GlobalControlConfigurationPage.tsx`
+- `src/types/globalControlConfiguration.ts`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+
+修改原因：
+
+- 客户要求系统无操作自动登出时长下拉从 15 分钟开始，以 15 分钟为间隔扩展至 4 小时。
+
+修改结果：
+
+- `System Idle Log-out Timeout` 现在提供 `15`、`30`、`45` 至 `240` 分钟共 16 个单选值，默认值保持 `30` 分钟。
+- 保持控件右侧 `min` 单位、与数值输入框一致的宽度，以及预警时长必须小于所选登出时长的既有校验。
+
+验证结果：
+
+- `npm run lint`、`npm run build` 和 `git diff --check` 通过；构建仅保留既有 bundle size warning。
+- 浏览器冒烟检查通过：默认显示 `30 min`，下拉提供从 `15`、`30`、`45` 开始的 15 分钟间隔选项，页面仍显示右侧 `min` 单位。
+
+回滚说明：
+
+- 将下拉选项和 `GlobalControlIdleLogoutMinutes` 联合类型恢复为之前的 `30`、`60`、`120` 即可。
+
+当前风险点：
+
+- 该设置为当前窗口前端演示配置；不会影响服务端会话或多标签页状态。
+
+### 2026-09-03 15:06 +08:00 - Common Phrase 客户演示运行模式
+
+修改页面或文件：
+
+- `src/config/commonPhraseMode.ts`
+- `src/api/commonPhraseDemoApi.ts`
+- `src/api/commonPhraseDataSource.ts`
+- `src/api/commonPhraseApi.ts`
+- `src/store/commonPhraseStore.ts`
+- `src/pages/call-management/CommonPhraseManagementPage.tsx`
+- `.env.example`
+- `PROJECT_CONTEXT.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DECISION_LOG.md`
+
+修改原因：
+
+- 客户版是静态 Vite 部署，不能把浏览器请求指向开发者电脑的 `localhost` SQLite 服务；同时客户仍需要看到并操作管理台页面。
+
+修改结果：
+
+- 同一套前端通过 `VITE_COMMON_PHRASE_MODE` 选择 API 或 demo 数据源。
+- 开发环境默认使用本地 Node API + SQLite；生产构建默认使用浏览器内存种子数据。
+- 客户版 Common Phrase 管理操作和 Live Chat Public Phrases 继续可用，但仅保留当前浏览器会话，刷新后恢复初始数据，不接触开发者本地数据库。
+- 客户版管理页显示 Demo Mode 提示，避免把临时修改误认为已持久化。
+
+验证结果：
+
+- 客户版浏览器烟测确认：编辑 `ab` 为 Disabled、切换 Common Link 后返回仍保留；刷新后恢复为 Enabled。
+- 本地 SQLite 数据未被客户版烟测修改。
+- `npm run lint`、`npm run build`、`npm test`、`npm run check:local`、`npx tsc --noEmit -p tsconfig.server.json` 和 `git diff --check` 通过。
+
+回滚说明：
+
+- 将 `commonPhraseDataSource` 固定回 `commonPhraseApi` 并移除 `commonPhraseDemoApi`、运行模式配置和 Demo Mode 提示，即可恢复仅 API 数据源行为。
+
+当前风险：
+
+- 客户版修改不跨刷新、浏览器或客户之间共享；要实现客户真实持久化，需要后续部署可访问的后端、认证、权限和正式数据存储。
+
+### 2026-09-03 14:14 +08:00 - Common Phrase 菜单切换后列表刷新修复
+
+修改页面或文件：
+
+- `src/pages/call-management/CommonPhraseManagementPage.tsx`
+
+修改原因：
+
+- 短语编辑并切换为 Disabled 后，页面重新进入时没有按管理页当前已应用的查询条件重新读取 API，可能继续显示旧结果或需要再次点击 Search 才同步。
+
+修改结果：
+
+- Common Phrase 仅在首次进入或再次切回页面时，用当前已应用的分类、关键字和状态条件刷新一次 API。
+- 筛选输入草稿不会触发额外请求，Enabled / Disabled 筛选语义保持不变。
+- 浏览器回归确认：短语切换为 Disabled 后切到 Common Link 再返回 Common Phrase，记录仍可见且状态正确；测试数据已恢复。
+
+验证结果：
+
+- `npm run typecheck`、`npm run lint`、`npm test`、`npm run build`、`npm run check:local` 和 `git diff --check` 通过。
+
+回滚说明：
+
+- 删除页面的活动状态刷新 effect、活动 tab key 判断和查询 ref，即可恢复原页面加载行为。
+
+当前风险点：
+
+- 每次重新进入 Common Phrase 会增加一次本地 API 查询；该请求只发生在页面进入时，不会随筛选输入变化触发。
+
+### 2026-09-03 13:57 +08:00 - Common Phrase 快速本地检查入口
+
+修改页面或文件：
+
+- `scripts/check-local.mjs`、`scripts/inspect-common-phrases.mjs`
+- `package.json`、`AGENTS.md`、`PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`
+
+修改原因：
+
+- 将日常 Common Phrase 验证从耗时的浏览器点击流程分层为秒级只读检查，同时提供无需额外 SQLite CLI 的表结构和数据查看方式。
+
+修改结果：
+
+- `npm run check:local` 检查 SQLite 完整性、表结构、API 健康状态、API/数据库数量一致性及 `status=Active` 查询结果，不修改数据。
+- `npm run db:inspect` 使用 Node 内置 `node:sqlite` 输出表、索引、分类和短语数据。
+- 仓库规则调整为：日常优先使用适用的快速检查，浏览器烟测作为受影响 UI 流程交付前的一次聚焦验收。
+
+验证结果：
+
+- `npm run check:local` 通过；后续仍保留 `npm test`、`npm run typecheck`、`npm run lint` 和 `npm run build` 作为对应层级检查。
+
+当前风险点：
+
+- 浏览器烟测仍不能完全由 API 检查替代；涉及页面路由、弹窗、布局或跨页面交互时仍需在交付前执行一次。
+
+### 2026-09-03 12:04 +08:00 - Common Phrase 本地全栈闭环
+
+修改页面或文件：
+
+- `server/*`：native Node HTTP API、SQLite repository、schema/seed、Node tests
+- `src/api/commonPhraseApi.ts`
+- `src/store/commonPhraseStore.ts` 与 `src/store/callManagementStore.ts`
+- Common Phrase 类型、mock、管理页和 Live Chat Quick Replies consumer
+- `scripts/dev.mjs`、`vite.config.ts`、`package.json`、`tsconfig.server.json`、`.gitignore`
+- `PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`BUSINESS_RULES.md`、`DECISION_LOG.md`
+
+修改原因：
+
+- 按用户批准的方案，把 Common Phrase 做成第一个不依赖公司资源、容器、PostgreSQL 或第三方接口的本地全栈闭环。
+
+修改结果：
+
+- 新增默认端口 `3001` 的 native TypeScript Node API，使用当前 Node `22.13+` 的 `node:sqlite` 保存 `data/common-phrases.sqlite`；首次启动从既有 Common Phrase mock 写入默认分类和短语。
+- 管理页的查询、分类 CRUD、短语 CRUD、启用/停用、删除和批量移动均通过真实 API；服务端负责校验、冲突响应、ID、更新时间、更新人默认值、外键级联和事务。
+- Live Chat Public Phrases 从同一 API 请求 `status=Active`；Disabled 短语不进入公共列表、候选项或插入结果，My Phrases 继续保持本地状态。
+- `npm run dev` 同时启动前端和 API，Vite `/api` 代理到 `127.0.0.1:3001`；SQLite 数据文件加入 `.gitignore`。
+- `npm run lint`、`npm run build`、`npm test`、`npm run typecheck`、`git diff --check` 通过。浏览器烟测确认管理页数据来自 API、停用后刷新仍保留、Live Chat 隐藏 Disabled 短语，随后通过管理页重新启用默认短语。
+
+回滚说明：
+
+- 删除本轮新增的 `server/*`、Common Phrase API/store、启动脚本和配置改动，并恢复管理页/Live Chat 对原有 mock slice 的引用；本地 `data/common-phrases.sqlite` 已被忽略，不参与版本回滚。
+
+当前风险点：
+
+- 本地 API 要求 Node `22.13+`，没有真实认证或多用户并发权限模型；只有 Common Phrase 使用 SQLite 持久化，其他模块仍是 front-end mock，尚未承诺生产后端契约。
 
 ### 2026-09-03 09:46 +08:00 - Customer Production Release
 
@@ -8214,6 +8857,10 @@ Current risk:
 - 技能队列列表显示已配置的目标值，未配置时显示 `-`。
 - 两个 Target 的单位统一写入字段标签（`AHT Target (sec)`、`QM Target (%)`），输入框保持与同类配置项一致的完整宽度；Assigned Agents 调整为最后一个字段。
 - Target 输入框使用技能队列弹框专属的全列宽度，已与同一弹框内的标准输入框对齐。
+- Skill Queues 增加由 Skill Routing Rules 反查的 Channel / Media 列与查询条件；关联多个规则值遵循现有列表格式，以 `, ` 分隔。新增时不显示，编辑时禁用，查看时只读展示。
+- 更正反查字段：按 Skill Routing Rules 的 Channel（因子 `11`）与 Media（因子 `12`）展示，而非 Business Type。Channel / Media 最多展示两个关联值，因此列宽收紧为 130px / 110px；同时压缩其他低密度字段，横向滚动总宽度为 1540px。所有文本列保持单行，只有超过分配宽度时才使用省略号。
+- Skill Queues 表头使用页面级不换行规则；AHT Target / QM Target 列宽按完整表头调整，横向滚动总宽度更新为 1570px，确保表头完整可见。
+- AHT Target 前新增可选 `SL (%)` 数字输入，与 QM Target 一样限制为 `0` 至 `100`。
 - 类型契约以可选数字字段保存，确保空配置不会被写入为 `0`。
 
 验证：
@@ -8227,3 +8874,41 @@ Current risk:
 当前风险点：
 
 - Routing Config 仍为本地前端演示数据，刷新页面会重置。
+
+### 2026-09-14 16:19 +08:00 - Channels DM queue auto-reply and Voice queue configuration removal
+
+Modified files or modules:
+
+- `src/pages/routing-config/RoutingConfigDataPages.tsx`
+- `src/mock/routingConfiguration.ts`
+- `src/types/routingConfiguration.ts`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+- `CURRENT_TODO.md`
+- `DECISION_LOG.md`
+- `DEV_LOG.md`
+
+Reason:
+
+- The confirmed routing configuration rule removes Queue Configuration from all Voice media, matching Phone Voice behavior.
+- DM queue handling needs a configurable `Queue Auto-Reply Message` for a customer message received before agent assignment.
+
+Result:
+
+- Voice Business Config shows the standard no-configuration prompt and no longer retains DM queue-message settings in new channel defaults.
+- DM Queue Configuration adds a required, saved `Queue Auto-Reply Message` with a neutral English demo default.
+- Video and Non-DM behavior remains unchanged. The new field is front-end demo configuration only; no routing engine dispatch is connected.
+
+Validation:
+
+- `npm run lint` passed.
+- `npm run build` passed; only the existing large chunk warning remains.
+- Browser smoke check passed at `/routing-config/channels`: HaloBCA Voice shows the no-configuration prompt; DM shows the new field and saves an edited value successfully.
+
+Rollback:
+
+- Restore the Voice queue fields and the `VOICE` queue condition in `ChannelsPage`, then remove `queueAutoReplyMessage` from the type, mock, default, validation, and DM form.
+
+Current risk:
+
+- Queue auto-reply is stored only in local front-end demo state and needs a future routing-engine trigger mapping for real delivery.

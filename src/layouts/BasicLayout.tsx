@@ -186,7 +186,7 @@ const allSideMenuItems: SideMenuItem[] = [
       },
       {
         key: 'customer-bankapp',
-        label: 'BankApp',
+        label: 'HaloBCA',
       },
       {
         key: 'customer-webchat',
@@ -1540,7 +1540,7 @@ export function BasicLayout() {
       currentCallInteraction.source === 'bankapp-video'
     ) {
       return {
-        label: 'HaloApp:',
+        label: 'HaloBCA:',
         value:
           currentCallInteraction.bankAppCustomerType === 'guest'
             ? 'Guest'
@@ -1599,7 +1599,8 @@ export function BasicLayout() {
             hasOutboundAccess={hasOutboundAccess}
             canTransferToNumber={canTransferToNumber}
             callStatus={callStatus}
-            canTransfer={activeCallChannel !== 'video'}
+            holdDisabled={activeCallChannel === 'video'}
+            transferDisabled={activeCallChannel === 'video'}
             callIdentification={callIdentification}
             callSkillDisplayName={callSkillDisplayName}
             baseElapsedSeconds={timerState.elapsedSeconds}

@@ -39,8 +39,8 @@ interface CustomerVerificationModalProps {
 }
 
 const channelTypeLabels: Record<VerificationChannelType, string> = {
-  'bankapp-registered': 'BankApp Registered',
-  'bankapp-unregistered': 'BankApp Unregistered',
+  'bankapp-registered': 'HaloBCA Registered',
+  'bankapp-unregistered': 'HaloBCA Unregistered',
   phone: 'PSTN / Phone',
   video: 'Video',
   webchat: 'Webchat',
@@ -233,7 +233,7 @@ export function CustomerVerificationModal({
       : `Wrong ${evaluation.wrongCount}/${wrongLimit}`
     : ''
   const emptyRuleText = isBankAppPinPending
-    ? 'Complete BankApp PIN to load registered verification rules.'
+    ? 'Complete HaloBCA PIN to load registered verification rules.'
     : 'No verification rule configured for this combination.'
 
   return (

@@ -29,7 +29,7 @@ export const inboundCustomer: CustomerInformation = {
     crmContacts: {
       Phone: ['+62 21 25563000', '+62 21 5088 1001'],
       WhatsApp: ['+62 878 2510 0234'],
-      BankApp: ['dimas.bank1'],
+      HaloBCA: ['dimas.bank1'],
       Email: ['Dimas@gmail.com', 'dimas.abimanyu@example.net'],
       Instagram: ['@dimas.abimanyu'],
       X: ['@dimasabimanyu'],
@@ -72,7 +72,7 @@ export const unidentifiedCustomerJourney: CustomerJourneyItem[] = []
 export const unidentifiedTicketingHistory: TicketHistoryItem[] = []
 
 export const bankAppVoiceCustomer: CustomerInformation = {
-  accessChannel: 'BankApp Voice',
+  accessChannel: 'HaloBCA Voice',
   accessDuration: '00:12',
   bankAppLoginStatus: 'registered',
   profile: {
@@ -89,7 +89,7 @@ export const bankAppVoiceCustomer: CustomerInformation = {
 }
 
 export const bankAppVoiceGuestCustomer: CustomerInformation = {
-  accessChannel: 'BankApp Voice',
+  accessChannel: 'HaloBCA Voice',
   accessDuration: '00:12',
   bankAppLoginStatus: 'guest',
   profile: {
@@ -105,7 +105,7 @@ export const bankAppVoiceGuestCustomer: CustomerInformation = {
 }
 
 export const bankAppVideoCustomer: CustomerInformation = {
-  accessChannel: 'BankApp Video',
+  accessChannel: 'HaloBCA Video',
   accessDuration: '00:12',
   profile: {
     avatarInitials: 'SA',
@@ -121,7 +121,7 @@ export const bankAppVideoCustomer: CustomerInformation = {
 }
 
 export const bankAppVideoGuestCustomer: CustomerInformation = {
-  accessChannel: 'BankApp Video',
+  accessChannel: 'HaloBCA Video',
   accessDuration: '00:12',
   profile: {
     avatarInitials: 'GU',
@@ -196,9 +196,9 @@ export const liveChatSessions: LiveChatSession[] = [
   },
   {
     id: 'live-chat-002',
-    channel: 'BankApp',
+    channel: 'HaloBCA',
     customer: {
-      accessChannel: 'BankApp',
+      accessChannel: 'HaloBCA',
       accessDuration: '02:11',
       profile: {
         avatarInitials: 'SA',
@@ -312,6 +312,9 @@ export const liveChat2Sessions: LiveChat2Session[] = [
   {
     id: 'livechat2-001',
     accessSequence: 1,
+    botSummary:
+      'The customer reports that a debit card was blocked after three incorrect ATM PIN attempts and needs cash access before travel. The virtual assistant captured the card issue and routed it to Card Services; complete authentication, confirm the card status, and continue the unblock request.',
+    botSummaryStatus: 'ready',
     channel: 'WhatsApp',
     customer: {
       ...unidentifiedWhatsAppCustomer,
@@ -327,6 +330,16 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         senderName: 'Dimas Abimanyu Prabowo',
         time: '13:42',
         timestamp: '2026-05-27T13:42:00+08:00',
+      },
+      {
+        id: 'livechat2-001-history-bot-1',
+        kind: 'text',
+        message:
+          'I have recorded the card-block issue and will route it to Card Services for continued support.',
+        sender: 'bot',
+        senderName: 'BANK 1 Virtual Assistant',
+        time: '13:43',
+        timestamp: '2026-05-27T13:43:00+08:00',
       },
       {
         id: 'livechat2-001-history-2',
@@ -415,9 +428,12 @@ export const liveChat2Sessions: LiveChat2Session[] = [
     id: 'livechat2-002',
     accessSequence: 2,
     bankAppLoginStatus: 'registered',
-    channel: 'BankApp',
+    botSummary:
+      'The customer changed to a new phone and cannot complete mobile banking sign-in because the device is not recognized. The virtual assistant captured the device-binding issue and requested secure account handling; verify the customer, then continue the device reset guidance.',
+    botSummaryStatus: 'ready',
+    channel: 'HaloBCA',
     customer: {
-      accessChannel: 'BankApp',
+      accessChannel: 'HaloBCA',
       accessDuration: '01:12',
       profile: {
         avatarInitials: 'SA',
@@ -441,6 +457,16 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         senderName: 'Sari Amelia',
         time: '13:58',
         timestamp: '2026-05-27T13:58:00+08:00',
+      },
+      {
+        id: 'livechat2-002-history-bot-1',
+        kind: 'text',
+        message:
+          'I have captured the new-device sign-in issue. A specialist will continue with secure device-binding support.',
+        sender: 'bot',
+        senderName: 'BANK 1 Virtual Assistant',
+        time: '13:59',
+        timestamp: '2026-05-27T13:59:00+08:00',
       },
       {
         id: 'livechat2-002-history-2',
@@ -504,6 +530,9 @@ export const liveChat2Sessions: LiveChat2Session[] = [
   {
     id: 'livechat2-003',
     accessSequence: 3,
+    botSummary:
+      'The customer is asking why a credit card billing amount changed and shared a supporting screenshot. The virtual assistant captured the billing inquiry and directed it to Webchat Card Service; review the statement and explain any applicable installment or fee adjustment.',
+    botSummaryStatus: 'ready',
     channel: 'Webchat',
     customer: {
       ...unidentifiedInboundCustomer,
@@ -525,10 +554,10 @@ export const liveChat2Sessions: LiveChat2Session[] = [
     initialStarColor: 'gray',
     initialUnansweredSeconds: 0,
     intent: 'Webchat credit card inquiry',
-    lastMessage:
-      'Hello, I need help checking my credit card billing.',
-    lastMessageAt: '2026-05-27T14:35:00+08:00',
-    lastMessageTime: '14:35',
+    endReason: 'timeout',
+    lastMessage: 'Session closed after customer inactivity.',
+    lastMessageAt: '2026-05-27T14:41:00+08:00',
+    lastMessageTime: '14:41',
     messages: [
       {
         id: 'livechat2-003-message-1',
@@ -557,15 +586,37 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         time: '14:35',
         timestamp: '2026-05-27T14:35:00+08:00',
       },
+      {
+        id: 'livechat2-003-message-bot-1',
+        kind: 'text',
+        message:
+          'I have captured the billing question and your screenshot. A card-service agent will review the statement with you.',
+        sender: 'bot',
+        senderName: 'BANK 1 Virtual Assistant',
+        time: '14:36',
+        timestamp: '2026-05-27T14:36:00+08:00',
+      },
+      {
+        id: 'livechat2-003-message-4',
+        kind: 'system',
+        message: 'Session closed after customer inactivity.',
+        sender: 'system',
+        senderName: 'System',
+        time: '14:41',
+        timestamp: '2026-05-27T14:41:00+08:00',
+      },
     ],
     queueName: 'Webchat Card Service',
     serviceStartedAt: '14:31',
-    status: 'active',
-    unreadCount: 1,
+    status: 'ended',
+    unreadCount: 0,
   },
   {
     id: 'livechat2-004',
     accessSequence: 4,
+    botSummary:
+      'The customer shared a credit card statement and requested installment conversion for a transaction. The virtual assistant captured the request and attachment for Credit Card Services; confirm eligibility, the available tenure, and the conversion result before responding.',
+    botSummaryStatus: 'ready',
     channel: 'WhatsApp',
     customer: {
       ...unidentifiedWhatsAppCustomer,
@@ -582,13 +633,24 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         time: '14:12',
         timestamp: '2026-05-27T14:12:00+08:00',
       },
+      {
+        id: 'livechat2-004-history-bot-1',
+        kind: 'text',
+        message:
+          'I have received the statement attachment and captured your installment-conversion request for a card-service agent.',
+        sender: 'bot',
+        senderName: 'BANK 1 Virtual Assistant',
+        time: '14:13',
+        timestamp: '2026-05-27T14:13:00+08:00',
+      },
     ],
     initialStarColor: 'blue',
     initialUnansweredSeconds: null,
     intent: 'Credit card installment conversion',
-    lastMessage: 'Thank you, please send the installment confirmation to me.',
-    lastMessageAt: '2026-05-27T14:21:00+08:00',
-    lastMessageTime: '14:21',
+    endReason: 'agent',
+    lastMessage: 'Agent ended the service conversation.',
+    lastMessageAt: '2026-05-27T14:24:00+08:00',
+    lastMessageTime: '14:24',
     messages: [
       {
         id: 'livechat2-004-message-1',
@@ -621,19 +683,31 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         time: '14:21',
         timestamp: '2026-05-27T14:21:00+08:00',
       },
+      {
+        id: 'livechat2-004-message-4',
+        kind: 'system',
+        message: 'Agent ended the service conversation.',
+        sender: 'system',
+        senderName: 'System',
+        time: '14:24',
+        timestamp: '2026-05-27T14:24:00+08:00',
+      },
     ],
     queueName: 'Credit Card Services',
     serviceStartedAt: '14:14',
-    status: 'active',
+    status: 'ended',
     unreadCount: 0,
   },
   {
     id: 'livechat2-005',
     accessSequence: 5,
     bankAppLoginStatus: 'registered',
-    channel: 'BankApp',
+    botSummary:
+      'The customer is checking delivery of a replacement debit card. The virtual assistant captured the delivery inquiry after authenticated HaloBCA access; review the courier status and registered delivery address, then provide the latest delivery update.',
+    botSummaryStatus: 'ready',
+    channel: 'HaloBCA',
     customer: {
-      accessChannel: 'BankApp',
+      accessChannel: 'HaloBCA',
       accessDuration: '02:53',
       profile: {
         avatarInitials: 'LN',
@@ -679,6 +753,16 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         timestamp: '2026-05-27T14:36:00+08:00',
       },
       {
+        id: 'livechat2-005-message-bot-1',
+        kind: 'text',
+        message:
+          'I have recorded your replacement-card delivery question. A specialist will check the courier status with you.',
+        sender: 'bot',
+        senderName: 'BANK 1 Virtual Assistant',
+        time: '14:37',
+        timestamp: '2026-05-27T14:37:00+08:00',
+      },
+      {
         id: 'livechat2-005-message-2',
         isCurrentAgent: true,
         kind: 'text',
@@ -710,9 +794,9 @@ export const liveChat2Sessions: LiveChat2Session[] = [
     id: 'livechat2-history-001',
     accessSequence: 99,
     bankAppLoginStatus: 'registered',
-    channel: 'BankApp',
+    channel: 'HaloBCA',
     customer: {
-      accessChannel: 'BankApp',
+      accessChannel: 'HaloBCA',
       accessDuration: '08:46',
       profile: {
         avatarInitials: 'RA',
@@ -1094,7 +1178,7 @@ export const verificationRules: VerificationRule[] = [
     maxWrongAttempts: 3,
     needLayering: false,
     notes: [
-      'Demo treats a successful 4-digit BankApp PIN as BankApp Registered.',
+      'Demo treats a successful 4-digit HaloBCA PIN as HaloBCA Registered.',
       'Customer confirmation is still needed for whether this reduction applies to other authenticated channels.',
     ],
     questions: perbankanQuestions,
@@ -1104,7 +1188,7 @@ export const verificationRules: VerificationRule[] = [
     },
     status: 'enabled',
     summary:
-      'BankApp Registered: 3 correct answers, including 1 mandatory and 2 dynamic. Max wrong: 3.',
+      'HaloBCA Registered: 3 correct answers, including 1 mandatory and 2 dynamic. Max wrong: 3.',
   },
   {
     businessType: 'kartu-kredit',
@@ -1133,7 +1217,7 @@ export const verificationRules: VerificationRule[] = [
     maxWrongAttempts: 3,
     needLayering: true,
     notes: [
-      'Demo follows the customer document rule that BankApp Registered can pass with 3 correct answers.',
+      'Demo follows the customer document rule that HaloBCA Registered can pass with 3 correct answers.',
       'ATO and add-on layering remains available as visible reference questions.',
     ],
     questions: kartuKreditQuestions,
@@ -1142,7 +1226,7 @@ export const verificationRules: VerificationRule[] = [
     },
     status: 'enabled',
     summary:
-      'BankApp Registered: 3 correct answers with mother maiden name as mandatory. Max wrong: 3.',
+      'HaloBCA Registered: 3 correct answers with mother maiden name as mandatory. Max wrong: 3.',
   },
   {
     businessType: 'paylater',
@@ -1152,7 +1236,7 @@ export const verificationRules: VerificationRule[] = [
     maxWrongAttempts: 3,
     needLayering: false,
     notes: [
-      'Demo follows the BankApp Registered banking threshold until BANK 1 confirms a Paylater-specific rule.',
+      'Demo follows the HaloBCA Registered banking threshold until BANK 1 confirms a Paylater-specific rule.',
       'The source document says Paylater may follow banking verification or internal Bank policy.',
     ],
     questions: paylaterQuestions,
@@ -1179,20 +1263,20 @@ export const customerJourney: CustomerJourneyItem[] = [
     date: '30 Dec',
     communicationDetail:
       'Customer requested card activation status and delivery confirmation by phone.',
-    summaryNotes: 'Customer was guided to the BankApp card activation menu.',
+    summaryNotes: 'Customer was guided to the HaloBCA card activation menu.',
     resolutionResult: 'Card activation path confirmed.',
     followUpNotes: 'No follow-up required.',
     conversation: [],
   },
   {
     id: 'journey-012',
-    channel: 'BankApp',
+    channel: 'HaloBCA',
     callRecordId: 'call-record-021',
     summary: 'Mobile Banking',
     result: 'Success',
     date: '29 Dec',
     communicationDetail:
-      'Customer requested help with BankApp transaction notifications.',
+      'Customer requested help with HaloBCA transaction notifications.',
     summaryNotes: 'Notification settings were reviewed during the service.',
     resolutionResult: 'Transaction alert setting enabled.',
     followUpNotes: 'Customer confirmed the setting.',

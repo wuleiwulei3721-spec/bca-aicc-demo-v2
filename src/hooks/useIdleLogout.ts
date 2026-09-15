@@ -40,9 +40,11 @@ export function useIdleLogout({
     const warningLeadMs = Math.max(0, warningLeadMinutes) * 60 * 1000
     const warningDelayMs = Math.max(0, timeoutMs - warningLeadMs)
 
-    warningTimerRef.current = window.setTimeout(() => {
-      setWarningOpen(true)
-    }, warningDelayMs)
+    if (warningLeadMinutes > 0) {
+      warningTimerRef.current = window.setTimeout(() => {
+        setWarningOpen(true)
+      }, warningDelayMs)
+    }
     expireTimerRef.current = window.setTimeout(() => {
       setWarningOpen(false)
       onExpire()
@@ -89,6 +91,6 @@ export function useIdleLogout({
 
   return {
     dismissWarning: resetIdleTimer,
-    warningOpen: timeoutMinutes > 0 && warningOpen,
+    warningOpen: timeoutMinutes > 0 && warningLeadMinutes > 0 && warningOpen,
   }
 }

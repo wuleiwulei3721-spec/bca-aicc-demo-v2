@@ -669,6 +669,8 @@ const defaultChannelBusinessConfigByMedia: Record<
     preTimeoutReminderMessage:
       'We have not received your reply. This conversation will close in {reminderMinutes} minute(s).',
     preTimeoutReminderMinutes: 1,
+    queueAutoReplyMessage:
+      'We have received your message. Please wait while we connect you with an agent.',
     queueTimeoutMessage:
       'All agents are currently busy. Please try again later.',
     queueTimeoutSeconds: 360,
@@ -757,18 +759,9 @@ const defaultChannelBusinessConfigByMedia: Record<
       'We did not receive your reply. The service has been closed automatically. Please contact us again if you need help.',
     maxConcurrentAccess: 50,
     minScanIntervalSeconds: 30,
-    outsideServiceHoursMessage:
-      'Sorry, we are currently outside service hours.',
-    longQueueWaitingMessage:
-      'All agents are currently busy. Thank you for your patience.',
-    longQueueWaitingSeconds: 180,
     preTimeoutReminderMessage:
       'We have not received your reply. This conversation will close in {reminderMinutes} minute(s).',
     preTimeoutReminderMinutes: 1,
-    queueTimeoutMessage:
-      'All agents are currently busy. Please try again later.',
-    queueTimeoutSeconds: 360,
-    queueWaitingMessage: 'All agents are currently busy. Please wait.',
   },
 }
 
@@ -1224,6 +1217,7 @@ export function ChannelsPage() {
               config.outsideServiceHoursMessage,
             ],
             ['Queue Waiting Message', config.queueWaitingMessage],
+            ['Queue Auto-Reply Message', config.queueAutoReplyMessage],
             ['Long Queue Waiting Message', config.longQueueWaitingMessage],
             ['Queue Timeout Message', config.queueTimeoutMessage],
           ].forEach(([label, value]) => {
@@ -1699,10 +1693,10 @@ export function ChannelsPage() {
   const renderBusinessMediaForm = (mediaCode: MediaTypeCode) => {
     const isText = mediaCode === 'TEXT'
     const isNonDm = mediaCode === 'NON_DM'
-    const isNonPhoneVoiceOrVideo =
+    const isNonPhoneVideo =
       draft.channelTypeCode !== 'PHONE' &&
-      (mediaCode === 'VOICE' || mediaCode === 'VIDEO')
-    const hasQueueConfiguration = isText || isNonPhoneVoiceOrVideo
+      mediaCode === 'VIDEO'
+    const hasQueueConfiguration = isText || isNonPhoneVideo
     const channelType = channelTypeByCode.get(draft.channelTypeCode)
     const usesSocialAccessCapacity = channelType?.category === 'social'
     const hasAccessConfiguration = usesSocialAccessCapacity || isText
@@ -1785,6 +1779,14 @@ export function ChannelsPage() {
                 2,
                 true,
               )}
+              {isText &&
+                renderBusinessMessageField(
+                  mediaCode,
+                  'queueAutoReplyMessage',
+                  'Queue Auto-Reply Message',
+                  2,
+                  true,
+                )}
               {isText &&
                 renderBusinessNumberField(
                   mediaCode,
@@ -5932,6 +5934,8 @@ function WorkingTimePlanPreviewContent({ plan }: { plan: WorkingTimePlan }) {
 }
 
 export function SkillQueuesPage() {
+  const channels = useRoutingConfigStore((state) => state.channels)
+  const mediaTypes = useRoutingConfigStore((state) => state.mediaTypes)
   const skillQueues = useRoutingConfigStore((state) => state.skillQueues)
   const upsertEntity = useRoutingConfigStore((state) => state.upsertEntity)
   const deleteEntity = useRoutingConfigStore((state) => state.deleteEntity)
@@ -5951,6 +5955,54 @@ export function SkillQueuesPage() {
     () => new Map(workingTimePlans.map((plan) => [plan.planCode, plan])),
     [workingTimePlans],
   )
+  const routingRuleValuesByQueue = useMemo(() => {
+    const channelNameByCode = new Map(
+      channels.map((channel) => [channel.channelCode, channel.channelName]),
+    )
+    const mediaNameByCode = new Map(
+      mediaTypes.map((mediaType) => [
+        mediaType.mediaCode,
+        mediaType.mediaName,
+      ]),
+    )
+    const valuesByQueue = new Map<
+      string,
+      { channels: Set<string>; media: Set<string> }
+    >()
+
+    routingRules.forEach((rule) => {
+      const values = valuesByQueue.get(rule.targetSkillQueueCode) ?? {
+        channels: new Set<string>(),
+        media: new Set<string>(),
+      }
+      const channelCode = rule.conditions.find(
+        (condition) => condition.factorCode === '11',
+      )?.factorValueCode
+      const mediaCode = rule.conditions.find(
+        (condition) => condition.factorCode === '12',
+      )?.factorValueCode
+
+      if (channelCode) {
+        values.channels.add(channelNameByCode.get(channelCode) ?? channelCode)
+      }
+
+      if (mediaCode) {
+        values.media.add(mediaNameByCode.get(mediaCode) ?? mediaCode)
+      }
+
+      valuesByQueue.set(rule.targetSkillQueueCode, values)
+    })
+
+    return valuesByQueue
+  }, [channels, mediaTypes, routingRules])
+  const getRoutingRuleValues = (skillQueueCode: string) => {
+    const values = routingRuleValuesByQueue.get(skillQueueCode)
+
+    return {
+      channel: values ? Array.from(values.channels).join(', ') : '-',
+      media: values ? Array.from(values.media).join(', ') : '-',
+    }
+  }
 
   return (
     <>
@@ -5958,39 +6010,112 @@ export function SkillQueuesPage() {
       columns={[
         {
           dataIndex: 'skillQueueCode',
+          ellipsis: true,
           title: 'Skill ID',
-          width: 150,
-          render: (value: string) => <strong>{value}</strong>,
+          width: 200,
+          render: (value: string) => (
+            <strong className="routing-config__table-factor-value" title={value}>
+              {value}
+            </strong>
+          ),
         },
-        { dataIndex: 'platformSkillId', title: 'Platform Skill ID', width: 140 },
-        { dataIndex: 'skillQueueName', title: 'Skill Name', width: 210 },
+        {
+          dataIndex: 'platformSkillId',
+          ellipsis: true,
+          title: 'Platform Skill ID',
+          width: 120,
+        },
+        {
+          dataIndex: 'skillQueueName',
+          ellipsis: true,
+          title: 'Skill Name',
+          width: 160,
+        },
         {
           dataIndex: 'vdnCode',
+          ellipsis: true,
           title: 'VDN',
-          width: 150,
-          render: (value: string) => vdnLabelMap.get(value) ?? value,
+          width: 130,
+          render: (value: string) => {
+            const label = vdnLabelMap.get(value) ?? value
+
+            return (
+              <span className="routing-config__table-factor-value" title={label}>
+                {label}
+              </span>
+            )
+          },
         },
-        { dataIndex: 'accessCode', title: 'Access Code', width: 130 },
+        {
+          key: 'channel',
+          ellipsis: true,
+          title: 'Channel',
+          width: 130,
+          render: (_: unknown, record) => {
+            const value = getRoutingRuleValues(record.skillQueueCode).channel
+
+            return (
+              <span className="routing-config__table-factor-value" title={value}>
+                {value}
+              </span>
+            )
+          },
+        },
+        {
+          key: 'media',
+          ellipsis: true,
+          title: 'Media',
+          width: 110,
+          render: (_: unknown, record) => {
+            const value = getRoutingRuleValues(record.skillQueueCode).media
+
+            return (
+              <span className="routing-config__table-factor-value" title={value}>
+                {value}
+              </span>
+            )
+          },
+        },
+        {
+          dataIndex: 'accessCode',
+          ellipsis: true,
+          title: 'Access Code',
+          width: 100,
+        },
         {
           dataIndex: 'workTimePlanCode',
+          ellipsis: true,
           title: 'Work Time Plan',
-          width: 150,
-          render: (value: string) =>
-            workTimeLabelMap.get(value) ?? 'Default 24/7',
+          width: 120,
+          render: (value: string) => {
+            const label = workTimeLabelMap.get(value) ?? 'Default 24/7'
+
+            return (
+              <span className="routing-config__table-factor-value" title={label}>
+                {label}
+              </span>
+            )
+          },
+        },
+        {
+          dataIndex: 'slTargetPercent',
+          title: 'SL (%)',
+          width: 65,
+          render: (value?: number) => (value === undefined ? '-' : value),
         },
         {
           dataIndex: 'ahtTargetSeconds',
           title: 'AHT Target (sec)',
-          width: 110,
+          width: 120,
           render: (value?: number) => (value === undefined ? '-' : value),
         },
         {
           dataIndex: 'qmTargetPercent',
           title: 'QM Target (%)',
-          width: 105,
+          width: 100,
           render: (value?: number) => (value === undefined ? '-' : value),
         },
-        { dataIndex: 'assignedAgentCount', title: 'Agents', width: 72 },
+        { dataIndex: 'assignedAgentCount', title: 'Agents', width: 60 },
       ]}
       createDraft={() => ({
         accessCode: '',
@@ -6007,6 +6132,7 @@ export function SkillQueuesPage() {
         queueWaitingMessage:
           'All agents are busy. Estimated waiting time is {estimatedWaitMinutes} minutes.',
         qmTargetPercent: undefined,
+        slTargetPercent: undefined,
         skillQueueCode: 'SQ_NEW',
         skillQueueName: '',
         status: 'Active',
@@ -6027,6 +6153,7 @@ export function SkillQueuesPage() {
         queueTimeoutMinutes: numberValue(draft.queueTimeoutMinutes),
         queueWaitingMessage: stringValue(draft.queueWaitingMessage),
         qmTargetPercent: optionalNumberValue(draft.qmTargetPercent),
+        slTargetPercent: optionalNumberValue(draft.slTargetPercent),
         skillQueueCode: stringValue(draft.skillQueueCode),
         skillQueueName: stringValue(draft.skillQueueName),
         status: 'Active',
@@ -6060,6 +6187,34 @@ export function SkillQueuesPage() {
           type: 'select',
           width: 220,
         },
+        {
+          key: 'channel',
+          label: 'Channel',
+          options: channels.map((channel) => ({
+            label: channel.channelName,
+            value: channel.channelName,
+          })),
+          match: (record, value) =>
+            getRoutingRuleValues(record.skillQueueCode).channel
+              .split(', ')
+              .includes(value),
+          type: 'select',
+          width: 220,
+        },
+        {
+          key: 'media',
+          label: 'Media',
+          options: mediaTypes.map((mediaType) => ({
+            label: mediaType.mediaName,
+            value: mediaType.mediaName,
+          })),
+          match: (record, value) =>
+            getRoutingRuleValues(record.skillQueueCode).media
+              .split(', ')
+              .includes(value),
+          type: 'select',
+          width: 220,
+        },
       ]}
       getDeleteBlockReason={(record) =>
         routingRules.some(
@@ -6082,13 +6237,20 @@ export function SkillQueuesPage() {
         queueTimeoutMinutes: record.queueTimeoutMinutes,
         queueWaitingMessage: record.queueWaitingMessage,
         qmTargetPercent: record.qmTargetPercent,
+        slTargetPercent: record.slTargetPercent,
         skillQueueCode: record.skillQueueCode,
         skillQueueName: record.skillQueueName,
         supportsVideo: record.supportsVideo ? 'true' : 'false',
         vdnCode: record.vdnCode,
         workTimePlanCode: record.workTimePlanCode,
       })}
-      renderFormContent={({ draft, isReadOnly, mode, setDraftValue }) => {
+      renderFormContent={({
+        currentRecord,
+        draft,
+        isReadOnly,
+        mode,
+        setDraftValue,
+      }) => {
         const isEditMode = mode === 'edit'
         const renderRequiredMark = () => <strong>*</strong>
         const renderTextField = (
@@ -6257,6 +6419,20 @@ export function SkillQueuesPage() {
             </label>
           )
         }
+        const renderRoutingRuleField = (label: 'Channel' | 'Media') => {
+          const value = currentRecord
+            ? getRoutingRuleValues(currentRecord.skillQueueCode)[
+                label.toLowerCase() as 'channel' | 'media'
+              ]
+            : '-'
+
+          return (
+            <label className="routing-config-crud-modal__field">
+              <span>{label}</span>
+              {isReadOnly ? <em>{value}</em> : <Input disabled value={value} />}
+            </label>
+          )
+        }
         return (
           <div className="routing-config-skill-queue-modal">
             <section className="routing-config-media-rule-modal__section">
@@ -6275,10 +6451,19 @@ export function SkillQueuesPage() {
                   required: true,
                 })}
                 {renderSelectField('vdnCode', 'VDN', vdnOptions, true)}
+                {(isEditMode || isReadOnly) && (
+                  <>
+                    {renderRoutingRuleField('Channel')}
+                    {renderRoutingRuleField('Media')}
+                  </>
+                )}
                 {renderTextField('accessCode', 'Access Code', {
                   required: true,
                 })}
                 {renderWorkTimePlanField()}
+                {renderOptionalNumberField('slTargetPercent', 'SL (%)', {
+                  max: 100,
+                })}
                 {renderOptionalNumberField(
                   'ahtTargetSeconds',
                   'AHT Target (sec)',
@@ -6303,6 +6488,8 @@ export function SkillQueuesPage() {
         'vdnCode',
         'accessCode',
       ]}
+      tableClassName="routing-config-skill-queue-table"
+      tableScrollX={1570}
       title="Skill Queues"
       validateDraft={(draft, currentRecord) => [
         ...validateCode(stringValue(draft.skillQueueCode), 'Skill ID'),

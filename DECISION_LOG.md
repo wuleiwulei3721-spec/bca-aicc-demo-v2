@@ -1,8 +1,146 @@
 # Decision Log
 
-Last updated: 2026-09-02 09:45 +08:00
+Last updated: 2026-09-11 14:40 +08:00
 
 This document records important product and system design decisions that can be confirmed from the current codebase, project documents, `DEV_LOG.md`, and readable Git history. It intentionally omits bug fixes, visual micro-adjustments, temporary test data, copy-only tweaks, and implementation details that do not affect product direction.
+
+--------------------------------------------------
+
+Decision ID:
+DEC-059
+
+Module:
+Common Link / Local Full-Stack Architecture
+
+Decision:
+Common Link is the third local full-stack module. Local development uses React -> FastAPI -> the independent local MySQL database `aicc_demo_local`; customer static builds use bundled browser data through the independent `VITE_COMMON_LINK_MODE` switch.
+
+Reason:
+Common Link must provide refresh-persistent management data and the same website references in the agent workspace during local development, without making customer builds depend on a developer machine or any company/shared system.
+
+Impact:
+The Demo-owned `common_links` table is created only by a new Alembic migration, with ID, Website Name, HTTP(S) Website URL, Remark, Updated Time, and Updated By. Website Name and URL are uniquely checked after trim/lowercase normalization. The Common Link management page and agent workspace Common Links tab use one configured source. Common Phrase and Common Number keep their existing migrations and runtime switches unchanged.
+
+Status:
+Validated locally; no shared database, old system, CRM, CTI, Redis, or production data is used
+
+Source:
+User confirmation and implementation request on 2026-09-11; Code: `backend/app/`, `backend/alembic/versions/0003_common_link.py`, `src/api/commonLink*`, `src/store/commonLinkStore.ts`, `src/pages/call-management/CommonLinkManagementPage.tsx`, `src/pages/inbound/components/AssistantPanel.tsx`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-058
+
+Module:
+Common Number / Local Full-Stack Architecture
+
+Decision:
+Common Number is the second local full-stack module. Local development uses React -> FastAPI -> the independent local MySQL database `aicc_demo_local`; customer static builds use bundled browser data through the independent `VITE_COMMON_NUMBER_MODE` switch.
+
+Reason:
+Common Number must provide refresh-persistent management data and the same Active-only IVR transfer targets during local development, without making customer builds depend on a developer machine or any company/shared system.
+
+Impact:
+The Demo-owned `common_numbers` table is created only by a new Alembic migration, with ID, Name, Number, Active/Disabled status, Remark, Updated Time, and Updated By. Name and Number are uniquely checked after trim/lowercase normalization, while Number accepts IVR short codes. The Common Number management page and call Transfer IVR use one configured source; the Transfer IVR consumer requests only Active records. Common Phrase keeps its existing runtime switch and migration unchanged.
+
+Status:
+Validated locally; no shared database, old system, CRM, CTI, Redis, or production data is used
+
+Source:
+User confirmation and implementation request on 2026-09-11; Code: `backend/app/`, `backend/alembic/versions/0002_common_number.py`, `src/api/commonNumber*`, `src/store/commonNumberStore.ts`, `src/pages/call-management/CommonNumberManagementPage.tsx`, `src/layouts/components/TransferModal.tsx`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-057
+
+Module:
+Project Architecture / Local and Published Runtime Boundary
+
+Decision:
+Common Phrase is the reference pattern for future module expansion. Local development may use a real locally hosted backend and local database, while published/customer builds continue as static React applications using bundled mock data. Each module that moves beyond mock behavior must keep an explicit runtime switch and must not connect to company, shared development, or production resources without a separate confirmed decision.
+
+Reason:
+The Demo needs realistic local full-stack development without making customer builds depend on a developer machine or unavailable infrastructure. Keeping the runtime boundary explicit also prevents later module work from accidentally changing the deployment model or exposing local database assumptions.
+
+Impact:
+Future modules should document their local backend, database, migration, API, frontend data-source contract, error handling, persistence behavior, published mock-data behavior, and rollback path. Local validation must pass before that module's local default is changed. Common Phrase currently uses React -> FastAPI -> local MySQL `aicc_demo_local`; published builds use `VITE_COMMON_PHRASE_MODE=demo` and bundled mock data. The retained Node + SQLite code is legacy rollback only.
+
+Status:
+Confirmed project architecture rule; implemented for Common Phrase
+
+Source:
+User confirmation on 2026-09-10; Code: `vite.config.ts`, `scripts/dev.mjs`, `src/config/commonPhraseMode.ts`; Docs: `PROJECT_CONTEXT.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-056
+
+Module:
+Common Phrase / Local Backend Architecture
+
+Decision:
+The next Common Phrase implementation path is React -> FastAPI -> an independent local MySQL database named `aicc_demo_local`. The current Node + SQLite implementation remains as an explicit rollback baseline until the FastAPI + MySQL path is fully validated.
+
+Reason:
+The current Demo is the only business-rule source. A colleague's MySQL is technical reference only; the project must not connect to or modify company shared development resources. FastAPI and local MySQL provide a realistic local full-stack learning path while keeping customer and production integrations out of scope.
+
+Impact:
+The FastAPI model includes Demo-owned Shortcut Code, Common Phrase, Category, Active/Disabled status, persistent sort order, Remark, Created By/Time, and Updated By/Time. The existing React API paths and Live Chat Active-only behavior remain compatible. The backend refuses non-loopback hosts and database names other than `aicc_demo_local`.
+
+Status:
+Validated locally; FastAPI is now the default local development backend and Node + SQLite is retained only as legacy rollback code
+
+Source:
+User confirmation on 2026-09-08; Code: `backend/*`, `vite.config.ts`, `scripts/dev.mjs`, `src/api/commonPhraseApi.ts`, `src/pages/call-management/CommonPhraseManagementPage.tsx`; Docs: `PROJECT_CONTEXT.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-055
+
+Module:
+Common Phrase / Customer Demo Runtime
+
+Decision:
+Use one codebase with two Common Phrase runtime modes. Local development uses the native Node API and SQLite for persistent CRUD. Customer-facing static builds use bundled in-memory demo data so the management page and Live Chat remain usable without connecting to a local or undeployed backend; those changes reset after refresh.
+
+Reason:
+The current Vercel deployment is a Vite SPA and does not host the local Node API or SQLite file. A customer build must not call `localhost` or appear broken while production persistence, authentication, and permissions remain undecided.
+
+Impact:
+`VITE_COMMON_PHRASE_MODE` can explicitly select `api` or `demo`; when unset, development selects `api` and production selects `demo`. Customer users can operate the Common Phrase page during the current browser session, but their changes are not shared or durable. Persistent customer changes require a future backend decision.
+
+Status:
+Superseded by DEC-056 and DEC-057; the published customer-demo boundary remains valid, but local development now uses FastAPI + MySQL and Node + SQLite is legacy rollback only
+
+Source:
+User confirmation on 2026-09-03; Code: `src/config/commonPhraseMode.ts`, `src/api/commonPhraseDemoApi.ts`, `src/api/commonPhraseDataSource.ts`, `src/store/commonPhraseStore.ts`; Docs: `PROJECT_CONTEXT.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `DEV_LOG.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-054
+
+Module:
+Common Phrase / Local Full-Stack Boundary
+
+Decision:
+Common Phrase is the first local full-stack module. Its React management page and Live Chat Public Phrases use the same native TypeScript Node HTTP API, with `node:sqlite` storing `data/common-phrases.sqlite`. The local slice has no authentication, CRM, CTI, Redis, legacy-system, PostgreSQL, Docker, or external-interface dependency; the demo session supplies `updatedBy` and the server supplies IDs and timestamps.
+
+Reason:
+The project needs one refresh-persistent, locally runnable end-to-end capability before deciding whether other modules should move beyond front-end mock state. Native Node and SQLite keep the boundary small and aligned with the current Node `22.13+` runtime without committing the demo to production infrastructure.
+
+Impact:
+Common Phrase supports server-side query filters, category and phrase CRUD, status changes, deletion, category move, normalized duplicate validation, foreign-key cascade deletion, and audit metadata. The API returns all statuses by default; Live Chat explicitly requests `Active`, while My Phrases and all other module data keep their existing local behavior. The ignored SQLite file is local demo data and is not committed.
+
+Status:
+Implemented as local Demo behavior
+
+Source:
+User-approved implementation plan on 2026-09-03; Code: `server/*`, `src/api/commonPhraseApi.ts`, `src/store/commonPhraseStore.ts`, `src/pages/call-management/CommonPhraseManagementPage.tsx`, `src/pages/inbound/LiveChat2Page.tsx`; Docs: `BUSINESS_RULES.md`, `PROJECT_CONTEXT.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`, `DEV_LOG.md`
 
 --------------------------------------------------
 
@@ -1345,6 +1483,29 @@ Implemented
 
 Source:
 Customer clarification on 2026-08-20; Code: `src/pages/call-management/QuickActionManagementPage.tsx`, `src/store/callManagementStore.ts`, `src/pages/inbound/components/QuickActionCard.tsx`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `PROJECT_CONTEXT.md`
+
+--------------------------------------------------
+
+Decision ID:
+DEC-039
+
+Module:
+Routing Config / Channels
+
+Decision:
+Voice channel Business Config follows the Phone Voice pattern and has no Queue Configuration. DM Queue Configuration adds the required `Queue Auto-Reply Message` for customers who send a message while queued.
+
+Reason:
+The confirmed channel-management rule distinguishes voice queue prompts from DM interactions that can receive customer messages before an agent is assigned.
+
+Impact:
+All `VOICE` Business Config tabs show the standard no-configuration prompt. The DM auto-reply is stored as front-end demo configuration only; a future routing integration must map it to the queued-message trigger.
+
+Status:
+Implemented
+
+Source:
+Customer request on 2026-09-14; Code: `src/pages/routing-config/RoutingConfigDataPages.tsx`, `src/mock/routingConfiguration.ts`, `src/types/routingConfiguration.ts`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `CURRENT_TODO.md`
 
 --------------------------------------------------
 

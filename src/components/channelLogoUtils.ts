@@ -4,9 +4,9 @@ export type ChannelLogoChannel =
   | 'Phone'
   | 'Video'
   | 'Email'
-  | 'BankApp'
-  | 'BankApp Voice'
-  | 'BankApp Video'
+  | 'HaloBCA'
+  | 'HaloBCA Voice'
+  | 'HaloBCA Video'
   | 'WhatsApp'
   | 'Webchat'
   | 'Webchat Voice'
@@ -22,9 +22,9 @@ export type ChannelLogoChannel =
 
 const standardLogoFiles: Record<string, string> = {
   'App Store': 'app-store.png',
-  BankApp: 'bankapp.png',
-  'BankApp Video': 'bankapp.png',
-  'BankApp Voice': 'bankapp.png',
+  HaloBCA: 'bankapp.png',
+  'HaloBCA Video': 'bankapp.png',
+  'HaloBCA Voice': 'bankapp.png',
   Email: 'email.png',
   Facebook: 'facebook.png',
   Instagram: 'instagram.png',
@@ -42,7 +42,7 @@ const standardLogoFiles: Record<string, string> = {
 }
 
 const liveChatLogoFiles: Record<string, string> = {
-  BankApp: 'bankapp.png',
+  HaloBCA: 'bankapp.png',
   Webchat: 'webchat.png',
   WhatsApp: 'whatsapp.png',
 }

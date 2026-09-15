@@ -147,6 +147,7 @@ interface RoutingConfigCrudPageProps<RecordType extends object> {
   resetButtonText?: string
   searchFields: Array<keyof RecordType>
   searchButtonText?: string
+  tableClassName?: string
   tableScrollX?: number
   title: string
   validationMessage?: string
@@ -351,6 +352,7 @@ export function RoutingConfigCrudPage<RecordType extends object>({
   resetButtonText = 'Reset',
   searchFields,
   searchButtonText = 'Search',
+  tableClassName,
   tableScrollX,
   title,
   validationMessage = 'Please resolve validation issues.',
@@ -675,6 +677,7 @@ export function RoutingConfigCrudPage<RecordType extends object>({
             }
           />
           <AdminTable<RecordType>
+            className={tableClassName}
             columns={actionColumns}
             dataSource={filteredData}
             pagination={{}}

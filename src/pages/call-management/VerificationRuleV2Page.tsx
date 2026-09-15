@@ -1,4 +1,4 @@
-﻿import {
+import {
   ArrowDownOutlined,
   ArrowUpOutlined,
   BookOutlined,
@@ -299,11 +299,11 @@ function getRuleValidationErrors(rule: VerificationV2Rule) {
   )
 
   if (hasHaloAppChannel && !rule.haloAppLoginStatus) {
-    errors.push('HaloApp Login Status is required.')
+    errors.push('HaloBCA Login Status is required.')
   }
 
   if (!hasHaloAppChannel && rule.haloAppLoginStatus) {
-    errors.push('HaloApp Login Status is only available for HaloApp rules.')
+    errors.push('HaloBCA Login Status is only available for HaloBCA rules.')
   }
 
   if (!rule.skillQueueCode) {
@@ -547,8 +547,8 @@ export function VerificationRuleV2Page() {
 
       return {
         ...channelNameByCode,
-        BANKAPP: `${getChannelName('BANKAPP', 'Bankapp')} ${getMediaName('VOICE', 'Voice')}`,
-        BANKAPP_VIDEO: `${getChannelName('BANKAPP', 'Bankapp')} ${getMediaName('VIDEO', 'Video')}`,
+        BANKAPP: `${getChannelName('BANKAPP', 'HaloBCA')} ${getMediaName('VOICE', 'Voice')}`,
+        BANKAPP_VIDEO: `${getChannelName('BANKAPP', 'HaloBCA')} ${getMediaName('VIDEO', 'Video')}`,
         PHONE: getChannelName('PHONE', 'Phone'),
         WEBCHAT: `${getChannelName('WEBCHAT', 'Webchat')} ${getMediaName('VOICE', 'Voice')}`,
         WEBCHAT_VIDEO: `${getChannelName('WEBCHAT', 'Webchat')} ${getMediaName('VIDEO', 'Video')}`,
@@ -1233,7 +1233,7 @@ export function VerificationRuleV2Page() {
     },
     {
       key: 'haloAppLoginStatus',
-      title: 'HaloApp Login Status',
+      title: 'HaloBCA Login Status',
       width: 128,
       render: (_, rule) =>
         rule.haloAppLoginStatus
@@ -1610,7 +1610,7 @@ export function VerificationRuleV2Page() {
                   }
                 />
               </AdminFilterField>
-              <AdminFilterField label="HaloApp Login Status" width={180}>
+              <AdminFilterField label="HaloBCA Login Status" width={180}>
                 <Select
                   options={[
                     { label: 'All', value: '' },
@@ -1776,7 +1776,7 @@ export function VerificationRuleV2Page() {
                 {ruleDraft.channelCodes.some(
                   isVerificationV2HaloAppChannel,
                 ) && (
-                  <AdminFormField label="HaloApp Login Status" required>
+                  <AdminFormField label="HaloBCA Login Status" required>
                     <Select
                       disabled={isRuleViewMode}
                       options={verificationV2HaloAppLoginStatusOptions}

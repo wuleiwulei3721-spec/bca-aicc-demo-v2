@@ -44,7 +44,7 @@ interface CallRecordFilters {
 const channelOptions: Array<{ label: string; value: CallRecordFilters['channel'] }> = [
   { label: 'All Channels', value: 'All' },
   { label: 'Phone', value: 'Phone' },
-  { label: 'BankApp', value: 'BankApp' },
+  { label: 'HaloBCA', value: 'HaloBCA' },
   { label: 'Webchat', value: 'Webchat' },
   { label: 'WhatsApp', value: 'WhatsApp' },
 ]
@@ -322,8 +322,14 @@ export function CallRecordQueryPage() {
     {
       dataIndex: 'durationSeconds',
       render: (value: number) => formatDuration(value),
-      title: 'Duration',
-      width: 92,
+      title: 'Total Duration',
+      width: 110,
+    },
+    {
+      dataIndex: 'holdDurationSeconds',
+      render: (value: number) => formatDuration(value),
+      title: 'Hold Duration',
+      width: 110,
     },
     {
       dataIndex: 'endedBy',
@@ -379,7 +385,7 @@ export function CallRecordQueryPage() {
     <AdminPage
       className="call-record-query"
       title="Interaction Log"
-      description="Current agent view for Phone, BankApp, Webchat, and WhatsApp interaction records."
+      description="Current agent view for Phone, HaloBCA, Webchat, and WhatsApp interaction records."
     >
       <BaseCard compact>
         <AdminToolbar

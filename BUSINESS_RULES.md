@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-09-02 09:45 +08:00
+Last updated: 2026-09-14 16:50 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -37,7 +37,7 @@ Implemented status model:
 - The current demo has fixed internal full-channel capability. Voice/video and text handoffs are gated only by `Ready` state and active-service guards; no sign-in-mode mismatch warning is shown.
 - A Not Ready sign-in opens no Live Chat service or default customer session. The first switch to Ready opens the fixed `Live Chat` tab and seeds default live chat demo sessions.
 - Saving or resetting Global Control Configuration changes the status applied by the next sign-in and immediately synchronizes the Live Chat ended-session retention limit in the current browser session. Refresh resets the demo configuration to its mock defaults.
-- Global Control `System Idle Log-out Timeout` is a required single-select system-session inactivity setting with `30` (default), `60`, and `120` minute values. `Auto Log-out Warning Lead Time` is always required, must be greater than `0`, and must be less than the selected timeout. Neither setting represents or changes the agent toolbar `Sign Out` action.
+- Global Control `System Idle Log-out Timeout` is a required single-select system-session inactivity setting with `15` to `240` minute values in 15-minute increments; `30` remains the default. `Auto Log-out Warning Lead Time` is required, accepts `0` or a value less than the selected timeout, and uses `0` to disable the advance warning while retaining automatic log-out at the selected timeout. Neither setting represents or changes the agent toolbar `Sign Out` action.
 
 ### Profile Menu
 
@@ -62,7 +62,7 @@ Implemented status model:
 - When the agent is signed in and is neither `Not Ready` nor AUX, including `Ready` and `Pre-AUX`, Log Out is blocked with: `To prevent new customer work from being assigned while you log out, change your status to Not Ready or AUX before logging out.`
 - `Unsigned`, `Not Ready`, and AUX statuses show the `Confirm Log Out` confirmation. Confirming clears agent service state, clears the auth session and any pending or unused external-operation approval, and returns to the login page.
 - Idle monitoring applies only while status is `Unsigned`, `Not Ready`, or AUX. It resets whenever the agent enters one of those statuses, leaves that scope, closes the warning, or performs a window activity such as focus, pointer movement/click, keyboard input, scrolling, or touch input.
-- The demo shows `Session Expiring` at `System Idle Log-out Timeout - Auto Log-out Warning Lead Time`; closing the dialog or choosing `Continue Working` resets the timer. At the selected timeout, the demo automatically logs out.
+- When `Auto Log-out Warning Lead Time` is greater than `0`, the demo shows `Session Expiring` at `System Idle Log-out Timeout - Auto Log-out Warning Lead Time`; closing the dialog or choosing `Continue Working` resets the timer. With a `0` warning lead time, no warning is shown. At the selected timeout, the demo automatically logs out in both cases.
 - This is a current-window front-end demo only. It does not provide server session invalidation, multi-tab synchronization, or a backend authentication revocation flow.
 
 ### Login Log
@@ -76,7 +76,7 @@ Implemented status model:
 
 - `Ready` means the agent can receive compatible interactions.
 - The call toolbar shows the `Not Ready` / `Ready` status button after signing in. A Not Ready sign-in can use its first click to enter Ready and seed the default Live Chat demo sessions.
-- After that first Ready transition, the Ready toolbar button remains visible but cannot return to Not Ready until a Voice or Video Incoming popup has appeared. PSTN, BankApp Voice, and BankApp Video Incoming popups unlock normal two-way Ready / Not Ready toolbar toggling for the rest of the signed-in session. Text-channel sessions do not unlock it.
+- After that first Ready transition, the Ready toolbar button remains visible but cannot return to Not Ready until a Voice or Video Incoming popup has appeared. PSTN, HaloBCA Voice, and HaloBCA Video Incoming popups unlock normal two-way Ready / Not Ready toolbar toggling for the rest of the signed-in session. Text-channel sessions do not unlock it.
 - If Global Control signs the agent in as Ready, the toolbar is immediately two-way toggleable. The profile menu remains status-specific and does not expose a manual Not Ready item. Selecting Ready while in Pre-AUX cancels the pending AUX request.
 - Returning to Ready clears After Call Work and call handoff warnings.
 
@@ -109,7 +109,7 @@ Only one voice/video call can be active at a time.
 
 ### Incoming
 
-- PSTN, BankApp Voice, and BankApp Video create and activate a dynamic call interaction tab.
+- PSTN, HaloBCA Voice, and HaloBCA Video create and activate a dynamic call interaction tab.
 - A new voice/video interaction removes all ended voice/video workspace tabs. Their embedded CRM workspaces are unmounted, so only the latest voice/video interaction remains available for CRM editing.
 - The toolbar shows Answer and call context.
 - Answer flashes while the call is incoming.
@@ -149,7 +149,7 @@ Only one voice/video call can be active at a time.
 Toolbar call context is visible for non-idle calls:
 
 - PSTN voice shows `IVR: +{ANI Number}`; the current demo ANI is `08123456789`.
-- HaloApp voice/video shows `HaloApp: {BCAID}` for logged-in customers; the current demo BCAID is `00012345`. Guests show `HaloApp: Guest`.
+- HaloBCA voice/video shows `HaloBCA: {BCAID}` for logged-in customers; the current demo BCAID is `00012345`. Guests show `HaloBCA: Guest`.
 - Webchat voice/video must show `Webchat: {BCAID}` for logged-in customers and `Webchat: Guest-0001` for guests when those media routes are implemented. The current Webchat demo supports DM only and does not open the voice/video toolbar.
 - Skill is shown as `Skill Credit card activation`.
 - Skill is shown during Incoming, Talking, and Hold.
@@ -182,7 +182,7 @@ Call transfer modal:
 - `Transfer Number` is not visible to ordinary agents. `888888 / 888888` has no permission for it. `666666 / 666666` is the TL Demo account and has `transfer:external-number`, which displays the tab. The agent must enter a number and select `Consult` before `Transfer` or `Conference` is enabled; while consulting, the number and other transfer targets are locked, and `Cancel Consult` restores the default state. It does not require TL approval. A successful transfer closes the modal, ends the current call through ordinary Hang Up / ACW, and shows `Transferred to {Number}.` below the toolbar. A successful conference closes the modal and disables toolbar Transfer until the call ends. Numbers ending in `000` deterministically simulate a failure at the final Transfer action, keep the modal open, and show `We couldn't complete the transfer. Please try again.`.
 - Transfer IVR lists enabled entries from `Call Management > Common Number`.
 - Transfer IVR row action is a release transfer: it closes the modal, ends the current call through ordinary Hang Up / ACW, and shows `Transferred to IVR {Name}.` below the toolbar.
-- Video calls do not expose the call Transfer action in the header toolbar.
+- During video calls, the header toolbar keeps Hold and Transfer visible but disables both actions. Their native titles explain that the action is unavailable during a video call.
 
 Conversation transfer modal:
 
@@ -261,7 +261,7 @@ Special Handling:
 Customer identity refresh:
 
 - A customer without a valid CRM CIS is displayed as `Unidentified Customer`; Customer Information has no manual Customer ID input or refresh action. The card keeps the compact presentation: Phone, Email, and Customer Number rows remain with `-` placeholder values, except that an unidentified WhatsApp interaction keeps its channel-provided WhatsApp number in the Phone row. Unidentified customers have no avatar, CRM-dependent actions, customer-phone outbound, Segmentation, or Special Handling. Identified profiles use the mapping formats: country-coded Phone, Email with contact verification suffix, Customer Number, and Segmentation from the CRM membership/segmentation fields. When available, Special Handling sits at the end of the Segmentation row. The toolbar may still show the anonymous caller number or channel-side Guest context for call identification.
-- Verification display follows the customer mapping by channel and media: PSTN, BankApp Voice/Video, and Webchat Voice/Video show the verification status and `KBV` entry; registered BankApp text / Live Chat shows the verification status and `PIN` entry; WhatsApp, Email, Webchat text, Social Media, and guest BankApp text hide both the status and verification entry. Social Media's supported identified state is `Identified, Unverified`; its customer profile may be populated, while the verification result and action remain hidden. WhatsApp uses the CRM WhatsApp contact as the Phone value when available.
+- Verification display follows the customer mapping by channel and media: PSTN, HaloBCA Voice/Video, and Webchat Voice/Video show the verification status and `KBV` entry; registered HaloBCA text / Live Chat shows the verification status and `PIN` entry; WhatsApp, Email, Webchat text, Social Media, and guest HaloBCA text hide both the status and verification entry. Social Media's supported identified state is `Identified, Unverified`; its customer profile may be populated, while the verification result and action remain hidden. WhatsApp uses the CRM WhatsApp contact as the Phone value when available.
 - After voice KBV meets its requirements and the agent selects `Apply Verified`, AICC marks the customer `Verified` and sends a same-origin CRM CIS `postMessage` request with a version and correlation ID.
 - The CRM demo bridge returns the CIS in a matching response. AICC accepts only matching, same-origin, non-empty CIS responses, then uses the CIS to load mock customer profile, journey, and ticket history.
 - Invalid origin, message type, correlation ID, empty CIS, unknown CIS, or timeout leaves the current customer information unchanged and shows a refresh failure message. A completed KBV remains `Verified`.
@@ -277,18 +277,18 @@ Guest customer information:
 
 Customer contact information:
 
-- Customer Information displays the phone number and email from the current CRM-backed customer profile. For WhatsApp interactions, the Phone value uses the CRM WhatsApp contact when available; an unidentified WhatsApp interaction may display its channel-provided WhatsApp number even without a CRM CIS. After a valid CRM CIS is available, its header provides an `All Contact Details` viewer; it is read-only and does not dial, send, or open external links. The viewer is hidden while the customer is unidentified or a Guest.
-- The viewer groups Phone, WhatsApp, BankApp, Email, Facebook, Instagram, X, TikTok, YouTube, LinkedIn, App Store, and Play Store. Each group presents fixed left channel identity and right-side CRM values; a channel can contain zero or more values, and no CRM value shows `-`.
+- Customer Information displays the phone number and email from the current CRM-backed customer profile. For WhatsApp interactions, the Phone value uses the CRM WhatsApp contact when available; an unidentified WhatsApp interaction may display its channel-provided WhatsApp number even without a CRM CIS. As soon as a valid CRM CIS identifies the customer, its header provides an `All Contact Details` viewer independently of verification status; it is read-only and does not dial, send, or open external links. The viewer is hidden while the customer is unidentified or a Guest.
+- The viewer groups Phone, HaloBCA, Email, Facebook, Instagram, X, TikTok, and LinkedIn. Each group presents fixed left channel identity and right-side CRM values; when the CRM contact object does not include Phone or Email, the identified customer profile values are used as the default display values, while unavailable values show `-`.
 - Agents cannot add, edit, or delete contacts in the customer profile. Unidentified customers have no CRM contact values; after a valid CIS refresh, the viewer reads the refreshed CRM-backed profile.
 - The legacy Contact Management DEMO remains available only to local maintainers when `VITE_APP_VISIBILITY_PROFILE=local` and `VITE_ENABLE_CONTACT_EDIT=true`; it is local-only mock state, not a CRM write-back capability or customer-visible feature.
 - Any future customer-facing contact editing requires confirmed CRM write authority, audit requirements, field ownership, validation, and failure handling.
 
 Verification:
 
-- PSTN, BankApp Voice/Video, and Webchat Voice/Video show a compact `KBV` action, which opens Customer Verification V2 in the right-side Verification tab, together with the verification result status. This remains true for an unidentified voice/video customer when the mapping marks the media as supported.
-- BankApp text / Live Chat for logged-in BankApp customers shows a compact `PIN` action on the Customer Information card.
-- WhatsApp, Email, Webchat text, Social Media, and BankApp text / Live Chat guest customers do not show either a verification action or verification result status in the current demo.
-- BankApp PIN verification sets the card status to `Verifying`, opens the mock secure PIN page in the BankApp customer demo, and updates the card to `Verified` or `Verification Failed` from the simulated callback result. Hovering the failed status icon shows the returned demo reason: `PIN input is incorrect`. After the third failed attempt, the disabled `PIN` action shows the verification-limit reason on hover.
+- PSTN, HaloBCA Voice/Video, and Webchat Voice/Video show a compact `KBV` action, which opens Customer Verification V2 in the right-side Verification tab, together with the verification result status. This remains true for an unidentified voice/video customer when the mapping marks the media as supported.
+- HaloBCA text / Live Chat for logged-in HaloBCA customers shows a compact `PIN` action on the Customer Information card.
+- WhatsApp, Email, Webchat text, Social Media, and HaloBCA text / Live Chat guest customers do not show either a verification action or verification result status in the current demo.
+- HaloBCA PIN verification sets the card status to `Verifying`, opens the mock secure PIN page in the HaloBCA customer demo, and updates the card to `Verified` or `Verification Failed` from the simulated callback result. Hovering the failed status icon shows the returned demo reason: `PIN input is incorrect`. After the third failed attempt, the disabled `PIN` action shows the verification-limit reason on hover.
 - The PIN page represents a BCA-provided client page. In the demo, Netinfo initiates the PIN verification request and BCA returns the result to Netinfo.
 - PIN can be requested up to 3 times. While waiting, after success, and after the third failed attempt, the `PIN` action is disabled.
 - For KBV, the CRM center workspace remains visible while the agent asks questions and marks Correct, Wrong, or Skip.
@@ -297,7 +297,7 @@ Verification:
 Call Flow Detail:
 
 - Only PSTN telephone calls show IVR Journey, recording the IVR nodes selected before routing.
-- BankApp Voice, BankApp Video, and digital channels do not show IVR Journey. Their Call Flow Detail shows `Business Menu Selection Record`, recording the business menu selected by the customer before routing. Transfer History is always visible: it includes completed upstream transfers when present and the current agent's in-progress service record with `-` for unavailable duration and transfer time.
+- HaloBCA Voice, HaloBCA Video, and digital channels do not show IVR Journey. Their Call Flow Detail shows `Business Menu Selection Record`, recording the business menu selected by the customer before routing. Transfer History is always visible: it includes completed upstream transfers when present and the current agent's in-progress service record with `-` for unavailable duration and transfer time.
 - Live Chat can show transfer history.
 
 ## 10. Customer Verification V2 Rules
@@ -306,14 +306,14 @@ Verification V2 is the current KBV model.
 
 Rule matching:
 
-- The Verification Rules management Channel field is built from active channel and media configuration. With the current default configuration it exposes exactly five media-level options: `Phone`, `Bankapp Voice`, `Bankapp Video`, `Webchat Voice`, and `Webchat Video`; `Phone` remains channel-level while Bankapp and Webchat combine with their configured Voice/Video media. Removing a channel media type removes that option from new and filter controls without deleting seeded rule rows; an unavailable value remains readable as inactive in an existing rule editor.
-- Rules match by enabled channel code, skill queue, customer segment, and, for HaloApp, the first received login status.
-- Rules containing Bankapp Voice or Bankapp Video must set `HaloApp Login Status` to `Same for Both`, `Logged In`, or `Not Logged In`. `Same for Both` applies to either first-call status; Phone and Webchat rules show no HaloApp login status.
-- Perbankan has a HaloApp-only `Logged In` rule requiring 1 Mandatory plus 2 Dynamic correct answers (3 total); its 5-answer `Not Logged In` configuration (1 Mandatory, 2 Dynamic, 2 Static) is combined with Phone in one multi-channel rule. Phone ignores the HaloApp-only login-status condition.
-- Kartu Kredit has a HaloApp-only `Logged In` rule requiring 3 correct answers; its 4-answer `Not Logged In` configuration is combined with Phone in one multi-channel rule.
-- Other HaloApp skills use `Same for Both` and retain their existing question configuration for logged-in and guest customers.
-- HaloApp login status is captured from the first Voice handoff, is not editable by the agent, and remains fixed when KBV is reopened in the same interaction. A future real-time HaloApp status callback requires a separate re-verification policy.
-- Enabled rules may not overlap on a channel, skill queue, customer segment, and applicable HaloApp login status. Disabled duplicate configurations are allowed.
+- The Verification Rules management Channel field is built from active channel and media configuration. With the current default configuration it exposes exactly five media-level options: `Phone`, `HaloBCA Voice`, `HaloBCA Video`, `Webchat Voice`, and `Webchat Video`; `Phone` remains channel-level while HaloBCA and Webchat combine with their configured Voice/Video media. Removing a channel media type removes that option from new and filter controls without deleting seeded rule rows; an unavailable value remains readable as inactive in an existing rule editor.
+- Rules match by enabled channel code, skill queue, customer segment, and, for HaloBCA, the first received login status.
+- Rules containing HaloBCA Voice or HaloBCA Video must set `HaloBCA Login Status` to `Same for Both`, `Logged In`, or `Not Logged In`. `Same for Both` applies to either first-call status; Phone and Webchat rules show no HaloBCA login status.
+- Perbankan has a HaloBCA-only `Logged In` rule requiring 1 Mandatory plus 2 Dynamic correct answers (3 total); its 5-answer `Not Logged In` configuration (1 Mandatory, 2 Dynamic, 2 Static) is combined with Phone in one multi-channel rule. Phone ignores the HaloBCA-only login-status condition.
+- Kartu Kredit has a HaloBCA-only `Logged In` rule requiring 3 correct answers; its 4-answer `Not Logged In` configuration is combined with Phone in one multi-channel rule.
+- Other HaloBCA skills use `Same for Both` and retain their existing question configuration for logged-in and guest customers.
+- HaloBCA login status is captured from the first Voice handoff, is not editable by the agent, and remains fixed when KBV is reopened in the same interaction. A future real-time HaloBCA status callback requires a separate re-verification policy.
+- Enabled rules may not overlap on a channel, skill queue, customer segment, and applicable HaloBCA login status. Disabled duplicate configurations are allowed.
 - Customer segment is inferred from profile but can be adjusted in the agent modal.
 - Skill can be adjusted in the agent verification tab or management preview modal.
 - Scenario selector is shown only when the matched rule has multiple scenarios.
@@ -321,7 +321,7 @@ Rule matching:
 Rule model:
 
 - A rule contains channel codes, skill queue, customer segments, status, and scenarios.
-- HaloApp rules additionally contain a single login-status applicability value. Management List and query support this value, and Copy opens a deep-copied Add Rule draft without persisting it.
+- HaloBCA rules additionally contain a single login-status applicability value. Management List and query support this value, and Copy opens a deep-copied Add Rule draft without persisting it.
 - A scenario contains question blocks.
 - Question block types include:
   - `Mandatory`
@@ -366,12 +366,12 @@ Customer Journey:
 - Sorts by date descending.
 - Collapsed state shows 2 items.
 - Expanded state shows up to 10 items.
-- Phone, BankApp, Webchat, and WhatsApp rows show the Category of every Ticket linked to the current interaction after the channel icon, in Ticket order. A missing Ticket or Category renders `-`; long combined Category text is ellipsized without a hover expansion. Journey rows do not show a success or failure result icon.
-- Clicking Phone, BankApp, Webchat, or WhatsApp opens the same channel-media detail modal used by Interaction Log. Voice, Video, and DM therefore keep their corresponding playback or conversation presentation.
+- Phone, HaloBCA, Webchat, and WhatsApp rows show the Category of every Ticket linked to the current interaction after the channel icon, in Ticket order. A missing Ticket or Category renders `-`; long combined Category text is ellipsized without a hover expansion. Journey rows do not show a success or failure result icon.
+- Clicking Phone, HaloBCA, Webchat, or WhatsApp opens the same channel-media detail modal used by Interaction Log. Voice, Video, and DM therefore keep their corresponding playback or conversation presentation.
 - Email and Social Media rows continue to open `Interaction Detail`, which shows customer/agent conversation and summary sections.
 - When no customer-specific journey data is available, the card displays `No data available.`.
 
-Channels shown in journey include Phone, BankApp, Webchat, WhatsApp, Email, X, Instagram, and TikTok.
+Channels shown in journey include Phone, HaloBCA, Webchat, WhatsApp, Email, X, Instagram, and TikTok.
 
 ## 12. Ticketing History Rules
 
@@ -427,7 +427,7 @@ Assistant panel:
 - Assistant screenshot path: `/screenshots/assistant-workspace.jpg`.
 - If screenshot loading fails, code fallback UI renders.
 
-Common Links shows website names and website URLs from `Call Management > Common Link`; clicking a link opens the website in a new browser tab.
+Common Links shows website names and website URLs from `Call Management > Common Link`; clicking a link opens the website in a new browser tab. The management page and workspace tab use the same configured Common Link source: local development persists through FastAPI and local MySQL, while customer static builds use bundled mock data and reset management changes after refresh.
 
 ## 17. Live Chat Rules
 
@@ -435,9 +435,12 @@ Live Chat opens and seeds default current demo sessions when the signed-in agent
 
 Customer list:
 
+- The customer list and conversation header display the channel-provided customer name for HaloBCA (logged-in and guest), WhatsApp, and Webchat. This Live Chat display name is independent of the shared Customer Information card, which continues to apply its CRM/CIS identification rule and may display `Unidentified Customer`.
+- Ended Current cards show a compact, unframed, light-gray text label (`Agent`, `Customer`, or `Timeout`) right-aligned on the customer-name row. A tooltip retains the full wording; the existing Close action remains on the row below.
+- The ended conversation header shows the full reason (`Agent ended`, `Customer ended`, or `Timed out`) directly left of the `Close` action.
 - Supports Current and History views.
 - Supports collapsed and expanded layouts.
-- Supports channel filters: All, WhatsApp, BankApp, Webchat.
+- Supports channel filters: All, WhatsApp, HaloBCA, Webchat.
 - All filter toggles all channels on/off.
 - Supports sorting by access time or message time.
 - Current combines active service sessions up to `Global Control Configuration > Max Digital Media Services` (default 3) with recently ended Live Chat sessions up to `Max Live Chat Ended Session Retention` (default 10). The list remains unified and follows the selected sort mode.
@@ -463,6 +466,9 @@ Conversation:
 - Active session actions: `Transfer`, `End Service`.
 - Customer-ended session action: `Close`.
 - Sending a message appends a current-agent message in local state.
+- Current sessions show BANK 1 Virtual Assistant messages and a centered one-paragraph `BOT CONVERSATION SUMMARY` immediately after the final bot message. The summary gives the customer request, the bot-captured context, and the intended agent follow-up; it is not shown in History.
+- A newly admitted Channel Simulation text handoff starts its summary in `Organizing the bot conversation. Please wait...` state and changes to the prepared mock summary after about 1.5 seconds. The summary state is isolated per session and does not affect SLA, unread counts, Message Record, transfer, or service ending.
+- This is a front-end demo only. The demo does not call a customer message platform or SpeaklyAI; a future integration must retrieve the bot transcript before submitting it to the approved summary service.
 - End Service main action keeps the confirmation modal, then records a normal agent end after confirmation.
 - End Service shows the `Abnormal End Reason` caret only when at least one active abnormal reason applies to DM. When none applies, End Service remains a normal single button and retains its confirmation modal.
 - Selecting an abnormal End Service reason ends the session immediately without another confirmation.
@@ -489,7 +495,7 @@ Quick Replies:
 
 Message recall:
 
-- Message recall and re-edit are not available in the Live Chat workspace for WhatsApp, BankApp, or Webchat.
+- Message recall and re-edit are not available in the Live Chat workspace for WhatsApp, HaloBCA, or Webchat.
 
 Sensitive word check:
 
@@ -498,9 +504,9 @@ Sensitive word check:
 - The blocked draft remains in the composer so the agent can revise it.
 - Matching is a front-end demo contains check after trim and lowercase normalization.
 
-## 18. BankApp Demo Rules
+## 18. HaloBCA Demo Rules
 
-BankApp demo variants:
+HaloBCA demo variants:
 
 - Voice.
 - Video.
@@ -508,7 +514,7 @@ BankApp demo variants:
 
 Client page ownership:
 
-- Haloapp / BankApp text, voice, video, PIN, desktop-share, and satisfaction pages are BCA-owned client pages.
+- HaloBCA / HaloBCA text, voice, video, PIN, desktop-share, and satisfaction pages are BCA-owned client pages.
 - Netinfo demo behavior starts at SDK/API handoff, routing, agent workspace, message exchange, verification request/result, and call popup behavior.
 - The customer-side demo uses the approved V1.8 flow screenshots as read-only client references and should not imply Netinfo builds those pages.
 
@@ -537,17 +543,17 @@ Handoff rules:
 
 PIN:
 
-- BankApp PIN verification is a mock customer-side secure PIN page.
-- It is triggered from the agent Customer Information card for logged-in BankApp text / Live Chat customers.
+- HaloBCA PIN verification is a mock customer-side secure PIN page.
+- It is triggered from the agent Customer Information card for logged-in HaloBCA text / Live Chat customers.
 - The agent-side card shows `Verifying` while the customer PIN page is open.
 - The customer demo page can submit success or simulate failure; success marks the customer `Verified`, while three failed attempts mark verification failed and disable further PIN requests.
-- PIN verification is separate from KBV question rules. In the current demo, KBV is used for voice channels and PIN is used for logged-in BankApp text verification.
+- PIN verification is separate from KBV question rules. In the current demo, KBV is used for voice channels and PIN is used for logged-in HaloBCA text verification.
 - Webchat PIN verification is temporarily hidden pending customer confirmation.
 
 Video desktop sharing:
 
 - Video client UI has no keypad and no transfer action.
-- Customer starts desktop sharing from the Haloapp video call page; the client button changes from `Desktop Share` to `Stop Sharing`.
+- Customer starts desktop sharing from the HaloBCA video call page; the client button changes from `Desktop Share` to `Stop Sharing`.
 - The agent side only views the customer-shared screen in the floating video window.
 - The demo does not show sensitive-word masking or desensitization during video desktop sharing.
 
@@ -576,7 +582,7 @@ Current scope:
 
 ## 20. WhatsApp Demo Rules
 
-WhatsApp demo uses the BankApp demo framework with a WhatsApp variant.
+WhatsApp demo uses the HaloBCA demo framework with a WhatsApp variant.
 
 Flow:
 
@@ -720,10 +726,12 @@ Hidden / redirected:
 - Common Phrase is required and limited to 2000 characters; it uses the shared Ticket-style count control.
 - Shortcut Code is limited to 50 characters and globally unique across public common phrases after trim and lowercase normalization.
 - Category Name is unique after trim and lowercase normalization.
-- Phrase records contain Shortcut Code, Common Phrase, Category, Updated Time, and Updated By. The list shows Updated Time followed by Updated By before Actions, and adding, editing, or moving a phrase refreshes the update metadata.
+- Phrase records contain Shortcut Code, Common Phrase, Category, Status (`Active` or `Disabled`), persistent Sort Order, Remark, Created Time, Created By, Updated Time, and Updated By. New phrases default to `Active` and append to the last sort position. The list shows the Demo-owned fields and audit metadata; adding, editing, moving, or changing status refreshes the update metadata.
+- The Common Phrase management page reads and mutates the configured local Common Phrase API. The target backend is FastAPI backed by the independent local MySQL database `aicc_demo_local`; the native Node + SQLite implementation remains an explicit rollback baseline. Its query returns all statuses by default and supports status filtering. The API validates field lengths, normalized duplicate Shortcut Code / Category Name values, category ownership, sort order, and valid statuses; duplicate values return a conflict response.
+- Live Chat Public Phrases reads the same API with `status=Active`. Disabled phrases remain in management but do not appear in Public Phrases, slash-command candidates, or inserted public phrase results. My Phrases remains local Live Chat workspace state.
 - Deleting a category requires confirmation and deletes all phrases under that category.
 - Selected phrases can be moved to another category. Source categories for selected rows are disabled as move targets, except when `All Categories` is selected and the selected rows span multiple source categories: then every category is available as a target, and entries already in the chosen target category are left unchanged.
-- Store is local front-end state.
+- In customer static Demo mode, management changes are in-browser session state and reset after refresh. In local FastAPI mode they persist in `aicc_demo_local`; no shared development database or production integration is connected.
 
 ### Common Link
 
@@ -735,8 +743,6 @@ Hidden / redirected:
 - Website URL must start with `http://` or `https://`.
 - Remark is limited to 2000 characters. Create and edit operations refresh Updated Time and Updated By.
 - Shared voice, video, and Live Chat workspaces read Common Link data in the right-side `Common Links` tab.
-- Store is local front-end state.
-
 ### Quick Action Management
 
 - Quick Action Management maintains shared customer-context quick actions for the current demo session. It is separate from Common Link, which remains a right-side external-reference list.
@@ -750,16 +756,16 @@ Hidden / redirected:
 
 ### Common Number
 
-- Common Number maintains IVR transfer targets for the current demo session.
+- Common Number maintains IVR transfer targets. In local API mode it persists through the independent `aicc_demo_local` FastAPI/MySQL path; in customer demo mode it remains browser-session data.
 - Entries contain Name, Number, Status, Remark, Updated Time, and Updated By.
 - Search supports Name, Number, and Status.
 - List columns include No., Name, Number, Status, Remark, Updated Time, Updated By, and Actions.
-- Add, Edit, and Delete are local demo actions.
+- Add, Edit, and Delete use the configured local API or browser-demo data source.
 - Name and Number are unique after trim and lowercase normalization.
 - Number is required but does not enforce strict phone format so IVR short codes and service numbers can be used.
 - Remark is limited to 2000 characters. Create and edit operations refresh Updated Time and Updated By.
 - Only `Active` entries appear in the call Transfer modal `Transfer IVR` tab.
-- Store is local front-end state.
+- Common Number management and call Transfer IVR read the same configured data source; Transfer IVR requests only `Active` entries.
 
 ### Sensitive Word
 
@@ -776,18 +782,18 @@ Hidden / redirected:
 ### Interaction Log
 
 - Interaction Log is the current demo's 通话记录查询 / interaction history page under Call Management. Its route remains `/call-management/call-record-query`.
-- Current scope includes Phone voice, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp service records.
+- Current scope includes Phone voice, HaloBCA Voice, HaloBCA Video, HaloBCA DM, Webchat, and WhatsApp service records.
 - The current demo seeds 30 mock records; at least 12 records are dynamically placed within the current day so the default Date Range has enough data for paging.
 - Current scope excludes Email and Social Media records. Email Record Inquiry remains a future scope; Social Media records are exposed only through the separate `Social Media > Interaction Log` menu and are not added to the Call Management menu.
 - Production permission intent is: agents see their own records, TL sees their own group, and SPV sees groups under managed TLs. The current demo has no permission system, so records are seeded as the current agent view only.
 - Search supports keyword, Channel, Media Type, Call Scenario, Call Type, Ended By, Rating Score, and Date Range. Default date range is the current day from `00:00:00` to `23:59:59`.
 - `Call Scenario` identifies interaction direction as `Inbound` or `Outbound`. It is available as both a list field and query filter before `Call Type`.
 - `Call Type` identifies how the record arrived at the current agent: `Customer` for a direct customer interaction, `Transfer` for a transferred interaction, and `Conference` for a three-party interaction. It is available as both a list field and query filter for leadership transfer-frequency checks.
-- The list uses `Contact` for the customer-side contact identifier: phone and WhatsApp show the number, logged-in BankApp/Webchat show BankID, and guest Webchat shows a guest ID such as `guest-7118`.
+- The list uses `Contact` for the customer-side contact identifier: phone and WhatsApp show the number, logged-in HaloBCA/Webchat show BankID, and guest Webchat shows a guest ID such as `guest-7118`.
 - The list shows `Queue`; missing queue values render as `-`.
 - The list shows `Service Time` as `start time - end time`.
 - The list shows `Rating Score` as integer `1` to `5` or `-`; it is available as a query filter. `End Reason` is not exposed in the current Interaction Log query page.
-- PSTN satisfaction is sent periodically through an independent outreach flow and cannot be bound to an individual call record, so PSTN `Rating Score` and feedback render as `-`. BankApp, Webchat, and WhatsApp interaction ratings are stored with the record; feedback is optional and may render as `-`.
+- PSTN satisfaction is sent periodically through an independent outreach flow and cannot be bound to an individual call record, so PSTN `Rating Score` and feedback render as `-`. HaloBCA, Webchat, and WhatsApp interaction ratings are stored with the record; feedback is optional and may render as `-`.
 - The list shows `QM Score` as plain text or `-`; QM Score is not a search filter in the current demo.
 - A numeric `QM Score` is a third-party quality-management detail entry. The current demo opens a customer-confirmed static third-party system-window preview at the original image ratio. Only the source image's top-right close X is interactive; other third-party toolbar icons remain static, `-` is not clickable, and mask / Esc do not close the preview. Future unified sign-in integration should replace this preview with the corresponding third-party detail page.
 - `Ended By` values are `Agent`, `Customer`, or `System`.
@@ -824,9 +830,9 @@ Important rules:
 - Email, AppStore, and PlayStore support Non-DM only.
 - Channels Edit Channel media type selector shows all configured media types; the current channel's selected media types determine which Business Config tabs are shown.
 - A media type with no available Business Config fields shows the standard `No configuration available for this media type.` information prompt instead of an empty configuration section.
-- Channels DM and non-Phone Voice / Video Business Config show `Queue Configuration` immediately after `Access Configuration` when access configuration is available.
-- `Queue Configuration` contains `Outside Service Hours Message`, `Queue Waiting Message`, `Long Queue Waiting Time (sec)`, `Long Queue Waiting Message`, `Queue Timeout (sec)`, and `Queue Timeout Message`.
-- Non-Phone Voice / Video Queue Configuration includes only `Outside Service Hours Message`, `Queue Waiting Message`, `Queue Timeout (sec)`, and `Queue Timeout Message`; long-wait threshold and message remain DM-only.
+- Channels DM and non-Phone Video Business Config show `Queue Configuration` immediately after `Access Configuration` when access configuration is available. Voice follows the Phone Voice behavior and shows the standard no-configuration prompt.
+- DM `Queue Configuration` contains `Outside Service Hours Message`, `Queue Waiting Message`, `Queue Auto-Reply Message`, `Long Queue Waiting Time (sec)`, `Long Queue Waiting Message`, `Queue Timeout (sec)`, and `Queue Timeout Message`.
+- `Queue Auto-Reply Message` is sent when a DM customer sends a message while waiting in queue. Non-Phone Video Queue Configuration omits the DM-only auto-reply and long-wait fields.
 - `Queue Waiting Message` supports the `{queuePosition}` dynamic parameter. Estimated-wait dynamic parameters remain unsupported.
 - `Long Queue Waiting Time (sec)` defaults to `180`; empty or `0` disables the long-wait prompt.
 - `Queue Timeout (sec)` defaults to `360` and accepts values from `0` to `60000`.
@@ -835,7 +841,7 @@ Important rules:
 - Voice and Video do not expose new-customer alert sound configuration and continue to use OpenEye ringing.
 - Channels Business Config `Agent Service Configuration` keeps the existing `Agent No Reply Warning (sec)` and `Agent No Reply Breach (sec)` labels, and uses colored dots matching Live Chat SLA warning and breach colors to clarify the threshold severity.
 - Business Types include `Source Business Code`.
-- Skill Queues require `Access Code`; it appears after `VDN` in list columns and Add / Edit / View forms. Keyword search includes Access Code. Optional `AHT Target` is a non-negative seconds value and optional `QM Target` is a percentage from `0` through `100`.
+- Skill Queues require `Access Code`; it appears after `VDN` in list columns and Add / Edit / View forms. Keyword search includes Access Code. `Channel` and `Media` are read-only derived fields: they reverse-look up all Skill Routing Rules that target the queue, aggregate the rule Channel and Media factors with `, ` separators, and are available as list/query values. They are hidden for new queues and disabled on edit. Optional `SL (%)` and `QM Target` are percentages from `0` through `100`; optional `AHT Target` is a non-negative seconds value.
 - Skill Routing Rules use configured route elements and target skill queues.
 - Site Access Volume ratios should total 100% for the same channel + media combination.
 - Working Time Plans support work schedule, Ramadan schedule, holiday schedule, and special working plans. Their plan codes are local internal keys and are not displayed or user-maintained.

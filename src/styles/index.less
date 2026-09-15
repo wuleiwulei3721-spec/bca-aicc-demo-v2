@@ -6324,6 +6324,10 @@ a {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.routing-config-skill-queue-table .ant-table-thead > tr > th {
+  white-space: nowrap;
+}
+
 .routing-config-skill-queue-modal__target-field {
   width: auto;
 }
@@ -10803,6 +10807,20 @@ button.inbound-list-row .inbound-list-row__title {
   white-space: nowrap;
 }
 
+.livechat2-session-card__end-status {
+  display: inline-flex;
+  flex: 0 0 auto;
+  grid-column: 2;
+  grid-row: 1;
+  align-items: center;
+  justify-content: center;
+  color: var(--aicc-text-secondary);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 14px;
+  white-space: nowrap;
+}
+
 .livechat2-session-card__message {
   overflow: hidden;
   grid-column: 1;
@@ -11068,6 +11086,13 @@ button.inbound-list-row .inbound-list-row__title {
   gap: 6px;
 }
 
+.livechat2-conversation__end-status {
+  color: var(--aicc-text-secondary);
+  font-size: 12px;
+  line-height: 28px;
+  white-space: nowrap;
+}
+
 .livechat2-conversation__actions button {
   display: inline-flex;
   height: 28px;
@@ -11255,6 +11280,69 @@ button.inbound-list-row .inbound-list-row__title {
 
 .livechat2-message--previous-agent .livechat2-message__bubble {
   background: #f3f7fb;
+}
+
+.livechat2-message--bot .livechat2-message__bubble {
+  border-color: #c7e2da;
+  background: #f1fbf7;
+}
+
+.livechat2-bot-avatar {
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #9dd0c1;
+  border-radius: 50%;
+  background: #e0f5ed;
+  color: #1c7b62;
+  font-size: 15px;
+}
+
+.livechat2-bot-summary {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  padding: 2px 0;
+}
+
+.livechat2-bot-summary__card {
+  width: min(86%, 620px);
+  padding: 9px 12px;
+  border: 1px solid #bfd9ed;
+  border-radius: var(--aicc-radius-sm);
+  background: #f7fbff;
+  box-shadow: 0 3px 10px rgba(36, 72, 108, 0.06);
+}
+
+.livechat2-bot-summary__title {
+  display: inline-flex;
+  align-items: center;
+  color: #286a9e;
+  font-size: 10px;
+  font-weight: 700;
+  gap: 5px;
+}
+
+.livechat2-bot-summary__title .anticon {
+  color: #1c7b62;
+  font-size: 13px;
+}
+
+.livechat2-bot-summary__card p {
+  margin: 5px 0 0;
+  color: #4f6174;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.livechat2-bot-summary[data-livechat2-bot-summary='generating']
+  .livechat2-bot-summary__card {
+  border-style: dashed;
+  border-color: #a9c9e7;
+  background: #f8fbff;
 }
 
 .livechat2-message--system .livechat2-message__bubble {

@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Codex Operating Rules
 
-Last updated: 2026-07-14 09:48 +08:00
+Last updated: 2026-09-03 13:57 +08:00
 Scope: entire repository at `D:\03projects\bca-aicc-demo-v2`
 
 This file is the required entry point for future Codex sessions and maintainers. Its job is to restore project context quickly, protect confirmed product decisions, and keep the project knowledge base current without relying on chat history, sidebar memory, or a specific OpenAI account.
@@ -41,7 +41,7 @@ Use the project documents for their intended roles. Do not duplicate large secti
 - `CURRENT_STATUS.md`: what is currently completed. Keep it module-based and outcome-based; do not write process history here.
 - `CURRENT_TODO.md`: what is still open. Keep customer confirmations, unfinished work, demo acceptance risks, future enhancements, and blocked items here.
 - `DESIGN_SYSTEM.md`: stable UI rules. Keep layout, Header, Toolbar, Card, Modal, Tabs, button, icon, typography, spacing, color, and admin page contracts here.
-- `BUSINESS_RULES.md`: confirmed business behavior. Keep agent status, call status, transfer, outbound, internal chat, customer information, verification, journey, ticket, Live Chat, BankApp, WhatsApp, Call Management, and Routing Config rules here.
+- `BUSINESS_RULES.md`: confirmed business behavior. Keep agent status, call status, transfer, outbound, internal chat, customer information, verification, journey, ticket, Live Chat, HaloBCA, WhatsApp, Call Management, and Routing Config rules here.
 - `DECISION_LOG.md`: long-term important decisions and why they were chosen. Do not record ordinary bug fixes, small visual tweaks, icon changes, color changes, copy edits, or temporary test data here.
 - `DEV_LOG.md`: current active development log and archive index. Use it for recent important changes, rollback clues, deployments, and links to older archived logs.
 - `docs/archive/dev-log/`: historical development log archives. Search this folder when investigating older decisions, regressions, or rollback context.
@@ -181,7 +181,7 @@ High-impact areas:
 - Ready / Not Ready / AUX / Pre-AUX.
 - Call status machine.
 - Answer / Hold / Mute / Transfer / Outbound / Hang Up.
-- BankApp and WhatsApp handoff readiness.
+- HaloBCA and WhatsApp handoff readiness.
 - Live Chat session lifecycle.
 - Customer Verification V2 rule model.
 - Priority List duplicate and match-rule behavior.
@@ -273,7 +273,7 @@ Backup set format:
 Customer-visible UI, mock data, docs, backup files, and demo narration must use safe wording:
 
 - Bank
-- BankApp
+- HaloBCA
 - BANK 1
 
 Avoid old customer brand names in visible content. Internal compatibility identifiers can remain only when needed for code continuity and must not leak into customer-facing UI.
@@ -289,14 +289,23 @@ Do not commit:
 
 ## 15. Validation Rules
 
-For frontend or interaction changes, normally run:
+Use the fastest validation tier that covers the change:
+
+- Backend or SQLite-only changes: run `npm test` and `npm run typecheck`.
+- Common Phrase local-stack changes: run `npm run check:local` while `npm run dev` is running.
+- Frontend changes without interaction changes: run `npm run lint` and `npm run build`.
+- UI, route, modal, or interaction changes: run `npm run lint` and `npm run build`, then do one focused browser smoke check before handoff.
+
+The local check commands are:
 
 ```bash
+npm run check:local
+npm run db:inspect
 npm run lint
 npm run build
 ```
 
-Use browser smoke checks when UI changes affect:
+Browser smoke checks are a delivery and acceptance check for the affected workflow, not a required step after every intermediate edit. Use them when UI changes affect:
 
 - `/`
 - `/design-system`

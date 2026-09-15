@@ -20,6 +20,7 @@ import {
   LIVE_CHAT_SLA_BREACH_SECONDS,
   type InteractionSlaState,
 } from '../../../utils/duration'
+import { getLiveChat2CustomerDisplayName } from './liveChat2CustomerDisplayName'
 
 type LiveChat2Channel = LiveChat2Session['channel']
 type LiveChat2ListView = 'current' | 'history'
@@ -55,13 +56,13 @@ interface LiveChat2CustomerPanelProps {
 }
 
 const channelLabels: Record<LiveChat2Session['channel'], string> = {
-  BankApp: 'BankApp',
+  HaloBCA: 'HaloBCA',
   Webchat: 'Webchat',
   WhatsApp: 'WhatsApp',
 }
 
 function getChannelClassName(channel: LiveChat2Channel) {
-  if (channel === 'BankApp') {
+  if (channel === 'HaloBCA') {
     return 'livechat2-channel-avatar--bankapp'
   }
 
@@ -83,6 +84,49 @@ function getUnansweredProgressPercent(unansweredSeconds: number) {
   return Math.min(
     100,
     Math.round((unansweredSeconds / LIVE_CHAT_SLA_BREACH_SECONDS) * 100),
+  )
+}
+
+function getEndStatus(session: LiveChat2SessionView) {
+  if (session.statusDisplay === 'active' || !session.endReason) {
+    return null
+  }
+
+  if (session.endReason === 'customer') {
+    return {
+      label: 'Customer',
+      title: 'Ended by customer',
+    }
+  }
+
+  if (session.endReason === 'timeout') {
+    return {
+      label: 'Timeout',
+      title: 'Ended by timeout',
+    }
+  }
+
+  return {
+    label: 'Agent',
+    title: 'Ended by agent',
+  }
+}
+
+function renderEndStatus(session: LiveChat2SessionView) {
+  const endStatus = getEndStatus(session)
+
+  if (!endStatus) {
+    return null
+  }
+
+  return (
+    <span
+      aria-label={endStatus.title}
+      className="livechat2-session-card__end-status"
+      title={endStatus.title}
+    >
+      <span>{endStatus.label}</span>
+    </span>
   )
 }
 
@@ -112,6 +156,7 @@ function renderSessionCard({
       ? 0
       : getUnansweredProgressPercent(session.unansweredSeconds)
   const unansweredLimitLabel = formatDuration(LIVE_CHAT_SLA_BREACH_SECONDS)
+  const customerDisplayName = getLiveChat2CustomerDisplayName(session)
 
   return (
     <div
@@ -156,8 +201,9 @@ function renderSessionCard({
 
       <span className="livechat2-session-card__content">
         <span className="livechat2-session-card__topline">
-          <strong>{session.customer.profile.name}</strong>
+          <strong>{customerDisplayName}</strong>
         </span>
+        {renderEndStatus(session)}
         {unansweredLabel && !isHistory && (
           <span
             className={[

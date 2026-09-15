@@ -1,4 +1,11 @@
-import { type KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Fragment,
+  type KeyboardEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import {
   AimOutlined,
   CaretDownOutlined,
@@ -8,6 +15,7 @@ import {
   FolderOpenOutlined,
   HistoryOutlined,
   PaperClipOutlined,
+  RobotOutlined,
   RollbackOutlined,
   SearchOutlined,
   SendOutlined,
@@ -33,6 +41,7 @@ import type { LiveChat2SessionView } from './LiveChat2CustomerPanel'
 import {
   getLiveChat2VisibleMessages,
 } from './liveChat2MessageUtils'
+import { getLiveChat2CustomerDisplayName } from './liveChat2CustomerDisplayName'
 import type { LiveChat2QuickReplyOption } from './liveChat2QuickReplies'
 
 const { RangePicker } = DatePicker
@@ -78,7 +87,11 @@ function getMessageDisplayType(message: LiveChat2Message) {
     return 'current-agent'
   }
 
-  if (message.sender === 'agent' || message.sender === 'bot') {
+  if (message.sender === 'bot') {
+    return 'bot'
+  }
+
+  if (message.sender === 'agent') {
     return 'previous-agent'
   }
 
@@ -86,19 +99,31 @@ function getMessageDisplayType(message: LiveChat2Message) {
 }
 
 function getChannelLabel(channel: LiveChat2SessionView['channel']) {
-  if (channel === 'BankApp') {
-    return 'BankApp'
+  if (channel === 'HaloBCA') {
+    return 'HaloBCA'
   }
 
   return channel
 }
 
 function getChannelClassName(channel: LiveChat2SessionView['channel']) {
-  if (channel === 'BankApp') {
+  if (channel === 'HaloBCA') {
     return 'livechat2-channel-avatar--bankapp'
   }
 
   return `livechat2-channel-avatar--${channel.toLowerCase()}`
+}
+
+function getEndedStatusLabel(session: LiveChat2SessionView) {
+  if (session.endReason === 'customer') {
+    return 'Customer ended'
+  }
+
+  if (session.endReason === 'timeout') {
+    return 'Timed out'
+  }
+
+  return 'Agent ended'
 }
 
 function highlightSearch(value: string, search: string) {
@@ -146,6 +171,36 @@ function renderMessageContent(
   }
 
   return <p>{highlightSearch(message.message, search)}</p>
+}
+
+function LiveChat2BotSummary({
+  status,
+  summary,
+}: {
+  status: LiveChat2SessionView['botSummaryStatus']
+  summary: string
+}) {
+  const isGenerating = status === 'generating'
+
+  return (
+    <section
+      aria-live="polite"
+      className="livechat2-bot-summary"
+      data-livechat2-bot-summary={isGenerating ? 'generating' : 'ready'}
+    >
+      <div className="livechat2-bot-summary__card">
+        <div className="livechat2-bot-summary__title">
+          <RobotOutlined />
+          <span>BOT CONVERSATION SUMMARY</span>
+        </div>
+        <p>
+          {isGenerating
+            ? 'Organizing the bot conversation. Please wait...'
+            : summary}
+        </p>
+      </div>
+    </section>
+  )
 }
 
 interface LiveChat2MessageRecordPanelProps {
@@ -445,6 +500,7 @@ export function LiveChat2ConversationWorkspace({
   onOpenMessageRecord,
   onSendMessage,
 }: LiveChat2ConversationWorkspaceProps) {
+  const customerDisplayName = getLiveChat2CustomerDisplayName(session)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [isTransferOpen, setIsTransferOpen] = useState(false)
   const [quoteMessage, setQuoteMessage] = useState<string | null>(null)
@@ -462,6 +518,15 @@ export function LiveChat2ConversationWorkspace({
     session.historyMessages,
     messages,
   )
+  const shouldShowBotSummary =
+    session.statusDisplay !== 'history' && Boolean(session.botSummary)
+  const lastBotMessageIndex = shouldShowBotSummary
+    ? visibleMessages.reduce(
+        (lastIndex, message, index) =>
+          message.sender === 'bot' ? index : lastIndex,
+        -1,
+      )
+    : -1
   const latestVisibleMessageId =
     visibleMessages[visibleMessages.length - 1]?.id ?? ''
   const quickReplyKeyword = draftMessage.startsWith('/')
@@ -634,7 +699,7 @@ export function LiveChat2ConversationWorkspace({
           >
             <ChannelLogo channel={session.channel} variant="livechat" />
           </span>
-          <strong>{session.customer.profile.name}</strong>
+          <strong>{customerDisplayName}</strong>
           <span className="livechat2-conversation__duration">
             <ClockCircleOutlined />
             {formatDuration(session.elapsedSeconds)}
@@ -644,15 +709,20 @@ export function LiveChat2ConversationWorkspace({
         {!readOnly && (
           <div className="livechat2-conversation__actions" role="group">
             {isEnded ? (
-              <button
-                className="livechat2-conversation__close-action"
-                title="Close"
-                type="button"
-                onClick={() => onCloseSession(session.id)}
-              >
-                <CloseOutlined />
-                Close
-              </button>
+              <>
+                <span className="livechat2-conversation__end-status">
+                  {getEndedStatusLabel(session)}
+                </span>
+                <button
+                  className="livechat2-conversation__close-action"
+                  title="Close"
+                  type="button"
+                  onClick={() => onCloseSession(session.id)}
+                >
+                  <CloseOutlined />
+                  Close
+                </button>
+              </>
             ) : (
               <>
                 <button
@@ -717,63 +787,80 @@ export function LiveChat2ConversationWorkspace({
           ref={messagesListRef}
           role="log"
         >
-          {visibleMessages.map((message) => {
+          {visibleMessages.map((message, index) => {
             const displayType = getMessageDisplayType(message)
             return (
-              <article
-                className={[
-                  'livechat2-message',
-                  `livechat2-message--${displayType}`,
-                ].join(' ')}
-                data-livechat2-message-id={message.id}
-                key={message.id}
-              >
-                {displayType !== 'system' && displayType !== 'current-agent' &&
-                  (displayType === 'customer' ? (
-                    <CustomerAvatar
-                      className="livechat2-message__avatar"
-                      size={30}
-                    />
-                  ) : (
-                    <AgentAvatar
-                      className="livechat2-message__avatar"
-                      name={message.senderName}
-                      size={30}
-                    />
-                  ))}
-                <div className="livechat2-message__main">
-                  <div className="livechat2-message__meta">
-                    {displayType === 'previous-agent' && (
-                      <strong>
-                        {formatAgentDisplay(
-                          message.senderEmployeeId,
-                          message.senderName,
-                        )}
-                      </strong>
-                    )}
-                    <time>{message.time}</time>
-                  </div>
-                  {message.quotedMessage && (
-                    <div className="livechat2-message__quote">
-                      {message.quotedMessage}
-                    </div>
-                  )}
-                  <div className="livechat2-message__bubble">
-                    {renderMessageContent(message)}
-                  </div>
-                  {displayType !== 'system' && (
-                    <div className="livechat2-message__tools">
-                      <button
-                        type="button"
-                        onClick={() => setQuoteMessage(message.message)}
+              <Fragment key={message.id}>
+                <article
+                  className={[
+                    'livechat2-message',
+                    `livechat2-message--${displayType}`,
+                  ].join(' ')}
+                  data-livechat2-message-id={message.id}
+                >
+                  {displayType !== 'system' &&
+                    displayType !== 'current-agent' &&
+                    (displayType === 'customer' ? (
+                      <CustomerAvatar
+                        className="livechat2-message__avatar"
+                        size={30}
+                      />
+                    ) : displayType === 'bot' ? (
+                      <span
+                        aria-label="BANK 1 Virtual Assistant avatar"
+                        className="livechat2-bot-avatar livechat2-message__avatar"
+                        role="img"
                       >
-                        <RollbackOutlined />
-                        Quote
-                      </button>
+                        <RobotOutlined />
+                      </span>
+                    ) : (
+                      <AgentAvatar
+                        className="livechat2-message__avatar"
+                        name={message.senderName}
+                        size={30}
+                      />
+                    ))}
+                  <div className="livechat2-message__main">
+                    <div className="livechat2-message__meta">
+                      {displayType === 'previous-agent' && (
+                        <strong>
+                          {formatAgentDisplay(
+                            message.senderEmployeeId,
+                            message.senderName,
+                          )}
+                        </strong>
+                      )}
+                      {displayType === 'bot' && <strong>{message.senderName}</strong>}
+                      <time>{message.time}</time>
                     </div>
-                  )}
-                </div>
-              </article>
+                    {message.quotedMessage && (
+                      <div className="livechat2-message__quote">
+                        {message.quotedMessage}
+                      </div>
+                    )}
+                    <div className="livechat2-message__bubble">
+                      {renderMessageContent(message)}
+                    </div>
+                    {displayType !== 'system' && (
+                      <div className="livechat2-message__tools">
+                        <button
+                          type="button"
+                          onClick={() => setQuoteMessage(message.message)}
+                        >
+                          <RollbackOutlined />
+                          Quote
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </article>
+                {index === lastBotMessageIndex && session.botSummary && (
+                  <LiveChat2BotSummary
+                    status={session.botSummaryStatus}
+                    summary={session.botSummary}
+                  />
+                )}
+              </Fragment>
             )
           })}
         </section>
@@ -804,7 +891,7 @@ export function LiveChat2ConversationWorkspace({
               </div>
             )}
             <textarea
-              aria-label={`Message ${session.customer.profile.name}`}
+              aria-label={`Message ${customerDisplayName}`}
               placeholder="Type / for quick replies"
               ref={composerRef}
               value={draftMessage}
@@ -888,7 +975,7 @@ export function LiveChat2ConversationWorkspace({
       >
         <p className="live-chat-conversation__confirm-text">
           Are you sure you want to end service for{' '}
-          {session.customer.profile.name}?
+          {customerDisplayName}?
         </p>
         <footer className="aicc-modal-footer live-chat-conversation__confirm-footer">
           <BaseButton

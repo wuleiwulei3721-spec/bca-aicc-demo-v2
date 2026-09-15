@@ -476,7 +476,7 @@ export function AgentWorkspace() {
         closable: true,
         label: (
           <WorkspaceTabLabel
-            label="BankApp Demo"
+            label="HaloBCA Demo"
             now={now}
           />
         ),

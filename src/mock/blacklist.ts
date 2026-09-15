@@ -39,7 +39,7 @@ export const defaultBlacklistEntries: BlacklistEntry[] = [
     status: 'Active',
   },
   {
-    channel: 'Bankapp',
+    channel: 'HaloBCA',
     createdAt: '2026-06-11 11:05:00',
     createdBy: DEFAULT_AUDIT_ACTOR,
     id: 'BL004',

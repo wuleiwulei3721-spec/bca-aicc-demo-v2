@@ -17,6 +17,7 @@ type CallRecordSeed = Omit<
   | 'callScenario'
   | 'callType'
   | 'endedAt'
+  | 'holdDurationSeconds'
   | 'ratingFeedback'
   | 'ratingScore'
   | 'summary'
@@ -24,6 +25,7 @@ type CallRecordSeed = Omit<
   callScenario?: CallRecordCallScenario
   callType?: CallRecordCallType
   endedAt?: string
+  holdDurationSeconds?: number
   ratingFeedback?: string | null
   ratingScore?: CallRecordRatingScore | null
   summary: CallRecordSeedSummary
@@ -79,7 +81,7 @@ const ticketDefinitionByTopic: Record<string, TicketDefinition> = {
       'REQ/R010 UBAH/DATA NASABAH/DATA KORESPONDENSI (NSBH GIRO,TAPRES,BCA DOLAR)',
     product: 'TABUNGAN/TAHAPAN',
   },
-  BankApp: {
+  HaloBCA: {
     caseCategory: 'REQ/R024 BUKA BLOKIR/PIN BCA ID',
     product: 'JASA/BCA ID',
   },
@@ -167,6 +169,19 @@ function createTickets(
   }))
 }
 
+function createDefaultHoldDuration(
+  record: Pick<CallRecordSeed, 'id' | 'mediaType' | 'durationSeconds'>,
+) {
+  if (record.mediaType !== 'Voice') {
+    return 0
+  }
+
+  const recordNumber = Number(record.id.replace(/\D/g, ''))
+  const holdSeconds = recordNumber % 4 === 0 ? 0 : 18 + (recordNumber % 5) * 13
+
+  return Math.min(holdSeconds, record.durationSeconds)
+}
+
 function createRecord(record: CallRecordSeed): CallRecord {
   const endedAt = record.endedAt ?? addSeconds(record.startedAt, record.durationSeconds)
   const defaultRating = createDefaultRating(record)
@@ -177,6 +192,8 @@ function createRecord(record: CallRecordSeed): CallRecord {
     callScenario: record.callScenario ?? 'Inbound',
     callType: record.callType ?? 'Customer',
     endedAt,
+    holdDurationSeconds:
+      record.holdDurationSeconds ?? createDefaultHoldDuration(record),
     ratingFeedback:
       record.ratingFeedback === undefined
         ? defaultRating.ratingFeedback
@@ -280,7 +297,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       summary: {
         ticketTopics: ['Credit Card Activation', 'Credit Card Billing'],
         description:
-          'Customer requested card activation status and delivery confirmation. Verified customer identity, confirmed activation path, and advised customer to retry BankApp card menu.',
+          'Customer requested card activation status and delivery confirmation. Verified customer identity, confirmed activation path, and advised customer to retry HaloBCA card menu.',
         ticketPrefix: 'TK-260707-001',
       },
       transcript: [
@@ -305,7 +322,7 @@ export function createDefaultCallRecords(): CallRecord[] {
         {
           id: 'call-record-001-t4',
           speaker: 'Customer',
-          text: 'The BankApp menu still asks me to confirm delivery.',
+          text: 'The HaloBCA menu still asks me to confirm delivery.',
           time: '03:10',
         },
         {
@@ -319,7 +336,7 @@ export function createDefaultCallRecords(): CallRecord[] {
     createRecord({
       agentId: '10027',
       agentName: 'Budi Kartika',
-      channel: 'BankApp',
+      channel: 'HaloBCA',
       contact: 'BankID 00080217',
       customerId: '00080217',
       customerName: 'Lukman Hakim',
@@ -337,12 +354,12 @@ export function createDefaultCallRecords(): CallRecord[] {
       summary: {
         ticketTopics: [],
         description:
-          'Customer needed support enabling transaction notification. Guided customer through BankApp notification settings.',
+          'Customer needed support enabling transaction notification. Guided customer through HaloBCA notification settings.',
         ticketPrefix: 'TK-260705-002',
       },
       transcript: createTranscript(
         'call-record-021',
-        'I do not receive BankApp transaction notifications.',
+        'I do not receive HaloBCA transaction notifications.',
         'Please open notification settings and enable transaction alerts.',
         'Customer confirmed notification setting was enabled.',
       ),
@@ -407,7 +424,7 @@ export function createDefaultCallRecords(): CallRecord[] {
     createRecord({
       agentId: '10027',
       agentName: 'Budi Kartika',
-      channel: 'BankApp',
+      channel: 'HaloBCA',
       contact: 'BankID 00074420',
       customerId: '00074420',
       customerName: 'Bayu Prakoso',
@@ -438,7 +455,7 @@ export function createDefaultCallRecords(): CallRecord[] {
     createRecord({
       agentId: '10027',
       agentName: 'Budi Kartika',
-      channel: 'BankApp',
+      channel: 'HaloBCA',
       contact: 'BankID 00061249',
       customerId: '00061249',
       customerName: 'Aldo Kurnia',
@@ -488,13 +505,13 @@ export function createDefaultCallRecords(): CallRecord[] {
       transcript: createTranscript(
         'call-record-026',
         'Can I track my debit card delivery from WhatsApp?',
-        'The tracking detail is available in BankApp Cards under replacement card.',
+        'The tracking detail is available in HaloBCA Cards under replacement card.',
       ),
     }),
     createRecord({
       agentId: '10027',
       agentName: 'Budi Kartika',
-      channel: 'BankApp',
+      channel: 'HaloBCA',
       contact: 'BankID 00035812',
       customerId: '00035812',
       customerName: 'Gita Wulandari',
@@ -508,15 +525,15 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: oldVideoStartTwo,
       qmScore: null,
       summary: {
-        ticketTopics: ['BankApp'],
+        ticketTopics: ['HaloBCA'],
         description:
-          'Customer attempted video support for BankApp login issue. Session ended due to channel gateway error.',
+          'Customer attempted video support for HaloBCA login issue. Session ended due to channel gateway error.',
         ticketPrefix: 'TK-260626-001',
       },
       transcript: createTranscript(
         'call-record-027',
         'The video support page keeps reconnecting.',
-        'I will keep the case note and ask you to retry from BankApp after reconnecting.',
+        'I will keep the case note and ask you to retry from HaloBCA after reconnecting.',
         'System ended service due to channel gateway error.',
       ),
     }),
@@ -639,7 +656,7 @@ export function createDefaultCallRecords(): CallRecord[] {
     createRecord({
       agentId: '10027',
       agentName: 'Budi Kartika',
-      channel: 'BankApp',
+      channel: 'HaloBCA',
       contact: 'BankID 00088431',
       customerId: '00088431',
       customerName: 'Indra Saputra',
@@ -655,7 +672,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: todayVideoStartTwo,
       qmScore: 93,
       summary: {
-        ticketTopics: ['Mobile Banking', 'Account Service', 'BankApp'],
+        ticketTopics: ['Mobile Banking', 'Account Service', 'HaloBCA'],
         description:
           'Customer needed help with biometric login reset. Reviewed shared screen and guided customer to reset biometric access.',
         ticketPrefix: 'TK-260710-006',
@@ -670,7 +687,7 @@ export function createDefaultCallRecords(): CallRecord[] {
     createRecord({
       agentId: '10027',
       agentName: 'Budi Kartika',
-      channel: 'BankApp',
+      channel: 'HaloBCA',
       contact: 'BankID 00071204',
       customerId: '00071204',
       customerName: 'Vina Maharani',
@@ -756,7 +773,7 @@ export function createDefaultCallRecords(): CallRecord[] {
     createRecord({
       agentId: '10027',
       agentName: 'Budi Kartika',
-      channel: 'BankApp',
+      channel: 'HaloBCA',
       contact: 'BankID 00049318',
       customerId: '00049318',
       customerName: 'Melati Santoso',
@@ -816,7 +833,7 @@ export function createDefaultCallRecords(): CallRecord[] {
     createRecord({
       agentId: '10027',
       agentName: 'Budi Kartika',
-      channel: 'BankApp',
+      channel: 'HaloBCA',
       contact: 'BankID 00031560',
       customerId: '00031560',
       customerName: 'Reno Mahardika',
@@ -844,7 +861,7 @@ export function createDefaultCallRecords(): CallRecord[] {
     createRecord({
       agentId: '10027',
       agentName: 'Budi Kartika',
-      channel: 'BankApp',
+      channel: 'HaloBCA',
       contact: 'BankID 00012345',
       customerId: '00012345',
       customerName: 'Dimas Satria',
@@ -861,7 +878,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       summary: {
         ticketTopics: ['Mobile Banking'],
         description:
-          'Customer could not complete device binding during BankApp login. Reviewed shared screen, confirmed device binding step, and advised customer to remove old device registration.',
+          'Customer could not complete device binding during HaloBCA login. Reviewed shared screen, confirmed device binding step, and advised customer to remove old device registration.',
         ticketPrefix: 'TK-260707-002',
       },
       transcript: [
@@ -916,7 +933,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       summary: {
         ticketTopics: ['Account Service'],
         description:
-          'Guest customer asked how to update statement delivery preference. Explained secure channel requirement and sent the customer to BankApp profile settings.',
+          'Guest customer asked how to update statement delivery preference. Explained secure channel requirement and sent the customer to HaloBCA profile settings.',
         ticketPrefix: 'TK-260707-003',
       },
       transcript: [
@@ -935,7 +952,7 @@ export function createDefaultCallRecords(): CallRecord[] {
         {
           id: 'call-record-003-t3',
           speaker: 'Agent',
-          text: 'Yes. For security, please update it from BankApp after login.',
+          text: 'Yes. For security, please update it from HaloBCA after login.',
           time: '01:03',
         },
         {
@@ -999,7 +1016,7 @@ export function createDefaultCallRecords(): CallRecord[] {
     createRecord({
       agentId: '10027',
       agentName: 'Budi Kartika',
-      channel: 'BankApp',
+      channel: 'HaloBCA',
       contact: 'BankID 00034520',
       customerId: '00034520',
       customerName: 'Maya Surya',
@@ -1043,7 +1060,7 @@ export function createDefaultCallRecords(): CallRecord[] {
     createRecord({
       agentId: '10027',
       agentName: 'Budi Kartika',
-      channel: 'BankApp',
+      channel: 'HaloBCA',
       contact: 'BankID 00072964',
       customerId: '00072964',
       customerName: 'Nadia Putri',
@@ -1057,7 +1074,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: dayTwoDmStart,
       qmScore: null,
       summary: {
-        ticketTopics: ['BankApp', 'Debit Card'],
+        ticketTopics: ['HaloBCA', 'Debit Card'],
         description:
           'Customer could not find card delivery tracking menu. Sent navigation guidance and confirmed customer found the delivery tracking page.',
         ticketPrefix: 'TK-260705-001',
@@ -1086,7 +1103,7 @@ export function createDefaultCallRecords(): CallRecord[] {
     createRecord({
       agentId: '10027',
       agentName: 'Budi Kartika',
-      channel: 'BankApp',
+      channel: 'HaloBCA',
       contact: 'BankID 00067412',
       customerId: '00067412',
       customerName: 'Fajar Nugroho',
@@ -1110,7 +1127,7 @@ export function createDefaultCallRecords(): CallRecord[] {
         {
           id: 'call-record-007-t1',
           speaker: 'System',
-          text: 'Video replay available. Customer shared BankApp screen.',
+          text: 'Video replay available. Customer shared HaloBCA screen.',
           time: '00:00',
         },
         {
@@ -1233,7 +1250,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       summary: {
         ticketTopics: ['Paylater'],
         description:
-          'Customer asked about Paylater repayment due date. Confirmed due date and explained repayment menu in BankApp.',
+          'Customer asked about Paylater repayment due date. Confirmed due date and explained repayment menu in HaloBCA.',
         ticketPrefix: 'TK-260625-001',
       },
       transcript: [
@@ -1291,7 +1308,7 @@ export function createDefaultCallRecords(): CallRecord[] {
     createRecord({
       agentId: '10027',
       agentName: 'Budi Kartika',
-      channel: 'BankApp',
+      channel: 'HaloBCA',
       contact: 'BankID 00056194',
       customerId: '00056194',
       customerName: 'Putra Mahendra',
@@ -1306,7 +1323,7 @@ export function createDefaultCallRecords(): CallRecord[] {
       startedAt: oldVideoStart,
       qmScore: null,
       summary: {
-        ticketTopics: ['BankApp', 'Account Service'],
+        ticketTopics: ['HaloBCA', 'Account Service'],
         description:
           'Customer could not find e-statement download page. Guided customer through shared screen and confirmed e-statement download succeeded.',
         ticketPrefix: 'TK-260601-001',
@@ -1315,7 +1332,7 @@ export function createDefaultCallRecords(): CallRecord[] {
         {
           id: 'call-record-012-t1',
           speaker: 'System',
-          text: 'Video replay available. Customer shared BankApp screen.',
+          text: 'Video replay available. Customer shared HaloBCA screen.',
           time: '00:00',
         },
         {

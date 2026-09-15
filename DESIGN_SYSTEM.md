@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Design System
 
-Last updated: 2026-09-02 09:45 +08:00
+Last updated: 2026-09-14 14:30 +08:00
 
 This document records the current implemented visual rules. It should be treated as the design baseline for future pages and components.
 
@@ -86,7 +86,7 @@ Call context display:
 
 - During `Incoming`, `Talking`, and `Hold`, show call identification and Skill.
 - PSTN displays `IVR +08123456789`.
-- BankApp voice/video displays `BankID 00012345`.
+- HaloBCA voice/video displays `BankID 00012345`.
 - Skill displays as a second row; inbound calls use `Skill Credit card activation` and outbound number / agent calls use `Skill -`.
 - Idle / ended call state hides call identification and Skill.
 
@@ -107,9 +107,9 @@ Inbound left-column cards:
 - Customer Information stays fixed at the top. The shared customer-context column containing Customer Information, Customer Journey, Ticketing History, Next Best Action, and Quick Action is fixed at `270px` on desktop across inbound voice/video, Live Chat, Email, and Social Media workspaces; narrow stacked layouts may expand it to the container width.
 - Customer Information exposes a compact `Request Approval` action only for a phone row with a usable number. It appears on hover or keyboard focus and opens the existing compact `Outbound Reason` modal without requiring outbound AUX eligibility. After ordinary-Agent approval, the resulting `Call` action remains disabled with `Switch to outbound AUX` until eligibility is active. The resulting outbound call creates no workspace tab and does not activate a customer screen pop. The bottom access-channel tag, verification status, and KBV action share the same compact geometry while retaining their semantic colors.
 - Customer Information keeps the compact name-plus-icon/value presentation. Phone, Email, Customer Number, and Segmentation use the same 24px icon slot and centered 20px icon container as the Customer Journey channel rows; their values start on the same text baseline as Journey Category. Segmentation uses a neutral `TeamOutlined` customer-group icon. Identified profiles use country-coded phone formatting. Email renders the address and its contact verification status as separate text spans: only the address receives hover/focus underline, while `Verified` / `Unverified` uses the same semantic text color and small type scale as verification status without a background, parentheses, or label underline. Customer Information fact rows keep a fixed 22px height with a tightened vertical gap; the phone action reserves its horizontal column and sizes to its text so hover/focus does not change row height or leave unnecessary space. Customer Information inline controls use one compact standard: 22px height, 10px text, 650 font weight, 18px line height, 8px horizontal padding, compact radius, and shared hover/focus treatment. The direct `Call` action, Special Handling, and access-channel tag use the same base geometry with their respective semantic colors. When Special Handling is available, it stays on the same row at the far right of Segmentation and sizes to its text. Unidentified interactions keep the three icon rows with `-` placeholder values except for a channel-provided WhatsApp number in an unidentified WhatsApp Phone row; they do not render an avatar, Segmentation, Special Handling, CRM-dependent header actions, or customer-phone outbound until a valid CIS loads. The toolbar remains responsible for the anonymous caller number used in call identification. The shared access duration is fixed mock data formatted as `mm:ss` below one hour or `hh:mm:ss` at one hour or above; Email SLA and Social Media reply-SLA timers remain separate.
-- Verification status and entry controls are conditional by channel/media: PSTN, BankApp Voice/Video, and Webchat Voice/Video keep the status plus `KBV`; registered BankApp text keeps the status plus `PIN`; WhatsApp, Email, Webchat text, Social Media, and guest BankApp text omit both. Social Media's populated customer state is `Identified, Unverified`; hiding the status/action is still required. The shared bottom-row control geometry remains unchanged when either verification element is omitted.
+- Verification status and entry controls are conditional by channel/media: PSTN, HaloBCA Voice/Video, and Webchat Voice/Video keep the status plus `KBV`; registered HaloBCA text keeps the status plus `PIN`; WhatsApp, Email, Webchat text, Social Media, and guest HaloBCA text omit both. Social Media's populated customer state is `Identified, Unverified`; hiding the status/action is still required. The shared bottom-row control geometry remains unchanged when either verification element is omitted.
 - Webchat text keeps `Webchat` as the internal channel value but uses the `bca.co.id` display-label override in the Customer Information access tag; the override does not change the channel icon, style, routing, or verification rule matching.
-- Customer-profile contact information is read-only in customer deployments. Its header provides the compact `IdcardOutlined` `All Contact Details` icon with a tooltip; the Customer Number / CIS fact row uses a centered literal `SIC` marker in the shared fixed icon slot. The modal groups channels in a clean two-column list: fixed left channel icon/name and right CRM values stacked as read-only text, including `-` empty states. The viewer and local legacy editor reuse one shared channel-icon presentation. Do not render editing controls in customer deployments. The legacy pencil is local-maintainer-only behind its explicit feature flag and appears beside the viewer only when enabled.
+- Customer-profile contact information is read-only in customer deployments. Its header provides the compact `IdcardOutlined` `All Contact Details` icon with a tooltip as soon as a valid CIS identifies the customer; verification status does not control the viewer. The Customer Number / CIS fact row uses a centered literal `CIS` marker in the shared fixed icon slot. The modal groups Phone, HaloBCA, Email, Facebook, Instagram, X, TikTok, and LinkedIn in a clean two-column list; fixed left channel identity aligns with right CRM values, while identified-profile Phone / Email supply default values when structured contacts are unavailable. The viewer and local legacy editor reuse one shared channel-icon presentation. Do not render editing controls in customer deployments. The legacy pencil is local-maintainer-only behind its explicit feature flag and appears beside the viewer only when enabled.
 - Journey / Ticket / NBA / Quick Action live in the scroll area.
 - Collapsed journey and ticket lists show the most recent two items.
 - Expanded journey and ticket lists show up to ten items.
@@ -204,7 +204,7 @@ Use `@ant-design/icons` and existing local icons:
 
 - Use call icons for call actions.
 - Use `PhoneIcon` where the project already uses it.
-- Use channel icons for WhatsApp, BankApp, Webchat, Voice, Video where implemented.
+- Use channel icons for WhatsApp, HaloBCA, Webchat, Voice, Video where implemented.
 - Prefer icon buttons for compact controls such as close, settings, history, search, star, recall, expand/collapse.
 - Provide `aria-label` or `title` for icon-only controls.
 
@@ -312,7 +312,7 @@ Admin list rules:
 - Complex filters may wrap, but Search / Reset stay in the query action group and Batch Add / Add stay in the right primary-action group.
 - Admin filter controls must use the shared 32px alignment for Input, Select, and Date/RangePicker controls; placeholders and selected values should be vertically centered.
 - Call Management audit timestamps use `DD-MM-YYYY HH:MM:SS` and display `Created By` / `Created Time` or `Updated By` / `Updated Time`; `Modified` is not used as a second label for the same last-update meaning. Other management modules will adopt this format in their own migration scope.
-- When update audit columns are present, list them at the end in `Updated Time`, then `Updated By`, then `Actions` order. Size management-table columns to their content and use horizontal scrolling only when confirmed minimum widths cannot fit the target workspace.
+- When update audit columns are present, list them at the end in `Updated Time`, then `Updated By`, then `Actions` order. Creation metadata precedes update metadata when both are shown. Size management-table columns to their content and use horizontal scrolling only when confirmed minimum widths cannot fit the target workspace.
 - `LimitedInput` and `LimitedTextArea` are the shared character-limit controls. Remark fields default to 2000 characters, while business-specific limits are passed explicitly, such as Quick Reply Code 50, Common Phrase / Quick Reply text 2000, Sensitive Word 100, Common Link Website Name / Website URL 200, Quick Action Action Name / Link Address 200, Question Name 100, Ticket Summary 250, or Ticket Note 1000. They share the Ticket count style: a compact normal-weight count that stays inside the control without changing the field geometry, and clamp over-limit change events at the configured maximum.
 - Local-only management modules such as Employee Management must still use English UI text and the same admin layout contract as customer-visible management pages.
 

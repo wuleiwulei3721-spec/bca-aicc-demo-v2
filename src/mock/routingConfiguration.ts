@@ -187,6 +187,8 @@ const textBusinessConfig: ChannelMediaBusinessConfig = {
   preTimeoutReminderMessage:
     'We have not received your reply. This conversation will close in {reminderMinutes} minute(s).',
   preTimeoutReminderMinutes: 1,
+  queueAutoReplyMessage:
+    'We have received your message. Please wait while we connect you with an agent.',
   queueTimeoutMessage: 'All agents are currently busy. Please try again later.',
   queueTimeoutSeconds: 360,
   queueWaitingMessage: 'All agents are currently busy. Please wait.',
@@ -197,6 +199,15 @@ const voiceBusinessConfig: ChannelMediaBusinessConfig = {
   accessSuccessWelcomeMessage:
     'Hello, BANK 1 voice assistant is ready to help you.',
 }
+
+// Voice queues use channel-level prompts, so DM queue-message settings do not apply.
+delete voiceBusinessConfig.longQueueWaitingMessage
+delete voiceBusinessConfig.longQueueWaitingSeconds
+delete voiceBusinessConfig.outsideServiceHoursMessage
+delete voiceBusinessConfig.queueAutoReplyMessage
+delete voiceBusinessConfig.queueTimeoutMessage
+delete voiceBusinessConfig.queueTimeoutSeconds
+delete voiceBusinessConfig.queueWaitingMessage
 
 const videoBusinessConfig: ChannelMediaBusinessConfig = {
   ...textBusinessConfig,
@@ -252,7 +263,7 @@ export const channelTypes: ChannelType[] = [
     ],
     category: 'owned-digital',
     channelTypeCode: 'BANKAPP',
-    channelTypeName: 'Bankapp',
+    channelTypeName: 'HaloBCA',
     licenseStatus: 'Licensed',
     status: 'Active',
     supportedMediaTypes: ['VOICE', 'VIDEO', 'TEXT'],
@@ -466,7 +477,7 @@ export const channels: Channel[] = [
     businessConfig: buildBusinessConfig(['VOICE', 'VIDEO', 'TEXT']),
     channelCode: 'BANKAPP',
     channelId: '201',
-    channelName: 'Bankapp',
+    channelName: 'HaloBCA',
     channelTypeCode: 'BANKAPP',
     mediaTypes: ['VOICE', 'VIDEO', 'TEXT'],
     status: 'Active',
@@ -1190,10 +1201,10 @@ export const channelAccounts: ChannelAccount[] = [
   {
     account: 'bankapp-bank1-prod',
     accountCode: 'ACC_BANKAPP_BANK1',
-    accountName: 'BANK 1 Bankapp',
+    accountName: 'BANK 1 HaloBCA',
     channelCode: 'BANKAPP',
     credentialRef: 'secret://aicc/bankapp/main',
-    purpose: 'BankApp official service account.',
+    purpose: 'HaloBCA official service account.',
     status: 'Active',
   },
   {

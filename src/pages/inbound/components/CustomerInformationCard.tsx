@@ -16,7 +16,9 @@ import { callFlowDetail } from '../../../mock/inbound'
 import { useAppStore, useAuthStore } from '../../../store'
 import type { CallTransferContext } from '../../../store'
 import type {
+  CustomerCrmContacts,
   CustomerInformation,
+  CustomerProfile,
   ExternalOutboundReason,
   VerificationV2CustomerSegment,
   VerificationV2DemoConditions,
@@ -100,6 +102,25 @@ function hasCustomerContactValue(value: string) {
   return normalizedValue.length > 0 && normalizedValue !== '-'
 }
 
+function getCustomerContactDetails(
+  profile: CustomerProfile,
+  phoneNumber: string,
+): CustomerCrmContacts {
+  const contacts = profile.crmContacts ?? {}
+
+  return {
+    ...contacts,
+    Phone:
+      contacts.Phone?.length || !hasCustomerContactValue(phoneNumber)
+        ? contacts.Phone
+        : [phoneNumber],
+    Email:
+      contacts.Email?.length || !hasCustomerContactValue(profile.email)
+        ? contacts.Email
+        : [profile.email],
+  }
+}
+
 function getCustomerSegmentFromProfile(
   customerType: string,
 ): VerificationV2CustomerSegment {
@@ -142,7 +163,7 @@ function getVerificationAction(customer: CustomerInformation) {
   }
 
   if (
-    channel === 'BankApp' &&
+    channel === 'HaloBCA' &&
     customer.bankAppLoginStatus === 'registered'
   ) {
     return 'pin'
@@ -162,7 +183,7 @@ function shouldHideVerificationStatus(customer: CustomerInformation) {
     return true
   }
 
-  return channel === 'BankApp' && customer.bankAppLoginStatus !== 'registered'
+  return channel === 'HaloBCA' && customer.bankAppLoginStatus !== 'registered'
 }
 
 function hasCrmCustomerIdentity(cisNumber: string) {
@@ -330,6 +351,7 @@ export function CustomerInformationCard({
       ? profile.crmContacts?.WhatsApp?.find(hasCustomerContactValue)
       : undefined
   const displayPhoneNumber = whatsAppPhoneNumber ?? profile.phoneNumber
+  const contactDetails = getCustomerContactDetails(profile, displayPhoneNumber)
   const hasOutboundNumber =
     !isUnidentifiedCustomer && hasCustomerContactValue(displayPhoneNumber)
   const displayCustomer = {
@@ -425,7 +447,7 @@ export function CustomerInformationCard({
       channelCode: getDefaultVerificationV2ChannelCode(customer.accessChannel),
       customerSegment: getCustomerSegmentFromProfile(profile.customerType),
       haloAppLoginStatus:
-        customer.accessChannel === 'BankApp Voice'
+        customer.accessChannel === 'HaloBCA Voice'
           ? customer.bankAppLoginStatus
           : undefined,
       organizationSegment: 'none',
@@ -691,7 +713,7 @@ export function CustomerInformationCard({
             />
           )}
           <CustomerContactDetailsModal
-            contacts={profile.crmContacts}
+            contacts={contactDetails}
             open={isContactDetailsOpen}
             onClose={() => setIsContactDetailsOpen(false)}
           />

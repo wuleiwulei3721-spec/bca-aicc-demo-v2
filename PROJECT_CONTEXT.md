@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Project Context
 
-Last updated: 2026-08-27 17:38 +08:00
+Last updated: 2026-09-11 14:28 +08:00
 Repository path: `D:\03projects\bca-aicc-demo-v2`
 
 ## 1. Project Name
@@ -9,14 +9,14 @@ Repository path: `D:\03projects\bca-aicc-demo-v2`
 - Customer-facing demo name: `BANK 1 AICC Demo V2`
 - Browser title / brand tone: `BANK 1 AICC Demo`
 
-This is a front-end demo for an enterprise banking AICC agent desktop. It is not a Vite starter project anymore; the repository already contains multiple implemented workspaces, management pages, customer-side channel simulations, screenshots, mock data, and project recovery documents.
+This is a local demo for an enterprise banking AICC agent desktop. It is not a Vite starter project anymore; the repository already contains multiple implemented workspaces, management pages, customer-side channel simulations, screenshots, mock data, and project recovery documents. Common Phrase, Common Number, and Common Link use a local full-stack path: React -> FastAPI -> independent local MySQL. The native Node + SQLite implementation remains a Common Phrase rollback baseline; the rest of the demo remains intentionally local front-end state unless stated otherwise.
 
 ## 2. Project Goal
 
 The project demonstrates how a BANK 1-style omnichannel AI contact center can support a bank agent through:
 
 - inbound PSTN call pop-up and call handling,
-- BankApp voice / video / live chat handoff,
+- HaloBCA voice / video / live chat handoff,
 - WhatsApp live chat handoff,
 - customer profile, verification, journey, tickets, CRM workspace, and assistant panels,
 - call management configuration,
@@ -30,13 +30,13 @@ The main demo quality target is a dense, restrained, enterprise-grade agent work
 The demo represents a bank customer service agent console. The primary story is:
 
 1. An agent logs in and signs in with the configured default agent status.
-2. The customer reaches BANK 1 through PSTN, BankApp, or WhatsApp.
+2. The customer reaches BANK 1 through PSTN, HaloBCA, or WhatsApp.
 3. The workspace opens the correct interaction tab.
 4. The agent sees customer information, verification, journey, ticketing, next best action, quick action, CRM, and assistant context.
 5. The agent can answer, hold, mute, transfer, make outbound calls, use internal chat, verify the customer, open CRM detail tabs, and handle live chat conversations.
 6. Supervisory / admin-like configuration is shown through Call Management and Routing Config pages.
 
-The application is a front-end demo. Data persistence is mostly in Zustand in-memory stores and mock files. Refreshing the browser generally restores default mock data.
+The application is still primarily a front-end demo. Data persistence is mostly in Zustand in-memory stores and mock files. Common Phrase supports the target FastAPI + local MySQL mode, the Node + SQLite rollback mode, and an in-browser demo mode for static customer builds. Common Number supports FastAPI + local MySQL and an independent in-browser demo mode; demo-mode management changes reset after refresh. No production account, CRM, CTI, Redis, company legacy system, shared development database, or external API is connected.
 
 ## 4. Technology Stack
 
@@ -53,15 +53,29 @@ From `package.json`:
 - Less `4.6.4`
 - ESLint `10.3.0`
 - Day.js `1.11.21`
+- Python `3.11+` for the FastAPI local backend
+- MySQL `8.x` on `127.0.0.1:3306` for the independent `aicc_demo_local` database
+- FastAPI, SQLAlchemy, Alembic, PyMySQL, and Uvicorn in `backend/`
+- Node.js `22.13+` for the native Node + SQLite rollback API
 
 Common commands:
 
 ```bash
 npm run dev
+npm run backend:install
+npm run backend:migrate
+npm run backend:test
+npm run check:fastapi
+npm run check:local
+npm run db:inspect
 npm run build
 npm run lint
 npm run preview
+npm run test
+npm run typecheck
 ```
+
+`npm run dev` starts FastAPI and Vite together by default. FastAPI listens on `127.0.0.1:8000`; Vite serves the React frontend and proxies `/api` to FastAPI. `VITE_COMMON_PHRASE_MODE=demo` and `VITE_COMMON_NUMBER_MODE=demo` select bundled in-browser mock data for their respective static/customer module, so the published frontend never calls the local backend. The retained Node + SQLite implementation is legacy rollback code only for Common Phrase. `npm run backend:migrate` creates the local MySQL database if the configured local MySQL user has permission, then applies Alembic migrations. `npm run check:fastapi` is the fast read-only health, response-shape, and Active-filter check for both modules. `npm run db:mysql-schema` inspects only the independent local MySQL schema.
 
 ## 5. GitHub Repository
 
@@ -92,6 +106,32 @@ Deployment is configured as a Vite SPA:
 - Local maintainer behavior: set `VITE_APP_VISIBILITY_PROFILE=local` in `.env.local` to show local-only modules.
 - Current local-only modules: `/design-system` and `/employee-management/*`.
 - Customer deployments should leave this variable unset or set it to `customer`.
+
+`VITE_COMMON_PHRASE_MODE` controls the Common Phrase data source:
+
+- `api`: uses the `/api` HTTP service and requires a reachable Common Phrase backend.
+- `demo`: uses bundled in-memory seed data; management actions work for the current browser session and reset after refresh.
+- If unset, development uses `api` and production builds use `demo`.
+
+Customer deployments should use `demo` until a persistent backend, authentication, and permission model are approved.
+
+`VITE_COMMON_NUMBER_MODE` controls the Common Number data source independently of Common Phrase:
+
+- `api`: uses the local `/api/common-numbers` FastAPI resource and persists to `aicc_demo_local`.
+- `demo`: uses bundled browser seed data; Common Number management and Transfer IVR changes work for the current browser session and reset after refresh.
+- If unset, development uses `api` and production builds use `demo`.
+
+## 6A. Module Extension Runtime Rule
+
+When a future module is expanded beyond mock behavior, follow the Common Phrase baseline unless the user explicitly confirms a different boundary:
+
+- Local development uses the real local backend and local database for that module's CRUD and query behavior.
+- Published/customer builds remain static React builds using bundled mock data and must not call `127.0.0.1`, a developer machine, a company server, or an unapproved shared database.
+- The module must expose an explicit runtime switch, keep the local API and demo data sources behind the same frontend contract where practical, and document the local setup, published behavior, persistence, and rollback boundary.
+- Do not connect a new module to company legacy systems, shared development databases, CRM, CTI, Redis, real accounts, or production data without a separate confirmed decision.
+- Complete local backend, migration, API, frontend workflow, error handling, and persistence validation before changing the default local development path for that module.
+
+Common Phrase remains the reference implementation for this pattern; Common Number now follows it: local React -> FastAPI -> `aicc_demo_local` MySQL, published React -> bundled demo data.
 
 ## 7. Application Routes
 
@@ -145,13 +185,13 @@ All business routes under `/` require an authenticated demo session.
 - `src/layouts/components/*`: toolbar, profile area, agent settings, Transfer, Outbound, Internal Chat, Toolbar Settings.
 - `src/utils/outboundApproval.ts` and `src/hooks/useExternalOperationApproval.ts`: localStorage + BroadcastChannel synchronization for the external-number TL approval simulation.
 - `src/pages/TlOutboundApprovalPage.tsx`: customer-supplied complete TL dashboard image and component-based popup approval decision surface.
-- `src/pages/AgentWorkspace.tsx`: workspace tab container for Home, Monitor, BankApp Demo, Webchat Demo, WhatsApp Demo, Email, Live Chat, PSTN, Voice Call, Video Call, and registered management page tabs.
+- `src/pages/AgentWorkspace.tsx`: workspace tab container for Home, Monitor, HaloBCA Demo, Webchat Demo, WhatsApp Demo, Email, Live Chat, PSTN, Voice Call, Video Call, and registered management page tabs.
 - `src/pages/inbound/InteractionWorkspace.tsx`: shared three-column workspace foundation.
-- `src/pages/inbound/InboundPage.tsx`: voice / PSTN and BankApp voice workspace.
+- `src/pages/inbound/InboundPage.tsx`: voice / PSTN and HaloBCA voice workspace.
 - `src/pages/inbound/VideoCallPage.tsx`: video call workspace and OpenEye floating client overlay.
 - `src/pages/inbound/LiveChat2Page.tsx`: current Live Chat workspace.
-- `src/pages/bankapp/BankAppDemoPage.tsx`: BankApp customer-side channel simulation.
-- `src/pages/whatsapp/WhatsAppDemoPage.tsx`: WhatsApp simulation using the BankApp demo framework.
+- `src/pages/bankapp/BankAppDemoPage.tsx`: HaloBCA customer-side channel simulation.
+- `src/pages/whatsapp/WhatsAppDemoPage.tsx`: WhatsApp simulation using the HaloBCA demo framework.
 - `src/pages/email/EmailPage.tsx`: code-built Email agent workspace with mailbox folders, customer context, message handling, CRM, thread records, and Ticket registration.
 - `src/pages/social-media/SocialMediaPage.tsx`: Social Media agent workspace with queue filters, post/review handling, CRM preview, and CWU prototype.
 - `src/pages/social-media/SocialMediaInteractionLogPage.tsx`: Social Media Interaction Log workspace page for social channel history query, agent lookup, alert review, and conversation detail.
@@ -160,6 +200,9 @@ All business routes under `/` require an authenticated demo session.
 - `src/pages/employee-management/*`: local-only employee profile management pages.
 - `src/components/*`: base UI components and compatibility components.
 - `src/components/admin/*`: unified admin CRUD layout, toolbar, table, modal, and form field components.
+- `server/*`: native Node HTTP API, SQLite repository, schema/seed initialization, and Node tests for the rollback baseline.
+- `backend/*`: FastAPI application, SQLAlchemy model/repository layers, Alembic migrations, local MySQL bootstrap, and Python API tests.
+- `src/api/*`: browser API clients.
 - `src/mock/*`: demo data.
 - `src/types/*`: shared business and config types.
 - `src/store/*`: Zustand stores for auth, app interaction state, call
@@ -203,7 +246,7 @@ The toolbar supports:
 - Customer-number Outbound Call and Customer Information outbound actions require an active AUX configured with `Support Outbound` only when placing the call and retain the `Miss Information` or `Financial Risk` business reason. Ordinary Agents keep the TL approval request/result flow, while TL-and-above accounts call directly. Any eligible nonempty Customer Information phone number can initiate that flow without KBV completion. The 10-second countdown starts only after the TL approval popup renders its pending request; timeout closes the popup and prompts the Agent to apply again. Only the Agent's latest approved unused request remains callable. A completed external Call carries the dialed number into the toolbar `Talking` state without creating an `Outbound Call` workspace tab or customer screen pop. `Transfer Number` remains a TL-and-above permission, hidden from `888888` and available to `666666` without additional approval.
 - In `Outbound Call > Call Agent`, ordinary Agents see only SPV and TL records; TL-and-above roles see the complete agent list. Calling an agent does not require an outbound AUX and enters the toolbar `Talking` state without creating an `Outbound Call` workspace tab or customer screen pop.
 - `Channel Simulation > Transferred Call` is local-only and opens a PSTN receiving-seat preview with source-agent transfer metadata; it is a local demo visualization, not a real routed call.
-- Call identification display: `IVR: {ANI Number}` for PSTN and `HaloApp: {BCAID}` / `HaloApp: Guest` for HaloApp voice and video; the current HaloApp BCAID mock is `00012345`. Future Webchat voice/video follows `Webchat: {BCAID}` / `Webchat: Guest-0001`.
+- Call identification display: `IVR: {ANI Number}` for PSTN and `HaloBCA: {BCAID}` / `HaloBCA: Guest` for HaloBCA voice and video; the current HaloBCA BCAID mock is `00012345`. Future Webchat voice/video follows `Webchat: {BCAID}` / `Webchat: Guest-0001`.
 - Skill display during active call lifecycle; outbound number and agent calls display `Skill -`.
 
 ### Agent Workspace
@@ -212,7 +255,7 @@ Workspace tabs include:
 
 - Home.
 - Monitor, opened from Monitoring menu items.
-- BankApp Demo.
+- HaloBCA Demo.
 - Webchat Demo.
 - WhatsApp Demo.
 - Live Chat.
@@ -248,14 +291,14 @@ PSTN initially shows an unidentified customer. After voice KBV passes, AICC requ
 
 ### Video Call Workspace
 
-Video call uses the same interaction workspace and adds an OpenEye floating video window when the current active interaction is connected. BankApp video desktop sharing is initiated from the BCA-owned Haloapp client screenshot; the agent-side floating window only views the customer-shared screen.
+Video call uses the same interaction workspace and adds an OpenEye floating video window when the current active interaction is connected. HaloBCA video desktop sharing is initiated from the BCA-owned HaloBCA client screenshot; the agent-side floating window only views the customer-shared screen.
 
 ### Live Chat Workspace
 
 Current formal Live Chat uses `LiveChat2Page`:
 
 - Current / History customer list.
-- Unified WhatsApp, BankApp, and Webchat customer list.
+- Unified WhatsApp, HaloBCA, and Webchat customer list.
 - Customer list collapsed / expanded states.
 - Sorting by access time or message time.
 - Star color marker UI is hidden in the customer list; compatibility state remains local.
@@ -265,6 +308,7 @@ Current formal Live Chat uses `LiveChat2Page`:
 - Conversation workspace.
 - Quick Replies tab.
 - Public Quick Replies are maintained through `Call Management > Common Phrase`.
+- The Common Phrase management page and Live Chat Public Phrases read the same configured API data source. FastAPI + local MySQL is the target local path; Node + SQLite remains the rollback path. Live Chat requests `Active` phrases only; disabled phrases remain visible in management but are unavailable for public insertion.
 - Agent replies are checked against `Call Management > Sensitive Word` before sending.
 - Message Record tab.
 - Transfer modal.
@@ -273,15 +317,15 @@ Current formal Live Chat uses `LiveChat2Page`:
 
 This is still a front-end simulation, not a real message gateway integration.
 
-### BankApp, Webchat, and WhatsApp Demo
+### HaloBCA, Webchat, and WhatsApp Demo
 
-BankApp supports:
+HaloBCA supports:
 
 - Voice.
 - Video.
 - Live Chat.
 - Registered / Guest customer type.
-- Customer-side screenshot flow using BCA-owned Haloapp V1.8 reference screens.
+- Customer-side screenshot flow using BCA-owned HaloBCA V1.8 reference screens.
 - Business selection and confirmation.
 - Voice/video handoff to Agent Workspace.
 - Live chat handoff to Live Chat.
@@ -353,8 +397,8 @@ Customer-visible Call Management pages:
 Legacy or hidden routes redirect to Verification Rules.
 
 Interaction Log is implemented at `/call-management/call-record-query` and is
-scoped to the current agent's Phone, BankApp Voice,
-BankApp Video, BankApp DM, Webchat, and WhatsApp records. It uses Contact /
+scoped to the current agent's Phone, HaloBCA Voice,
+HaloBCA Video, HaloBCA DM, Webchat, and WhatsApp records. It uses Contact /
 Call Type / Queue / Service Time / Ended By / Rating Score / QM Score to show the
 customer-side identifier, queue context, start-end service time, service ending
 metadata, customer satisfaction, and quality score.
@@ -450,7 +494,7 @@ Current behaviors:
 - Single-action agent sign-in with the current demo account's existing full-channel capability retained internally.
 - Ready / Not Ready / AUX / Pre-AUX state handling.
 - PSTN inbound call simulation.
-- BankApp voice and video handoff.
+- HaloBCA voice and video handoff.
 - Video workspace with OpenEye floating client and screen-share demo.
 - Shared InteractionWorkspace for voice, video, and live chat.
 - Customer Information, verification, journey, tickets, next best actions, quick actions.
@@ -461,14 +505,15 @@ Current behaviors:
 - Live Chat workspace with customer list, conversation, message record, quick replies, and local message state.
 - Monitoring side menu with static Home / Monitor dashboard screenshot switching.
 - AI external side-menu group for Quality Manage and AI Assist Config.
-- BankApp, Webchat, and WhatsApp customer-side simulations with screenshot assets.
+- HaloBCA, Webchat, and WhatsApp customer-side simulations with screenshot assets.
 - Customer-visible Email agent workspace with mailbox folders, shared customer context, the Live Chat CRM screenshot, message handling, thread records, and Ticket registration.
 - Customer-visible Social Media agent workspace with queue filtering, social post/review handling, CRM preview, local CWU prototype, and review reply simulation.
 - Customer-visible Social Media Interaction Log workspace page with channel/type/account/agent/team/time/duration/ticket/summary filters, role-scoped mock visibility, agent lookup, alert detail, and conversation detail.
 - Call Management pages listed above.
 - Abnormal End Reasons for abnormal Voice / Video / DM service end reasons.
-- Interaction Log for current-agent Phone, BankApp Voice, BankApp Video, BankApp DM, Webchat, and WhatsApp history, with 30 mock records, Contact, Queue, Service Time, Ended By, End Reason, QM Score, playback/transcript details, and read-only mandatory CWU summary.
+- Interaction Log for current-agent Phone, HaloBCA Voice, HaloBCA Video, HaloBCA DM, Webchat, and WhatsApp history, with 30 mock records, Contact, Queue, Service Time, Ended By, End Reason, QM Score, playback/transcript details, and read-only mandatory CWU summary.
 - Common Number feeds enabled IVR transfer targets in the call Transfer modal.
+- Common Link management and the agent workspace Common Links tab read the same configured source. Local FastAPI mode persists the Demo-owned Website Name, HTTP(S) Website URL, Remark, and update audit fields; the customer static build reads bundled mock data.
 - Quick Action Management maintains global enabled quick actions, their display order, and Updated Time / Updated By metadata for the shared customer-context cards in call, Email, and Social Media workspaces. Common Phrase, Common Link, Common Number, Sensitive Word, AUX Reason, Abnormal End Reasons, and Verification Rules expose the same update metadata pattern in their management lists. A quick action continues to open the local CRM mock detail tab; its configured Link Address is a displayed business reference and does not navigate externally.
 - Call Management page timestamps, including management audit columns, Interaction Log Service Time, Login Log Time, configuration Last saved, and date-range controls, use `DD-MM-YYYY HH:MM:SS`. Routing Config retains its existing timestamp presentation until its own migration.
 - Sensitive word detection for Live Chat agent replies.
@@ -480,10 +525,10 @@ Current behaviors:
 
 ## 11. Current Unfinished or Partially Implemented Areas
 
-- No real backend persistence. Stores are local demo state.
-- No real AICC, IVR, CRM, OpenEye, BankApp, WhatsApp, Webchat, LDAP, queue, or routing engine integration.
+- No production backend persistence. Common Phrase has independent local MySQL persistence through FastAPI, Node + SQLite rollback persistence, and non-persistent in-browser demo data; Common Number and Common Link have independent local MySQL persistence through FastAPI and non-persistent in-browser demo data. Other modules remain local demo state.
+- No real AICC, IVR, CRM, OpenEye, HaloBCA, WhatsApp, Webchat, LDAP, queue, or routing engine integration.
 - Video Call is a visual demo, not real audio/video.
-- Live Chat is a front-end mock, not a real channel gateway.
+- Live Chat is a front-end mock, not a real channel gateway. Its Public Phrases list is the local Common Phrase API consumer.
 - Webchat customer-side simulation currently covers text only; voice and video Webchat media are future scope.
 - Email Record Inquiry and Email Template Deploy are not part of the current Email workspace scope.
 - Social Media has no real social-network gateway, persistence, moderation, routing, audit, or service-ending lifecycle. Social Media Interaction Log is front-end mock data until backend query contracts are confirmed.
@@ -501,7 +546,7 @@ Current `public/screenshots/` contains:
 - `assistant-workspace.jpg`
 - `login-illustration.svg`
 - OpenEye images.
-- BankApp channel, business selection, confirmation, queue, chat, voice/video, screen-share, and service-closed images.
+- HaloBCA channel, business selection, confirmation, queue, chat, voice/video, screen-share, and service-closed images.
 - Webchat text entry, queue, agent chat, and satisfaction rating images.
 - WhatsApp chat request, business selection, agent chat, and satisfaction rating images.
 - Monitoring dashboard images under `public/screenshots/monitoring/` for `Home-Agent`, `Home-TL`, `Home-SPV`, `Monitor-TL`, and `Monitor-OM`.
@@ -512,23 +557,27 @@ CRM and Assistant components keep code-based fallback UI if image loading fails.
 
 Important demo boundary:
 
-- `useAppStore`: workspace tabs, call interactions, call/session end metadata, live chat sessions, BankApp flow flags, verification rules.
+- `useAppStore`: workspace tabs, call interactions, call/session end metadata, live chat sessions, HaloBCA flow flags, verification rules.
 - `useAuthStore`: demo session.
 - `useCallManagementStore`: blacklist, priority list, busy reasons, session end reasons.
+- `useCommonPhraseStore`, `useCommonNumberStore`, and `useCommonLinkStore`: module query state and mutations loaded from their configured API or in-browser demo data source.
 - `useRoutingConfigStore`: routing configuration collections.
 - `EmailPage` local state: mailbox messages, folders, drafts, reply/ignore handling, thread records, SLA stop state, and Ticket registration backed by the existing internal CWU mock field.
+- `backend/app/repositories/common_phrase_repository.py`, `backend/app/repositories/common_number_repository.py`, and `backend/app/repositories/common_link_repository.py`: MySQL-backed Demo module data. `backend/alembic/versions/` is the migration source of truth for the independent local database.
+- `server/commonPhraseRepository.ts`: SQLite-backed Common Phrase rollback categories and public phrases. The ignored `data/common-phrases.sqlite` file is local-only demo data.
 
-These are front-end stores. They are not connected to production APIs. Most changes reset after refresh or new session.
+Except for the local Common Phrase, Common Number, and Common Link API boundaries above, these are front-end stores and are not connected to production APIs. All three modules reset after refresh when their customer demo mode is active; FastAPI mode persists them in local MySQL, while only Common Phrase retains the Node + SQLite fallback.
 
 ## 14. Known Risks
 
 - The project is UI-heavy and interaction-heavy, with limited automated test coverage.
 - Build has historically shown a Vite / Rolldown large chunk warning.
-- Browser visual verification is still important after any frontend change.
+- Browser visual verification is important before handoff for affected frontend workflows; daily iterations should use the faster lint/build or local API checks where applicable.
+- Common Phrase, Common Number, and Common Link local FastAPI modes require Python, MySQL, and installed backend dependencies; they have no real authentication or multi-user permission model in this local demo. The backend refuses non-loopback database hosts and database names other than `aicc_demo_local`.
 - Call state currently supports only one active voice/video call at a time.
 - Closing a Video Call tab does not automatically hang up; Hang Up is the authoritative call end action.
 - Email is a front-end workflow simulation with no mailbox, SMTP, attachment, template service, or Ticket backend integration.
-- Some older compatibility code or internal identifiers may still exist in source, but customer-visible text should use Bank / BankApp / BANK 1 wording.
+- Some older compatibility code or internal identifiers may still exist in source, but customer-visible text should use Bank / HaloBCA / BANK 1 wording.
 - `DEPLOY.md` may display encoding issues in non-UTF-8 terminals.
 
 ## 15. Handoff Reading Order

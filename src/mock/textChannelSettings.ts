@@ -12,7 +12,7 @@ export interface TextChannelMeta {
 export const textChannelMetas: TextChannelMeta[] = [
   {
     code: 'bankapp',
-    label: 'Bankapp',
+    label: 'HaloBCA',
     tone: 'bankapp',
   },
   {

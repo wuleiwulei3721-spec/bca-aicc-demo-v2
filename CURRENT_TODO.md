@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-09-02 09:45 +08:00
+Last updated: 2026-09-10 15:30 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -22,7 +22,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Card Link,
   - CardPack,
   - Base24,
-  - BankApp login context,
+  - HaloBCA login context,
   - backend-only matching,
   - whether answers should ever be visible to agents.
 - Confirm special verification scenarios:
@@ -70,7 +70,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Local-only `Channel Simulation > Transferred Call` opens a receiving-seat PSTN preview with the `Transferred from Maya Lestari.` banner and a green source-transfer icon after the customer channel duration.
 - Verify toolbar call context:
   - PSTN shows IVR and Skill,
-  - BankApp voice/video shows BankID and Skill,
+  - HaloBCA voice/video shows BankID and Skill,
   - Idle hides call context.
 - Verify Customer Information:
   - KBV-approved CRM CIS identity refresh, including valid response, unknown/empty CIS, mismatched correlation ID, foreign origin, and timeout handling,
@@ -78,7 +78,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - CRM-backed read-only all-channel contact viewer, including multi-value and empty-channel states after CIS refresh; confirm CRM write authority, audit, field ownership, validation, and failure handling before any customer-facing contact editing is added,
   - customer-phone outbound: every eligible nonempty customer phone number can start the flow, including before KBV completion. The agent must switch to an eligible outbound AUX and select `Miss Information` or `Financial Risk`; ordinary Agents retain TL approval while TL-and-above accounts call directly, and neither path opens a customer screen pop.
   - Send Email,
-  - Call Flow Detail: PSTN shows IVR Journey; BankApp Voice / Video and digital channels show Business Menu Selection Record only, with the customer-selected business name. Transfer History is always present and includes the current in-progress agent record with `-` duration / transfer time.
+  - Call Flow Detail: PSTN shows IVR Journey; HaloBCA Voice / Video and digital channels show Business Menu Selection Record only, with the customer-selected business name. Transfer History is always present and includes the current in-progress agent record with `-` duration / transfer time.
   - Customer Verification V2.
 - Verify CRM and Assistant screenshot rendering:
   - `/screenshots/crm-workspace.jpg`,
@@ -89,15 +89,15 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - click opens CRM dynamic tabs,
   - dynamic tabs can close,
   - tab labels remain compact.
-  - Quick Action Management: route/menu workspace lifecycle, add/edit/delete validation, Enabled/Disabled visibility, direct icon reorder boundaries/filter guard, current-operator Updated Time / Updated By values, compact no-horizontal-scroll table layout, and shared PSTN / BankApp / Email / Social Media display order.
+  - Quick Action Management: route/menu workspace lifecycle, add/edit/delete validation, Enabled/Disabled visibility, direct icon reorder boundaries/filter guard, current-operator Updated Time / Updated By values, compact no-horizontal-scroll table layout, and shared PSTN / HaloBCA / Email / Social Media display order.
 - Verify shared CRM Ticket registration in PSTN, voice/video, Live Chat, and Email: searchable single-select Category / Product linkage, long Category / Product values use standard one-line ellipsis with a right-aligned centered arrow, Product reset after Category changes, Summary 250 and Note 1000 character caps with shared limited-input counts, One-Click Generation draft refresh from the left side of the fixed footer, Confirm save feedback, form reset, consecutive ticket creation, and inbound Ticketing History append.
 - Verify Video Popup Workspace:
-  - BankApp Video opens Video Call tab,
+  - HaloBCA Video opens Video Call tab,
   - OpenEye floating window appears only during connected active video,
   - customer-initiated desktop sharing changes the client button to Stop Sharing and the agent only views the shared screen,
   - Hang Up hides OpenEye.
 - Verify whether closing a Video Call tab without Hang Up is acceptable for demos.
-- Verify Haloapp V1.8 screenshots with the product/customer team, especially text client, voice keypad, video no-keypad, PIN, desktop-share, and satisfaction pages.
+- Verify HaloBCA V1.8 screenshots with the product/customer team, especially text client, voice keypad, video no-keypad, PIN, desktop-share, and satisfaction pages.
 - Verify Live Chat workspace:
   - fixed Live Chat tab opens after digital-capable sign-in,
   - Current: active services up to Global Control `Max Digital Media Services` (default 3) plus the most recently ended Live Chat sessions up to `Max Live Chat Ended Session Retention` (default 10); the next end evicts the earliest-ended retained session to History when the retention limit is reached,
@@ -107,7 +107,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - unread count,
   - customer-list SLA reminder and unanswered progress bar; Conversation header shows only total service duration,
   - Send message,
-  - Confirm Recall / Re-edit are absent for WhatsApp, BankApp, and Webchat,
+  - Confirm Recall / Re-edit are absent for WhatsApp, HaloBCA, and Webchat,
   - End Service retains the ended session in Current and removes it from active-service guards; Close moves it to History,
   - End Service main action keeps the confirmation modal,
   - End Service caret appears only when DM has an active abnormal reason; otherwise the normal End Service confirmation flow has no caret,
@@ -117,10 +117,10 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Transfer: ordinary Agent sees only SPV/TL transfer targets with no ordinary-agent data; TL sees all targets.
   - New customer handoff remains in queue when the configured `Max Digital Media Services` slots are occupied.
 - Verify Online Chat / text-channel story:
-  - BankApp Live Chat handoff,
+  - HaloBCA Live Chat handoff,
   - WhatsApp Demo handoff,
   - Webchat Demo handoff.
-- Verify BankApp Demo:
+- Verify HaloBCA Demo:
   - Voice,
   - Video,
   - Live Chat,
@@ -134,14 +134,14 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - handoff,
   - satisfaction rating.
 - Verify Webchat Demo:
-  - menu entry under BankApp,
+  - menu entry under HaloBCA,
   - Guest-only flow shows contact information / business selection then queue,
   - handoff opens a new Webchat customer in Live Chat,
   - handoff success shows Agent Workspace before Text Chat,
   - PIN action remains hidden pending customer confirmation,
   - satisfaction rating.
 - Verify Call Management:
-  - Verification Rules, including the default dynamically derived Channel options `Phone`, `Bankapp Voice`, `Bankapp Video`, `Webchat Voice`, and `Webchat Video`, with no HaloApp Login Status for Webchat,
+  - Verification Rules, including the default dynamically derived Channel options `Phone`, `HaloBCA Voice`, `HaloBCA Video`, `Webchat Voice`, and `Webchat Video`, with no HaloBCA Login Status for Webchat,
   - Global Control Configuration Save / Reset, its effect on the next sign-in, and DM active-service / ended-session-retention limits,
   - Blacklist: Batch Add Status switch defaults to Enabled and saves its selected state, enabled/disabled status filter and inline Status switch, single Channel selector, shared Phone / WhatsApp country-code (`62` default, editable) / local-number batch mode, Phone-only selectable restriction policies, fixed WhatsApp and non-phone `Prohibit Transfer to Agent` policy, a Country Code list column (`-` for non-phone channels), duplicate preview/skip, required 2000-character Reason, and one-channel Identifier batch behavior,
   - Priority List: single Channel selectors in the query and Batch Add form, shared Phone / WhatsApp Country Code (`62` default) / Phone Number mode, Country Code list column, seeded Created By values shown as `1234-Admin`, required 2000-character Reason, and duplicate validation by Phone-like `Channel + Country Code + Identifier` or non-phone `Channel + Identifier` regardless of Match Rule,
@@ -163,7 +163,8 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Verify Routing Config:
   - Routing Config visible by default,
   - Channels Phone Accounts disabled,
-  - Skill Queues Access Code appears after VDN in list columns and Add / Edit / View forms, Keyword can search Access Code, required validation works, and optional AHT Target / QM Target values can be configured,
+  - Channels Voice Business Config shows the no-configuration prompt; DM Queue Configuration includes Queue Auto-Reply Message and preserves its saved value,
+  - Skill Queues Access Code appears after VDN in list columns and Add / Edit / View forms, Keyword can search Access Code, derived Channel / Media lookup values are shown and filterable, and optional SL / AHT Target / QM Target values can be configured,
   - Skill Routing Rules batch behavior,
   - Site Access Volume ratio validation,
   - Working Time Plans layout.
@@ -191,7 +192,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - keep Current / History, sorting, and collapse controls compact,
   - keep Message Record and Quick Replies usable.
 - Localization optimization:
-  - standardize terms such as Skill, Customer Segment, Scenario, BankApp, Webchat, WhatsApp,
+  - standardize terms such as Skill, Customer Segment, Scenario, HaloBCA, Webchat, WhatsApp,
   - keep Indonesian KBV questions and business cases readable.
 - Routing Config content review:
   - align channel names, business type names, skill queues, and routing examples with customer narration.
@@ -210,12 +211,14 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Add Supervisor page if demo scope expands.
 - Add Admin dashboard if demo scope expands beyond current management pages.
 - Add Reporting / KPI pages if demo scope expands.
-- Add real API integration layer if moving beyond front-end demo.
+- When extending another module beyond mock behavior, use the documented Common Phrase / Common Number / Common Link runtime boundary: local real backend/database, published bundled mock data, explicit runtime switch, and no company/shared/production integrations without a separate decision.
+- FastAPI + local MySQL is the default development backend for Common Phrase, Common Number, and Common Link. Keep the legacy Node + SQLite source only as Common Phrase rollback code; keep `VITE_COMMON_PHRASE_MODE=demo`, `VITE_COMMON_NUMBER_MODE=demo`, and `VITE_COMMON_LINK_MODE=demo` for published static/customer builds.
+- Define production backends, authentication, permissions, persistent storage, and deployment boundaries before Common Phrase, Common Number, or Common Link customer data changes need to survive refresh or be shared across users. The current FastAPI + MySQL backend is local learning infrastructure only.
 - Add Playwright smoke tests for:
   - login,
   - Sign In,
   - PSTN call,
-  - BankApp handoff,
+  - HaloBCA handoff,
   - WhatsApp handoff,
   - Live Chat,
   - Verification Rule V2,
@@ -236,7 +239,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 
 - Real simultaneous multi-call handling.
 - Real OpenEye media protocol integration.
-- Real WhatsApp / BankApp / Webchat gateway connection.
+- Real WhatsApp / HaloBCA / Webchat gateway connection.
 - Real CRM SSO / CRM embedded iframe integration.
 - Backend persistence for management pages.
 - Replacing the current workbench visual system with a new global style.

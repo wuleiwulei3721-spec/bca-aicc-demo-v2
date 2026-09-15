@@ -110,13 +110,16 @@ interface SetLiveChatTabOpenOptions {
 }
 
 const INTERACTION_FLASH_MS = 5000
+const LIVE_CHAT2_BOT_SUMMARY_DELAY_MS = 1500
 const DEFAULT_INBOUND_SKILL_DISPLAY_NAME = 'Credit card activation'
 const LIVE_CHAT_TAB_KEY = 'live-chat'
 const LEGACY_LIVECHAT2_TAB_KEY = 'livechat2'
 const MONITORING_MONITOR_TAB_KEY = 'monitor'
 const DEFAULT_LIVECHAT2_CURRENT_SESSION_IDS = [
   'livechat2-001',
+  'livechat2-004',
   'livechat2-005',
+  'livechat2-003',
 ]
 const LIVE_CHAT_TO_LIVECHAT2_SESSION_ID: Record<string, string> = {
   'live-chat-001': 'livechat2-001',
@@ -129,7 +132,7 @@ const liveChat2SessionById = Object.fromEntries(
 const fallbackLiveChat2SessionId =
   liveChat2Sessions.find((session) => !session.isInitialHistory)?.id ?? null
 const channelCodeByLiveChatChannel: Record<string, string> = {
-  BankApp: 'BANKAPP',
+  HaloBCA: 'BANKAPP',
   Webchat: 'WEBCHAT',
   WhatsApp: 'WHATSAPP',
 }
@@ -333,6 +336,10 @@ function createLiveChat2HandoffSession(
     ...sourceSession.historyMessages,
     ...sourceSession.messages,
   ]
+  const customerDisplayName =
+    sourceMessages.find(
+      (message) => message.sender === 'customer' && message.senderName.trim(),
+    )?.senderName ?? sourceSession.customer.profile.name
   const firstMessageTimestamp =
     now - Math.max(sourceMessages.length - 1, 0) * 60 * 1000
   const messageTimestampById = new Map(
@@ -343,7 +350,7 @@ function createLiveChat2HandoffSession(
   )
 
   const isTextGuest =
-    (sourceSession.channel === 'BankApp' ||
+    (sourceSession.channel === 'HaloBCA' ||
       sourceSession.channel === 'Webchat') &&
     bankAppCustomerType === 'guest'
   const textGuestProfile = {
@@ -364,7 +371,7 @@ function createLiveChat2HandoffSession(
     : {
         ...sourceSession.customer.profile,
         customerType:
-          (sourceSession.channel === 'BankApp' ||
+          (sourceSession.channel === 'HaloBCA' ||
             sourceSession.channel === 'Webchat') &&
           bankAppCustomerType === 'registered'
             ? 'Regular Customer'
@@ -388,17 +395,19 @@ function createLiveChat2HandoffSession(
     ...sourceSession,
     accessSequence,
     bankAppLoginStatus:
-      sourceSession.channel === 'BankApp'
+      sourceSession.channel === 'HaloBCA'
         ? bankAppCustomerType ?? sourceSession.bankAppLoginStatus ?? 'registered'
         : sourceSession.bankAppLoginStatus,
     customer: {
       ...sourceSession.customer,
       bankAppLoginStatus:
-        sourceSession.channel === 'BankApp'
+        sourceSession.channel === 'HaloBCA'
           ? bankAppCustomerType ?? sourceSession.bankAppLoginStatus ?? 'registered'
           : sourceSession.customer.bankAppLoginStatus,
       profile: customerProfile,
     },
+    customerDisplayName,
+    botSummaryStatus: sourceSession.botSummary ? 'generating' : undefined,
     historyMessages: sourceSession.historyMessages.map(cloneHandoffMessage),
     id: nextSessionId,
     lastMessageAt: new Date(now).toISOString(),
@@ -601,6 +610,7 @@ interface AppState {
   resetBankAppPinVerification: () => void
   resetBankAppVideoDesktopShare: () => void
   closeLiveChat2Session: (sessionId: string) => void
+  completeLiveChat2BotSummary: (sessionId: string) => void
   endLiveChat2Session: (
     sessionId: string,
     endReason?: LiveChat2EndReason,
@@ -617,7 +627,7 @@ interface AppState {
   clearLiveChatSessions: () => void
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set, get) => ({
   activeWorkspaceTabKey: 'home',
   agentServiceMode: null,
   activeLiveChatSessionIds: [],
@@ -1211,6 +1221,7 @@ export const useAppStore = create<AppState>((set) => ({
     }),
   requestLiveChatWorkspace: (sessionId, activate = true, bankAppCustomerType) => {
     let wasAdmitted = false
+    let generatedSummarySessionId: string | null = null
 
     set((state) => {
       const { maxActiveServices } = getLiveChat2CapacityLimits()
@@ -1256,6 +1267,7 @@ export const useAppStore = create<AppState>((set) => ({
 
       if (handoffSessionId && handoffSession) {
         wasAdmitted = true
+        generatedSummarySessionId = handoffSessionId
         const initialUnansweredSeconds =
           typeof handoffSession.initialUnansweredSeconds === 'number'
             ? 0
@@ -1345,6 +1357,12 @@ export const useAppStore = create<AppState>((set) => ({
         readLiveChatSessionIds: [],
       }
     })
+
+    if (generatedSummarySessionId) {
+      window.setTimeout(() => {
+        get().completeLiveChat2BotSummary(generatedSummarySessionId)
+      }, LIVE_CHAT2_BOT_SUMMARY_DELAY_MS)
+    }
 
     return wasAdmitted
   },
@@ -1686,6 +1704,24 @@ export const useAppStore = create<AppState>((set) => ({
     set({
       bankAppVideoShareState: 'idle',
       isScreenShareActive: false,
+    }),
+  completeLiveChat2BotSummary: (sessionId) =>
+    set((state) => {
+      const session = state.liveChat2SessionInstances[sessionId]
+
+      if (!session || session.botSummaryStatus !== 'generating') {
+        return {}
+      }
+
+      return {
+        liveChat2SessionInstances: {
+          ...state.liveChat2SessionInstances,
+          [sessionId]: {
+            ...session,
+            botSummaryStatus: 'ready',
+          },
+        },
+      }
     }),
   closeLiveChat2Session: (sessionId) =>
     set((state) => {

@@ -706,9 +706,9 @@ export function getDefaultVerificationV2ChannelCode(
   }
 
   if (
-    accessChannel === 'BankApp' ||
-    accessChannel === 'BankApp Voice' ||
-    accessChannel === 'BankApp Video' ||
+    accessChannel === 'HaloBCA' ||
+    accessChannel === 'HaloBCA Voice' ||
+    accessChannel === 'HaloBCA Video' ||
     accessChannel === 'Video'
   ) {
     return 'BANKAPP'

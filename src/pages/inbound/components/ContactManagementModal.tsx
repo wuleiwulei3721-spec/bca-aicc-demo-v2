@@ -20,7 +20,7 @@ interface ContactManagementModalProps {
 const contactPlaceholders: Record<ContactType, string> = {
   Phone: '+62 21 0000 0000',
   WhatsApp: '+62 812 0000 0000',
-  BankApp: 'bankapp_id',
+  HaloBCA: 'bankapp_id',
   Email: 'customer@email.com',
   Facebook: 'facebook.com/customer',
   Instagram: '@customer',

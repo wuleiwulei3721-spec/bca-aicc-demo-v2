@@ -13,11 +13,11 @@ interface ChannelTagProps {
 }
 
 const channelClassNames: Record<string, string> = {
-  BankApp: 'inbound-channel-tag--bankapp',
+  HaloBCA: 'inbound-channel-tag--bankapp',
   Phone: 'inbound-channel-tag--phone',
   Video: 'inbound-channel-tag--video',
-  'BankApp Voice': 'inbound-channel-tag--bankapp',
-  'BankApp Video': 'inbound-channel-tag--bankapp',
+  'HaloBCA Voice': 'inbound-channel-tag--bankapp',
+  'HaloBCA Video': 'inbound-channel-tag--bankapp',
   Webchat: 'inbound-channel-tag--webchat',
   'Webchat Voice': 'inbound-channel-tag--webchat',
   Email: 'inbound-channel-tag--email',
@@ -28,9 +28,9 @@ const channelClassNames: Record<string, string> = {
 }
 
 const channelDisplayLabels: Partial<Record<ChannelTagValue, string>> = {
-  BankApp: 'BankApp',
-  'BankApp Voice': 'BankApp',
-  'BankApp Video': 'BankApp',
+  HaloBCA: 'HaloBCA',
+  'HaloBCA Voice': 'HaloBCA',
+  'HaloBCA Video': 'HaloBCA',
   Phone: 'PSTN',
   Video: 'Video Call',
 }

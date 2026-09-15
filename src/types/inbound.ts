@@ -2,9 +2,9 @@ export type AccessChannel =
   | 'Phone'
   | 'Video'
   | 'Email'
-  | 'BankApp'
-  | 'BankApp Voice'
-  | 'BankApp Video'
+  | 'HaloBCA'
+  | 'HaloBCA Voice'
+  | 'HaloBCA Video'
   | 'WhatsApp'
   | 'Webchat'
   | 'Webchat Voice'
@@ -20,7 +20,7 @@ export type CustomerEmailVerificationStatus = 'Verified' | 'Unverified'
 export type CustomerContactChannel =
   | 'Phone'
   | 'WhatsApp'
-  | 'BankApp'
+  | 'HaloBCA'
   | 'Email'
   | 'Facebook'
   | 'Instagram'
@@ -37,7 +37,7 @@ export type CustomerCrmContacts = Partial<
 
 export type JourneyChannel =
   | 'Phone'
-  | 'BankApp'
+  | 'HaloBCA'
   | 'Webchat'
   | 'Email'
   | 'Facebook'
@@ -87,7 +87,7 @@ export interface LiveChatConversationMessage {
 
 export interface LiveChatSession {
   id: string
-  channel: Extract<AccessChannel, 'WhatsApp' | 'BankApp' | 'Webchat'>
+  channel: Extract<AccessChannel, 'WhatsApp' | 'HaloBCA' | 'Webchat'>
   customer: CustomerInformation
   conversation: LiveChatConversationMessage[]
   intent: string
@@ -104,6 +104,8 @@ export type LiveChat2StarColor = 'gray' | 'red' | 'blue' | 'yellow'
 export type LiveChat2SessionStatus = 'active' | 'ended'
 
 export type LiveChat2EndReason = 'agent' | 'customer' | 'timeout'
+
+export type LiveChat2BotSummaryStatus = 'generating' | 'ready'
 
 export type LiveChat2MessageSender = 'agent' | 'bot' | 'customer' | 'system'
 
@@ -134,8 +136,11 @@ export interface LiveChat2Session {
   id: string
   accessSequence: number
   bankAppLoginStatus?: 'guest' | 'registered'
-  channel: Extract<AccessChannel, 'WhatsApp' | 'BankApp' | 'Webchat'>
+  botSummary?: string
+  botSummaryStatus?: LiveChat2BotSummaryStatus
+  channel: Extract<AccessChannel, 'WhatsApp' | 'HaloBCA' | 'Webchat'>
   customer: CustomerInformation
+  customerDisplayName?: string
   historyMessages: LiveChat2Message[]
   initialStarColor: LiveChat2StarColor
   initialUnansweredSeconds: number | null

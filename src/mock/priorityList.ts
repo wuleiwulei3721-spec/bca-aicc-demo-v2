@@ -11,10 +11,10 @@ interface PriorityListSeed {
 
 const priorityListSeeds: PriorityListSeed[] = [
   {
-    channels: ['Bankapp'],
+    channels: ['HaloBCA'],
     createdBy: DEFAULT_AUDIT_ACTOR,
     identifiers: ['BANKID00045678'],
-    reason: 'BankApp customer identifier for priority queue.',
+    reason: 'HaloBCA customer identifier for priority queue.',
   },
   {
     channels: ['Phone', 'WhatsApp'],

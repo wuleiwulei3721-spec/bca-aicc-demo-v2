@@ -29,8 +29,8 @@ import type {
 type RuleModalMode = 'view' | 'edit'
 
 const channelTypeLabels: Record<VerificationChannelType, string> = {
-  'bankapp-registered': 'BankApp Registered',
-  'bankapp-unregistered': 'BankApp Unregistered',
+  'bankapp-registered': 'HaloBCA Registered',
+  'bankapp-unregistered': 'HaloBCA Unregistered',
   phone: 'PSTN / Phone',
   video: 'Video',
   webchat: 'Webchat',
