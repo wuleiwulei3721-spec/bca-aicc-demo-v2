@@ -1,7 +1,7 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
 import { Alert, Input } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   AdminFilterField,
   AdminFormField,
@@ -15,8 +15,10 @@ import {
   LimitedInput,
   LimitedTextArea,
 } from '../../components'
+import type { CommonLinkQuery } from '../../api/commonLinkApi'
+import { isCommonLinkDemoMode } from '../../config/commonLinkMode'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
-import { useAuthStore, useCallManagementStore } from '../../store'
+import { useAppStore, useAuthStore, useCommonLinkStore } from '../../store'
 import type { CommonLinkEntry } from '../../types'
 import {
   formatAuditActor,
@@ -39,6 +41,8 @@ interface CommonLinkDraft {
 
 const COMMON_LINK_NAME_MAX_LENGTH = 200
 const COMMON_LINK_URL_MAX_LENGTH = 200
+const COMMON_LINK_REMARK_MAX_LENGTH = 2000
+const commonLinkTabKey = 'page:call-management-common-links'
 
 const defaultFilters: CommonLinkFilters = {
   websiteName: '',
@@ -55,17 +59,6 @@ function normalizeValue(value: string) {
   return value.trim().toLowerCase()
 }
 
-function getNextCommonLinkId(entries: CommonLinkEntry[]) {
-  const nextSequence =
-    entries.reduce((maxSequence, entry) => {
-      const match = /^CL(\d+)$/.exec(entry.id)
-
-      return match ? Math.max(maxSequence, Number(match[1])) : maxSequence
-    }, 0) + 1
-
-  return `CL${String(nextSequence).padStart(3, '0')}`
-}
-
 function isValidHttpUrl(value: string) {
   try {
     const url = new URL(value)
@@ -76,16 +69,30 @@ function isValidHttpUrl(value: string) {
   }
 }
 
+function toQuery(filters: CommonLinkFilters): CommonLinkQuery {
+  return {
+    websiteName: filters.websiteName.trim() || undefined,
+    websiteUrl: filters.websiteUrl.trim() || undefined,
+  }
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'The Common Link request failed.'
+}
+
 export function CommonLinkManagementPage() {
+  const activeWorkspaceTabKey = useAppStore(
+    (state) => state.activeWorkspaceTabKey,
+  )
   const authSession = useAuthStore((state) => state.session)
-  const entries = useCallManagementStore((state) => state.commonLinkEntries)
-  const addEntry = useCallManagementStore((state) => state.addCommonLinkEntry)
-  const updateEntry = useCallManagementStore(
-    (state) => state.updateCommonLinkEntry,
-  )
-  const deleteEntries = useCallManagementStore(
-    (state) => state.deleteCommonLinkEntries,
-  )
+  const entries = useCommonLinkStore((state) => state.entries)
+  const error = useCommonLinkStore((state) => state.error)
+  const isLoading = useCommonLinkStore((state) => state.isLoading)
+  const isMutating = useCommonLinkStore((state) => state.isMutating)
+  const load = useCommonLinkStore((state) => state.load)
+  const createEntry = useCommonLinkStore((state) => state.create)
+  const updateEntry = useCommonLinkStore((state) => state.update)
+  const deleteEntry = useCommonLinkStore((state) => state.delete)
   const [appliedFilters, setAppliedFilters] =
     useState<CommonLinkFilters>(defaultFilters)
   const [deleteTarget, setDeleteTarget] = useState<CommonLinkEntry | null>(null)
@@ -95,6 +102,18 @@ export function CommonLinkManagementPage() {
   const [modalMode, setModalMode] = useState<CommonLinkModalMode>(null)
   const { notify } = useOperationFeedback()
   const [submitAttempted, setSubmitAttempted] = useState(false)
+  const appliedQueryRef = useRef<CommonLinkQuery>(toQuery(defaultFilters))
+  const isPageActive = activeWorkspaceTabKey === commonLinkTabKey
+
+  useEffect(() => {
+    appliedQueryRef.current = toQuery(appliedFilters)
+  }, [appliedFilters])
+
+  useEffect(() => {
+    if (isPageActive) {
+      void load(appliedQueryRef.current).catch(() => undefined)
+    }
+  }, [isPageActive, load])
 
   const filteredEntries = useMemo(
     () =>
@@ -140,6 +159,12 @@ export function CommonLinkManagementPage() {
       errors.push('Website URL must start with http:// or https://.')
     }
 
+    if (draft.remark.trim().length > COMMON_LINK_REMARK_MAX_LENGTH) {
+      errors.push(
+        `Remark must be ${COMMON_LINK_REMARK_MAX_LENGTH} characters or fewer.`,
+      )
+    }
+
     if (
       normalizedName &&
       entries.some(
@@ -163,7 +188,14 @@ export function CommonLinkManagementPage() {
     }
 
     return errors
-  }, [draft.id, draft.websiteName, draft.websiteUrl, entries, modalMode])
+  }, [
+    draft.id,
+    draft.remark,
+    draft.websiteName,
+    draft.websiteUrl,
+    entries,
+    modalMode,
+  ])
 
   const updateDraft = <Key extends keyof CommonLinkDraft>(
     key: Key,
@@ -177,11 +209,13 @@ export function CommonLinkManagementPage() {
 
   const handleSearch = () => {
     setAppliedFilters({ ...filterDraft })
+    void load(toQuery(filterDraft)).catch(() => undefined)
   }
 
   const handleReset = () => {
     setAppliedFilters(defaultFilters)
     setFilterDraft(defaultFilters)
+    void load(toQuery(defaultFilters)).catch(() => undefined)
   }
 
   const openCreateModal = () => {
@@ -202,20 +236,15 @@ export function CommonLinkManagementPage() {
     setSubmitAttempted(false)
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSubmitAttempted(true)
 
     if (validationErrors.length > 0) {
       return
     }
 
-    const nextEntry: CommonLinkEntry = {
-      id:
-        modalMode === 'edit' && draft.id
-          ? draft.id
-          : getNextCommonLinkId(entries),
+    const input = {
       remark: draft.remark.trim(),
-      updatedAt: formatCallManagementDateTime(new Date()),
       updatedBy: formatAuditActor(
         authSession?.employeeId,
         authSession?.displayName,
@@ -224,25 +253,32 @@ export function CommonLinkManagementPage() {
       websiteUrl: draft.websiteUrl.trim(),
     }
 
-    if (modalMode === 'edit') {
-      updateEntry(nextEntry)
-      notify('Common link updated.')
-    } else {
-      addEntry(nextEntry)
-      notify('Common link added.')
+    try {
+      if (modalMode === 'edit' && draft.id) {
+        await updateEntry(draft.id, input)
+        notify('Common link updated.')
+      } else {
+        await createEntry(input)
+        notify('Common link added.')
+      }
+      closeModal()
+    } catch (error) {
+      notify(errorMessage(error), 'error')
     }
-
-    closeModal()
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) {
       return
     }
 
-    deleteEntries([deleteTarget.id])
-    notify('Common link deleted.')
-    setDeleteTarget(null)
+    try {
+      await deleteEntry(deleteTarget.id)
+      notify('Common link deleted.')
+      setDeleteTarget(null)
+    } catch (error) {
+      notify(errorMessage(error), 'error')
+    }
   }
 
   const columns: ColumnsType<CommonLinkEntry> = [
@@ -313,14 +349,40 @@ export function CommonLinkManagementPage() {
 
   return (
     <AdminPage className="common-link-management" title="Common Link">
+      {isCommonLinkDemoMode && (
+        <Alert
+          description="Changes are available for this demo session and reset after a page refresh."
+          message="Common Link Demo Mode"
+          showIcon
+          type="info"
+        />
+      )}
+      {error && (
+        <Alert
+          action={
+            <BaseButton
+              size="small"
+              variant="secondary"
+              onClick={() => void load(appliedQueryRef.current).catch(() => undefined)}
+            >
+              Retry
+            </BaseButton>
+          }
+          closable
+          description={error}
+          message="Common Link API error"
+          showIcon
+          type="error"
+        />
+      )}
       <BaseCard compact>
         <AdminToolbar
           actions={
             <>
-              <BaseButton variant="primary" onClick={handleSearch}>
+              <BaseButton disabled={isLoading || isMutating} variant="primary" onClick={handleSearch}>
                 Search
               </BaseButton>
-              <BaseButton variant="secondary" onClick={handleReset}>
+              <BaseButton disabled={isLoading || isMutating} variant="secondary" onClick={handleReset}>
                 Reset
               </BaseButton>
             </>
@@ -357,6 +419,8 @@ export function CommonLinkManagementPage() {
             <div className="call-management-list__add-actions">
               <BaseButton
                 icon={<PlusOutlined />}
+                disabled={isMutating}
+                loading={isMutating}
                 variant="primary"
                 onClick={openCreateModal}
               >
@@ -368,6 +432,7 @@ export function CommonLinkManagementPage() {
         <AdminTable<CommonLinkEntry>
           columns={columns}
           dataSource={filteredEntries}
+          loading={isLoading}
           pagination={{}}
           rowKey="id"
         />
@@ -423,6 +488,7 @@ export function CommonLinkManagementPage() {
             </AdminFormField>
             <AdminFormField label="Remark" fullWidth>
               <LimitedTextArea
+                maxLength={COMMON_LINK_REMARK_MAX_LENGTH}
                 rows={3}
                 value={draft.remark}
                 onChange={(event) => updateDraft('remark', event.target.value)}
@@ -434,7 +500,7 @@ export function CommonLinkManagementPage() {
           <BaseButton variant="secondary" onClick={closeModal}>
             Cancel
           </BaseButton>
-          <BaseButton variant="primary" onClick={handleSave}>
+          <BaseButton loading={isMutating} variant="primary" onClick={handleSave}>
             Save
           </BaseButton>
         </AdminModalFooter>
@@ -449,7 +515,7 @@ export function CommonLinkManagementPage() {
         <div className="routing-config-crud-modal__delete">
           <Alert
             showIcon
-            description="This deletes the common link from the current demo session."
+            description="This deletes the common link from the configured data source."
             message={`Delete common link ${deleteTarget?.websiteName ?? ''}?`}
             type="warning"
           />
@@ -458,7 +524,7 @@ export function CommonLinkManagementPage() {
           <BaseButton variant="secondary" onClick={() => setDeleteTarget(null)}>
             Cancel
           </BaseButton>
-          <BaseButton variant="danger" onClick={handleDelete}>
+          <BaseButton loading={isMutating} variant="danger" onClick={handleDelete}>
             Delete
           </BaseButton>
         </AdminModalFooter>

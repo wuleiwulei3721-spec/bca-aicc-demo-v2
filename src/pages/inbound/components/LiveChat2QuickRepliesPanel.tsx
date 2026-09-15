@@ -10,7 +10,7 @@ import {
   RightOutlined,
   SearchOutlined,
 } from '@ant-design/icons'
-import { Input } from 'antd'
+import { Alert, Input } from 'antd'
 import {
   BaseButton,
   LimitedInput,
@@ -23,9 +23,12 @@ import type {
 } from './liveChat2QuickReplies'
 
 interface LiveChat2QuickRepliesPanelProps {
+  error?: string | null
   groups: LiveChat2QuickReplyGroup[]
+  loading?: boolean
   onGroupsChange: (groups: LiveChat2QuickReplyGroup[]) => void
   onInsertPhrase: (text: string) => void
+  onRetry?: () => void
 }
 
 interface PhraseFormState {
@@ -110,9 +113,12 @@ function getPhraseValidationError({
 }
 
 export function LiveChat2QuickRepliesPanel({
+  error = null,
   groups,
+  loading = false,
   onGroupsChange,
   onInsertPhrase,
+  onRetry,
 }: LiveChat2QuickRepliesPanelProps) {
   const [searchKeyword, setSearchKeyword] = useState('')
   const [expandedSections, setExpandedSections] = useState({
@@ -370,6 +376,30 @@ export function LiveChat2QuickRepliesPanel({
 
         {isExpanded && (
           <div className="livechat2-quick-reply-panel__section-body">
+            {scope === publicScope && loading && (
+              <div className="livechat2-quick-reply-panel__empty">
+                Loading public phrases...
+              </div>
+            )}
+            {scope === publicScope && error && (
+              <Alert
+                action={
+                  onRetry ? (
+                    <BaseButton
+                      size="small"
+                      variant="secondary"
+                      onClick={onRetry}
+                    >
+                      Retry
+                    </BaseButton>
+                  ) : undefined
+                }
+                description={error}
+                message="Public phrases unavailable"
+                showIcon
+                type="error"
+              />
+            )}
             {isMySection && isCreatingGroup && (
               <div className="livechat2-quick-reply-panel__group-create">
                 <Input

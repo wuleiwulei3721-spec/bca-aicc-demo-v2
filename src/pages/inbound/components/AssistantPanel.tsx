@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ApiOutlined,
   CloseOutlined,
@@ -8,7 +8,7 @@ import {
 } from '@ant-design/icons'
 import type { ReactNode } from 'react'
 import { BaseTabs } from '../../../components'
-import { useCallManagementStore } from '../../../store'
+import { useCommonLinkStore } from '../../../store'
 
 const ASSISTANT_SCREENSHOT_SRC = '/screenshots/assistant-workspace.jpg'
 
@@ -76,9 +76,12 @@ function AssistantScreenshotArea() {
 }
 
 function CommonLinksArea() {
-  const commonLinks = useCallManagementStore(
-    (state) => state.commonLinkEntries,
-  )
+  const commonLinks = useCommonLinkStore((state) => state.entries)
+  const load = useCommonLinkStore((state) => state.load)
+
+  useEffect(() => {
+    void load().catch(() => undefined)
+  }, [load])
 
   return (
     <div className="inbound-system-shot inbound-system-shot--assistant">

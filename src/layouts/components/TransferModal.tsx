@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { SearchOutlined } from '@ant-design/icons'
 import { Input, Select, Space, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
@@ -10,7 +10,7 @@ import {
   SearchInput,
 } from '../../components'
 import { transferAgents, transferSkills } from '../../mock/transfer'
-import { useAuthStore, useCallManagementStore } from '../../store'
+import { useAuthStore, useCommonNumberStore } from '../../store'
 import type {
   CommonNumberEntry,
   TransferAgent,
@@ -434,9 +434,12 @@ function TransferIvrTab({
   onComplete: () => void
   onTransferToIvr?: (entry: CommonNumberEntry) => void
 }) {
-  const commonNumbers = useCallManagementStore(
-    (state) => state.commonNumberEntries,
-  )
+  const commonNumbers = useCommonNumberStore((state) => state.entries)
+  const isLoading = useCommonNumberStore((state) => state.isLoading)
+  const load = useCommonNumberStore((state) => state.load)
+  useEffect(() => {
+    void load({ status: 'Active' }).catch(() => undefined)
+  }, [load])
   const activeNumbers = useMemo(
     () => commonNumbers.filter((entry) => entry.status === 'Active'),
     [commonNumbers],
@@ -490,6 +493,7 @@ function TransferIvrTab({
       <AppTable<CommonNumberEntry>
         columns={columns}
         dataSource={activeNumbers}
+        loading={isLoading}
         pagination={{ pageSize: 10 }}
         rowKey="id"
         size="small"

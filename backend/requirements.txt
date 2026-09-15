@@ -1,0 +1,7 @@
+alembic>=1.15,<2
+fastapi>=0.115,<1
+httpx>=0.27,<1
+PyMySQL>=1.1,<2
+pytest>=8,<9
+SQLAlchemy>=2,<3
+uvicorn[standard]>=0.34,<1

@@ -7,9 +7,9 @@ import {
   PlusOutlined,
   SwapOutlined,
 } from '@ant-design/icons'
-import { Alert, Input, Popover, Select } from 'antd'
+import { Alert, Input, Popover, Select, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   AdminFilterField,
   AdminFormField,
@@ -22,10 +22,21 @@ import {
   BaseCard,
   LimitedInput,
   LimitedTextArea,
+  StatusBadge,
 } from '../../components'
+import { isCommonPhraseDemoMode } from '../../config/commonPhraseMode'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
-import { useAuthStore, useCallManagementStore } from '../../store'
-import type { CommonPhraseCategory, CommonPhraseEntry } from '../../types'
+import {
+  useAppStore,
+  useAuthStore,
+  useCommonPhraseStore,
+} from '../../store'
+import type {
+  CommonPhraseCategory,
+  CommonPhraseEntry,
+  CommonPhraseStatus,
+} from '../../types'
+import type { CommonPhraseQuery } from '../../api/commonPhraseApi'
 import {
   formatAuditActor,
   formatCallManagementDateTime,
@@ -36,63 +47,99 @@ type CommonPhraseModalMode = 'create' | 'edit' | null
 interface CommonPhraseFilters {
   phraseText: string
   shortcutCode: string
+  status: '' | CommonPhraseStatus
 }
 
 interface CommonPhraseDraft {
   categoryId: string
   phraseId?: string
   phraseText: string
+  remark: string
   shortcutCode: string
+  status: CommonPhraseStatus
 }
 
 const allCategoriesKey = '__all__'
+const commonPhraseTabKey = 'page:call-management-common-phrases'
 const COMMON_PHRASE_SHORTCUT_CODE_MAX_LENGTH = 50
 const COMMON_PHRASE_MAX_LENGTH = 2000
+const COMMON_PHRASE_REMARK_MAX_LENGTH = 2000
 
 const defaultFilters: CommonPhraseFilters = {
   phraseText: '',
   shortcutCode: '',
+  status: '',
 }
 
 const defaultDraft: CommonPhraseDraft = {
   categoryId: '',
   phraseText: '',
+  remark: '',
   shortcutCode: '',
+  status: 'Active',
 }
 
 function normalizeValue(value: string) {
   return value.trim().toLowerCase()
 }
 
-function createEntityId(prefix: string) {
-  return `${prefix}-${Date.now()}-${Math.round(Math.random() * 1000)}`
+const statusOptions: Array<{
+  label: string
+  value: '' | CommonPhraseStatus
+}> = [
+  { label: 'All Statuses', value: '' },
+  { label: 'Enabled', value: 'Active' },
+  { label: 'Disabled', value: 'Disabled' },
+]
+
+function toQuery(
+  filters: CommonPhraseFilters,
+  categoryId: string,
+): CommonPhraseQuery {
+  return {
+    categoryId: categoryId === allCategoriesKey ? undefined : categoryId,
+    phraseText: filters.phraseText.trim() || undefined,
+    shortcutCode: filters.shortcutCode.trim() || undefined,
+    status: filters.status || undefined,
+  }
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error
+    ? error.message
+    : 'The Common Phrase request failed.'
+}
+
+function renderStatusBadge(status: CommonPhraseStatus) {
+  return (
+    <StatusBadge
+      dot
+      label={status === 'Active' ? 'Enabled' : 'Disabled'}
+      size="small"
+      status={status === 'Active' ? 'success' : 'disabled'}
+    />
+  )
 }
 
 export function CommonPhraseManagementPage() {
+  const activeWorkspaceTabKey = useAppStore(
+    (state) => state.activeWorkspaceTabKey,
+  )
   const authSession = useAuthStore((state) => state.session)
-  const categories = useCallManagementStore(
-    (state) => state.commonPhraseCategories,
-  )
-  const entries = useCallManagementStore((state) => state.commonPhraseEntries)
-  const addCategory = useCallManagementStore(
-    (state) => state.addCommonPhraseCategory,
-  )
-  const renameCategory = useCallManagementStore(
-    (state) => state.renameCommonPhraseCategory,
-  )
-  const deleteCategory = useCallManagementStore(
-    (state) => state.deleteCommonPhraseCategory,
-  )
-  const addEntry = useCallManagementStore((state) => state.addCommonPhraseEntry)
-  const updateEntry = useCallManagementStore(
-    (state) => state.updateCommonPhraseEntry,
-  )
-  const deleteEntries = useCallManagementStore(
-    (state) => state.deleteCommonPhraseEntries,
-  )
-  const moveEntries = useCallManagementStore(
-    (state) => state.moveCommonPhraseEntries,
-  )
+  const categories = useCommonPhraseStore((state) => state.categories)
+  const categoryCounts = useCommonPhraseStore((state) => state.categoryCounts)
+  const entries = useCommonPhraseStore((state) => state.entries)
+  const error = useCommonPhraseStore((state) => state.error)
+  const isLoading = useCommonPhraseStore((state) => state.isLoading)
+  const isMutating = useCommonPhraseStore((state) => state.isMutating)
+  const load = useCommonPhraseStore((state) => state.load)
+  const createCategory = useCommonPhraseStore((state) => state.createCategory)
+  const renameCategory = useCommonPhraseStore((state) => state.renameCategory)
+  const deleteCategory = useCommonPhraseStore((state) => state.deleteCategory)
+  const createPhrase = useCommonPhraseStore((state) => state.createPhrase)
+  const updatePhrase = useCommonPhraseStore((state) => state.updatePhrase)
+  const deletePhrase = useCommonPhraseStore((state) => state.deletePhrase)
+  const movePhrases = useCommonPhraseStore((state) => state.movePhrases)
   const [appliedFilters, setAppliedFilters] =
     useState<CommonPhraseFilters>(defaultFilters)
   const [categorySearch, setCategorySearch] = useState('')
@@ -114,6 +161,23 @@ export function CommonPhraseManagementPage() {
     useState(allCategoriesKey)
   const [selectedPhraseIds, setSelectedPhraseIds] = useState<string[]>([])
   const [submitAttempted, setSubmitAttempted] = useState(false)
+  const appliedQueryRef = useRef<CommonPhraseQuery>(
+    toQuery(defaultFilters, allCategoriesKey),
+  )
+
+  const isPageActive = activeWorkspaceTabKey === commonPhraseTabKey
+
+  useEffect(() => {
+    appliedQueryRef.current = toQuery(appliedFilters, selectedCategoryId)
+  }, [appliedFilters, selectedCategoryId])
+
+  useEffect(() => {
+    if (!isPageActive) {
+      return
+    }
+
+    void load(appliedQueryRef.current).catch(() => undefined)
+  }, [isPageActive, load])
 
   const categoryNameById = useMemo(
     () =>
@@ -137,15 +201,14 @@ export function CommonPhraseManagementPage() {
   const isCrossCategorySelectionFromAll =
     selectedCategoryId === allCategoriesKey &&
     selectedRecordCategoryIds.size > 1
-  const categoryCounts = useMemo(() => {
-    const counts = new Map<string, number>()
-
-    entries.forEach((entry) => {
-      counts.set(entry.categoryId, (counts.get(entry.categoryId) ?? 0) + 1)
-    })
-
-    return counts
-  }, [entries])
+  const allEntryCount = useMemo(
+    () =>
+      Object.values(categoryCounts).reduce(
+        (total, count) => total + count,
+        0,
+      ),
+    [categoryCounts],
+  )
   const visibleCategories = useMemo(() => {
     const keyword = normalizeValue(categorySearch)
 
@@ -170,8 +233,11 @@ export function CommonPhraseManagementPage() {
         const phraseMatched = phraseKeyword
           ? entry.phraseText.toLowerCase().includes(phraseKeyword)
           : true
+        const statusMatched = appliedFilters.status
+          ? entry.status === appliedFilters.status
+          : true
 
-        return categoryMatched && shortcutMatched && phraseMatched
+        return categoryMatched && shortcutMatched && phraseMatched && statusMatched
       }),
     [appliedFilters, entries, selectedCategoryId],
   )
@@ -216,6 +282,7 @@ export function CommonPhraseManagementPage() {
     const errors: string[] = []
     const shortcutCode = draft.shortcutCode.trim()
     const phraseText = draft.phraseText.trim()
+    const remark = draft.remark.trim()
 
     if (!shortcutCode) {
       errors.push('Shortcut Code is required.')
@@ -248,12 +315,19 @@ export function CommonPhraseManagementPage() {
       errors.push('Category is required.')
     }
 
+    if (remark.length > COMMON_PHRASE_REMARK_MAX_LENGTH) {
+      errors.push(
+        `Remark must be ${COMMON_PHRASE_REMARK_MAX_LENGTH} characters or fewer.`,
+      )
+    }
+
     return errors
   }, [
     categoryNameById,
     draft.categoryId,
     draft.phraseId,
     draft.phraseText,
+    draft.remark,
     draft.shortcutCode,
     entries,
     modalMode,
@@ -264,24 +338,24 @@ export function CommonPhraseManagementPage() {
     setSelectedPhraseIds([])
     setMovePopoverOpen(false)
     setMoveTargetCategoryId('')
+    void load(toQuery(appliedFilters, categoryId)).catch(() => undefined)
   }
 
-  const handleCreateCategory = () => {
+  const handleCreateCategory = async () => {
     const categoryName = newCategoryName.trim()
 
     if (!categoryName || isDuplicateCategoryName(categoryName)) {
       return
     }
 
-    const category: CommonPhraseCategory = {
-      categoryId: createEntityId('public-category'),
-      categoryName,
+    try {
+      const category = await createCategory(categoryName)
+      setNewCategoryName('')
+      setSelectedCategoryId(category.categoryId)
+      notify('Common phrase category added.')
+    } catch (error) {
+      notify(errorMessage(error), 'error')
     }
-
-    addCategory(category)
-    setNewCategoryName('')
-    setSelectedCategoryId(category.categoryId)
-    notify('Common phrase category added.')
   }
 
   const startRenameCategory = (category: CommonPhraseCategory) => {
@@ -294,7 +368,7 @@ export function CommonPhraseManagementPage() {
     setEditingCategoryName('')
   }
 
-  const handleRenameCategory = () => {
+  const handleRenameCategory = async () => {
     const categoryName = editingCategoryName.trim()
 
     if (
@@ -305,27 +379,40 @@ export function CommonPhraseManagementPage() {
       return
     }
 
-    renameCategory(editingCategoryId, categoryName)
-    cancelRenameCategory()
-    notify('Common phrase category renamed.')
+    try {
+      await renameCategory(editingCategoryId, categoryName)
+      cancelRenameCategory()
+      notify('Common phrase category renamed.')
+    } catch (error) {
+      notify(errorMessage(error), 'error')
+    }
   }
 
-  const confirmDeleteCategory = () => {
+  const confirmDeleteCategory = async () => {
     if (!deleteCategoryTarget) {
       return
     }
 
     const deletedCategoryId = deleteCategoryTarget.categoryId
 
-    deleteCategory(deletedCategoryId)
-    setDeleteCategoryTarget(null)
-    setSelectedPhraseIds([])
+    try {
+      await deleteCategory(deletedCategoryId)
+      setDeleteCategoryTarget(null)
+      setSelectedPhraseIds([])
 
-    if (selectedCategoryId === deletedCategoryId) {
-      setSelectedCategoryId(allCategoriesKey)
+      const nextCategoryId =
+        selectedCategoryId === deletedCategoryId
+          ? allCategoriesKey
+          : selectedCategoryId
+
+      if (selectedCategoryId === deletedCategoryId) {
+        setSelectedCategoryId(allCategoriesKey)
+      }
+      await load(toQuery(appliedFilters, nextCategoryId))
+      notify('Common phrase category and related phrases deleted.')
+    } catch (error) {
+      notify(errorMessage(error), 'error')
     }
-
-    notify('Common phrase category and related phrases deleted.')
   }
 
   const updateDraft = <Key extends keyof CommonPhraseDraft>(
@@ -363,61 +450,71 @@ export function CommonPhraseManagementPage() {
     setSubmitAttempted(false)
   }
 
-  const handleSavePhrase = () => {
+  const handleSavePhrase = async () => {
     setSubmitAttempted(true)
 
     if (validationErrors.length > 0) {
       return
     }
 
-    const nextEntry: CommonPhraseEntry = {
+    const input = {
       categoryId: draft.categoryId,
-      phraseId: draft.phraseId ?? createEntityId('public-phrase'),
       phraseText: draft.phraseText.trim(),
+      remark: draft.remark.trim(),
       shortcutCode: draft.shortcutCode.trim(),
-      updatedAt: formatCallManagementDateTime(new Date()),
+      status: draft.status,
       updatedBy: formatAuditActor(
         authSession?.employeeId,
         authSession?.displayName,
       ),
     }
 
-    if (modalMode === 'edit') {
-      updateEntry(nextEntry)
-      notify('Common phrase updated.')
-    } else {
-      addEntry(nextEntry)
-      notify('Common phrase added.')
-    }
+    try {
+      if (modalMode === 'edit' && draft.phraseId) {
+        await updatePhrase(draft.phraseId, input)
+        notify('Common phrase updated.')
+      } else {
+        await createPhrase(input)
+        notify('Common phrase added.')
+      }
 
-    closeModal()
+      closeModal()
+    } catch (error) {
+      notify(errorMessage(error), 'error')
+    }
   }
 
-  const handleDeleteEntry = () => {
+  const handleDeleteEntry = async () => {
     if (!deleteEntryTarget) {
       return
     }
 
-    deleteEntries([deleteEntryTarget.phraseId])
-    setSelectedPhraseIds((currentIds) =>
-      currentIds.filter((phraseId) => phraseId !== deleteEntryTarget.phraseId),
-    )
-    setDeleteEntryTarget(null)
-    notify('Common phrase deleted.')
+    try {
+      await deletePhrase(deleteEntryTarget.phraseId)
+      setSelectedPhraseIds((currentIds) =>
+        currentIds.filter((phraseId) => phraseId !== deleteEntryTarget.phraseId),
+      )
+      setDeleteEntryTarget(null)
+      notify('Common phrase deleted.')
+    } catch (error) {
+      notify(errorMessage(error), 'error')
+    }
   }
 
   const handleSearch = () => {
     setAppliedFilters({ ...filterDraft })
     setSelectedPhraseIds([])
+    void load(toQuery(filterDraft, selectedCategoryId)).catch(() => undefined)
   }
 
   const handleReset = () => {
     setAppliedFilters(defaultFilters)
     setFilterDraft(defaultFilters)
     setSelectedPhraseIds([])
+    void load(toQuery(defaultFilters, selectedCategoryId)).catch(() => undefined)
   }
 
-  const handleMoveSelected = () => {
+  const handleMoveSelected = async () => {
     if (!moveTargetCategoryId || selectedPhraseIds.length === 0) {
       return
     }
@@ -426,19 +523,23 @@ export function CommonPhraseManagementPage() {
       (entry) => entry.categoryId !== moveTargetCategoryId,
     ).length
 
-    moveEntries(
-      selectedPhraseIds,
-      moveTargetCategoryId,
-      formatAuditActor(authSession?.employeeId, authSession?.displayName),
-    )
-    notify(
-      movedCount === 1
-        ? 'Selected common phrase moved.'
-        : `${movedCount} selected common phrases moved.`,
-    )
-    setSelectedPhraseIds([])
-    setMovePopoverOpen(false)
-    setMoveTargetCategoryId('')
+    try {
+      await movePhrases(
+        selectedPhraseIds,
+        moveTargetCategoryId,
+        formatAuditActor(authSession?.employeeId, authSession?.displayName),
+      )
+      notify(
+        movedCount === 1
+          ? 'Selected common phrase moved.'
+          : `${movedCount} selected common phrases moved.`,
+      )
+      setSelectedPhraseIds([])
+      setMovePopoverOpen(false)
+      setMoveTargetCategoryId('')
+    } catch (error) {
+      notify(errorMessage(error), 'error')
+    }
   }
 
   const movePopoverContent = (
@@ -482,7 +583,7 @@ export function CommonPhraseManagementPage() {
       dataIndex: 'phraseText',
       ellipsis: true,
       title: 'Common Phrase',
-      width: 280,
+      width: 250,
     },
     {
       dataIndex: 'categoryId',
@@ -490,6 +591,34 @@ export function CommonPhraseManagementPage() {
         categoryNameById.get(categoryId) ?? 'Unknown Category',
       title: 'Category',
       width: 96,
+    },
+    {
+      dataIndex: 'sortOrder',
+      title: 'Sort Order',
+      width: 84,
+    },
+    {
+      dataIndex: 'status',
+      render: (status: CommonPhraseStatus) => renderStatusBadge(status),
+      title: 'Status',
+      width: 92,
+    },
+    {
+      dataIndex: 'remark',
+      ellipsis: true,
+      title: 'Remark',
+      width: 190,
+    },
+    {
+      dataIndex: 'createdAt',
+      render: (createdAt: string) => formatCallManagementDateTime(createdAt),
+      title: 'Created Time',
+      width: 146,
+    },
+    {
+      dataIndex: 'createdBy',
+      title: 'Created By',
+      width: 145,
     },
     {
       dataIndex: 'updatedAt',
@@ -500,7 +629,7 @@ export function CommonPhraseManagementPage() {
     {
       dataIndex: 'updatedBy',
       title: 'Updated By',
-      width: 170,
+      width: 145,
     },
     {
       fixed: 'right',
@@ -536,6 +665,36 @@ export function CommonPhraseManagementPage() {
       className="common-phrase-management"
       title="Common Phrase"
     >
+      {isCommonPhraseDemoMode && (
+        <Alert
+          description="Changes are available for this demo session and reset after a page refresh."
+          message="Common Phrase Demo Mode"
+          showIcon
+          type="info"
+        />
+      )}
+      {error && (
+        <Alert
+          action={
+            <BaseButton
+              size="small"
+              variant="secondary"
+              onClick={() =>
+                void load(toQuery(appliedFilters, selectedCategoryId)).catch(
+                  () => undefined,
+                )
+              }
+            >
+              Retry
+            </BaseButton>
+          }
+          closable
+          description={error}
+          message="Common Phrase API error"
+          showIcon
+          type="error"
+        />
+      )}
       <div className="common-phrase-management__layout">
         <BaseCard compact className="common-phrase-management__categories">
           <div className="common-phrase-management__category-search">
@@ -559,7 +718,7 @@ export function CommonPhraseManagementPage() {
             onClick={() => selectCategory(allCategoriesKey)}
           >
             <span>All Categories</span>
-            <em>{entries.length}</em>
+            <em>{allEntryCount}</em>
           </button>
           <div className="common-phrase-management__category-list">
             {visibleCategories.map((category) => {
@@ -610,7 +769,7 @@ export function CommonPhraseManagementPage() {
                         onClick={() => selectCategory(category.categoryId)}
                       >
                         <span>{category.categoryName}</span>
-                        <em>{categoryCounts.get(category.categoryId) ?? 0}</em>
+                        <em>{categoryCounts[category.categoryId] ?? 0}</em>
                       </button>
                       <div className="common-phrase-management__category-actions">
                         <button
@@ -648,7 +807,8 @@ export function CommonPhraseManagementPage() {
             <BaseButton
               disabled={
                 !newCategoryName.trim() ||
-                isDuplicateCategoryName(newCategoryName)
+                isDuplicateCategoryName(newCategoryName) ||
+                isMutating
               }
               icon={<FolderAddOutlined />}
               variant="primary"
@@ -662,10 +822,18 @@ export function CommonPhraseManagementPage() {
           <AdminToolbar
             actions={
               <>
-                <BaseButton variant="primary" onClick={handleSearch}>
+                <BaseButton
+                  disabled={isLoading || isMutating}
+                  variant="primary"
+                  onClick={handleSearch}
+                >
                   Search
                 </BaseButton>
-                <BaseButton variant="secondary" onClick={handleReset}>
+                <BaseButton
+                  disabled={isLoading || isMutating}
+                  variant="secondary"
+                  onClick={handleReset}
+                >
                   Reset
                 </BaseButton>
               </>
@@ -680,6 +848,18 @@ export function CommonPhraseManagementPage() {
                       setFilterDraft((currentDraft) => ({
                         ...currentDraft,
                         shortcutCode: event.target.value,
+                      }))
+                    }
+                  />
+                </AdminFilterField>
+                <AdminFilterField label="Status" width={160}>
+                  <Select
+                    options={statusOptions}
+                    value={filterDraft.status}
+                    onChange={(value) =>
+                      setFilterDraft((currentDraft) => ({
+                        ...currentDraft,
+                        status: value,
                       }))
                     }
                   />
@@ -701,8 +881,9 @@ export function CommonPhraseManagementPage() {
             primaryActions={
               <div className="call-management-list__add-actions">
                 <BaseButton
-                  disabled={!canAddPhrase}
+                  disabled={!canAddPhrase || isMutating}
                   icon={<PlusOutlined />}
+                  loading={isMutating}
                   title={
                     canAddPhrase
                       ? undefined
@@ -731,7 +912,7 @@ export function CommonPhraseManagementPage() {
                   }}
                 >
                   <BaseButton
-                    disabled={!canMoveSelected}
+                    disabled={!canMoveSelected || isMutating}
                     icon={<SwapOutlined />}
                     variant="secondary"
                   >
@@ -744,6 +925,8 @@ export function CommonPhraseManagementPage() {
           <AdminTable<CommonPhraseEntry>
             columns={columns}
             dataSource={filteredEntries}
+            horizontalScroll={1400}
+            loading={isLoading}
             pagination={{}}
             rowKey="phraseId"
             rowSelection={{
@@ -808,13 +991,37 @@ export function CommonPhraseManagementPage() {
                 }
               />
             </AdminFormField>
+            <AdminFormField label="Remark" fullWidth>
+              <LimitedTextArea
+                maxLength={COMMON_PHRASE_REMARK_MAX_LENGTH}
+                rows={3}
+                value={draft.remark}
+                onChange={(event) => updateDraft('remark', event.target.value)}
+              />
+            </AdminFormField>
+            <AdminFormField label="Status">
+              <span className="busy-reason-config__switch-row">
+                <Switch
+                  checked={draft.status === 'Active'}
+                  size="small"
+                  onChange={(checked) =>
+                    updateDraft('status', checked ? 'Active' : 'Disabled')
+                  }
+                />
+                <em>{draft.status === 'Active' ? 'Enabled' : 'Disabled'}</em>
+              </span>
+            </AdminFormField>
           </div>
         </div>
         <AdminModalFooter>
           <BaseButton variant="secondary" onClick={closeModal}>
             Cancel
           </BaseButton>
-          <BaseButton variant="primary" onClick={handleSavePhrase}>
+          <BaseButton
+            loading={isMutating}
+            variant="primary"
+            onClick={handleSavePhrase}
+          >
             Save
           </BaseButton>
         </AdminModalFooter>

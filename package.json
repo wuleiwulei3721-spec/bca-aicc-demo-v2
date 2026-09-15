@@ -4,10 +4,22 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
     "build": "vite build",
+    "backend:install": "node scripts/run-backend-python.mjs -m pip install -r backend/requirements.txt",
+    "backend:migrate": "node scripts/run-backend-python.mjs backend/scripts/migrate.py",
+    "backend:test": "node scripts/run-backend-python.mjs -m pytest backend/tests",
+    "check:local": "node scripts/check-local.mjs",
+    "check:fastapi": "node scripts/check-fastapi.mjs",
+    "db:inspect": "node scripts/inspect-common-phrases.mjs",
+    "db:mysql-schema": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/inspect-mysql-schema.ps1",
+    "dev": "node scripts/dev.mjs",
+    "dev:api": "node --experimental-strip-types server/index.ts",
+    "dev:fastapi": "node scripts/run-backend-python.mjs backend/run.py",
+    "dev:frontend": "vite",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --experimental-strip-types --test server/commonPhraseRepository.test.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.server.json"
   },
   "dependencies": {
     "@ant-design/icons": "^6.2.3",
@@ -29,6 +41,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "mysql2": "^3.24.3",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12"

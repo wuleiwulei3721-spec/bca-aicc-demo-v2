@@ -1,7 +1,7 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
 import { Alert, Input, Select, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   AdminFilterField,
   AdminFormField,
@@ -15,8 +15,14 @@ import {
   LimitedTextArea,
   StatusBadge,
 } from '../../components'
+import { isCommonNumberDemoMode } from '../../config/commonNumberMode'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
-import { useAuthStore, useCallManagementStore } from '../../store'
+import {
+  useAppStore,
+  useAuthStore,
+  useCommonNumberStore,
+} from '../../store'
+import type { CommonNumberQuery } from '../../api/commonNumberApi'
 import type { CommonNumberEntry, CommonNumberStatus } from '../../types'
 import {
   formatAuditActor,
@@ -52,6 +58,9 @@ const defaultDraft: CommonNumberDraft = {
   status: 'Active',
 }
 
+const commonNumberTabKey = 'page:call-management-common-numbers'
+const COMMON_NUMBER_REMARK_MAX_LENGTH = 2000
+
 const statusOptions: Array<{
   label: string
   value: '' | CommonNumberStatus
@@ -65,15 +74,16 @@ function normalizeValue(value: string) {
   return value.trim().toLowerCase()
 }
 
-function getNextCommonNumberId(entries: CommonNumberEntry[]) {
-  const nextSequence =
-    entries.reduce((maxSequence, entry) => {
-      const match = /^CN(\d+)$/.exec(entry.id)
+function toQuery(filters: CommonNumberFilters): CommonNumberQuery {
+  return {
+    name: filters.name.trim() || undefined,
+    number: filters.number.trim() || undefined,
+    status: filters.status || undefined,
+  }
+}
 
-      return match ? Math.max(maxSequence, Number(match[1])) : maxSequence
-    }, 0) + 1
-
-  return `CN${String(nextSequence).padStart(3, '0')}`
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'The Common Number request failed.'
 }
 
 function renderStatusBadge(status: CommonNumberStatus) {
@@ -88,15 +98,18 @@ function renderStatusBadge(status: CommonNumberStatus) {
 }
 
 export function CommonNumberManagementPage() {
+  const activeWorkspaceTabKey = useAppStore(
+    (state) => state.activeWorkspaceTabKey,
+  )
   const authSession = useAuthStore((state) => state.session)
-  const entries = useCallManagementStore((state) => state.commonNumberEntries)
-  const addEntry = useCallManagementStore((state) => state.addCommonNumberEntry)
-  const updateEntry = useCallManagementStore(
-    (state) => state.updateCommonNumberEntry,
-  )
-  const deleteEntries = useCallManagementStore(
-    (state) => state.deleteCommonNumberEntries,
-  )
+  const entries = useCommonNumberStore((state) => state.entries)
+  const error = useCommonNumberStore((state) => state.error)
+  const isLoading = useCommonNumberStore((state) => state.isLoading)
+  const isMutating = useCommonNumberStore((state) => state.isMutating)
+  const load = useCommonNumberStore((state) => state.load)
+  const createEntry = useCommonNumberStore((state) => state.create)
+  const updateEntry = useCommonNumberStore((state) => state.update)
+  const deleteEntry = useCommonNumberStore((state) => state.delete)
   const [appliedFilters, setAppliedFilters] =
     useState<CommonNumberFilters>(defaultFilters)
   const [deleteTarget, setDeleteTarget] =
@@ -107,6 +120,18 @@ export function CommonNumberManagementPage() {
   const [modalMode, setModalMode] = useState<CommonNumberModalMode>(null)
   const { notify } = useOperationFeedback()
   const [submitAttempted, setSubmitAttempted] = useState(false)
+  const appliedQueryRef = useRef<CommonNumberQuery>(toQuery(defaultFilters))
+  const isPageActive = activeWorkspaceTabKey === commonNumberTabKey
+
+  useEffect(() => {
+    appliedQueryRef.current = toQuery(appliedFilters)
+  }, [appliedFilters])
+
+  useEffect(() => {
+    if (isPageActive) {
+      void load(appliedQueryRef.current).catch(() => undefined)
+    }
+  }, [isPageActive, load])
 
   const filteredEntries = useMemo(
     () =>
@@ -181,11 +206,13 @@ export function CommonNumberManagementPage() {
 
   const handleSearch = () => {
     setAppliedFilters({ ...filterDraft })
+    void load(toQuery(filterDraft)).catch(() => undefined)
   }
 
   const handleReset = () => {
     setAppliedFilters(defaultFilters)
     setFilterDraft(defaultFilters)
+    void load(toQuery(defaultFilters)).catch(() => undefined)
   }
 
   const openCreateModal = () => {
@@ -206,48 +233,50 @@ export function CommonNumberManagementPage() {
     setSubmitAttempted(false)
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSubmitAttempted(true)
 
     if (validationErrors.length > 0) {
       return
     }
 
-    const nextEntry: CommonNumberEntry = {
-      id:
-        modalMode === 'edit' && draft.id
-          ? draft.id
-          : getNextCommonNumberId(entries),
+    const input = {
       name: draft.name.trim(),
       number: draft.number.trim(),
       remark: draft.remark.trim(),
       status: draft.status,
-      updatedAt: formatCallManagementDateTime(new Date()),
       updatedBy: formatAuditActor(
         authSession?.employeeId,
         authSession?.displayName,
       ),
     }
 
-    if (modalMode === 'edit') {
-      updateEntry(nextEntry)
-      notify('Common number updated.')
-    } else {
-      addEntry(nextEntry)
-      notify('Common number added.')
+    try {
+      if (modalMode === 'edit' && draft.id) {
+        await updateEntry(draft.id, input)
+        notify('Common number updated.')
+      } else {
+        await createEntry(input)
+        notify('Common number added.')
+      }
+      closeModal()
+    } catch (error) {
+      notify(errorMessage(error), 'error')
     }
-
-    closeModal()
   }
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) {
       return
     }
 
-    deleteEntries([deleteTarget.id])
-    notify('Common number deleted.')
-    setDeleteTarget(null)
+    try {
+      await deleteEntry(deleteTarget.id)
+      notify('Common number deleted.')
+      setDeleteTarget(null)
+    } catch (error) {
+      notify(errorMessage(error), 'error')
+    }
   }
 
   const columns: ColumnsType<CommonNumberEntry> = [
@@ -325,15 +354,41 @@ export function CommonNumberManagementPage() {
     <AdminPage
       className="common-number-management"
       title="Common Number"
-    >
+  >
+      {isCommonNumberDemoMode && (
+        <Alert
+          description="Changes are available for this demo session and reset after a page refresh."
+          message="Common Number Demo Mode"
+          showIcon
+          type="info"
+        />
+      )}
+      {error && (
+        <Alert
+          action={
+            <BaseButton
+              size="small"
+              variant="secondary"
+              onClick={() => void load(appliedQueryRef.current).catch(() => undefined)}
+            >
+              Retry
+            </BaseButton>
+          }
+          closable
+          description={error}
+          message="Common Number API error"
+          showIcon
+          type="error"
+        />
+      )}
       <BaseCard compact>
         <AdminToolbar
           actions={
             <>
-              <BaseButton variant="primary" onClick={handleSearch}>
+              <BaseButton disabled={isLoading || isMutating} variant="primary" onClick={handleSearch}>
                 Search
               </BaseButton>
-              <BaseButton variant="secondary" onClick={handleReset}>
+              <BaseButton disabled={isLoading || isMutating} variant="secondary" onClick={handleReset}>
                 Reset
               </BaseButton>
             </>
@@ -382,6 +437,8 @@ export function CommonNumberManagementPage() {
             <div className="call-management-list__add-actions">
               <BaseButton
                 icon={<PlusOutlined />}
+                disabled={isMutating}
+                loading={isMutating}
                 variant="primary"
                 onClick={openCreateModal}
               >
@@ -393,6 +450,7 @@ export function CommonNumberManagementPage() {
         <AdminTable<CommonNumberEntry>
           columns={columns}
           dataSource={filteredEntries}
+          loading={isLoading}
           pagination={{}}
           rowKey="id"
         />
@@ -456,6 +514,7 @@ export function CommonNumberManagementPage() {
             </AdminFormField>
             <AdminFormField label="Remark" fullWidth>
               <LimitedTextArea
+                maxLength={COMMON_NUMBER_REMARK_MAX_LENGTH}
                 rows={3}
                 value={draft.remark}
                 onChange={(event) => updateDraft('remark', event.target.value)}
@@ -467,7 +526,7 @@ export function CommonNumberManagementPage() {
           <BaseButton variant="secondary" onClick={closeModal}>
             Cancel
           </BaseButton>
-          <BaseButton variant="primary" onClick={handleSave}>
+          <BaseButton loading={isMutating} variant="primary" onClick={handleSave}>
             Save
           </BaseButton>
         </AdminModalFooter>
@@ -491,7 +550,7 @@ export function CommonNumberManagementPage() {
           <BaseButton variant="secondary" onClick={() => setDeleteTarget(null)}>
             Cancel
           </BaseButton>
-          <BaseButton variant="danger" onClick={handleDelete}>
+          <BaseButton loading={isMutating} variant="danger" onClick={handleDelete}>
             Delete
           </BaseButton>
         </AdminModalFooter>

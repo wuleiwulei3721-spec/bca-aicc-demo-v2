@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { HistoryOutlined, MessageOutlined } from '@ant-design/icons'
 import { liveChat2Sessions } from '../../mock/inbound'
 import { sensitiveWordCategoryLabels } from '../../mock/sensitiveWords'
-import { useAppStore, useCallManagementStore } from '../../store'
+import {
+  useAppStore,
+  useCallManagementStore,
+  useCommonPhraseStore,
+} from '../../store'
 import type {
   LiveChat2Message,
   LiveChat2Session,
@@ -157,12 +161,15 @@ export function LiveChat2Page() {
   const liveChat2UnansweredSinceBySessionId = useAppStore(
     (state) => state.liveChat2UnansweredSinceBySessionId,
   )
-  const commonPhraseCategories = useCallManagementStore(
-    (state) => state.commonPhraseCategories,
+  const commonPhraseCategories = useCommonPhraseStore(
+    (state) => state.categories,
   )
-  const commonPhraseEntries = useCallManagementStore(
-    (state) => state.commonPhraseEntries,
+  const commonPhraseEntries = useCommonPhraseStore((state) => state.entries)
+  const commonPhraseError = useCommonPhraseStore((state) => state.error)
+  const commonPhraseLoading = useCommonPhraseStore(
+    (state) => state.isLoading,
   )
+  const loadCommonPhrases = useCommonPhraseStore((state) => state.load)
   const findSensitiveWordMatches = useCallManagementStore(
     (state) => state.findSensitiveWordMatches,
   )
@@ -185,13 +192,22 @@ export function LiveChat2Page() {
     (state) => state.setLiveChat2SortMode,
   )
   const now = useNow(activeLiveChat2SessionIds.length > 0)
+
+  useEffect(() => {
+    void loadCommonPhrases({ status: 'Active' }).catch(() => undefined)
+  }, [loadCommonPhrases])
+
   const publicQuickReplyGroups = useMemo<LiveChat2QuickReplyGroup[]>(
     () =>
       commonPhraseCategories.map((category) => ({
         groupId: category.categoryId,
         groupName: category.categoryName,
         phrases: commonPhraseEntries
-          .filter((entry) => entry.categoryId === category.categoryId)
+          .filter(
+            (entry) =>
+              entry.categoryId === category.categoryId &&
+              entry.status === 'Active',
+          )
           .map((entry) => ({
             code: entry.shortcutCode,
             id: entry.phraseId,
@@ -495,7 +511,7 @@ export function LiveChat2Page() {
     const emptyWorkspaceDescription =
       customerPanelView === 'history'
         ? 'Closed conversations will appear here after the agent closes a session.'
-        : 'New WhatsApp or BankApp conversations will appear here.'
+        : 'New WhatsApp or HaloBCA conversations will appear here.'
 
     return (
       <section
@@ -527,13 +543,18 @@ export function LiveChat2Page() {
     {
       children: (
         <LiveChat2QuickRepliesPanel
+          error={commonPhraseError}
           groups={allQuickReplyGroups}
+          loading={commonPhraseLoading}
           onGroupsChange={(nextGroups) =>
             setQuickReplyGroups(
               nextGroups.filter((group) => group.scope === 'my'),
             )
           }
           onInsertPhrase={handleInsertQuickReply}
+          onRetry={() =>
+            void loadCommonPhrases({ status: 'Active' }).catch(() => undefined)
+          }
         />
       ),
       closable: false,

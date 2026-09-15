@@ -10,10 +10,17 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+data/*.sqlite
+data/*.sqlite-shm
+data/*.sqlite-wal
+data/mysql-schema-export.sql
 *.local
 .env
 .env.*
 !.env.example
+backend/.venv/
+backend/**/__pycache__/
+*.pyc
 
 # Editor directories and files
 .vscode

@@ -1,0 +1,16 @@
+[project]
+name = "aicc-demo-local-backend"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "alembic>=1.15,<2",
+  "fastapi>=0.115,<1",
+  "httpx>=0.27,<1",
+  "PyMySQL>=1.1,<2",
+  "SQLAlchemy>=2,<3",
+  "uvicorn[standard]>=0.34,<1",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

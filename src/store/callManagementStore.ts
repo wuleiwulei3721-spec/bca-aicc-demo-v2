@@ -2,14 +2,9 @@ import { create } from 'zustand'
 import { defaultBlacklistEntries } from '../mock/blacklist'
 import { defaultBusyReasons } from '../mock/busyReasons'
 import { createDefaultCallRecords } from '../mock/callRecords'
-import { defaultCommonLinkEntries } from '../mock/commonLinks'
 import { defaultCommonNumberEntries } from '../mock/commonNumbers'
 import { defaultGlobalControlConfiguration } from '../mock/globalControlConfiguration'
 import { createDefaultLoginLogs } from '../mock/loginLogs'
-import {
-  defaultCommonPhraseCategories,
-  defaultCommonPhraseEntries,
-} from '../mock/commonPhrases'
 import { defaultPriorityListEntries } from '../mock/priorityList'
 import { defaultQuickActionEntries } from '../mock/quickActions'
 import { defaultSensitiveWordEntries } from '../mock/sensitiveWords'
@@ -21,10 +16,7 @@ import type {
   BusyReason,
   CallRecord,
   CallRecordSummary,
-  CommonLinkEntry,
   CommonNumberEntry,
-  CommonPhraseCategory,
-  CommonPhraseEntry,
   GlobalControlConfiguration,
   LoginLogEntry,
   LoginLogLogoutType,
@@ -40,9 +32,6 @@ import type {
 
 interface CallManagementStore {
   addBlacklistEntries: (entries: BlacklistEntry[]) => void
-  addCommonPhraseCategory: (category: CommonPhraseCategory) => void
-  addCommonPhraseEntry: (entry: CommonPhraseEntry) => void
-  addCommonLinkEntry: (entry: CommonLinkEntry) => void
   addCommonNumberEntry: (entry: CommonNumberEntry) => void
   addPriorityListEntries: (entries: PriorityListEntry[]) => void
   addQuickActionEntry: (entry: QuickActionEntry) => void
@@ -51,14 +40,8 @@ interface CallManagementStore {
   blacklistEntries: BlacklistEntry[]
   busyReasons: BusyReason[]
   callRecords: CallRecord[]
-  commonLinkEntries: CommonLinkEntry[]
   commonNumberEntries: CommonNumberEntry[]
-  commonPhraseCategories: CommonPhraseCategory[]
-  commonPhraseEntries: CommonPhraseEntry[]
   deleteBlacklistEntries: (ids: string[]) => void
-  deleteCommonPhraseCategory: (categoryId: string) => void
-  deleteCommonPhraseEntries: (phraseIds: string[]) => void
-  deleteCommonLinkEntries: (ids: string[]) => void
   deleteCommonNumberEntries: (ids: string[]) => void
   deletePriorityListEntries: (ids: string[]) => void
   deleteQuickActionEntries: (ids: string[], updatedBy: string) => void
@@ -70,11 +53,6 @@ interface CallManagementStore {
   ) => SessionEndReasonEntry[]
   globalControlConfiguration: GlobalControlConfiguration
   loginLogs: LoginLogEntry[]
-  moveCommonPhraseEntries: (
-    phraseIds: string[],
-    categoryId: string,
-    updatedBy: string,
-  ) => void
   moveQuickActionEntry: (
     id: string,
     direction: QuickActionReorderDirection,
@@ -91,15 +69,12 @@ interface CallManagementStore {
   }) => void
   resetBlacklistEntries: () => void
   resetBusyReasons: () => void
-  resetCommonLinkEntries: () => void
   resetCommonNumberEntries: () => void
-  resetCommonPhrases: () => void
   resetGlobalControlConfiguration: () => void
   resetPriorityListEntries: () => void
   resetQuickActionEntries: () => void
   resetSensitiveWordEntries: () => void
   resetSessionEndReasonEntries: () => void
-  renameCommonPhraseCategory: (categoryId: string, categoryName: string) => void
   sensitiveWordEntries: SensitiveWordEntry[]
   sessionEndReasonEntries: SessionEndReasonEntry[]
   updateCallRecordSummary: (recordId: string, summary: CallRecordSummary) => void
@@ -107,9 +82,7 @@ interface CallManagementStore {
   updateGlobalControlConfiguration: (
     configuration: GlobalControlConfiguration,
   ) => void
-  updateCommonLinkEntry: (entry: CommonLinkEntry) => void
   updateCommonNumberEntry: (entry: CommonNumberEntry) => void
-  updateCommonPhraseEntry: (entry: CommonPhraseEntry) => void
   updateQuickActionEntry: (entry: QuickActionEntry) => void
   updateSensitiveWordEntry: (entry: SensitiveWordEntry) => void
   updateSessionEndReasonEntry: (entry: SessionEndReasonEntry) => void
@@ -137,20 +110,8 @@ function cloneCallRecords() {
   }))
 }
 
-function cloneCommonPhraseCategories() {
-  return defaultCommonPhraseCategories.map((category) => ({ ...category }))
-}
-
-function cloneCommonLinkEntries() {
-  return defaultCommonLinkEntries.map((entry) => ({ ...entry }))
-}
-
 function cloneCommonNumberEntries() {
   return defaultCommonNumberEntries.map((entry) => ({ ...entry }))
-}
-
-function cloneCommonPhraseEntries() {
-  return defaultCommonPhraseEntries.map((entry) => ({ ...entry }))
 }
 
 function clonePriorityListEntries() {
@@ -192,21 +153,6 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
         ...state.blacklistEntries,
       ],
     })),
-  addCommonPhraseCategory: (category) =>
-    set((state) => ({
-      commonPhraseCategories: [
-        ...state.commonPhraseCategories,
-        { ...category },
-      ],
-    })),
-  addCommonPhraseEntry: (entry) =>
-    set((state) => ({
-      commonPhraseEntries: [{ ...entry }, ...state.commonPhraseEntries],
-    })),
-  addCommonLinkEntry: (entry) =>
-    set((state) => ({
-      commonLinkEntries: [{ ...entry }, ...state.commonLinkEntries],
-    })),
   addCommonNumberEntry: (entry) =>
     set((state) => ({
       commonNumberEntries: [{ ...entry }, ...state.commonNumberEntries],
@@ -245,45 +191,13 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
   blacklistEntries: cloneBlacklistEntries(),
   busyReasons: cloneBusyReasons(),
   callRecords: cloneCallRecords(),
-  commonLinkEntries: cloneCommonLinkEntries(),
   commonNumberEntries: cloneCommonNumberEntries(),
-  commonPhraseCategories: cloneCommonPhraseCategories(),
-  commonPhraseEntries: cloneCommonPhraseEntries(),
   deleteBlacklistEntries: (ids) =>
     set((state) => {
       const idSet = new Set(ids)
 
       return {
         blacklistEntries: state.blacklistEntries.filter(
-          (entry) => !idSet.has(entry.id),
-        ),
-      }
-    }),
-  deleteCommonPhraseCategory: (categoryId) =>
-    set((state) => ({
-      commonPhraseCategories: state.commonPhraseCategories.filter(
-        (category) => category.categoryId !== categoryId,
-      ),
-      commonPhraseEntries: state.commonPhraseEntries.filter(
-        (entry) => entry.categoryId !== categoryId,
-      ),
-    })),
-  deleteCommonPhraseEntries: (phraseIds) =>
-    set((state) => {
-      const idSet = new Set(phraseIds)
-
-      return {
-        commonPhraseEntries: state.commonPhraseEntries.filter(
-          (entry) => !idSet.has(entry.phraseId),
-        ),
-      }
-    }),
-  deleteCommonLinkEntries: (ids) =>
-    set((state) => {
-      const idSet = new Set(ids)
-
-      return {
-        commonLinkEntries: state.commonLinkEntries.filter(
           (entry) => !idSet.has(entry.id),
         ),
       }
@@ -377,19 +291,6 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
       ),
   globalControlConfiguration: cloneGlobalControlConfiguration(),
   loginLogs: cloneLoginLogs(),
-  moveCommonPhraseEntries: (phraseIds, categoryId, updatedBy) =>
-    set((state) => {
-      const idSet = new Set(phraseIds)
-      const updatedAt = formatCallManagementDateTime(new Date())
-
-      return {
-        commonPhraseEntries: state.commonPhraseEntries.map((entry) =>
-          idSet.has(entry.phraseId) && entry.categoryId !== categoryId
-            ? { ...entry, categoryId, updatedAt, updatedBy }
-            : entry,
-        ),
-      }
-    }),
   moveQuickActionEntry: (id, direction, updatedBy) =>
     set((state) => {
       const orderedEntries = [...state.quickActionEntries].sort(
@@ -445,15 +346,8 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
   resetBlacklistEntries: () =>
     set({ blacklistEntries: cloneBlacklistEntries() }),
   resetBusyReasons: () => set({ busyReasons: cloneBusyReasons() }),
-  resetCommonLinkEntries: () =>
-    set({ commonLinkEntries: cloneCommonLinkEntries() }),
   resetCommonNumberEntries: () =>
     set({ commonNumberEntries: cloneCommonNumberEntries() }),
-  resetCommonPhrases: () =>
-    set({
-      commonPhraseCategories: cloneCommonPhraseCategories(),
-      commonPhraseEntries: cloneCommonPhraseEntries(),
-    }),
   resetGlobalControlConfiguration: () =>
     set({ globalControlConfiguration: cloneGlobalControlConfiguration() }),
   resetPriorityListEntries: () =>
@@ -464,14 +358,6 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
     set({ sensitiveWordEntries: cloneSensitiveWordEntries() }),
   resetSessionEndReasonEntries: () =>
     set({ sessionEndReasonEntries: cloneSessionEndReasonEntries() }),
-  renameCommonPhraseCategory: (categoryId, categoryName) =>
-    set((state) => ({
-      commonPhraseCategories: state.commonPhraseCategories.map((category) =>
-        category.categoryId === categoryId
-          ? { ...category, categoryName }
-          : category,
-      ),
-    })),
   sensitiveWordEntries: cloneSensitiveWordEntries(),
   sessionEndReasonEntries: cloneSessionEndReasonEntries(),
   updateCallRecordSummary: (recordId, summary) =>
@@ -498,24 +384,10 @@ export const useCallManagementStore = create<CallManagementStore>((set) => ({
     })),
   updateGlobalControlConfiguration: (configuration) =>
     set({ globalControlConfiguration: { ...configuration } }),
-  updateCommonLinkEntry: (entry) =>
-    set((state) => ({
-      commonLinkEntries: state.commonLinkEntries.map((currentEntry) =>
-        currentEntry.id === entry.id ? { ...entry } : currentEntry,
-      ),
-    })),
   updateCommonNumberEntry: (entry) =>
     set((state) => ({
       commonNumberEntries: state.commonNumberEntries.map((currentEntry) =>
         currentEntry.id === entry.id ? { ...entry } : currentEntry,
-      ),
-    })),
-  updateCommonPhraseEntry: (entry) =>
-    set((state) => ({
-      commonPhraseEntries: state.commonPhraseEntries.map((currentEntry) =>
-        currentEntry.phraseId === entry.phraseId
-          ? { ...entry }
-          : currentEntry,
       ),
     })),
   updateQuickActionEntry: (entry) =>
