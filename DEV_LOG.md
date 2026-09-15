@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-09-14 17:07 +08:00
+最后更新：2026-09-15 10:04 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,38 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-09-15 10:04 +08:00 - Customer Production Release
+
+修改页面或文件：
+
+- Release commits `e7447c0` (`feat(local-data): add FastAPI/MySQL management data sources`) and `82184db` (`feat(customer-demo): refine HaloBCA workspace and routing experience`) on `main`.
+- `DEV_LOG.md`.
+
+修改原因：
+
+- Publish the validated local data boundary, HaloBCA workspace, Live Chat, and routing configuration refinements to the customer-visible demo.
+
+修改结果：
+
+- Rebased the two release commits onto the latest `origin/main`, preserving the intervening Social Media Interaction Log naming changes, then pushed `main`.
+- Deployed the committed revision with `vercel --prod --yes` and explicit customer build settings: `VITE_APP_VISIBILITY_PROFILE=customer`, `VITE_COMMON_PHRASE_MODE=demo`, `VITE_COMMON_NUMBER_MODE=demo`, `VITE_COMMON_LINK_MODE=demo`, and `VITE_ENABLE_CONTACT_EDIT=false`.
+- Production URL: `https://netinfo-aicc-demo-v2.vercel.app`.
+- Deployment URL: `https://netinfo-aicc-demo-v2-ppyts3r3x-wl-demo-s-projects.vercel.app`.
+
+验证：
+
+- `git diff --check`, `npm test`, `npm run typecheck`, `npm run backend:test`, `npm run lint`, customer-mode `npm run build`, `npm run check:fastapi`, and `npm run check:local` passed before release. The build retains the existing large chunk warning only.
+- Production homepage and `/call-management/common-phrases` returned HTTP 200; the direct route retained SPA behavior.
+- Production browser smoke passed: Common Phrase shows Demo Mode and bundled records, local-only menus remain hidden, and login -> Ready -> Live Chat shows HaloBCA, the Virtual Assistant summary, and ended-session reason labels.
+
+回滚说明：
+
+- Use Vercel to restore the production alias to the previous successful deployment, or redeploy the prior known-good Git revision after confirming the desired rollback scope.
+
+当前风险点：
+
+- Common Phrase, Common Number, and Common Link remain bundled browser demo data in production; the FastAPI/MySQL implementation is local-only. The Vite large chunk warning remains unchanged.
 
 ### 2026-09-14 16:50 +08:00 - Live Chat 机器人转人工摘要
 
