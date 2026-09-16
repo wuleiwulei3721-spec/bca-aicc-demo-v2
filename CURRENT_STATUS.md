@@ -162,7 +162,7 @@ This repository is still a demo application:
 - Live Chat workspace tab aggregates unanswered warning and breach customer counts with compact colored badges.
 - Conversation workspace.
 - Conversation header keeps only the total service duration; unanswered reminder timing remains in the customer list.
-- Current WhatsApp, HaloBCA, and Webchat conversations show BANK 1 Virtual Assistant turns with a centered one-paragraph bot summary; History excludes the summary. Newly simulated text handoffs show a per-session summary-loading state for about 1.5 seconds before the prepared demo summary appears.
+- Current WhatsApp, HaloBCA, and Webchat conversations show `AI Assistant` turns with a centered one-paragraph bot summary; History excludes the summary. Newly simulated text handoffs show a per-session summary-loading state for about 1.5 seconds before the prepared demo summary appears.
 - Send message local state.
 - End Service retains the completed session in Current without counting it as active service; Close moves it to History while keeping existing CRM behavior.
 - Ended Current cards show a compact, unframed, light-gray text label (`Agent`, `Customer`, or `Timeout`) right-aligned on the customer-name row; a tooltip retains the full wording while the Customer Information card remains unchanged.
@@ -171,6 +171,7 @@ This repository is still a demo application:
 - End Service uses a split-button only when DM has an active abnormal end reason; otherwise it remains the normal confirmation-based End Service action.
 - Customer-ended mock session handling.
 - Transfer modal from voice and conversation workspaces; ordinary Agents see only SPV and TL transfer targets, while TL and other roles see all targets.
+- Live Chat transfer supports release transfer only; its Transfer Agent list does not expose a three-party Conference action.
 - Quick Replies right-side tab, with local My Phrases maintenance using 50-character Shortcut Code and 2000-character Quick Reply limits.
 - Public Phrases in Quick Replies are read-only from the shared local Common Phrase API; only `Active` entries are shown, while `Disabled` entries remain available in management.
 - Agent replies are blocked before sending when they match Call Management sensitive words.

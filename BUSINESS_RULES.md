@@ -188,7 +188,7 @@ Conversation transfer modal:
 
 - Tabs: `Transfer Agent`, `Transfer Skill`.
 - No `Transfer Number` or `Transfer IVR` tab.
-- Agent row actions: `Transfer`, `Conference`.
+- Agent row action: `Transfer`. Live Chat does not provide a three-party `Conference` action.
 - Ordinary Agents can transfer only to `SPV` or `TL` targets. TL and all other roles retain access to all transfer-agent targets.
 
 Current demo behavior:
@@ -466,7 +466,7 @@ Conversation:
 - Active session actions: `Transfer`, `End Service`.
 - Customer-ended session action: `Close`.
 - Sending a message appends a current-agent message in local state.
-- Current sessions show BANK 1 Virtual Assistant messages and a centered one-paragraph `BOT CONVERSATION SUMMARY` immediately after the final bot message. The summary gives the customer request, the bot-captured context, and the intended agent follow-up; it is not shown in History.
+- Current sessions show `AI Assistant` messages and a centered one-paragraph `BOT CONVERSATION SUMMARY` immediately after the final bot message. The summary gives the customer request, the bot-captured context, and the intended agent follow-up; it is not shown in History.
 - A newly admitted Channel Simulation text handoff starts its summary in `Organizing the bot conversation. Please wait...` state and changes to the prepared mock summary after about 1.5 seconds. The summary state is isolated per session and does not affect SLA, unread counts, Message Record, transfer, or service ending.
 - This is a front-end demo only. The demo does not call a customer message platform or SpeaklyAI; a future integration must retrieve the bot transcript before submitting it to the approved summary service.
 - End Service main action keeps the confirmation modal, then records a normal agent end after confirmation.

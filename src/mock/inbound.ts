@@ -337,7 +337,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         message:
           'I have recorded the card-block issue and will route it to Card Services for continued support.',
         sender: 'bot',
-        senderName: 'BANK 1 Virtual Assistant',
+        senderName: 'AI Assistant',
         time: '13:43',
         timestamp: '2026-05-27T13:43:00+08:00',
       },
@@ -464,7 +464,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         message:
           'I have captured the new-device sign-in issue. A specialist will continue with secure device-binding support.',
         sender: 'bot',
-        senderName: 'BANK 1 Virtual Assistant',
+        senderName: 'AI Assistant',
         time: '13:59',
         timestamp: '2026-05-27T13:59:00+08:00',
       },
@@ -592,7 +592,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         message:
           'I have captured the billing question and your screenshot. A card-service agent will review the statement with you.',
         sender: 'bot',
-        senderName: 'BANK 1 Virtual Assistant',
+        senderName: 'AI Assistant',
         time: '14:36',
         timestamp: '2026-05-27T14:36:00+08:00',
       },
@@ -639,7 +639,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         message:
           'I have received the statement attachment and captured your installment-conversion request for a card-service agent.',
         sender: 'bot',
-        senderName: 'BANK 1 Virtual Assistant',
+        senderName: 'AI Assistant',
         time: '14:13',
         timestamp: '2026-05-27T14:13:00+08:00',
       },
@@ -758,7 +758,7 @@ export const liveChat2Sessions: LiveChat2Session[] = [
         message:
           'I have recorded your replacement-card delivery question. A specialist will check the courier status with you.',
         sender: 'bot',
-        senderName: 'BANK 1 Virtual Assistant',
+        senderName: 'AI Assistant',
         time: '14:37',
         timestamp: '2026-05-27T14:37:00+08:00',
       },

@@ -807,7 +807,7 @@ export function LiveChat2ConversationWorkspace({
                       />
                     ) : displayType === 'bot' ? (
                       <span
-                        aria-label="BANK 1 Virtual Assistant avatar"
+                        aria-label="AI Assistant avatar"
                         className="livechat2-bot-avatar livechat2-message__avatar"
                         role="img"
                       >

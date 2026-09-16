@@ -39,7 +39,7 @@ interface TransferModalProps {
 type TransferModalVariant = 'call' | 'conversation'
 type TransferAgentScope = 'all' | 'leaders-only'
 
-const conversationPrimaryAgentActions = ['Transfer', 'Conference']
+const conversationPrimaryAgentActions = ['Transfer']
 const allFilterValue = 'all'
 const transferStatusClassNames: Record<TransferAgentStatus, string> = {
   Ready: 'ready',
@@ -131,6 +131,7 @@ function TransferAgentTab({
       })
   }, [keyword, skillQueue, variant, visibleAgents])
 
+  const isConversation = variant === 'conversation'
   const columns: ColumnsType<TransferAgent> = [
     {
       dataIndex: 'marker',
@@ -142,35 +143,35 @@ function TransferAgentTab({
     {
       dataIndex: 'employeeId',
       title: 'Employee ID',
-      width: 88,
+      width: isConversation ? 108 : 88,
     },
     {
       dataIndex: 'name',
       title: 'Name',
       ellipsis: true,
-      width: 118,
+      width: isConversation ? 150 : 118,
     },
     {
       dataIndex: 'skillName',
       title: 'Skill Name',
       ellipsis: true,
-      width: 112,
+      width: isConversation ? 150 : 112,
     },
     {
       dataIndex: 'status',
       title: 'Status',
-      width: 82,
+      width: isConversation ? 90 : 82,
       render: renderAgentStatus,
     },
     {
       dataIndex: 'extension',
       title: 'Extension',
-      width: 64,
+      width: isConversation ? 74 : 64,
     },
     {
       key: 'actions',
       title: 'Actions',
-      width: 248,
+      width: isConversation ? 140 : 248,
       render: (_, agent) => {
         if (variant === 'conversation') {
           return <ConversationAgentActions onComplete={onComplete} />

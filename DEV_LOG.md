@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-09-15 10:04 +08:00
+最后更新：2026-09-15 15:41 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,59 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-09-16 16:12 +08:00 - Live Chat Transfer Conference Removed
+
+Modified files or modules:
+
+- `src/layouts/components/TransferModal.tsx`
+- `BUSINESS_RULES.md`
+- `CURRENT_STATUS.md`
+
+Reason:
+
+- Customer requested removal of the three-party action from the Live Chat Transfer dialog.
+
+Result:
+
+- The Live Chat Transfer Agent list now exposes only `Transfer`.
+- Voice-call transfer behavior, including its Conference action, remains unchanged.
+
+Rollback notes:
+
+- Restore `Conference` to the conversation action list in `TransferModal.tsx`.
+
+Current risk:
+
+- This remains a local front-end transfer simulation without channel-gateway dispatch.
+
+### 2026-09-15 15:41 +08:00 - Live Chat 机器人名称精简
+
+修改页面或文件：
+
+- `src/mock/inbound.ts`、`src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`。
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`DEV_LOG.md`。
+
+修改原因：
+
+- 产品确认将过长的 `BANK 1 Virtual Assistant` 统一改为更简洁的英文名称 `AI Assistant`。
+
+修改结果：
+
+- Live Chat 机器人消息发送者名称和机器人头像辅助标签均改为 `AI Assistant`。
+- 机器人总结标题与生成逻辑不变。
+
+验证：
+
+- `npm run lint` 与 `git diff --check` 通过。
+
+回滚说明：
+
+- 将机器人发送者名称和头像辅助标签恢复为原名称即可。
+
+当前风险点：
+
+- 无新增风险。
 
 ### 2026-09-15 10:04 +08:00 - Customer Production Release
 
