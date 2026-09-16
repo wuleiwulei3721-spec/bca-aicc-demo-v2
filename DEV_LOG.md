@@ -1,6 +1,6 @@
 ﻿# BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-09-15 15:41 +08:00
+最后更新：2026-09-16 16:59 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,32 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-09-16 16:59 +08:00 - Customer Production Release
+
+Modified files or modules:
+
+- Production deployment of commit `049471f`
+- `DEV_LOG.md`
+
+Reason:
+
+- Customer approved release of the Live Chat transfer and presentation updates.
+
+Result:
+
+- Production URL: `https://netinfo-aicc-demo-v2.vercel.app`
+- Deployment command: `VITE_APP_VISIBILITY_PROFILE=customer npx vercel --prod --yes`
+- Customer visibility profile was explicitly used. The deployed page returned HTTP 200 and rendered the BANK 1 shell.
+- Release validation before deployment: `npm run lint`, `npm run build`, and `git diff --check` passed. The build retained only the existing large-chunk warning.
+
+Rollback notes:
+
+- Redeploy the prior Vercel revision or revert commit `049471f`, then redeploy with `VITE_APP_VISIBILITY_PROFILE=customer`.
+
+Current risk:
+
+- The production demo remains a static front-end experience; local FastAPI and MySQL services are not deployed.
 
 ### 2026-09-16 16:12 +08:00 - Live Chat Transfer Conference Removed
 
