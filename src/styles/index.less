@@ -20410,26 +20410,6 @@ button.inbound-list-row .inbound-list-row__title {
   object-fit: contain;
 }
 
-.social-media-page__queue-collapsed-item em {
-  position: absolute;
-  right: -2px;
-  bottom: -3px;
-  display: inline-flex;
-  min-width: 15px;
-  height: 15px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 4px;
-  border: 2px solid #fff;
-  border-radius: 999px;
-  background: #ef4444;
-  color: #fff;
-  font-style: normal;
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 11px;
-}
-
 .social-media-page__queue-collapsed-empty {
   padding: 6px 0;
   color: #9ca3af;
@@ -20539,14 +20519,6 @@ button.inbound-list-row .inbound-list-row__title {
 
 .social-media-page__type-chip-image--compact {
   height: 20px;
-}
-
-.social-media-page__queue-type-icon {
-  display: block;
-  width: 26px;
-  height: 20px;
-  flex: 0 0 26px;
-  object-fit: contain;
 }
 
 .social-media-page__filter-footer {
@@ -20701,6 +20673,15 @@ button.inbound-list-row .inbound-list-row__title {
   gap: 6px;
 }
 
+.social-media-page__queue-card .social-media-page__queue-unread,
+.social-media-page__queue-card .social-media-page__queue-type-icon,
+.social-media-page__queue-card .ant-badge-count,
+.social-media-page__queue-card [class*='message-count'],
+.social-media-page__queue-card [class*='reply-count'],
+.social-media-page__queue-badges > em {
+  display: none !important;
+}
+
 .social-media-page__queue-time {
   white-space: nowrap;
 }
@@ -20732,28 +20713,6 @@ button.inbound-list-row .inbound-list-row__title {
   justify-content: flex-start;
   color: var(--social-text-tertiary);
   font-size: 11px;
-  font-weight: 700;
-}
-
-.social-media-page__queue-unread,
-.social-media-page__queue-meta em {
-  display: inline-flex;
-  min-width: 18px;
-  height: 18px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  background: #f04438;
-  color: #fff;
-  font-style: normal;
-  font-size: 10px;
-  line-height: 18px;
-}
-
-.social-media-page__queue-unread {
-  position: absolute;
-  top: 39px;
-  right: 12px;
   font-weight: 700;
 }
 

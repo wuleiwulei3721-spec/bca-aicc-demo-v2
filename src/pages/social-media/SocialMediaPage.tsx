@@ -356,7 +356,7 @@ const socialMediaItems: SocialMediaItem[] = [
     status: 'pending',
     title: 'BANK 1 Official Support',
     type: 'cmts',
-    unread: 1,
+    unread: 0,
   },
   {
     avatarSrc: socialMediaAvatar('avatar-02.jpg'),
@@ -385,7 +385,7 @@ const socialMediaItems: SocialMediaItem[] = [
     status: 'review',
     title: 'BANK 1 Facebook Page',
     type: 'cmts',
-    unread: 2,
+    unread: 0,
   },
   {
     avatarSrc: socialMediaAvatar('avatar-03.jpg'),
@@ -402,7 +402,7 @@ const socialMediaItems: SocialMediaItem[] = [
     status: 'pending',
     title: 'X Inbox',
     type: 'chats',
-    unread: 2,
+    unread: 0,
   },
   {
     avatarSrc: socialMediaAvatar('avatar-04.jpg'),
@@ -420,7 +420,7 @@ const socialMediaItems: SocialMediaItem[] = [
     status: 'pending',
     title: 'Instagram DM',
     type: 'chats',
-    unread: 12,
+    unread: 0,
   },
   {
     avatarSrc: socialMediaAvatar('avatar-05.jpg'),
@@ -473,7 +473,7 @@ const socialMediaItems: SocialMediaItem[] = [
     status: 'pending',
     title: 'TikTok comment',
     type: 'cmts',
-    unread: 4,
+    unread: 0,
   },
   {
     avatarSrc: socialMediaAvatar('avatar-07.jpg'),
@@ -512,7 +512,7 @@ const socialMediaItems: SocialMediaItem[] = [
     status: 'pending',
     title: 'Customer Post Mention',
     type: 'at',
-    unread: 2,
+    unread: 0,
   },
   {
     avatarSrc: socialMediaAvatar('avatar-09.jpg'),
@@ -530,7 +530,7 @@ const socialMediaItems: SocialMediaItem[] = [
     status: 'review',
     title: 'App Store Review',
     type: 'reviews',
-    unread: 1,
+    unread: 0,
   },
   {
     avatarSrc: socialMediaAvatar('avatar-10.jpg'),
@@ -551,7 +551,7 @@ const socialMediaItems: SocialMediaItem[] = [
     status: 'pending',
     title: 'Third-party Post Mention',
     type: 'at',
-    unread: 2,
+    unread: 0,
   },
 ]
 
@@ -1039,19 +1039,6 @@ function SocialTypeChip({
   )
 }
 
-function SocialQueueTypeIcon({ type }: { type: SocialMediaType }) {
-  const option = getTypeOption(type)
-
-  return (
-    <img
-      alt=""
-      aria-hidden="true"
-      className="social-media-page__queue-type-icon"
-      src={option.queueIconSrc ?? option.iconSrc}
-    />
-  )
-}
-
 function CrmTabIcon({ active }: { active: boolean }) {
   return (
     <img
@@ -1446,7 +1433,6 @@ export function SocialMediaPage() {
     () =>
       filteredItems.map((item) => ({
         channel: getChannelOption(item.channel),
-        count: item.unread,
         id: item.id,
         isActive: item.id === activeItemId,
         label: `${item.customer} ${getChannelOption(item.channel).label}`,
@@ -1692,7 +1678,6 @@ export function SocialMediaPage() {
                     }}
                   >
                     <img alt="" aria-hidden="true" src={item.channel.logoSrc} />
-                    {item.count > 0 ? <em>{item.count}</em> : null}
                   </button>
                 ))
               ) : (
@@ -1934,7 +1919,6 @@ export function SocialMediaPage() {
                     <span className="social-media-page__queue-head">
                       <strong>{item.customer}</strong>
                       <span className="social-media-page__queue-badges">
-                        <SocialQueueTypeIcon type={item.type} />
                         {isReplySent ? null : (
                           <span
                             className={`social-media-page__queue-time social-media-page__queue-time--${replyProgress.tone}`}
@@ -1948,11 +1932,6 @@ export function SocialMediaPage() {
                       {item.preview} ...
                     </span>
                   </span>
-                  {item.unread > 0 && !isReplySent ? (
-                    <em className="social-media-page__queue-unread">
-                      {item.unread}
-                    </em>
-                  ) : null}
                   {isReplySent ? null : (
                     <span
                       aria-label={`Reply progress ${replyProgress.label} of 5 minutes`}
