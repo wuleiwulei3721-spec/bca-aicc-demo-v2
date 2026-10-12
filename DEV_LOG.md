@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-09-16 16:59 +08:00
+最后更新：2026-10-12 15:41 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,20 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-10-12 15:41 +08:00 - Production release: Message Record navigation and HaloBCA updates
+
+范围/原因：发布 `33df5cf` 的 Message Record 逐词搜索导航，以及 `a5ddac41447b02f6a6061a1af59292ceefb2b05e` 的 HaloBCA 话务条、AGENTS 公司 API 规则/文档补充，供客户演示使用。
+
+结果：`git push origin main` 触发 Vercel Git 自动 Production 部署成功，正式 URL https://netinfo-aicc-demo-v2.vercel.app ，版本 URL https://netinfo-aicc-demo-v2-9wnu0t12m-wl-demo-s-projects.vercel.app ，详情 https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/AVXGsacMPEiT6FrfKQbMeM7aeUgL 。GitHub deployment `7008252126` latest status success，完成于 2026-10-12 14:54:49 +08:00；commit status Vercel success，CI `lint-and-build` success。
+
+验证：clean checkout 下 `npm run lint`、customer + three common demo env `npm run build`、`git diff --check` 通过，build 仍有既有 large chunk 提示；本地浏览器完成 card 7 次、8 条上下文、offset 20/58 分别 2/7 和 3/7、单橙色 mark、首尾 disabled、0/0、hover/click 无行背景、查询条件单行无常驻 Max7 提示。线上登录页、JS/CSS 新 asset、客户可见性与 `data-livechat2-match-start`/`16zero guest` 静态核对完成；线上登录后交互 smoke 因工具连接超时未完成，由本地验收覆盖。
+
+实际命令/环境：CLI `vercel deploy --prod --yes --build-env VITE_APP_VISIBILITY_PROFILE=customer --build-env VITE_COMMON_PHRASE_MODE=demo --build-env VITE_COMMON_NUMBER_MODE=demo --build-env VITE_COMMON_LINK_MODE=demo --meta gitCommitSha=a5ddac41447b02f6a6061a1af59292ceefb2b05e` 在 Retrieving project 阶段因 token invalid 失败，未上传部署；已停止重复登录，后确认 Git 自动部署成功，CLI 认证需后续重新登录。
+
+Rollback：回退运行时提交 `33df5cf`、`a5ddac4` 后正常推送重新部署，或恢复上一已确认 Vercel 生产版本。
+
+当前风险：前端 mock、Vercel CLI auth 失效、线上交互复核受工具超时限制。
 
 ### 2026-10-12 11:26 +08:00 - Live Chat Message Record query and navigation update
 
