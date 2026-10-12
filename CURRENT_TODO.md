@@ -111,7 +111,9 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - End Service retains the ended session in Current and removes it from active-service guards; Close moves it to History,
   - End Service main action keeps the confirmation modal,
   - End Service caret appears only when DM has an active abnormal reason; otherwise the normal End Service confirmation flow has no caret,
-  - Message Record date-range query and result timestamps in `DD-MM-YYYY HH:MM:SS`,
+  - Message Record acceptance: the narrow right-side list shows the complete selected-range message context in ascending time order without skipping intermediate Conversation messages; query conditions remain on one compact row; result navigation remains below and right-aligned.
+  - Message Record acceptance: Search applies draft date and keyword changes, auto-locates the first keyword occurrence, shows right-aligned `current/total`, Previous match, and Next match, counts keyword occurrences rather than matching messages, highlights only the current occurrence orange and all other occurrences yellow, stops navigation at the ends without wrapping, disables `0/0`, and shows the selected-range context with `0/0` disabled for an empty keyword.
+  - Message Record acceptance: picker and Search enforce inclusive exact-second ranges no longer than 168 hours and allow shorter ranges without a static Max 7 days helper; the default ends at the latest current-session message and starts 168 hours earlier. New messages retain the applied conditions and current location, while switching session ID resets the query state. Confirm the interaction reuses local controls without changing shell or global state.
   - Quick Replies,
   - Sensitive Word send blocking,
   - Transfer: ordinary Agent sees only SPV/TL transfer targets with no ordinary-agent data; TL sees all targets.

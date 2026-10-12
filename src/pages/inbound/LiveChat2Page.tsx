@@ -567,6 +567,7 @@ export function LiveChat2Page() {
           {
             children: (
               <LiveChat2MessageRecordPanel
+                key={activeSession.id}
                 messages={messageRecordMessages}
               />
             ),

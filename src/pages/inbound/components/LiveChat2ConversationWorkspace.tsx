@@ -7,9 +7,9 @@ import {
   useState,
 } from 'react'
 import {
-  AimOutlined,
   CaretDownOutlined,
   CloseOutlined,
+  DownOutlined,
   ClockCircleOutlined,
   FileImageOutlined,
   FolderOpenOutlined,
@@ -21,9 +21,11 @@ import {
   SendOutlined,
   SmileOutlined,
   SwapOutlined,
+  UpOutlined,
 } from '@ant-design/icons'
 import { Alert, DatePicker, Dropdown, Input } from 'antd'
-import type { InputRef, MenuProps } from 'antd'
+import type { MenuProps } from 'antd'
+import type { RangePickerProps } from 'antd/es/date-picker'
 import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import {
@@ -126,26 +128,55 @@ function getEndedStatusLabel(session: LiveChat2SessionView) {
   return 'Agent ended'
 }
 
-function highlightSearch(value: string, search: string) {
+function highlightSearch(
+  value: string,
+  search: string,
+  currentOffset: number | null = null,
+) {
   const normalizedSearch = search.trim()
 
   if (!normalizedSearch) {
     return value
   }
 
-  const index = value.toLowerCase().indexOf(normalizedSearch.toLowerCase())
+  const normalizedValue = value.toLowerCase()
+  const normalizedNeedle = normalizedSearch.toLowerCase()
+  const segments: React.ReactNode[] = []
+  let cursor = 0
+  let matchIndex = normalizedValue.indexOf(normalizedNeedle)
 
-  if (index < 0) {
+  if (matchIndex < 0) {
     return value
   }
 
-  return (
-    <>
-      {value.slice(0, index)}
-      <mark>{value.slice(index, index + normalizedSearch.length)}</mark>
-      {value.slice(index + normalizedSearch.length)}
-    </>
-  )
+  while (matchIndex >= 0) {
+    if (matchIndex > cursor) {
+      segments.push(value.slice(cursor, matchIndex))
+    }
+
+    const matchEnd = matchIndex + normalizedSearch.length
+    segments.push(
+      <mark
+        className={
+          matchIndex === currentOffset
+            ? 'livechat2-records__mark--current'
+            : undefined
+        }
+        data-livechat2-match-start={matchIndex}
+        key={`${matchIndex}-${matchEnd}`}
+      >
+        {value.slice(matchIndex, matchEnd)}
+      </mark>,
+    )
+    cursor = matchEnd
+    matchIndex = normalizedValue.indexOf(normalizedNeedle, cursor)
+  }
+
+  if (cursor < value.length) {
+    segments.push(value.slice(cursor))
+  }
+
+  return <>{segments}</>
 }
 
 function renderMessageContent(
@@ -218,8 +249,18 @@ interface MessageRecordFilterState {
   appliedFilters: MessageRecordFilters
   draftFilters: MessageRecordFilters
   isSearchResultMode: boolean
-  latestMessageTimestamp: number
 }
+
+interface MessageRecordOccurrence {
+  key: string
+  messageId: string
+  startIndex: number
+}
+
+type MessageRecordDisabledTime = NonNullable<RangePickerProps['disabledTime']>
+
+const MESSAGE_RECORD_MAX_RANGE_MS = 7 * 24 * 60 * 60 * 1000
+const MESSAGE_RECORD_RANGE_ERROR = 'Select a range up to 7 days with end after start.'
 
 function getMessageTime(message: LiveChat2Message) {
   const time = new Date(message.timestamp).getTime()
@@ -240,9 +281,11 @@ function getDefaultRecordDateRange(
 ): MessageRecordDateRange {
   const latestMessageDate =
     latestMessageTimestamp > 0 ? dayjs(latestMessageTimestamp) : dayjs()
-  const anchorDate = latestMessageDate.isValid() ? latestMessageDate : dayjs()
+  const anchorDate = latestMessageDate.isValid()
+    ? latestMessageDate.millisecond(0)
+    : dayjs().millisecond(0)
 
-  return [anchorDate.subtract(6, 'day'), anchorDate]
+  return [anchorDate.subtract(168, 'hour'), anchorDate]
 }
 
 function getDefaultRecordFilters(
@@ -262,108 +305,280 @@ function formatMessageRecordTimestamp(timestamp: string) {
     : timestamp
 }
 
+function getMessageRecordSearchText(message: LiveChat2Message) {
+  return message.kind === 'file' ? message.fileName ?? message.message : message.message
+}
+
+function getMessageRecordOccurrences(
+  messages: LiveChat2Message[],
+  keyword: string,
+): MessageRecordOccurrence[] {
+  const normalizedKeyword = keyword.trim().toLowerCase()
+
+  if (!normalizedKeyword) {
+    return []
+  }
+
+  return messages.flatMap((message) => {
+    const text = getMessageRecordSearchText(message)
+    const normalizedText = text.toLowerCase()
+    const occurrences: MessageRecordOccurrence[] = []
+    let matchIndex = normalizedText.indexOf(normalizedKeyword)
+
+    while (matchIndex >= 0) {
+      occurrences.push({
+        key: `${message.id}:${matchIndex}`,
+        messageId: message.id,
+        startIndex: matchIndex,
+      })
+      const cursor = matchIndex + normalizedKeyword.length
+      matchIndex = normalizedText.indexOf(normalizedKeyword, cursor)
+    }
+
+    return occurrences
+  })
+}
+
+function isValidMessageRecordRange(dateRange: MessageRecordDateRange) {
+  const [start, end] = dateRange
+
+  return (
+    start.isValid() &&
+    end.isValid() &&
+    !end.isBefore(start) &&
+    end.valueOf() - start.valueOf() <= MESSAGE_RECORD_MAX_RANGE_MS
+  )
+}
+
+function getMessageRecordRangeError(dateRange: MessageRecordDateRange) {
+  return isValidMessageRecordRange(dateRange) ? null : MESSAGE_RECORD_RANGE_ERROR
+}
+
+function getMessageRecordDisabledDate(date: Dayjs, info: { from?: Dayjs }) {
+  if (!info.from) {
+    return false
+  }
+
+  return Math.abs(date.startOf('day').diff(info.from.startOf('day'), 'day')) > 7
+}
+
+function getDisabledRecordTime(
+  date: Dayjs | null,
+  range: 'start' | 'end',
+  info: { from?: Dayjs },
+): ReturnType<MessageRecordDisabledTime> {
+  const from = info.from
+
+  if (!date || !from || Math.abs(date.startOf('day').diff(from.startOf('day'), 'day')) !== 7) {
+    return {}
+  }
+
+  const boundary =
+    range === 'start'
+      ? from.subtract(168, 'hour')
+      : from.add(168, 'hour')
+
+  if (!date.isSame(boundary, 'day')) {
+    return {}
+  }
+
+  const disabledHours = () =>
+    Array.from({ length: 24 }, (_, hour) => hour).filter((hour) =>
+      range === 'start' ? hour < boundary.hour() : hour > boundary.hour(),
+    )
+  const disabledMinutes = (hour: number) => {
+    if (hour !== boundary.hour()) {
+      return []
+    }
+
+    return Array.from({ length: 60 }, (_, minute) => minute).filter((minute) =>
+      range === 'start' ? minute < boundary.minute() : minute > boundary.minute(),
+    )
+  }
+  const disabledSeconds = (hour: number, minute: number) => {
+    if (hour !== boundary.hour() || minute !== boundary.minute()) {
+      return []
+    }
+
+    return Array.from({ length: 60 }, (_, second) => second).filter((second) =>
+      range === 'start' ? second < boundary.second() : second > boundary.second(),
+    )
+  }
+
+  return {
+    disabledHours,
+    disabledMinutes,
+    disabledSeconds,
+  }
+}
+
 export function LiveChat2MessageRecordPanel({
   messages,
 }: LiveChat2MessageRecordPanelProps) {
   const latestMessageTimestamp = getLatestMessageTimestamp(messages)
-  const defaultFilters = getDefaultRecordFilters(latestMessageTimestamp)
-  const [filterState, setFilterState] = useState<MessageRecordFilterState>(() => ({
-    appliedFilters: defaultFilters,
-    draftFilters: defaultFilters,
-    isSearchResultMode: false,
-    latestMessageTimestamp,
-  }))
-  const activeFilterState =
-    filterState.latestMessageTimestamp === latestMessageTimestamp
-      ? filterState
-      : {
-          appliedFilters: defaultFilters,
-          draftFilters: defaultFilters,
-          isSearchResultMode: false,
-          latestMessageTimestamp,
-        }
-  const { appliedFilters, draftFilters, isSearchResultMode } =
-    activeFilterState
+  const [filterState, setFilterState] = useState<MessageRecordFilterState>(() => {
+    const defaultFilters = getDefaultRecordFilters(latestMessageTimestamp)
+
+    return {
+      appliedFilters: defaultFilters,
+      draftFilters: defaultFilters,
+      isSearchResultMode: false,
+    }
+  })
+  const [rangeError, setRangeError] = useState<string | null>(null)
+  const [currentOccurrence, setCurrentOccurrence] =
+    useState<MessageRecordOccurrence | null>(null)
+  const [searchRequestId, setSearchRequestId] = useState(0)
+  const { appliedFilters, draftFilters, isSearchResultMode } = filterState
   const appliedKeyword = appliedFilters.keyword.trim()
   const recordNodeRefs = useRef<Record<string, HTMLElement | null>>({})
-  const searchInputRef = useRef<InputRef>(null)
-  const [locatedRecordRequest, setLocatedRecordRequest] = useState<{
-    messageId: string
-    requestId: number
-  } | null>(null)
+  const recordListRef = useRef<HTMLDivElement | null>(null)
 
-  const matchedRecordMessages = useMemo(() => {
-    const fromTime = appliedFilters.dateRange[0].valueOf()
-    const toTime = appliedFilters.dateRange[1].valueOf()
-    const normalizedKeyword = appliedKeyword.toLowerCase()
+  const rangeFilteredRecordMessages = useMemo(() => {
+    const fromTime = appliedFilters.dateRange[0].startOf('second').valueOf()
+    const toTime = appliedFilters.dateRange[1].endOf('second').valueOf()
 
     return messages
       .filter((message) => {
         const messageTime = getMessageTime(message)
-        const isInDateRange = messageTime >= fromTime && messageTime <= toTime
-        const isKeywordMatch = normalizedKeyword
-          ? message.message.toLowerCase().includes(normalizedKeyword)
-          : true
 
-        return isInDateRange && isKeywordMatch
+        return messageTime >= fromTime && messageTime <= toTime
       })
-      .sort((first, second) => getMessageTime(second) - getMessageTime(first))
-  }, [
-    appliedFilters.dateRange,
-    appliedKeyword,
-    messages,
-  ])
-  const handleSearch = () => {
-    setLocatedRecordRequest(null)
-    setFilterState({
-      appliedFilters: {
-        dateRange: [draftFilters.dateRange[0], draftFilters.dateRange[1]],
-        keyword: draftFilters.keyword.trim(),
-      },
-      draftFilters,
-      isSearchResultMode: true,
-      latestMessageTimestamp,
-    })
-  }
-  const handleLocateMessage = (messageId: string) => {
-    const nextFilters = {
-      dateRange: [appliedFilters.dateRange[0], appliedFilters.dateRange[1]],
-      keyword: '',
-    } satisfies MessageRecordFilters
+      .sort((first, second) => getMessageTime(first) - getMessageTime(second))
+  }, [appliedFilters.dateRange, messages])
 
-    setFilterState({
-      appliedFilters: nextFilters,
-      draftFilters: nextFilters,
-      isSearchResultMode: false,
-      latestMessageTimestamp,
-    })
-    setLocatedRecordRequest((currentRequest) => ({
-      messageId,
-      requestId: (currentRequest?.requestId ?? 0) + 1,
+  const recordOccurrences = useMemo(
+    () => getMessageRecordOccurrences(rangeFilteredRecordMessages, appliedKeyword),
+    [appliedKeyword, rangeFilteredRecordMessages],
+  )
+
+  const currentMatchIndex = currentOccurrence
+    ? recordOccurrences.findIndex(
+        (occurrence) => occurrence.key === currentOccurrence.key,
+      )
+    : -1
+  const effectiveCurrentMatchIndex =
+    currentMatchIndex >= 0 ? currentMatchIndex : recordOccurrences.length > 0 ? 0 : -1
+  const effectiveCurrentOccurrence =
+    effectiveCurrentMatchIndex >= 0
+      ? recordOccurrences[effectiveCurrentMatchIndex] ?? null
+      : null
+  const currentMessageId = effectiveCurrentOccurrence?.messageId ?? null
+  const currentOffset = effectiveCurrentOccurrence?.startIndex ?? null
+  const matchCount = recordOccurrences.length
+  const canGoPrevious = effectiveCurrentMatchIndex > 0
+  const canGoNext =
+    effectiveCurrentMatchIndex >= 0 && effectiveCurrentMatchIndex < matchCount - 1
+
+  const applyDraftRange = (dateRange: MessageRecordDateRange) => {
+    setRangeError(getMessageRecordRangeError(dateRange))
+    setFilterState((current) => ({
+      ...current,
+      draftFilters: {
+        ...current.draftFilters,
+        dateRange,
+      },
     }))
+  }
+  const handleSearch = () => {
+    const validationError = getMessageRecordRangeError(draftFilters.dateRange)
+
+    setRangeError(validationError)
+
+    if (validationError) {
+      return
+    }
+
+    const nextFilters: MessageRecordFilters = {
+      dateRange: [draftFilters.dateRange[0], draftFilters.dateRange[1]],
+      keyword: draftFilters.keyword.trim(),
+    }
+    const fromTime = nextFilters.dateRange[0].startOf('second').valueOf()
+    const toTime = nextFilters.dateRange[1].endOf('second').valueOf()
+    const nextRangeFilteredMessages = messages
+      .filter((message) => {
+        const messageTime = getMessageTime(message)
+
+        return messageTime >= fromTime && messageTime <= toTime
+      })
+      .sort((first, second) => getMessageTime(first) - getMessageTime(second))
+    const firstOccurrence = getMessageRecordOccurrences(
+      nextRangeFilteredMessages,
+      nextFilters.keyword,
+    )[0]
+
+    setFilterState((current) => ({
+      appliedFilters: nextFilters,
+      draftFilters: current.draftFilters,
+      isSearchResultMode: true,
+    }))
+    setCurrentOccurrence(firstOccurrence ?? null)
+    setSearchRequestId((requestId) => requestId + 1)
+  }
+  const handlePreviousMatch = () => {
+    if (!canGoPrevious) {
+      return
+    }
+
+    const previousOccurrence = recordOccurrences[effectiveCurrentMatchIndex - 1]
+
+    if (previousOccurrence) {
+      setCurrentOccurrence(previousOccurrence)
+      setSearchRequestId((requestId) => requestId + 1)
+    }
+  }
+  const handleNextMatch = () => {
+    if (!canGoNext) {
+      return
+    }
+
+    const nextOccurrence = recordOccurrences[effectiveCurrentMatchIndex + 1]
+
+    if (nextOccurrence) {
+      setCurrentOccurrence(nextOccurrence)
+      setSearchRequestId((requestId) => requestId + 1)
+    }
   }
 
   useEffect(() => {
-    if (!locatedRecordRequest) {
+    if (
+      !isSearchResultMode ||
+      !currentMessageId ||
+      currentOffset === null ||
+      searchRequestId === 0
+    ) {
       return
     }
 
-    const targetNode = recordNodeRefs.current[locatedRecordRequest.messageId]
+    const listNode = recordListRef.current
+    const recordNode = recordNodeRefs.current[currentMessageId]
+    const targetNode = recordNode?.querySelector<HTMLElement>(
+      `mark[data-livechat2-match-start="${currentOffset}"]`,
+    )
 
-    if (!targetNode) {
+    if (!listNode || !targetNode) {
       return
     }
 
-    targetNode.scrollIntoView({
+    const listRect = listNode.getBoundingClientRect()
+    const targetRect = targetNode.getBoundingClientRect()
+    const targetOffset =
+      targetRect.top - listRect.top + listNode.scrollTop - listNode.clientHeight / 2 + targetNode.offsetHeight / 2
+
+    listNode.scrollTo({
       behavior: 'smooth',
-      block: 'center',
+      top: Math.max(targetOffset, 0),
     })
-    window.setTimeout(() => {
-      searchInputRef.current?.focus({
-        cursor: 'end',
-      })
-    }, 0)
-  }, [locatedRecordRequest, matchedRecordMessages])
+  }, [currentMessageId, currentOffset, isSearchResultMode, searchRequestId])
+
+  const getDraftDisabledRecordTime: MessageRecordDisabledTime = (date, range, info) =>
+    getDisabledRecordTime(date, range, {
+      from:
+        info.from ??
+        (range === 'start'
+          ? draftFilters.dateRange[1]
+          : draftFilters.dateRange[0]),
+    })
 
   return (
     <aside
@@ -380,27 +595,21 @@ export function LiveChat2MessageRecordPanel({
         <RangePicker
           allowClear={false}
           className="livechat2-records__range-picker"
+          disabledDate={getMessageRecordDisabledDate}
           format={MESSAGE_RECORD_DATE_TIME_FORMAT}
           inputReadOnly
           size="small"
-          showTime={{ format: 'HH:mm:ss' }}
+          disabledTime={getDraftDisabledRecordTime}
+          showTime={{
+            format: 'HH:mm:ss',
+          }}
           value={draftFilters.dateRange}
           onChange={(dates) => {
             if (!dates?.[0] || !dates?.[1]) {
               return
             }
 
-            setLocatedRecordRequest(null)
-            setFilterState((current) => ({
-              ...activeFilterState,
-              draftFilters: {
-                ...(current.latestMessageTimestamp === latestMessageTimestamp
-                  ? current.draftFilters
-                  : draftFilters),
-                dateRange: [dates[0], dates[1]],
-              },
-              latestMessageTimestamp,
-            }))
+            applyDraftRange([dates[0], dates[1]])
           }}
         />
         <Input
@@ -408,75 +617,92 @@ export function LiveChat2MessageRecordPanel({
           aria-label="Search message record"
           placeholder="Search messages"
           prefix={<SearchOutlined />}
-          ref={searchInputRef}
           size="small"
           value={draftFilters.keyword}
           onChange={(event) => {
-            setLocatedRecordRequest(null)
             setFilterState((current) => ({
-              ...activeFilterState,
+              ...current,
               draftFilters: {
-                ...(current.latestMessageTimestamp === latestMessageTimestamp
-                  ? current.draftFilters
-                  : draftFilters),
+                ...current.draftFilters,
                 keyword: event.target.value,
               },
-              latestMessageTimestamp,
             }))
           }}
         />
         <BaseButton htmlType="submit" size="small" type="primary" variant="primary">
           Search
         </BaseButton>
-        <span
-          className="livechat2-records__result-count"
-          title={`${matchedRecordMessages.length} records found`}
-        >
-          {matchedRecordMessages.length}
-        </span>
-      </form>
-      <div className="livechat2-records__list">
-        {matchedRecordMessages.length > 0 ? (
-          matchedRecordMessages.map((message) => (
-            <article
-              className={
-                locatedRecordRequest?.messageId === message.id
-                  ? 'livechat2-records__item--located'
-                  : undefined
-              }
-              data-livechat2-record-id={message.id}
-              key={`record-${message.id}`}
-              ref={(node) => {
-                recordNodeRefs.current[message.id] = node
-              }}
-              tabIndex={0}
+        {rangeError && (
+          <Alert
+            showIcon
+            className="livechat2-records__range-alert"
+            message={rangeError}
+            type="warning"
+          />
+        )}
+        {isSearchResultMode && (
+          <div className="livechat2-records__result-nav">
+            <span
+              className="livechat2-records__result-count"
+              title={`${matchCount} keyword occurrences found`}
             >
-              <div className="livechat2-records__item-head">
-                <strong>
-                  {message.sender === 'agent' || message.sender === 'bot'
-                    ? formatAgentDisplay(
-                        message.senderEmployeeId,
-                        message.senderName,
-                      )
-                    : message.senderName}
-                </strong>
-                <time>
-                  {formatMessageRecordTimestamp(message.timestamp)}
-                </time>
-              </div>
-              <p>{highlightSearch(message.message, appliedKeyword)}</p>
-              {isSearchResultMode && (
-                <button
-                  className="livechat2-records__locate"
-                  type="button"
-                  onClick={() => handleLocateMessage(message.id)}
-                >
-                  <AimOutlined />
-                  Locate
-                </button>
-              )}
-            </article>
-          ))
+              {effectiveCurrentMatchIndex >= 0 ? effectiveCurrentMatchIndex + 1 : 0}/{matchCount}
+            </span>
+            <BaseButton
+              aria-label="Previous match"
+              disabled={!canGoPrevious}
+              icon={<UpOutlined />}
+              size="small"
+              title="Previous match"
+              variant="ghost"
+              onClick={handlePreviousMatch}
+            />
+            <BaseButton
+              aria-label="Next match"
+              disabled={!canGoNext}
+              icon={<DownOutlined />}
+              size="small"
+              title="Next match"
+              variant="ghost"
+              onClick={handleNextMatch}
+            />
+          </div>
+        )}
+      </form>
+      <div className="livechat2-records__list" ref={recordListRef}>
+        {rangeFilteredRecordMessages.length > 0 ? (
+          rangeFilteredRecordMessages.map((message) => {
+            const selectedStart =
+              isSearchResultMode && currentMessageId === message.id
+                ? currentOffset
+                : null
+            const displayMessage = getMessageRecordSearchText(message)
+
+            return (
+              <article
+                data-livechat2-record-id={message.id}
+                key={`record-${message.id}`}
+                ref={(node) => {
+                  recordNodeRefs.current[message.id] = node
+                }}
+              >
+                <div className="livechat2-records__item-head">
+                  <strong>
+                    {message.sender === 'agent' || message.sender === 'bot'
+                      ? formatAgentDisplay(
+                          message.senderEmployeeId,
+                          message.senderName,
+                        )
+                      : message.senderName}
+                  </strong>
+                  <time>
+                    {formatMessageRecordTimestamp(message.timestamp)}
+                  </time>
+                </div>
+                <p>{highlightSearch(displayMessage, appliedKeyword, selectedStart)}</p>
+              </article>
+            )
+          })
         ) : (
           <div className="livechat2-records__empty">No records found</div>
         )}

@@ -11359,8 +11359,7 @@ button.inbound-list-row .inbound-list-row__title {
   line-height: 17px;
 }
 
-.livechat2-message__bubble mark,
-.livechat2-records__list mark {
+.livechat2-message__bubble mark {
   padding: 0 2px;
   border-radius: 2px;
   background: #fff1a8;
@@ -11449,11 +11448,33 @@ button.inbound-list-row .inbound-list-row__title {
 
 .livechat2-records__search {
   display: grid;
-  grid-template-columns: minmax(92px, 0.8fr) minmax(72px, 1fr) auto auto;
+  grid-template-columns: minmax(92px, 0.8fr) minmax(72px, 1fr) auto;
   align-items: center;
   padding: 8px 8px;
   border-bottom: 1px solid #e8eef7;
   gap: 5px;
+}
+
+.livechat2-records__range-alert.ant-alert {
+  grid-column: 1 / -1;
+  align-items: flex-start;
+  padding: 4px 6px;
+  font-size: 10px;
+  line-height: 14px;
+}
+
+.livechat2-records__range-alert .ant-alert-message {
+  color: var(--aicc-text-secondary);
+  font-size: 10px;
+  line-height: 14px;
+}
+
+.livechat2-records__result-nav {
+  display: inline-flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
 }
 
 .livechat2-records__result-count {
@@ -11501,6 +11522,12 @@ button.inbound-list-row .inbound-list-row__title {
   font-size: 11px;
 }
 
+.livechat2-records__result-nav .aicc-button.ant-btn-sm {
+  width: 24px;
+  min-width: 24px;
+  padding-inline: 0;
+}
+
 .livechat2-records__list {
   display: flex;
   overflow-y: auto;
@@ -11517,22 +11544,17 @@ button.inbound-list-row .inbound-list-row__title {
   border-bottom: 1px solid #eef3f8;
   border-radius: var(--aicc-radius-sm);
   outline: 0;
-  transition:
-    background 0.16s ease,
-    box-shadow 0.16s ease;
 }
 
-.livechat2-records__list article:hover,
-.livechat2-records__list article:focus-within {
-  background: #f6faff;
-  box-shadow: inset 2px 0 0 var(--aicc-primary);
+.livechat2-records__list mark {
+  padding: 0 2px;
+  border-radius: 2px;
+  background: #fff1a8;
 }
 
-.livechat2-records__list article.livechat2-records__item--located {
-  background: #eaf4ff;
-  box-shadow:
-    inset 2px 0 0 var(--aicc-primary),
-    0 0 0 1px rgba(24, 103, 192, 0.18);
+.livechat2-records__list mark.livechat2-records__mark--current {
+  background: #f59e0b;
+  color: #ffffff;
 }
 
 .livechat2-records__list time,
@@ -11570,44 +11592,6 @@ button.inbound-list-row .inbound-list-row__title {
   color: var(--aicc-text-secondary);
   font-size: 11px;
   line-height: 16px;
-}
-
-.livechat2-records__locate {
-  display: inline-flex;
-  position: absolute;
-  right: 6px;
-  bottom: 6px;
-  height: 22px;
-  align-items: center;
-  padding: 0 7px;
-  border: 1px solid #c8d8ee;
-  border-radius: var(--aicc-radius-sm);
-  background: #ffffff;
-  color: var(--aicc-primary);
-  cursor: pointer;
-  font-size: 10px;
-  font-weight: 700;
-  gap: 4px;
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    opacity 0.16s ease,
-    background 0.16s ease,
-    border-color 0.16s ease;
-}
-
-.livechat2-records__list article:hover .livechat2-records__locate,
-.livechat2-records__list article:focus-within .livechat2-records__locate,
-.livechat2-records__locate:focus-visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.livechat2-records__locate:hover,
-.livechat2-records__locate:focus-visible {
-  border-color: var(--aicc-primary);
-  background: #eaf4ff;
-  outline: 0;
 }
 
 .livechat2-records__empty {

@@ -1,4 +1,4 @@
-﻿# BANK 1 AICC Demo V2 - 开发日志
+# BANK 1 AICC Demo V2 - 开发日志
 
 最后更新：2026-09-16 16:59 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
@@ -28,6 +28,48 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-10-12 11:26 +08:00 - Live Chat Message Record query and navigation update
+
+修改页面或文件：
+
+- `src/pages/inbound/components/LiveChat2ConversationWorkspace.tsx`。
+- `src/pages/inbound/LiveChat2Page.tsx`。
+- `src/styles/index.less`。
+- `BUSINESS_RULES.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DESIGN_SYSTEM.md`、`DEV_LOG.md`。
+
+Reason:
+
+- 用户已确认 Live Chat Message Record 的日期范围、消息上下文、命中定位、导航、高亮和窄右面板交互规则，需要同步实现边界与知识库记录。
+
+Result:
+
+- Message Record 右侧列表按选定日期范围展示完整消息上下文并按时间升序，不跳过中间 Conversation 消息。
+- Search 后自动定位首个关键词 occurrence，并提供右对齐 `current/total`、Previous match、Next match；总数按关键词 occurrence 计数，仅当前 occurrence 橙色高亮，其余关键词出现黄色高亮，首尾不循环，空关键词展示范围上下文但保持 `0/0` 禁用。
+- 日期范围支持 inclusive 精确秒，最大 168 小时且允许更短；默认截至当前会话最新消息时间往前 168 小时。草稿修改仅在 Search 后应用，新消息不清空条件或当前定位，切换 session id 重置。
+- 窄右面板保留日期范围、关键词和 Search 同一行，结果导航在下方右对齐，复用局部控件，不改变 shell 或 global state。
+- 按用户反馈恢复原单行查询条件，移除新增行背景及静态 7 天文案；消息行无 hover、focus 或 selection 样式。
+
+Rollback:
+
+- 回退上述三个实现源文件中本次 Message Record 调整，并恢复本条日志之前对应的四个知识库条目；不删除既有历史开发记录。
+
+Risk:
+
+- 当前仍为本地 mock，168 小时限制不等于生产查询性能保证，真实查询需由后端同样限制范围。
+
+Validation:
+
+- `npm run lint` 和 `npm run build` 通过；build 保留既有 large chunk 提示。
+- `git diff --check` 通过。
+- 历史本地浏览器验证（旧按消息计数实现）：card 搜索 5 条命中消息、8 条上下文、7 处高亮；1/5 首端和 5/5 末端按钮禁用；Previous/Next 可定位。
+- 历史本地浏览器验证（旧按消息计数实现）：草稿修改仅在 Search 后应用；0/0 禁用；空关键词支持 1/8 导航；切换客户重置；新增本地消息不清空条件并保留 4/5 位置。
+- 已完成验证：card 按关键词次数计 7 个、5 条含关键词消息、8 条上下文；2/7 与 3/7 位于同条消息 offset 20/58，Previous 能返回单词；1/7 首端和 7/7 末端禁用对应按钮，全列表始终仅 1 个橙色 mark；无命中和空 keyword 均 0/0 且保留 8 条上下文；实际 hover 并 click 消息行后 background 透明、shadow none、无选中 class/无 tabIndex；本轮 npm run lint/build 和 git diff --check 通过（build 保留已知 large chunk 提示）。
+- 7 天边界日 14:32:00 之后的秒被禁用；超过 7 天的日期未能应用。
+额外前端 TypeScript 检查仍报告既有类型错误，包含未改业务区的 getLiveChat2CustomerDisplayName(session) 参数契约和 LiveChat2Page store 隐式 any；本次 Message Record 新增类型错误已修复。正式系统查询性能及后端7天约束仍需集成验收。
+
+
+
 
 ### 2026-09-16 16:59 +08:00 - Customer Production Release
 

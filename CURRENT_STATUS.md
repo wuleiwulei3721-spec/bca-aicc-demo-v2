@@ -175,7 +175,10 @@ This repository is still a demo application:
 - Quick Replies right-side tab, with local My Phrases maintenance using 50-character Shortcut Code and 2000-character Quick Reply limits.
 - Public Phrases in Quick Replies are read-only from the shared local Common Phrase API; only `Active` entries are shown, while `Disabled` entries remain available in management.
 - Agent replies are blocked before sending when they match Call Management sensitive words.
-- Message Record right-side tab with `DD-MM-YYYY HH:MM:SS` query and result timestamps.
+- Message Record right-side tab with complete selected-range message context in ascending time order, including intermediate Conversation messages without skipping.
+- Message Record Search applies the edited date range and keyword, auto-locates the first keyword occurrence, and shows right-aligned `current/total`, Previous match, and Next match controls below the conditions. Totals count keyword occurrences rather than matching messages; only the current occurrence is orange and all other occurrences are yellow. Navigation stops at the first and last occurrence without wrapping, disables at `0/0`, and empty-keyword searches show the selected-range context with `0/0` disabled.
+- Message Record limits the inclusive exact-second date range to 168 hours, accepts shorter ranges, validates both the picker and Search, and defaults from the latest current-session message backward 168 hours. Draft changes apply only after Search; new messages retain applied conditions and location, while session-ID changes reset them.
+- Message Record keeps the date range, keyword, and Search controls on one compact row; result navigation is below and right-aligned. Message rows do not show hover, focus, or selection backgrounds, and the panel does not show a static Max 7 days helper. The shell and global state are unchanged.
 
 ## 10. Completed HaloBCA Demo
 

@@ -168,6 +168,10 @@ Rules:
 - Dynamic CRM business tabs are closable.
 - The agent-side Customer Verification workflow opens as a fixed right-side Assistant tab so CRM can stay visible for answer comparison.
 - Assistant extra tabs can be closable unless the feature requires fixed presence, such as Quick Replies.
+- Message Record is a right-side Assistant extra-tab pattern: keep the selected date range, keyword, and Search controls on one compact row.
+- Keep result navigation right-aligned and stable beneath the query conditions; do not show a static Max 7 days helper.
+- Message Record match navigation uses `current/total`, Previous match, and Next match. Disable navigation at the first and last result without wrapping, and disable the complete control state for `0/0`.
+- Count matches by keyword occurrence, not by matching message. Use orange only for the single current occurrence and yellow for every other occurrence; message rows have no hover, focus, or selection background.
 
 ## 8. Button Design Principles
 

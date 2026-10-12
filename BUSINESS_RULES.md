@@ -480,6 +480,12 @@ Message Record:
 
 - Opens as a right Assistant extra tab.
 - Searches and locates historical / current messages.
+- The right-side Message Record list shows the complete message context within the selected date range, ordered by time ascending without skipping intermediate Conversation messages.
+- Search applies the edited date range and keyword only when the agent selects Search. After Search, the condition area is followed by a right-aligned result row with `current/total`, `Previous match`, and `Next match`; the first matching message is selected automatically.
+- Result totals count keyword occurrences, not matching messages. Only the single current occurrence is highlighted orange, and every other keyword occurrence is highlighted yellow. Previous / Next is disabled at the first / last occurrence and does not wrap; `0/0` is disabled. An empty keyword has no keyword hits, shows all messages in the selected date range as context, and keeps navigation disabled at `0/0`.
+- The selected date range may be shorter than 168 hours but cannot exceed 168 hours (7 days). Picker and Search validation use inclusive exact-second boundaries. The default range ends at the latest message available in the current session and starts 168 hours earlier.
+- Draft date and keyword changes do not apply until Search. New messages do not clear the applied conditions or current location. Switching sessions resets Message Record by session ID.
+- In the narrow right panel, the date range, keyword, and Search controls remain on one compact row; the result-navigation row stays below and right-aligned. Message rows have no hover, focus, or selection background; only keyword marks indicate search state. The 168-hour limit is validated without a static Max 7 days helper. The interaction reuses the existing local button and date-control patterns without changing the shell or global state.
 - The date-range query and result timestamps use `DD-MM-YYYY HH:MM:SS`; the selected range filters to the exact second.
 - Does not replace the conversation center panel.
 
