@@ -134,7 +134,7 @@ This repository is still a demo application:
 - Verification tab for side-by-side CRM comparison.
 - Call Transfer modal includes Transfer IVR targets from Common Number.
 - Voice Transfer supports Ready-only agent filtering, Agent-only SPV/TL transfer-target visibility, SPV/TL priority ordering, consultation cancellation for agent and number targets, a compact Actions column, release transfer for skill / IVR, consultation-first number transfer with retryable deterministic failure, and conference mode that temporarily disables toolbar Transfer.
-- Active PSTN voice shows `IVR: +08123456789`; outbound number and agent calls show a `+`-prefixed target; HaloBCA voice/video shows `HaloBCA: 00012345` for logged-in customers or `HaloBCA: Guest` for guests.
+- Active PSTN voice shows `IVR: +08123456789`; outbound number and agent calls show a `+`-prefixed target; HaloBCA voice/video shows the logged-in customer phone with `+` or `HaloBCA: 0000000000000000` for guests.
 - Transfer success/failure uses an English banner below the toolbar. The local-only `Channel Simulation > Transferred Call` preview shows `Transferred from Maya Lestari.` on the receiving seat for four seconds, plus a green transfer icon after the channel duration without consuming customer-card action space.
 
 ## 8. Completed Video Call Workspace

@@ -69,7 +69,30 @@ Validation:
 额外前端 TypeScript 检查仍报告既有类型错误，包含未改业务区的 getLiveChat2CustomerDisplayName(session) 参数契约和 LiveChat2Page store 隐式 any；本次 Message Record 新增类型错误已修复。正式系统查询性能及后端7天约束仍需集成验收。
 
 
+### 2026-09-21 10:43 +08:00 - HaloApp 话务条号码展示调整
 
+修改页面或文件：
+
+- `src/layouts/BasicLayout.tsx`。
+- `BUSINESS_RULES.md`、`DESIGN_SYSTEM.md`、`PROJECT_CONTEXT.md`、`CURRENT_STATUS.md`、`CURRENT_TODO.md`、`DEV_LOG.md`。
+
+修改原因：
+
+- HaloBCA 话务条左侧原先显示 BCAID 或 `Guest`，需要改为 HaloApp 登录状态对应的电话号码展示。
+
+修改结果：
+
+- 已登录 HaloBCA Voice / Video 显示带 `+` 的现有客户电话号码。
+- 未登录 HaloBCA Voice / Video 显示严格 16 个 `0`，不添加 `+`。
+- PSTN、外呼、Idle 和 Skill 展示逻辑保持不变。
+
+回滚说明：
+
+- 恢复 `BasicLayout.tsx` 的 HaloBCA `callIdentification` 分支及对应文档记录即可。
+
+当前风险：
+
+- 当前号码来自本地 HaloBCA mock customer profile，真实 HaloApp / CTI 电话号码仍未接入。
 
 ### 2026-09-16 16:59 +08:00 - Customer Production Release
 

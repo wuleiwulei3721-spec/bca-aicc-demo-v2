@@ -32,6 +32,10 @@ import {
 import { getNewCustomerAlertSoundUrl } from '../config/newCustomerAlertSounds'
 import { headerAgentProfile } from '../mock/agent'
 import {
+  bankAppVideoCustomer,
+  bankAppVoiceCustomer,
+} from '../mock/inbound'
+import {
   monitoringScreenshotViews,
   type MonitoringScreenshotView,
 } from '../mock/monitoring'
@@ -124,6 +128,8 @@ function formatToolbarCallNumber(value: string) {
 
   return `+${normalizedValue}`
 }
+
+const HALO_BCA_GUEST_PHONE_NUMBER = '0000000000000000'
 
 const monitoringMenuKeyPrefix = 'monitoring-'
 const monitoringViewByMenuKey = Object.fromEntries(
@@ -1539,12 +1545,17 @@ export function BasicLayout() {
       currentCallInteraction.source === 'bankapp-voice' ||
       currentCallInteraction.source === 'bankapp-video'
     ) {
+      const customer =
+        currentCallInteraction.source === 'bankapp-video'
+          ? bankAppVideoCustomer
+          : bankAppVoiceCustomer
+
       return {
         label: 'HaloBCA:',
         value:
           currentCallInteraction.bankAppCustomerType === 'guest'
-            ? 'Guest'
-            : '00012345',
+            ? HALO_BCA_GUEST_PHONE_NUMBER
+            : formatToolbarCallNumber(customer.profile.phoneNumber),
       }
     }
 

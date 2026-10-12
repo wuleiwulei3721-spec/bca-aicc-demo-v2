@@ -149,7 +149,7 @@ Only one voice/video call can be active at a time.
 Toolbar call context is visible for non-idle calls:
 
 - PSTN voice shows `IVR: +{ANI Number}`; the current demo ANI is `08123456789`.
-- HaloBCA voice/video shows `HaloBCA: {BCAID}` for logged-in customers; the current demo BCAID is `00012345`. Guests show `HaloBCA: Guest`.
+- HaloBCA voice/video shows `HaloBCA: +{phone number}` for logged-in customers, using the current HaloBCA customer phone number. Guests show `HaloBCA: 0000000000000000` without a leading `+`.
 - Webchat voice/video must show `Webchat: {BCAID}` for logged-in customers and `Webchat: Guest-0001` for guests when those media routes are implemented. The current Webchat demo supports DM only and does not open the voice/video toolbar.
 - Skill is shown as `Skill Credit card activation`.
 - Skill is shown during Incoming, Talking, and Hold.

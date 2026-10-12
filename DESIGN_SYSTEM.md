@@ -86,7 +86,7 @@ Call context display:
 
 - During `Incoming`, `Talking`, and `Hold`, show call identification and Skill.
 - PSTN displays `IVR +08123456789`.
-- HaloBCA voice/video displays `BankID 00012345`.
+- HaloBCA voice/video displays the logged-in customer phone with a leading `+`, or `0000000000000000` for guests without a leading `+`.
 - Skill displays as a second row; inbound calls use `Skill Credit card activation` and outbound number / agent calls use `Skill -`.
 - Idle / ended call state hides call identification and Skill.
 

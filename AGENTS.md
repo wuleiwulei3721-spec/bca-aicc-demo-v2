@@ -337,3 +337,49 @@ These rules are mandatory for Vercel or any other production / customer-visible 
 - Do not interpret a plan assumption such as "use current workspace" as permission to skip commit / push. If the user's requested release flow is unusual, risky, or ambiguous, ask for confirmation before deploying.
 - Production deployments must explicitly use customer-safe environment settings when applicable, especially `VITE_APP_VISIBILITY_PROFILE=customer` so local-only modules such as Employee Management and Design System stay hidden.
 - After deployment, record the production URL, deployment command, environment profile, validation results, and any rollback notes in `DEV_LOG.md`.
+
+---
+
+## 18. Company API Execution Rules
+
+### Project Classification
+
+This repository is a company project.
+
+### AI Execution Policy
+
+All AI tasks for this project must use the company API skill.
+
+Do not use the personal ChatGPT quota for this repository.
+
+The company API should be used for:
+
+- code analysis
+- architecture review
+- debugging
+- code modification
+- refactoring
+- UI implementation
+- documentation generation
+- technical design
+- all development-related tasks
+
+### Company Skill
+
+Preferred skill:
+
+`run-company-api`
+
+All development requests in this project should be routed through the company API skill.
+
+### Security Rules
+
+Never store or expose:
+
+- API keys
+- access tokens
+- passwords
+- credentials
+- internal secrets
+
+inside project files.

@@ -70,7 +70,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Local-only `Channel Simulation > Transferred Call` opens a receiving-seat PSTN preview with the `Transferred from Maya Lestari.` banner and a green source-transfer icon after the customer channel duration.
 - Verify toolbar call context:
   - PSTN shows IVR and Skill,
-  - HaloBCA voice/video shows BankID and Skill,
+  - HaloBCA voice/video shows the logged-in phone with `+`, or 16 zeroes without `+` for guests, together with Skill,
   - Idle hides call context.
 - Verify Customer Information:
   - KBV-approved CRM CIS identity refresh, including valid response, unknown/empty CIS, mismatched correlation ID, foreign origin, and timeout handling,
