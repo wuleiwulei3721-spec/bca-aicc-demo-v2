@@ -1,8 +1,31 @@
 # Decision Log
 
-Last updated: 2026-09-11 14:40 +08:00
+Last updated: 2026-10-20 11:53 +08:00
 
 This document records important product and system design decisions that can be confirmed from the current codebase, project documents, `DEV_LOG.md`, and readable Git history. It intentionally omits bug fixes, visual micro-adjustments, temporary test data, copy-only tweaks, and implementation details that do not affect product direction.
+
+--------------------------------------------------
+
+Decision ID:
+DEC-060
+
+Module:
+Attachment Management / Shared Outbound Library / Email and Live Chat
+
+Decision:
+Use one managed outbound library for Email and HaloBCA/Webchat/WhatsApp agent chat. The human explicitly chose frontend memory-only categories, entries, binary content, and content IDs for this demo; full refresh resets them. This is an explicit current boundary under DEC-057, with no attachment API, environment flag, FastAPI/MySQL migration, SMTP, gateway, or production permission integration.
+
+Reason:
+Agents need reusable, previewable managed files across channels while retaining each channel's confirmed send rules and allowing Email drafts to exceed the eventual delivery budget.
+
+Impact:
+Attachment Management follows Common Link in the authenticated customer/local workspace. Only management uploads images/video/PDF up to 20,000,000 original bytes. Email allows only PDF/PNG/JPG/JPEG/GIF/BMP, with no count cap or aggregate/remaining-capacity selection filter; oversized drafts can be staged and saved, and only Send enforces total mock MIME <=10,000,000 bytes including body, headers, base64 wrapping, and boundaries. Live Chat sends at most one image/video/PDF <=20,000,000 bytes per Send using MIME/known-extension fallback. Confirm stages only; channel Send dispatches. Templates and manual sources share deduplicated catalog IDs with ownership preserved through template changes and draft restoration. Metadata edits retain content IDs; replacement creates new IDs. Stale pending references block Send, while sent names/bytes remain readable until refresh. Production binary persistence, delivery, authorization, and audit require future contracts.
+
+Status:
+Implemented as frontend demo; validation and remaining checks are recorded in CURRENT_STATUS.md
+
+Source:
+Final human confirmation and implementation request on 2026-10-20; shared attachment catalog/content registry, Email composer/template/draft integration, Live Chat/appStore integration, and `src/utils/attachmentRules.test.ts`; Docs: `BUSINESS_RULES.md`, `CURRENT_STATUS.md`, `PROJECT_CONTEXT.md`, `DESIGN_SYSTEM.md`, `CURRENT_TODO.md`, `DEV_LOG.md`
 
 --------------------------------------------------
 

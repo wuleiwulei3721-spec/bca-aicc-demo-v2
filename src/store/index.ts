@@ -1,4 +1,5 @@
 export * from './appStore'
+export * from './attachmentStore'
 export * from './authStore'
 export * from './callManagementStore'
 export * from './commonLinkStore'

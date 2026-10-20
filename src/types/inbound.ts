@@ -1,3 +1,5 @@
+import type { AttachmentReference } from './attachment'
+
 export type AccessChannel =
   | 'Phone'
   | 'Video'
@@ -128,6 +130,7 @@ export interface LiveChat2Message {
   time: string
   timestamp: string
   fileName?: string
+  attachment?: AttachmentReference
   isCurrentAgent?: boolean
   quotedMessage?: string
 }

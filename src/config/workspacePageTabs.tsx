@@ -9,6 +9,7 @@ import type { ReactNode } from 'react'
 import type { ModuleVisibilityKey } from './moduleVisibility'
 import { DesignSystem } from '../pages/DesignSystem'
 import {
+  AttachmentManagementPage,
   BlacklistManagementPage,
   BusyReasonManagementPage,
   CallRecordQueryPage,
@@ -106,6 +107,15 @@ export const workspacePageTabDefinitions: WorkspacePageTabDefinition[] = [
     moduleKey: 'call-management',
     routePath: '/call-management/common-links',
     tabKey: 'page:call-management-common-links',
+  },
+  {
+    element: <AttachmentManagementPage />,
+    icon: callManagementIcon,
+    label: 'Attachment Management',
+    menuKey: 'call-management-attachments',
+    moduleKey: 'call-management',
+    routePath: '/call-management/attachments',
+    tabKey: 'page:call-management-attachments',
   },
   {
     element: <QuickActionManagementPage />,

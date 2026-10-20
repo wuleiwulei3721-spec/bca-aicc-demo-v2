@@ -1,4 +1,5 @@
 import type { CustomerInformation } from './inbound'
+import type { AttachmentReference } from './attachment'
 
 export type EmailFolder = 'inbox' | 'sent' | 'drafts' | 'trash'
 
@@ -44,6 +45,8 @@ export interface EmailMessage {
   preview: string
   bodyHtml: string
   attachmentName?: string
+  attachments?: AttachmentReference[]
+  templateId?: string
   language?: EmailLanguage
   sentAt: number
   customer: CustomerInformation
@@ -62,6 +65,7 @@ export interface EmailMessage {
 export interface EmailTemplate {
   id: string
   name: string
+  attachmentIds?: string[]
   attachmentName?: string
   subjectPrefix?: string
   bodyHtml: string
@@ -70,6 +74,7 @@ export interface EmailTemplate {
 
 export interface EmailComposeDraft {
   attachmentName?: string
+  attachments: AttachmentReference[]
   autoSavedAt?: number
   bodyHtml: string
   draftMessageId?: string

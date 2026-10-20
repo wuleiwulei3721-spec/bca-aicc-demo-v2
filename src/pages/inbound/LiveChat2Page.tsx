@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { HistoryOutlined, MessageOutlined } from '@ant-design/icons'
 import { liveChat2Sessions } from '../../mock/inbound'
+import type { AttachmentReference } from '../../types/attachment'
+import { getAttachmentContent, useAttachmentStore } from '../../store/attachmentStore'
+import { validateAttachmentReferences } from '../../utils/attachmentRules'
 import { sensitiveWordCategoryLabels } from '../../mock/sensitiveWords'
 import {
   useAppStore,
@@ -40,6 +43,7 @@ import type { LiveChat2QuickReplyGroup } from './components/liveChat2QuickReplie
 const staticLiveChat2SessionById = Object.fromEntries(
   liveChat2Sessions.map((session) => [session.id, session]),
 ) as Record<string, LiveChat2Session>
+const EMPTY_ATTACHMENTS: AttachmentReference[] = []
 const LIVECHAT2_MESSAGE_RECORD_TAB_KEY = 'livechat2-message-record'
 const LIVECHAT2_QUICK_REPLIES_TAB_KEY = 'livechat2-quick-replies'
 
@@ -133,6 +137,8 @@ export function LiveChat2Page() {
   const liveChat2DraftMessages = useAppStore(
     (state) => state.liveChat2DraftMessages,
   )
+  const liveChat2DraftAttachments = useAppStore((state) => state.liveChat2DraftAttachments)
+  const setLiveChat2DraftAttachments = useAppStore((state) => state.setLiveChat2DraftAttachments)
   const liveChat2FocusSessionId = useAppStore(
     (state) => state.liveChat2FocusSessionId,
   )
@@ -454,7 +460,8 @@ export function LiveChat2Page() {
     message: string,
     baseMessages: LiveChat2Message[],
     quotedMessage?: string | null,
-  ) => {
+    attachmentRefs: AttachmentReference[] = EMPTY_ATTACHMENTS,
+  ): boolean => {
     const matches = findSensitiveWordMatches(message)
 
     if (matches.length > 0) {
@@ -472,11 +479,25 @@ export function LiveChat2Page() {
         }: ${matchedWordList}${matches.length > 3 ? '...' : ''}`,
         sessionId,
       })
-      return
+      return false
     }
 
-    setSensitiveWordNotice(null)
-    sendLiveChat2Message(sessionId, message, baseMessages, quotedMessage)
+    const errors = validateAttachmentReferences(attachmentRefs, useAttachmentStore.getState().entries, 'livechat')
+    for (const ref of attachmentRefs) {
+      const content = getAttachmentContent(ref.contentId)
+      if (!content) errors.push(`${ref.fileName}: file content is unavailable in this session. Select another attachment.`)
+      else if (content.size !== ref.size) errors.push(`${ref.fileName}: file size changed. Select it again.`)
+    }
+    if (errors.length > 0) {
+      setSensitiveWordNotice({ sessionId, message: errors.join(' ') })
+      return false
+    }
+    const sent = sendLiveChat2Message(sessionId, message, baseMessages, quotedMessage, attachmentRefs)
+    setSensitiveWordNotice(sent ? null : {
+      sessionId,
+      message: 'This conversation may have ended or become unavailable. Review the conversation and your reply before trying again.',
+    })
+    return sent
   }
 
   const handleEndService = (
@@ -598,6 +619,9 @@ export function LiveChat2Page() {
         .join(' ')}
       conversationContent={
         <LiveChat2ConversationWorkspace
+          key={activeSession.id}
+          pendingAttachments={liveChat2DraftAttachments[activeSession.id] ?? EMPTY_ATTACHMENTS}
+          onAttachmentsChange={setLiveChat2DraftAttachments}
           composerFocusRequest={composerFocusRequest}
           draftMessage={liveChat2DraftMessages[activeSession.id] ?? ''}
           isMessageRecordOpen={isMessageRecordTabOpen}

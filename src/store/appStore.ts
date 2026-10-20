@@ -1,5 +1,8 @@
 import { create } from 'zustand'
 import { useCallManagementStore } from './callManagementStore'
+import type { AttachmentReference } from '../types/attachment'
+import { getAttachmentContent, useAttachmentStore } from './attachmentStore'
+import { getAttachmentKind, validateAttachmentReferences } from '../utils/attachmentRules'
 import type {
   AgentServiceMode,
   BankAppCustomerType,
@@ -111,6 +114,7 @@ interface SetLiveChatTabOpenOptions {
 
 const INTERACTION_FLASH_MS = 5000
 const LIVE_CHAT2_BOT_SUMMARY_DELAY_MS = 1500
+let liveChat2SendSequence = 0
 const DEFAULT_INBOUND_SKILL_DISPLAY_NAME = 'Credit card activation'
 const LIVE_CHAT_TAB_KEY = 'live-chat'
 const LEGACY_LIVECHAT2_TAB_KEY = 'livechat2'
@@ -477,6 +481,7 @@ interface AppState {
   liveChat2ClosedSessionIds: string[]
   liveChat2RecentClosedSessionIds: string[]
   liveChat2DraftMessages: Record<string, string>
+  liveChat2DraftAttachments: Record<string, AttachmentReference[]>
   liveChat2FocusRequestId: number
   liveChat2FocusSessionId: string | null
   liveChat2LastMessageOverrides: Record<string, LiveChat2SessionSummaryOverride>
@@ -580,6 +585,7 @@ interface AppState {
     readiness: DigitalHandoffReadiness,
   ) => void
   setLiveChat2DraftMessage: (sessionId: string, message: string) => void
+  setLiveChat2DraftAttachments: (sessionId: string, refs: AttachmentReference[]) => void
   setLiveChat2FocusedSession: (sessionId: string | null) => void
   setLiveChat2SortMode: (sortMode: LiveChat2SortMode) => void
   setLiveChat2StarColor: (
@@ -622,7 +628,8 @@ interface AppState {
     message: string,
     baseMessages: LiveChat2Message[],
     quotedMessage?: string | null,
-  ) => void
+    attachmentRefs?: AttachmentReference[],
+  ) => boolean
   clearLiveChat2Sessions: () => void
   clearLiveChatSessions: () => void
 }
@@ -667,6 +674,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   liveChat2ClosedSessionIds: [],
   liveChat2RecentClosedSessionIds: [],
   liveChat2DraftMessages: {},
+  liveChat2DraftAttachments: {},
   liveChat2FocusRequestId: 0,
   liveChat2FocusSessionId: null,
   liveChat2LastMessageOverrides: {},
@@ -1437,6 +1445,24 @@ export const useAppStore = create<AppState>((set, get) => ({
         liveChat2DraftMessages: nextDrafts,
       }
     }),
+  setLiveChat2DraftAttachments: (sessionId, refs) => {
+    const state = get()
+    const session = state.liveChat2SessionInstances[sessionId] ?? liveChat2SessionById[sessionId]
+    if (
+      !session || session.isInitialHistory ||
+      (state.liveChat2SessionStatuses[sessionId]?.status ?? session.status) !== 'active' ||
+      !state.activeLiveChat2SessionIds.includes(sessionId) ||
+      state.liveChat2ClosedSessionIds.includes(sessionId) ||
+      state.liveChat2RecentClosedSessionIds.includes(sessionId)
+    ) return
+    const nextDrafts = { ...state.liveChat2DraftAttachments }
+    if (refs.length) {
+      nextDrafts[sessionId] = refs.slice(0, 1).map((ref) => ({ ...ref, sources: [...ref.sources] }))
+    } else {
+      delete nextDrafts[sessionId]
+    }
+    set({ liveChat2DraftAttachments: nextDrafts })
+  },
   setLiveChat2FocusedSession: (sessionId) =>
     set((state) => ({
       liveChat2FocusRequestId: state.liveChat2FocusRequestId + 1,
@@ -1500,6 +1526,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           liveChat2ClosedSessionIds: [],
           liveChat2RecentClosedSessionIds: [],
           liveChat2DraftMessages: {},
+          liveChat2DraftAttachments: {},
           liveChat2FocusSessionId: null,
           liveChat2LastMessageOverrides: {},
           liveChat2MessagesBySessionId: {},
@@ -1738,8 +1765,11 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
       delete nextSessionTimings[sessionId]
       delete nextUnanswered[sessionId]
+      const nextDraftAttachments = { ...state.liveChat2DraftAttachments }
+      delete nextDraftAttachments[sessionId]
 
       return {
+        liveChat2DraftAttachments: nextDraftAttachments,
         activeLiveChat2SessionIds: nextActiveSessionIds,
         liveChat2RecentClosedSessionIds: nextRecentClosedSessionIds,
         liveChat2ClosedSessionIds: state.liveChat2ClosedSessionIds.includes(
@@ -1792,6 +1822,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       const nextSessionTimings = { ...state.liveChat2SessionTimings }
       delete nextUnanswered[sessionId]
       delete nextSessionTimings[sessionId]
+      const nextDraftAttachments = { ...state.liveChat2DraftAttachments }
+      delete nextDraftAttachments[sessionId]
 
       const nextRecentClosedSessionIds = [
         sessionId,
@@ -1819,6 +1851,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         activeLiveChat2SessionIds: state.activeLiveChat2SessionIds.filter(
           (activeSessionId) => activeSessionId !== sessionId,
         ),
+        liveChat2DraftAttachments: nextDraftAttachments,
         liveChat2LastMessageOverrides: {
           ...state.liveChat2LastMessageOverrides,
           [sessionId]: {
@@ -1866,55 +1899,78 @@ export const useAppStore = create<AppState>((set, get) => ({
         liveChat2UnansweredSinceBySessionId: nextUnanswered,
       }
     }),
-  sendLiveChat2Message: (sessionId, message, baseMessages, quotedMessage) =>
-    set((state) => {
-      const now = Date.now()
-      const time = formatCurrentLiveChat2Time()
-      const nextMessage: LiveChat2Message = {
-        id: `livechat2-agent-${sessionId}-${now}`,
-        isCurrentAgent: true,
-        kind: 'text',
-        message,
-        sender: 'agent',
-        senderName: 'Nadia Putri',
-        time,
-        timestamp: new Date(now).toISOString(),
-        quotedMessage: quotedMessage || undefined,
-      }
-      const nextDrafts = { ...state.liveChat2DraftMessages }
-      const nextUnanswered = {
-        ...state.liveChat2UnansweredSinceBySessionId,
-      }
-      delete nextDrafts[sessionId]
-      delete nextUnanswered[sessionId]
+  sendLiveChat2Message: (sessionId, message, baseMessages, quotedMessage, attachmentRefs = []) => {
+    const state = get()
+    const session = state.liveChat2SessionInstances[sessionId] ?? liveChat2SessionById[sessionId]
+    const text = message.trim()
+    if (
+      (!text && attachmentRefs.length === 0) ||
+      !session || session.isInitialHistory ||
+      (state.liveChat2SessionStatuses[sessionId]?.status ?? session.status) !== 'active' ||
+      !state.activeLiveChat2SessionIds.includes(sessionId) ||
+      state.liveChat2ClosedSessionIds.includes(sessionId) ||
+      state.liveChat2RecentClosedSessionIds.includes(sessionId) ||
+      useCallManagementStore.getState().findSensitiveWordMatches(text).length > 0 ||
+      validateAttachmentReferences(attachmentRefs, useAttachmentStore.getState().entries, 'livechat').length > 0 ||
+      attachmentRefs.some((ref) => {
+        const content = getAttachmentContent(ref.contentId)
+        return !content || content.size !== ref.size
+      })
+    ) return false
 
-      return {
-        liveChat2DraftMessages: nextDrafts,
-        liveChat2LastMessageOverrides: {
-          ...state.liveChat2LastMessageOverrides,
-          [sessionId]: {
-            lastMessage: message,
-            lastMessageAt: nextMessage.timestamp,
-            lastMessageTime: time,
-            unreadCount: 0,
-          },
+    const now = Date.now()
+    const time = formatLiveChat2Time(new Date(now))
+    const timestamp = new Date(now).toISOString()
+    const id = `livechat2-agent-${sessionId}-${now}-${++liveChat2SendSequence}`
+    const emitted: LiveChat2Message[] = []
+    const common = {
+      isCurrentAgent: true,
+      sender: 'agent' as const,
+      senderName: 'Nadia Putri',
+      time,
+      timestamp,
+    }
+    if (text) emitted.push({ ...common, id: `${id}-text`, kind: 'text', message: text })
+    for (const ref of attachmentRefs) {
+      emitted.push({
+        ...common,
+        id: `${id}-attachment`,
+        kind: getAttachmentKind(ref) === 'image' ? 'image' : 'file',
+        message: '',
+        fileName: ref.fileName,
+        attachment: { ...ref, sources: [...ref.sources] },
+      })
+    }
+    emitted[0].quotedMessage = quotedMessage || undefined
+    const nextDrafts = { ...state.liveChat2DraftMessages }
+    const nextDraftAttachments = { ...state.liveChat2DraftAttachments }
+    const nextUnanswered = { ...state.liveChat2UnansweredSinceBySessionId }
+    delete nextDrafts[sessionId]
+    delete nextDraftAttachments[sessionId]
+    delete nextUnanswered[sessionId]
+    set({
+      liveChat2DraftMessages: nextDrafts,
+      liveChat2DraftAttachments: nextDraftAttachments,
+      liveChat2LastMessageOverrides: {
+        ...state.liveChat2LastMessageOverrides,
+        [sessionId]: {
+          lastMessage: text || attachmentRefs[0].fileName,
+          lastMessageAt: timestamp,
+          lastMessageTime: time,
+          unreadCount: 0,
         },
-        liveChat2MessagesBySessionId: {
-          ...state.liveChat2MessagesBySessionId,
-          [sessionId]: [
-            ...(state.liveChat2MessagesBySessionId[sessionId] ??
-              baseMessages),
-            nextMessage,
-          ],
-        },
-        liveChat2ReadSessionIds: state.liveChat2ReadSessionIds.includes(
-          sessionId,
-        )
-          ? state.liveChat2ReadSessionIds
-          : [...state.liveChat2ReadSessionIds, sessionId],
-        liveChat2UnansweredSinceBySessionId: nextUnanswered,
-      }
-    }),
+      },
+      liveChat2MessagesBySessionId: {
+        ...state.liveChat2MessagesBySessionId,
+        [sessionId]: [...(state.liveChat2MessagesBySessionId[sessionId] ?? baseMessages), ...emitted],
+      },
+      liveChat2ReadSessionIds: state.liveChat2ReadSessionIds.includes(sessionId)
+        ? state.liveChat2ReadSessionIds
+        : [...state.liveChat2ReadSessionIds, sessionId],
+      liveChat2UnansweredSinceBySessionId: nextUnanswered,
+    })
+    return true
+  },
   clearLiveChat2Sessions: () =>
     set((state) => ({
       activeLiveChat2SessionIds: [],
@@ -1928,6 +1984,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       liveChat2ClosedSessionIds: [],
       liveChat2RecentClosedSessionIds: [],
       liveChat2DraftMessages: {},
+      liveChat2DraftAttachments: {},
       liveChat2FocusSessionId: null,
       liveChat2LastMessageOverrides: {},
       liveChat2MessagesBySessionId: {},
@@ -1941,6 +1998,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     })),
   clearLiveChatSessions: () =>
     set({
+      liveChat2DraftAttachments: {},
       activeLiveChatSessionIds: [],
       liveChatFocusSessionId: null,
       liveChatSessionTimings: {},

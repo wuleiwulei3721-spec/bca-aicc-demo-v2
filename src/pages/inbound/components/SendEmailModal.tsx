@@ -15,6 +15,7 @@ interface SendEmailModalProps {
 
 function createCustomerEmailDraft(customerEmail: string): EmailComposeDraft {
   return {
+    attachments: [],
     bodyHtml: createEmailSignature(DEFAULT_EMAIL_LANGUAGE),
     language: DEFAULT_EMAIL_LANGUAGE,
     mode: 'reply',

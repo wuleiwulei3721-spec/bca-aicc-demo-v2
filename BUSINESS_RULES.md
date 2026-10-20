@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-09-14 16:50 +08:00
+Last updated: 2026-10-20 16:18 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -510,6 +510,13 @@ Sensitive word check:
 - The blocked draft remains in the composer so the agent can revise it.
 - Matching is a front-end demo contains check after trim and lowercase normalization.
 
+### Agent Live Chat Attachments
+
+- HaloBCA, Webchat, and WhatsApp use the shared library picker for images, video, and PDF. Each Send supports one file at most `20_000_000` bytes; type recognition uses MIME with known-extension fallback and does not invent a strict video suffix list. `1 MB` means `1_000_000` bytes.
+- Picker titles use neutral `Select Attachment` / `Select Attachments` wording. Add stages only; Send dispatches. The pending/pre-Send attachment list offers metadata and Remove only, with no Preview or Download. Existing radio controls remain unchanged pending the user's decision. Send supports text-only, file-only, or text plus one file. Pending references are keyed by session ID in `appStore` and clear on session end, close, or reset; switching sessions retains each session's own pending file.
+- New messages carry an optional attachment reference using existing image/file kinds. Conversation and Message Record render static image thumbnails, filenames, and sizes without click preview or download, and Message Record keyword search includes filenames. Ended/history conversations are read-only.
+- The compatible Send method accepts an optional attachment argument and returns a boolean. It validates the active session, current library/reference, available bytes, and sensitive words before one atomic text/file state update. Failure retains all text, pending attachment, and quote. Success updates the existing read/SLA/summary state and clears the sent draft.
+
 ## 18. HaloBCA Demo Rules
 
 HaloBCA demo variants:
@@ -616,6 +623,15 @@ WhatsApp demo is chat-only in the current implementation.
 - Email directly reuses Live Chat's `CrmPanel`; CRM uses the same current screenshot and Email uses the same tab styling as Conversation. Legacy full-system Email design screenshots are not embedded.
 - No real mailbox, SMTP, attachment upload, routing, permission, audit, template deployment, record inquiry, or Ticket backend integration exists.
 
+### Outgoing Email Attachments
+
+- Shared inline and popup composers and the customer `SendEmailModal` retain the original layout. Attachment selection uses only the pre-existing `Template Config > Attachment` native `Choose File` field, intercepted to open the library picker. Original entry visibility is retained; customer locked/read-only popups have only template-derived attachments when that entry is hidden. Existing mandatory template, read-only body, and locked receiver constraints remain in effect.
+- At Send, outgoing files are limited to `.pdf`, `.png`, `.jpg`, `.jpeg`, `.gif`, and `.bmp`. The customer inbound Office/other-file whitelist does not expand outgoing formats. There is no attachment count cap. The picker shows all enabled library attachments without channel format or size filtering and allows their selection; Add never uses remaining capacity or aggregate selected size; repeated Add preserves existing selections and deduplicates by catalog ID.
+- Users may stage oversized combinations, save/autosave oversized drafts, and change/remove files through the original attachment rows. Only Send revalidates all attachment references and enforces total mock MIME size at most `10_000_000` bytes, including body, headers, base64 line wrapping, and boundaries. `1 MB` means `1_000_000` bytes. Failure retains the draft and open compose surface.
+- Templates reference catalog IDs. Switching templates replaces only old template-owned sources, retaining manual sources and deduplicating shared IDs. Clearing the template preserves manually owned references, including references previously owned by both sources.
+- Draft autosave stores attachment arrays, source ownership, and template ID; reopening restores them. Sent arrays are snapshots. A stable mode/source/thread key keeps the picker open when autosave first assigns a draft ID.
+- Customer Information `onSend` keeps its current close-only demo behavior and does not add a global mailbox scope. Attachment data remains memory-only and resets on full refresh; no real SMTP or binary service is added.
+
 ## 22. Social Media Workspace Rules
 
 - Social Media is available from `Channel Simulation` directly after Email in both customer and local visibility profiles. Its menu action opens or reuses one closable `Social Media` workspace tab.
@@ -645,6 +661,7 @@ Visible customer pages:
 - Priority List.
 - Common Phrase.
 - Common Link.
+- Attachment Management.
 - Quick Action Management.
 - Common Number.
 - Sensitive Word.
@@ -749,6 +766,17 @@ Hidden / redirected:
 - Website URL must start with `http://` or `https://`.
 - Remark is limited to 2000 characters. Create and edit operations refresh Updated Time and Updated By.
 - Shared voice, video, and Live Chat workspaces read Common Link data in the right-side `Common Links` tab.
+### Attachment Management and Shared Content
+
+- `Call Management > Attachment Management` appears after Common Link. `/call-management/attachments` requires authentication and opens/reuses a closable workspace tab in customer/local profiles.
+- A shared frontend memory-only catalog owns hierarchical directories, entries, File/Blob bytes, and content IDs. Full refresh resets all of them. The human explicitly selected this demo boundary: no attachment API, environment flag, FastAPI/MySQL persistence, SMTP, channel gateway, or production permission integration is required in this delivery.
+- Library upload accepts images, video, and PDF with original file size at most `20_000_000` bytes. Bundled BANK 1 PDF/image/MP4 samples contain actual valid safe bytes. Only management uploads files; outbound composers select library sources only.
+- Filters are Keyword across Name/original filename/Remark, hierarchical Category (parent selection includes its subtree), Type, and Status. Shared admin controls are 32px with 10 rows by default. Columns are ID, Name, Category, Type, Size, Status, Updated Time, Updated By, Actions; ID is a generated read-only six-digit numeric string, and Name is single-line. Seed IDs are `"100001"`, `"100002"`, and `"100003"`; new IDs start at `"100004"`, are never reused after deletion, and remain unchanged on file replacement. The template PDF binding references `"100002"`. Remark is optional, is not a list column, and is available only for internal maintenance; it is excluded from send references and customer chat.
+- Actions are Download, Edit, and Delete with confirmation; Preview is unavailable. File replacement is available inside Edit only. File, Category, and Status changes refresh update audit metadata. Attachment Management and Common Phrase use the shared `AdminCategoryPanel` with the existing classes/styles for category search, counts, inline add, rename, and delete. Attachment directories support child creation up to five levels (root depth 1) and require unique sibling names. Delete is available even with files or children and opens the shared confirmation modal with a concise single-sentence warning that the folder, its descendants, and their attachments will be deleted, without counts. Confirming atomically removes the folder, all descendant folders, and their library entries; cancellation removes nothing. Sent snapshots retain their original names and bytes, while pending references to deleted entries fail existing existence validation. Common Phrase remains flat and retains confirmation and cascade deletion of its phrases.
+- Name always equals the original uploaded filename including its extension. The independent Name input and its 200-character cap are removed; the compatibility `name` derives from `fileName`, and an input `name` is ignored. Category/Remark edits retain the content ID. Actual file replacement updates filename and Name while retaining the stable entry ID and creating a new content ID as before; historical sent references are not rewritten. Disabled, deleted, or replaced entries invalidate pending send references and require Remove/Reselect; Send also requires available binary content.
+- Sent snapshots retain their original names and bytes in the content registry until full refresh. Read-only history does not invalidate sent attachments because the current catalog entry was disabled, deleted, or replaced. Old name-only records display unavailable content rather than fabricated bytes.
+- Management and Email/Live Chat library pickers offer Download using actual registered content, without Preview. Both pickers show all enabled library attachments without channel format or size filtering and allow their selection. Their shared 32px Category TreeSelect shows expandable nested folder names, initially expands the sample hierarchy, searches full slash-separated paths, and displays the selected full path. It filters one category including its subtree; clearing restores All Categories. Email keeps multi-select and Live Chat keeps radio selection; existing final Send format/size validity rules remain unchanged.
+
 ### Quick Action Management
 
 - Quick Action Management maintains shared customer-context quick actions for the current demo session. It is separate from Common Link, which remains a right-side external-reference list.
@@ -850,7 +878,7 @@ Important rules:
 - Skill Queues require `Access Code`; it appears after `VDN` in list columns and Add / Edit / View forms. Keyword search includes Access Code. `Channel` and `Media` are read-only derived fields: they reverse-look up all Skill Routing Rules that target the queue, aggregate the rule Channel and Media factors with `, ` separators, and are available as list/query values. They are hidden for new queues and disabled on edit. Optional `SL (%)` and `QM Target` are percentages from `0` through `100`; optional `AHT Target` is a non-negative seconds value.
 - Skill Routing Rules use configured route elements and target skill queues.
 - Site Access Volume ratios should total 100% for the same channel + media combination.
-- Working Time Plans support work schedule, Ramadan schedule, holiday schedule, and special working plans. Their plan codes are local internal keys and are not displayed or user-maintained.
+- Working Time Plans support work schedule, Ramadan schedule, holiday schedule, and special working plans. Their plan codes are local internal keys and are not displayed or user-maintained. Holiday Schedule dates are full-day nonworking dates with fixed 00:00–23:59 ranges; holiday dates and names remain editable, while the other three schedules continue to use working hours. Existing schedule precedence is unchanged. This is local demo behavior.
 
 All Routing Config changes are front-end demo state only.
 

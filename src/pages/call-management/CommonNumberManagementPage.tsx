@@ -15,7 +15,6 @@ import {
   LimitedTextArea,
   StatusBadge,
 } from '../../components'
-import { isCommonNumberDemoMode } from '../../config/commonNumberMode'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import {
   useAppStore,
@@ -355,14 +354,6 @@ export function CommonNumberManagementPage() {
       className="common-number-management"
       title="Common Number"
   >
-      {isCommonNumberDemoMode && (
-        <Alert
-          description="Changes are available for this demo session and reset after a page refresh."
-          message="Common Number Demo Mode"
-          showIcon
-          type="info"
-        />
-      )}
       {error && (
         <Alert
           action={
@@ -376,7 +367,7 @@ export function CommonNumberManagementPage() {
           }
           closable
           description={error}
-          message="Common Number API error"
+          message="Unable to complete the common number operation"
           showIcon
           type="error"
         />
@@ -541,7 +532,7 @@ export function CommonNumberManagementPage() {
         <div className="routing-config-crud-modal__delete">
           <Alert
             showIcon
-            description="This deletes the common number from the current demo session."
+            description="This deletes the selected common number."
             message={`Delete common number ${deleteTarget?.name ?? ''}?`}
             type="warning"
           />

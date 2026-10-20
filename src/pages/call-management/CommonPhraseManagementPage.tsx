@@ -1,9 +1,6 @@
 import {
-  CheckOutlined,
-  CloseOutlined,
   DeleteOutlined,
   EditOutlined,
-  FolderAddOutlined,
   PlusOutlined,
   SwapOutlined,
 } from '@ant-design/icons'
@@ -11,6 +8,7 @@ import { Alert, Input, Popover, Select, Switch } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  AdminCategoryPanel,
   AdminFilterField,
   AdminFormField,
   AdminModal,
@@ -24,7 +22,6 @@ import {
   LimitedTextArea,
   StatusBadge,
 } from '../../components'
-import { isCommonPhraseDemoMode } from '../../config/commonPhraseMode'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import {
   useAppStore,
@@ -665,14 +662,6 @@ export function CommonPhraseManagementPage() {
       className="common-phrase-management"
       title="Common Phrase"
     >
-      {isCommonPhraseDemoMode && (
-        <Alert
-          description="Changes are available for this demo session and reset after a page refresh."
-          message="Common Phrase Demo Mode"
-          showIcon
-          type="info"
-        />
-      )}
       {error && (
         <Alert
           action={
@@ -690,134 +679,35 @@ export function CommonPhraseManagementPage() {
           }
           closable
           description={error}
-          message="Common Phrase API error"
+          message="Unable to complete the common phrase operation"
           showIcon
           type="error"
         />
       )}
       <div className="common-phrase-management__layout">
-        <BaseCard compact className="common-phrase-management__categories">
-          <div className="common-phrase-management__category-search">
-            <Input
-              allowClear
-              placeholder="Search category"
-              value={categorySearch}
-              onChange={(event) => setCategorySearch(event.target.value)}
-            />
-          </div>
-          <button
-            className={[
-              'common-phrase-management__category-item',
-              selectedCategoryId === allCategoriesKey
-                ? 'is-selected'
-                : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-            type="button"
-            onClick={() => selectCategory(allCategoriesKey)}
-          >
-            <span>All Categories</span>
-            <em>{allEntryCount}</em>
-          </button>
-          <div className="common-phrase-management__category-list">
-            {visibleCategories.map((category) => {
-              const isEditing = editingCategoryId === category.categoryId
-
-              return (
-                <div
-                  className={[
-                    'common-phrase-management__category-row',
-                    selectedCategoryId === category.categoryId
-                      ? 'is-selected'
-                      : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                  key={category.categoryId}
-                >
-                  {isEditing ? (
-                    <div className="common-phrase-management__category-edit">
-                      <Input
-                        autoFocus
-                        value={editingCategoryName}
-                        onChange={(event) =>
-                          setEditingCategoryName(event.target.value)
-                        }
-                        onPressEnter={handleRenameCategory}
-                      />
-                      <button
-                        aria-label="Save category name"
-                        type="button"
-                        onClick={handleRenameCategory}
-                      >
-                        <CheckOutlined />
-                      </button>
-                      <button
-                        aria-label="Cancel category name"
-                        type="button"
-                        onClick={cancelRenameCategory}
-                      >
-                        <CloseOutlined />
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <button
-                        className="common-phrase-management__category-main"
-                        type="button"
-                        onClick={() => selectCategory(category.categoryId)}
-                      >
-                        <span>{category.categoryName}</span>
-                        <em>{categoryCounts[category.categoryId] ?? 0}</em>
-                      </button>
-                      <div className="common-phrase-management__category-actions">
-                        <button
-                          aria-label={`Rename ${category.categoryName}`}
-                          title="Rename"
-                          type="button"
-                          onClick={() => startRenameCategory(category)}
-                        >
-                          <EditOutlined />
-                        </button>
-                        <button
-                          aria-label={`Delete ${category.categoryName}`}
-                          title="Delete"
-                          type="button"
-                          onClick={() => {
-                            setDeleteCategoryTarget(category)
-                          }}
-                        >
-                          <DeleteOutlined />
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-          <div className="common-phrase-management__category-create">
-            <Input
-              placeholder="New category"
-              value={newCategoryName}
-              onChange={(event) => setNewCategoryName(event.target.value)}
-              onPressEnter={handleCreateCategory}
-            />
-            <BaseButton
-              disabled={
-                !newCategoryName.trim() ||
-                isDuplicateCategoryName(newCategoryName) ||
-                isMutating
-              }
-              icon={<FolderAddOutlined />}
-              variant="primary"
-              onClick={handleCreateCategory}
-            >
-              Add
-            </BaseButton>
-          </div>
-        </BaseCard>
+        <AdminCategoryPanel
+          items={visibleCategories.map((category) => ({ id: category.categoryId, name: category.categoryName, count: categoryCounts[category.categoryId] ?? 0 }))}
+          selectedId={selectedCategoryId}
+          allId={allCategoriesKey}
+          totalCount={allEntryCount}
+          search={categorySearch}
+          newName={newCategoryName}
+          renameId={editingCategoryId}
+          renameName={editingCategoryName}
+          canCreate={Boolean(newCategoryName.trim()) && !isDuplicateCategoryName(newCategoryName) && !isMutating}
+          onSearchChange={setCategorySearch}
+          onSelect={selectCategory}
+          onNewNameChange={setNewCategoryName}
+          onCreate={handleCreateCategory}
+          onRenameStart={(id) => {
+            const category = categories.find((item) => item.categoryId === id)
+            if (category) startRenameCategory(category)
+          }}
+          onRenameNameChange={setEditingCategoryName}
+          onRenameSave={handleRenameCategory}
+          onRenameCancel={cancelRenameCategory}
+          onDelete={(id) => setDeleteCategoryTarget(categories.find((item) => item.categoryId === id) ?? null)}
+        />
         <BaseCard compact className="common-phrase-management__content">
           <AdminToolbar
             actions={
@@ -1036,7 +926,7 @@ export function CommonPhraseManagementPage() {
         <div className="routing-config-crud-modal__delete">
           <Alert
             showIcon
-            description="This deletes the selected common phrase in the current demo session."
+            description="This deletes the selected common phrase."
             message={`Delete shortcut ${
               deleteEntryTarget?.shortcutCode ?? ''
             }?`}
@@ -1065,7 +955,7 @@ export function CommonPhraseManagementPage() {
         <div className="routing-config-crud-modal__delete">
           <Alert
             showIcon
-            description="This deletes the category and all common phrases under it in the current demo session."
+            description="This deletes the category and all common phrases under it."
             message={`Delete category ${
               deleteCategoryTarget?.categoryName ?? ''
             }?`}

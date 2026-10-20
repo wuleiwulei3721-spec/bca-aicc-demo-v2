@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Project Context
 
-Last updated: 2026-09-11 14:28 +08:00
+Last updated: 2026-10-20 11:53 +08:00
 Repository path: `D:\03projects\bca-aicc-demo-v2`
 
 ## 1. Project Name
@@ -127,6 +127,7 @@ When a future module is expanded beyond mock behavior, follow the Common Phrase 
 
 - Local development uses the real local backend and local database for that module's CRUD and query behavior.
 - Published/customer builds remain static React builds using bundled mock data and must not call `127.0.0.1`, a developer machine, a company server, or an unapproved shared database.
+- Runtime selection is an internal implementation detail. Common Phrase, Common Number, and Common Link show the same business interface locally and in customer reviews, without Demo Mode banners or refresh-reset explanations. This presentation rule does not change either mode's persistence boundary.
 - The module must expose an explicit runtime switch, keep the local API and demo data sources behind the same frontend contract where practical, and document the local setup, published behavior, persistence, and rollback boundary.
 - Do not connect a new module to company legacy systems, shared development databases, CRM, CTI, Redis, real accounts, or production data without a separate confirmed decision.
 - Complete local backend, migration, API, frontend workflow, error handling, and persistence validation before changing the default local development path for that module.
@@ -149,6 +150,7 @@ Current router structure:
 - `/call-management/priority-list`
 - `/call-management/common-phrases`
 - `/call-management/common-links`
+- `/call-management/attachments` -> authenticated Attachment Management workspace tab, available in customer/local profiles.
 - `/call-management/quick-actions`
 - `/call-management/common-numbers`
 - `/call-management/sensitive-words`
@@ -386,6 +388,7 @@ Customer-visible Call Management pages:
 - Priority List.
 - Common Phrase.
 - Common Link.
+- Attachment Management.
 - Quick Action Management.
 - Common Number.
 - Sensitive Word.
@@ -554,6 +557,8 @@ Current `public/screenshots/` contains:
 CRM and Assistant components keep code-based fallback UI if image loading fails.
 
 ## 13. Data and Persistence Boundaries
+
+Attachment Management appears after Common Link and opens/reuses a closable workspace tab through `src/config/workspacePageTabs.tsx`. Its shared frontend catalog holds hierarchical categories up to five levels, entries, File/Blob bytes, and content IDs for Email and HaloBCA/Webchat/WhatsApp agent sends; full refresh resets all attachment data. The human explicitly chose this frontend demo boundary, so Attachment Management does not yet follow the FastAPI/MySQL pattern and needs no attachment API or environment flag. SMTP, channel gateways, persistent binary storage, and production permissions remain future work. See `BUSINESS_RULES.md` for confirmed channel and content-reference rules.
 
 Important demo boundary:
 

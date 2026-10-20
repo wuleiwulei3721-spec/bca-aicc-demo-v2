@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-09-14 16:50 +08:00
+Last updated: 2026-10-20 16:18 +08:00
 
 ## 1. Overall Status
 
@@ -255,6 +255,7 @@ Customer-visible pages:
 - Priority List.
 - Common Phrase.
 - Common Link.
+- Attachment Management.
 - Quick Action Management.
 - Common Number.
 - Sensitive Word.
@@ -281,6 +282,7 @@ Implemented behaviors:
 - Common Number runtime modes: local development defaults to `VITE_COMMON_NUMBER_MODE=api`; published/static customer builds default to independent bundled demo data. The Common Number management page and call Transfer IVR read the same configured store, and Transfer IVR requests Active entries only.
 - Common Link local full-stack closure: FastAPI + local MySQL persists Common Link CRUD, server-side Website Name / Website URL queries, trim-plus-lowercase uniqueness for both values, HTTP(S) URL validation, 2000-character Remark, and Updated Time / Updated By metadata. `0003_common_link` is a new Alembic migration and does not modify the applied Common Phrase or Common Number migrations.
 - Common Link runtime modes: local development defaults to `VITE_COMMON_LINK_MODE=api`; published/static customer builds default to independent bundled mock data. The Common Link management page and agent workspace Common Links tab read the same configured store; static demo-mode management changes reset after refresh.
+- Common Phrase, Common Number, and Common Link no longer display runtime-mode banners or demo-session deletion wording. Business-facing error/retry feedback remains; local API persistence and static demo-mode behavior are unchanged.
 - Common Phrase management queries support category, shortcut, phrase text, and status filters with server-side results.
 - Common phrase batch move between categories.
 - Public phrase linkage into the Live Chat Quick Replies tab reads the same API and filters to `Active`.
@@ -308,6 +310,19 @@ Implemented behaviors:
 - Email and Social Media records are intentionally excluded from `Call Management > Interaction Log`; Social Media records are shown only in the separate `Social Media > Interaction Log` page.
 - Login Log records successful system Login plus manual and idle Log Out events in current demo memory. It defaults to the last seven calendar days, includes 19 seeded records across that period, and sorts Time descending. It filters combined Employee ID / Name keyword, Time Range, Operation, and Log Out Type; Login renders `-`, while manual and idle Log Out render `User` and `System` respectively.
 - Local store state for demo changes.
+
+### Attachment Management delivery
+
+- Three-level sample categories use an initially expanded standard Tree with independent selection/expansion and inline child insertion; tables and management editor category options show complete slash-separated paths. Email and Live Chat picker Category controls use a shared 32px expandable TreeSelect with nested folder-name titles, an initially expanded sample hierarchy, full-path search and selected labels, single-category subtree filtering, and clear to All Categories. Email checkbox and Live Chat radio selection remain unchanged.
+
+- Implemented the customer/local authenticated `/call-management/attachments` workspace tab after Common Link, shared admin filters/table, hierarchical category CRUD with child creation, up to five levels (root depth 1), unique sibling names, recursive folder deletion with a concise single-sentence warning without counts and confirmed atomic removal of all descendant categories and library entries, subtree selection, upload, Download without Preview, Edit with optional file replacement, confirmed Delete, and update audit metadata.
+- Shared memory-only catalog/content registry supplies valid safe BANK 1 PDF, image, and MP4 sample bytes. Name now always derives from the original uploaded filename including extension; the independent Name input and 200-character cap are removed, and compatibility input `name` is ignored in favor of `fileName`. Category/Remark edits retain content IDs; replacement updates filename/Name, keeps the entry ID stable, creates a new content ID, blocks stale pending references, and preserves historical sent references and their original names/bytes until full refresh.
+- The approved quick attachment UI cleanup reuses the extracted `AdminCategoryPanel` in both Attachment Management and Common Phrase with the existing classes/styles and per-page deletion policies; Common Phrase categories remain flat. It removes the attachment management subtitle and standalone category modal/dropdown, places the existing read-only generated ID first, keeps Name single-line, and uses shared 32px form controls, a small Switch with an Enabled label, status badges, primary Plus Add, 24px icon buttons, a file button with hidden native input and one filename display, and adaptive decimal B/KB/MB sizes. This is UI cleanup; Email, Live Chat, and binary lifecycle limits remain unchanged.
+- Email inline/popup composers and customer Send Email retain the original layout: library selection opens only through the pre-existing `Template Config > Attachment` native `Choose File` field, with original entry visibility, icon/filename rows, and `tinyRemoveX` for adjusting multiple files. The independent attachments area, extra Add Attachments button, size counter/bar, and layout overrides are removed; no attachment field is added elsewhere. Customer locked/read-only popups have only template-derived attachments when the original upload entry is hidden. Template/manual source ownership, deduplication, draft restoration, and sent snapshots remain. Oversized combinations can be staged and saved/autosaved; Send revalidates all references and the 10 MB total mock MIME limit. Mandatory templates, read-only body, locked receiver, and customer-card close-only Send behavior remain intact.
+- HaloBCA, Webchat, and WhatsApp agent chat share session-isolated staged attachments and atomic text/file Send validation. Pending/pre-Send attachment lists offer metadata and Remove only, with no Preview or Download. Sent `AttachmentMessage` displays static image thumbnails, filenames, and sizes without click preview or download; Conversation/Message Record filename search remains. Failed sends retain text, file, and quote; ended/history conversations are read-only.
+- Fixed draft-ID autosave picker closure using stable mode/source/thread identity and customer Email overlay layering with local picker/preview layers and scrolling body/fixed Send toolbar.
+- Email and Live Chat library pickers show all enabled attachments without channel format or size filtering and allow their selection. Both pickers offer Download without Preview; existing final Send format/size validity rules and the library upload limit of 20 MB remain unchanged.
+- All attachment data resets on full refresh; no attachment backend, runtime switch, SMTP, gateway, or production permission integration was added.
 
 ## 16. Completed Routing Config
 
@@ -345,6 +360,7 @@ Implemented behaviors:
 - Skill Queues include required `Access Code` after `VDN` in list columns and Add / Edit / View forms; Keyword search includes Access Code. Derived Channel / Media values reverse-look up Skill Routing Rules that target each queue and aggregate multiple values. Optional `SL (%)`, `AHT Target` (seconds), and `QM Target` (percentage) can be configured and displayed per queue.
 - Skill Routing Rules batch behavior and duplicate handling.
 - Working Time Plans hide internal plan IDs from query, list, editor, and preview surfaces.
+- Working Time Plans show Holiday Schedule as closed all day with editable dates and names, fixed disabled 00:00–23:59 times, and unchanged working-hour behavior for the other schedules.
 - Local store state for demo changes.
 
 ## 17. Completed Local-Only Employee Management
@@ -403,7 +419,17 @@ Current public assets include:
 
 ## 20. Current Validation Baseline
 
-Latest recorded validation:
+At the human's explicit request, the final attachment-only release skips local tests, lint, build, and browser verification and will use the existing GitHub -> Vercel customer deployment; commit, push, and automatic production deployment remain pending, and the Vercel platform build is still required to deploy. The results below remain historical records from previous deliveries.
+
+Attachment delivery validation recorded at 2026-10-20 11:53 +08:00:
+
+- All 12 tests passed with `node --experimental-strip-types --test src/utils/attachmentRules.test.ts`: formats/caps, no Email quantity/aggregate selection cap, independent mock MIME serialization and binary-searched 10 MB edge, source ownership, metadata/reference validity, retained old Blob bytes/URLs, and category deletion guards.
+- Final `npm run lint` and `npm run build` succeeded after all layer/CSS fixes. Frontend TypeScript diagnostics: 147 baseline versus 146 current, with no newly introduced errors; diagnostics are not globally clean. Existing large chunk warning remains.
+- Full frontend TypeScript comparison using original HEAD tracked files through a virtual compiler found 147 baseline diagnostics versus 146 current, with no new diagnostics. A local Email map annotation removes one existing widened-literal diagnostic; global TypeScript success is not claimed.
+- CUA browser checks at `http://127.0.0.1:5175` verified login/direct management tab entry, safe 8 MB PDF upload with auto-name/blank Remark, Email repeated Add and image selection above 10 MB, Send blocking with draft preservation, Save Draft/reopen restoration, removal then successful Send/Sent preview, all three chat attachment send modes, session isolation, sensitive-word atomic blocking/recovery, customer Email Add/layering and oversize preservation, and actual sent-image preview after catalog deletion.
+- CUA checked management at 1366x768 and 1920x1080, with document width equal to viewport width and no horizontal overflow; customer Email layers, body scrolling, and the fixed Send toolbar were usable at 1280x720. No deployment, commit, or push was performed or requested for this delivery.
+
+Earlier recorded validation and deployment history:
 
 - ESLint passed.
 - Production build passed with existing large chunk warning.

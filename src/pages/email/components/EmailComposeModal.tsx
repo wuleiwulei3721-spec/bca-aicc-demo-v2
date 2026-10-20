@@ -1,10 +1,22 @@
-import { CloseOutlined, FilePdfOutlined, MailOutlined, SendOutlined } from '@ant-design/icons'
+import { CloseOutlined, FilePdfOutlined, MailOutlined, PaperClipOutlined, SendOutlined } from '@ant-design/icons'
 import { Input, Select } from 'antd'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { BaseButton } from '../../../components'
+import { AttachmentPickerModal } from '../../../components/attachments/AttachmentPickerModal'
 import { emailTemplates } from '../../../mock/email'
+import { getAttachmentContent, useAttachmentStore } from '../../../store/attachmentStore'
+import type { AttachmentReference } from '../../../types/attachment'
 import type { EmailComposeDraft, EmailLanguage } from '../../../types'
+import {
+  EMAIL_MAX_BYTES,
+  createReference,
+  estimateEmailSize,
+  mergeAttachmentReferences,
+  mergeTemplateAttachmentReferences,
+  validateAttachmentReferences,
+} from '../../../utils/attachmentRules'
 import { TEAM_LEADER_EMAIL, createEmailSignature } from './emailComposeModel'
+import './emailAttachments.less'
 
 const emailLanguageOptions: Array<{ label: string; value: EmailLanguage }> = [
   { label: 'ID', value: 'ID' },
@@ -116,12 +128,29 @@ function EmailComposePanelContent({
 }: EmailComposePanelContentProps) {
   const [fields, setFields] = useState<EmailComposeDraft>(() => ({ ...draft }))
   const [error, setError] = useState('')
-  const [templateAttachmentError, setTemplateAttachmentError] = useState('')
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [templateConfigOpen, setTemplateConfigOpen] = useState(false)
   const [autoSaveLabel, setAutoSaveLabel] = useState('')
   const editorRef = useRef<HTMLDivElement>(null)
+  const attachmentInputRef = useRef<HTMLInputElement>(null)
   const autoSaveTimerRef = useRef<number | null>(null)
   const lastAutoSavedSignatureRef = useRef('')
+
+  useEffect(() => {
+    const input = attachmentInputRef.current
+    if (!templateConfigOpen || !input || typeof DataTransfer === 'undefined') {
+      return
+    }
+
+    const transfer = new DataTransfer()
+    for (const reference of fields.attachments) {
+      const content = getAttachmentContent(reference.contentId)
+      if (content) {
+        transfer.items.add(new File([content], reference.fileName, { type: content.type }))
+      }
+    }
+    input.files = transfer.files
+  }, [fields.attachments, templateConfigOpen])
 
   const readEditorHtml = useCallback(
     () => sanitizeEmailHtml(editorRef.current?.innerHTML ?? fields.bodyHtml),
@@ -165,11 +194,12 @@ function EmailComposePanelContent({
       receiver: nextDraft.receiver,
       subject: nextDraft.subject,
       templateId: nextDraft.templateId,
+      attachments: nextDraft.attachments,
     })
 
     if (
       signature === lastAutoSavedSignatureRef.current ||
-      (!nextDraft.receiver && !nextDraft.subject && !getEmailText(nextDraft.bodyHtml))
+      (!nextDraft.receiver && !nextDraft.subject && !getEmailText(nextDraft.bodyHtml) && !nextDraft.attachments.length && !nextDraft.attachmentName)
     ) {
       return
     }
@@ -188,6 +218,7 @@ function EmailComposePanelContent({
         receiver: savedDraft.receiver,
         subject: savedDraft.subject,
         templateId: savedDraft.templateId,
+        attachments: savedDraft.attachments,
       })
       if (savedDraft.draftMessageId !== fields.draftMessageId) {
         setFields(savedDraft)
@@ -209,6 +240,7 @@ function EmailComposePanelContent({
     fields.receiver,
     fields.subject,
     fields.templateId,
+    fields.attachments,
     fields.draftMessageId,
     normalizedDraft,
     onAutoSave,
@@ -238,6 +270,24 @@ function EmailComposePanelContent({
       return
     }
 
+    if (action === 'send') {
+      const entries = useAttachmentStore.getState().entries
+      const errors = validateAttachmentReferences(nextDraft.attachments, entries, 'email')
+      for (const reference of nextDraft.attachments) {
+        if (!getAttachmentContent(reference.contentId)) {
+          errors.push(`${reference.name}: file content is unavailable in this session.`)
+        }
+      }
+      const estimatedSize = estimateEmailSize(nextDraft, nextDraft.attachments)
+      if (estimatedSize > EMAIL_MAX_BYTES) {
+        errors.push(`Estimated email size is ${(estimatedSize / 1_000_000).toFixed(2)} MB and exceeds the 10 MB limit, including base64 encoding and MIME headers. Remove attachments or shorten the email before sending.`)
+      }
+      if (errors.length > 0) {
+        setError(errors.join(' '))
+        return
+      }
+    }
+
     setError('')
     if (action === 'save') {
       onSave(nextDraft)
@@ -256,8 +306,24 @@ function EmailComposePanelContent({
       template.localizedBodyHtml?.[fields.language] ?? template.bodyHtml,
       fields.language,
     )
+    const entries = useAttachmentStore.getState().entries
+    const templateReferences: AttachmentReference[] = (template.attachmentIds ?? []).map((id) => {
+      const entry = entries.find((item) => item.id === id)
+      return entry
+        ? createReference(entry, `template:${templateId}`)
+        : {
+            attachmentId: id,
+            contentId: '',
+            name: `Unavailable attachment: ${id}`,
+            fileName: id,
+            mimeType: '',
+            size: 0,
+            sources: [`template:${templateId}`],
+          }
+    })
     updateFields({
-      attachmentName: template.attachmentName,
+      attachmentName: template.attachmentIds?.length ? undefined : template.attachmentName,
+      attachments: mergeTemplateAttachmentReferences(fields.attachments, templateId, templateReferences),
       bodyHtml: nextHtml,
       templateId,
     })
@@ -277,22 +343,6 @@ function EmailComposePanelContent({
     if (editorRef.current) {
       editorRef.current.innerHTML = nextHtml
     }
-  }
-
-  const chooseTemplateAttachment = (fileList: FileList | null) => {
-    const file = fileList?.[0]
-
-    if (!file) {
-      return
-    }
-
-    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-      setTemplateAttachmentError('Only PDF attachments can be selected.')
-      return
-    }
-
-    setTemplateAttachmentError('')
-    updateFields({ attachmentName: file.name })
   }
 
   const runEditorCommand = (command: string) => {
@@ -397,7 +447,11 @@ function EmailComposePanelContent({
                 if (templateId) {
                   applyTemplate(templateId)
                 } else {
-                  updateFields({ templateId: undefined })
+                  updateFields({
+                    attachmentName: undefined,
+                    attachments: mergeTemplateAttachmentReferences(fields.attachments, '', []),
+                    templateId: undefined,
+                  })
                 }
               }}
             />
@@ -467,7 +521,7 @@ function EmailComposePanelContent({
             <div className="email-compose__template-config">
               <div>
                 <strong>Template Config</strong>
-                <span>EN / ID template content and PDF attachment only.</span>
+                <span>EN / ID template content and attachments.</span>
               </div>
               <label>
                 <span>Template language</span>
@@ -481,19 +535,46 @@ function EmailComposePanelContent({
               <label>
                 <span>Attachment</span>
                 <input
-                  accept="application/pdf,.pdf"
+                  accept="application/pdf,.pdf,image/png,.png,image/jpeg,.jpg,.jpeg,image/gif,.gif,image/bmp,.bmp"
+                  multiple
+                  ref={attachmentInputRef}
                   type="file"
-                  onChange={(event) => chooseTemplateAttachment(event.target.files)}
+                  onClick={(event) => {
+                    event.preventDefault()
+                    setPickerOpen(true)
+                  }}
+                  onChange={(event) => {
+                    event.target.value = ''
+                  }}
                 />
               </label>
-              {fields.attachmentName && (
+              {fields.attachments.map((reference) => (
+                <em key={reference.attachmentId}>
+                  {reference.mimeType === 'application/pdf' || /\.pdf$/i.test(reference.fileName)
+                    ? <FilePdfOutlined />
+                    : <PaperClipOutlined />}
+                  {reference.fileName}
+                  <button
+                    aria-label={`Remove ${reference.fileName}`}
+                    className="email-compose__attachment-remove"
+                    title="Remove attachment"
+                    type="button"
+                    onClick={() => updateFields({
+                      attachments: fields.attachments.filter((item) => item.attachmentId !== reference.attachmentId),
+                    })}
+                  >
+                    <CloseOutlined />
+                  </button>
+                  {!getAttachmentContent(reference.contentId) && (
+                    <small role="status">File content is unavailable in this session.</small>
+                  )}
+                </em>
+              ))}
+              {fields.attachments.length === 0 && fields.attachmentName && (
                 <em>
                   <FilePdfOutlined />
                   {fields.attachmentName}
                 </em>
-              )}
-              {templateAttachmentError && (
-                <small>{templateAttachmentError}</small>
               )}
             </div>
           )}
@@ -518,7 +599,18 @@ function EmailComposePanelContent({
           />
         </div>
 
-        {error && <div className="email-compose__error">{error}</div>}
+        <AttachmentPickerModal
+          open={pickerOpen}
+          channel="email"
+          selected={fields.attachments}
+          onCancel={() => setPickerOpen(false)}
+          onConfirm={(references) => {
+            updateFields({ attachments: mergeAttachmentReferences(fields.attachments, references) })
+            setPickerOpen(false)
+          }}
+        />
+
+        {error && <div className="email-compose__error" role="alert">{error}</div>}
 
         {!isModal && (
           <footer className="email-compose__footer">
@@ -567,7 +659,6 @@ export function EmailComposePanel({ draft, ...props }: EmailComposePanelProps) {
 
   const composeKey = [
     draft.mode,
-    draft.draftMessageId,
     draft.sourceMessageId,
     draft.threadId,
   ].join(':')

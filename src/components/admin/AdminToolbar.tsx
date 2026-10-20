@@ -20,6 +20,7 @@ export function AdminToolbar({
       className={['aicc-admin-toolbar', 'routing-config-page__admin-toolbar', className]
         .filter(Boolean)
         .join(' ')}
+      style={{ '--routing-config-control-height': '32px' } as CSSProperties}
     >
       <div className="aicc-admin-query-group routing-config-page__query-group">
         {filters && (

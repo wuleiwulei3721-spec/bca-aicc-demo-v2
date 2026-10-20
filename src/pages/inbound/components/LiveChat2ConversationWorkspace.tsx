@@ -36,6 +36,10 @@ import {
   CustomerAvatar,
 } from '../../../components'
 import { TransferModal } from '../../../layouts/components/TransferModal'
+import type { AttachmentReference } from '../../../types/attachment'
+import { AttachmentList } from '../../../components/attachments/AttachmentList'
+import { AttachmentMessage } from '../../../components/attachments/AttachmentMessage'
+import { AttachmentPickerModal } from '../../../components/attachments/AttachmentPickerModal'
 import type { LiveChat2Message, SessionEndReasonEntry } from '../../../types'
 import { formatAgentDisplay } from '../../../utils/agentDisplay'
 import { formatDuration } from '../../../utils/duration'
@@ -50,6 +54,8 @@ const { RangePicker } = DatePicker
 const MESSAGE_RECORD_DATE_TIME_FORMAT = 'DD-MM-YYYY HH:mm:ss'
 
 interface LiveChat2ConversationWorkspaceProps {
+  pendingAttachments: AttachmentReference[]
+  onAttachmentsChange: (sessionId: string, refs: AttachmentReference[]) => void
   composerFocusRequest: LiveChat2ComposerFocusRequest | null
   draftMessage: string
   isMessageRecordOpen: boolean
@@ -71,7 +77,8 @@ interface LiveChat2ConversationWorkspaceProps {
     message: string,
     baseMessages: LiveChat2Message[],
     quotedMessage?: string | null,
-  ) => void
+    attachmentRefs?: AttachmentReference[],
+  ) => boolean
 }
 
 interface LiveChat2ComposerFocusRequest {
@@ -183,6 +190,10 @@ function renderMessageContent(
   message: LiveChat2Message,
   search = '',
 ) {
+  if (message.attachment) {
+    return <AttachmentMessage reference={message.attachment} />
+  }
+
   if (message.kind === 'image') {
     return (
       <div className="livechat2-message__attachment">
@@ -306,7 +317,10 @@ function formatMessageRecordTimestamp(timestamp: string) {
 }
 
 function getMessageRecordSearchText(message: LiveChat2Message) {
-  return message.kind === 'file' ? message.fileName ?? message.message : message.message
+  if (message.attachment) return [message.message, message.attachment.fileName].filter(Boolean).join(' ')
+  return message.kind === 'file' || message.kind === 'image'
+    ? message.fileName ?? message.message
+    : message.message
 }
 
 function getMessageRecordOccurrences(
@@ -700,6 +714,7 @@ export function LiveChat2MessageRecordPanel({
                   </time>
                 </div>
                 <p>{highlightSearch(displayMessage, appliedKeyword, selectedStart)}</p>
+                {message.attachment && <AttachmentMessage reference={message.attachment} variant="record" />}
               </article>
             )
           })
@@ -712,6 +727,8 @@ export function LiveChat2MessageRecordPanel({
 }
 
 export function LiveChat2ConversationWorkspace({
+  pendingAttachments,
+  onAttachmentsChange,
   composerFocusRequest,
   draftMessage,
   isMessageRecordOpen,
@@ -727,6 +744,7 @@ export function LiveChat2ConversationWorkspace({
   onSendMessage,
 }: LiveChat2ConversationWorkspaceProps) {
   const customerDisplayName = getLiveChat2CustomerDisplayName(session)
+  const [pickerSessionId, setPickerSessionId] = useState<string | null>(null)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [isTransferOpen, setIsTransferOpen] = useState(false)
   const [quoteMessage, setQuoteMessage] = useState<string | null>(null)
@@ -810,12 +828,12 @@ export function LiveChat2ConversationWorkspace({
   ])
 
   const handleSend = () => {
-    if (!trimmedDraft || !canCompose) {
+    if ((!trimmedDraft && pendingAttachments.length === 0) || !canCompose) {
       return
     }
 
-    onSendMessage(session.id, trimmedDraft, messages, quoteMessage)
-    setQuoteMessage(null)
+    const sent = onSendMessage(session.id, trimmedDraft, messages, quoteMessage, pendingAttachments)
+    if (sent) setQuoteMessage(null)
   }
 
   const handleQuickReplySelect = (reply: LiveChat2QuickReplyOption) => {
@@ -1071,7 +1089,7 @@ export function LiveChat2ConversationWorkspace({
                       <div className="livechat2-message__tools">
                         <button
                           type="button"
-                          onClick={() => setQuoteMessage(message.message)}
+                          onClick={() => setQuoteMessage(message.message || message.attachment?.fileName || message.fileName || '')}
                         >
                           <RollbackOutlined />
                           Quote
@@ -1100,7 +1118,7 @@ export function LiveChat2ConversationWorkspace({
                 showIcon
                 className="livechat2-composer__warning"
                 description={sendBlockedMessage}
-                message="Message blocked by sensitive word check."
+                message="Message cannot be sent."
                 type="warning"
               />
             )}
@@ -1115,6 +1133,13 @@ export function LiveChat2ConversationWorkspace({
                   <CloseOutlined />
                 </button>
               </div>
+            )}
+            {pendingAttachments.length > 0 && (
+              <AttachmentList
+                removeOnly
+                attachments={pendingAttachments}
+                onRemove={(reference) => onAttachmentsChange(session.id, pendingAttachments.filter((ref) => ref.attachmentId !== reference.attachmentId))}
+              />
             )}
             <textarea
               aria-label={`Message ${customerDisplayName}`}
@@ -1157,7 +1182,7 @@ export function LiveChat2ConversationWorkspace({
                 <button title="Emoji" type="button">
                   <SmileOutlined />
                 </button>
-                <button title="File" type="button">
+                <button aria-label="Select attachment" title="File" type="button" onClick={() => setPickerSessionId(session.id)}>
                   <FolderOpenOutlined />
                 </button>
                 <button
@@ -1182,6 +1207,21 @@ export function LiveChat2ConversationWorkspace({
             </div>
           </footer>
         </div>
+      )}
+
+      {canCompose && pickerSessionId === session.id && (
+        <AttachmentPickerModal
+          key={pickerSessionId}
+          open
+          channel="livechat"
+          selected={pendingAttachments}
+          onConfirm={(refs) => {
+            if (refs.length !== 1) return
+            onAttachmentsChange(pickerSessionId, refs)
+            setPickerSessionId(null)
+          }}
+          onCancel={() => setPickerSessionId(null)}
+        />
       )}
 
       {readOnly && (

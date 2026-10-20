@@ -1,3 +1,4 @@
+export * from './AttachmentManagementPage'
 export * from './BlacklistManagementPage'
 export * from './BusyReasonManagementPage'
 export * from './CallRecordQueryPage'

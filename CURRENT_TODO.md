@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-09-10 15:30 +08:00
+Last updated: 2026-10-20 11:53 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -40,6 +40,8 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Confirm whether screenshots are approved for customer demos and public deployment.
 
 ## P1 - Manual Verification Before Customer Demo
+
+- Frontend TypeScript baseline remains a risk: original HEAD tracked files produce 147 diagnostics versus current 146 with no new diagnostics; this is not a clean global typecheck.
 
 - Verify `/` login, single-action Sign In, configured Status after Sign-in, first-Ready toolbar lock, Voice/Video Incoming toolbar unlock, Pre-AUX cancellation, Pre-AUX profile display during ACW, ACW-to-pending-AUX transition, AUX, Sign Out, and Log Out guards.
 - Verify the profile menu state matrix: Unsigned shows Sign In / Settings; all Not Ready states show Ready, AUX reasons, and Sign Out; Ready shows AUX reasons only; Pre-AUX hides Sign Out; AUX restores Sign Out; the team line shows the formatted current status.
@@ -206,7 +208,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 
 - Add independent Email Record Inquiry list/detail scope when confirmed; do not fold it into Interaction Log.
 - Add Email Template Deploy CRUD and backend template integration when confirmed.
-- Add real mailbox/SMTP, attachment, routing, permission, audit, and CWU persistence contracts if Email moves beyond front-end demo state.
+- Define production attachment binary storage/retrieval/retention, persistent catalog/categories/content IDs, backend API, authentication/permissions/audit, real mailbox/SMTP/MIME delivery, chat gateways, routing, and CWU persistence contracts before moving beyond the implemented frontend attachment demo. The explicitly chosen memory-only attachment boundary needs no API or environment flag today.
 - Define Social Media API, channel authentication, moderation, routing, delivery, audit, persistence, service-ending, and backend Interaction Log query contracts before treating the Social Media workspace or Social Media Interaction Log as production integrations.
 - Add Webchat voice and video customer simulation if customer requires it.
 - Add Dashboard page if demo scope expands.

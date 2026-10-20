@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Design System
 
-Last updated: 2026-09-14 14:30 +08:00
+Last updated: 2026-10-20 11:53 +08:00
 
 This document records the current implemented visual rules. It should be treated as the design baseline for future pages and components.
 
@@ -141,6 +141,17 @@ General rules:
 - Admin modal footers should use `AdminModalFooter`.
 - The Customer Information `Outbound Reason` Modal uses a light-blue header with one uninterrupted white content body. A nonempty customer phone number exposes the compact `Call` action only while its phone row is hovered or receives keyboard focus; the action remains disabled when the agent is not in an eligible outbound AUX.
 - The TL approval route remains available for ordinary-Agent outbound number and Customer Information phone requests. Its pending popup starts a 10-second countdown after the approval dialog renders and retains the `N more pending` queue indicator when additional requests exist; timeout closes the popup and uses the standard right-bottom result dialog to require a new request. This approval/result UI is separate from customer screen-pop behavior.
+
+### Shared attachment selection and preview
+
+- Attachment Management and Common Phrase reuse `AdminCategoryPanel`: hierarchy mode uses a standard Ant Design Tree with independent selection and expansion, folder/count titles, a 24px actions dropdown, and focused inline child insertion under the parent; flat Common Phrase DOM and behavior stay unchanged. Attachment directories support child creation up to five levels (root depth 1), unique sibling names, and parent selection covering the subtree. Delete remains available for populated folders and opens the existing AdminModal with a concise single-sentence warning that the folder, its descendants, and their attachments will be deleted, without counts. Only the shared danger Delete footer action confirms recursive deletion of the folder, all descendants, and their library entries; Cancel leaves them intact. Common Phrase remains flat with its existing deletion policy. Attachment Management removes the management subtitle and standalone category modal/dropdown.
+- Attachment Management shows the existing generated read-only ID in the first column and Name on one line. Add/Edit uses shared 32px form controls, a small Switch with an `Enabled` label, and the list uses the shared status badge. Add is primary with a Plus icon; icon action buttons are 24px. The file button triggers a hidden native input, shows the original filename including extension once, and omits native `No file chosen` text and filler text. File sizes adapt between B, KB, and MB using decimal units.
+
+- Reuse the shared library picker with explicit Email or Live Chat channel mode, shared admin controls at 32px, and default 10-row pagination. Category uses an Ant Design TreeSelect inside AdminFilterField: nested folder-name titles, indentation and expansion arrows, initially expanded sample hierarchy, full-path search and selected label, single-category subtree filtering, and clear to All Categories. Email retains checkbox selection and Live Chat retains radio selection. Use neutral `Select Attachment` / `Select Attachments` titles. Show all enabled library attachments without channel format or size filtering and allow their selection. Management and pickers offer Download without Preview. Add stages references; the existing Send action dispatches. Existing radio controls remain unchanged pending the user's decision. Upload and replacement belong to Attachment Management, with replacement inside Edit only.
+- Pending/pre-Send Live Chat attachment lists show metadata and Remove only, with no Preview or Download. Sent `AttachmentMessage` is static: attachments show a compact type icon, a single filename and size; images show an actual thumbnail. Filenames and thumbnails have no click preview or download. Message Record uses the same static presentation and preserves filename keyword highlighting. Message bubbles must not contain an admin text-button row.
+- Email inline, popup, and customer Send Email surfaces retain the original composer layout and upload-entry visibility. Only the pre-existing `Template Config > Attachment` native `Choose File` field opens the library picker. Keep the original icon/filename rows there and use `tinyRemoveX` to adjust multiple files. No independent attachments area, extra Add Attachments button, size counter/bar, layout overrides, or attachment field elsewhere is present. Customer locked/read-only popups have only template-derived attachments when the original upload entry is hidden. Oversized staging and save/autosave remain allowed; Send revalidates all references and the 10 MB total mock MIME limit.
+- Existing final Send format/size validity rules and the library upload limit of 20 MB remain unchanged.
+- Customer Email custom overlays use picker z-index 1400 and preview 1500, with independently scrolling modal body and fixed Send toolbar. Keep these stacking/scroll rules local to the Email surface.
 
 ## 7. Tab Design Principles
 
@@ -297,7 +308,7 @@ Do not handwrite a separate query bar, table style, pagination style, fixed Acti
 
 Admin list rules:
 
-- Query controls are 32px high.
+- Query controls are 32px high. `.sharedAdminToolbar` itself defines the control-height variable as `32px` so query buttons in portals and modals inherit the shared height.
 - Keyword width: about `240-260px`.
 - Normal input/select width: about `200-220px`.
 - Status width: about `150-160px`.
@@ -319,6 +330,7 @@ Admin list rules:
 - When update audit columns are present, list them at the end in `Updated Time`, then `Updated By`, then `Actions` order. Creation metadata precedes update metadata when both are shown. Size management-table columns to their content and use horizontal scrolling only when confirmed minimum widths cannot fit the target workspace.
 - `LimitedInput` and `LimitedTextArea` are the shared character-limit controls. Remark fields default to 2000 characters, while business-specific limits are passed explicitly, such as Quick Reply Code 50, Common Phrase / Quick Reply text 2000, Sensitive Word 100, Common Link Website Name / Website URL 200, Quick Action Action Name / Link Address 200, Question Name 100, Ticket Summary 250, or Ticket Note 1000. They share the Ticket count style: a compact normal-weight count that stays inside the control without changing the field geometry, and clamp over-limit change events at the configured maximum.
 - Local-only management modules such as Employee Management must still use English UI text and the same admin layout contract as customer-visible management pages.
+- Common Phrase, Common Number, and Common Link must present the same business interface in local API and published demo modes. Do not display runtime-mode banners, refresh-reset notices, or demo-session terminology; keep data-source details in internal configuration and documentation. Preserve contextual validation, error/retry feedback, and deletion consequences.
 
 ## 14. Responsive and Demo Quality Rules
 

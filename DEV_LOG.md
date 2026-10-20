@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-10-12 15:41 +08:00
+最后更新：2026-10-20 16:18 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,50 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-10-20 (Asia/Shanghai) — Attachment-only release preparation
+
+- Scope: attachment library and Email/Live Chat integration, five-level hierarchy, full paths, TreeSelect, cascade confirmation with a concise single-sentence warning without counts, Download, and static sent chat attachments.
+- Reason/status: user approved commit and production release; commit, push, and automatic customer deployment through the existing GitHub -> Vercel integration remain pending.
+- Verification: user explicitly skipped local tests, lint, build, and browser checks; the Vercel platform build is still required to deploy. Prior validation remains historical.
+- Rollback: restore the previous production runtime revision `a5ddac4` or point the Vercel production alias to its previous confirmed deployment.
+- Risk: attachment data and bytes are memory-only demo state and reset on full refresh; no real backend or channel delivery is connected.
+
+### 2026-10-20 17:05 +08:00
+- Extracted shared AdminCategoryPanel and aligned Common Phrase / Attachment Management UI.
+- Name follows the original filename including extension; file replacement changes Name while preserving the entry ID.
+- Focused visual check confirmed both shared directory panels, Add modal controls, and replacement naming / stable ID; no full-project tests, lint, or build per user request.
+- Rollback: revert the shared component, both consumers, and the store filename rule together. Risk: frontend memory-only behavior remains unchanged.
+
+### 2026-10-20 +08:00 — Remove runtime-mode notices from three management pages
+
+- Scope: Common Phrase, Common Number, and Common Link management pages; DESIGN_SYSTEM.md, PROJECT_CONTEXT.md, and CURRENT_STATUS.md.
+- Reason/result: customer reviews should present the same business interface regardless of internal API/demo mode. Removed the three Demo Mode banners and unused UI flag imports, removed demo-session wording from phrase/number deletion confirmations, and replaced API-error headings with business-facing operation feedback. Error descriptions, retry actions, data-source switches, and persistence behavior are preserved.
+- Validation: lint, build, and browser checks skipped at the user's explicit request for a quick scoped edit; no runtime verification claimed.
+- Rollback/risk: restore only these scoped presentation changes if needed; no backend, configuration, database, commit, or deployment changes. Public deployment will retain its previous UI until a separate release. Company API returned a rate-limit error; the user explicitly authorized direct work for this task only.
+
+### 2026-10-20 16:18 +08:00 — Working Time Plans holiday full-day behavior
+
+- Modules/scope: `src/pages/routing-config/RoutingConfigDataPages.tsx` and `src/styles/index.less`; localized Working Time Plans editor and preview behavior.
+- Reason/result: represent Holiday Schedule entries as full-day nonworking dates, keep holiday dates and names editable, and show the closed-all-day helper with fixed disabled 00:00–23:59 times while preserving other schedule behavior.
+- Validation: `npm run lint` and `npm run build` passed; browser smoke checks covered cancel preservation, save/reopen, View, collapsed headings, other schedule inputs, and Skill Queue preview. `git diff --check` passed for scoped code/styles. Build reported the existing large chunk warning.
+- Rollback: revert only these localized frontend and style edits if needed.
+- Risk: behavior remains within the existing frontend demo boundary; no deployment was performed.
+
+### 2026-10-20 11:53 +08:00 — Shared Attachment Management frontend delivery
+
+- Modules/scope: new attachment management/components/domain and catalog/content registry; workspace registry/menu/routes; Email composer/templates/drafts/types; Live Chat Conversation/Message Record/types and `src/store/appStore.ts`. Base HEAD `3e12292`; delivery remains dirty/uncommitted.
+- Reason: provide one managed outbound library across Email and the three agent chat channels under the human-confirmed frontend demo boundary (DEC-060).
+- Result: authenticated customer/local Attachment Management tab after Common Link, shared admin filtering/CRUD/audit and category usage guard, valid safe BANK 1 sample bytes, real previews/downloads, template/manual source ownership and draft restoration, session-isolated chat staging and atomic Send, stale-reference blocking, and preserved sent names/bytes. Confirm stages only; upload/replacement belongs to management, replacement inside Edit only. See BUSINESS_RULES.md for the full channel rules.
+- Confirmed limits: library images/video/PDF <=20,000,000 original bytes; outgoing Email PDF/PNG/JPG/JPEG/GIF/BMP with no count or aggregate selection cap, oversized draft saving allowed, Send-only total mock MIME <=10,000,000 bytes; Live Chat one image/video/PDF <=20,000,000 bytes per Send. MB is decimal. Full refresh resets all attachment memory; no API/env flag, FastAPI/MySQL, SMTP, gateway, or production permissions added.
+- Fixes: stable mode/source/thread composer identity prevents first autosave draft-ID assignment from closing the picker; local customer Email picker/preview layers (1400/1500), scrolling modal body, and fixed Send toolbar resolve custom overlay stacking.
+- Validation: all 12 Node tests passed with `node --experimental-strip-types --test src/utils/attachmentRules.test.ts`, covering formats/caps, unrestricted Email selection quantity/aggregate, independent mock MIME serialization and binary-searched boundary, source ownership, metadata/reference validity, old Blob/URL preservation, and category guards. Final `npm run lint` and `npm run build` succeeded after all layer/CSS fixes. Frontend TypeScript diagnostics: 147 baseline versus 146 current, with no newly introduced errors; diagnostics are not globally clean. CUA checked management at 1366x768 and 1920x1080; document width equaled viewport width, with no horizontal overflow. Customer Email picker/preview layers, body scrolling, and the fixed Send toolbar were usable at 1280x720; an 8 MB attachment produced a 10.95 MB message and blocked Send without losing the popup. All other functional browser tests stated earlier were already verified. Unauthenticated direct-route access redirected to login; authenticated direct-route access opened in the reused tab. Production backend and real delivery remain future work. No commit, push, or deployment was performed. Existing large chunk warning remains.
+- Type baseline: virtual compiler comparison of original HEAD tracked files found 147 frontend diagnostics versus current 146 with no new diagnostics. Local Email map annotation removes one existing widened-literal error; no global TS success or unrelated type-error cleanup is claimed.
+- Browser validation: CUA at http://127.0.0.1:5175 verified login/direct management tab, safe 8 MB PDF upload with auto-name/blank Remark; Email repeated Add plus image at estimated 10.96 MB, blocked Send preserving draft, Save Draft/reopen restoration, removal then Send/Sent preview; WhatsApp file-only video, Webchat image, HaloBCA text+PDF, session isolation, and sensitive-word failure retaining text/file then successful recovery. Customer read-only Email Add works after layering fix; estimated 10.95 MB Send block retains popup/content. Deleting a catalog image preserves actual Webchat sent-image preview.
+- Validation complete: final lint/build succeeded after all layer/CSS fixes; 12 Node attachment tests passed; CUA checked management at 1366x768 and 1920x1080 without horizontal overflow and confirmed customer Email usability at 1280x720. Production binary storage/retention, backend/persistence, authorization/audit, SMTP, gateway work, and real delivery remain future scope.
+- Rollback: review against base HEAD and selectively revert the new attachment folder/domain/content registry, workspace registry/menu/routes, Email integrations, and chat/appStore/type integrations together; preserve unrelated dirty changes. No destructive rollback command is prescribed.
+- Handoff: added three concise `.codex-backup/*-2026-10-20-1153.md` context snapshots, not full code backups. No deployment, commit, or push was performed or requested; no production URL is associated with this delivery.
+
 
 ### 2026-10-12 15:41 +08:00 - Production release: Message Record navigation and HaloBCA updates
 

@@ -81,6 +81,7 @@ export const emailTemplates: EmailTemplate[] = [
   {
     id: 'template-dispute-follow-up',
     name: 'Transaction dispute follow-up',
+    attachmentIds: ['100002'],
     attachmentName: 'dispute-follow-up.pdf',
     bodyHtml:
       '<p>Halo Bapak/Ibu,</p><p>Terima kasih telah menghubungi BANK 1. Laporan sanggahan transaksi Anda telah kami terima dan akan kami tindak lanjuti sesuai prosedur.</p><p>Salam,<br>BANK 1 Customer Service</p>',

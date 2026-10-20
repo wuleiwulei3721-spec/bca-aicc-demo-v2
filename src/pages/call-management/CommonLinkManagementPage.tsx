@@ -16,7 +16,6 @@ import {
   LimitedTextArea,
 } from '../../components'
 import type { CommonLinkQuery } from '../../api/commonLinkApi'
-import { isCommonLinkDemoMode } from '../../config/commonLinkMode'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import { useAppStore, useAuthStore, useCommonLinkStore } from '../../store'
 import type { CommonLinkEntry } from '../../types'
@@ -349,14 +348,6 @@ export function CommonLinkManagementPage() {
 
   return (
     <AdminPage className="common-link-management" title="Common Link">
-      {isCommonLinkDemoMode && (
-        <Alert
-          description="Changes are available for this demo session and reset after a page refresh."
-          message="Common Link Demo Mode"
-          showIcon
-          type="info"
-        />
-      )}
       {error && (
         <Alert
           action={
@@ -370,7 +361,7 @@ export function CommonLinkManagementPage() {
           }
           closable
           description={error}
-          message="Common Link API error"
+          message="Unable to complete the common link operation"
           showIcon
           type="error"
         />

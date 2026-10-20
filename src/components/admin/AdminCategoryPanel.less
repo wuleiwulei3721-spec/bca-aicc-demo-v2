@@ -1,0 +1,26 @@
+.admin-category-hierarchy {
+  min-width: 0;
+
+  .common-phrase-management__category-list { min-width: 0; }
+  .ant-tree { min-width: 0; background: transparent; color: var(--aicc-text); font-size: 12px; }
+  .ant-tree .ant-tree-treenode { width: 100%; min-width: 0; padding-bottom: 0; align-items: center; }
+  .ant-tree .ant-tree-indent-unit { width: 16px; }
+  .ant-tree .ant-tree-switcher { flex: 0 0 16px; width: 16px; height: 32px; line-height: 32px; }
+  .ant-tree .ant-tree-node-content-wrapper { display: flex; flex: 1 1 0; min-width: 0; height: 32px; align-items: center; padding: 0 2px; border-radius: var(--aicc-radius-sm); }
+  .ant-tree .ant-tree-iconEle { flex: 0 0 16px; width: 16px; line-height: 32px; color: var(--aicc-text-tertiary); }
+  .ant-tree .ant-tree-title { flex: 1 1 0; min-width: 0; }
+  .ant-tree .ant-tree-node-content-wrapper:hover { background: var(--aicc-hover); }
+  .ant-tree .ant-tree-node-selected { background: var(--aicc-selected); color: var(--aicc-primary); }
+  .admin-category-hierarchy__title { display: flex; min-width: 0; height: 32px; align-items: center; gap: 4px; }
+  .admin-category-hierarchy__name { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+  .admin-category-hierarchy__title em { flex: 0 0 auto; color: var(--aicc-text-tertiary); font-size: 11px; font-style: normal; font-weight: 750; }
+  .admin-category-hierarchy__actions { display: inline-flex; flex: 0 0 24px; }
+  .admin-category-hierarchy__actions button { display: inline-flex; width: 24px; height: 24px; align-items: center; justify-content: center; padding: 0; border: 1px solid transparent; border-radius: var(--aicc-radius-sm); background: transparent; color: var(--aicc-text-secondary); cursor: pointer; }
+  .admin-category-hierarchy__actions button:hover,
+  .admin-category-hierarchy__actions button:focus-visible { border-color: var(--aicc-primary); background: var(--aicc-hover); color: var(--aicc-primary); }
+  .common-phrase-management__category-edit { min-width: 0; align-items: center; }
+  .common-phrase-management__category-edit .ant-input { min-width: 0; height: 28px; padding-inline: 4px; font-size: 12px; }
+  .common-phrase-management__category-edit button { padding: 0; background: var(--aicc-bg-elevated); }
+  .common-phrase-management__category-edit button:disabled,
+  .admin-category-hierarchy__actions button:disabled { opacity: 0.5; cursor: not-allowed; }
+} 

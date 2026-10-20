@@ -4519,9 +4519,7 @@ function cloneWorkingTimePlan(plan: WorkingTimePlan): WorkingTimePlan {
     ...plan,
     holidayRules: (plan.holidayRules ?? []).map((rule) => ({
       ...rule,
-      nonWorkingRanges: (rule.nonWorkingRanges ?? []).map((range) => ({
-        ...range,
-      })),
+      nonWorkingRanges: [createTimeRange('00:00', '23:59')],
     })),
     ramadanSchedule: {
       ...plan.ramadanSchedule,
@@ -4588,10 +4586,7 @@ function normalizeWorkingTimePlan(
     holidayRules: normalizedDraft.holidayRules.map((rule) => ({
       ...rule,
       closedAllDay: false,
-      nonWorkingRanges:
-        rule.nonWorkingRanges.length > 0
-          ? rule.nonWorkingRanges
-          : [createTimeRange('00:00', '23:59')],
+      nonWorkingRanges: [createTimeRange('00:00', '23:59')],
     })),
     updatedAt: formatAuditDateTime(new Date()),
     updatedBy,
@@ -4914,28 +4909,6 @@ export function WorkingTimePlansPage() {
       ...currentDraft,
       holidayRules: currentDraft.holidayRules.map((rule, ruleIndex) =>
         ruleIndex === index ? { ...rule, ...patch } : rule,
-      ),
-    }))
-  }
-
-  function updateHolidayRange(
-    index: number,
-    patch: Partial<WorkingTimeRange>,
-  ) {
-    setDraft((currentDraft) => ({
-      ...currentDraft,
-      holidayRules: currentDraft.holidayRules.map((rule, ruleIndex) =>
-        ruleIndex === index
-          ? {
-              ...rule,
-              nonWorkingRanges: [
-                {
-                  ...(rule.nonWorkingRanges[0] ?? createTimeRange()),
-                  ...patch,
-                },
-              ],
-            }
-          : rule,
       ),
     }))
   }
@@ -5310,7 +5283,12 @@ export function WorkingTimePlansPage() {
         open={draft.holidayRules.length > 0}
       >
         <summary>
-          <strong>Holiday Schedule</strong>
+          <strong>
+            Holiday Schedule
+            <span className="routing-config-working-time-modal__holiday-note">
+              Closed all day
+            </span>
+          </strong>
           {!isReadOnly && (
             <BaseButton
               icon={<PlusOutlined />}
@@ -5380,27 +5358,17 @@ export function WorkingTimePlansPage() {
               <label className="routing-config-working-time-modal__row-field">
                 {index === 0 && <span>Start</span>}
                 <Input
-                  disabled={isReadOnly}
+                  disabled
                   type="time"
-                  value={rule.nonWorkingRanges[0]?.startTime ?? ''}
-                  onChange={(event) =>
-                    updateHolidayRange(index, {
-                      startTime: event.target.value,
-                    })
-                  }
+                  value="00:00"
                 />
               </label>
               <label className="routing-config-working-time-modal__row-field">
                 {index === 0 && <span>End</span>}
                 <Input
-                  disabled={isReadOnly}
+                  disabled
                   type="time"
-                  value={rule.nonWorkingRanges[0]?.endTime ?? ''}
-                  onChange={(event) =>
-                    updateHolidayRange(index, {
-                      endTime: event.target.value,
-                    })
-                  }
+                  value="23:59"
                 />
               </label>
               {!isReadOnly && (
@@ -5807,7 +5775,9 @@ function WorkingTimePlanPreviewContent({ plan }: { plan: WorkingTimePlan }) {
             </span>
             <span className="routing-config-working-time-modal__row-field">
               {index === 0 && <span>Non-working Time</span>}
-              <em>{formatWorkingTimeRanges(rule.nonWorkingRanges)}</em>
+              <em>
+                {formatWorkingTimeRanges([createTimeRange('00:00', '23:59')])}
+              </em>
             </span>
           </div>
         ))
@@ -5915,7 +5885,12 @@ function WorkingTimePlanPreviewContent({ plan }: { plan: WorkingTimePlan }) {
       </section>
       <section className="routing-config-working-time-modal__section">
         <header>
-          <strong>Holiday Schedule</strong>
+          <strong>
+            Holiday Schedule
+            <span className="routing-config-working-time-modal__holiday-note">
+              Closed all day
+            </span>
+          </strong>
         </header>
         {renderHolidayRows()}
       </section>

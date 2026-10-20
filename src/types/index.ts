@@ -1,4 +1,5 @@
 export * from './agent'
+export * from './attachment'
 export * from './auth'
 export * from './bankapp'
 export * from './blacklist'

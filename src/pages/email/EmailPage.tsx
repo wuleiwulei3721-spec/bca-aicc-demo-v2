@@ -30,6 +30,7 @@ import {
 import type { MenuProps } from 'antd'
 import type { PointerEvent, ReactNode } from 'react'
 import { useMemo, useRef, useState } from 'react'
+import { AttachmentList } from '../../components/attachments/AttachmentList'
 import {
   BaseButton,
   StatusBadge,
@@ -149,6 +150,7 @@ function cloneMessages(messages: EmailMessage[]) {
           ...email.cwu,
         }
       : undefined,
+    attachments: email.attachments?.map((attachment) => ({ ...attachment, sources: [...attachment.sources] })),
   }))
 }
 
@@ -307,6 +309,9 @@ function createComposeDraft(
     const language = source.language ?? DEFAULT_EMAIL_LANGUAGE
 
     return {
+      attachmentName: source.attachmentName,
+      attachments: source.attachments?.map((attachment) => ({ ...attachment, sources: [...attachment.sources] })) ?? [],
+      templateId: source.templateId,
       bodyHtml: source.bodyHtml,
       draftMessageId: source.id,
       emailStatus: source.emailStatus,
@@ -323,6 +328,7 @@ function createComposeDraft(
 
   if (mode === 'reply' && source) {
     return {
+      attachments: [],
       bodyHtml: createEmailSignature(DEFAULT_EMAIL_LANGUAGE),
       language: DEFAULT_EMAIL_LANGUAGE,
       mode,
@@ -337,6 +343,7 @@ function createComposeDraft(
 
   if (mode === 'transfer' && source) {
     return {
+      attachments: [],
       bodyHtml: `${createEmailSignature(DEFAULT_EMAIL_LANGUAGE)}<blockquote><strong>Transferred message</strong><br>${sanitizeEmailHtml(source.bodyHtml)}</blockquote>`,
       emailStatus: 'pending',
       language: DEFAULT_EMAIL_LANGUAGE,
@@ -351,6 +358,7 @@ function createComposeDraft(
   }
 
   return {
+    attachments: [],
     bodyHtml: createEmailSignature(DEFAULT_EMAIL_LANGUAGE),
     language: DEFAULT_EMAIL_LANGUAGE,
     mode: 'new',
@@ -1184,6 +1192,14 @@ function EmailDetail({
         )}
       </header>
 
+      {email.attachments && email.attachments.length > 0 && (
+        <AttachmentList attachments={email.attachments} />
+      )}
+      {email.attachmentName && (
+        <p className="email-compose__legacy-attachment">
+          Legacy attachment: {email.attachmentName} (unavailable)
+        </p>
+      )}
       <div
         className="email-message-rich"
         dangerouslySetInnerHTML={{ __html: sanitizeEmailHtml(email.bodyHtml) }}
@@ -1330,6 +1346,8 @@ export function EmailPage() {
     return {
       id: draft.draftMessageId ?? `email-draft-${Date.now()}`,
       attachmentName: draft.attachmentName,
+      attachments: draft.attachments.map((attachment) => ({ ...attachment, sources: [...attachment.sources] })),
+      templateId: draft.templateId,
       bodyHtml,
       customer: {
         ...customer,
@@ -1340,7 +1358,7 @@ export function EmailPage() {
       folder: 'drafts',
       transferSourceMessageId:
         draft.mode === 'transfer' ? draft.sourceMessageId : undefined,
-      hasAttachment: Boolean(draft.attachmentName),
+      hasAttachment: draft.attachments.length > 0 || Boolean(draft.attachmentName),
       handlingStatus: 'draft',
       isRead: true,
       language: draft.language,
@@ -1411,7 +1429,7 @@ export function EmailPage() {
       ...draftMessage,
       id: `email-sent-${Date.now()}`,
       folder: 'sent',
-      hasAttachment: Boolean(draft.attachmentName),
+      hasAttachment: draft.attachments.length > 0 || Boolean(draft.attachmentName),
       handlingStatus: 'sent',
       sentAt: Date.now(),
     }
@@ -1419,7 +1437,7 @@ export function EmailPage() {
     setMessages((current) =>
       current
         .filter((email) => email.id !== draft.draftMessageId)
-        .map((email) =>
+        .map<EmailMessage>((email) =>
           draft.mode === 'reply' && email.id === source?.id
             ? {
                 ...email,
