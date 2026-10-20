@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-10-20 16:18 +08:00
+最后更新：2026-10-20 20:30:16 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -29,13 +29,13 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
 
-### 2026-10-20 (Asia/Shanghai) — Attachment-only release preparation
+### 2026-10-20 20:30:16 +08:00 — Production release completed
 
-- Scope: attachment library and Email/Live Chat integration, five-level hierarchy, full paths, TreeSelect, cascade confirmation with a concise single-sentence warning without counts, Download, and static sent chat attachments.
-- Reason/status: user approved commit and production release; commit, push, and automatic customer deployment through the existing GitHub -> Vercel integration remain pending.
-- Verification: user explicitly skipped local tests, lint, build, and browser checks; the Vercel platform build is still required to deploy. Prior validation remains historical.
-- Rollback: restore the previous production runtime revision `a5ddac4` or point the Vercel production alias to its previous confirmed deployment.
-- Risk: attachment data and bytes are memory-only demo state and reset on full refresh; no real backend or channel delivery is connected.
+- Authorization/scope: user expanded approval to all 49 working changes, including shared attachments and Email/Live Chat integration, three management pages' runtime notice/copy cleanup, Working Time Plans holiday full-day behavior, documentation, and existing handoff snapshots.
+- Release: committed and pushed to `origin/main` as `5296bb418a34f0e5bd6d8e8ed75286804b5378ff` (`feat: deliver shared attachments and management updates`). `git push origin main` automatically triggered Vercel production through the existing Git integration; no CLI deployment. Working tree was clean after commit.
+- Deployment evidence: GitHub commit Vercel status succeeded with “Deployment has completed”; GitHub Production deployment `7199695653` succeeded, created at `2026-10-20T12:30:16Z` (`2026-10-20 20:30:16 +08:00`). Production: https://netinfo-aicc-demo-v2.vercel.app ; immutable deployment: https://netinfo-aicc-demo-v2-gygfboicf-wl-demo-s-projects.vercel.app ; inspect: https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/Diy5pKPqcBPat6oVsNpNmW9KjyPv .
+- Validation/configuration: local tests, lint, build, and browser checks explicitly skipped at the user's request. Vercel's platform deployment build succeeded; no new smoke verification claimed. Existing Git production customer/default profile and bundled demo modes preserved; no configuration or backend changes.
+- Rollback/risk: restore prior production revision `3e12292` through the Vercel alias or redeploy that committed revision. Attachments remain memory-only and reset after refresh.
 
 ### 2026-10-20 17:05 +08:00
 - Extracted shared AdminCategoryPanel and aligned Common Phrase / Attachment Management UI.
