@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-10-20 20:30:16 +08:00
+最后更新：2026-10-22 17:48:51 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,16 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-10-22 17:48:51 +08:00 — Skill Queues 功能版本生产发布完成
+
+- 修改原因/范围：按用户要求移除 Skill Queues 列表 Agents 列及 Add/Edit/View 的 Assigned Agents 字段；保留 assignedAgentCount 模型与映射，同步 CURRENT_STATUS.md、CURRENT_TODO.md，无路由业务变化。
+- 授权/提交：用户明确批准提交发布；功能提交 `4cb859b42fab1dd9d1a4d80ed4f89a8e42850efd`（`fix(routing-config): remove agent assignment fields from skill queues`）已执行 `git push origin main` 成功。
+- 发布结果：现有 Vercel Git integration 自动触发 Production 部署 `7248978212`，状态 success，于 `2026-10-22T09:46:46Z`（2026-10-22 17:46:46 +08:00）完成；commit Vercel 状态 success；GitHub CI completed/success：https://github.com/wuleiwulei3721-spec/bca-aicc-demo-v2/actions/runs/39758017082 。Production：https://netinfo-aicc-demo-v2.vercel.app ；版本地址：https://netinfo-aicc-demo-v2-cs98wrugw-wl-demo-s-projects.vercel.app ；inspect：https://vercel.com/wl-demo-s-projects/netinfo-aicc-demo-v2/FuRMJGBY38SThV3R15SZS5W4w1Yq 。
+- 本地验收：`npm run lint`、`npm run build`、`git diff --check` 及浏览器列表/Add/Edit/View/编辑保存检查通过；发布前显式设置 `VITE_APP_VISIBILITY_PROFILE=customer`、`VITE_COMMON_PHRASE_MODE=demo`、`VITE_COMMON_NUMBER_MODE=demo`、`VITE_COMMON_LINK_MODE=demo` 后再次 build 成功。
+- 生产配置/核验：沿用已有 Git 配置及默认 customer/demo，未修改远程环境。Vercel CLI 无凭据，`vercel env ls production` 触发登录后已取消，未执行 CLI deploy 或更改设置。正式 HTML/JS 均 HTTP 200，`/assets/index-djuCgkt_.js` 无 Assigned Agents 文本；产物中 isLocal 标志 `jX=!1`，design-system/employee-management Set 与菜单函数使用 `jX||!NX.has(e)`，确认本地专用菜单隐藏。本地显式 customer/demo 构建与平台产物 hash 不同，不声称字节相等。
+- 验收限制/风险：线上浏览器工具连续连接超时，未完成线上登录后交互复核，交互验收由本地检查覆盖；仍为前端 mock。此条记录功能版本已完成发布；日志更新后的独立 docs commit/push 及最终 Production 状态确认尚待执行，不预先声明完成。
+- 回滚：执行 `git revert 4cb859b`，按正常流程推送并重新部署；前一已确认生产代码提交为 `ce622f23cba12c7f1fbb47528fd642d49d15ab3e`。
 
 ### 2026-10-20 20:30:16 +08:00 — Production release completed
 
