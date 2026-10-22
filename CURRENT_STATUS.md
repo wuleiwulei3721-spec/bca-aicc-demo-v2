@@ -357,7 +357,7 @@ Implemented behaviors:
 - Channels Business Config Agent Service warning and breach threshold labels include colored status dots that reuse Live Chat SLA warning and breach colors.
 - Phone account management disabled.
 - Business Types `Source Business Code`.
-- Skill Queues include required `Access Code` after `VDN` in list columns and Add / Edit / View forms; Keyword search includes Access Code. Derived Channel / Media values reverse-look up Skill Routing Rules that target each queue and aggregate multiple values. Optional `SL (%)`, `AHT Target` (seconds), and `QM Target` (percentage) can be configured and displayed per queue.
+- Skill Queues include required `Access Code` after `VDN` in list columns and Add / Edit / View forms; Keyword search includes Access Code. Derived Channel / Media values reverse-look up Skill Routing Rules that target each queue and aggregate multiple values. Optional `SL (%)`, `AHT Target` (seconds), and `QM Target` (percentage) can be configured and displayed per queue. The `Agents` list column and `Assigned Agents` field in Add / Edit / View forms are removed; internal assigned agent counts and their existing values on edit/save are preserved.
 - Skill Routing Rules batch behavior and duplicate handling.
 - Working Time Plans hide internal plan IDs from query, list, editor, and preview surfaces.
 - Working Time Plans show Holiday Schedule as closed all day with editable dates and names, fixed disabled 00:00–23:59 times, and unchanged working-hour behavior for the other schedules.

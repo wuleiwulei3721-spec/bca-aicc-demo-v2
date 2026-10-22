@@ -6090,7 +6090,6 @@ export function SkillQueuesPage() {
           width: 100,
           render: (value?: number) => (value === undefined ? '-' : value),
         },
-        { dataIndex: 'assignedAgentCount', title: 'Agents', width: 60 },
       ]}
       createDraft={() => ({
         accessCode: '',
@@ -6322,45 +6321,6 @@ export function SkillQueuesPage() {
             </label>
           )
         }
-        const renderNumberField = (
-          key: string,
-          label: string,
-          unit: string,
-          options?: {
-            max?: number
-            min?: number
-            readOnly?: boolean
-            required?: boolean
-          },
-        ) => {
-          const value = numberValue(draft[key])
-
-          return (
-            <label className="routing-config-crud-modal__field routing-config-media-rule-modal__number-field">
-              <span>
-                {label}
-                {options?.required && renderRequiredMark()}
-              </span>
-              {isReadOnly || options?.readOnly ? (
-                <em>
-                  {value} {unit}
-                </em>
-              ) : (
-                <span className="routing-config-media-rule-modal__number-control">
-                  <InputNumber
-                    max={options?.max}
-                    min={options?.min ?? 1}
-                    value={value}
-                    onChange={(nextValue) =>
-                      setDraftValue(key, Number(nextValue) || 0)
-                    }
-                  />
-                  <em>{unit}</em>
-                </span>
-              )}
-            </label>
-          )
-        }
         const renderOptionalNumberField = (
           key: string,
           label: string,
@@ -6448,9 +6408,6 @@ export function SkillQueuesPage() {
                   'QM Target (%)',
                   { max: 100 },
                 )}
-                {renderNumberField('assignedAgentCount', 'Assigned Agents', 'agents', {
-                  readOnly: true,
-                })}
               </div>
             </section>
           </div>

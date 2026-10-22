@@ -168,7 +168,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
   - Routing Config visible by default,
   - Channels Phone Accounts disabled,
   - Channels Voice Business Config shows the no-configuration prompt; DM Queue Configuration includes Queue Auto-Reply Message and preserves its saved value,
-  - Skill Queues Access Code appears after VDN in list columns and Add / Edit / View forms, Keyword can search Access Code, derived Channel / Media lookup values are shown and filterable, and optional SL / AHT Target / QM Target values can be configured,
+  - Skill Queues Access Code appears after VDN in list columns and Add / Edit / View forms, Keyword can search Access Code, derived Channel / Media lookup values are shown and filterable, optional SL / AHT Target / QM Target values can be configured, the Agents list header and Assigned Agents field are absent from Add / Edit / View forms, and editing/saving works while preserving the internal assigned agent count,
   - Skill Routing Rules batch behavior,
   - Site Access Volume ratio validation,
   - Working Time Plans layout.
