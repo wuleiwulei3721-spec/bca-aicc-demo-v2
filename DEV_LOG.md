@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-10-22 17:48:51 +08:00
+最后更新：2026-10-25 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,13 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-10-25 +08:00 — Remove Common Phrase Remark controls
+
+- Scope: Common Phrase Management Add/Edit form and query-result table only. Removed Remark input, table column, draft field, and frontend length validation. Existing stored remarks are carried through edit requests because the backend treats omitted remarks as empty.
+- Validation: `pnpm run lint`, customer/demo `pnpm run build`, and local browser list/Add/Edit/save checks passed. Build retains the existing large bundle warning. Dependencies were installed locally with pnpm; no package or lockfile changes are included in this release.
+- Release: commit to main through the GitHub Git Data API to trigger the existing Vercel production integration. Customer settings: `VITE_APP_VISIBILITY_PROFILE=customer`, Common Phrase/Number/Link modes `demo`. Deployment confirmation follows in the delivery report.
+- Production URL: https://netinfo-aicc-demo-v2.vercel.app/ . No backend/schema migration. Rollback: revert this feature commit and redeploy the preceding revision `f17abd9259d169e996b89dede72ee1c836cbfa72`.
 
 ### 2026-10-22 17:48:51 +08:00 — Skill Queues 功能版本生产发布完成
 

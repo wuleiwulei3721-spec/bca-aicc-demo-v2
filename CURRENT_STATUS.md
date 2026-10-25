@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-10-20 16:18 +08:00
+Last updated: 2026-10-25 +08:00
 
 ## 1. Overall Status
 
@@ -285,6 +285,7 @@ Implemented behaviors:
 - Common Phrase, Common Number, and Common Link no longer display runtime-mode banners or demo-session deletion wording. Business-facing error/retry feedback remains; local API persistence and static demo-mode behavior are unchanged.
 - Common Phrase management queries support category, shortcut, phrase text, and status filters with server-side results.
 - Common phrase batch move between categories.
+- Common Phrase Management: Add/Edit forms and query result lists omit Remark. Existing remark values remain compatible and are preserved when editing other phrase fields.
 - Public phrase linkage into the Live Chat Quick Replies tab reads the same API and filters to `Active`.
 - `npm run check:local` provides a fast read-only API and SQLite integrity check; `npm run db:inspect` prints the local schema and Common Phrase records.
 - Local FastAPI environment is installed and verified on this machine: Python 3.12.10, MySQL 8.0.46, independent `aicc_demo_local`, backend virtual environment, dependencies, Alembic migration, `/docs`, API health, FastAPI tests, and `npm run check:fastapi` all pass.

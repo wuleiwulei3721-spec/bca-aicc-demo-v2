@@ -51,7 +51,6 @@ interface CommonPhraseDraft {
   categoryId: string
   phraseId?: string
   phraseText: string
-  remark: string
   shortcutCode: string
   status: CommonPhraseStatus
 }
@@ -60,7 +59,6 @@ const allCategoriesKey = '__all__'
 const commonPhraseTabKey = 'page:call-management-common-phrases'
 const COMMON_PHRASE_SHORTCUT_CODE_MAX_LENGTH = 50
 const COMMON_PHRASE_MAX_LENGTH = 2000
-const COMMON_PHRASE_REMARK_MAX_LENGTH = 2000
 
 const defaultFilters: CommonPhraseFilters = {
   phraseText: '',
@@ -71,7 +69,6 @@ const defaultFilters: CommonPhraseFilters = {
 const defaultDraft: CommonPhraseDraft = {
   categoryId: '',
   phraseText: '',
-  remark: '',
   shortcutCode: '',
   status: 'Active',
 }
@@ -279,7 +276,6 @@ export function CommonPhraseManagementPage() {
     const errors: string[] = []
     const shortcutCode = draft.shortcutCode.trim()
     const phraseText = draft.phraseText.trim()
-    const remark = draft.remark.trim()
 
     if (!shortcutCode) {
       errors.push('Shortcut Code is required.')
@@ -312,19 +308,12 @@ export function CommonPhraseManagementPage() {
       errors.push('Category is required.')
     }
 
-    if (remark.length > COMMON_PHRASE_REMARK_MAX_LENGTH) {
-      errors.push(
-        `Remark must be ${COMMON_PHRASE_REMARK_MAX_LENGTH} characters or fewer.`,
-      )
-    }
-
     return errors
   }, [
     categoryNameById,
     draft.categoryId,
     draft.phraseId,
     draft.phraseText,
-    draft.remark,
     draft.shortcutCode,
     entries,
     modalMode,
@@ -436,7 +425,13 @@ export function CommonPhraseManagementPage() {
   }
 
   const openEditModal = (entry: CommonPhraseEntry) => {
-    setDraft({ ...entry })
+    setDraft({
+      categoryId: entry.categoryId,
+      phraseId: entry.phraseId,
+      phraseText: entry.phraseText,
+      shortcutCode: entry.shortcutCode,
+      status: entry.status,
+    })
     setModalMode('edit')
     setSubmitAttempted(false)
   }
@@ -457,7 +452,7 @@ export function CommonPhraseManagementPage() {
     const input = {
       categoryId: draft.categoryId,
       phraseText: draft.phraseText.trim(),
-      remark: draft.remark.trim(),
+      remark: entries.find((entry) => entry.phraseId === draft.phraseId)?.remark ?? '',
       shortcutCode: draft.shortcutCode.trim(),
       status: draft.status,
       updatedBy: formatAuditActor(
@@ -599,12 +594,6 @@ export function CommonPhraseManagementPage() {
       render: (status: CommonPhraseStatus) => renderStatusBadge(status),
       title: 'Status',
       width: 92,
-    },
-    {
-      dataIndex: 'remark',
-      ellipsis: true,
-      title: 'Remark',
-      width: 190,
     },
     {
       dataIndex: 'createdAt',
@@ -879,14 +868,6 @@ export function CommonPhraseManagementPage() {
                 onChange={(event) =>
                   updateDraft('phraseText', event.target.value)
                 }
-              />
-            </AdminFormField>
-            <AdminFormField label="Remark" fullWidth>
-              <LimitedTextArea
-                maxLength={COMMON_PHRASE_REMARK_MAX_LENGTH}
-                rows={3}
-                value={draft.remark}
-                onChange={(event) => updateDraft('remark', event.target.value)}
               />
             </AdminFormField>
             <AdminFormField label="Status">
