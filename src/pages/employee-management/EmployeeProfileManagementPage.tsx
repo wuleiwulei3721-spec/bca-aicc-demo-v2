@@ -90,6 +90,7 @@ const roleOptions: Array<{ label: string; value: '' | EmployeeRole }> = [
   { label: 'SPV', value: 'SPV' },
   { label: 'OM', value: 'OM' },
   { label: 'QA', value: 'QA' },
+  { label: 'Admin', value: 'Admin' },
 ]
 
 const employeeRoleOptions = roleOptions.filter(
@@ -159,12 +160,18 @@ const organizationTreeData = toTreeData(employeeOrganizationUnits)
 function getNextEmployeeId(entries: EmployeeProfile[]) {
   const nextSequence =
     entries.reduce((maxSequence, entry) => {
-      const match = /^EMP-(\d+)$/.exec(entry.employeeId)
+      const match = /^(?:EMP-)?(\d+)$/.exec(entry.employeeId)
 
-      return match ? Math.max(maxSequence, Number(match[1])) : maxSequence
-    }, 10000) + 1
+      if (!match) {
+        return maxSequence
+      }
 
-  return `EMP-${String(nextSequence).padStart(5, '0')}`
+      const sequence = BigInt(match[1])
+
+      return sequence > maxSequence ? sequence : maxSequence
+    }, 10000n) + 1n
+
+  return nextSequence.toString().padStart(5, '0')
 }
 
 function createDefaultDraft(entries: EmployeeProfile[]) {
@@ -326,6 +333,8 @@ export function EmployeeProfileManagementPage() {
 
     if (!normalizedEmployeeId) {
       errors.push('Employee ID is required.')
+    } else if (!/^\d+$/.test(normalizedEmployeeId)) {
+      errors.push('Employee ID must contain digits only.')
     }
 
     if (!normalizedName) {

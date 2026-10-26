@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-10-25 +08:00
+Last updated: 2026-10-26 +08:00
 
 ## 1. Overall Status
 
@@ -283,7 +283,8 @@ Implemented behaviors:
 - Common Link local full-stack closure: FastAPI + local MySQL persists Common Link CRUD, server-side Website Name / Website URL queries, trim-plus-lowercase uniqueness for both values, HTTP(S) URL validation, 2000-character Remark, and Updated Time / Updated By metadata. `0003_common_link` is a new Alembic migration and does not modify the applied Common Phrase or Common Number migrations.
 - Common Link runtime modes: local development defaults to `VITE_COMMON_LINK_MODE=api`; published/static customer builds default to independent bundled mock data. The Common Link management page and agent workspace Common Links tab read the same configured store; static demo-mode management changes reset after refresh.
 - Common Phrase, Common Number, and Common Link no longer display runtime-mode banners or demo-session deletion wording. Business-facing error/retry feedback remains; local API persistence and static demo-mode behavior are unchanged.
-- Common Phrase management queries support category, shortcut, phrase text, and status filters with server-side results.
+- Common Phrase management displays only Shortcut Code, Common Phrase, Category, Updated Time, Updated By, and Actions; query controls are Shortcut Code and Common Phrase alongside the category panel. Backend status filtering and other model fields remain available internally and do not imply additional list columns.
+- Common Phrase Add/Edit forms show Shortcut Code, Category, and Common Phrase only. Existing hidden Remark/Status values are preserved during edits; new entries retain the internal empty Remark and Active defaults. The restored list no longer forces a 1400px horizontal scroll.
 - Common phrase batch move between categories.
 - Common Phrase Management: Add/Edit forms and query result lists omit Remark. Existing remark values remain compatible and are preserved when editing other phrase fields.
 - Public phrase linkage into the Live Chat Quick Replies tab reads the same API and filters to `Active`.
@@ -381,7 +382,8 @@ Implemented behaviors:
 - Agent Capacity Settings modal with Skill Configuration and Other Configuration tabs.
 - Skill Configuration selects Routing Config Skill Queues first, then stores Agent Weight / Skill Weight for selected skills per employee.
 - Other Configuration stores Live Chat Max Services per employee.
-- Local mock store state for demo changes, seeded with 10 employee profiles.
+- Local mock store state for demo changes, seeded with 11 employee profiles including the `1234 / Admin` system-administrator record corresponding to existing `1234-Admin` audit labels. Admin is an employee-profile role only; it adds no login account, authorization, or CTI identity.
+- Employee Profile now normalizes legacy `EMP-` IDs to numeric strings when loading/saving local profiles; newly generated IDs and manual input use digits only, preserving leading zeroes. Login/session internal identifiers remain compatible. Shared audit writes use numeric ID-name labels; the three local full-stack lists also normalize legacy audit labels for display. `1234-Admin` stays unchanged, and historical MySQL values are not rewritten.
 
 ## 18. Completed Design System
 

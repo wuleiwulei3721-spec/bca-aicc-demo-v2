@@ -2,7 +2,7 @@ export type EmployeeStatus = 'Normal' | 'Resigned' | 'Frozen' | 'Disabled'
 
 export type EmployeePositionType = 'Management' | 'Agent'
 
-export type EmployeeRole = 'Agent' | 'TL' | 'SPV' | 'OM' | 'QA'
+export type EmployeeRole = 'Agent' | 'TL' | 'SPV' | 'OM' | 'QA' | 'Admin'
 
 export interface EmployeeOrganizationUnit {
   children?: EmployeeOrganizationUnit[]

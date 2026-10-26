@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-10-25 +08:00
+最后更新：2026-10-26 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -35,6 +35,36 @@ Historical entries are preserved in archive files without content rewrites. Use 
 - Validation: `pnpm run lint`, customer/demo `pnpm run build`, and local browser list/Add/Edit/save checks passed. Build retains the existing large bundle warning. Dependencies were installed locally with pnpm; no package or lockfile changes are included in this release.
 - Release: committed to main as `922fcc4b1485e75717283747ccbe17e49c8d4b15` through the GitHub Git Data API. Existing Vercel integration confirmed Production deployment `7307307721` success at `2026-10-25T01:59:53Z` (09:59:53 +08:00), with Vercel commit status success. Immutable URL: https://netinfo-aicc-demo-v2-8u7n402c5-wl-demo-s-projects.vercel.app . Local customer/demo build explicitly used `VITE_APP_VISIBILITY_PROFILE=customer` and Common Phrase/Number/Link modes `demo`; remote settings were unchanged. Direct production HTTP/browser acceptance remains unavailable because this machine cannot connect to the production host; local browser acceptance covers the requested workflow.
 - Production URL: https://netinfo-aicc-demo-v2.vercel.app/ . No backend/schema migration. Rollback: revert this feature commit and redeploy the preceding revision `f17abd9259d169e996b89dede72ee1c836cbfa72`.
+
+### 2026-10-26 +08:00 — Common Phrase restoration and employee/audit ID release validation
+
+- Scope: restore the original Common Phrase list, query bar, and three-field Add/Edit forms; normalize employee/audit display IDs; add the local `1234 / Admin` employee profile. Existing backend fields, login identities, and persisted historical audit values are preserved.
+- Validation: `npm run lint`, explicit customer/demo `npm run build`, all 4 Node API tests, server typecheck, all 3 Python API tests, `npm run check:fastapi`, and `git diff --check` passed. Targeted checks verified prefix removal, leading-zero preservation, unchanged `1234-Admin`, 11 unique numeric employee IDs, and BigInt generation beyond Number.MAX_SAFE_INTEGER. The final generator fix passed the repeated lint/build checks.
+- Browser acceptance: at desktop 1440x900, local API mode showed the original six list columns, two query controls, three-field Add/Edit forms, numeric historical audit labels, and the 1234/Admin employee profile. Customer/demo preview retained `1234-Admin`, hid local-only menus, showed the same restored forms/list, and saved a preview-only edit with `10027-Budi Kartika`. No production or local MySQL records were changed by these browser checks.
+- Release preparation: customer build explicitly used `VITE_APP_VISIBILITY_PROFILE=customer` and `VITE_COMMON_PHRASE_MODE=demo`, `VITE_COMMON_NUMBER_MODE=demo`, `VITE_COMMON_LINK_MODE=demo`. The production release is not yet claimed complete. Remote main contains an intervening Remark-removal release, which must be preserved while integrating this change.
+- Risk/rollback: existing large bundle and Python dependency deprecation warnings remain non-blocking. This is still the approved static customer demo, with no production backend deployment or identity/permission integration. Roll back only this release's committed changes through the normal committed release flow if needed.
+
+### 2026-10-26 +08:00 — Remove legacy employee prefixes from employee and audit presentation
+
+- Scope/reason: user explicitly confirmed that `EMP-` must also be removed after the administrator-profile addition.
+- Result: normalize local Employee Profile IDs during store loading/saving, generate numeric IDs, and require digits for employee ID input. Shared audit formatting now writes numeric ID-name labels; Common Phrase/Number/Link normalize existing prefixed Updated By values when rendering. `1234-Admin`, login/session internal IDs, and historical database records are preserved.
+- Validation: full checks skipped per the user's quick-edit preference; no commit or deployment.
+- Rollback/risk: selectively restore the employee-store/ID-generator and audit-format/render changes. Existing mock/login source identifiers remain legacy-compatible; no identity-provider integration or database migration was performed.
+
+### 2026-10-26 +08:00 — Add the administrator employee profile
+
+- Scope/reason: user narrowed the ID/audit request to adding an employee record matching the existing `1234-Admin` audit label; the proposed EMP-prefix normalization was not applied.
+- Result: added `1234 / Admin` to the local employee mock under Operations Support, plus Admin in the employee role type/filter/form options. No AICC account or skills are configured. Existing EMP-prefixed IDs, login accounts/sessions, audit formatting, and historical database records remain unchanged; the local catalog now contains 11 profiles.
+- Validation: full checks skipped per the user's request for a minimal quick change. No commit or deployment.
+- Rollback/risk: remove only the new mock record and employee-role option/type member to undo. This employee-profile entry does not grant an Admin login, real permissions, or CTI access.
+
+### 2026-10-26 +08:00 — Restore Common Phrase customer-confirmed list
+
+- Scope/reason: user requested removal of frontend fields introduced during the local full-stack migration in `e7447c0`.
+- Result: removed Sort Order, Status, Remark, Created Time, and Created By columns and the added Status query control from `CommonPhraseManagementPage.tsx`; restored Common Phrase / Updated By widths to 280 / 170. Preserved the original six columns, backend/API/data fields, editing behavior, and local/published data-source modes. Updated CURRENT_STATUS.md and DESIGN_SYSTEM.md to prevent backend fields from automatically expanding the customer UI.
+- Follow-up: restored Add/Edit forms to Shortcut Code, Category, and Common Phrase, removing the extra Remark/Status controls and unused Switch import. Kept existing hidden values in edit submissions and existing defaults for new phrases. Removed the leftover forced 1400px table scroll so the six-column list can fit its container. Backend and stored data remain untouched.
+- Validation: lint, build, and browser checks skipped per the user's request for quick scoped changes; no commit or deployment.
+- Rollback/risk: selectively restore this page's presentation changes if required. Public site keeps its current version until a separate release; persisted data is untouched.
 
 ### 2026-10-22 17:48:51 +08:00 — Skill Queues 功能版本生产发布完成
 

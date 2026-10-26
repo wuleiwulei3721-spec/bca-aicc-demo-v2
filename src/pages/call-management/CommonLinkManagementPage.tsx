@@ -21,6 +21,7 @@ import { useAppStore, useAuthStore, useCommonLinkStore } from '../../store'
 import type { CommonLinkEntry } from '../../types'
 import {
   formatAuditActor,
+  formatAuditActorLabel,
   formatCallManagementDateTime,
 } from '../../utils/audit'
 
@@ -313,6 +314,7 @@ export function CommonLinkManagementPage() {
     },
     {
       dataIndex: 'updatedBy',
+      render: formatAuditActorLabel,
       ellipsis: true,
       title: 'Updated By',
       width: 132,

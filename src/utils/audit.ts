@@ -1,10 +1,18 @@
 export const DEFAULT_AUDIT_ACTOR = '1234-Admin'
 
+export function normalizeEmployeeId(value: string) {
+  return value.trim().replace(/^EMP-(?=\d)/i, '')
+}
+
+export function formatAuditActorLabel(value: string) {
+  return normalizeEmployeeId(value)
+}
+
 export function formatAuditActor(
   employeeId?: string,
   displayName?: string,
 ) {
-  const normalizedEmployeeId = employeeId?.trim()
+  const normalizedEmployeeId = employeeId ? normalizeEmployeeId(employeeId) : ''
   const normalizedDisplayName = displayName?.trim()
 
   if (normalizedEmployeeId && normalizedDisplayName) {

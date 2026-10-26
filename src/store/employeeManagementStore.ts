@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { employeeProfiles } from '../mock/employeeManagement'
 import type { EmployeeProfile } from '../types'
+import { normalizeEmployeeId } from '../utils/audit'
 
 interface EmployeeManagementStore {
   employeeProfiles: EmployeeProfile[]
@@ -11,6 +12,7 @@ interface EmployeeManagementStore {
 function cloneProfile(profile: EmployeeProfile): EmployeeProfile {
   return {
     ...profile,
+    employeeId: normalizeEmployeeId(profile.employeeId),
     skillSettings: profile.skillSettings.map((setting) => ({ ...setting })),
   }
 }
@@ -29,7 +31,7 @@ export const useEmployeeManagementStore = create<EmployeeManagementStore>(
     upsertEmployeeProfile: (profile) =>
       set((state) => {
         const existingIndex = state.employeeProfiles.findIndex(
-          (item) => item.employeeId === profile.employeeId,
+          (item) => item.employeeId === normalizeEmployeeId(profile.employeeId),
         )
         const nextProfile = cloneProfile(profile)
 

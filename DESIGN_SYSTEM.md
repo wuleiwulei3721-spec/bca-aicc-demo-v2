@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Design System
 
-Last updated: 2026-10-20 11:53 +08:00
+Last updated: 2026-10-26 +08:00
 
 This document records the current implemented visual rules. It should be treated as the design baseline for future pages and components.
 
@@ -330,7 +330,10 @@ Admin list rules:
 - When update audit columns are present, list them at the end in `Updated Time`, then `Updated By`, then `Actions` order. Creation metadata precedes update metadata when both are shown. Size management-table columns to their content and use horizontal scrolling only when confirmed minimum widths cannot fit the target workspace.
 - `LimitedInput` and `LimitedTextArea` are the shared character-limit controls. Remark fields default to 2000 characters, while business-specific limits are passed explicitly, such as Quick Reply Code 50, Common Phrase / Quick Reply text 2000, Sensitive Word 100, Common Link Website Name / Website URL 200, Quick Action Action Name / Link Address 200, Question Name 100, Ticket Summary 250, or Ticket Note 1000. They share the Ticket count style: a compact normal-weight count that stays inside the control without changing the field geometry, and clamp over-limit change events at the configured maximum.
 - Local-only management modules such as Employee Management must still use English UI text and the same admin layout contract as customer-visible management pages.
+- Employee Profile IDs are numeric strings without the legacy `EMP-` prefix, including new defaults and validation. Audit actors use numeric ID-name labels; preserve `1234-Admin`. The three local full-stack management pages normalize historical prefixed audit labels for display without rewriting history or changing login/session identifiers.
 - Common Phrase, Common Number, and Common Link must present the same business interface in local API and published demo modes. Do not display runtime-mode banners, refresh-reset notices, or demo-session terminology; keep data-source details in internal configuration and documentation. Preserve contextual validation, error/retry feedback, and deletion consequences.
+- Common Phrase keeps the customer-confirmed six-column list: Shortcut Code, Common Phrase, Category, Updated Time, Updated By, and Actions. Its query bar contains Shortcut Code and Common Phrase only. Adding backend fields does not authorize exposing Sort Order, Status, Remark, Created Time, or Created By as list columns or adding query controls.
+- Common Phrase Add/Edit modals expose only Shortcut Code, Category, and Common Phrase. Preserve backend-only values when saving an existing phrase; do not expose additional model fields as form controls without customer confirmation. The restored list does not force the 1400px horizontal scroll introduced with the extra fields.
 
 ## 14. Responsive and Demo Quality Rules
 

@@ -25,6 +25,7 @@ import type { CommonNumberQuery } from '../../api/commonNumberApi'
 import type { CommonNumberEntry, CommonNumberStatus } from '../../types'
 import {
   formatAuditActor,
+  formatAuditActorLabel,
   formatCallManagementDateTime,
 } from '../../utils/audit'
 
@@ -316,6 +317,7 @@ export function CommonNumberManagementPage() {
     },
     {
       dataIndex: 'updatedBy',
+      render: formatAuditActorLabel,
       ellipsis: true,
       title: 'Updated By',
       width: 132,

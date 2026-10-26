@@ -4,7 +4,7 @@ import {
   PlusOutlined,
   SwapOutlined,
 } from '@ant-design/icons'
-import { Alert, Input, Popover, Select, Switch } from 'antd'
+import { Alert, Input, Popover, Select } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
@@ -20,7 +20,6 @@ import {
   BaseCard,
   LimitedInput,
   LimitedTextArea,
-  StatusBadge,
 } from '../../components'
 import { useOperationFeedback } from '../../contexts/operationFeedbackContext'
 import {
@@ -36,6 +35,7 @@ import type {
 import type { CommonPhraseQuery } from '../../api/commonPhraseApi'
 import {
   formatAuditActor,
+  formatAuditActorLabel,
   formatCallManagementDateTime,
 } from '../../utils/audit'
 
@@ -77,15 +77,6 @@ function normalizeValue(value: string) {
   return value.trim().toLowerCase()
 }
 
-const statusOptions: Array<{
-  label: string
-  value: '' | CommonPhraseStatus
-}> = [
-  { label: 'All Statuses', value: '' },
-  { label: 'Enabled', value: 'Active' },
-  { label: 'Disabled', value: 'Disabled' },
-]
-
 function toQuery(
   filters: CommonPhraseFilters,
   categoryId: string,
@@ -102,17 +93,6 @@ function errorMessage(error: unknown) {
   return error instanceof Error
     ? error.message
     : 'The Common Phrase request failed.'
-}
-
-function renderStatusBadge(status: CommonPhraseStatus) {
-  return (
-    <StatusBadge
-      dot
-      label={status === 'Active' ? 'Enabled' : 'Disabled'}
-      size="small"
-      status={status === 'Active' ? 'success' : 'disabled'}
-    />
-  )
 }
 
 export function CommonPhraseManagementPage() {
@@ -575,7 +555,7 @@ export function CommonPhraseManagementPage() {
       dataIndex: 'phraseText',
       ellipsis: true,
       title: 'Common Phrase',
-      width: 250,
+      width: 280,
     },
     {
       dataIndex: 'categoryId',
@@ -585,28 +565,6 @@ export function CommonPhraseManagementPage() {
       width: 96,
     },
     {
-      dataIndex: 'sortOrder',
-      title: 'Sort Order',
-      width: 84,
-    },
-    {
-      dataIndex: 'status',
-      render: (status: CommonPhraseStatus) => renderStatusBadge(status),
-      title: 'Status',
-      width: 92,
-    },
-    {
-      dataIndex: 'createdAt',
-      render: (createdAt: string) => formatCallManagementDateTime(createdAt),
-      title: 'Created Time',
-      width: 146,
-    },
-    {
-      dataIndex: 'createdBy',
-      title: 'Created By',
-      width: 145,
-    },
-    {
       dataIndex: 'updatedAt',
       render: (updatedAt: string) => formatCallManagementDateTime(updatedAt),
       title: 'Updated Time',
@@ -614,8 +572,9 @@ export function CommonPhraseManagementPage() {
     },
     {
       dataIndex: 'updatedBy',
+      render: formatAuditActorLabel,
       title: 'Updated By',
-      width: 145,
+      width: 170,
     },
     {
       fixed: 'right',
@@ -731,18 +690,6 @@ export function CommonPhraseManagementPage() {
                     }
                   />
                 </AdminFilterField>
-                <AdminFilterField label="Status" width={160}>
-                  <Select
-                    options={statusOptions}
-                    value={filterDraft.status}
-                    onChange={(value) =>
-                      setFilterDraft((currentDraft) => ({
-                        ...currentDraft,
-                        status: value,
-                      }))
-                    }
-                  />
-                </AdminFilterField>
                 <AdminFilterField label="Common Phrase" width={260}>
                   <Input
                     placeholder="Common Phrase"
@@ -804,7 +751,6 @@ export function CommonPhraseManagementPage() {
           <AdminTable<CommonPhraseEntry>
             columns={columns}
             dataSource={filteredEntries}
-            horizontalScroll={1400}
             loading={isLoading}
             pagination={{}}
             rowKey="phraseId"
@@ -869,18 +815,6 @@ export function CommonPhraseManagementPage() {
                   updateDraft('phraseText', event.target.value)
                 }
               />
-            </AdminFormField>
-            <AdminFormField label="Status">
-              <span className="busy-reason-config__switch-row">
-                <Switch
-                  checked={draft.status === 'Active'}
-                  size="small"
-                  onChange={(checked) =>
-                    updateDraft('status', checked ? 'Active' : 'Disabled')
-                  }
-                />
-                <em>{draft.status === 'Active' ? 'Enabled' : 'Disabled'}</em>
-              </span>
             </AdminFormField>
           </div>
         </div>
