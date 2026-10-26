@@ -34,7 +34,7 @@ Historical entries are preserved in archive files without content rewrites. Use 
 - Scope: moved the Social Media top-level group to the end of `allSideMenuItems` in `src/layouts/BasicLayout.tsx`. Customer navigation places it immediately after Routing Config. Documented the ordering in DESIGN_SYSTEM.md.
 - Validation: lint, customer/demo production build, and `git diff --check` passed. Local browser smoke check confirmed the final position in expanded/collapsed navigation and opening Social Media Interaction Log. Existing large bundle warning remains.
 - Release method: commit only BasicLayout.tsx, DESIGN_SYSTEM.md, and this log to main through the GitHub Git Data API; use existing Vercel Git integration. Local build explicitly uses customer visibility and demo Common Phrase/Number/Link modes. Remote environment settings unchanged.
-- Production: https://netinfo-aicc-demo-v2.vercel.app/ . Deployment status will be recorded after the integration finishes. Rollback: revert the navigation feature commit; preceding upstream revision is `57ef59af92f763b65f471c66d16b0402130c90ca`.
+- Production: https://netinfo-aicc-demo-v2.vercel.app/ . Feature commit `408b44bc809e6ab4163782d4ac1a21d1f329224b` deployed successfully: Vercel Production deployment `7328233182`, completed `2026-10-26T09:23:14Z` (17:23:14 +08:00); commit Vercel status success. Immutable deployment: https://netinfo-aicc-demo-v2-qafp6q4qr-wl-demo-s-projects.vercel.app . Direct production HTTP verification timed out from this machine; local browser acceptance passed. Rollback: revert the navigation feature commit; preceding upstream revision is `57ef59af92f763b65f471c66d16b0402130c90ca`.
 
 ### 2026-10-26 12:06 +08:00 — Production release: Common Phrase UI and numeric employee audit labels
 
