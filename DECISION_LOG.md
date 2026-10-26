@@ -562,13 +562,13 @@ Module:
 Email Channel / Workspace
 
 Decision:
-The Email-channel delivery is a code-built, closable agent workspace opened from `Channel Simulation > Email`. It covers Inbox, Sent, Drafts, Trash, Reply, Forward, Ignore, thread records, and CWU, directly reuses the shared five-card customer column, and uses Live Chat's `CrmPanel` with the same CRM screenshot and `CRM / Email` tab styling. It does not embed the legacy full-system Email design screenshots and does not add Email Record Inquiry or Email Template Deploy.
+The Email-channel delivery is a code-built, closable agent workspace opened from `Channel Simulation > Email`. It covers Inbox, Sent, Drafts, Trash, Reply, Ignore, thread records, and CWU, directly reuses the shared five-card customer column, and uses Live Chat's `CrmPanel` with the same CRM screenshot and `CRM / Email` tab styling. As confirmed by the user on 2026-10-26, Email Forward and Transfer are prohibited. It does not embed the legacy full-system Email design screenshots and does not add Email Record Inquiry or Email Template Deploy.
 
 Reason:
 The Email reference images contain a complete legacy application shell and fixed dimensions, so the mailbox interaction remains code-built. Reusing the existing Live Chat customer and CRM workspace components keeps shared behavior and visual contracts identical across channels, including the current CRM screenshot already used by Live Chat.
 
 Impact:
-Email handling uses anonymized front-end mock data and resets when the tab is closed/reopened or the app refreshes. 2026-07-24 update: Ignore moves the email to Trash, while a completed Forward removes the source and forwarding record from all four folders, including when resumed from a saved draft. Reply/Send, Draft, Ignore, Recover, thread, SLA, and CWU behavior remains front-end only. The same date's customer-release approval exposes the Email menu in both customer and local visibility profiles. Email verification stays hidden until a rule is confirmed. Email Record Inquiry remains separate from Interaction Log, and Email Template Deploy remains a future independent scope.
+Email handling uses anonymized front-end mock data and resets when the tab is closed/reopened or the app refreshes. 2026-10-26 update: Email Transfer and Forward are removed from Inbox, Sent, internal transfer state/modal/options, and all compose/draft entry paths so agents cannot forward Email. Reply/Send, normal new email, Draft, autosave, Ignore, Recover, thread, SLA, attachments, and CWU behavior remains front-end only; historical transferred status presentation may remain in mock records. The 2026-07-24 customer-release approval exposes the Email menu in both customer and local visibility profiles. Email verification stays hidden until a rule is confirmed. Email Record Inquiry remains separate from Interaction Log, and Email Template Deploy remains a future independent scope.
 
 Status:
 Implemented

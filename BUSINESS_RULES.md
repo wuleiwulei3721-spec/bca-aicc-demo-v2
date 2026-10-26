@@ -614,8 +614,8 @@ WhatsApp demo is chat-only in the current implementation.
 - Inbox, Sent, Drafts, and Trash use anonymized front-end mock data. All changes reset after refresh or closing/reopening the Email tab.
 - Selecting an email marks it read and updates the shared customer context, `CRM / Email` content, and the related thread record.
 - Reply creates a Sent email, appends the thread record, marks the source email `Replied`, and stops the source SLA.
-- Forward uses the same composer and requires an explicit receiver. After Send, the source email and forwarding record are removed from Inbox, Sent, Drafts, and Trash; Forward does not create a Sent item.
-- Save Draft creates or updates a Drafts item. Sending a normal edited draft removes the draft and creates a Sent item; sending a saved Forward draft removes both the draft and its original source without creating a Sent item.
+- Agents cannot transfer or forward Email messages. Inbox and Sent have no Email Transfer action, the internal Email transfer modal/state/options are removed, and compose/draft paths cannot enter a transfer or forward mode.
+- Save Draft creates or updates a Drafts item. Sending a normal edited draft removes the draft and creates a Sent item; drafts and autosave retain normal new-email or Reply behavior.
 - Ignore reasons are `AD`, `Spam`, and `Sales Email`. Ignore marks the email `No reply`, stops SLA, and moves it from Inbox to Trash.
 - Trash Recover returns the pre-seeded or ignored trashed email to its original folder and clears the ignore marker.
 - The customer-visible Email panel is named `Ticket`. It shares the four-field Ticket Registration component: Category, Product, Summary, and Note are required. Category and Product are searchable single-select dropdowns; Product is disabled until Category is selected and is filtered to its configured Category relationship. Summary is limited to 250 characters and Note to 1000; each editor shows its normal-weight count inside the lower-right corner. One-Click Generation creates an editable local draft before confirmation from the left side of the fixed footer. The internal CWU mock stores the selected Category and Product as single values.
@@ -857,7 +857,7 @@ Implemented customer-review pages:
 
 Important rules:
 
-- Channels has Phone account management disabled.
+- Phone account management disabled. Account list and Add/Edit forms omit Credential / Secret Ref.
 - Routing Config media types include Voice, Video, DM, and Non-DM.
 - Non-DM represents non-direct-message scenarios such as social comments, replies, mentions, app-store reviews, and Email mailbox interactions.
 - Instagram, LinkedIn, Facebook, X, Tik Tok, and YouTube support DM plus Non-DM media.

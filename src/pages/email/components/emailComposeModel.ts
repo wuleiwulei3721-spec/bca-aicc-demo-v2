@@ -3,7 +3,6 @@ import type { EmailLanguage } from '../../../types'
 export const BANK_EMAIL_ACCOUNT = 'contact@bank1.demo'
 export const BANK_PUBLIC_WEBSITE = 'https://www.bca.co.id'
 export const BANK_SIGNATURE_IMAGE = '/email-assets/bank-service-counter.jpg'
-export const TEAM_LEADER_EMAIL = 'tl.budi.kartika@bank1.demo'
 export const AGENT_NAME = 'Budi Kartika'
 export const DEFAULT_EMAIL_LANGUAGE: EmailLanguage = 'ID'
 

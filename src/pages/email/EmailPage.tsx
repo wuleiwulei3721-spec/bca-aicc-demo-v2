@@ -1,18 +1,15 @@
 import {
   ClockCircleOutlined,
-  CloseOutlined,
   DeleteOutlined,
   EditOutlined,
   FileTextOutlined,
   FilterOutlined,
   InboxOutlined,
-  LeftOutlined,
   LinkOutlined,
   MailOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   ReloadOutlined,
-  RightOutlined,
   RollbackOutlined,
   SaveOutlined,
   SearchOutlined,
@@ -24,7 +21,6 @@ import {
   Dropdown,
   Empty,
   Input,
-  Select,
   Tooltip,
 } from 'antd'
 import type { MenuProps } from 'antd'
@@ -68,7 +64,6 @@ import {
 const BANK_EMAIL_ACCOUNT = 'contact@bank1.demo'
 const BANK_PUBLIC_WEBSITE = 'https://www.bca.co.id'
 const BANK_SIGNATURE_IMAGE = '/email-assets/bank-service-counter.jpg'
-const TEAM_LEADER_EMAIL = 'tl.budi.kartika@bank1.demo'
 const AGENT_NAME = 'Budi Kartika'
 const DEFAULT_EMAIL_LANGUAGE: EmailLanguage = 'ID'
 
@@ -103,28 +98,6 @@ const emailCommonLinks = [
     id: 'bca-mobile-help',
     title: 'BCA Mobile Support',
   },
-]
-
-const transferAgents = [
-  {
-    employeeId: 'AICC1025',
-    extension: '81025',
-    id: 'tl-arif-prasetyo',
-    name: 'Arif Prasetyo',
-    role: 'TL',
-    skillName: 'Debit Card',
-    status: 'Ready',
-  },
-]
-
-const transferSkillOptions = [
-  { label: 'All skill Name', value: 'all' },
-  { label: 'Debit Card', value: 'Debit Card' },
-]
-
-const transferStatusOptions = [
-  { label: 'All status', value: 'all' },
-  { label: 'Ready', value: 'Ready' },
 ]
 
 const folderDefinitions: Array<{
@@ -305,7 +278,6 @@ function createComposeDraft(
   const replySubject = source?.subject.replace(/^(RE|FW|TR):\s*/i, '') ?? ''
 
   if (mode === 'draft' && source) {
-    const transferSourceMessageId = source.transferSourceMessageId
     const language = source.language ?? DEFAULT_EMAIL_LANGUAGE
 
     return {
@@ -316,11 +288,11 @@ function createComposeDraft(
       draftMessageId: source.id,
       emailStatus: source.emailStatus,
       language,
-      mode: transferSourceMessageId ? 'transfer' : mode,
+      mode,
       receiver: source.receiver,
       receiverLocked: options.receiverLocked,
       sender: source.sender,
-      sourceMessageId: transferSourceMessageId ?? source.id,
+      sourceMessageId: source.id,
       subject: source.subject,
       threadId: source.threadId,
     }
@@ -337,22 +309,6 @@ function createComposeDraft(
       sender: BANK_EMAIL_ACCOUNT,
       sourceMessageId: source.id,
       subject: `RE: ${replySubject}`,
-      threadId: source.threadId,
-    }
-  }
-
-  if (mode === 'transfer' && source) {
-    return {
-      attachments: [],
-      bodyHtml: `${createEmailSignature(DEFAULT_EMAIL_LANGUAGE)}<blockquote><strong>Transferred message</strong><br>${sanitizeEmailHtml(source.bodyHtml)}</blockquote>`,
-      emailStatus: 'pending',
-      language: DEFAULT_EMAIL_LANGUAGE,
-      mode,
-      receiver: TEAM_LEADER_EMAIL,
-      receiverLocked: options.receiverLocked,
-      sender: BANK_EMAIL_ACCOUNT,
-      sourceMessageId: source.id,
-      subject: `TR: ${replySubject}`,
       threadId: source.threadId,
     }
   }
@@ -936,150 +892,6 @@ function EmailThreadPanel({
   )
 }
 
-interface EmailTransferModalProps {
-  open: boolean
-  onClose: () => void
-  onTransfer: (agent: (typeof transferAgents)[number]) => void
-}
-
-function EmailTransferModal({
-  open,
-  onClose,
-  onTransfer,
-}: EmailTransferModalProps) {
-  const [searchValue, setSearchValue] = useState('')
-  const [skillName, setSkillName] = useState('all')
-  const [status, setStatus] = useState('all')
-
-  if (!open) {
-    return null
-  }
-
-  const normalizedSearch = searchValue.trim().toLowerCase()
-  const visibleAgents = transferAgents.filter((agent) => {
-    const matchesSearch =
-      !normalizedSearch ||
-      [agent.employeeId, agent.name]
-        .join(' ')
-        .toLowerCase()
-        .includes(normalizedSearch)
-    const matchesSkill = skillName === 'all' || agent.skillName === skillName
-    const matchesStatus = status === 'all' || agent.status === status
-
-    return matchesSearch && matchesSkill && matchesStatus
-  })
-
-  const resetFilters = () => {
-    setSearchValue('')
-    setSkillName('all')
-    setStatus('all')
-  }
-
-  return (
-    <div className="email-transfer-modal-overlay" role="presentation">
-      <section className="email-transfer-modal" aria-label="Transfer">
-        <header>
-          <h2>Transfer</h2>
-          <button aria-label="Close transfer modal" type="button" onClick={onClose}>
-            <CloseOutlined />
-          </button>
-        </header>
-
-        <div className="email-transfer-modal__filters">
-          <button aria-label="Reset transfer filters" type="button" onClick={resetFilters}>
-            <ReloadOutlined />
-          </button>
-          <Input
-            allowClear
-            aria-label="Search employee"
-            placeholder="Employee ID or Name"
-            prefix={<SearchOutlined />}
-            type="search"
-            value={searchValue}
-            onChange={(event) => setSearchValue(event.target.value)}
-          />
-          <Select
-            aria-label="Skill name"
-            options={transferSkillOptions}
-            value={skillName}
-            onChange={setSkillName}
-          />
-          <Select
-            aria-label="Agent status"
-            options={transferStatusOptions}
-            value={status}
-            onChange={setStatus}
-          />
-          <BaseButton icon={<SearchOutlined />} variant="primary">
-            Srh
-          </BaseButton>
-        </div>
-
-        <div className="email-transfer-modal__table">
-          <div className="email-transfer-modal__table-head">
-            <span>Employee ID</span>
-            <span>Name</span>
-            <span>Skill Name</span>
-            <span>Extension</span>
-            <span>Extension</span>
-            <span>Actions</span>
-          </div>
-          {visibleAgents.length > 0 ? (
-            visibleAgents.map((agent) => (
-              <div className="email-transfer-modal__table-row" key={agent.id}>
-                <span>{agent.employeeId}</span>
-                <span>
-                  {agent.name}
-                  <em>{agent.role}</em>
-                </span>
-                <span>{agent.skillName}</span>
-                <span>{agent.extension}</span>
-                <span>
-                  <i />
-                  {agent.status}
-                </span>
-                <span>
-                  <button type="button" onClick={() => onTransfer(agent)}>
-                    <SendOutlined />
-                    Transfer
-                  </button>
-                </span>
-              </div>
-            ))
-          ) : (
-            <div className="email-transfer-modal__empty">
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No transfer agent found" />
-            </div>
-          )}
-        </div>
-
-        <footer className="email-transfer-modal__pager">
-          <span>Total: {visibleAgents.length} items</span>
-          <span>Per page</span>
-          <Select
-            aria-label="Items per page"
-            options={[{ label: '10', value: '10' }]}
-            value="10"
-          />
-          <span>items</span>
-          <div>
-            <button aria-label="Previous page" disabled type="button">
-              <LeftOutlined />
-            </button>
-            <button aria-current="page" type="button">1</button>
-            <button aria-label="Next page" disabled type="button">
-              <RightOutlined />
-            </button>
-          </div>
-          <span>Go to</span>
-          <Input aria-label="Go to page" value="1" readOnly />
-          <span>page</span>
-        </footer>
-      </section>
-    </div>
-  )
-}
-
 interface EmailDetailProps {
   email: EmailMessage | null
   now: number
@@ -1087,7 +899,6 @@ interface EmailDetailProps {
   onIgnore: (reason: EmailIgnoreReason) => void
   onRecover: () => void
   onReply: () => void
-  onTransfer: () => void
 }
 
 function EmailDetail({
@@ -1097,7 +908,6 @@ function EmailDetail({
   onIgnore,
   onRecover,
   onReply,
-  onTransfer,
 }: EmailDetailProps) {
   if (!email) {
     return (
@@ -1123,9 +933,6 @@ function EmailDetail({
       <div className="email-detail__actions">
         {canHandleInboxEmail && (
           <>
-            <BaseButton icon={<SendOutlined />} size="small" onClick={onTransfer}>
-              Transfer
-            </BaseButton>
             <span className="email-detail__actions-spacer" />
             <BaseButton size="small" variant="primary" onClick={onReply}>
               Reply
@@ -1143,11 +950,6 @@ function EmailDetail({
               </BaseButton>
             </Dropdown>
           </>
-        )}
-        {email.folder === 'sent' && (
-          <BaseButton icon={<SendOutlined />} size="small" onClick={onTransfer}>
-            Transfer
-          </BaseButton>
         )}
         {email.folder === 'drafts' && (
           <BaseButton icon={<EditOutlined />} size="small" variant="primary" onClick={onEditDraft}>
@@ -1233,7 +1035,6 @@ export function EmailPage() {
   const [composeDraft, setComposeDraft] = useState<EmailComposeDraft | null>(null)
   const [composeModalDraft, setComposeModalDraft] =
     useState<EmailComposeDraft | null>(null)
-  const [isTransferOpen, setIsTransferOpen] = useState(false)
   const [isCwuOpen, setIsCwuOpen] = useState(false)
   const hasRunningSla = messages.some(
     (email) => email.slaStartedAt && !email.slaStoppedAt,
@@ -1268,7 +1069,6 @@ export function EmailPage() {
     setSelectedMessageId(messageId)
     setComposeDraft(null)
     setComposeModalDraft(null)
-    setIsTransferOpen(false)
     setMessages((current) =>
       current.map((email) =>
         email.id === messageId
@@ -1292,7 +1092,6 @@ export function EmailPage() {
     setSentStatusFilter('all')
     setComposeDraft(null)
     setComposeModalDraft(null)
-    setIsTransferOpen(false)
     setSelectedMessageId(firstMessage?.id ?? null)
     setCrmWorkspace((current) => ({
       ...current,
@@ -1356,8 +1155,6 @@ export function EmailPage() {
       direction: 'outbound',
       emailStatus: draft.emailStatus,
       folder: 'drafts',
-      transferSourceMessageId:
-        draft.mode === 'transfer' ? draft.sourceMessageId : undefined,
       hasAttachment: draft.attachments.length > 0 || Boolean(draft.attachmentName),
       handlingStatus: 'draft',
       isRead: true,
@@ -1462,40 +1259,6 @@ export function EmailPage() {
     showNotice('Email sent and added to the conversation record.')
   }
 
-  const openTransferModal = () => {
-    if (!selectedEmail) {
-      showNotice('Select an email before transferring.', 'info')
-      return
-    }
-
-    setComposeDraft(null)
-    setComposeModalDraft(null)
-    setIsTransferOpen(true)
-  }
-
-  const transferEmail = (agent: (typeof transferAgents)[number]) => {
-    if (!selectedEmail) {
-      return
-    }
-
-    const transferredAt = Date.now()
-
-    setMessages((current) =>
-      current.map((email) =>
-        email.id === selectedEmail.id
-          ? {
-              ...email,
-              handlingStatus: 'transferred',
-              isRead: true,
-              slaStoppedAt: email.slaStoppedAt ?? transferredAt,
-            }
-          : email,
-      ),
-    )
-    setIsTransferOpen(false)
-    showNotice(`Email transferred to ${agent.name} (${agent.role}).`)
-  }
-
   const ignoreEmail = (reason: EmailIgnoreReason) => {
     if (!selectedEmail) {
       return
@@ -1596,7 +1359,6 @@ export function EmailPage() {
           onReply={() =>
             selectedEmail && setComposeDraft(createComposeDraft('reply', selectedEmail))
           }
-          onTransfer={openTransferModal}
         />
       )}
       <EmailThreadPanel
@@ -1677,14 +1439,6 @@ export function EmailPage() {
         onSend={sendComposeDraft}
         onSendSurvey={sendSatisfactionSurvey}
       />
-
-      {isTransferOpen && (
-        <EmailTransferModal
-          open
-          onClose={() => setIsTransferOpen(false)}
-          onTransfer={transferEmail}
-        />
-      )}
 
       <TicketRegistrationDrawer
         contextLabel={selectedEmail?.subject}

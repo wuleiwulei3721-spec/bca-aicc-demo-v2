@@ -1021,7 +1021,6 @@ export function ChannelsPage() {
     accountCode: '',
     accountName: '',
     channelCode: '',
-    credentialRef: 'secret://aicc/new',
     purpose: '',
     status: 'Active',
   })
@@ -1262,10 +1261,6 @@ export function ChannelsPage() {
       errors.push('Account Name is required.')
     }
 
-    if (!accountDraft.credentialRef.trim()) {
-      errors.push('Credential / Secret Ref is required.')
-    }
-
     const duplicatedAccount = channelAccounts.some(
       (account) =>
         account.channelCode === accountDraft.channelCode &&
@@ -1358,7 +1353,6 @@ export function ChannelsPage() {
         ).padStart(2, '0')}`,
         accountName: '',
         channelCode: selectedChannel.channelCode,
-        credentialRef: 'secret://aicc/new',
         purpose: '',
         status: 'Active',
       } satisfies ChannelAccount)
@@ -1405,7 +1399,6 @@ export function ChannelsPage() {
       ...accountDraft,
       account: accountDraft.account.trim(),
       accountName: accountDraft.accountName.trim(),
-      credentialRef: accountDraft.credentialRef.trim(),
       purpose: accountDraft.purpose.trim(),
     })
     notify('Channel account saved locally for this demo session.')
@@ -1942,12 +1935,6 @@ export function ChannelsPage() {
       render: (value: string) => <strong>{value}</strong>,
     },
     { dataIndex: 'accountName', title: 'Account Name', width: 160 },
-    {
-      dataIndex: 'credentialRef',
-      ellipsis: true,
-      title: 'Credential / Secret Ref',
-      width: 200,
-    },
     { dataIndex: 'purpose', ellipsis: true, title: 'Purpose', width: 220 },
     {
       dataIndex: 'status',
@@ -2397,17 +2384,6 @@ export function ChannelsPage() {
                   value={accountDraft.accountName}
                   onChange={(event) =>
                     updateAccountDraft('accountName', event.target.value)
-                  }
-                />
-              </label>
-              <label className="routing-config-crud-modal__field routing-config-crud-modal__field--full">
-                <span>
-                  Credential / Secret Ref <strong>*</strong>
-                </span>
-                <Input.Password
-                  value={accountDraft.credentialRef}
-                  onChange={(event) =>
-                    updateAccountDraft('credentialRef', event.target.value)
                   }
                 />
               </label>

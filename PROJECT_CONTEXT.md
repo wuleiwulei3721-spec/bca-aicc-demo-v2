@@ -359,7 +359,7 @@ The current Email demo supports:
 
 - Inbox, Sent, Drafts, and Trash folders with search and local counts.
 - Email selection, read state, SLA progress, and related thread records.
-- Reply, Save Draft, Edit Draft, and Send with local folder/thread updates. Forward requires a receiver and, after Send, removes the source and forwarding record from Inbox, Sent, Drafts, and Trash.
+- Reply, normal new email, Save Draft, Edit Draft, and Send with local folder/thread updates. Email forwarding and transfer are disabled for agents; historical transferred status may remain visible in mock records.
 - Ignore with AD, Spam, or Sales Email reason; ignored messages move to Trash with SLA stopped.
 - Trash recovery returns a trashed or ignored mock email to its original folder.
 - The shared Customer Information, Customer Journey, Ticketing History, Next Best Action, and Quick Action column used by the other interaction workspaces; Email is shown as the access channel.

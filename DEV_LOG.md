@@ -36,6 +36,33 @@ Historical entries are preserved in archive files without content rewrites. Use 
 - Release method: commit only BasicLayout.tsx, DESIGN_SYSTEM.md, and this log to main through the GitHub Git Data API; use existing Vercel Git integration. Local build explicitly uses customer visibility and demo Common Phrase/Number/Link modes. Remote environment settings unchanged.
 - Production: https://netinfo-aicc-demo-v2.vercel.app/ . Feature commit `408b44bc809e6ab4163782d4ac1a21d1f329224b` deployed successfully: Vercel Production deployment `7328233182`, completed `2026-10-26T09:23:14Z` (17:23:14 +08:00); commit Vercel status success. Immutable deployment: https://netinfo-aicc-demo-v2-qafp6q4qr-wl-demo-s-projects.vercel.app . Direct production HTTP verification timed out from this machine; local browser acceptance passed. Rollback: revert the navigation feature commit; preceding upstream revision is `57ef59af92f763b65f471c66d16b0402130c90ca`.
 
+### 2026-10-26 +08:00 — Channel accounts and Email release preparation
+
+- Scope: Prepare the 12 intended task files for release: remove Credential / Secret Ref from channel account list, Add/Edit forms, validation, types, and mock records; remove Email Transfer/Forward actions and executable compose/draft paths. The existing actions-spacer remains before Reply, preserving the original right-aligned Reply and No Reply positions.
+- Review: Supplied diff reviewed for release blockers; none identified. This is a preparation record, not confirmation of a completed release.
+- Verified validation: Earlier required lint passed; the latest customer/demo build passed. Previous browser checks passed for account list/Add/Edit/save, no Transfer in Email Inbox/Sent, Reply, draft editing, new email, and restored right-side action positions. Extra frontend typechecking previously produced the same diagnostics as the isolated HEAD baseline, with no new errors. The latest lint run also passed.
+- Integration and release commands: Commit the intended files, integrate origin/main with rebase or merge while preserving both DEV_LOG histories and remote commits 408b44b and 3248266, rerun affected validation including npm run lint and the required customer/demo build, confirm git status --porcelain is empty, then git push origin main. Existing Vercel Git integration is the production deployment path; deploy only the committed clean revision.
+- Release profile: VITE_APP_VISIBILITY_PROFILE=customer; static Common Phrase, Number, and Link modes must all be demo. Confirm and record the exact build command and deployed profile before declaring release complete.
+- Pending production confirmation: Record the final commit SHA, exact executed validation/release commands, production URL, deployment result, and public HTTP/browser verification after push. Confirm production account forms omit Credential / Secret Ref, Email has no Transfer/Forward action, and Reply/No Reply retain their original right-aligned positions. Production publication has not yet been confirmed.
+- Rollback: Revert the task release commit on the integrated main branch, preserve unrelated remote changes and both development-log histories, validate the customer/demo revision, and push the clean committed rollback through the same Vercel Git integration. Record the rollback commit and resulting production URL if used.
+
+### 2026-10-26 +08:00 — Email Transfer/Forward disabled
+- reason: User explicitly required that Email Transfer be removed and agents be prohibited from forwarding Email.
+- files: `src/pages/email/EmailPage.tsx`, `src/pages/email/components/EmailComposeModal.tsx`, `src/pages/email/components/emailComposeModel.ts`, `src/types/email.ts`, active Email documentation.
+- result: Email Transfer buttons, internal transfer execution paths, and compose transfer/forward mode are removed while Reply, normal new email, drafts/autosave, attachments, No Reply/recovery, Ticket, and non-email voice/chat Transfer remain available.
+- rollback: Restore the listed source and documentation replacements, then reintroduce the former Email transfer/forward contracts only if a later confirmed rule supersedes this one.
+- risk: Historical transferred mock presentation and stale transfer-only styling may remain without an executable Email transfer operation.
+- validation: npm run lint and npm run build passed; git diff --check passed. Browser smoke confirmed no Transfer action in Inbox/Sent, Reply opens normally, Save Draft and Edit Draft work, and Sendmail opens New Email without a transfer mode. The temporary smoke draft was cleared by reopening only the Email workspace. Existing large-bundle warning remains; no commit or deployment.
+
+### 2026-10-26 +08:00 — Routing Config channel account field removal
+
+- 修改文件或模块：`src/pages/routing-config/RoutingConfigDataPages.tsx`、`src/types/routingConfiguration.ts`、`src/mock/routingConfiguration.ts`、`CURRENT_STATUS.md`、`BUSINESS_RULES.md`。
+- 原因：渠道管理-账号管理不再展示或维护 `Credential / Secret Ref`。
+- 范围与结果：移除账号列表、Add/Edit 表单、校验、草稿初始化与保存映射、TypeScript ChannelAccount 合约及 mock 账号记录中的该字段；其他账号字段、行为及无关渠道凭证/安全配置文本保持不变。
+- 回滚：恢复本记录涉及的代码、mock 和文档文本即可回滚。
+- 验证：npm run lint、npm run build 通过；浏览器确认账号列表、Add/Edit 表单均无该字段，剩余必填校验及新增、编辑保存通过；临时测试账号已清理。
+- 当前风险：构建保留现有大包体积警告；额外前端 TypeScript 全量检查未通过；隔离 HEAD 基线与当前代码均返回相同 203 行诊断（仅归一化行列号），未新增类型错误；本次未提交或部署。
+
 ### 2026-10-26 12:06 +08:00 — Production release: Common Phrase UI and numeric employee audit labels
 
 - Release: feature commit `1dad94186038d292c04392c88d60286df871357c` (`fix: restore common phrase UI and normalize employee audit IDs`) was committed and pushed with `git push origin main`. It was rebased onto `58bfdfb`, preserving the intervening `922fcc4` Remark-removal release and its historical-value compatibility. The rebase retained both tasks' development records.

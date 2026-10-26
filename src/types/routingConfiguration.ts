@@ -214,7 +214,6 @@ export interface ChannelAccount {
   accountCode: string
   accountName: string
   channelCode: string
-  credentialRef: string
   purpose: string
   status: RoutingConfigStatus
 }

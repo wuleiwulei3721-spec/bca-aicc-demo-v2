@@ -221,7 +221,7 @@ This repository is still a demo application:
 - Email opens or reuses one closable Email workspace tab; closing it falls back to Home.
 - High-density desktop workspace for mailbox folders, shared customer context, `CRM / Email` content, and the thread record rail inside Email.
 - Inbox, Sent, Drafts, and Trash folder switching with search, refresh feedback, counts, selected mail, read state, and SLA progress.
-- Reply and Forward compose flows with anonymous BANK 1 addresses, built-in response templates, basic rich-text controls, Save Draft, and Send. A sent Forward removes both its source and forwarding record from all four folders; a saved Forward draft retains that behavior when later sent.
+- Reply, normal new email, built-in response templates, basic rich-text controls, Save Draft, autosave, and Send. Email Forward and Transfer operations are removed from Inbox, Sent, compose state, and alternate draft paths; historical transferred status presentation remains supported where useful.
 - Sending a Reply or normal draft adds a Sent record and related thread item; replying marks the source email replied and stops its SLA.
 - Drafts can be opened and edited; Trash has a recover flow back to Inbox.
 - Ignore supports AD, Spam, and Sales Email reasons, moves the email to Trash, and stops its SLA.
@@ -357,7 +357,7 @@ Implemented behaviors:
 - DM and Non-DM Business Config both support selecting and previewing a fixed new-customer alert sound; the selected sound plays once on a new matching interaction when System prompt sound is enabled.
 - Voice and Video Business Config do not show an alert-sound configuration and continue to use OpenEye ringing.
 - Channels Business Config Agent Service warning and breach threshold labels include colored status dots that reuse Live Chat SLA warning and breach colors.
-- Phone account management disabled.
+- Phone account management disabled. Account list and Add/Edit forms omit Credential / Secret Ref.
 - Business Types `Source Business Code`.
 - Skill Queues include required `Access Code` after `VDN` in list columns and Add / Edit / View forms; Keyword search includes Access Code. Derived Channel / Media values reverse-look up Skill Routing Rules that target each queue and aggregate multiple values. Optional `SL (%)`, `AHT Target` (seconds), and `QM Target` (percentage) can be configured and displayed per queue. The `Agents` list column and `Assigned Agents` field in Add / Edit / View forms are removed; internal assigned agent counts and their existing values on edit/save are preserved.
 - Skill Routing Rules batch behavior and duplicate handling.

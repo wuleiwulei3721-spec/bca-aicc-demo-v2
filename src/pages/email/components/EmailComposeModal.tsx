@@ -15,7 +15,7 @@ import {
   mergeTemplateAttachmentReferences,
   validateAttachmentReferences,
 } from '../../../utils/attachmentRules'
-import { TEAM_LEADER_EMAIL, createEmailSignature } from './emailComposeModel'
+import { createEmailSignature } from './emailComposeModel'
 import './emailAttachments.less'
 
 const emailLanguageOptions: Array<{ label: string; value: EmailLanguage }> = [
@@ -354,9 +354,7 @@ function EmailComposePanelContent({
   const title =
     fields.mode === 'reply'
       ? 'Reply Email'
-      : fields.mode === 'transfer'
-        ? 'Transfer Email'
-        : fields.mode === 'draft'
+      : fields.mode === 'draft'
           ? 'Edit Draft'
           : 'New Email'
   const canSendSurvey = true
@@ -410,7 +408,7 @@ function EmailComposePanelContent({
           <label>
             <span>Receiver</span>
             <Input
-              disabled={fields.mode === 'transfer' || fields.receiverLocked}
+              disabled={fields.receiverLocked}
               placeholder="customer@example.com"
               value={fields.receiver}
               onChange={(event) =>
@@ -614,11 +612,6 @@ function EmailComposePanelContent({
 
         {!isModal && (
           <footer className="email-compose__footer">
-            {fields.mode === 'transfer' && (
-              <span className="email-compose__transfer-note">
-                Transfer is limited to your TL: {TEAM_LEADER_EMAIL}
-              </span>
-            )}
             <BaseButton
               disabled={!canSendSurvey}
               variant="secondary"
