@@ -422,7 +422,7 @@ Current public assets include:
 
 ## 20. Current Validation Baseline
 
-At the human's explicit request, the final attachment-only release skips local tests, lint, build, and browser verification and will use the existing GitHub -> Vercel customer deployment; commit, push, and automatic production deployment remain pending, and the Vercel platform build is still required to deploy. The results below remain historical records from previous deliveries.
+Latest Common Phrase / employee-audit release on 2026-10-26: restored list/query/Add/Edit presentation, numeric employee IDs, and unchanged `1234-Admin` labels passed local API and customer-build browser acceptance, lint/build, existing Node/Python API tests, server typecheck, and targeted ID/audit regression checks. Feature commit `1dad941` is confirmed successfully deployed to Production with successful GitHub CI. Public HTTP checks passed; online browser interaction checks timed out and are not claimed complete. The attachment-only validation and deployment results below are historical records from previous deliveries.
 
 Attachment delivery validation recorded at 2026-10-20 11:53 +08:00:
 
