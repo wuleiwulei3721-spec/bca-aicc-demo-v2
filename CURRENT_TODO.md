@@ -41,6 +41,8 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 
 ## P1 - Manual Verification Before Customer Demo
 
+- 2026-10-26 +08:00 — Resolve the customer production-preview channel Accounts modal acceptance gap: login and customer menu hiding passed, but Accounts did not open its modal. The same behavior reproduced in isolated prechange `57ef59a` with the same dependencies; cause remains unidentified and no unrelated fix was made. Earlier development-browser account list/Add/Edit/save checks passed. Recheck account modal behavior in the customer build and online interactions when browser access is available; production HTTP/asset checks do not establish interaction acceptance.
+
 - Frontend TypeScript baseline remains a risk: original HEAD tracked files produce 147 diagnostics versus current 146 with no new diagnostics; this is not a clean global typecheck.
 
 - Verify `/` login, single-action Sign In, configured Status after Sign-in, first-Ready toolbar lock, Voice/Video Incoming toolbar unlock, Pre-AUX cancellation, Pre-AUX profile display during ACW, ACW-to-pending-AUX transition, AUX, Sign Out, and Log Out guards.
