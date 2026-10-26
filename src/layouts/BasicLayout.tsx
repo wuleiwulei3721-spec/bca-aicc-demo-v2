@@ -234,13 +234,6 @@ const allSideMenuItems: SideMenuItem[] = [
     children: getWorkspacePageMenuChildren('call-management'),
   },
   {
-    key: 'social-media',
-    icon: <MessageOutlined />,
-    label: 'Social Media',
-    moduleKey: 'social-media',
-    children: getWorkspacePageMenuChildren('social-media'),
-  },
-  {
     key: 'routing-config',
     icon: <BranchesOutlined />,
     label: 'Routing Config',
@@ -259,6 +252,13 @@ const allSideMenuItems: SideMenuItem[] = [
     icon: <SettingOutlined />,
     label: 'Design System',
     moduleKey: 'design-system',
+  },
+  {
+    key: 'social-media',
+    icon: <MessageOutlined />,
+    label: 'Social Media',
+    moduleKey: 'social-media',
+    children: getWorkspacePageMenuChildren('social-media'),
   },
 ]
 

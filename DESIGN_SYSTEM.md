@@ -29,6 +29,7 @@ The app shell is implemented by `BasicLayout`:
 - Route entry may open the matching parent menu, but users can manually collapse the current parent group afterward.
 - Main content uses a full workbench canvas.
 - Workspace content is tab-driven through `AgentWorkspace`.
+- Social Media is the final top-level navigation group; customer menus place it after Routing Config.
 - Visible management pages open inside `AgentWorkspace` as closable workspace tabs; they should not replace the workbench canvas or hide active popup, call, or Live Chat tabs.
 - Registered management-page URLs are compatibility entries: they may open the matching workspace tab, then return the URL to `/` so the workspace remains the stable shell.
 - `AI` is an external-link side-menu group below Monitoring; `Quality Manage` and `AI Assist Config` open new browser tabs and must not navigate or reset the current workspace.

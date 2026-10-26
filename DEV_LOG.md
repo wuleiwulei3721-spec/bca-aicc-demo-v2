@@ -29,6 +29,13 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
 
+### 2026-10-26 +08:00 — Move Social Media to the final navigation position
+
+- Scope: moved the Social Media top-level group to the end of `allSideMenuItems` in `src/layouts/BasicLayout.tsx`. Customer navigation places it immediately after Routing Config. Documented the ordering in DESIGN_SYSTEM.md.
+- Validation: lint, customer/demo production build, and `git diff --check` passed. Local browser smoke check confirmed the final position in expanded/collapsed navigation and opening Social Media Interaction Log. Existing large bundle warning remains.
+- Release method: commit only BasicLayout.tsx, DESIGN_SYSTEM.md, and this log to main through the GitHub Git Data API; use existing Vercel Git integration. Local build explicitly uses customer visibility and demo Common Phrase/Number/Link modes. Remote environment settings unchanged.
+- Production: https://netinfo-aicc-demo-v2.vercel.app/ . Deployment status will be recorded after the integration finishes. Rollback: revert the navigation feature commit; preceding upstream revision is `57ef59af92f763b65f471c66d16b0402130c90ca`.
+
 ### 2026-10-26 12:06 +08:00 — Production release: Common Phrase UI and numeric employee audit labels
 
 - Release: feature commit `1dad94186038d292c04392c88d60286df871357c` (`fix: restore common phrase UI and normalize employee audit IDs`) was committed and pushed with `git push origin main`. It was rebased onto `58bfdfb`, preserving the intervening `922fcc4` Remark-removal release and its historical-value compatibility. The rebase retained both tasks' development records.
