@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Project Context
 
-Last updated: 2026-10-20 11:53 +08:00
+Last updated: 2026-10-28 +08:00
 Repository path: `D:\03projects\bca-aicc-demo-v2`
 
 ## 1. Project Name
@@ -276,10 +276,11 @@ to `/` so active customer service tabs remain available.
 The Home and Monitor tabs can display customer-provided static monitoring
 screenshots from the `Monitoring` side menu:
 
-- `Home-Agent`, `Home-TL`, and `Home-SPV` replace the fixed Home tab image.
-- `Monitor-TL` and `Monitor-OM` open or reuse the closable Monitor tab.
-- This is a static screenshot demo only. It does not add TL / SPV / OM login
-  roles, permissions, live reporting data, or monitoring interactions.
+- Exactly three entries appear in order: `Home-Agent`, `Home-TL SPV`, and `Monitor-RTFM OM`, mapped to the first, second, and third supplied screenshots respectively.
+- `Home-Agent` is the default Home image; `Home-TL SPV` switches the same fixed Home tab.
+- `Monitor-RTFM OM` opens or reuses the existing closable Monitor tab.
+- Screenshot content and controls remain static, including the third screenshot's bottom-right `AI Assistant Fail SLA` popup.
+- This is a static screenshot demo only. It adds no login roles, permissions, APIs, live reporting data, or monitoring interactions.
 
 ### Inbound / Voice Workspace
 
@@ -506,7 +507,7 @@ Current behaviors:
 - Common Links tab.
 - Transfer, Outbound Call, Internal Chat, Agent Settings, Toolbar Settings, Call Flow Detail, Send Email, and read-only All Contact Details modals. Legacy Contact Management is local-only and disabled by default because customer contact information is CRM read-only.
 - Live Chat workspace with customer list, conversation, message record, quick replies, and local message state.
-- Monitoring side menu with static Home / Monitor dashboard screenshot switching.
+- Monitoring side menu with exactly three static screenshot entries: `Home-Agent` (default Home), `Home-TL SPV` (same Home tab), and `Monitor-RTFM OM` (existing closable Monitor tab).
 - AI external side-menu group for Quality Manage and AI Assist Config.
 - HaloBCA, Webchat, and WhatsApp customer-side simulations with screenshot assets.
 - Customer-visible Email agent workspace with mailbox folders, shared customer context, the Live Chat CRM screenshot, message handling, thread records, and Ticket registration.
@@ -552,7 +553,7 @@ Current `public/screenshots/` contains:
 - HaloBCA channel, business selection, confirmation, queue, chat, voice/video, screen-share, and service-closed images.
 - Webchat text entry, queue, agent chat, and satisfaction rating images.
 - WhatsApp chat request, business selection, agent chat, and satisfaction rating images.
-- Monitoring dashboard images under `public/screenshots/monitoring/` for `Home-Agent`, `Home-TL`, `Home-SPV`, `Monitor-TL`, and `Monitor-OM`.
+- Monitoring assets under `public/screenshots/monitoring/`: `home-agent.png`, `home-tl-spv.png`, and `monitor-rtfm-om.png`. Physically cropped to remove the original shell; old assets retained.
 
 CRM and Assistant components keep code-based fallback UI if image loading fails.
 

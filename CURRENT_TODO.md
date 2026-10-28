@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current TODO
 
-Last updated: 2026-10-20 11:53 +08:00
+Last updated: 2026-10-28 +08:00
 
 This list focuses on current handoff priorities. Historical granular TODOs remain available in `PROJECT_CONTEXT.md`, `DEV_LOG.md`, and `.codex-backup/`.
 
@@ -49,15 +49,18 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Verify the profile menu state matrix: Unsigned shows Sign In / Settings; all Not Ready states show Ready, AUX reasons, and Sign Out; Ready shows AUX reasons only; Pre-AUX hides Sign Out; AUX restores Sign Out; the team line shows the formatted current status.
 - Verify Channels Business Config: DM and Non-DM can select and preview each of the five new-customer alert sounds; Voice and Video have no alert-sound field; a new matching interaction plays once only while the existing System prompt sound switch is enabled; unconfigured channels remain silent.
 - Verify default Not Ready sign-in creates no default Live Chat service; the first switch to Ready opens Live Chat and seeds its default demo sessions.
-- Verify Monitoring screenshot tabs:
-  - default `/` Home tab shows `Home-Agent`,
-  - `Monitoring > Home-Agent`, `Home-TL`, and `Home-SPV` keep the Home tab active and swap the screenshot,
-  - `Monitoring > Monitor-TL` and `Monitor-OM` open or reuse the closable Monitor tab,
-  - closing Monitor and reopening it from the menu works,
+- Verify Monitoring screenshot tabs before each customer demo:
+  - exactly three menu entries appear in order: `Home-Agent`, `Home-TL SPV`, and `Monitor-RTFM OM`, matching the first, second, and third supplied screenshots respectively,
+  - default `/` Home shows `Home-Agent`; `Monitoring > Home-Agent` and `Home-TL SPV` activate the same Home tab and switch its screenshot,
+  - `Monitoring > Monitor-RTFM OM` opens or reuses exactly one closable Monitor tab, including on repeated clicks,
+  - closing Monitor returns to Home with its selected screenshot preserved, and reopening Monitor works,
+  - the three images load from `/screenshots/monitoring/home-agent.png`, `/screenshots/monitoring/home-tl-spv.png`, and `/screenshots/monitoring/monitor-rtfm-om.png`,
   - `AI > Quality Manage` opens `https://www.QualityManage.example/` in a new browser tab and keeps the current workspace unchanged,
   - `AI > AI Assist Config` opens `https://www.AIAssistConfig.example/` in a new browser tab and keeps the current workspace unchanged,
-  - cropped screenshots do not show the original customer top header, left menu, or outer workspace tab bar,
-  - Home channel tabs and Monitor-TL prompt popup remain visible because they are part of the provided static screenshot demo.
+  - cropped screenshots exclude the original customer logo, header, navigation, sidebar, and outer workspace tab bar; original assets remain,
+  - dashboard controls, displayed dates/periods, and the third screenshot's bottom-right `AI Assistant Fail SLA` popup remain visible static screenshot content,
+  - Monitor displays correctly with the sidebar collapsed and expanded at 1920×1080, with no document horizontal overflow; at 1366×768 with the sidebar collapsed, clicking the image and pressing End reaches the bottom of the internally scrolling content,
+  - verify Email workspace coexistence: open Email, use the Monitoring menu to switch to Monitor, return to Email with the mailbox intact, and return to Monitor successfully.
 - Verify PSTN flow:
   - menu click opens incoming call,
   - Answer works,

@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-10-26 +08:00
+最后更新：2026-10-28 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,32 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### Monitoring 发布准备（待验证、待发布）
+
+- 基线：预期 `23bbb85`，准备时核对 `origin/main`；使用干净隔离工作树，保留并排除根目录既有 PIN 改动（appStore、inbound 组件）。禁止从脏工作区部署。
+- 范围：`src/mock/monitoring.ts` 将五个静态图片配置缩减为 `home-agent`、`home-tl-spv`、`monitor-rtfm-om`；前两项为 `home`，末项为 `monitor`，默认键对应有效条目；配套三张物理裁切 PNG。文档仅基于隔离工作树 HEAD 做指定替换，沿用现有 last-updated 值，仅插入 Monitoring 日志，不带入 PIN 日志。预期提交共八个文件，文件清单待核对。
+- 验证：此前混合脏工作区的本地浏览器检查通过；干净发布检查尚未执行。提交前核对变更范围、旧键引用并运行 `npm run lint`，随后在 PowerShell 执行：
+
+```powershell
+$env:VITE_APP_VISIBILITY_PROFILE = 'customer'
+$env:VITE_COMMON_PHRASE_MODE = 'demo'
+$env:VITE_COMMON_NUMBER_MODE = 'demo'
+$env:VITE_COMMON_LINK_MODE = 'demo'
+npm run build
+```
+
+- 风险与放行：无预期 API、UI 外壳、路由、工具栏、store 或依赖变更；检查范围有限，不代表其他功能完整回归。仅在检查通过且确认未夹带或影响无关功能后，提交 Monitoring 范围并将已提交 HEAD 推送至 `origin/main`，通过现有 Vercel Git 集成发布。
+- 生产地址：https://netinfo-aicc-demo-v2.vercel.app/ 。Monitoring 提交 SHA、实际发布前基线 SHA、生产部署 ID、部署结果及生产验证结果均待完成后记录。
+- 回滚：仅 revert 本次 Monitoring 功能提交，使该功能变更恢复至发布前基线；执行时填入实际提交 SHA 与基线 SHA，并核对结果，不重置或覆盖其他改动。
+
+### 2026-10-28 13:03 +08:00｜Monitoring 三图配置与裁剪
+
+- 修改时间：2026-10-28 13:03 +08:00（客户端时区）。
+- 模块／原因：按新提供的三张截图更新 Monitoring；菜单依次为 `Home-Agent`、`Home-TL SPV`、`Monitor-RTFM OM`。默认 Home-Agent，TL SPV 在同一 Home 标签切换，RTFM OM 复用可关闭的 Monitor 标签。运行时代码仅修改 `src/mock/monitoring.ts`；菜单、工作区、store 复用常量，无需修改这些模块源码。同步项目上下文、状态及演示前检查文档；未改变架构、业务决策或权限。
+- 资源结果：使用随附 Pillow 实际裁剪并生成三个新 PNG，位于 `public/screenshots/monitoring/`。`home-agent.png`、`home-tl-spv.png`：原图均为 3202×1800，裁剪框 `(110, 200, 3202, 1800)`，输出均为 3092×1600；`monitor-rtfm-om.png`：原图 3840×2160，裁剪框 `(112, 210, 3840, 2160)`，输出 3728×1950。Pillow 右／下边界不包含。已实际裁去原始外壳，包括 logo、页头、导航、侧栏及外层工作区标签栏，保留看板内容和第三图右下角 `AI Assistant Fail SLA`；旧资源保留。
+- 验证：`npm run lint`、`npm run build` 均 exit 0；构建仍有原有大包警告及插件耗时提示。此后源码及架构未变。应用升级中断前，1366×768 下三图、三项菜单顺序、Home 同标签切换均通过；重复点击 Monitor 始终仅一个标签，关闭后返回 Home 并保留 TL SPV，重新打开通过。1366×768、侧栏收起时，Monitor 内容区 `clientHeight=643`、`scrollHeight=676`；点击图片后按 End，内容区滚动至 `scrollTop=33.714`，底部可达，图片比例正常。升级后通过 `npm run dev:frontend -- --host 127.0.0.1` 重启前端，1920×1080 下默认 Home-Agent、TL SPV、RTFM OM 全页截图均已核验；Monitor 在侧栏收起及展开两种状态下均通过视觉检查，文档 `scrollWidth=1920`，等于视口宽度。Email 工作区标签共存已测试：打开 Email，通过 Monitoring 菜单切换至 Monitor，返回 Email 后邮箱保持完整，再返回 Monitor 成功。未验证通话或 Live Chat 处理。验证结束时已重置视口覆盖。
+- 风险／回滚：截图控件及日期／周期为静态内容，构建保留原有大包警告。回滚仅涉及 Monitoring 配置、三个新图片及本次文档变更；保留原有无关脏文件及条目。未提交、推送或部署。
 
 ### 2026-10-26 +08:00 — Channel accounts and Email production release
 

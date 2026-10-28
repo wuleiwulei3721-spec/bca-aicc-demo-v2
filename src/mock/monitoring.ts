@@ -1,5 +1,5 @@
-export type MonitoringHomeViewKey = 'home-tl' | 'home-spv' | 'home-om'
-export type MonitoringMonitorViewKey = 'monitor-tl' | 'monitor-om'
+export type MonitoringHomeViewKey = 'home-agent' | 'home-tl-spv'
+export type MonitoringMonitorViewKey = 'monitor-rtfm-om'
 export type MonitoringViewKey =
   | MonitoringHomeViewKey
   | MonitoringMonitorViewKey
@@ -26,46 +26,32 @@ export type MonitoringScreenshotView =
   | MonitoringHomeScreenshotView
   | MonitoringMonitorScreenshotView
 
-export const defaultMonitoringHomeViewKey: MonitoringHomeViewKey = 'home-om'
+export const defaultMonitoringHomeViewKey: MonitoringHomeViewKey = 'home-agent'
 
 export const defaultMonitoringMonitorViewKey: MonitoringMonitorViewKey =
-  'monitor-tl'
+  'monitor-rtfm-om'
 
 export const monitoringScreenshotViews: MonitoringScreenshotView[] = [
   {
     alt: 'Home Agent monitoring dashboard',
-    imageSrc: '/screenshots/monitoring/home-om.png',
-    key: 'home-om',
+    imageSrc: '/screenshots/monitoring/home-agent.png',
+    key: 'home-agent',
     kind: 'home',
     label: 'Home-Agent',
   },
   {
-    alt: 'Home TL monitoring dashboard',
-    imageSrc: '/screenshots/monitoring/home-tl.png',
-    key: 'home-tl',
+    alt: 'Home TL and SPV monitoring dashboard',
+    imageSrc: '/screenshots/monitoring/home-tl-spv.png',
+    key: 'home-tl-spv',
     kind: 'home',
-    label: 'Home-TL',
+    label: 'Home-TL SPV',
   },
   {
-    alt: 'Home SPV monitoring dashboard',
-    imageSrc: '/screenshots/monitoring/home-spv.png',
-    key: 'home-spv',
-    kind: 'home',
-    label: 'Home-SPV',
-  },
-  {
-    alt: 'Monitor TL agent monitoring dashboard',
-    imageSrc: '/screenshots/monitoring/monitor-tl.png',
-    key: 'monitor-tl',
+    alt: 'Monitor RTFM and OM dashboard with AI Assistant Fail SLA popup',
+    imageSrc: '/screenshots/monitoring/monitor-rtfm-om.png',
+    key: 'monitor-rtfm-om',
     kind: 'monitor',
-    label: 'Monitor-TL',
-  },
-  {
-    alt: 'Monitor OM agent monitoring dashboard',
-    imageSrc: '/screenshots/monitoring/monitor-om.png',
-    key: 'monitor-om',
-    kind: 'monitor',
-    label: 'Monitor-OM',
+    label: 'Monitor-RTFM OM',
   },
 ]
 

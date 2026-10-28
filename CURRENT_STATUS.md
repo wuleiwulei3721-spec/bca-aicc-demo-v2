@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-10-26 +08:00
+Last updated: 2026-10-28 +08:00
 
 ## 1. Overall Status
 
@@ -41,7 +41,7 @@ This repository is still a demo application:
 - BANK 1 branded header.
 - Collapsible side menu.
 - Menu search in expanded side menu.
-- Customer-visible Monitoring menu for static Home / Monitor dashboard screenshot switching.
+- Customer-visible Monitoring menu with exactly three static entries in order: `Home-Agent`, `Home-TL SPV`, and `Monitor-RTFM OM`, mapped to the three supplied screenshots in order. Runtime source changes were limited to `src/mock/monitoring.ts`; menu, workspace, and store reuse its constants without edits. Source code and architecture have not changed since the successful lint/build checks. No API or permissions were added.
 - Customer-visible `AI` side-menu group with `Quality Manage` and `AI Assist Config` external links; both open a new browser tab without changing the current workspace.
 - Route-aware menu selection.
 - Left-menu management entries open or reuse workspace page tabs instead of replacing the workbench.
@@ -85,9 +85,9 @@ This repository is still a demo application:
 ## 6. Completed Workspace Tabs
 
 - Home tab.
-- Home tab displays the selected static monitoring Home screenshot, defaulting to `Home-Agent`.
+- Home tab defaults to `Home-Agent` (`home-agent`); selecting `Home-TL SPV` (`home-tl-spv`) switches the screenshot in the same Home tab.
 - Home is the only top workspace tab that keeps an icon; other top workspace tabs are text-first.
-- Closable Monitor tab opens from Monitoring menu items and displays the selected static Monitor screenshot.
+- `Monitoring > Monitor-RTFM OM` (`monitor-rtfm-om`) opens or reuses the existing closable Monitor tab and displays the third supplied screenshot, retaining its bottom-right `AI Assistant Fail SLA` popup as static content.
 - HaloBCA Demo tab.
 - Webchat Demo tab.
 - WhatsApp Demo tab.
@@ -416,7 +416,7 @@ Current public assets include:
 - HaloBCA customer-side screenshots.
 - Webchat customer-side screenshots.
 - WhatsApp customer-side screenshots.
-- Monitoring screenshots for `Home-Agent`, `Home-TL`, `Home-SPV`, `Monitor-TL`, and `Monitor-OM`.
+- Monitoring assets under `public/screenshots/monitoring/`: `home-agent.png`, `home-tl-spv.png`, and `monitor-rtfm-om.png`. Physically cropped to remove the original shell; old assets retained.
 - WhatsApp customer avatar.
 - Icons and favicon.
 
