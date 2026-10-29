@@ -2062,9 +2062,9 @@ export function VerificationRuleV2Page() {
               }
             >
               <Radio.Button value="copy-current">
-                Copy current scenario
+                Copy Current Scenario
               </Radio.Button>
-              <Radio.Button value="blank">Blank scenario</Radio.Button>
+              <Radio.Button value="blank">Blank Scenario</Radio.Button>
             </Radio.Group>
           </div>
           <AdminModalFooter className="verification-rule-config-modal__footer">
