@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-10-29 +08:00
+最后更新：2026-10-30 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,15 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-10-30 11:56 +08:00 — 全部待提交改动生产发布
+
+- 2026-10-30 11:56 +08:00：发布提交 `948ef477fdc7a528a9fd7ad99b5473aceeb2fccd`，包含全部尚未部署的已授权变更；统一菜单、页签和页头名称为 Voice/Video/Chat Interaction Log，并包含 HaloBCA Live Chat PIN 调整：注册客户每会话仅发起一次，立即禁用且无禁用提示；会话独立，当前客户客户端仅接受匹配的活跃会话及请求结果，忽略迟到或重复结果，重置不恢复机会。
+- 验证：lint 与显式 customer build 通过，保留原有 bundle 大小警告；设置 `VITE_APP_VISIBILITY_PROFILE=customer`、`VITE_COMMON_PHRASE_MODE=demo`、`VITE_COMMON_NUMBER_MODE=demo`、`VITE_COMMON_LINK_MODE=demo` 后执行 `npm run build`，远端既有环境配置不变。此前 PIN 的 20 场景 store 检查和浏览器验收为历史通过记录，本次未重跑。
+- 发布：确认源文件已覆盖全部待发布变更；以远端 de5d270 为基线，按实际 git diff 动态路径白名单，执行 `python "$env:TEMP\all-pending-github-release.py"`，通过 Git Data API 校验精确 SHA、非强制前进 main，并由既有 Vercel 项目部署。部署 `7430300927`，固定地址 https://netinfo-aicc-demo-v2-hjbmpnq50-wl-demo-s-projects.vercel.app。
+- 线上验证：生产地址 https://netinfo-aicc-demo-v2.vercel.app/ 返回 HTTP 200，产物 `/assets/index-CKrPk1qM.js` 中名称及 PIN 特征验证通过；需要回滚时，将本次全部功能整体恢复至 de5d270 基线。
+- 工作区：全部已授权改动已逐文件核对并提交，原项目 main 已同步至相同提交。此发布记录作为后续文档提交补齐；不改变运行时代码。
+
 
 ### 2026-10-29 14:36 +08:00 — Verification Scenario 文案发布
 
