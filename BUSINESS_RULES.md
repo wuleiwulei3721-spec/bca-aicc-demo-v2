@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-10-20 16:18 +08:00
+Last updated: 2026-10-27 18:20 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -288,9 +288,10 @@ Verification:
 - PSTN, HaloBCA Voice/Video, and Webchat Voice/Video show a compact `KBV` action, which opens Customer Verification V2 in the right-side Verification tab, together with the verification result status. This remains true for an unidentified voice/video customer when the mapping marks the media as supported.
 - HaloBCA text / Live Chat for logged-in HaloBCA customers shows a compact `PIN` action on the Customer Information card.
 - WhatsApp, Email, Webchat text, Social Media, and HaloBCA text / Live Chat guest customers do not show either a verification action or verification result status in the current demo.
-- HaloBCA PIN verification sets the card status to `Verifying`, opens the mock secure PIN page in the HaloBCA customer demo, and updates the card to `Verified` or `Verification Failed` from the simulated callback result. Hovering the failed status icon shows the returned demo reason: `PIN input is incorrect`. After the third failed attempt, the disabled `PIN` action shows the verification-limit reason on hover.
-- The PIN page represents a BCA-provided client page. In the demo, Netinfo initiates the PIN verification request and BCA returns the result to Netinfo.
-- PIN can be requested up to 3 times. While waiting, after success, and after the third failed attempt, the `PIN` action is disabled.
+- Registered HaloBCA text / Live Chat allows the agent to initiate PIN verification once per session. Initiation immediately disables the PIN button without a Tooltip or `title`; success, failure, or client reset does not restore the opportunity. This limits agent initiation, not customer PIN entry attempts. Different active sessions can initiate independently and concurrently.
+- The mock PIN page represents a BCA-provided client page: Netinfo initiates verification and receives the simulated result. Initiation sets the card to `Verifying`; an accepted result sets `Verified` or `Verification Failed`. The failed-status hint remains `PIN input is incorrect`.
+- The single customer demo client serves only the currently connected HaloBCA customer, bound through handoff independently of agent focus. Older active sessions can still initiate but cannot receive results through that client and may remain `Verifying`. Results apply only to the matching active session and request; late or duplicate results are ignored.
+- Ended, closed, and historical sessions cannot initiate PIN verification. Client reset preserves each session's used opportunity; a new session has its own opportunity. PIN state is held in memory only.
 - For KBV, the CRM center workspace remains visible while the agent asks questions and marks Correct, Wrong, or Skip.
 - KBV verification result is managed by the shared interaction workspace so that a CIS-driven customer refresh preserves the completed status.
 
@@ -559,9 +560,8 @@ PIN:
 - HaloBCA PIN verification is a mock customer-side secure PIN page.
 - It is triggered from the agent Customer Information card for logged-in HaloBCA text / Live Chat customers.
 - The agent-side card shows `Verifying` while the customer PIN page is open.
-- The customer demo page can submit success or simulate failure; success marks the customer `Verified`, while three failed attempts mark verification failed and disable further PIN requests.
-- PIN verification is separate from KBV question rules. In the current demo, KBV is used for voice channels and PIN is used for logged-in HaloBCA text verification.
-- Webchat PIN verification is temporarily hidden pending customer confirmation.
+- Registered HaloBCA text / Live Chat PIN follows §9 for initiation limits, results, and the single-client demo boundary.
+- PIN verification is separate from KBV question rules. Voice/Video KBV remains unchanged; Webchat PIN remains hidden pending customer confirmation, and WhatsApp has no PIN action.
 
 Video desktop sharing:
 

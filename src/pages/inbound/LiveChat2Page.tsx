@@ -642,6 +642,7 @@ export function LiveChat2Page() {
         />
       }
       customer={activeSession.customer}
+      liveChatSessionId={activeSession.id}
       leadPanel={leadPanel}
       onAssistantActiveKeyChange={setRightPanelActiveKey}
       onAssistantCloseExtraTab={handleCloseRightPanelTab}

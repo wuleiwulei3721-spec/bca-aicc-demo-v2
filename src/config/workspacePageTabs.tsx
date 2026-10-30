@@ -165,7 +165,7 @@ export const workspacePageTabDefinitions: WorkspacePageTabDefinition[] = [
   {
     element: <CallRecordQueryPage />,
     icon: callManagementIcon,
-    label: 'Interaction Log',
+    label: 'Voice/Video/Chat Interaction Log',
     menuKey: 'call-management-call-record-query',
     moduleKey: 'call-management',
     routePath: '/call-management/call-record-query',

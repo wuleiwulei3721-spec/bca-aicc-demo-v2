@@ -1,6 +1,6 @@
 # Decision Log
 
-Last updated: 2026-10-20 11:53 +08:00
+Last updated: 2026-10-27 18:20 +08:00
 
 This document records important product and system design decisions that can be confirmed from the current codebase, project documents, `DEV_LOG.md`, and readable Git history. It intentionally omits bug fixes, visual micro-adjustments, temporary test data, copy-only tweaks, and implementation details that do not affect product direction.
 
@@ -963,6 +963,9 @@ Customer research clarified that question verification is for voice channels, wh
 
 Impact:
 Do not merge PIN settings into Verification Rule V2 unless customer policy changes. Webchat PIN remains hidden pending customer confirmation.
+
+User-confirmed update — 2026-10-27 18:20 +08:00:
+The user confirmed one agent-initiated PIN request per registered HaloBCA Live Chat session, with immediate disablement and no disabled-button hint. Active sessions may initiate independently and concurrently. The single demo client returns results only for the currently connected HaloBCA customer; older active sessions may still initiate but remain `Verifying` without a result. See BUSINESS_RULES.md §9.
 
 Status:
 Implemented

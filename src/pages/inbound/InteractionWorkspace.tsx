@@ -47,6 +47,7 @@ interface InteractionWorkspaceProps {
   initialJourney?: CustomerJourneyItem[]
   initialTickets?: TicketHistoryItem[]
   leadPanel?: ReactNode
+  liveChatSessionId?: string
   onAssistantActiveKeyChange?: (activeKey: string) => void
   onAssistantCloseExtraTab?: (targetKey: string) => void
   overlay?: ReactNode
@@ -67,6 +68,7 @@ export function InteractionWorkspace({
   initialJourney,
   initialTickets,
   leadPanel,
+  liveChatSessionId,
   onAssistantActiveKeyChange,
   onAssistantCloseExtraTab,
   overlay,
@@ -100,6 +102,7 @@ export function InteractionWorkspace({
   const initialJourneyItems = initialJourney ?? customerJourney
   const initialTicketItems = initialTickets ?? ticketingHistory
   const sourceCustomerKey = [
+    liveChatSessionId,
     customer.accessChannel,
     customer.profile.cisNumber,
     customer.profile.phoneNumber,
@@ -408,6 +411,7 @@ export function InteractionWorkspace({
           accessMenuLabel={accessMenuLabel}
           accessMenuName={accessMenuName}
           customer={displayCustomer}
+          liveChatSessionId={liveChatSessionId}
           journey={identityData.journey}
           nextBestActions={nextBestActions}
           tickets={identityData.tickets}

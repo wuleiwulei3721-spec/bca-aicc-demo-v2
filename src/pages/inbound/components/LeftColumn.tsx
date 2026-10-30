@@ -24,6 +24,7 @@ interface LeftColumnProps {
   accessMenuLabel?: string
   accessMenuName?: string
   customer: CustomerInformation
+  liveChatSessionId?: string
   journey: CustomerJourneyItem[]
   tickets: TicketHistoryItem[]
   nextBestActions: NextBestActionItem[]
@@ -44,6 +45,7 @@ export function LeftColumn({
   accessMenuLabel,
   accessMenuName,
   customer,
+  liveChatSessionId,
   journey,
   tickets,
   nextBestActions,
@@ -71,6 +73,7 @@ export function LeftColumn({
           accessMenuLabel={accessMenuLabel}
           accessMenuName={accessMenuName}
           customer={customer}
+          liveChatSessionId={liveChatSessionId}
           hideVerificationStatus={hideVerificationStatus}
           onSendEmail={onSendEmail}
           showIvrJourney={showIvrJourney}

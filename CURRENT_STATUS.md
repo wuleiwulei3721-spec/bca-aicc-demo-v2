@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-10-28 +08:00
+Last updated: 2026-10-30 +08:00
 
 ## 1. Overall Status
 
@@ -191,7 +191,8 @@ This repository is still a demo application:
 - Voice handoff to Agent Workspace.
 - Video handoff to Agent Workspace.
 - Live Chat handoff to Live Chat workspace.
-- PIN verification can be opened from the agent Customer Information card for logged-in HaloBCA text customers; the displayed PIN page is marked as BCA-owned and returns success / failed results to Netinfo. Hovering the failed verification status shows the PIN input error; when locked, the disabled PIN action shows the attempt-limit reason.
+- Registered HaloBCA text / Live Chat supports one agent-initiated PIN request per session, with immediate disablement and no disabled-button hint. Active sessions can initiate independently; success or failure updates the card, and the failure-status hint remains.
+- The single customer demo client returns results only for the currently connected HaloBCA customer. Older active sessions can still initiate but may remain `Verifying` without a result.
 - Voice client screenshots retain keypad capability for IVR transfer scenarios.
 
 ## 11. Completed WhatsApp Demo
@@ -261,7 +262,7 @@ Customer-visible pages:
 - Sensitive Word.
 - AUX Reason Management.
 - Abnormal End Reasons.
-- Interaction Log.
+- The Call Management menu label, workspace top tab, and page heading are all Voice/Video/Chat Interaction Log.
 - Login Log.
 
 These pages open from the left menu as closable workspace tabs. Direct `/call-management/*` visits open the matching workspace tab and return to `/`, preserving active interaction tabs. Call Management timestamps use `DD-MM-YYYY HH:MM:SS`.
@@ -309,7 +310,7 @@ Implemented behaviors:
 - Interaction Log details use a consistent layout: Voice and Video show left media playback, middle transcript, and a read-only Ticket / Summary card plus Satisfaction panel on the right; DM shows conversation bubbles plus the same right-side panels without an empty media column. Each Ticket uses a CRM-style ID label and one plain Category text value styled like Summary; Product is retained but not displayed. Ticket entries and the single AI-generated service Summary are separated inside one scrollable card. Satisfaction shows stars and the final rating number without a denominator.
 - Interaction Log treats CWU summary as mandatory and read-only in the query page, so Summary Status, Summary Time, and edit actions are not exposed.
 - Interaction Log uses `Contact` for the customer-side identifier: phone and WhatsApp numbers, BankID for logged-in HaloBCA/Webchat, and guest IDs for guest Webchat.
-- Email and Social Media records are intentionally excluded from `Call Management > Interaction Log`; Social Media records are shown only in the separate `Social Media > Interaction Log` page.
+- Email and Social Media records are intentionally excluded from `Call Management > Voice/Video/Chat Interaction Log`; Social Media records are shown only in the separate `Social Media > Interaction Log` page.
 - Login Log records successful system Login plus manual and idle Log Out events in current demo memory. It defaults to the last seven calendar days, includes 19 seeded records across that period, and sorts Time descending. It filters combined Employee ID / Name keyword, Time Range, Operation, and Log Out Type; Login renders `-`, while manual and idle Log Out render `User` and `System` respectively.
 - Local store state for demo changes.
 

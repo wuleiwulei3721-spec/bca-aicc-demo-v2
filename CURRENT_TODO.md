@@ -106,6 +106,7 @@ This list focuses on current handoff priorities. Historical granular TODOs remai
 - Verify whether closing a Video Call tab without Hang Up is acceptable for demos.
 - Verify HaloBCA V1.8 screenshots with the product/customer team, especially text client, voice keypad, video no-keypad, PIN, desktop-share, and satisfaction pages.
 - Verify Live Chat workspace:
+  - [x] Registered HaloBCA PIN verified: one agent initiation per session; immediate disablement without Tooltip or `title`; success/failure results and retained failure-status hint; no renewed opportunity after success, failure, or reset; independent parallel sessions; older active sessions can initiate but receive no result through the single current client; callback isolation, duplicate/late-result rejection, ended/closed/history restrictions, lifecycle cleanup, and new-session eligibility. Temporary store smoke checks passed all 20 scenarios; browser acceptance passed.
   - fixed Live Chat tab opens after digital-capable sign-in,
   - Current: active services up to Global Control `Max Digital Media Services` (default 3) plus the most recently ended Live Chat sessions up to `Max Live Chat Ended Session Retention` (default 10); the next end evicts the earliest-ended retained session to History when the retention limit is reached,
   - unified three-channel customer list,

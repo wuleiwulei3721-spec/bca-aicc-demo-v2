@@ -14,6 +14,7 @@ import { useOutboundEligibility } from '../../../contexts/outboundEligibility'
 import { useExternalOperationApproval } from '../../../hooks/useExternalOperationApproval'
 import { callFlowDetail } from '../../../mock/inbound'
 import { useAppStore, useAuthStore } from '../../../store'
+import { isActiveHaloAppLiveChatSession } from '../../../store/appStore'
 import type { CallTransferContext } from '../../../store'
 import type {
   CustomerCrmContacts,
@@ -46,6 +47,7 @@ interface CustomerInformationCardProps {
   accessMenuLabel?: string
   accessMenuName?: string
   customer: CustomerInformation
+  liveChatSessionId?: string
   hideVerificationStatus?: boolean
   onSendEmail?: () => void
   onOpenVerification: (config: CustomerVerificationPanelConfig) => void
@@ -309,6 +311,7 @@ export function CustomerInformationCard({
   accessMenuLabel = 'Business Menu Selection Record',
   accessMenuName,
   customer,
+  liveChatSessionId,
   hideVerificationStatus: hideVerificationStatusProp,
   onSendEmail,
   onOpenVerification,
@@ -328,12 +331,26 @@ export function CustomerInformationCard({
   const requestBankAppPinVerification = useAppStore(
     (state) => state.requestBankAppPinVerification,
   )
+  const isHaloAppLiveChat =
+    liveChatSessionId !== undefined && customer.accessChannel === 'HaloBCA'
+  const requestHaloAppLiveChatPin = useAppStore(
+    (state) => state.requestHaloAppLiveChatPin,
+  )
+  const haloAppPinRecord = useAppStore((state) =>
+    isHaloAppLiveChat ? state.haloAppLiveChatPinBySessionId[liveChatSessionId] : undefined,
+  )
+  const isHaloAppSessionActive = useAppStore((state) =>
+    isHaloAppLiveChat && isActiveHaloAppLiveChatSession(state, liveChatSessionId),
+  )
   const bankAppPinVerificationAttempts = useAppStore(
-    (state) => state.bankAppPinVerificationAttempts,
+    (state) => isHaloAppLiveChat ? 0 : state.bankAppPinVerificationAttempts,
   )
-  const bankAppPinVerificationStatus = useAppStore(
-    (state) => state.bankAppPinVerificationStatus,
+  const legacyPinVerificationStatus = useAppStore(
+    (state) => isHaloAppLiveChat ? 'idle' : state.bankAppPinVerificationStatus,
   )
+  const bankAppPinVerificationStatus = isHaloAppLiveChat
+    ? haloAppPinRecord?.status ?? 'idle'
+    : legacyPinVerificationStatus
   const verificationV2QuestionBank = useAppStore(
     (state) => state.verificationV2QuestionBank,
   )
@@ -391,11 +408,12 @@ export function CustomerInformationCard({
   const hideVerificationStatus =
     hideVerificationStatusProp ?? shouldHideVerificationStatus(customer)
   const pinAttemptsRemaining = Math.max(0, 3 - bankAppPinVerificationAttempts)
-  const pinButtonDisabled =
-    bankAppPinVerificationStatus === 'sent' ||
-    bankAppPinVerificationStatus === 'verified' ||
-    bankAppPinVerificationStatus === 'locked' ||
-    bankAppPinVerificationAttempts >= 3
+  const pinButtonDisabled = isHaloAppLiveChat
+    ? Boolean(haloAppPinRecord) || !isHaloAppSessionActive
+    : bankAppPinVerificationStatus === 'sent' ||
+      bankAppPinVerificationStatus === 'verified' ||
+      bankAppPinVerificationStatus === 'locked' ||
+      bankAppPinVerificationAttempts >= 3
   const pinVerificationStatus =
     bankAppPinVerificationStatus === 'sent'
       ? 'Verifying'
@@ -405,7 +423,7 @@ export function CustomerInformationCard({
           ? 'Verification Failed'
           : bankAppPinVerificationStatus === 'failed'
             ? 'Verification Failed'
-            : verificationStatus === 'Verifying'
+            : isHaloAppLiveChat || verificationStatus === 'Verifying'
               ? 'Unverified'
               : verificationStatus
   const effectiveVerificationStatus =
@@ -470,7 +488,12 @@ export function CustomerInformationCard({
 
   const openVerification = () => {
     if (verificationAction === 'pin') {
-      requestBankAppPinVerification('bankapp')
+      if (pinButtonDisabled) return
+      if (isHaloAppLiveChat) {
+        requestHaloAppLiveChatPin(liveChatSessionId)
+      } else {
+        requestBankAppPinVerification('bankapp')
+      }
       return
     }
 
@@ -491,9 +514,13 @@ export function CustomerInformationCard({
         : undefined
   const verifyButtonTitle =
     verificationAction === 'pin'
-      ? pinAttemptsRemaining > 0
-        ? `Send PIN verification to customer app. ${pinAttemptsRemaining} attempt${pinAttemptsRemaining === 1 ? '' : 's'} remaining.`
-        : 'PIN verification limit reached.'
+      ? pinButtonDisabled
+        ? undefined
+        : isHaloAppLiveChat
+          ? 'Send PIN verification to customer app.'
+          : pinAttemptsRemaining > 0
+            ? `Send PIN verification to customer app. ${pinAttemptsRemaining} attempt${pinAttemptsRemaining === 1 ? '' : 's'} remaining.`
+            : 'PIN verification limit reached.'
       : verificationAction === 'kbv'
         ? 'Open knowledge-based verification'
         : undefined

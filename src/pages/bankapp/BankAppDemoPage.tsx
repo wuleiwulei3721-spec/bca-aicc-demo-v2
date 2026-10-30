@@ -25,6 +25,7 @@ import {
   useAppStore,
   type BankAppVideoShareState,
 } from '../../store'
+import { isActiveHaloAppLiveChatSession } from '../../store/appStore'
 import type {
   BankAppBusinessOption,
   BankAppBusinessType,
@@ -506,11 +507,29 @@ export function BankAppDemoPage({
   const bankAppVideoShareState = useAppStore(
     (state) => state.bankAppVideoShareState,
   )
-  const bankAppPinVerificationStatus = useAppStore(
-    (state) => state.bankAppPinVerificationStatus,
+  const currentHaloAppCustomerSessionId = useAppStore(
+    (state) => state.currentHaloAppCustomerSessionId,
   )
+  const haloAppPinRecord = useAppStore((state) =>
+    variant === 'bankapp' && currentHaloAppCustomerSessionId
+      ? state.haloAppLiveChatPinBySessionId[currentHaloAppCustomerSessionId]
+      : undefined,
+  )
+  const isHaloAppSessionActive = useAppStore((state) =>
+    variant === 'bankapp' && currentHaloAppCustomerSessionId !== null &&
+    isActiveHaloAppLiveChatSession(state, currentHaloAppCustomerSessionId),
+  )
+  const legacyPinVerificationStatus = useAppStore(
+    (state) => variant === 'bankapp' ? 'idle' : state.bankAppPinVerificationStatus,
+  )
+  const bankAppPinVerificationStatus = variant === 'bankapp'
+    ? haloAppPinRecord?.status ?? 'idle'
+    : legacyPinVerificationStatus
   const bankAppPinVerificationAttempts = useAppStore(
-    (state) => state.bankAppPinVerificationAttempts,
+    (state) => variant === 'bankapp' ? 0 : state.bankAppPinVerificationAttempts,
+  )
+  const completeHaloAppLiveChatPin = useAppStore(
+    (state) => state.completeHaloAppLiveChatPin,
   )
   const completeBankAppPinVerification = useAppStore(
     (state) => state.completeBankAppPinVerification,
@@ -521,9 +540,29 @@ export function BankAppDemoPage({
   const startBankAppVideoScreenShare = useAppStore(
     (state) => state.startBankAppVideoScreenShare,
   )
-  const resetBankAppPinVerification = useAppStore(
+  const resetPinVerification = useAppStore(
     (state) => state.resetBankAppPinVerification,
   )
+  const resetBankAppPinVerification = () => resetPinVerification(variant)
+  const completePinResult = (result: 'failed' | 'verified') => {
+    if (variant === 'bankapp') {
+      if (
+        currentHaloAppCustomerSessionId &&
+        haloAppPinRecord?.status === 'sent' &&
+        isHaloAppSessionActive
+      ) {
+        completeHaloAppLiveChatPin(
+          currentHaloAppCustomerSessionId,
+          haloAppPinRecord.requestId,
+          result,
+        )
+      }
+      return
+    }
+    completeBankAppPinVerification(result)
+  }
+  const pinResultDisabled = variant === 'bankapp' &&
+    (haloAppPinRecord?.status !== 'sent' || !isHaloAppSessionActive)
   const [customerType, setCustomerType] = useState<BankAppCustomerType>(
     variant === 'webchat' ? 'guest' : 'registered',
   )
@@ -677,9 +716,11 @@ export function BankAppDemoPage({
     setHandoffWarningReason(null)
     setActiveWorkspaceTabKey('live-chat')
     setLiveChat2FocusedSession(
-      liveChat2FocusSessionId ??
-        activeLiveChat2SessionIds[activeLiveChat2SessionIds.length - 1] ??
-        null,
+      variant === 'bankapp'
+        ? currentHaloAppCustomerSessionId
+        : liveChat2FocusSessionId ??
+          activeLiveChat2SessionIds[activeLiveChat2SessionIds.length - 1] ??
+          null,
     )
     return true
   }
@@ -1077,16 +1118,18 @@ export function BankAppDemoPage({
       <button
         aria-label="Simulate failed PIN result"
         className="bankapp-pin-hotspot bankapp-pin-hotspot--failed"
-        title="Simulate Failed"
+        title={pinResultDisabled ? undefined : 'Simulate Failed'}
+        disabled={pinResultDisabled}
         type="button"
-        onClick={() => completeBankAppPinVerification('failed')}
+        onClick={() => completePinResult('failed')}
       />
       <button
         aria-label="Submit successful PIN result"
         className="bankapp-pin-hotspot bankapp-pin-hotspot--accept"
-        title="Accept"
+        title={pinResultDisabled ? undefined : 'Accept'}
+        disabled={pinResultDisabled}
         type="button"
-        onClick={() => completeBankAppPinVerification('verified')}
+        onClick={() => completePinResult('verified')}
       />
     </div>
   )
@@ -1371,13 +1414,19 @@ export function BankAppDemoPage({
                 >
                   <LockOutlined />
                   <span>
-                    {bankAppPinVerificationStatus === 'verified'
-                      ? 'Customer PIN verified in HaloBCA.'
-                      : bankAppPinVerificationStatus === 'locked'
-                        ? 'PIN verification failed after 3 attempts.'
+                    {variant === 'bankapp'
+                      ? bankAppPinVerificationStatus === 'verified'
+                        ? 'Customer PIN verified in HaloBCA.'
                         : bankAppPinVerificationStatus === 'failed'
-                          ? `PIN verification failed. Attempt ${bankAppPinVerificationAttempts}/3 used.`
-                          : `HaloBCA PIN page is open. Attempt ${bankAppPinVerificationAttempts}/3.`}
+                          ? 'PIN verification failed.'
+                          : 'HaloBCA PIN page is open.'
+                      : bankAppPinVerificationStatus === 'verified'
+                        ? 'Customer PIN verified in HaloBCA.'
+                        : bankAppPinVerificationStatus === 'locked'
+                          ? 'PIN verification failed after 3 attempts.'
+                          : bankAppPinVerificationStatus === 'failed'
+                            ? `PIN verification failed. Attempt ${bankAppPinVerificationAttempts}/3 used.`
+                            : `HaloBCA PIN page is open. Attempt ${bankAppPinVerificationAttempts}/3.`}
                   </span>
                 </div>
               )}

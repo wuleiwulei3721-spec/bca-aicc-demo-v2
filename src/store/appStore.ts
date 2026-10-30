@@ -453,6 +453,10 @@ interface AppState {
   bankAppPinVerificationAttempts: number
   bankAppPinVerificationRequestId: number
   bankAppPinVerificationStatus: BankAppPinVerificationStatus
+  haloAppLiveChatPinBySessionId: Record<string, { status: 'sent' | 'verified' | 'failed'; requestId: number }>
+  currentHaloAppCustomerSessionId: string | null
+  requestHaloAppLiveChatPin: (sessionId: string) => void
+  completeHaloAppLiveChatPin: (sessionId: string, requestId: number, result: 'failed' | 'verified') => void
   bankAppVideoShareState: BankAppVideoShareState
   bankAppVoiceCallActivateWorkspace: boolean
   bankAppVoiceBusinessMenuName: string | null
@@ -613,7 +617,7 @@ interface AppState {
     channelCode: string,
     mediaCode: NewCustomerAlert['mediaCode'],
   ) => void
-  resetBankAppPinVerification: () => void
+  resetBankAppPinVerification: (target?: 'bankapp' | 'webchat' | 'whatsapp') => void
   resetBankAppVideoDesktopShare: () => void
   closeLiveChat2Session: (sessionId: string) => void
   completeLiveChat2BotSummary: (sessionId: string) => void
@@ -634,6 +638,21 @@ interface AppState {
   clearLiveChatSessions: () => void
 }
 
+export function isActiveHaloAppLiveChatSession(state: AppState, sessionId: string) {
+  const session = state.liveChat2SessionInstances[sessionId] ?? liveChat2SessionById[sessionId]
+
+  return Boolean(
+    session &&
+    !session.isInitialHistory &&
+    session.channel === 'HaloBCA' &&
+    (session.bankAppLoginStatus ?? session.customer.bankAppLoginStatus) === 'registered' &&
+    (state.liveChat2SessionStatuses[sessionId]?.status ?? session.status) === 'active' &&
+    state.activeLiveChat2SessionIds.includes(sessionId) &&
+    !state.liveChat2ClosedSessionIds.includes(sessionId) &&
+    !state.liveChat2RecentClosedSessionIds.includes(sessionId),
+  )
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
   activeWorkspaceTabKey: 'home',
   agentServiceMode: null,
@@ -646,6 +665,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   bankAppPinVerificationAttempts: 0,
   bankAppPinVerificationRequestId: 0,
   bankAppPinVerificationStatus: 'idle',
+  haloAppLiveChatPinBySessionId: {},
+  currentHaloAppCustomerSessionId: null,
   bankAppVideoShareState: 'idle',
   bankAppVoiceCallActivateWorkspace: false,
   bankAppVoiceBusinessMenuName: null,
@@ -727,6 +748,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       bankAppPinVerificationAttempts: 0,
       bankAppPinVerificationStatus: 'idle',
       isBankAppDemoTabOpen: false,
+      currentHaloAppCustomerSessionId: null,
     })),
   closeEmailTab: () =>
     set((state) => ({
@@ -1047,6 +1069,49 @@ export const useAppStore = create<AppState>((set, get) => ({
       activeWorkspaceTabKey: 'social-media',
       isSocialMediaTabOpen: true,
     }),
+  requestHaloAppLiveChatPin: (sessionId) =>
+    set((state) => {
+      if (
+        !isActiveHaloAppLiveChatSession(state, sessionId) ||
+        state.haloAppLiveChatPinBySessionId[sessionId]
+      ) {
+        return {}
+      }
+
+      const requestId = state.bankAppPinVerificationRequestId + 1
+      const isCurrentCustomer = state.currentHaloAppCustomerSessionId === sessionId
+
+      return {
+        bankAppPinVerificationRequestId: requestId,
+        haloAppLiveChatPinBySessionId: {
+          ...state.haloAppLiveChatPinBySessionId,
+          [sessionId]: { status: 'sent' as const, requestId },
+        },
+        ...(isCurrentCustomer
+          ? { activeWorkspaceTabKey: 'bankapp-demo', isBankAppDemoTabOpen: true }
+          : {}),
+      }
+    }),
+  completeHaloAppLiveChatPin: (sessionId, requestId, result) =>
+    set((state) => {
+      const record = state.haloAppLiveChatPinBySessionId[sessionId]
+      if (
+        state.currentHaloAppCustomerSessionId !== sessionId ||
+        !record ||
+        record.requestId !== requestId ||
+        record.status !== 'sent' ||
+        !isActiveHaloAppLiveChatSession(state, sessionId)
+      ) {
+        return {}
+      }
+
+      return {
+        haloAppLiveChatPinBySessionId: {
+          ...state.haloAppLiveChatPinBySessionId,
+          [sessionId]: { status: result, requestId },
+        },
+      }
+    }),
   requestBankAppPinVerification: (target = 'bankapp') =>
     set((state) => {
       if (
@@ -1346,6 +1411,10 @@ export const useAppStore = create<AppState>((set, get) => ({
         liveChat2MessagesBySessionId: nextMessagesBySessionId,
         liveChat2ReadSessionIds: nextReadSessionIds,
         liveChat2SessionInstances: nextSessionInstances,
+        currentHaloAppCustomerSessionId:
+          handoffSessionId && handoffSession?.channel === 'HaloBCA'
+            ? handoffSessionId
+            : state.currentHaloAppCustomerSessionId,
         liveChat2SessionStatuses: nextSessionStatuses,
         liveChat2SessionTimings: nextSessionTimings,
         liveChat2StarColors: nextStarColors,
@@ -1515,6 +1584,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => {
       if (!open) {
         return {
+          haloAppLiveChatPinBySessionId: {},
+          currentHaloAppCustomerSessionId: null,
           activeLiveChat2SessionIds: [],
           activeLiveChatSessionIds: [],
           activeWorkspaceTabKey:
@@ -1722,11 +1793,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       bankAppVideoShareState: 'idle',
       isScreenShareActive: false,
     }),
-  resetBankAppPinVerification: () =>
-    set({
+  resetBankAppPinVerification: (target = 'bankapp') =>
+    set((state) => ({
       bankAppPinVerificationAttempts: 0,
       bankAppPinVerificationStatus: 'idle',
-    }),
+      currentHaloAppCustomerSessionId:
+        target === 'bankapp' ? null : state.currentHaloAppCustomerSessionId,
+    })),
   resetBankAppVideoDesktopShare: () =>
     set({
       bankAppVideoShareState: 'idle',
@@ -1770,6 +1843,10 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       return {
         liveChat2DraftAttachments: nextDraftAttachments,
+        currentHaloAppCustomerSessionId:
+          state.currentHaloAppCustomerSessionId === sessionId
+            ? null
+            : state.currentHaloAppCustomerSessionId,
         activeLiveChat2SessionIds: nextActiveSessionIds,
         liveChat2RecentClosedSessionIds: nextRecentClosedSessionIds,
         liveChat2ClosedSessionIds: state.liveChat2ClosedSessionIds.includes(
@@ -1848,6 +1925,10 @@ export const useAppStore = create<AppState>((set, get) => ({
       ].slice(0, 30)
 
       return {
+        currentHaloAppCustomerSessionId:
+          state.currentHaloAppCustomerSessionId === sessionId
+            ? null
+            : state.currentHaloAppCustomerSessionId,
         activeLiveChat2SessionIds: state.activeLiveChat2SessionIds.filter(
           (activeSessionId) => activeSessionId !== sessionId,
         ),
@@ -1973,6 +2054,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   clearLiveChat2Sessions: () =>
     set((state) => ({
+      haloAppLiveChatPinBySessionId: {},
+      currentHaloAppCustomerSessionId: null,
       activeLiveChat2SessionIds: [],
       activeWorkspaceTabKey:
         state.activeWorkspaceTabKey === LEGACY_LIVECHAT2_TAB_KEY
