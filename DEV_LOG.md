@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-10-30 +08:00
+最后更新：2026-11-02 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,15 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-11-02 14:28 +08:00 — 黑名单必填标识及 Login Log 显示发布
+
+- 发布时间：2026-11-02 14:28 +08:00；功能提交：`b08721c51e0f5644d1388d533a500bb4562c7351`（父提交 `361747990b75a1e420a33ac1dce42266dcc52180`，仅含两个指定文件）。BlacklistManagementPage 使用已导入的 `AdminFormField label="Restriction Policy" required`，保留 Select 属性、默认值、禁用状态及事件处理；LoginLogQueryPage 将列标题改为 User Domain，并以 `value.replace(/^EMP-/, '')` 展示字符串值。
+- 发布验证：lint 与 customer 构建通过，保留既有 bundle 警告；customer 环境及 CommonPhrase、Number、Link 演示配置、远端配置未变；无新增凭据，无其他业务、数据或筛选逻辑变更。
+- 生产部署：通过既有 GitData API 推送精确提交并触发 Vercel Git 部署；部署 `7485749282` 状态成功。生产地址：https://netinfo-aicc-demo-v2.vercel.app/；不可变地址：https://netinfo-aicc-demo-v2-9dcyytvz5-wl-demo-s-projects.vercel.app。HTTP 200，产物 `/assets/index-DW_UvLwz.js` 已核验 User Domain、EMP- 前缀移除逻辑及 Restriction Policy 必填配置；未执行浏览器验证。
+- 发布收尾：部署成功后记录日志并推送仅文档提交，工作区干净。回滚时仅 revert 功能提交 `b08721c51e0f5644d1388d533a500bb4562c7351`，重新验证 customer 构建并发布已提交版本；本次改动范围有限，仍需关注实际展示效果。
+- 实际命令：设置 `VITE_APP_VISIBILITY_PROFILE=customer`、`VITE_COMMON_PHRASE_MODE=demo`、`VITE_COMMON_NUMBER_MODE=demo`、`VITE_COMMON_LINK_MODE=demo` 后执行 `npm run build`；通过 `python "$env:TEMP\blacklist-login-release.py"` 推送已提交修订，使用现有 Vercel Git 集成部署。远端环境未修改，本地 profile 已显式核验。
+
 
 ### 2026-10-30 11:56 +08:00 — 全部待提交改动生产发布
 
