@@ -99,7 +99,8 @@ export function LoginLogQueryPage() {
   const columns: ColumnsType<LoginLogEntry> = [
     {
       dataIndex: 'employeeId',
-      title: 'Employee ID',
+      render: (value: string) => value.replace(/^EMP-/, ''),
+      title: 'User Domain',
       width: 150,
     },
     {

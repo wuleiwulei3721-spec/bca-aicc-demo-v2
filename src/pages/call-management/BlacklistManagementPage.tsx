@@ -737,8 +737,7 @@ export function BlacklistManagementPage() {
                 onChange={(value) => handleChannelChange(value ? [value] : [])}
               />
             </AdminFormField>
-            <label className="routing-config-crud-modal__field">
-              <span>Restriction Policy</span>
+            <AdminFormField label="Restriction Policy" required>
               <Select
                 disabled={!isPhoneOnlyMode}
                 options={formRestrictionPolicyOptions}
@@ -749,7 +748,7 @@ export function BlacklistManagementPage() {
                 }
                 onChange={(value) => updateDraft('restrictionPolicy', value)}
               />
-            </label>
+            </AdminFormField>
             <AdminFormField label="Status">
               <span className="busy-reason-config__switch-row">
                 <Switch
