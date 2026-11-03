@@ -66,6 +66,7 @@ import {
   getVerificationV2ScenarioQuestionCount,
   getVerificationV2ScenarioCorrectRequired,
   normalizeVerificationV2QuestionBlock,
+  normalizeVerificationV2QuestionBlocks,
   verificationV2BaseGroupOrder,
   verificationV2CustomerSegmentLabels,
   verificationV2CustomerSegmentOptions,
@@ -259,8 +260,8 @@ function normalizeScenarios(
             scenario.maxWrongAttempts === undefined
               ? null
               : scenario.maxWrongAttempts,
-          questionBlocks: scenario.questionBlocks.map(
-            cloneVerificationV2QuestionBlock,
+          questionBlocks: normalizeVerificationV2QuestionBlocks(
+            scenario.questionBlocks,
           ),
         }))
       : [
@@ -1427,7 +1428,7 @@ export function VerificationRuleV2Page() {
               <label className="verification-rule-v2-group__correct">
                 <span>Correct</span>
                 <InputNumber
-                  disabled={isRuleViewMode}
+                  disabled={isRuleViewMode || blockType === 'mandatory'}
                   max={block.questionIds.length}
                   min={0}
                   value={block.requiredCorrect}
@@ -1986,7 +1987,7 @@ export function VerificationRuleV2Page() {
                     size="small"
                     onClick={() => addQuestionBlock('custom')}
                   >
-                    Custom Block
+                    {verificationV2QuestionBlockTypeLabels.custom}
                   </BaseButton>
                 </div>
               )}

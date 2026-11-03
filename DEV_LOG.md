@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-11-02 +08:00
+最后更新：2026-11-03 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,15 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-11-03 10:21 +08:00 — Verification Rules group configuration
+
+- Parameters: rename the shared custom label and generated names to Customize Group; derive Mandatory Correct from questionIds.length and disable its editor input; normalize block order to Mandatory > Dynamic > Static > Alternative > Customize Group.
+- Reason: every Mandatory question must be correct, and group order must remain consistent regardless of addition order.
+- Result: shared normalization covers scenario creation, cloning, legacy conversion, rule reads, and editor updates. Existing custom names, IDs, question order, custom relative order, other correct counts, and Alternative substitution behavior are preserved.
+- Rollback: revert these scoped utility, editor, and documentation replacements together.
+- Risk: stale Mandatory counts become the full selected-question count, and existing scenario blocks display in the confirmed fixed order.
+- Validation: npm run lint and npm run build passed; the existing bundle-size warning remains. Targeted Vite SSR assertions passed for Mandatory add/remove/legacy counts, stable fixed ordering, input non-mutation, cloning, scenario reads, effective runtime rules, and custom labels. Browser smoke passed: Dynamic added before Mandatory still renders Mandatory first; two selected Mandatory questions show disabled Correct=2, removing one gives Correct=1; adding all five categories in mixed order renders the confirmed fixed order. No commit or deployment was performed.
 
 ### 2026-11-02 14:28 +08:00 — 黑名单必填标识及 Login Log 显示发布
 

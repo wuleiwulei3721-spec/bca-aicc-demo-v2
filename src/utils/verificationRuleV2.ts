@@ -37,7 +37,7 @@ export const verificationV2QuestionBlockTypeLabels: Record<
   string
 > = {
   alternative: 'Alternative',
-  custom: 'Custom Block',
+  custom: 'Customize Group',
   dynamic: 'Dynamic',
   mandatory: 'Mandatory',
   static: 'Static',
@@ -215,8 +215,33 @@ export function normalizeVerificationV2QuestionBlock(
         ? block.name
         : verificationV2QuestionBlockTypeLabels[blockType],
     questionIds: [...block.questionIds],
-    requiredCorrect: blockType === 'alternative' ? 0 : block.requiredCorrect,
+    requiredCorrect:
+      blockType === 'mandatory'
+        ? block.questionIds.length
+        : blockType === 'alternative'
+          ? 0
+          : block.requiredCorrect,
   }
+}
+
+export function normalizeVerificationV2QuestionBlocks(
+  blocks: VerificationV2QuestionBlock[],
+): VerificationV2QuestionBlock[] {
+  const rank: Record<VerificationV2QuestionBlockType, number> = {
+    mandatory: 0,
+    dynamic: 1,
+    static: 2,
+    alternative: 3,
+    custom: 4,
+  }
+
+  return blocks
+    .map(normalizeVerificationV2QuestionBlock)
+    .sort(
+      (first, second) =>
+        rank[getVerificationV2QuestionBlockType(first)] -
+        rank[getVerificationV2QuestionBlockType(second)],
+    )
 }
 
 export function createEmptyVerificationV2QuestionBlock(
@@ -228,7 +253,7 @@ export function createEmptyVerificationV2QuestionBlock(
     id: blockType === 'custom' ? `custom-block-${sequence}` : blockType,
     name:
       blockType === 'custom'
-        ? `Custom Block ${sequence}`
+        ? `${verificationV2QuestionBlockTypeLabels.custom} ${sequence}`
         : verificationV2QuestionBlockTypeLabels[blockType],
     questionIds: [],
     requiredCorrect: 0,
@@ -249,7 +274,7 @@ export function cloneVerificationV2Scenario(
     agentHint: scenario.agentHint ?? '',
     maxWrongAttempts:
       scenario.maxWrongAttempts === undefined ? null : scenario.maxWrongAttempts,
-    questionBlocks: scenario.questionBlocks.map(cloneVerificationV2QuestionBlock),
+    questionBlocks: normalizeVerificationV2QuestionBlocks(scenario.questionBlocks),
   }
 }
 
@@ -262,7 +287,7 @@ export function createDefaultVerificationV2Scenario(
     isDefault: true,
     maxWrongAttempts: null,
     name: 'Default',
-    questionBlocks: questionBlocks.map(normalizeVerificationV2QuestionBlock),
+    questionBlocks: normalizeVerificationV2QuestionBlocks(questionBlocks),
   }
 }
 
@@ -428,15 +453,11 @@ function buildScenarioFromLegacySpecialScenario(
     isDefault: false,
     maxWrongAttempts: baseScenario.maxWrongAttempts,
     name: scenario.name,
-    questionBlocks:
+    questionBlocks: normalizeVerificationV2QuestionBlocks(
       scenarioMode === 'replace'
         ? [scenarioBlock]
-        : [
-            ...baseScenario.questionBlocks.map(
-              cloneVerificationV2QuestionBlock,
-            ),
-            scenarioBlock,
-          ],
+        : [...baseScenario.questionBlocks, scenarioBlock],
+    ),
   }
 }
 
@@ -481,9 +502,7 @@ export function getVerificationV2RuleScenarios(rule: VerificationV2Rule) {
         legacyScenarioIds.has(scenario.id))
         ? rule.maxWrongAttempts
         : scenario.maxWrongAttempts,
-    questionBlocks: scenario.questionBlocks.map(
-      normalizeVerificationV2QuestionBlock,
-    ),
+    questionBlocks: normalizeVerificationV2QuestionBlocks(scenario.questionBlocks),
   }))
 }
 

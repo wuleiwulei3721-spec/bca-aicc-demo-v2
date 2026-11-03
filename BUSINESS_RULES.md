@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Business Rules
 
-Last updated: 2026-10-27 18:20 +08:00
+Last updated: 2026-11-03 +08:00
 
 This document records the currently implemented business behavior. It describes demo rules, not production backend contracts.
 
@@ -329,7 +329,10 @@ Rule model:
   - `Dynamic`
   - `Static`
   - `Alternative`
-  - custom blocks such as Branch Data, Customer Data, Layering.
+  - `Customize Group`, with editable names such as Branch Data, Customer Data, Layering.
+- The custom-group label and newly generated names use `Customize Group`; existing custom names are preserved.
+- Mandatory Correct is disabled in the editor and always equals its selected question count, including zero; all Mandatory questions must be correct.
+- Blocks always appear in this order regardless of addition order: Mandatory, Dynamic, Static, Alternative, Customize Group. Question order within each block and relative order among custom groups are preserved.
 
 Question bank:
 

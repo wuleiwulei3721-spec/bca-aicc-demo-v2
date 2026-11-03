@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - Current Status
 
-Last updated: 2026-10-30 +08:00
+Last updated: 2026-11-03 +08:00
 
 ## 1. Overall Status
 
@@ -274,6 +274,9 @@ Implemented behaviors:
 - Rule preview using agent verification modal.
 - Scenario-based KBV question model.
 - Verification Rules Channel options are dynamically derived from active channel/media configuration: the default data produces `Phone`, `HaloBCA Voice`, `HaloBCA Video`, `Webchat Voice`, and `Webchat Video`; existing rule rows remain unchanged, unavailable rule values remain readable as inactive, and only HaloBCA Voice / Video expose HaloBCA Login Status.
+- Verification Rules uses `Customize Group` for the custom-group label and generated names, preserving existing custom names.
+- Mandatory Correct is disabled and derived from the selected question count; every Mandatory question must be correct.
+- Verification blocks normalize to Mandatory > Dynamic > Static > Alternative > Customize Group regardless of addition order, preserving question order and relative custom-group order.
 - Blacklist required single-channel batch add with a Status switch defaulting to Enabled, shared `62` Phone / WhatsApp country code and phone-number mode, Phone-only selectable restriction policies, fixed WhatsApp and non-phone `Prohibit Transfer to Agent` policy, a Country Code list column (`-` for non-phone channels), duplicate preview/skip, inline enabled/disabled list Status switch, status filtering, 2000-character Reason, and delete. Seeded Created By values use `1234-Admin`.
 - Priority list add / batch add / delete with required 2000-character Reason, single-channel query and batch-add selectors, shared Phone / WhatsApp Country Code (`62` default) / Phone Number mode, Country Code list column, duplicate validation that excludes Match Rule, and seeded Created By values shown as `1234-Admin`.
 - Priority Match Rule filtering.
