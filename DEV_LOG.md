@@ -29,6 +29,15 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
 
+### 2026-11-03 10:38 +08:00 — Verification Rules 三项调整生产发布
+
+- 发布时间：2026-11-03 10:38 +08:00；提交：4aed0220e1b56f57a1f73d2b216953661497f077；部署：7508897583；不可变地址：https://netinfo-aicc-demo-v2-70vwq4je9-wl-demo-s-projects.vercel.app。Vercel Production 状态成功，线上首页与 JavaScript 资源均返回 HTTP 200，三项功能标记已核验。
+- 变更范围：仅发布已批准的五个文件；自定义组标签及新建名称统一为 Customize Group，保留已有自定义名称；Mandatory 的 Correct 禁用并始终等于已选题数（含 0）；分组固定按 Mandatory → Dynamic → Static → Alternative → Customize Group 排序，保留组内题目顺序和自定义组相对顺序。
+- 验证与风险：lint、build、SSR 断言及浏览器冒烟检查已通过；客户构建使用 VITE_APP_VISIBILITY_PROFILE=customer，VITE_COMMON_PHRASE_MODE、VITE_COMMON_NUMBER_MODE、VITE_COMMON_LINK_MODE 均为 demo。构建包记录：/assets/index-fyU6G51R.js，保留原有 bundle 警告。旧数据中 Mandatory 已配置的 Correct 将有意调整为全部已选题数，其他计数保持不变；远程环境未修改，无法独立检查其配置。
+- 发布与回滚：使用现有 verification-group-release.py，通过 Git Data API 校验本地提交及 tree SHA、干净工作区与父基线 55f4e2214eed17fc77ff076d381a46d020cd2297，非强制更新 main，由现有 Vercel Git 集成部署。需要回滚时仅撤销本次功能提交，恢复该基线对应的功能状态，再验证、提交并发布。
+- 生产地址：https://netinfo-aicc-demo-v2.vercel.app/ 。发布命令：`python "$env:TEMP\verification-group-release.py"`；构建命令：以上述 customer/demo 环境变量执行 `npm run build`。发布后日志由后续文档提交补齐，不改变运行时代码。
+
+
 ### 2026-11-03 10:21 +08:00 — Verification Rules group configuration
 
 - Parameters: rename the shared custom label and generated names to Customize Group; derive Mandatory Correct from questionIds.length and disable its editor input; normalize block order to Mandatory > Dynamic > Static > Alternative > Customize Group.
