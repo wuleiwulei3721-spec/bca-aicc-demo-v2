@@ -1,6 +1,6 @@
 # BANK 1 AICC Demo V2 - 开发日志
 
-最后更新：2026-11-03 +08:00
+最后更新：2026-11-09 +08:00
 项目路径：`D:\03projects\bca-aicc-demo-v2`
 
 ## 记录规则
@@ -28,6 +28,14 @@ DEV_LOG.md 是当前活跃开发日志和历史归档入口，不再作为完整
 
 Historical entries are preserved in archive files without content rewrites. Use `rg` across `DEV_LOG.md` and `docs/archive/dev-log/` when investigating older context.
 ## 日志
+
+### 2026-11-09 16:07 +08:00 — Internal Chat 会话顶部精简与生产发布
+
+- 范围：功能提交 `dc5b69f1a93455a5936768ea122d928e0b977ff1` 仅删除 `src/layouts/components/InternalChatModal.tsx` 会话顶部的技能／部门副标题一行；保留头像与名称，沿用 Header 的 `display: flex; align-items: center` 对齐。未改动聊天数据、消息或其他业务逻辑。
+- 验证：默认 lint 因 `backend/.pytest_cache` 读取权限受限未完成；`npm run lint -- --ignore-pattern backend/.pytest_cache/` 通过。默认构建无法清理旧 `dist/assets`，改用 `npm run build -- --outDir` 指定全新临时目录后通过；构建目录为 `C:\Users\KayaW\AppData\Local\Temp\aicc-internal-chat-release-be71cf1a60264aeb97bd31d9a5a8c71c`。显式设置 `VITE_APP_VISIBILITY_PROFILE=customer`、`VITE_COMMON_PHRASE_MODE=demo`、`VITE_COMMON_NUMBER_MODE=demo`、`VITE_COMMON_LINK_MODE=demo`；原 bundle 大小警告保留。用户已确认本地显示，本次未重复浏览器检查。
+- 发布：通过 `python "$env:TEMP\internal-chat-header-release.py"` 校验已提交版本、干净工作区及精确 Git SHA，非强制推送 main，触发现有 Vercel Git 集成。GitHub Production deployment `7649841503` 状态成功。生产地址：https://netinfo-aicc-demo-v2.vercel.app/；不可变地址：https://netinfo-aicc-demo-v2-ji963za23-wl-demo-s-projects.vercel.app。线上首页和 `/assets/index-CrcFwndz.js` 均返回 HTTP 200，产物中的会话顶部已移除技能副标题且保留头像／名称。远端环境配置未修改；customer/demo 配置仅在本地发布构建中显式核验。
+- 回滚：仅 revert 功能提交 `dc5b69f1a93455a5936768ea122d928e0b977ff1`，保留其他修订；构建验证后提交并发布。此前基线为 `8ccd36452ff2fb69efc3bde77e60f32176afd6fb`。本条为发布后的文档记录，不改变运行时代码。
+
 
 ### 2026-11-03 10:38 +08:00 — Verification Rules 三项调整生产发布
 
