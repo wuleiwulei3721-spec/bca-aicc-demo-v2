@@ -111,7 +111,6 @@ export function InternalChatModal({ open, onClose }: InternalChatModalProps) {
                   activeSession.agentName,
                 )}
               </strong>
-              <em>{activeSession.department}</em>
             </span>
           </header>
 
